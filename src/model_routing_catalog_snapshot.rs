@@ -8,17 +8,12 @@ use super::{ProviderHealthReport, ProviderHealthState};
 
 pub struct ConfiguredCatalogSnapshot {
     pub(super) health: Vec<ProviderHealthReport>,
-    pub(super) models: HashMap<SubscriptionProvider, Vec<String>>,
     pub(super) records: HashMap<SubscriptionProvider, Vec<crate::model_catalog::CatalogRecord>>,
 }
 
 impl ConfiguredCatalogSnapshot {
     pub fn health(&self) -> &[ProviderHealthReport] {
         &self.health
-    }
-
-    pub fn models(&self, provider: SubscriptionProvider) -> Vec<String> {
-        self.models.get(&provider).cloned().unwrap_or_default()
     }
 
     pub fn records(

@@ -8,10 +8,7 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value, json};
 
-use super::{
-    done_frame, extract_sse_data, find_sse_separator, map_finish_reason, response_sse_frame,
-    sse_frame,
-};
+use super::{done_frame, extract_sse_data, map_finish_reason, response_sse_frame, sse_frame};
 
 /// OpenAI-compatible stream response shape to emit while translating
 /// Anthropic SSE events.
@@ -28,14 +25,17 @@ pub struct OpenAIStreamTranslator {
     served_model: String,
     id: String,
     created: i64,
-    buffer: String,
+    buffer: Vec<u8>,
     sent_chat_role: bool,
     sent_response_created: bool,
     sent_final: bool,
+    failed: Option<()>,
     usage_requested: Option<()>,
-    input_tokens: u64,
-    output_tokens: u64,
+    usage: crate::bridge_response::AnthropicUsage,
+    stop_reason: Option<String>,
     response_output_text: String,
+    response_annotations: Vec<Value>,
+    citation_search_from: usize,
     /// The output slot the text item occupies, once any text has arrived.
     ///
     /// `None` until then, which is what keeps a tool-only turn from carrying an
@@ -90,14 +90,17 @@ impl OpenAIStreamTranslator {
             served_model: resolved_model.to_string(),
             id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
-            buffer: String::new(),
+            buffer: Vec::new(),
             sent_chat_role: false,
             sent_response_created: false,
             sent_final: false,
+            failed: None,
             usage_requested: None,
-            input_tokens: 0,
-            output_tokens: 0,
+            usage: crate::bridge_response::AnthropicUsage::default(),
+            stop_reason: None,
             response_output_text: String::new(),
+            response_annotations: Vec::new(),
+            citation_search_from: 0,
             response_text_item: None,
             response_tool_calls: BTreeMap::new(),
             response_output_index: 0,
@@ -113,17 +116,17 @@ impl OpenAIStreamTranslator {
 
     /// Push raw upstream bytes and return zero or more `OpenAI` SSE frames.
     pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut frames = Vec::new();
-        while let Some((idx, separator_len)) = find_sse_separator(&self.buffer) {
-            let block = self.buffer[..idx].to_string();
-            self.buffer.drain(..idx + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             frames.extend(self.translate_block(&block));
         }
         frames
     }
 
     fn translate_block(&mut self, block: &str) -> Vec<String> {
+        if self.failed.is_some() {
+            return Vec::new();
+        }
         let data = extract_sse_data(block);
         if data.is_empty() {
             return Vec::new();
@@ -182,12 +185,32 @@ impl OpenAIStreamTranslator {
                 match delta.get("type").and_then(Value::as_str) {
                     Some("text_delta") => {
                         let text = delta.get("text").and_then(Value::as_str).unwrap_or("");
+                        self.response_output_text.push_str(text);
                         let mut payload = json!({"content": text});
                         if !self.sent_chat_role {
                             payload["role"] = Value::String("assistant".into());
                             self.sent_chat_role = true;
                         }
                         vec![self.chat_frame(&payload, None)]
+                    }
+                    Some("citations_delta") => {
+                        let Some((annotation, next)) =
+                            crate::bridge_response::annotation_from_anthropic_delta(
+                                delta,
+                                &self.response_output_text,
+                                self.citation_search_from,
+                            )
+                        else {
+                            return self.fail_citation();
+                        };
+                        self.citation_search_from = next;
+                        self.response_annotations.push(annotation.clone());
+                        vec![self.chat_frame(
+                            &json!({
+                                "annotations": crate::bridge_response::chat_annotations(&[annotation])
+                            }),
+                            None,
+                        )]
                     }
                     Some("input_json_delta") => {
                         let partial = delta
@@ -215,6 +238,7 @@ impl OpenAIStreamTranslator {
                     .and_then(|d| d.get("stop_reason"))
                     .and_then(Value::as_str)
                     .map_or_else(Vec::new, |reason| {
+                        self.stop_reason = Some(reason.to_string());
                         self.sent_final = true;
                         vec![self.chat_frame(&json!({}), Some(map_finish_reason(reason)))]
                     })
@@ -239,6 +263,7 @@ impl OpenAIStreamTranslator {
         match event.get("type").and_then(Value::as_str) {
             Some("message_start") => {
                 self.capture_upstream_identity(event);
+                self.capture_anthropic_usage(event.pointer("/message/usage"));
                 if let Some(id) = event
                     .get("message")
                     .and_then(|m| m.get("id"))
@@ -319,6 +344,27 @@ impl OpenAIStreamTranslator {
                         })));
                         frames
                     }
+                    Some("citations_delta") => {
+                        let Some((annotation, next)) =
+                            crate::bridge_response::annotation_from_anthropic_delta(
+                                delta,
+                                &self.response_output_text,
+                                self.citation_search_from,
+                            )
+                        else {
+                            return self.fail_citation();
+                        };
+                        self.citation_search_from = next;
+                        self.response_annotations.push(annotation.clone());
+                        vec![response_sse_frame(&json!({
+                            "type": "response.output_text.annotation.added",
+                            "item_id": self.response_item_id(),
+                            "output_index": self.response_text_item.unwrap_or(0),
+                            "content_index": 0,
+                            "annotation_index": self.response_annotations.len() - 1,
+                            "annotation": annotation,
+                        }))]
+                    }
                     Some("input_json_delta") => {
                         // The arguments arrive as fragments that must be
                         // concatenated in order; a fragment is not valid JSON on
@@ -366,36 +412,52 @@ impl OpenAIStreamTranslator {
                     })),
                 ]
             }
+            Some("message_delta") => {
+                self.capture_anthropic_usage(event.get("usage"));
+                self.stop_reason = event
+                    .pointer("/delta/stop_reason")
+                    .and_then(Value::as_str)
+                    .map(str::to_string);
+                Vec::new()
+            }
             Some("message_stop") => {
                 self.sent_final = true;
+                let stop = crate::bridge_response::stop_semantics(self.stop_reason.as_deref());
                 let mut frames = Vec::new();
                 // Only close the text item if one was ever opened. A tool-only
                 // turn previously ended here with `"text": ""`, which reads to
                 // the caller as a successful empty answer (issue #218).
                 if let Some(index) = self.response_text_item {
-                    frames.push(response_sse_frame(&json!({
-                        "type": "response.output_text.done",
+                    let mut done = json!({
+                        "type": if stop.refusal { "response.refusal.done" } else { "response.output_text.done" },
                         "item_id": self.response_item_id(),
                         "output_index": index,
-                        "content_index": 0,
-                        "text": self.response_output_text
-                    })));
+                        "content_index": 0
+                    });
+                    done[if stop.refusal { "refusal" } else { "text" }] =
+                        Value::String(self.response_output_text.clone());
+                    frames.push(response_sse_frame(&done));
                     frames.push(response_sse_frame(&json!({
                         "type": "response.content_part.done",
                         "item_id": self.response_item_id(),
                         "output_index": index,
                         "content_index": 0,
-                        "part": Self::response_content_part(&self.response_output_text)
+                        "part": self.response_content_part(&self.response_output_text)
                     })));
                     frames.push(response_sse_frame(&json!({
                         "type": "response.output_item.done",
                         "output_index": index,
-                        "item": self.response_output_item("completed", true)
+                        "item": self.response_output_item(stop.response_status, true)
                     })));
                 }
+                let terminal = if stop.response_status == "completed" {
+                    "response.completed"
+                } else {
+                    "response.incomplete"
+                };
                 frames.push(response_sse_frame(&json!({
-                    "type": "response.completed",
-                    "response": self.response_object("completed", true)
+                    "type": terminal,
+                    "response": self.response_object(stop.response_status, true)
                 })));
                 frames.push(done_frame());
                 frames
@@ -405,7 +467,7 @@ impl OpenAIStreamTranslator {
     }
 
     fn chat_frame(&self, delta: &Value, finish_reason: Option<&str>) -> String {
-        sse_frame(&json!({
+        let mut frame = json!({
             "id": self.id,
             "object": "chat.completion.chunk",
             "created": self.created,
@@ -415,7 +477,11 @@ impl OpenAIStreamTranslator {
                 "delta": delta,
                 "finish_reason": finish_reason
             }]
-        }))
+        });
+        if let Some(tier) = self.usage.openai_service_tier() {
+            frame["service_tier"] = Value::String(tier.into());
+        }
+        sse_frame(&frame)
     }
 
     fn chat_usage_frame(&self) -> String {
@@ -425,26 +491,12 @@ impl OpenAIStreamTranslator {
             "created": self.created,
             "model": self.served_model,
             "choices": [],
-            "usage": {
-                "prompt_tokens": self.input_tokens,
-                "completion_tokens": self.output_tokens,
-                "total_tokens": self.input_tokens + self.output_tokens,
-            }
+            "usage": self.usage.chat()
         }))
     }
 
     fn capture_anthropic_usage(&mut self, usage: Option<&Value>) {
-        let Some(usage) = usage else {
-            return;
-        };
-        self.input_tokens = usage
-            .get("input_tokens")
-            .and_then(Value::as_u64)
-            .unwrap_or(self.input_tokens);
-        self.output_tokens = usage
-            .get("output_tokens")
-            .and_then(Value::as_u64)
-            .unwrap_or(self.output_tokens);
+        self.usage.absorb(usage);
     }
 
     fn response_object(&self, status: &str, include_output: bool) -> Value {
@@ -458,21 +510,34 @@ impl OpenAIStreamTranslator {
                 .map(|call| (call.output_index, call.item()))
                 .collect();
             if let Some(index) = self.response_text_item {
-                items.push((index, self.response_output_item("completed", true)));
+                items.push((index, self.response_output_item(status, true)));
             }
             items.sort_by_key(|(index, _)| *index);
             items.into_iter().map(|(_, item)| item).collect()
         } else {
             Vec::new()
         };
-        json!({
+        let mut response = json!({
             "id": self.id,
             "object": "response",
             "created_at": self.created,
             "model": self.served_model,
             "status": status,
             "output": output
-        })
+        });
+        if let Some(tier) = self.usage.openai_service_tier() {
+            response["service_tier"] = Value::String(tier.into());
+        }
+        if status != "in_progress" {
+            response["usage"] = self.usage.responses();
+            if let Some(reason) =
+                crate::bridge_response::stop_semantics(self.stop_reason.as_deref())
+                    .incomplete_reason
+            {
+                response["incomplete_details"] = json!({"reason": reason});
+            }
+        }
+        response
     }
 
     fn response_item_id(&self) -> String {
@@ -506,18 +571,22 @@ impl OpenAIStreamTranslator {
                 "item_id": self.response_item_id(),
                 "output_index": index,
                 "content_index": 0,
-                "part": Self::response_content_part("")
+                "part": self.response_content_part("")
             })),
         ]
     }
 
-    fn response_content_part(text: &str) -> Value {
-        json!({"type": "output_text", "text": text, "annotations": []})
+    fn response_content_part(&self, text: &str) -> Value {
+        if crate::bridge_response::stop_semantics(self.stop_reason.as_deref()).refusal {
+            json!({"type": "refusal", "refusal": text})
+        } else {
+            json!({"type": "output_text", "text": text, "annotations": self.response_annotations})
+        }
     }
 
     fn response_output_item(&self, status: &str, include_content: bool) -> Value {
         let content = if include_content {
-            vec![Self::response_content_part(&self.response_output_text)]
+            vec![self.response_content_part(&self.response_output_text)]
         } else {
             Vec::new()
         };
@@ -537,6 +606,29 @@ impl OpenAIStreamTranslator {
             .and_then(Value::as_str)
         {
             self.served_model = model.to_string();
+        }
+    }
+
+    fn fail_citation(&mut self) -> Vec<String> {
+        self.failed = Some(());
+        let message = "upstream returned an unrepresentable citation";
+        match self.shape {
+            OpenAIStreamShape::ChatCompletion => vec![
+                sse_frame(&json!({"error": {"type": "api_error", "message": message}})),
+                done_frame(),
+            ],
+            OpenAIStreamShape::Response => vec![
+                response_sse_frame(&json!({
+                    "type": "response.failed",
+                    "response": {
+                        "id": self.id,
+                        "object": "response",
+                        "status": "failed",
+                        "error": {"code": "server_error", "message": message}
+                    }
+                })),
+                done_frame(),
+            ],
         }
     }
 }

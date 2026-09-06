@@ -42,7 +42,7 @@ fn opencode_setup_populates_models_from_the_live_catalog() {
     );
     let requests = server.join().expect("mock catalog server");
     let request = &requests[0];
-    assert!(request.starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
+    assert!(request.starts_with("GET /api/models HTTP/1.1"));
     assert!(request.to_ascii_lowercase().contains(&format!(
         "authorization: bearer {}",
         token.to_ascii_lowercase()
@@ -83,7 +83,7 @@ fn claude_setup_pins_only_dynamic_boundaries_to_a_live_zai_only_catalog_model() 
         "Claude setup must fetch its live catalog"
     );
     assert!(
-        requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"),
+        requests[0].starts_with("GET /api/models HTTP/1.1"),
         "{}",
         requests[0]
     );
@@ -189,7 +189,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     fs::create_dir_all(&codex_dir).expect("create codex dir");
     fs::write(
         codex_dir.join("config.toml"),
-        "model = \"user-model\"\nmodel_provider = \"user-provider\"\napproval_policy = \"never\"\n\n[model_providers.user-provider]\nname = \"Mine\"\nbase_url = \"http://mine.test/v1\"\n\n[custom]\nkeep = true\n",
+        "model = \"user-model\"\nmodel_provider = \"user-provider\"\nchatgpt_base_url = \"https://chatgpt.example/backend-api\"\napproval_policy = \"never\"\n\n[model_providers.user-provider]\nname = \"Mine\"\nbase_url = \"http://mine.test/v1\"\n\n[custom]\nkeep = true\n",
     )
     .expect("seed config");
     let token = test_token("codex");
@@ -214,8 +214,24 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(configured.contains("[custom]"));
     assert!(configured.contains("[model_providers.link-assistant]"));
     assert!(configured.contains("wire_api = \"responses\""));
-    assert!(configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
+    assert!(!configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
+    assert!(configured.contains("name = \"OpenAI\""));
+    assert!(configured.contains("requires_openai_auth = true"));
+    assert!(configured.contains("supports_websockets = true"));
+    assert!(configured.contains("supports_standalone_web_search = true"));
+    assert!(configured.contains(&format!(
+        "chatgpt_base_url = \"{}/api/services/codex/backend-api\"",
+        base_url.trim_end_matches('/')
+    )));
     assert!(!configured.contains(&token), "secret leaked into config");
+    let environment = fs::read_to_string(
+        home.path()
+            .join(".config/link-assistant-router/clients/codex.env"),
+    )
+    .expect("read Codex environment");
+    assert!(environment.contains("CODEX_ACCESS_TOKEN='at-"));
+    assert!(environment.contains("CODEX_CONNECTORS_TOKEN='at-"));
+    assert!(environment.contains("CODEX_AUTHAPI_BASE_URL="));
     assert!(String::from_utf8_lossy(&first.stdout).contains("credentials:"));
     assert!(!String::from_utf8_lossy(&first.stdout).contains(&token));
     assert!(
@@ -240,6 +256,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(after_remove.contains("[model_providers.user-provider]"));
     assert!(after_remove.contains("approval_policy = \"never\""));
     assert!(after_remove.contains("[custom]"));
+    assert!(after_remove.contains("chatgpt_base_url = \"https://chatgpt.example/backend-api\""));
     assert!(!after_remove.contains("model_providers.link-assistant"));
 }
 
@@ -456,10 +473,10 @@ fn doctor_uses_the_configured_codex_path_and_token_variable() {
     assert!(String::from_utf8_lossy(&doctor.stdout).contains("successfully (200 OK)"));
     let requests = server.join().expect("mock server thread");
     assert!(
-        requests[0].starts_with("GET /api/services/codex/v1/models HTTP/1.1"),
+        requests[0].starts_with("GET /api/models HTTP/1.1"),
         "unexpected requests: {requests:?}"
     );
-    assert!(requests[1].starts_with("GET /api/services/codex/v1/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     let request = &requests[2];
     assert!(request.starts_with("POST /api/services/codex/v1/responses HTTP/1.1"));
     assert!(request.contains("gpt-codex-live"));
@@ -512,8 +529,8 @@ fn claude_doctor_uses_bearer_for_catalog_and_successful_inference() {
             "Claude's recorded bearer carrier must remain bearer: {request}"
         );
     }
-    assert!(requests[0].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
-    assert!(requests[1].starts_with("GET /api/services/anthropic/v1/models HTTP/1.1"));
+    assert!(requests[0].starts_with("GET /api/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     assert!(requests[2].starts_with("POST /api/services/anthropic/v1/messages HTTP/1.1"));
     assert!(requests[2].contains("claude-live"));
     assert!(
@@ -591,8 +608,8 @@ fn doctor_uses_chat_completions_for_opencode_compatible_clients() {
         String::from_utf8_lossy(&doctor.stderr)
     );
     let requests = server.join().expect("mock server thread");
-    assert!(requests[0].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
-    assert!(requests[1].starts_with("GET /api/services/openai/v1/models HTTP/1.1"));
+    assert!(requests[0].starts_with("GET /api/models HTTP/1.1"));
+    assert!(requests[1].starts_with("GET /api/models HTTP/1.1"));
     let request = &requests[2];
     assert!(request.starts_with("POST /api/services/openai/v1/chat/completions HTTP/1.1"));
     assert!(request.contains("gpt-chat-live"));

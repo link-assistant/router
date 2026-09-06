@@ -102,6 +102,22 @@ impl CapturedRequest {
             .find(|(candidate, _)| candidate.eq_ignore_ascii_case(name))
             .map(|(_, value)| value.as_str())
     }
+
+    fn decoded_body(&self) -> Vec<u8> {
+        if self.header("content-encoding").is_some_and(|value| {
+            value
+                .split(',')
+                .any(|encoding| encoding.trim().eq_ignore_ascii_case("zstd"))
+        }) {
+            zstd::decode_all(self.body.as_slice()).expect("decode captured zstd request")
+        } else {
+            self.body.clone()
+        }
+    }
+
+    fn json_body(&self) -> Value {
+        serde_json::from_slice(&self.decoded_body()).expect("captured request JSON")
+    }
 }
 
 struct MockRouter {
@@ -131,12 +147,21 @@ impl MockRouter {
             while !stopped.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
-                        let request = read_request(&mut stream);
+                        let Some(request) = read_request(&mut stream) else {
+                            continue;
+                        };
                         let response = mock_response(case, &models, &request);
                         captured.lock().expect("capture request").push(request);
-                        stream
-                            .write_all(&response)
-                            .expect("write offline Router response");
+                        if let Err(error) = stream.write_all(&response)
+                            && !matches!(
+                                error.kind(),
+                                std::io::ErrorKind::BrokenPipe
+                                    | std::io::ErrorKind::ConnectionReset
+                                    | std::io::ErrorKind::ConnectionAborted
+                            )
+                        {
+                            panic!("write offline Router response: {error}");
+                        }
                     }
                     Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                         thread::sleep(Duration::from_millis(10));
@@ -158,7 +183,7 @@ impl MockRouter {
             .lock()
             .expect("read captured requests")
             .iter()
-            .find(|request| request.path == path)
+            .find(|request| request.method == "POST" && request.path == path)
             .cloned()
     }
 
@@ -167,8 +192,17 @@ impl MockRouter {
             .lock()
             .expect("read captured requests")
             .iter()
-            .filter(|request| request.path == path)
+            .filter(|request| request.method == "POST" && request.path == path)
             .cloned()
+            .collect()
+    }
+
+    fn routes(&self) -> Vec<(String, String)> {
+        self.requests
+            .lock()
+            .expect("read captured request routes")
+            .iter()
+            .map(|request| (request.method.clone(), request.path.clone()))
             .collect()
     }
 }
@@ -193,21 +227,32 @@ fn command_exists(command: &str) -> bool {
     })
 }
 
-fn read_request(stream: &mut TcpStream) -> CapturedRequest {
+fn read_request(stream: &mut TcpStream) -> Option<CapturedRequest> {
     stream
         .set_read_timeout(Some(Duration::from_secs(10)))
         .expect("set mock read timeout");
     let mut bytes = Vec::new();
     let mut buffer = [0_u8; 16 * 1024];
     loop {
-        let count = stream.read(&mut buffer).expect("read mock request");
-        assert_ne!(count, 0, "client closed an incomplete HTTP request");
+        let count = match stream.read(&mut buffer) {
+            Ok(0) => return None,
+            Ok(count) => count,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                return None;
+            }
+            Err(error) => panic!("read mock request: {error}"),
+        };
         bytes.extend_from_slice(&buffer[..count]);
         if request_is_complete(&bytes) {
             break;
         }
     }
-    parse_request(&bytes)
+    Some(parse_request(&bytes))
 }
 
 fn request_is_complete(bytes: &[u8]) -> bool {
@@ -215,6 +260,13 @@ fn request_is_complete(bytes: &[u8]) -> bool {
         return false;
     };
     let headers = String::from_utf8_lossy(&bytes[..header_end]);
+    if headers
+        .lines()
+        .next()
+        .is_some_and(|line| line.starts_with("GET ") || line.starts_with("DELETE "))
+    {
+        return true;
+    }
     if let Some(length) = headers.lines().find_map(|line| {
         let (name, value) = line.split_once(':')?;
         name.eq_ignore_ascii_case("content-length")
@@ -281,7 +333,7 @@ fn run_token(case: ClientCase) -> String {
         "principal_id": "offline-acceptance"
     });
     let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(payload.to_string());
-    format!("e30.{encoded}.offline-signature")
+    format!("la_sk_e30.{encoded}.offline-signature")
 }
 
 fn default_models(case: ClientCase) -> Vec<Value> {
@@ -338,30 +390,64 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
         ("POST", "/api/management/tokens/revoke") => {
             http_response("200 OK", "application/json", r#"{"revoked":"offline-run"}"#)
         }
+        ("GET", "/api/services/codex/v1/user-auth-credential/whoami") => http_response(
+            "200 OK",
+            "application/json",
+            r#"{"email":null,"chatgpt_user_id":"usr_offline","chatgpt_account_id":"acct_offline","chatgpt_plan_type":"pro","chatgpt_account_is_fedramp":false}"#,
+        ),
+        ("GET", "/api/services/codex/backend-api/plugins/featured") => {
+            http_response("200 OK", "application/json", r#"{"plugins":[]}"#)
+        }
+        ("GET", "/api/models") => http_response(
+            "200 OK",
+            "application/json",
+            &json!({"data": models}).to_string(),
+        ),
         ("GET", path) if path == case.catalog_path => {
-            let body = json!({
-                "object": "list",
-                "data": models,
-                "has_more": false,
-                "first_id": models.first().and_then(|model| model["id"].as_str()),
-                "last_id": models.last().and_then(|model| model["id"].as_str())
-            });
+            let data = models
+                .iter()
+                .map(|model| match case.client {
+                    "claude" => json!({
+                        "id": model["id"],
+                        "type": "model",
+                        "display_name": model["display_name"],
+                        "created_at": model["created_at"],
+                    }),
+                    _ => json!({
+                        "id": model["id"],
+                        "object": "model",
+                    }),
+                })
+                .collect::<Vec<_>>();
+            let body = if case.client == "claude" {
+                json!({
+                    "data": data,
+                    "has_more": false,
+                    "first_id": data.first().and_then(|model| model["id"].as_str()),
+                    "last_id": data.last().and_then(|model| model["id"].as_str())
+                })
+            } else {
+                json!({"object": "list", "data": data})
+            };
             http_response("200 OK", "application/json", &body.to_string())
         }
+        ("POST", "/api/services/codex/v1/alpha/notes/v2/thread_hint") => http_response(
+            "200 OK",
+            "application/json",
+            r#"{"text":"Synthetic offline history/notes hint."}"#,
+        ),
         ("POST", path) if path.ends_with("/messages/count_tokens") => {
             http_response("200 OK", "application/json", r#"{"input_tokens":1}"#)
         }
         ("POST", path) if path == case.inference_path => match case.client {
             "claude" => {
-                let model = serde_json::from_slice::<Value>(&request.body)
-                    .ok()
+                let model = Some(request.json_body())
                     .and_then(|body| body["model"].as_str().map(str::to_string))
                     .unwrap_or_else(|| case.model.to_string());
                 anthropic_answer(&model, &request.body)
             }
             "codex" => {
-                let model = serde_json::from_slice::<Value>(&request.body)
-                    .ok()
+                let model = Some(request.json_body())
                     .and_then(|body| {
                         body.get("model")
                             .and_then(Value::as_str)
@@ -605,12 +691,14 @@ fn assert_real_client_capture(case: ClientCase) {
             .collect::<Vec<_>>()
     };
     assert!(
-        catalogs.iter().any(|path| path == case.catalog_path),
-        "{} did not discover its enabled native catalog: {catalogs:?}",
+        catalogs.iter().any(|path| path == "/api/models"),
+        "{} did not discover its client-scoped normalized catalog: {catalogs:?}",
         case.client
     );
     assert!(
-        catalogs.iter().all(|path| path == case.catalog_path),
+        catalogs
+            .iter()
+            .all(|path| path == "/api/models" || path == case.catalog_path),
         "{} crossed into a different protocol catalog: {catalogs:?}",
         case.client
     );
@@ -659,7 +747,11 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client,
         request.header("user-agent")
     );
-    let token = run_token(case);
+    let token = if case.client == "codex" {
+        run_token(case).replacen("la_sk_", "at-", 1)
+    } else {
+        run_token(case)
+    };
     let expected_credential = if case.credential_header == "authorization" {
         format!("Bearer {token}")
     } else {
@@ -678,22 +770,19 @@ fn assert_real_client_capture(case: ClientCase) {
             .all(|(name, _)| !name.to_ascii_lowercase().starts_with("x-router")),
         "the real client unexpectedly emitted an internal Router header"
     );
-    let body: Value = serde_json::from_slice(&request.body).unwrap_or_else(|error| {
-        panic!(
-            "{} sent invalid JSON ({error}): {}",
-            case.client,
-            String::from_utf8_lossy(&request.body)
-        )
-    });
+    let decoded = request.decoded_body();
+    let body: Value = serde_json::from_slice(&decoded)
+        .unwrap_or_else(|error| panic!("{} sent invalid JSON ({error})", case.client));
     assert_eq!(body["model"], case.model);
     assert!(
-        String::from_utf8_lossy(&request.body).contains(PROMPT),
+        String::from_utf8_lossy(&decoded).contains(PROMPT),
         "{} request omitted the prompt",
         case.client
     );
     match case.client {
         "claude" => assert_eq!(request.header("anthropic-version"), Some("2023-06-01")),
         "codex" => {
+            assert_eq!(request.header("chatgpt-account-id"), Some("acct_offline"));
             assert_eq!(request.header("originator"), Some("codex_exec"));
             assert!(request.header("x-codex-turn-metadata").is_some());
             let requests = router.inference_requests(case.inference_path);
@@ -704,7 +793,7 @@ fn assert_real_client_capture(case: ClientCase) {
             );
             let bodies = requests
                 .iter()
-                .map(|request| serde_json::from_slice::<Value>(&request.body).unwrap())
+                .map(CapturedRequest::json_body)
                 .collect::<Vec<_>>();
             assert_eq!(bodies[0]["model"], case.model);
             assert_eq!(bodies[1]["model"], CODEX_ALTERNATE_MODEL);
@@ -735,6 +824,9 @@ mod claude_selector;
 fn current_codex_reaches_the_native_responses_surface_offline() {
     assert_real_client_capture(CODEX);
 }
+
+#[path = "real_clients/history_notes.rs"]
+mod history_notes;
 
 #[test]
 fn current_codex_tui_model_selector_preserves_reasoning_effort() {
@@ -788,7 +880,8 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
         )
         .unwrap_or_else(|error| {
             panic!(
-                "Codex TUI did not become ready: {error}; transcript: {}",
+                "Codex TUI did not become ready: {error}; routes: {:?}; transcript: {}",
+                router.routes(),
                 session.transcript_tail(2_000)
             )
         });
@@ -872,7 +965,7 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
         );
         thread::sleep(Duration::from_millis(50));
     };
-    let body: Value = serde_json::from_slice(&request.body).expect("Codex request JSON");
+    let body = request.json_body();
     assert_eq!(body["model"], CODEX_ALTERNATE_MODEL);
     assert_eq!(
         body["reasoning"]["effort"], "xhigh",

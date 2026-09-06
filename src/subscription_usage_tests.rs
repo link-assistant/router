@@ -11,7 +11,10 @@ use tower::ServiceExt as _;
 #[test]
 fn provider_names_mappings_and_openai_claims_are_exact_and_fail_closed() {
     let providers = UsageProvider::ALL.map(UsageProvider::as_str);
-    assert_eq!(providers, ["anthropic", "openai", "z-ai", "lefine"]);
+    assert_eq!(
+        providers,
+        ["anthropic", "openai", "z-ai", "lefine", "gemini", "qwen"]
+    );
     assert_eq!(
         UsageProvider::Anthropic.subscription(),
         Some(SubscriptionProvider::Claude)
@@ -22,6 +25,14 @@ fn provider_names_mappings_and_openai_claims_are_exact_and_fail_closed() {
     );
     assert_eq!(UsageProvider::ZAi.subscription(), None);
     assert_eq!(UsageProvider::Lefine.subscription(), None);
+    assert_eq!(
+        UsageProvider::Gemini.subscription(),
+        Some(SubscriptionProvider::Gemini)
+    );
+    assert_eq!(
+        UsageProvider::Qwen.subscription(),
+        Some(SubscriptionProvider::Qwen)
+    );
 
     assert!(openai_claims("not-a-jwt").is_none());
     assert!(openai_claims("header.!.signature").is_none());
@@ -64,6 +75,57 @@ fn anthropic_fields_are_normalized_and_missing_values_stay_absent() {
     );
     assert_eq!(usage.status, "active");
     assert!(usage.subscription_end.is_none());
+}
+
+#[test]
+fn empty_and_error_usage_envelopes_are_not_recognized_as_available() {
+    for value in [
+        json!({}),
+        json!({"error": {"message": "denied"}}),
+        json!({"rate_limit": {"error": "denied"}}),
+        json!({"credits": {"error": "denied"}}),
+    ] {
+        assert!(!recognizable_anthropic_usage(&value));
+        assert!(!recognizable_openai_usage(&value));
+    }
+    assert!(recognizable_anthropic_usage(&json!({
+        "five_hour": {"utilization": 10.0}
+    })));
+    assert!(recognizable_openai_usage(&json!({
+        "rate_limit": {"primary_window": {"used_percent": 10.0}}
+    })));
+}
+
+#[tokio::test]
+async fn bounded_body_reader_rejects_declared_and_streamed_overflow() {
+    async fn fixed() -> impl IntoResponse {
+        ([("content-length", "5")], "abcde")
+    }
+    async fn chunked() -> impl IntoResponse {
+        Body::from_stream(futures_util::stream::iter([
+            Ok::<_, std::io::Error>(bytes::Bytes::from_static(b"abc")),
+            Ok(bytes::Bytes::from_static(b"de")),
+        ]))
+    }
+    let app = axum::Router::new()
+        .route("/fixed", get(fixed))
+        .route("/chunked", get(chunked));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let client = reqwest::Client::new();
+    for path in ["fixed", "chunked"] {
+        let response = client
+            .get(format!("http://{address}/{path}"))
+            .send()
+            .await
+            .unwrap();
+        assert!(matches!(
+            bounded_response_bytes(response, 4).await,
+            Err(BoundedBodyError::TooLarge)
+        ));
+    }
+    server.abort();
 }
 
 #[test]
@@ -128,6 +190,16 @@ fn zai_http_200_error_bodies_are_not_treated_as_healthy() {
             zai_payload(payload),
             Err(VendorResponse::AuthenticationRejected)
         ));
+    }
+    for payload in [
+        json!({}),
+        json!({"error": "denied"}),
+        json!({"success": true, "code": 200, "data": {}}),
+    ] {
+        assert!(
+            matches!(zai_payload(payload), Err(VendorResponse::Unavailable)),
+            "an HTTP 200 body without quota data must remain unavailable"
+        );
     }
     let healthy = zai_payload(json!({"success": true, "code": 200, "data": {
         "limits": [{"type": "TOKENS_LIMIT", "percentage": 12.0}]

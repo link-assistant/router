@@ -46,6 +46,26 @@ fn main() -> ExitCode {
 }
 
 async fn run() -> ExitCode {
+    match link_assistant_router::codex_loopback_bridge::daemon_request_from_env() {
+        Ok(Some(request)) => {
+            return match link_assistant_router::codex_loopback_bridge::run_persistent_daemon(
+                request,
+            )
+            .await
+            {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::from(1)
+                }
+            };
+        }
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
     let arguments =
         link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
     let cli = link_assistant_router::cli::parse_arguments(arguments);
@@ -65,7 +85,8 @@ async fn run() -> ExitCode {
         // a token here, so the local signing secret is not its to hold — the
         // same reasoning as the remote commands in issue #294.
         Some(Command::Configure(args)) => {
-            return link_assistant_router::configure::run(args).await;
+            return link_assistant_router::configure::run_with_home(args, cli.home.as_deref())
+                .await;
         }
         _ => {}
     }
@@ -321,12 +342,8 @@ async fn run_server(
         };
 
     // Keep readers for every vendor so automatic routing can discover all
-    // mounted subscriptions. Claude's configured home may differ from HOME.
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let subscription_readers = link_assistant_router::subscription::all_subscription_readers(
-        &config.claude_code_home,
-        &user_home,
-    );
+    // mounted subscriptions, using the exact roots selected during parsing.
+    let subscription_readers = config.subscription_readers();
     for reader in &subscription_readers {
         tracing::info!(
             "Subscription provider {}: reading credentials from {}",
@@ -369,8 +386,8 @@ async fn run_server(
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
         gonka: link_assistant_router::gonka::GonkaConfig::new(
-            config.gonka_private_key.clone(),
-            &config.gonka_source_url,
+            config.gonka_api_key.clone(),
+            config.gonka_source_url.as_deref(),
             config.gonka_model.clone(),
         ),
         bridge_model: config.bridge_model.clone(),
@@ -465,7 +482,18 @@ async fn run_server(
         state.clone(),
         link_assistant_router::request_log::log_http_exchange,
     ))
-    .layer(TraceLayer::new_for_http());
+    .layer(TraceLayer::new_for_http().make_span_with(
+        |request: &axum::http::Request<axum::body::Body>| {
+            let uri =
+                link_assistant_router::request_log::safe_http_uri(request.method(), request.uri());
+            tracing::debug_span!(
+                "http request",
+                method = %request.method(),
+                uri = %uri,
+                version = ?request.version()
+            )
+        },
+    ));
 
     tracing::info!("Listening on {}", config.listen_addr);
 
@@ -480,7 +508,20 @@ async fn run_server(
                     state.clone(),
                     link_assistant_router::request_log::log_http_exchange,
                 ))
-                .layer(TraceLayer::new_for_http());
+                .layer(TraceLayer::new_for_http().make_span_with(
+                    |request: &axum::http::Request<axum::body::Body>| {
+                        let uri = link_assistant_router::request_log::safe_http_uri(
+                            request.method(),
+                            request.uri(),
+                        );
+                        tracing::debug_span!(
+                            "http request",
+                            method = %request.method(),
+                            uri = %uri,
+                            version = ?request.version()
+                        )
+                    },
+                ));
         let admin_shutdown = shutdown.notified();
         let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
         tracing::info!("Admin UI listening on {admin_addr}");

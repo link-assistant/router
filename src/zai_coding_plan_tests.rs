@@ -125,6 +125,29 @@ fn live_model(id: &str) -> crate::providers::LiveProviderModel {
     }
 }
 
+#[tokio::test]
+async fn repeated_exact_catalog_ids_collapse_to_the_first_stable_record() {
+    let app = axum::Router::new().fallback(|| async {
+        (
+            StatusCode::OK,
+            r#"{"object":"list","data":[{"id":"glm-5","label":"first"},{"id":"glm-5","label":"second"}]}"#,
+        )
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let mut provider = resolved_zai_provider();
+    provider.base_url = base_url;
+
+    let models = crate::zai_coding_plan::fetch_catalog(&reqwest::Client::new(), &provider)
+        .await
+        .expect("duplicate exact ids are valid provider repetition");
+    assert_eq!(models.len(), 1);
+    assert_eq!(models[0].id, "glm-5");
+    assert_eq!(models[0].raw["label"], "first");
+    handle.abort();
+}
+
 #[test]
 fn authorization_rejects_invalid_claim_shapes_provider_kinds_and_evidence() {
     let provider = resolved_zai_provider();
@@ -454,21 +477,12 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         )
         .await;
         assert_eq!(response.status(), StatusCode::OK, "{client}");
-        assert!(
-            response
-                .headers()
-                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-                .is_none()
-        );
+        assert!(response.headers().get("x-router-upstream-model").is_none());
         let response_body = response.into_body().collect().await.unwrap().to_bytes();
         assert_eq!(response_body.as_ref(), br#"{"id":"ok","model":"glm-5"}"#);
         let response_body: serde_json::Value = serde_json::from_slice(&response_body).unwrap();
         assert_eq!(response_body["model"], model);
-        assert!(
-            response_body
-                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-                .is_none()
-        );
+        assert!(response_body.get("x_router_upstream_model").is_none());
         let requests = requests.lock().unwrap();
         assert_eq!(requests.len(), 2, "catalog then inference for {client}");
         assert_eq!(requests[0].0, crate::zai_coding_plan::CATALOG_PATH);
@@ -710,12 +724,39 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
         .await;
         assert_eq!(response.status(), StatusCode::OK);
         let body = response.into_body().collect().await.unwrap().to_bytes();
-        let body = String::from_utf8_lossy(&body);
+        let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        let body = catalog.to_string();
         assert!(body.contains("future-saffron-91"), "{client}: {body}");
         assert!(!body.contains("claude-zai-"), "{client}: {body}");
         assert!(!body.contains("z.ai/future"), "{client}: {body}");
-        assert!(body.contains(r#""owned_by":"z.ai""#));
-        assert!(body.contains("display_name"));
+        for router_only in [
+            "canonical_id",
+            "native_id",
+            "provider",
+            "router_fetched_at",
+            "using_fallback",
+            "healthy_providers",
+            "degraded_providers",
+            "degraded_reasons",
+            "catalog_conflicts",
+        ] {
+            assert!(
+                !body.contains(router_only),
+                "{client}: leaked {router_only}: {body}"
+            );
+        }
+        let models = catalog["data"].as_array().unwrap();
+        if client == ClientKind::ClaudeCode {
+            assert!(
+                models.iter().all(|model| model.get("owned_by").is_none()),
+                "{client}: Anthropic model rows leaked OpenAI metadata: {body}"
+            );
+        } else {
+            assert!(
+                models.iter().all(|model| model["owned_by"] == "z.ai"),
+                "{client}: OpenAI model rows lost their provider owner: {body}"
+            );
+        }
     }
     assert_eq!(
         requests.lock().unwrap().len(),

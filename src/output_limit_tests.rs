@@ -29,16 +29,16 @@ fn limiter_never_splits_a_multibyte_character() {
 }
 
 #[test]
-fn model_identity_keeps_the_requested_id_and_reports_the_served_one() {
+fn model_identity_keeps_the_requested_id_without_private_wire_metadata() {
     let mut payload = json!({"model": "gpt-5.6-luna", "object": "response"});
     let served = preserve_model_identity(&mut payload, "codex-auto-review");
     assert_eq!(served.as_deref(), Some("gpt-5.6-luna"));
     assert_eq!(payload["model"], "codex-auto-review");
-    assert_eq!(payload[UPSTREAM_MODEL_FIELD], "gpt-5.6-luna");
+    assert!(payload.get("x_router_upstream_model").is_none());
 
     let mut same = json!({"model": "gpt-5.6-luna"});
     assert_eq!(preserve_model_identity(&mut same, "gpt-5.6-luna"), None);
-    assert!(same.get(UPSTREAM_MODEL_FIELD).is_none());
+    assert!(same.get("x_router_upstream_model").is_none());
 }
 
 #[test]
@@ -107,7 +107,7 @@ fn stream_rewriter_restores_the_requested_model_identity() {
     let out = rewriter.push(&stream) + &rewriter.push(b"data: [DONE]\n\n");
     assert!(!out.contains("\"model\":\"gpt-5.6-luna\""));
     assert!(out.contains("\"model\":\"codex-auto-review\""));
-    assert!(out.contains("\"x_router_upstream_model\":\"gpt-5.6-luna\""));
+    assert!(!out.contains("x_router_"));
     assert!(out.contains("event: response.created"));
     assert!(out.contains("data: [DONE]"));
     assert_eq!(rewriter.upstream_model(), Some("gpt-5.6-luna"));
@@ -120,14 +120,14 @@ fn stream_rewriter_preserves_chat_and_anthropic_aliases() {
         b"data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"model\":\"shared-future\",\"choices\":[]}\n\n",
     );
     assert!(chat_out.contains("\"model\":\"stored/shared-future\""));
-    assert!(chat_out.contains("\"x_router_upstream_model\":\"shared-future\""));
+    assert!(!chat_out.contains("x_router_"));
 
     let mut anthropic = ResponsesStreamRewriter::new("future-saffron-2099", None);
     let anthropic_out = anthropic.push(
         b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"future\",\"content\":[]}}\n\n",
     );
     assert!(anthropic_out.contains("\"model\":\"future-saffron-2099\""));
-    assert!(anthropic_out.contains("\"x_router_upstream_model\":\"future\""));
+    assert!(!anthropic_out.contains("x_router_"));
 }
 
 #[test]

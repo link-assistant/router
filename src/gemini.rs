@@ -7,19 +7,20 @@
 //!
 //! The Code Assist API wraps a standard `GenerateContentRequest` in an envelope
 //! that also carries the `model` and (optionally) a Cloud project id. We build
-//! that envelope here. Streaming clients receive a synthesized single-delta SSE
-//! sequence: the upstream is called non-streaming and the result re-emitted in
-//! `OpenAI`'s `chat.completion.chunk` shape, which keeps the translation simple
-//! and fully deterministic without a Gemini SSE parser.
+//! that envelope here. Streaming calls use Code Assist's SSE endpoint and are
+//! translated event by event without buffering the completed generation.
 
 #![allow(clippy::unused_async)]
 
 use axum::body::Body;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
+use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
 mod native;
+mod responses;
+mod stream;
 #[cfg(test)]
 pub(crate) use native::forward_native_gemini_authorized;
 pub use native::{forward_native_gemini, forward_native_vertex, native_model, native_models};
@@ -35,58 +36,7 @@ pub const PROJECT_ENV: &str = "GEMINI_PROJECT";
 /// Model owner reported for Gemini catalog entries.
 pub const MODEL_OWNER: &str = "google";
 
-/// Translate an `OpenAI` Chat Completions request body to a Gemini
-/// `GenerateContentRequest`.
-#[must_use]
-pub fn chat_to_gemini_request(body: &Value) -> Value {
-    let mut contents: Vec<Value> = Vec::new();
-    let mut system_parts: Vec<Value> = Vec::new();
-
-    if let Some(messages) = body.get("messages").and_then(Value::as_array) {
-        for msg in messages {
-            let role = msg.get("role").and_then(Value::as_str).unwrap_or("user");
-            let text = extract_message_text(msg.get("content"));
-            match role {
-                "system" | "developer" => {
-                    system_parts.push(json!({ "text": text }));
-                }
-                "assistant" => contents.push(json!({
-                    "role": "model",
-                    "parts": [{ "text": text }],
-                })),
-                // user, tool, and anything else map to a user turn.
-                _ => contents.push(json!({
-                    "role": "user",
-                    "parts": [{ "text": text }],
-                })),
-            }
-        }
-    }
-
-    let mut generation_config = json!({});
-    if let Some(max) = body
-        .get("max_completion_tokens")
-        .or_else(|| body.get("max_tokens"))
-        .and_then(Value::as_u64)
-    {
-        generation_config["maxOutputTokens"] = json!(max);
-    }
-    if let Some(t) = body.get("temperature").and_then(Value::as_f64) {
-        generation_config["temperature"] = json!(t);
-    }
-    if let Some(t) = body.get("top_p").and_then(Value::as_f64) {
-        generation_config["topP"] = json!(t);
-    }
-
-    let mut request = json!({ "contents": contents });
-    if !system_parts.is_empty() {
-        request["systemInstruction"] = json!({ "parts": system_parts });
-    }
-    if generation_config.as_object().is_some_and(|o| !o.is_empty()) {
-        request["generationConfig"] = generation_config;
-    }
-    request
-}
+pub use crate::gemini_bridge::chat_to_gemini_request;
 
 /// Wrap a `GenerateContentRequest` in the Code Assist envelope.
 #[must_use]
@@ -111,26 +61,35 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
     // returns it at the top level. Accept both.
     let inner = resp.get("response").unwrap_or(resp);
     let mut text = String::new();
+    let mut tool_calls = Vec::new();
     let mut finish_reason = "stop";
-    if let Some(candidate) = inner
-        .get("candidates")
+    if let Some(parts) = inner
+        .pointer("/candidates/0/content/parts")
         .and_then(Value::as_array)
-        .and_then(|c| c.first())
     {
-        if let Some(parts) = candidate
-            .get("content")
-            .and_then(|c| c.get("parts"))
-            .and_then(Value::as_array)
-        {
-            for part in parts {
-                if let Some(t) = part.get("text").and_then(Value::as_str) {
-                    text.push_str(t);
-                }
+        for part in parts {
+            if let Some(t) = part.get("text").and_then(Value::as_str) {
+                text.push_str(t);
+            } else if let Some(call) = part.get("functionCall") {
+                let id = call
+                    .get("id")
+                    .and_then(Value::as_str)
+                    .filter(|id| !id.is_empty())
+                    .map_or_else(|| format!("call_{}", uuid::Uuid::new_v4()), str::to_string);
+                tool_calls.push(json!({
+                    "id": id,
+                    "type": "function",
+                    "function": {
+                        "name": call.get("name").and_then(Value::as_str).unwrap_or_default(),
+                        "arguments": call.get("args").cloned()
+                            .unwrap_or_else(|| json!({})).to_string(),
+                    }
+                }));
             }
         }
-        if let Some(reason) = candidate.get("finishReason").and_then(Value::as_str) {
-            finish_reason = map_finish_reason(reason);
-        }
+    }
+    if let Some(reason) = gemini_finish_reason(resp) {
+        finish_reason = map_finish_reason(reason);
     }
 
     let usage = inner.get("usageMetadata");
@@ -143,6 +102,17 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
         .and_then(Value::as_u64)
         .unwrap_or(0);
 
+    let mut message = json!({"role": "assistant", "content": text});
+    if !tool_calls.is_empty() {
+        message["tool_calls"] = Value::Array(tool_calls);
+        if message["content"].as_str().is_some_and(str::is_empty) {
+            message["content"] = Value::Null;
+        }
+        if finish_reason == "stop" {
+            finish_reason = "tool_calls";
+        }
+    }
+
     json!({
         "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         "object": "chat.completion",
@@ -150,7 +120,7 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
         "model": model,
         "choices": [{
             "index": 0,
-            "message": { "role": "assistant", "content": text },
+            "message": message,
             "finish_reason": finish_reason,
         }],
         "usage": {
@@ -163,12 +133,21 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
 
 fn map_finish_reason(gemini: &str) -> &'static str {
     match gemini {
+        "STOP" => "stop",
         "MAX_TOKENS" => "length",
-        "SAFETY" | "RECITATION" | "BLOCKLIST" | "PROHIBITED_CONTENT" => "content_filter",
-        _ => "stop",
+        _ => "content_filter",
     }
 }
 
+fn gemini_finish_reason(response: &Value) -> Option<&str> {
+    let inner = response.get("response").unwrap_or(response);
+    inner
+        .pointer("/candidates/0/finishReason")
+        .or_else(|| inner.pointer("/promptFeedback/blockReason"))
+        .and_then(Value::as_str)
+}
+
+#[cfg(test)]
 fn extract_message_text(content: Option<&Value>) -> String {
     match content {
         Some(Value::String(s)) => s.clone(),
@@ -302,7 +281,7 @@ pub(crate) async fn forward_responses_routed(
     .await
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum ShapeIn {
     Chat,
     Responses,
@@ -496,7 +475,10 @@ async fn forward(
     // translator handles both surfaces.
     let chat_body = match shape {
         ShapeIn::Chat => body,
-        ShapeIn::Responses => responses_to_chat(&body),
+        ShapeIn::Responses => match crate::gemini_bridge::responses_to_chat_checked(&body) {
+            Ok(chat) => chat,
+            Err(reason) => return bridge_request_error(surface, &reason),
+        },
     };
 
     let catalog = state
@@ -518,7 +500,10 @@ async fn forward(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let gemini_request = chat_to_gemini_request(&chat_body);
+    let gemini_request = match crate::gemini_bridge::chat_to_gemini_request_checked(&chat_body) {
+        Ok(request) => request,
+        Err(reason) => return bridge_request_error(surface, &reason),
+    };
     let envelope = code_assist_envelope(&model, &gemini_request);
     let serialized = match serde_json::to_vec(&envelope) {
         Ok(v) => v,
@@ -536,9 +521,11 @@ async fn forward(
         .base_url(crate::subscription::SubscriptionProvider::Gemini)
         .trim_end_matches('/')
         .to_string();
-    // Non-streaming upstream call keeps the translation deterministic; we
-    // synthesize `OpenAI` SSE below when the client asked to stream.
-    let upstream_url = format!("{base}/v1internal:generateContent");
+    let upstream_url = if stream_requested {
+        format!("{base}/v1internal:streamGenerateContent?alt=sse")
+    } else {
+        format!("{base}/v1internal:generateContent")
+    };
 
     let mut upstream_request = state
         .client
@@ -549,6 +536,9 @@ async fn forward(
             format!("Bearer {}", sub_token.access_token),
         )
         .body(serialized);
+    if stream_requested {
+        upstream_request = upstream_request.header("accept", "text/event-stream");
+    }
     if let Some(request_id) = crate::proxy::translated_request_id(headers) {
         upstream_request = upstream_request.header("x-request-id", request_id);
     }
@@ -587,6 +577,7 @@ async fn forward(
         )
         .await;
     let retry_after = retry_after_duration(upstream_resp.headers());
+    let response_headers = crate::proxy::relay_response_headers(upstream_resp.headers());
     if status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =
             (state.account_router.as_ref(), selected_account.as_deref())
@@ -596,6 +587,42 @@ async fn forward(
             "Gemini subscription upstream returned 429",
             retry_after,
         );
+    }
+
+    if status.is_success() && stream_requested {
+        state.metrics.record_bytes(bytes_sent, 0);
+        let response_log = std::sync::Arc::clone(&state.request_log);
+        let metrics = std::sync::Arc::clone(&state.metrics);
+        let mut usage = reservation.take().into_tracker();
+        let response_model = if requested_model.is_empty() {
+            model.clone()
+        } else {
+            requested_model.clone()
+        };
+        let mut translator = stream::OpenAiStreamTranslator::new(response_model);
+        let mut responses_translator =
+            stream::ResponsesStreamTranslator::new(requested_model.clone());
+        let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
+            Err(error) => Err(std::io::Error::other(error)),
+            Ok(bytes) => {
+                response_log.record_upstream_body(&correlation_id, &bytes);
+                metrics.record_bytes(0, bytes.len() as u64);
+                usage.feed(&bytes);
+                if shape == ShapeIn::Responses {
+                    responses_translator.push(&bytes)
+                } else {
+                    translator.push(&bytes)
+                }
+            }
+        });
+        let mut response = Response::new(Body::from_stream(stream));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
     }
 
     let upstream_body = match upstream_resp.bytes().await {
@@ -619,8 +646,14 @@ async fn forward(
         .record_bytes(bytes_sent, upstream_body.len() as u64);
 
     if !status.is_success() {
-        // Pass upstream errors through verbatim for diagnosability.
-        let mut response = Response::new(Body::from(upstream_body));
+        let body: Vec<u8> = if surface == Surface::Anthropic {
+            upstream_body.to_vec()
+        } else {
+            crate::api_error::openai_error_body(status.as_u16(), &upstream_body)
+                .to_string()
+                .into_bytes()
+        };
+        let mut response = Response::new(Body::from(body));
         *response.status_mut() = status;
         response.headers_mut().insert(
             "content-type",
@@ -642,125 +675,32 @@ async fn forward(
         }
     };
     let mut chat = gemini_response_to_chat(&gemini_json, &model);
-    let upstream_model = crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
+    crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
+    let output = if shape == ShapeIn::Responses {
+        let finish = gemini_finish_reason(&gemini_json)
+            .map_or(responses::Finish::Completed, responses::Finish::from_gemini);
+        responses::from_chat(&chat, &requested_model, finish)
+    } else {
+        chat
+    };
 
-    if stream_requested {
-        return sse_from_chat_completion(&chat, &requested_model, upstream_model.as_deref());
-    }
-    let mut response = Response::new(Body::from(chat.to_string()));
+    let mut response = Response::new(Body::from(output.to_string()));
     *response.status_mut() = StatusCode::OK;
     response.headers_mut().insert(
         "content-type",
         axum::http::HeaderValue::from_static("application/json"),
     );
-    if let Some(upstream_model) = upstream_model.as_deref()
-        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
-    response
-}
-
-/// Re-emit a non-streamed chat completion as an `OpenAI` SSE stream
-/// (`chat.completion.chunk` deltas followed by `[DONE]`).
-fn sse_from_chat_completion(
-    chat: &Value,
-    requested_model: &str,
-    upstream_model: Option<&str>,
-) -> Response {
-    let id = chat
-        .get("id")
-        .and_then(Value::as_str)
-        .unwrap_or("chatcmpl-gemini");
-    let content = chat
-        .get("choices")
-        .and_then(|c| c.get(0))
-        .and_then(|c| c.get("message"))
-        .and_then(|m| m.get("content"))
-        .and_then(Value::as_str)
-        .unwrap_or("");
-    let created = chat
-        .get("created")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-
-    let mut role_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": { "role": "assistant" }, "finish_reason": null }],
-    });
-    let mut content_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": { "content": content }, "finish_reason": null }],
-    });
-    let mut stop_chunk = json!({
-        "id": id, "object": "chat.completion.chunk", "created": created, "model": requested_model,
-        "choices": [{ "index": 0, "delta": {}, "finish_reason": "stop" }],
-    });
-    if let Some(upstream_model) = upstream_model {
-        for chunk in [&mut role_chunk, &mut content_chunk, &mut stop_chunk] {
-            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-                Value::String(upstream_model.to_string());
-        }
-    }
-    let payload = format!(
-        "data: {role_chunk}\n\ndata: {content_chunk}\n\ndata: {stop_chunk}\n\ndata: [DONE]\n\n"
-    );
-    let mut response = Response::new(Body::from(payload));
-    *response.status_mut() = StatusCode::OK;
-    response.headers_mut().insert(
-        "content-type",
-        axum::http::HeaderValue::from_static("text/event-stream"),
-    );
-    if let Some(upstream_model) = upstream_model
-        && let Ok(value) = axum::http::HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 
 /// Project an `OpenAI` Responses request onto the Chat Completions shape.
-fn responses_to_chat(body: &Value) -> Value {
-    let mut messages: Vec<Value> = Vec::new();
-    if let Some(instructions) = body.get("instructions").and_then(Value::as_str) {
-        messages.push(json!({ "role": "system", "content": instructions }));
-    }
-    match body.get("input") {
-        Some(Value::String(s)) => messages.push(json!({ "role": "user", "content": s })),
-        Some(Value::Array(items)) => {
-            for item in items {
-                if let Some(role) = item.get("role").and_then(Value::as_str) {
-                    let content = item.get("content").cloned().unwrap_or(Value::Null);
-                    messages.push(json!({ "role": role, "content": content }));
-                } else if let Some(text) = item.as_str() {
-                    messages.push(json!({ "role": "user", "content": text }));
-                }
-            }
-        }
-        _ => {}
-    }
-    let mut out = json!({ "messages": messages });
-    for key in [
-        "model",
-        "max_output_tokens",
-        "temperature",
-        "top_p",
-        "stream",
-    ] {
-        if let Some(v) = body.get(key) {
-            let mapped = if key == "max_output_tokens" {
-                "max_tokens"
-            } else {
-                key
-            };
-            out[mapped] = v.clone();
-        }
-    }
-    out
+fn bridge_request_error(surface: Surface, reason: &str) -> Response {
+    crate::api_error::error_response_for_surface(
+        surface,
+        StatusCode::BAD_REQUEST,
+        "invalid_request_error",
+        reason,
+    )
 }
 
 /// Choose the Gemini model to serve a request with.
@@ -855,7 +795,7 @@ mod tests {
             "input": [{"role": "user", "content": "hi"}],
             "max_output_tokens": 100
         });
-        let chat = responses_to_chat(&body);
+        let chat = crate::gemini_bridge::responses_to_chat_checked(&body).unwrap();
         let messages = chat["messages"].as_array().unwrap();
         assert_eq!(messages[0]["role"], "system");
         assert_eq!(messages[1]["role"], "user");
@@ -927,8 +867,11 @@ mod tests {
             "messages": [
                 {"role": "system", "content": "be brief"},
                 {"role": "user", "content": "hello"},
-                {"role": "assistant", "content": "hi"},
-                {"role": "tool", "content": "result"}
+                {"role": "assistant", "content": "hi", "tool_calls": [{
+                    "id": "call_1", "type": "function",
+                    "function": {"name": "lookup", "arguments": "{}"}
+                }]},
+                {"role": "tool", "tool_call_id": "call_1", "content": "result"}
             ],
             "max_tokens": 128,
             "temperature": 0.4,

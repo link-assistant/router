@@ -220,9 +220,10 @@ fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
         settings["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"],
         "1"
     );
-    assert_eq!(
-        settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
-        "0"
+    assert!(
+        settings["env"]
+            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+            .is_none()
     );
     for key in CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
@@ -243,7 +244,7 @@ fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
         .unwrap();
     let env = std::fs::read_to_string(env).unwrap();
     assert!(env.contains("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"));
-    assert!(env.contains("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"));
+    assert!(!env.contains("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"));
     assert!(env.contains("https://router.example/api/services/anthropic"));
     assert!(!env.contains("zai-secret"));
 
@@ -267,6 +268,79 @@ fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
         restored["env"]
             .get("ANTHROPIC_DEFAULT_SONNET_MODEL")
             .is_none()
+    );
+}
+
+#[test]
+fn claude_setup_migrates_only_router_owned_legacy_nonessential_traffic() {
+    for (previous, expected) in [(None, None), (Some("1"), Some("1"))] {
+        let home = tempfile::tempdir().unwrap();
+        let manager = ClientManager::isolated(home.path());
+        std::fs::create_dir_all(home.path().join(".claude")).unwrap();
+        std::fs::write(
+            manager.config_path(ClientKind::ClaudeCode),
+            r#"{"env":{"ANTHROPIC_BASE_URL":"https://old-router.example","CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC":"0"}}"#,
+        )
+        .unwrap();
+        super::write_claude_marker(
+            &manager
+                .ownership_marker_path(ClientKind::ClaudeCode)
+                .unwrap(),
+            "https://old-router.example",
+            None,
+            &vec![(
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".into(),
+                Some("0".into()),
+                previous.map(str::to_string),
+            )],
+        )
+        .unwrap();
+
+        manager
+            .setup(ClientKind::ClaudeCode, "https://router.example", &[])
+            .unwrap();
+        let settings: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(manager.config_path(ClientKind::ClaudeCode)).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            settings["env"]
+                .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+                .and_then(serde_json::Value::as_str),
+            expected
+        );
+        let (_, _, entries) = super::claude_marker(
+            &manager
+                .ownership_marker_path(ClientKind::ClaudeCode)
+                .unwrap(),
+        )
+        .unwrap()
+        .unwrap();
+        assert!(
+            entries
+                .iter()
+                .all(|(key, _, _)| key != "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+        );
+    }
+
+    let home = tempfile::tempdir().unwrap();
+    let manager = ClientManager::isolated(home.path());
+    std::fs::create_dir_all(home.path().join(".claude")).unwrap();
+    std::fs::write(
+        manager.config_path(ClientKind::ClaudeCode),
+        r#"{"env":{"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC":"1"}}"#,
+    )
+    .unwrap();
+    manager
+        .setup(ClientKind::ClaudeCode, "https://router.example", &[])
+        .unwrap();
+    let settings: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(manager.config_path(ClientKind::ClaudeCode)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        settings["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"],
+        "1"
     );
 }
 
@@ -359,6 +433,7 @@ fn zai_model_pins_are_owned_configuration_and_drift_is_detected() {
                 label: None,
                 issued_at: None,
                 router: Some("https://router.example".into()),
+                management_server: None,
                 principal_id: Some("primary".into()),
                 config_sha256: None,
             },

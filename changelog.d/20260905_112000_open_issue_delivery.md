@@ -1,0 +1,38 @@
+---
+bump: minor
+---
+
+### Fixed
+- Document the registered GitHub REST, GraphQL, and Git routes exactly.
+- Strip `anthropic-auth-token` credentials in both proxy directions while preserving unrelated native protocol headers.
+- Deduplicate repeated exact z.ai catalog records without hiding the provider, while retaining cross-provider collision safety.
+- Align the canonical-route migration guide with the narrow current Claude z.ai-only main/subagent fallback behavior.
+- Preserve usage-window durations in human output and authenticate unknown provider paths before revealing route validity.
+- Preserve current Claude named/model-scoped and extra-usage limits plus Codex allow/credit/spend/reset state in both JSON and human usage output, without exposing raw vendor or account data.
+- Bound vendor and Router usage bodies while reading their streams, and reject empty or error-shaped 200 responses as unverified.
+- Cap untrusted `Retry-After` cooldowns at 24 hours and use checked instant arithmetic.
+- Coalesce concurrent usage requests by token, provider, principal, and credential generation.
+- Keep the normal Lefine live credential gate catalog-only, with explicit run/skip output and a separate inference opt-in.
+- Stream GitHub REST, GraphQL, and Git smart-HTTP response bodies without whole-response buffering, preserving mid-stream failures.
+- Keep translated model and dropped-tool diagnostics in local logs instead of emitting Router-private response fields or headers.
+- Preserve safe end-to-end client metadata on ordinary OpenAI-compatible Chat Completions and Responses requests while replacing credentials.
+- Honor `GEMINI_CLI_HOME`, prefer Claude Code's canonical credential file over legacy fallbacks, and select `gh` credentials only for the configured GitHub host.
+- Make `--home` an isolation boundary for every vendor credential reader and local client command.
+- Use one non-inference provider-acceptance check for local and remote auth status, distinguishing usable, rejected, unverified, absent, and refresh-failed states.
+- Validate imported rotating refresh chains in an isolated durable store and promote Router-owned successors, including newer Claude Keychain credentials.
+- Persist the management origin that issued a managed client credential and revoke through it before `clients remove` deletes local files.
+- Stream Gemini subscription Chat Completions and native `streamGenerateContent` incrementally from Code Assist, preserving ordered text, tools, finish reasons, usage, errors, and cancellation.
+- Refresh the complete compatible Cargo lockfile and the pinned Bun runtime image; verify every direct Rust/UI package, workflow action, hook, and other container base against its latest release.
+- Accept every Router-generated `clients doctor` probe through one stripped internal marker without forging or forwarding client fingerprints.
+- Preserve valid non-ASCII text and tool arguments when arbitrary network chunks split a UTF-8 scalar in any incremental SSE translator.
+- Stream Gonka broker responses incrementally with safe response metadata, usage accounting, and terminal settlement on completion, errors, or client disconnects.
+- Reject unsupported Gonka direct-wallet credentials before startup and keep supported broker authentication in the separate `GONKA_API_KEY` mode.
+- Discover Gonka models through authenticated live catalogs with bounded freshness, exact optional narrowing, fail-closed refreshes, and automatic-routing de-duplication.
+- Translate streamed and buffered Responses failures into truthful, caller-safe OpenAI and Anthropic errors without successful terminal frames.
+- Collapse incomplete Codex SSE terminals into indexed JSON output and preserve refusal content across buffered and streamed Chat and Anthropic surfaces.
+- Proxy native Conversations CRUD and item resources with exact provider/account affinity, bounded bodies, and transparent safe metadata.
+- Resolve one visible model through exact native model resources while rejecting unknown or unauthorized IDs before upstream contact.
+- Preserve supported multi-turn Chat history, images, files, refusals, tool calls, and tool results when translating to Codex Responses, and reject lossy legacy variants locally.
+- Reject provider-specific Responses reasoning and custom-tool output on Anthropic bridges instead of silently returning an empty successful message, without exposing private output state.
+- Match the current Claude, Codex, Gemini, and Qwen OAuth refresh wire contracts, including versioned client identity and Gemini's public installed-app configuration.
+- Preserve only allowlisted Cloudflare infrastructure-cookie continuity on canonical Codex ChatGPT HTTP and WebSocket traffic, with RFC scoping and strict size/count bounds.

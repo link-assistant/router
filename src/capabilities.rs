@@ -26,14 +26,15 @@ pub struct ProviderCapabilities {
 }
 
 #[must_use]
-pub fn subscription(provider: SubscriptionProvider, model: Option<&str>) -> ProviderCapabilities {
+pub const fn subscription(
+    provider: SubscriptionProvider,
+    _model: Option<&str>,
+) -> ProviderCapabilities {
     match provider {
         SubscriptionProvider::Claude => ProviderCapabilities {
-            temperature: if claude_generation(model).is_some_and(|generation| generation >= 5) {
-                Capability::Unsupported
-            } else {
-                Capability::Native
-            },
+            // Capability varies by the live model. Its digits are not metadata;
+            // preserve the caller's field and let the selected provider decide.
+            temperature: Capability::Unknown,
             top_p: Capability::Native,
             stop_sequences: Capability::Native,
             output_token_limit: Capability::Native,
@@ -76,13 +77,6 @@ pub fn upstream(provider: UpstreamProvider) -> ProviderCapabilities {
         },
         |provider| subscription(provider, None),
     )
-}
-
-#[must_use]
-pub fn claude_generation(model: Option<&str>) -> Option<u32> {
-    let model = model?;
-    let model = model.strip_prefix("claude-").unwrap_or(model);
-    model.split('-').find_map(|part| part.parse::<u32>().ok())
 }
 
 /// Whether the selected Claude model uses the current adaptive-thinking wire
@@ -195,7 +189,7 @@ mod tests {
         );
         let claude = subscription(SubscriptionProvider::Claude, Some("claude-opus-5"));
         assert_eq!(claude.top_p, Capability::Native);
-        assert_eq!(claude.temperature, Capability::Unsupported);
+        assert_eq!(claude.temperature, Capability::Unknown);
         assert_eq!(claude.output_token_limit, Capability::Native);
         assert!(claude_uses_adaptive_thinking(Some("claude-opus-5")));
         assert!(claude_uses_adaptive_thinking(Some("opus-4-7")));

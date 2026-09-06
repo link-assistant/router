@@ -251,6 +251,91 @@ fn command_mode_word_inside_prompt_is_not_treated_as_the_subcommand() {
     assert!(rendered.ends_with(&["explain".to_string(), "run".to_string()]));
 }
 
+#[test]
+fn every_current_native_command_stays_in_command_position() {
+    for client in ClientKind::ALL {
+        for command in native_commands(client) {
+            for terminal in [true, false] {
+                let launch = plan(&args(client, &[command, "--help"]), None, terminal);
+                assert_eq!(
+                    rendered(&launch),
+                    [command.to_string(), "--help".to_string()],
+                    "{client} {command} terminal={terminal}"
+                );
+                assert!(!launch.one_shot, "native commands are not inference tasks");
+            }
+        }
+    }
+}
+
+#[test]
+fn separator_is_future_proof_exact_argv_mode() {
+    for client in ClientKind::ALL {
+        if client == ClientKind::Cursor {
+            continue;
+        }
+        let launch = plan(
+            &args(client, &["--", "future-command", "--flag"]),
+            None,
+            false,
+        );
+        assert_eq!(
+            rendered(&launch),
+            ["future-command".to_string(), "--flag".to_string()],
+            "{client}"
+        );
+        assert!(!launch.one_shot);
+    }
+}
+
+#[test]
+fn codex_cloud_is_rejected_before_launch_planning() {
+    for command in ["cloud", "cloud-tasks"] {
+        assert!(unsupported_native_command(&args(ClientKind::Codex, &[command])).is_some());
+        assert!(unsupported_native_command(&args(ClientKind::Codex, &["--", command])).is_some());
+    }
+    assert!(
+        unsupported_native_command(&args(ClientKind::Codex, &["exec", "explain cloud"])).is_none()
+    );
+    assert!(unsupported_native_command(&args(ClientKind::ClaudeCode, &["cloud"])).is_none());
+}
+
+#[test]
+fn codex_cloud_is_found_after_every_current_root_option_shape() {
+    for arguments in [
+        vec!["--profile", "audit", "cloud", "list"],
+        vec!["--profile=audit", "cloud", "list"],
+        vec!["-c", "model='gpt-5'", "cloud", "list"],
+        vec!["-cmodel='gpt-5'", "cloud", "list"],
+        vec!["--config", "model='gpt-5'", "cloud-tasks", "list"],
+        vec!["--enable", "feature-name", "cloud", "list"],
+        vec!["--disable=feature-name", "cloud-tasks", "list"],
+        vec!["--search", "--oss", "--profile", "audit", "cloud", "list"],
+        vec!["--", "cloud", "list"],
+    ] {
+        assert!(
+            unsupported_native_command(&args(ClientKind::Codex, &arguments)).is_some(),
+            "{arguments:?}"
+        );
+    }
+}
+
+#[test]
+fn codex_cloud_words_used_as_option_values_or_prompts_are_not_commands() {
+    for arguments in [
+        vec!["--profile", "cloud", "exec", "task"],
+        vec!["-c", "cloud", "exec", "task"],
+        vec!["--enable", "cloud", "exec", "task"],
+        vec!["exec", "explain cloud"],
+        vec!["--unknown-option", "cloud", "exec", "task"],
+    ] {
+        assert!(
+            unsupported_native_command(&args(ClientKind::Codex, &arguments)).is_none(),
+            "{arguments:?}"
+        );
+    }
+}
+
 /// The defect in the issue #297 follow-up: for four clients the injected mode
 /// argument takes the prompt as its *value*, and it was inserted immediately
 /// before whatever the user passed. With a flag there, that flag landed where

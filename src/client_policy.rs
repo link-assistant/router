@@ -237,7 +237,13 @@ impl SubscriptionEntitlementPolicy {
             (client, provider),
             (ClientKind::ClaudeCode, SubscriptionProvider::Claude)
                 | (ClientKind::Codex, SubscriptionProvider::Codex)
-        ) {
+        ) || (protocol == ClientProtocol::Catalog
+            && matches!(
+                (client, provider),
+                (ClientKind::GeminiCli, SubscriptionProvider::Gemini)
+                    | (ClientKind::QwenCode, SubscriptionProvider::Qwen)
+            ))
+        {
             return EntitlementDecision::Native;
         }
         if self
@@ -288,6 +294,46 @@ fn header_starts_with(headers: &HeaderMap, name: &str, prefix: &str) -> bool {
         .is_some_and(|value| value.to_ascii_lowercase().starts_with(prefix))
 }
 
+fn header_equals(headers: &HeaderMap, name: &str, expected: &str) -> bool {
+    headers
+        .get(name)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value == expected)
+}
+
+/// Router-generated doctor requests use one exact internal marker instead of
+/// forging any supported client's public fingerprint. The signed token still
+/// supplies the client identity; this only proves that Router itself created
+/// the deliberately narrow reachability probe. The marker is removed by
+/// `native_request_headers` before provider dispatch.
+fn doctor_request_evidence(
+    client: ClientKind,
+    protocol: ClientProtocol,
+    path: &str,
+    headers: &HeaderMap,
+) -> bool {
+    if !header_equals(
+        headers,
+        crate::clients::doctor::DOCTOR_EVIDENCE_HEADER,
+        crate::clients::doctor::DOCTOR_EVIDENCE_VALUE,
+    ) || !credential_carrier_matches(client, headers)
+    {
+        return false;
+    }
+    match client {
+        ClientKind::ClaudeCode => {
+            protocol == ClientProtocol::AnthropicMessages && path.ends_with("/v1/messages")
+        }
+        ClientKind::Codex => {
+            protocol == ClientProtocol::OpenAIResponses && path.ends_with("/v1/responses")
+        }
+        ClientKind::QwenCode | ClientKind::Opencode | ClientKind::GrokCli | ClientKind::Agent => {
+            protocol == ClientProtocol::OpenAIChat && path.ends_with("/v1/chat/completions")
+        }
+        ClientKind::Cursor | ClientKind::GeminiCli => false,
+    }
+}
+
 /// Match the stable request evidence recorded in `tests/fixtures/clients`.
 ///
 /// This is defense against accidental/unsupported routing, not cryptographic
@@ -300,6 +346,9 @@ pub fn request_evidence(
     path: &str,
     headers: &HeaderMap,
 ) -> bool {
+    if header_present(headers, crate::clients::doctor::DOCTOR_EVIDENCE_HEADER) {
+        return doctor_request_evidence(client, protocol, path, headers);
+    }
     if !protocol_matches_client(client, protocol) {
         return false;
     }
@@ -317,11 +366,10 @@ pub fn request_evidence(
             (path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens"))
                 && credential_carrier_matches(client, headers)
                 && header_present(headers, "anthropic-version")
-                && (header_starts_with(headers, "user-agent", "claude")
-                    || header_starts_with(headers, "x-link-assistant-client-check", "reachability"))
+                && header_starts_with(headers, "user-agent", "claude")
         }
         ClientKind::Codex => {
-            path.contains("/v1/responses")
+            (path.contains("/v1/responses") || path.contains("/v1/conversations"))
                 && header_present(headers, "authorization")
                 && header_starts_with(headers, "user-agent", "codex")
                 && (header_present(headers, "x-openai-internal-codex-responses-lite")
@@ -369,14 +417,16 @@ fn path_belongs_to_client(client: ClientKind, path: &str) -> bool {
         return !matches!(client, ClientKind::Cursor | ClientKind::Agent);
     }
     match client {
-        ClientKind::Codex => path == "/api/services/codex/v1/models",
+        ClientKind::Codex => path.starts_with("/api/services/codex/v1/models"),
         ClientKind::GeminiCli => {
             path == "/api/services/gemini/v1beta/models"
                 || path.starts_with("/api/services/gemini/v1beta/models/")
         }
-        ClientKind::QwenCode => path == "/api/services/qwen/v1/models",
-        ClientKind::ClaudeCode => path == "/api/services/anthropic/v1/models",
-        ClientKind::Opencode | ClientKind::GrokCli => path == "/api/services/openai/v1/models",
+        ClientKind::QwenCode => path.starts_with("/api/services/qwen/v1/models"),
+        ClientKind::ClaudeCode => path.starts_with("/api/services/anthropic/v1/models"),
+        ClientKind::Opencode | ClientKind::GrokCli => {
+            path.starts_with("/api/services/openai/v1/models")
+        }
         ClientKind::Cursor | ClientKind::Agent => false,
     }
 }

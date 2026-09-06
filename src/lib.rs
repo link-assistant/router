@@ -19,11 +19,17 @@ pub mod app_state;
 pub mod audit;
 pub mod auth;
 pub mod auth_remote;
+mod bridge_controls;
+mod bridge_request;
+mod bridge_response;
+#[cfg(test)]
+mod bridge_response_tests;
 pub mod bridge_selection;
 pub mod capabilities;
 pub mod chat_admin;
 pub mod chat_commands;
 pub mod chat_config;
+mod chat_lifecycle;
 pub mod claude_auth;
 pub mod claude_identity;
 pub mod cli;
@@ -31,17 +37,24 @@ pub mod client_command;
 pub mod client_global;
 mod client_launch;
 pub mod client_policy;
+mod client_repair_command;
 pub mod clients;
+mod codex_cloudflare_cookies;
 pub mod codex_identity;
+pub mod codex_loopback_bridge;
+mod codex_remote_control;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;
+pub mod conversations;
 pub mod crater;
 pub mod credential_acceptance;
 pub mod credential_recovery_store;
+pub mod credential_status;
 pub mod credential_store;
 pub mod doctor;
 pub mod durable_file;
+mod encoded_request_body;
 pub mod entrypoint;
 pub mod env_paths;
 pub mod gemini;
@@ -49,6 +62,8 @@ pub mod gemini_bridge;
 pub mod git_proxy;
 pub mod github_proxy;
 pub mod gonka;
+#[cfg(test)]
+mod gonka_timeout_tests;
 pub mod lefine;
 pub mod lino_json;
 pub mod log_analysis;
@@ -62,9 +77,13 @@ pub mod login_url;
 pub mod managed_server;
 pub mod metrics;
 pub mod model_catalog;
+pub mod model_resource;
+#[cfg(test)]
+mod model_resource_tests;
 pub mod model_routing;
 pub mod monitoring_api;
 pub mod mpp;
+mod native_service;
 pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;
@@ -81,13 +100,20 @@ pub mod refresh_rejections;
 pub mod remote_command;
 pub mod request_log;
 mod request_routing;
+mod resource_capture;
+pub(crate) mod response_affinity;
 pub mod responses;
+pub mod responses_lifecycle;
+pub mod responses_websocket;
 pub mod route_contract;
+mod safety_identifier;
 pub mod security_headers;
 pub mod server_command;
 pub mod server_router;
+mod sse;
 pub mod stop_sequences;
 pub mod storage;
+mod structured_output;
 pub mod subscription;
 pub mod subscription_health;
 pub mod subscription_proxy;
@@ -117,11 +143,23 @@ pub mod zai_coding_plan;
 #[cfg(test)]
 mod anthropic_bridge_tests;
 #[cfg(test)]
+mod bridge_request_tests;
+#[cfg(test)]
 mod client_policy_tests;
+#[cfg(test)]
+mod codex_loopback_bridge_tests;
+#[cfg(test)]
+mod codex_remote_control_tests;
 #[cfg(test)]
 mod proxy_tests;
 #[cfg(test)]
+mod resource_lifecycle_tests;
+#[cfg(test)]
+mod response_affinity_tests;
+#[cfg(test)]
 mod route_contract_tests;
+#[cfg(test)]
+mod sse_regression_tests;
 #[cfg(test)]
 mod token_admin_tests;
 #[cfg(test)]

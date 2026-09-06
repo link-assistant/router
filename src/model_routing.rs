@@ -35,6 +35,9 @@ pub(crate) use snapshot::{
 mod catalog_snapshot;
 pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
 
+#[path = "model_routing_native_catalog.rs"]
+mod native_catalog;
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -560,17 +563,6 @@ pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredC
             (provider, healthy_accounts)
         })
         .collect::<Vec<_>>();
-    let models = model_accounts
-        .iter()
-        .map(|(provider, accounts)| {
-            (
-                *provider,
-                state
-                    .model_catalogs
-                    .models_for_accounts(*provider, accounts),
-            )
-        })
-        .collect();
     let records = model_accounts
         .iter()
         .map(|(provider, accounts)| {
@@ -584,7 +576,6 @@ pub(crate) async fn configured_catalog_snapshot(state: &AppState) -> ConfiguredC
         .collect();
     ConfiguredCatalogSnapshot {
         health: aggregate_provider_health(&accounts),
-        models,
         records,
     }
 }
@@ -816,7 +807,13 @@ pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
             .map_err(|error| {
                 crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
             })?;
-        route_state_with_subscription_for_client(
+        let owner =
+            crate::response_affinity::ResponseOwner::from_claims(&claims).map_err(|message| {
+                crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &message)
+            })?;
+        let resource_destination =
+            anthropic_message_resource_destination(state, &owner, &routing_body)?;
+        let mut routed = route_state_with_subscription_for_client(
             state,
             &routing_body,
             entitled_providers,
@@ -830,7 +827,56 @@ pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
             ),
         )
         .await
-        .map_err(|error| model_route_error_response(&error))?
+        .map_err(|error| model_route_error_response(&error))?;
+        if let Some(crate::response_affinity::AffinityDestination::Subscription {
+            provider: SubscriptionProvider::Claude,
+            account,
+            upstream_account_id,
+            base_url,
+        }) = resource_destination
+        {
+            let subscription = routed
+                .subscription
+                .as_ref()
+                .filter(|subscription| subscription.provider == SubscriptionProvider::Claude)
+                .ok_or_else(|| {
+                    crate::proxy::error_response(
+                        StatusCode::CONFLICT,
+                        "invalid_request_error",
+                        "Anthropic native resources cannot be used on the selected provider",
+                    )
+                })?;
+            let bound = subscription
+                .bind_to_account(state, &account)
+                .await
+                .map_err(|_| {
+                    crate::proxy::error_response(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "api_error",
+                        "the Anthropic native resource account cannot serve this request",
+                    )
+                })?;
+            let selected = bound
+                .selected_token()
+                .expect("an exact resource account snapshot is ready");
+            let current_base = state
+                .subscription_base_url
+                .clone()
+                .unwrap_or_else(|| selected.base_url(SubscriptionProvider::Claude));
+            if selected.account_id != upstream_account_id
+                || current_base.trim_end_matches('/') != base_url.trim_end_matches('/')
+            {
+                return Err(crate::proxy::error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "api_error",
+                    "the Anthropic native resource authority changed",
+                ));
+            }
+            routed.subscription = Some(bound);
+            routed.state.upstream_provider = UpstreamProvider::Anthropic;
+            routed.state.account_router = None;
+        }
+        routed
     } else {
         route_pinned_subscription(state, SubscriptionProvider::Claude)
             .await
@@ -844,6 +890,8 @@ pub(crate) async fn route_anthropic_request_with_subscription_for_providers(
     };
     Ok((routed, Request::from_parts(parts, Body::from(body_bytes))))
 }
+
+include!("model_routing_resources.rs");
 
 /// Resolve one provider only when its credential is currently healthy.
 pub async fn route_provider(
@@ -931,3 +979,7 @@ mod provider_tests;
 #[cfg(test)]
 #[path = "model_routing_lefine_client_tests.rs"]
 mod lefine_client_tests;
+
+#[cfg(test)]
+#[path = "model_routing_native_http_tests.rs"]
+mod native_http_tests;

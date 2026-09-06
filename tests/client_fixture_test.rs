@@ -62,6 +62,12 @@ fn load_fixtures() -> Vec<Fixture> {
         let raw = std::fs::read_to_string(&path).expect("read fixture");
         let value: Value = serde_json::from_str(&raw)
             .unwrap_or_else(|error| panic!("{file} is not valid JSON: {error}"));
+        // This directory also carries authorization and refresh contract
+        // snapshots. Only request-replay fixtures declare where Router should
+        // inject the managed client credential.
+        if value.get("credential_carrier").is_none() {
+            continue;
+        }
         let headers = value["headers"]
             .as_object()
             .unwrap_or_else(|| panic!("{file} has no headers object"))
@@ -293,19 +299,31 @@ async fn every_recorded_client_is_refused_an_invalid_credential() {
     }
 }
 
-/// The vendor headers real clients send must not disturb routing. Seven of the
-/// eight headers catalogued in issue #211 appear nowhere in the tree; the
-/// router very likely handles them by ignoring them, but that was an assumption
-/// no test stated.
+/// Headers outside the stable client fingerprint must not disturb routing.
+/// Router intentionally requires a small subset of real-client evidence before
+/// spending a client-bound consumer subscription (issue #389), while the rest
+/// of each recorded vendor envelope remains routing-neutral.
 #[tokio::test]
-async fn vendor_specific_headers_do_not_disturb_routing() {
+async fn non_identity_vendor_headers_do_not_disturb_routing() {
     for fixture in load_fixtures() {
         let (with_headers, _) = replay(&fixture, None).await;
         let stripped = Fixture {
             headers: fixture
                 .headers
                 .iter()
-                .filter(|(name, _)| name == "content-type" || name == "anthropic-version")
+                .filter(|(name, _)| {
+                    matches!(
+                        name.as_str(),
+                        "content-type"
+                            | "anthropic-version"
+                            | "user-agent"
+                            | "x-codex-turn-metadata"
+                            | "x-openai-internal-codex-responses-lite"
+                            | "x-goog-api-client"
+                            | "x-stainless-package-version"
+                            | "x-session-id"
+                    )
+                })
                 .cloned()
                 .collect(),
             ..fixture

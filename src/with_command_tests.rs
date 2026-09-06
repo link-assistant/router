@@ -74,6 +74,7 @@ fn the_users_configuration_is_kept_by_default() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare with the default configuration handling");
     let names: Vec<String> = extended
@@ -112,11 +113,11 @@ fn the_users_configuration_is_kept_by_default() {
             .map(String::as_str),
         Some("1")
     );
-    assert_eq!(
-        environment
-            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
-            .map(String::as_str),
-        Some("0")
+    assert!(
+        !names
+            .iter()
+            .any(|name| name == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"),
+        "the run must inherit the user's setting instead of installing the presence-based disable switch"
     );
     assert_eq!(
         environment.get("ANTHROPIC_API_KEY").map(String::as_str),
@@ -143,6 +144,7 @@ fn the_users_configuration_is_kept_by_default() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated");
     assert!(
@@ -178,6 +180,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         one_shot: false,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare a resumed z.ai-only Claude session");
     let resumed_env = resumed
@@ -213,6 +216,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare an explicit z.ai Claude model");
     let explicit_env = explicit
@@ -265,13 +269,14 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::Codex,
         base_url: "http://router.test/path?tenant=one",
-        token: "task-token",
+        token: "la_sk_header.payload.sig",
         model_override: None,
         models: &models,
         isolated_config: false,
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: Some("http://127.0.0.1:43123/api/services/codex/backend-api"),
     })
     .expect("prepare Codex overlay");
 
@@ -287,7 +292,30 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             .get("LINK_ASSISTANT_TOKEN")
             .and_then(|value| *value)
             .map(|value| value.to_string_lossy()),
-        Some(std::borrow::Cow::Borrowed("task-token"))
+        Some(std::borrow::Cow::Borrowed("la_sk_header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_ACCESS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_CONNECTORS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_AUTHAPI_BASE_URL")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed(
+            "http://router.test/path?tenant=one/api/services/codex"
+        ))
     );
 
     let arguments = prepared
@@ -295,10 +323,13 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         .get_args()
         .map(|argument| argument.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
-    assert_eq!(
-        arguments[0..3],
-        ["-c", "model_provider=\"link-assistant\"", "-c"]
-    );
+    assert_eq!(arguments[0], "-c");
+    let provider = arguments[1]
+        .strip_prefix("model_provider=")
+        .and_then(|value| serde_json::from_str::<String>(value).ok())
+        .expect("process-local model provider argument");
+    assert!(provider.starts_with("link-assistant-run-"), "{provider}");
+    assert_eq!(arguments[2], "-c");
     let catalog_path = arguments[3]
         .strip_prefix("model_catalog_json=")
         .and_then(|value| serde_json::from_str::<String>(value).ok())
@@ -315,17 +346,23 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         json!([{"effort": "high", "description": "Deep reasoning"}])
     );
     assert_eq!(catalog["models"].as_array().unwrap().len(), 1);
+    assert_eq!(arguments[4], "-c");
     assert_eq!(
-        arguments[4..],
+        arguments[5],
+        format!(
+            "model_providers.{provider}={{ name = \"OpenAI\", base_url = \"http://router.test/path?tenant=one/api/services/codex/v1\", wire_api = \"responses\", requires_openai_auth = true, supports_websockets = true, supports_standalone_web_search = true }}"
+        )
+    );
+    assert!(!arguments[5].contains("env_key"));
+    assert_eq!(
+        arguments[6..],
         [
             "-c",
-            "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
+            "chatgpt_base_url=\"http://127.0.0.1:43123/api/services/codex/backend-api\"",
             "-c",
-            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
+            "experimental_realtime_ws_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
             "-c",
-            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
-            "-c",
-            "model_providers.link-assistant.wire_api=\"responses\"",
+            "experimental_realtime_webrtc_call_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
         ]
     );
 
@@ -339,6 +376,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated Codex");
     let isolated_home = isolated
@@ -539,6 +577,7 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("a file-configured client must still run");
 }
@@ -581,6 +620,7 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare gemini");
     let root = temporary.directory.path();
@@ -673,6 +713,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                     one_shot: true,
                     profile_root: Some(profiles.path()),
                     codex_reasoning_effort: None,
+                    codex_backend_base_url: None,
                 })
                 .is_err()
             );
@@ -688,6 +729,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             one_shot: true,
             profile_root: Some(profiles.path()),
             codex_reasoning_effort: None,
+            codex_backend_base_url: None,
         })
         .unwrap_or_else(|error| panic!("{client} failed setup: {error}"));
         let root = temporary.directory.path().to_path_buf();

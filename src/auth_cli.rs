@@ -118,10 +118,14 @@ fn run_gh(
             eprintln!("error: no gh configuration directory; pass --from-gh-config <DIR>");
             return ExitCode::from(1);
         };
-        let Some(token) = github_proxy::token_from_gh_config(&directory) else {
+        let Some(host) = github_proxy::configured_credential_host() else {
+            eprintln!("error: GITHUB_PROXY_BASE_URL does not name a valid GitHub host");
+            return ExitCode::from(1);
+        };
+        let Some(token) = github_proxy::token_from_gh_config(&directory, &host) else {
             eprintln!(
-                "error: no GitHub credential in {}; run `gh auth login` there first",
-                directory.display()
+                "error: no GitHub credential for {host} in {}; run `gh auth login --hostname {host}` there first",
+                directory.display(),
             );
             return ExitCode::from(1);
         };
@@ -268,7 +272,7 @@ fn clear_provider(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
 ) -> Result<(), String> {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let user_home = config.client_home.to_string_lossy().into_owned();
     let reader = SubscriptionReader::new(
         provider,
         crate::auth_import::provider_home(config, provider, &user_home),
@@ -680,8 +684,7 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
 /// answer this question: only the vendor can. Each credential is therefore
 /// probed, and the answer says plainly whether it was checked or merely read.
 async fn status(config: &Config) -> ExitCode {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let now = chrono::Utc::now().timestamp_millis();
+    let user_home = config.client_home.to_string_lossy().into_owned();
     let client = reqwest::Client::new();
     let readers: Vec<_> = SubscriptionProvider::ALL
         .into_iter()
@@ -694,74 +697,25 @@ async fn status(config: &Config) -> ExitCode {
         .collect();
     let token_cache =
         link_assistant_router::refresh::TokenCache::registered_for(&readers, &config.data_dir);
-    let mut refresh_failed = false;
-
-    for reader in readers {
-        let provider = reader.provider();
-        let value = match token_cache
-            .load_authoritative(
-                provider,
-                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-            )
-            .await
-        {
-            Ok(Some(_)) => {
-                // Refresh first when the stored expiry says to, exactly as the
-                // proxy would, so the probe reflects what a real request sees.
-                let token = token_cache
-                    .get_fresh_registered(
-                        &client,
-                        provider,
-                        link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-                        now,
-                    )
-                    .await;
-                if let Ok(token) = token
-                    && token_cache.last_refresh_error(provider).is_none()
-                {
-                    let catalog = link_assistant_router::model_catalog::fetch_provider_catalog(
-                        &client, provider, &token, None,
-                    )
-                    .await;
-                    match link_assistant_router::model_catalog::classify_catalog_acceptance(
-                        &catalog,
-                    ) {
-                        link_assistant_router::model_catalog::CatalogAcceptance::Accepted => {
-                            "usable"
-                        }
-                        link_assistant_router::model_catalog::CatalogAcceptance::MissingSubscription
-                        | link_assistant_router::model_catalog::CatalogAcceptance::CredentialRejected => {
-                            "rejected"
-                        }
-                        // The credential may well be fine; the probe could not say.
-                        link_assistant_router::model_catalog::CatalogAcceptance::Unverified => {
-                            "unverified"
-                        }
-                    }
-                } else {
-                    let detail = token_cache.last_refresh_error(provider).unwrap_or_else(|| {
-                        "refresh failed before the credential could be checked".into()
-                    });
-                    eprintln!(
-                        "error: {provider} refresh failed: {detail}; credential state was not reported usable"
-                    );
-                    refresh_failed = true;
-                    "refresh-failed"
-                }
-            }
-            Ok(None) => "absent",
-            Err(_) => {
-                eprintln!(
-                    "error: {provider} refresh failed; credential recovery state could not be loaded"
-                );
-                refresh_failed = true;
-                "refresh-failed"
-            }
-        };
+    let reports =
+        link_assistant_router::credential_status::evaluate(&client, &token_cache, &readers, None)
+            .await;
+    let refresh_failed = reports.iter().any(|report| {
+        report.state
+            == link_assistant_router::credential_status::CredentialAcceptanceState::RefreshFailed
+    });
+    for report in reports {
+        if let Some(detail) = report.detail.as_deref() {
+            eprintln!(
+                "error: {} refresh failed: {detail}; credential state was not reported usable",
+                report.provider
+            );
+        }
         println!(
-            "{:<8} {value:<10} {}",
-            reader.provider(),
-            reader.home().display()
+            "{:<8} {:<10} {}",
+            report.provider,
+            report.state.as_str(),
+            report.home
         );
     }
     if refresh_failed {

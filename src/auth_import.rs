@@ -42,10 +42,10 @@ struct ImportPolicy {
     /// Whether the caller explicitly asserted the safe-flow capability. This
     /// is diagnostic only and never bypasses candidate validation.
     capability_asserted: bool,
-    /// Fresh imports copy an externally owned rotation chain. A resumed
-    /// acceptance transaction contains a Router-owned successor and must keep
-    /// that provenance when promoted.
-    external_refresh_owner: bool,
+    /// A retained acceptance transaction contains a Router-owned successor
+    /// whose refresh chain may be advanced during recovery. Fresh imports keep
+    /// this false because the source remains owned by the vendor client.
+    router_owned_candidate: bool,
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -69,7 +69,7 @@ pub async fn run_import(
         } => ImportPolicy {
             if_absent: *if_absent,
             capability_asserted: *force,
-            external_refresh_owner: true,
+            router_owned_candidate: false,
         },
         _ => ImportPolicy::default(),
     };
@@ -134,7 +134,7 @@ pub async fn run_import(
                     continue;
                 };
                 let mut provider_policy = policy;
-                provider_policy.external_refresh_owner = resumed.is_none();
+                provider_policy.router_owned_candidate = resumed.is_some();
                 if resumed.as_ref().is_some_and(|candidate| {
                     destination_has_receipt(config, subscription, &candidate.transaction_id)
                 }) {
@@ -335,10 +335,12 @@ fn import_github(data_dir: &std::path::Path, source: &str) -> Result<Vec<String>
         .ok_or_else(|| {
             String::from("no gh configuration directory; name one, or set GH_CONFIG_DIR")
         })?;
-    let token = github_proxy::token_from_gh_config(&directory).ok_or_else(|| {
+    let host = github_proxy::configured_credential_host()
+        .ok_or_else(|| String::from("GITHUB_PROXY_BASE_URL does not name a valid GitHub host"))?;
+    let token = github_proxy::token_from_gh_config(&directory, &host).ok_or_else(|| {
         format!(
-            "no GitHub credential in {}; run `gh auth login` there first",
-            directory.display()
+            "no GitHub credential for {host} in {}; run `gh auth login --hostname {host}` there first",
+            directory.display(),
         )
     })?;
     let path = github_proxy::store_credential(data_dir, &token)?;
@@ -356,12 +358,7 @@ fn import_github(data_dir: &std::path::Path, source: &str) -> Result<Vec<String>
     Ok(messages)
 }
 
-/// Copy a vendor credential into this deployment's home, and say what it is.
-///
-/// The document is copied rather than re-serialized from a parsed token: that
-/// type does not model `id_token`, `auth_mode`, or `scope`, and Codex derives
-/// its account id from `id_token` on every read, so a round-trip would drop the
-/// field the next read depends on.
+/// Adopt a vendor credential into this deployment's home, and say what it is.
 async fn import_provider(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
@@ -369,7 +366,46 @@ async fn import_provider(
     policy: ImportPolicy,
     resumed_transaction_id: Option<&str>,
 ) -> Result<ImportExecution, ImportFailure> {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let user_home = config.client_home.to_string_lossy().into_owned();
+    let destination_home = provider_home(config, provider, &user_home);
+    let catalog_base_url_override = import_catalog_base_url_override();
+    import_provider_with_paths(
+        &config.data_dir,
+        &user_home,
+        &destination_home,
+        provider,
+        source,
+        policy,
+        resumed_transaction_id,
+        catalog_base_url_override.as_deref(),
+    )
+    .await
+}
+
+fn import_catalog_base_url_override() -> Option<String> {
+    #[cfg(debug_assertions)]
+    {
+        std::env::var("LINK_ASSISTANT_ROUTER_TEST_CATALOG_BASE_URL")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+    }
+    #[cfg(not(debug_assertions))]
+    {
+        None
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn import_provider_with_paths(
+    data_dir: &std::path::Path,
+    user_home: &str,
+    destination_home: &std::path::Path,
+    provider: SubscriptionProvider,
+    source: &str,
+    policy: ImportPolicy,
+    resumed_transaction_id: Option<&str>,
+    catalog_base_url_override: Option<&str>,
+) -> Result<ImportExecution, ImportFailure> {
     // An empty value asks for the vendor's own default location.
     //
     // Deliberately not `resolve_home`, which honours `CLAUDE_CODE_HOME` and
@@ -378,12 +414,11 @@ async fn import_provider(
     // itself as a self-import (issue #278). The vendor's conventional home is
     // the thing an operator means by "the login this machine already has".
     let source_home = if source.trim().is_empty() {
-        provider.conventional_home(&user_home)
+        provider.conventional_home(user_home)
     } else {
         std::path::PathBuf::from(source)
     };
-    let destination_home = provider_home(config, provider, &user_home);
-    if same_credential_home(&source_home, &destination_home) {
+    if same_credential_home(&source_home, destination_home) {
         // A deployment that reads the vendor's own home already holds whatever
         // is there; there is nothing to copy, and copying a file onto itself
         // would truncate it.
@@ -391,6 +426,36 @@ async fn import_provider(
             "{provider} is already read from {}, so there is nothing to adopt",
             destination_home.display()
         )));
+    }
+
+    let destination = SubscriptionReader::new(provider, destination_home);
+    // Conditional provisioning must win without even reading a malformed or
+    // externally owned source. Installation repeats the same check after the
+    // catalog request while holding the destination transaction lock.
+    if policy.if_absent && destination.has_platform_store_credential() {
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present in the platform credential store; the candidate was not read, validated, or installed"
+            )],
+        ));
+    }
+    if policy.if_absent
+        && let Some(path) = destination
+            .existing_document_locked(
+                data_dir,
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
+            )
+            .await
+            .map_err(ImportFailure::not_attempted)?
+    {
+        return Ok(ImportExecution::already_present(
+            provider.to_string(),
+            vec![format!(
+                "{provider:<8} already present at {}; the candidate was not read, validated, or installed",
+                path.display()
+            )],
+        ));
     }
 
     let from = SubscriptionReader::new(provider, &source_home);
@@ -409,8 +474,8 @@ async fn import_provider(
         document,
         token: _,
         origin,
-        path: source_path,
-    } = &source_credential;
+        path,
+    } = source_credential;
     let where_from = match origin {
         link_assistant_router::platform_keychain::Origin::Keychain => {
             link_assistant_router::platform_keychain::service_name(provider).map_or_else(
@@ -421,101 +486,92 @@ async fn import_provider(
         link_assistant_router::platform_keychain::Origin::File
         | link_assistant_router::platform_keychain::Origin::ExternalFile
         | link_assistant_router::platform_keychain::Origin::AdoptedFile => {
-            from.discover_credential_path().map_or_else(
+            path.as_ref().map_or_else(
                 || source_home.display().to_string(),
                 |path| path.display().to_string(),
             )
         }
     };
-
-    let destination = SubscriptionReader::new(provider, &destination_home);
-    if policy.external_refresh_owner
-        && !matches!(
+    let external_source = if policy.router_owned_candidate {
+        None
+    } else {
+        Some(prepare_external_source(
+            provider,
             origin,
-            link_assistant_router::platform_keychain::Origin::File
-        )
-    {
-        return Err(ImportFailure::not_attempted(format!(
-            "the {provider} credential is owned by {where_from}, which Router cannot durably advance; its refresh token was not spent"
-        )));
-    }
-    // Do not spend a rotating candidate chain when conditional provisioning
-    // already has a winner. Installation repeats this check after validation,
-    // under the same lock, so a concurrent login/refresh still wins the race.
-    if policy.if_absent && destination.has_platform_store_credential() {
-        return Ok(ImportExecution::already_present(
-            provider.to_string(),
-            vec![format!(
-                "{provider:<8} already present in the platform credential store; candidate from {where_from} was not validated or installed"
-            )],
-        ));
-    }
-    if policy.if_absent
-        && let Some(path) = destination
-            .existing_document_locked(
-                &config.data_dir,
-                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
-            )
-            .await
-            .map_err(ImportFailure::not_attempted)?
-    {
-        return Ok(ImportExecution::already_present(
-            provider.to_string(),
-            vec![format!(
-                "{provider:<8} already present at {}; candidate from {where_from} was not validated or installed",
-                path.display()
-            )],
-        ));
-    }
+            path.as_deref(),
+            &destination,
+        )?)
+    };
 
-    // A working access token can be paired with a stale, already-spent refresh
-    // link. Prove the chain by forcing one direct OAuth exchange in an isolated
-    // durable store, then ask the non-inference catalog with the persisted
-    // result. The destination remains untouched throughout both network calls.
-    let validated = validate_candidate(&config.data_dir, provider, document).await?;
+    // A fresh import validates only the current access token. Redeeming its
+    // refresh token would invalidate the vendor client's copy before Router
+    // had installed anything. Only a claimed Router-owned recovery transaction
+    // may advance its own chain here.
+    let validated = validate_candidate_at(
+        data_dir,
+        provider,
+        &document,
+        policy.router_owned_candidate,
+        None,
+        catalog_base_url_override,
+    )
+    .await?;
     let report = describe_credential(validated.token());
     if (policy.if_absent && destination.has_platform_store_credential())
         || (!policy.if_absent
             && destination.candidate_is_shadowed_by_platform_store(validated.token()))
     {
+        let error = format!(
+            "the {provider} platform credential remains authoritative; the external source was not installed"
+        );
+        if policy.router_owned_candidate {
+            return Err(retain_validated_candidate(
+                validated,
+                ImportPhase::Promotion,
+                error,
+            ));
+        }
         drop(validated);
-        return Err(ImportFailure::safe_failure(
-            ImportPhase::Promotion,
-            format!(
-                "the {provider} platform credential remains authoritative; the external refresh token was not spent"
-            ),
-        ));
+        return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
     }
-    let receipt_id = resumed_transaction_id.unwrap_or_else(|| validated.transaction_id());
-    let promotion_document = if policy.external_refresh_owner {
-        let source_path = source_path.as_deref().ok_or_else(|| {
-            ImportFailure::not_attempted(format!(
-                "the {provider} external credential has no writable source; its refresh token was not spent"
-            ))
-        })?;
-        link_assistant_router::subscription::reference_external_credential(source_path, receipt_id)
-            .map_err(ImportFailure::not_attempted)?
-    } else {
-        link_assistant_router::subscription::mark_promotion_receipt(
-            validated.document(),
-            receipt_id,
-        )
-        .map_err(ImportFailure::not_attempted)?
+    let receipt_id = resumed_transaction_id
+        .unwrap_or_else(|| validated.transaction_id())
+        .to_string();
+    let promotion_document = match external_source.as_ref().map_or_else(
+        || {
+            link_assistant_router::subscription::mark_promotion_receipt(
+                validated.document(),
+                &receipt_id,
+            )
+        },
+        |source| {
+            link_assistant_router::subscription::reference_external_credential(source, &receipt_id)
+        },
+    ) {
+        Ok(document) => document,
+        Err(error) => {
+            if policy.router_owned_candidate {
+                return Err(retain_validated_candidate(
+                    validated,
+                    ImportPhase::Promotion,
+                    error,
+                ));
+            }
+            drop(validated);
+            return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
+        }
     };
     let promotion = install_candidate(
         &destination,
-        &config.data_dir,
+        data_dir,
         &promotion_document,
         CredentialProbe::Accepted,
-        ImportPolicy {
-            external_refresh_owner: false,
-            ..policy
-        },
+        policy,
     )
     .await;
     let installed = match promotion {
         Ok(installed) => installed,
-        Err(_error) if destination_has_receipt(config, provider, receipt_id) => {
+        Err(_error) if destination_has_receipt_at(&destination, &receipt_id) => {
             let path = destination.discover_credential_path().ok_or_else(|| {
                 ImportFailure::safe_failure(
                     ImportPhase::Promotion,
@@ -525,6 +581,13 @@ async fn import_provider(
             InstallDocumentResult::Installed(path)
         }
         Err(error) => {
+            if policy.router_owned_candidate {
+                return Err(retain_validated_candidate(
+                    validated,
+                    ImportPhase::Promotion,
+                    error,
+                ));
+            }
             drop(validated);
             return Err(ImportFailure::safe_failure(ImportPhase::Promotion, error));
         }
@@ -536,30 +599,106 @@ async fn import_provider(
                     "{provider:<8} imported {} from {where_from}",
                     path.display()
                 ),
-                format!(
-                    "{provider:<8} candidate {report}, accepted by the vendor without spending the source refresh token"
+                external_source.as_ref().map_or_else(
+                    || format!(
+                        "{provider:<8} candidate {report}, Router-owned refresh chain validated and promoted"
+                    ),
+                    |source| format!(
+                        "{provider:<8} candidate {report}, current access accepted without OAuth exchange; Router and the vendor client share the authoritative file at {}",
+                        source.display()
+                    ),
                 ),
             ];
-            // Dropping a successfully promoted candidate removes its isolated
-            // staging directory. The complete bytes now live at `path`.
+            // The isolated validation copy is never authoritative. A fresh
+            // import leaves the complete bytes at the vendor source; a resumed
+            // transaction has copied them into the destination above.
             drop(validated);
             ImportExecution::promoted(provider.to_string(), messages)
         }
         InstallDocumentResult::AlreadyPresent(path) => {
-            // A login or refresh won the race after the preflight. The source
-            // refresh token was never spent, so no recovery transaction is
-            // needed for the discarded duplicate.
-            drop(validated);
-            ImportExecution::already_present(
-                provider.to_string(),
-                vec![format!(
-                    "{provider:<8} already present at {}; candidate from {where_from} was not installed",
+            if !policy.router_owned_candidate {
+                drop(validated);
+                return Ok(ImportExecution::already_present(
+                    provider.to_string(),
+                    vec![format!(
+                        "{provider:<8} already present at {}; the external candidate from {where_from} was validated but not installed",
+                        path.display()
+                    )],
+                ));
+            }
+            return Err(retain_validated_candidate(
+                validated,
+                ImportPhase::Promotion,
+                format!(
+                    "a credential appeared at {}; the validated {provider} successor from {where_from} was retained for recovery",
                     path.display()
-                )],
-            )
+                ),
+            ));
         }
     };
     Ok(execution)
+}
+
+fn prepare_external_source(
+    provider: SubscriptionProvider,
+    origin: link_assistant_router::platform_keychain::Origin,
+    path: Option<&std::path::Path>,
+    destination: &SubscriptionReader,
+) -> Result<std::path::PathBuf, ImportFailure> {
+    if origin == link_assistant_router::platform_keychain::Origin::Keychain {
+        return Err(ImportFailure::not_attempted(format!(
+            "the selected {provider} credential exists only in the platform keychain; let the vendor client expose a current writable credential file before import"
+        )));
+    }
+    if origin == link_assistant_router::platform_keychain::Origin::ExternalFile {
+        return Err(ImportFailure::not_attempted(format!(
+            "the selected {provider} credential is externally owned but does not identify its authoritative writable source"
+        )));
+    }
+    let path = path.ok_or_else(|| {
+        ImportFailure::not_attempted(format!(
+            "the selected {provider} credential has no authoritative writable source file"
+        ))
+    })?;
+    let source = std::fs::canonicalize(path).map_err(|_| {
+        ImportFailure::not_attempted(format!(
+            "the selected {provider} credential source is not a readable file"
+        ))
+    })?;
+    if destination
+        .credential_paths()
+        .iter()
+        .filter_map(|candidate| std::fs::canonicalize(candidate).ok())
+        .any(|candidate| candidate == source)
+    {
+        return Err(ImportFailure::not_attempted(format!(
+            "the selected {provider} source is also a Router destination credential"
+        )));
+    }
+    let parent = source.parent().ok_or_else(|| {
+        ImportFailure::not_attempted(format!(
+            "the selected {provider} credential source has no writable directory"
+        ))
+    })?;
+    let probe = tempfile::Builder::new()
+        .prefix(".router-import-write-check-")
+        .tempfile_in(parent)
+        .map_err(|_| {
+            ImportFailure::not_attempted(format!(
+                "the selected {provider} credential source cannot be replaced atomically; make its directory writable before import"
+            ))
+        })?;
+    probe.as_file().sync_all().map_err(|_| {
+        ImportFailure::not_attempted(format!(
+            "the selected {provider} credential source cannot be persisted durably"
+        ))
+    })?;
+    probe.close().map_err(|_| {
+        ImportFailure::not_attempted(format!(
+            "the selected {provider} credential source write check could not be cleaned up"
+        ))
+    })?;
+    Ok(source)
 }
 
 fn destination_has_receipt(
@@ -567,9 +706,13 @@ fn destination_has_receipt(
     provider: SubscriptionProvider,
     transaction_id: &str,
 ) -> bool {
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let user_home = config.client_home.to_string_lossy().into_owned();
     let destination =
         SubscriptionReader::new(provider, provider_home(config, provider, &user_home));
+    destination_has_receipt_at(&destination, transaction_id)
+}
+
+fn destination_has_receipt_at(destination: &SubscriptionReader, transaction_id: &str) -> bool {
     destination
         .discover_credential_path()
         .and_then(|path| std::fs::read_to_string(path).ok())
@@ -578,33 +721,43 @@ fn destination_has_receipt(
         })
 }
 
-async fn validate_candidate(
+async fn validate_candidate_at(
     data_dir: &std::path::Path,
     provider: SubscriptionProvider,
     document: &str,
+    rotate_candidate: bool,
+    token_url_override: Option<&str>,
+    catalog_base_url_override: Option<&str>,
 ) -> Result<ValidatedCandidate, ImportFailure> {
-    link_assistant_router::credential_acceptance::accept_external_candidate(
-        data_dir, provider, document, None,
-    )
-    .await
-    .map_err(|failure| ImportFailure::from_acceptance(&failure))
+    let accepted = if rotate_candidate {
+        link_assistant_router::credential_acceptance::accept_candidate(
+            data_dir,
+            provider,
+            document,
+            token_url_override,
+            catalog_base_url_override,
+        )
+        .await
+    } else {
+        link_assistant_router::credential_acceptance::accept_external_candidate(
+            data_dir,
+            provider,
+            document,
+            catalog_base_url_override,
+        )
+        .await
+    };
+    accepted.map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
-#[cfg(test)]
-fn import_refresh_prerequisite(
-    provider: SubscriptionProvider,
-    lookup: impl FnOnce(&str) -> Option<String>,
-) -> Result<(), String> {
-    if provider != SubscriptionProvider::Gemini {
-        return Ok(());
-    }
-    let variable = link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV;
-    if lookup(variable).is_some_and(|value| !value.trim().is_empty()) {
-        return Ok(());
-    }
-    Err(format!(
-        "Gemini refresh-chain import requires {variable}; set it to the OAuth client secret shipped with Gemini CLI"
-    ))
+fn retain_validated_candidate(
+    validated: ValidatedCandidate,
+    phase: ImportPhase,
+    error: String,
+) -> ImportFailure {
+    let transaction_id = validated.transaction_id().to_string();
+    std::mem::forget(validated);
+    ImportFailure::retained(phase, transaction_id, error)
 }
 
 fn same_credential_home(source: &std::path::Path, destination: &std::path::Path) -> bool {
@@ -636,15 +789,15 @@ async fn validate_candidate_with(
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
 ) -> Result<ValidatedCandidate, ImportFailure> {
-    link_assistant_router::credential_acceptance::accept_candidate(
+    validate_candidate_at(
         data_dir,
         provider,
         document,
+        true,
         token_url_override,
         catalog_base_url_override,
     )
     .await
-    .map_err(|failure| ImportFailure::from_acceptance(&failure))
 }
 
 /// Enforce candidate acceptance policy, then enter the shared writer boundary.
@@ -731,15 +884,9 @@ pub fn humanize_minutes(minutes: i64) -> String {
 pub fn provider_home(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
-    user_home: &str,
+    _user_home: &str,
 ) -> std::path::PathBuf {
-    match provider {
-        SubscriptionProvider::Claude => config.login.claude_code_home.clone(),
-        SubscriptionProvider::Codex => config.login.codex_home.clone(),
-        SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
-            provider.resolve_home(user_home)
-        }
-    }
+    config.credential_home(provider)
 }
 
 #[cfg(test)]

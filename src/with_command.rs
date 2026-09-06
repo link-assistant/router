@@ -39,6 +39,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if args.global || args.undo {
         return Ok(crate::configure::run(&args.as_configure()).await);
     }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
+    }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
             .client
@@ -124,7 +127,17 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         None
     };
-    let temporary = match TemporaryClient::prepare(&Preparation {
+    let codex_bridge = if args.client == ClientKind::Codex
+        && crate::codex_loopback_bridge::required(&server.base_url)?
+    {
+        Some(crate::codex_loopback_bridge::start_ephemeral(&server.base_url).await?)
+    } else {
+        None
+    };
+    let codex_backend_base_url = codex_bridge
+        .as_ref()
+        .map(crate::codex_loopback_bridge::EphemeralBridge::backend_base_url);
+    let mut temporary = match TemporaryClient::prepare(&Preparation {
         client: args.client,
         base_url: &server.base_url,
         token: &credential.token,
@@ -134,6 +147,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         one_shot: plan.one_shot,
         profile_root: None,
         codex_reasoning_effort: codex_reasoning_effort.as_deref(),
+        codex_backend_base_url,
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -141,6 +155,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             return Err(error);
         }
     };
+    temporary.codex_bridge = codex_bridge;
     let arguments = plan.arguments;
     let launch = temporary.launch(&arguments).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
@@ -215,6 +230,7 @@ fn resolve_model(
 struct TemporaryClient {
     directory: RunDirectory,
     command: Command,
+    codex_bridge: Option<crate::codex_loopback_bridge::EphemeralBridge>,
 }
 
 /// Where a run that cannot layer onto the user's configuration keeps its files.
@@ -328,6 +344,7 @@ struct Preparation<'a> {
     one_shot: bool,
     profile_root: Option<&'a Path>,
     codex_reasoning_effort: Option<&'a str>,
+    codex_backend_base_url: Option<&'a str>,
 }
 
 impl TemporaryClient {
@@ -342,6 +359,7 @@ impl TemporaryClient {
             one_shot,
             profile_root,
             codex_reasoning_effort,
+            codex_backend_base_url,
         } = request;
         // A client that can be extended never reads this directory — the
         // router's whole contribution is two environment variables — so it is
@@ -382,7 +400,12 @@ impl TemporaryClient {
                     .into());
             }
             _ => {
-                manager.setup(client, base_url, models)?;
+                manager.setup_with_codex_backend(
+                    client,
+                    base_url,
+                    models,
+                    codex_backend_base_url,
+                )?;
             }
         }
         let integration = client.integration();
@@ -400,6 +423,17 @@ impl TemporaryClient {
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
         }
+        if client == ClientKind::Codex
+            && let Some(alias) = crate::token::codex_token_alias(token)
+        {
+            command
+                .env("CODEX_ACCESS_TOKEN", &alias)
+                .env("CODEX_CONNECTORS_TOKEN", alias)
+                .env(
+                    "CODEX_AUTHAPI_BASE_URL",
+                    endpoint(base_url, "/api/services/codex"),
+                );
+        }
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
         }
@@ -416,8 +450,7 @@ impl TemporaryClient {
                 // outranks the auth token, so the run would leave the router.
                 command
                     .env("ANTHROPIC_API_KEY", "")
-                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
-                    .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
                 // Claude Code's built-in family aliases describe Anthropic
                 // models. A z.ai-only catalog needs only the same exact pair
                 // of main/subagent pins as persistent setup. Assigning one GLM
@@ -462,19 +495,29 @@ impl TemporaryClient {
                         codex_reasoning_effort,
                         model_override,
                     )?;
-                    append_codex_router_overrides(&mut command, base_url, &catalog)?;
+                    append_codex_router_overrides(
+                        &mut command,
+                        base_url,
+                        codex_backend_base_url,
+                        &catalog,
+                    )?;
                 }
             }
             ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
             }
         }
-        Ok(Self { directory, command })
+        Ok(Self {
+            directory,
+            command,
+            codex_bridge: None,
+        })
     }
 
     async fn launch(
         mut self,
         arguments: &[OsString],
     ) -> Result<std::process::ExitStatus, AnyError> {
+        let _codex_bridge = self.codex_bridge.take();
         debug_assert!(self.directory.path().is_dir());
         self.command.args(arguments);
         let program = self.command.get_program().to_string_lossy().into_owned();
@@ -501,52 +544,58 @@ impl TemporaryClient {
     }
 }
 
-/// Overlay only the connection provider for an ordinary Codex run.
-///
-/// Codex parses every value after `-c` as TOML. JSON string literals are also
-/// valid TOML basic strings and safely quote URLs and names without ever
-/// embedding the token, which remains in `LINK_ASSISTANT_TOKEN`.
+/// Overlay routing for an ordinary Codex run. Values after `-c` are TOML;
+/// JSON strings quote them safely while the token stays in the environment.
 fn append_codex_router_overrides(
     command: &mut Command,
     base_url: &str,
+    codex_backend_base_url: Option<&str>,
     catalog: &Path,
 ) -> Result<(), AnyError> {
+    let provider_id = format!("link-assistant-run-{}", uuid::Uuid::new_v4().simple());
+    let provider_key = format!("model_providers.{provider_id}");
+    let provider_base_url = endpoint(
+        base_url,
+        crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+    );
+    let provider = format!(
+        "{{ name = {}, base_url = {}, wire_api = \"responses\", requires_openai_auth = true, \
+         supports_websockets = true, supports_standalone_web_search = true }}",
+        serde_json::to_string("OpenAI")?,
+        serde_json::to_string(&provider_base_url)?,
+    );
     for (key, value) in [
-        ("model_provider", "link-assistant".to_string()),
+        ("model_provider", provider_id),
         ("model_catalog_json", catalog.to_string_lossy().into_owned()),
+        (provider_key.as_str(), provider),
         (
-            "model_providers.link-assistant.name",
-            "Link.Assistant.Router".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.base_url",
-            endpoint(
-                base_url,
-                crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+            "chatgpt_base_url",
+            codex_backend_base_url.map_or_else(
+                || endpoint(base_url, "/api/services/codex/backend-api"),
+                str::to_string,
             ),
         ),
         (
-            "model_providers.link-assistant.env_key",
-            "LINK_ASSISTANT_TOKEN".to_string(),
+            "experimental_realtime_ws_base_url",
+            provider_base_url.clone(),
         ),
         (
-            "model_providers.link-assistant.wire_api",
-            "responses".to_string(),
+            "experimental_realtime_webrtc_call_base_url",
+            provider_base_url,
         ),
     ] {
-        command
-            .arg("-c")
-            .arg(format!("{key}={}", serde_json::to_string(&value)?));
+        let rendered = if key == provider_key.as_str() {
+            value
+        } else {
+            serde_json::to_string(&value)?
+        };
+        command.arg("-c").arg(format!("{key}={rendered}"));
     }
     Ok(())
 }
 
-/// Write the exact live Router catalog in Codex's process-local override shape.
-///
-/// Codex treats a user `model_catalog_json` as a complete replacement for its
-/// bundled catalog. A higher-precedence, disposable catalog prevents that file
-/// from authorizing foreign model ids without modifying the user's config or
-/// hiding their sessions, MCP servers, or ordinary preferences.
+/// Write the live Router catalog as a complete process-local Codex catalog,
+/// preventing foreign model ids without changing the user's configuration.
 fn write_codex_model_catalog(
     root: &Path,
     models: &[RouterModel],
@@ -653,9 +702,8 @@ fn model_supports_reasoning_effort(model: &RouterModel, effort: &str) -> bool {
         .is_some_and(|levels| levels.iter().any(|level| level.effort == effort))
 }
 
-/// Read only the preference needed to keep Codex's process-local model picker
-/// compatible. The real file remains the source of every other setting and is
-/// never rewritten by `with`.
+/// Read the preference needed by Codex's process-local model picker without
+/// rewriting its real configuration.
 fn configured_codex_reasoning_effort() -> Result<Option<String>, AnyError> {
     let path = ClientManager::from_env()?.config_path(ClientKind::Codex);
     let source = match fs::read_to_string(&path) {

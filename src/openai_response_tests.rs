@@ -15,6 +15,10 @@ fn translates_tool_call_blocks() {
         max_completion_tokens: None,
         temperature: None,
         top_p: None,
+        frequency_penalty: None,
+        presence_penalty: None,
+        logit_bias: None,
+        seed: None,
         stream: None,
         stop: None,
         tools: Some(json!([
@@ -30,6 +34,16 @@ fn translates_tool_call_blocks() {
         tool_choice: Some(json!("required")),
         reasoning_effort: None,
         reasoning: None,
+        response_format: None,
+        parallel_tool_calls: None,
+        n: None,
+        modalities: None,
+        audio: None,
+        logprobs: None,
+        top_logprobs: None,
+        safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["tools"][0]["name"], "search");

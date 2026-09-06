@@ -1,6 +1,7 @@
 //! Fail-closed refresh transaction regressions (issue #383).
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::super::{
     RefreshError, refresh_failure_diagnostic, terminal_failure_diagnostic, terminal_message,
@@ -19,6 +20,32 @@ struct ControlledStore {
 struct ExternalAuthoritativeStore {
     credential: SubscriptionToken,
     lock_path: PathBuf,
+}
+
+#[derive(Debug)]
+struct PersistCountingStore {
+    credential: SubscriptionToken,
+    lock_path: PathBuf,
+    persist_calls: Arc<AtomicUsize>,
+}
+
+impl CredentialStore for PersistCountingStore {
+    fn reload(&self) -> Option<SubscriptionToken> {
+        Some(self.credential.clone())
+    }
+
+    fn persist(&self, _token: &SubscriptionToken) -> Result<(), String> {
+        self.persist_calls.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+
+    fn lock_path(&self) -> Option<PathBuf> {
+        Some(self.lock_path.clone())
+    }
+
+    fn describe(&self) -> String {
+        "expiry-validation test credential store".into()
+    }
 }
 
 impl CredentialStore for ExternalAuthoritativeStore {
@@ -144,6 +171,63 @@ async fn an_external_authoritative_store_is_not_spent_without_a_writer() {
 
     assert_refresh_is_refused_without_endpoint_request(Some(store as Arc<dyn CredentialStore>))
         .await;
+}
+
+#[tokio::test]
+async fn invalid_expiry_never_persists_or_caches_a_rotated_credential() {
+    let directory = tempfile::tempdir().expect("lock directory");
+    let original = token("safe-old-access", "safe-old-refresh", NOW_MS - 1);
+    let persist_calls = Arc::new(AtomicUsize::new(0));
+    let store = Arc::new(PersistCountingStore {
+        credential: original.clone(),
+        lock_path: directory.path().join("credential.lock"),
+        persist_calls: Arc::clone(&persist_calls),
+    });
+    let (url, received, server) = scripted_endpoint(
+        vec![Answer::new(
+            200,
+            r#"{"access_token":"must-not-escape","refresh_token":"must-not-rotate","expires_in":9223372036854775807}"#,
+        )],
+        |_| {},
+    )
+    .await;
+    let cache = TokenCache::new();
+    cache.register_store(
+        SubscriptionProvider::Claude,
+        "primary",
+        store as Arc<dyn CredentialStore>,
+    );
+
+    let returned = cache
+        .get_fresh_for_at(
+            &reqwest::Client::new(),
+            &url,
+            SubscriptionProvider::Claude,
+            "primary",
+            original.clone(),
+            NOW_MS,
+        )
+        .await;
+    drain(server).await;
+
+    assert_eq!(
+        returned, original,
+        "the old credential remains authoritative"
+    );
+    assert_eq!(received.lock().unwrap().len(), 1, "one exchange attempted");
+    assert_eq!(persist_calls.load(Ordering::SeqCst), 0);
+    assert!(
+        cache
+            .cached_valid_for(SubscriptionProvider::Claude, "primary", NOW_MS)
+            .is_none(),
+        "an invalid successor must never enter the cache"
+    );
+    let reported = cache
+        .last_refresh_error(SubscriptionProvider::Claude)
+        .expect("validation failure is operator-visible");
+    assert!(reported.contains("invalid_token_response"), "{reported}");
+    assert!(!reported.contains("must-not-escape"), "{reported}");
+    assert!(!reported.contains("must-not-rotate"), "{reported}");
 }
 
 #[tokio::test]

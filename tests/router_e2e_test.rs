@@ -9,11 +9,13 @@ use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
+use axum::extract::ws::{Message as AxumWebSocketMessage, WebSocketUpgrade};
 use axum::extract::{Request, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::from_fn_with_state;
 use axum::response::Response;
 use axum::routing::{get, post};
+use futures_util::StreamExt;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
@@ -27,6 +29,8 @@ use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
+#[path = "router_e2e/responses_websocket.rs"]
+mod responses_websocket;
 #[path = "router_e2e/token_budget.rs"]
 mod token_budget;
 #[path = "router_e2e/token_surfaces.rs"]
@@ -103,7 +107,17 @@ impl TestRouter {
             headers: Arc::clone(&upstream_headers),
             invalid_body,
         };
-        let stub = Router::new().fallback(stub_vendor).with_state(stub_state);
+        let stub = Router::new()
+            .route(
+                "/v1/responses",
+                get(stub_responses_websocket).post(stub_vendor),
+            )
+            .route(
+                "/responses",
+                get(stub_responses_websocket).post(stub_vendor),
+            )
+            .fallback(stub_vendor)
+            .with_state(stub_state);
         let (stub_url, stub_task) = spawn(stub).await;
 
         let token_manager = TokenManager::new("router-e2e-secret");
@@ -161,7 +175,7 @@ impl TestRouter {
                 .expect("router e2e bridge policy"),
             )
             .expect("install router e2e bridge policy");
-        let state = AppState {
+        let mut state = AppState {
             client: reqwest::Client::new(),
             token_manager: token_manager.clone(),
             oauth_provider,
@@ -204,6 +218,13 @@ impl TestRouter {
             github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
             max_proxy_request_bytes,
         };
+        if provider == UpstreamProvider::OpenAICompatible {
+            state.openai_compatible.base_url = state.upstream_base_url.clone();
+            state.openai_compatible.api_key = Some("stub-openai-compatible-key".into());
+            state.openai_compatible.default_model = Some("gpt-5".into());
+            state.openai_compatible.models = vec!["gpt-5".into()];
+            state.openai_compatible.supported_clients = vec!["opencode".into(), "codex".into()];
+        }
         let app = test_app(state);
         let (url, router_task) = spawn(app).await;
 
@@ -260,7 +281,7 @@ impl TestRouter {
     }
 
     fn token_for(&self, path: &str) -> &str {
-        if path.ends_with("/v1/messages") {
+        if path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens") {
             &self.claude_token
         } else if path.ends_with("/v1/responses") {
             &self.codex_token
@@ -271,7 +292,7 @@ impl TestRouter {
 
     fn authenticated_post(&self, path: &str, token: &str) -> reqwest::RequestBuilder {
         let request = self.client.post(format!("{}{path}", self.url));
-        if path.ends_with("/v1/messages") {
+        if path.ends_with("/v1/messages") || path.ends_with("/v1/messages/count_tokens") {
             request
                 .header("x-api-key", token)
                 .header("anthropic-version", "2023-06-01")
@@ -315,6 +336,10 @@ fn test_app(state: AppState) -> Router {
             post(proxy::proxy_handler),
         )
         .route(
+            "/api/services/anthropic/v1/messages/count_tokens",
+            post(proxy::proxy_handler),
+        )
+        .route(
             "/api/services/openai/v1/chat/completions",
             post(proxy::openai_chat_completions),
         )
@@ -328,15 +353,17 @@ fn test_app(state: AppState) -> Router {
         )
         .route(
             "/api/services/openai/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses).get(link_assistant_router::responses_websocket::openai),
         )
         .route(
             "/api/services/codex/v1/responses",
-            post(proxy::openai_responses_native),
+            post(proxy::openai_responses_native)
+                .get(link_assistant_router::responses_websocket::codex),
         )
         .route(
             "/api/services/qwen/v1/responses",
-            post(proxy::openai_responses),
+            post(proxy::openai_responses)
+                .get(link_assistant_router::responses_websocket::unsupported_qwen),
         )
         .route("/api/services/openai/v1/models", get(proxy::openai_models))
         .route(
@@ -397,11 +424,22 @@ async fn response_payload(response: reqwest::Response) -> Value {
 }
 
 async fn stub_vendor(State(state): State<StubState>, request: Request) -> Response {
+    let count_tokens = request.uri().path().ends_with("/messages/count_tokens");
     state
         .headers
         .lock()
         .expect("stub header lock")
         .push(request.headers().clone());
+    if request.method() == axum::http::Method::GET && request.uri().path().ends_with("/v1/models") {
+        let mut response = Response::new(Body::from(
+            serde_json::to_vec(&json!({"data": [{"id": "gpt-5"}]}))
+                .expect("serialize model catalog"),
+        ));
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        return response;
+    }
     let body = to_bytes(request.into_body(), 1024 * 1024)
         .await
         .expect("read stub request");
@@ -416,6 +454,13 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         return Response::new(Body::from(
             "internal safety_identifier and prompt_cache_key must stay private",
         ));
+    }
+    if count_tokens {
+        let mut response = Response::new(Body::from(r#"{"input_tokens":37}"#));
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+        return response;
     }
 
     let stream = body.get("stream").and_then(Value::as_bool) == Some(true);
@@ -453,6 +498,79 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
         .headers_mut()
         .insert("x-oai-request-id", HeaderValue::from_static("req_stub_123"));
     response
+}
+
+async fn stub_responses_websocket(
+    State(state): State<StubState>,
+    headers: HeaderMap,
+    upgrade: WebSocketUpgrade,
+) -> Response {
+    state
+        .headers
+        .lock()
+        .expect("stub header lock")
+        .push(headers);
+    upgrade.on_upgrade(move |mut socket| async move {
+        while let Some(message) = socket.next().await {
+            let Ok(message) = message else { break };
+            match message {
+                AxumWebSocketMessage::Text(text) => {
+                    let Ok(event) = serde_json::from_slice::<Value>(text.as_bytes()) else {
+                        break;
+                    };
+                    state
+                        .requests
+                        .lock()
+                        .expect("stub request lock")
+                        .push(event.clone());
+                    let stream_id = event.get("stream_id").cloned();
+                    let mut progress = json!({
+                        "type": "response.in_progress",
+                        "response": {"id": "resp_ws_stub", "status": "in_progress"},
+                        "vendor_extension": {"preserved": true}
+                    });
+                    let mut completed = json!({
+                        "type": "response.completed",
+                        "response": {
+                            "id": "resp_ws_stub",
+                            "status": "completed",
+                            "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
+                        },
+                        "vendor_extension": {"preserved": true}
+                    });
+                    if let Some(stream_id) = stream_id {
+                        progress["stream_id"] = stream_id.clone();
+                        completed["stream_id"] = stream_id;
+                    }
+                    if socket
+                        .send(AxumWebSocketMessage::Text(progress.to_string().into()))
+                        .await
+                        .is_err()
+                        || socket
+                            .send(AxumWebSocketMessage::Text(completed.to_string().into()))
+                            .await
+                            .is_err()
+                    {
+                        break;
+                    }
+                }
+                AxumWebSocketMessage::Ping(bytes) => {
+                    if socket
+                        .send(AxumWebSocketMessage::Pong(bytes))
+                        .await
+                        .is_err()
+                    {
+                        break;
+                    }
+                }
+                AxumWebSocketMessage::Close(frame) => {
+                    let _ = socket.send(AxumWebSocketMessage::Close(frame)).await;
+                    break;
+                }
+                AxumWebSocketMessage::Binary(_) | AxumWebSocketMessage::Pong(_) => {}
+            }
+        }
+    })
 }
 
 fn anthropic_message() -> Value {
@@ -550,6 +668,50 @@ fn anthropic_stream() -> String {
 }
 
 fn codex_stream_for_request(request: &Value) -> String {
+    let request_text = request.to_string();
+    if request_text.contains("terminal-incomplete-e2e") {
+        return codex_fixture_stream(&[
+            json!({"type":"response.output_text.delta","item_id":"msg_partial","output_index":0,"content_index":0,"delta":"partial"}),
+            json!({"type":"response.output_item.added","output_index":1,"item":{"id":"fc_partial","type":"function_call","call_id":"call_partial","name":"lookup","arguments":"{}"}}),
+            json!({"type":"response.incomplete","response":{"id":"resp_incomplete","model":"gpt-5","status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"usage":{"input_tokens":3,"output_tokens":4,"total_tokens":7},"output":[]}}),
+        ]);
+    }
+    if request_text.contains("refusal-only-e2e") || request_text.contains("refusal-mixed-e2e") {
+        let mixed = request_text.contains("refusal-mixed-e2e");
+        let mut events = vec![
+            json!({"type":"response.output_item.added","output_index":0,"item":{"id":"msg_refusal","type":"message","status":"in_progress","role":"assistant","content":[]}}),
+        ];
+        if mixed {
+            events.push(json!({"type":"response.output_text.delta","item_id":"msg_refusal","output_index":0,"content_index":0,"delta":"before "}));
+        }
+        let refusal_index = u8::from(mixed);
+        if mixed {
+            events.push(json!({"type":"response.refusal.delta","item_id":"msg_refusal","output_index":0,"content_index":refusal_index,"delta":"cannot comply"}));
+        }
+        events.push(json!({"type":"response.refusal.done","item_id":"msg_refusal","output_index":0,"content_index":refusal_index,"refusal":"cannot comply"}));
+        if mixed {
+            events.push(json!({"type":"response.output_text.delta","item_id":"msg_refusal","output_index":0,"content_index":2,"delta":" after"}));
+        }
+        events.push(json!({"type":"response.completed","response":{"id":"resp_refusal","model":"gpt-5","status":"completed","usage":{"input_tokens":3,"output_tokens":3,"total_tokens":6},"output":[]}}));
+        return codex_fixture_stream(&events);
+    }
+    if request_text.contains("response-failure-e2e")
+        || request_text.contains("standalone-error-e2e")
+    {
+        let terminal = if request_text.contains("standalone-error-e2e") {
+            "data: {\"type\":\"error\",\"message\":\"synthetic stream failure\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}\n\n"
+        } else {
+            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n"
+        };
+        return [
+            "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n",
+            "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\n",
+            "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+            terminal,
+            "data: [DONE]\n\n",
+        ]
+        .concat();
+    }
     let has_server_search = request["tools"]
         .as_array()
         .is_some_and(|tools| tools.iter().any(|tool| tool["type"] == "web_search"));
@@ -623,6 +785,10 @@ fn codex_stream_for_request(request: &Value) -> String {
         ]);
     }
     events.push(json!({"type":"response.completed","response":response}));
+    codex_fixture_stream(&events)
+}
+
+fn codex_fixture_stream(events: &[Value]) -> String {
     let mut stream = String::new();
     for event in events {
         write!(
@@ -647,3 +813,9 @@ mod cases_server_tools;
 
 #[path = "router_e2e/chat_validation.rs"]
 mod chat_validation;
+
+#[path = "router_e2e/bridge_history.rs"]
+mod bridge_history;
+
+#[path = "router_e2e/bridge_semantics.rs"]
+mod bridge_semantics;

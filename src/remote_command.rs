@@ -142,7 +142,7 @@ pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
 /// ask for one.
 #[must_use]
 pub const fn names_local_state(cli: &crate::cli::Cli) -> bool {
-    cli.data_dir.is_some() || cli.claude_code_home.is_some()
+    cli.data_dir.is_some() || cli.claude_code_home.is_some() || cli.home.is_some()
 }
 
 /// Let every command that does not serve start without `TOKEN_SECRET`.

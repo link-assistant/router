@@ -180,13 +180,97 @@ async fn service_switches_own_their_complete_namespaces() {
     let openai_routes = [
         (Method::GET, "/api/services/openai/v1/models"),
         (Method::POST, "/api/services/openai/v1/chat/completions"),
+        (Method::GET, "/api/services/openai/v1/chat/completions"),
+        (
+            Method::GET,
+            "/api/services/openai/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::POST,
+            "/api/services/openai/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/openai/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::GET,
+            "/api/services/openai/v1/chat/completions/chatcmpl_test/messages",
+        ),
         (Method::POST, "/api/services/openai/v1/responses"),
+        (Method::GET, "/api/services/openai/v1/responses/resp_test"),
+        (
+            Method::DELETE,
+            "/api/services/openai/v1/responses/resp_test",
+        ),
+        (
+            Method::POST,
+            "/api/services/openai/v1/responses/resp_test/cancel",
+        ),
+        (
+            Method::GET,
+            "/api/services/openai/v1/responses/resp_test/input_items",
+        ),
         (Method::GET, "/api/services/codex/v1/models"),
         (Method::POST, "/api/services/codex/v1/chat/completions"),
+        (Method::GET, "/api/services/codex/v1/chat/completions"),
+        (
+            Method::GET,
+            "/api/services/codex/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/codex/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/v1/chat/completions/chatcmpl_test/messages",
+        ),
         (Method::POST, "/api/services/codex/v1/responses"),
+        (Method::GET, "/api/services/codex/v1/responses/resp_test"),
+        (Method::DELETE, "/api/services/codex/v1/responses/resp_test"),
+        (
+            Method::POST,
+            "/api/services/codex/v1/responses/resp_test/cancel",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/v1/responses/resp_test/input_items",
+        ),
         (Method::GET, "/api/services/qwen/v1/models"),
         (Method::POST, "/api/services/qwen/v1/chat/completions"),
+        (Method::GET, "/api/services/qwen/v1/chat/completions"),
+        (
+            Method::GET,
+            "/api/services/qwen/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::POST,
+            "/api/services/qwen/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/qwen/v1/chat/completions/chatcmpl_test",
+        ),
+        (
+            Method::GET,
+            "/api/services/qwen/v1/chat/completions/chatcmpl_test/messages",
+        ),
         (Method::POST, "/api/services/qwen/v1/responses"),
+        (Method::GET, "/api/services/qwen/v1/responses/resp_test"),
+        (Method::DELETE, "/api/services/qwen/v1/responses/resp_test"),
+        (
+            Method::POST,
+            "/api/services/qwen/v1/responses/resp_test/cancel",
+        ),
+        (
+            Method::GET,
+            "/api/services/qwen/v1/responses/resp_test/input_items",
+        ),
         (Method::GET, "/api/services/gemini/v1beta/models"),
         (
             Method::GET,

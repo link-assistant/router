@@ -357,7 +357,6 @@ mod config_verbose_tests {
     use link_assistant_router::config::{
         BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
         default_activitypub_public_key_pem, default_crater_config, default_gonka_model,
-        default_gonka_source_url,
     };
     use std::path::PathBuf;
 
@@ -379,7 +378,8 @@ mod config_verbose_tests {
             codex_cli_bin: None,
             upstream_provider: UpstreamProvider::Anthropic,
             gonka_private_key: None,
-            gonka_source_url: default_gonka_source_url(),
+            gonka_api_key: None,
+            gonka_source_url: None,
             gonka_model: default_gonka_model(),
             bridge_model: None,
             audit_log: None,

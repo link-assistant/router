@@ -128,7 +128,7 @@ pub(super) fn shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 
-pub(super) fn failed(error: impl std::fmt::Display) -> ExitCode {
+pub fn failed(error: impl std::fmt::Display) -> ExitCode {
     eprintln!(
         "error: {}",
         crate::login_url::redact_secrets(&error.to_string())

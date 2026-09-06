@@ -3,6 +3,27 @@
 use std::path::Path;
 
 #[test]
+fn readme_pins_the_registered_github_routes() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("README.md");
+    let text = std::fs::read_to_string(&path).expect("README should be readable");
+
+    for canonical in [
+        "`/api/services/github/api/*`",
+        "`/api/services/github/api/graphql`",
+        "`/api/services/github/git/*`",
+    ] {
+        assert!(
+            text.contains(canonical),
+            "README must document canonical GitHub route {canonical}"
+        );
+    }
+    assert!(
+        !text.contains("`/api/services/github/graphql`"),
+        "README must not advertise the unregistered GitHub GraphQL path"
+    );
+}
+
+#[test]
 fn public_guides_never_promise_synthesized_anthropic_headers() {
     for relative in [
         "README.md",

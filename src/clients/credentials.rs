@@ -44,6 +44,13 @@ pub struct ManagedCredential {
     /// cannot do once the target is another deployment.
     #[serde(default)]
     pub router: Option<String>,
+    /// Management origin that issued this credential, when it differs from
+    /// the local token store used by legacy `clients setup` calls.
+    ///
+    /// This is deliberately only an origin. Administrative credentials are
+    /// never copied into client metadata.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub management_server: Option<String>,
     /// Non-secret subscriber identity carried by the signed client token.
     #[serde(default)]
     pub principal_id: Option<String>,
@@ -121,6 +128,7 @@ mod tests {
             label: None,
             issued_at: None,
             router: None,
+            management_server: None,
             principal_id: Some("primary".into()),
             config_sha256: None,
         };
@@ -143,6 +151,7 @@ mod tests {
             label: Some("client-codex".into()),
             issued_at: Some(7),
             router: Some("http://router.test".into()),
+            management_server: Some("http://admin.router.test".into()),
             principal_id: Some("primary".into()),
             config_sha256: Some("configuration-hash".into()),
         };
@@ -152,6 +161,10 @@ mod tests {
         let read_back = read(&path).expect("read metadata").expect("record exists");
         assert_eq!(read_back.token_id.as_deref(), Some("token-id"));
         assert_eq!(read_back.source, TokenSource::Minted);
+        assert_eq!(
+            read_back.management_server.as_deref(),
+            Some("http://admin.router.test")
+        );
         remove(&path).expect("remove metadata");
         assert!(read(&path).expect("missing metadata is fine").is_none());
     }

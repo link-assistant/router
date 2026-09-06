@@ -66,6 +66,7 @@ pub async fn models(
             {
                 return model_route_error_response(&error);
             }
+            append_gonka_models(&state, &claims, &headers, path, &mut catalog).await;
             catalog
         }
         UpstreamProvider::Anthropic => {
@@ -78,10 +79,25 @@ pub async fn models(
                 |provider| principal_catalog_records(&state, provider, &principal_accounts),
             )
         }
-        UpstreamProvider::Gonka => state.gonka.as_ref().map_or_else(
-            || crate::gonka::list_models(&crate::config::default_gonka_model()),
-            |gonka| crate::gonka::list_models(&gonka.model),
-        ),
+        UpstreamProvider::Gonka => {
+            let Some(gonka) = state.gonka.as_ref() else {
+                return crate::proxy::error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "api_error",
+                    crate::gonka::MISSING_API_KEY_MESSAGE,
+                );
+            };
+            match gonka.live_catalog(&state.client).await {
+                Ok(models) => crate::gonka::catalog_json(models),
+                Err(error) => {
+                    return crate::proxy::error_response(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "api_error",
+                        &error,
+                    );
+                }
+            }
+        }
         UpstreamProvider::Crater => crate::crater::list_models(),
         UpstreamProvider::Codex => {
             if let Err(response) = entitled(SubscriptionProvider::Codex) {
@@ -132,7 +148,77 @@ pub async fn models(
             catalog
         }
     };
-    (StatusCode::OK, axum::Json(models)).into_response()
+    match super::native_catalog::project(path, uri.query(), &models) {
+        Ok(Some(native)) => (StatusCode::OK, axum::Json(native)).into_response(),
+        Ok(None) => (StatusCode::OK, axum::Json(models)).into_response(),
+        Err(error) => crate::api_error::PresentedError {
+            status: error.status,
+            error_type: error.error_type,
+            message: &error.message,
+        }
+        .render(crate::api_error::dialect_for_path(path)),
+    }
+}
+
+async fn append_gonka_models(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    headers: &HeaderMap,
+    path: &str,
+    catalog: &mut serde_json::Value,
+) {
+    let Ok((client, _)) = crate::client_policy::bound_client(claims) else {
+        return;
+    };
+    if !crate::gonka::supports_client(client)
+        || !crate::client_policy::request_evidence(
+            client,
+            crate::client_policy::ClientProtocol::Catalog,
+            path,
+            headers,
+        )
+    {
+        return;
+    }
+    let Some(gonka) = state.gonka.as_ref() else {
+        return;
+    };
+    let Ok(models) = gonka.live_catalog(&state.client).await else {
+        catalog_status(catalog, "gonka", false);
+        return;
+    };
+    crate::gonka::merge_catalog(catalog, models);
+    catalog_status(catalog, "gonka", true);
+}
+
+fn catalog_status(catalog: &mut serde_json::Value, provider: &str, healthy: bool) {
+    let Some(object) = catalog.as_object_mut() else {
+        return;
+    };
+    let field = if healthy {
+        "healthy_providers"
+    } else {
+        "degraded_providers"
+    };
+    let entries = object
+        .entry(field)
+        .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+    if let Some(entries) = entries.as_array_mut()
+        && !entries.iter().any(|entry| entry == provider)
+    {
+        entries.push(serde_json::Value::String(provider.to_string()));
+    }
+    if !healthy {
+        let reasons = object
+            .entry("degraded_reasons")
+            .or_insert_with(|| serde_json::Value::Object(serde_json::Map::new()));
+        if let Some(reasons) = reasons.as_object_mut() {
+            reasons.insert(
+                provider.to_string(),
+                serde_json::Value::String("live Gonka catalog refresh failed".into()),
+            );
+        }
+    }
 }
 
 /// Client-scoped normalized union of every currently routable model.

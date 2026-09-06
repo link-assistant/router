@@ -835,9 +835,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             .await
             .expect("chat JSON");
         assert_eq!(payload["model"], id.as_str(), "buffered chat identity");
-        if payload.get("x_router_upstream_model").is_some() {
-            assert_eq!(payload["x_router_upstream_model"], "gpt-5");
-        }
+        assert!(payload.get("x_router_upstream_model").is_none());
 
         // Streaming Chat Completions.
         let stream = codex

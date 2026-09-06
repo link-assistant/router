@@ -230,6 +230,33 @@ impl RequestLog {
         self.append_bounded(&identity.hash, &line);
     }
 
+    /// Persist only route-level facts for private Codex control-plane traffic.
+    ///
+    /// The token still selects its owner-only log directory, but neither its
+    /// identity fields nor any protocol headers or body fields are serialized.
+    fn record_opaque(&self, correlation_id: &str, phase: &str, fields: Value) {
+        let identity = self.identity(correlation_id);
+        let mut event = Map::new();
+        event.insert(
+            "time".into(),
+            Value::String(chrono::Utc::now().to_rfc3339()),
+        );
+        event.insert(
+            "correlation_id".into(),
+            Value::String(correlation_id.to_string()),
+        );
+        event.insert("phase".into(), Value::String(phase.to_string()));
+        if let Value::Object(fields) = fields {
+            event.extend(fields);
+        }
+        let Ok(rendered) = crate::lino_json::encode_line(&Value::Object(event)) else {
+            return;
+        };
+        let mut line = rendered.into_bytes();
+        line.push(b'\n');
+        self.append_bounded(&identity.hash, &line);
+    }
+
     fn identity(&self, correlation_id: &str) -> LogIdentity {
         self.routes
             .lock()
@@ -628,6 +655,41 @@ fn eagerly_capture_json(headers: &HeaderMap) -> bool {
     json && bounded_length
 }
 
+/// Return the public route template for byte-transparent native services.
+///
+/// Their provider-owned payloads can contain uploads, workspace data, account
+/// state, and future fields Router cannot safely classify. Templates also
+/// remove resource IDs, while exact contract matching prevents a lookalike or
+/// wrong-method route from silently receiving this stronger policy.
+fn opaque_native_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
+    let route = crate::route_contract::route_for_path(method, path)?;
+    matches!(
+        route.id,
+        crate::route_contract::RouteId::NativeOpenAi
+            | crate::route_contract::RouteId::NativeAnthropic
+            | crate::route_contract::RouteId::NativeCodex
+            | crate::route_contract::RouteId::NativeCodexBackend
+    )
+    .then_some(route.template)
+}
+
+fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
+    ["x-request-id", "x-oai-request-id"]
+        .into_iter()
+        .find_map(|name| headers.get(name)?.to_str().ok())
+        .filter(|value| !value.is_empty() && value.len() <= 512)
+}
+
+/// URI safe for process diagnostics and HTTP tracing.
+///
+/// Native vendor routes are reduced to their static route template; ordinary
+/// routes retain their path and generically redacted query.
+#[must_use]
+pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
+    opaque_native_route(method, uri.path())
+        .map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
+}
+
 impl Drop for ClientRequestCapture {
     fn drop(&mut self) {
         self.record();
@@ -676,7 +738,52 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    let logged_uri = redacted_uri(&parts.uri.to_string());
+    if let Some(route) = opaque_native_route(&parts.method, parts.uri.path()) {
+        parts
+            .extensions
+            .insert(RequestCorrelationId(correlation_id.clone()));
+        let method = parts.method.clone();
+        let started = Instant::now();
+        state.request_log.record_opaque(
+            &correlation_id,
+            "client_request",
+            json!({"method": method.as_str(), "uri": route}),
+        );
+        let response = ACTIVE_CORRELATION_ID
+            .scope(
+                correlation_id.clone(),
+                next.run(Request::from_parts(parts, body)),
+            )
+            .await;
+        let upstream_request_id = upstream_request_id(response.headers());
+        tracing::info!(
+            request_id = %correlation_id,
+            method = %method,
+            uri = route,
+            "private request"
+        );
+        state.request_log.record_opaque(
+            &correlation_id,
+            "client_response",
+            json!({
+                "status": response.status().as_u16(),
+                "latency_ms": started.elapsed().as_millis(),
+                "uri": route,
+                "upstream_request_id": upstream_request_id,
+            }),
+        );
+        tracing::info!(
+            request_id = %correlation_id,
+            status = response.status().as_u16(),
+            latency_ms = started.elapsed().as_millis(),
+            uri = route,
+            upstream_request_id = upstream_request_id.unwrap_or("-"),
+            "private response"
+        );
+        drop(route_guard);
+        return response;
+    }
+    let logged_uri = safe_http_uri(&parts.method, &parts.uri);
     let requested_model = Arc::new(Mutex::new(None));
     let capture = ClientRequestCapture {
         logger: Arc::clone(&state.request_log),
@@ -776,22 +883,10 @@ pub async fn log_http_exchange(
     // URI for every Claude model, so without this the log cannot answer the
     // first question anyone asks of it (issue #320).
     //
-    // The model the caller asked for is what identifies the request, and it is
-    // the only one that exists when the request is refused before an upstream
-    // is ever reached. The served-model header is the fallback for the case it
-    // was built for -- the upstream substituting a different model -- but it
-    // exists only in that case, so relying on it alone left `model=-` on every
-    // ordinary line, success and failure alike.
-    let served_model = requested_model
-        .clone()
-        .or_else(|| {
-            response
-                .headers()
-                .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-                .and_then(|value| value.to_str().ok())
-                .map(str::to_string)
-        })
-        .unwrap_or_else(|| "-".to_string());
+    // The model the caller asked for identifies the public request, including
+    // requests refused before an upstream is reached. Concrete upstream
+    // responses remain available in the local structured request log.
+    let served_model = requested_model.clone().unwrap_or_else(|| "-".to_string());
     // A rate limit is one of the few conditions an operator must act on
     // quickly, and it was logged as three digits.
     let retry_after = response
@@ -834,6 +929,10 @@ mod tests;
 #[cfg(test)]
 #[path = "request_log_isolation_tests.rs"]
 mod isolation_tests;
+
+#[cfg(test)]
+#[path = "request_log_private_tests.rs"]
+mod private_tests;
 
 /// One record saying that older records were discarded to stay inside
 /// `REQUEST_LOG_MAX_BYTES`.

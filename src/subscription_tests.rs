@@ -694,10 +694,8 @@ fn a_qwen_resource_url_is_completed_only_where_it_is_incomplete() {
 /// An adopted credential lands where the provider's own client writes, which
 /// is not the same as the first name it is searched under.
 ///
-/// Claude is *read* from `credentials.json` first for legacy-pool parity but
-/// Claude Code *writes* `.credentials.json`, so installing under the
-/// search-first name would leave the vendor client with a file it does not
-/// recognise (issue #274).
+/// Claude Code reads and writes `.credentials.json`; legacy names are only
+/// fallbacks and cannot shadow the canonical login.
 #[test]
 fn an_installed_document_lands_where_the_vendor_client_writes() {
     let dir = tempfile::tempdir().expect("home");
@@ -719,6 +717,40 @@ fn an_installed_document_lands_where_the_vendor_client_writes() {
         SubscriptionProvider::Codex.canonical_credential_filename(),
         "auth.json"
     );
+}
+
+#[test]
+fn malformed_or_stale_legacy_claude_files_never_shadow_the_canonical_login() {
+    for legacy in [
+        "not-json".to_string(),
+        serde_json::json!({
+            "claudeAiOauth": {
+                "accessToken": "expired-legacy",
+                "expiresAt": 1,
+            }
+        })
+        .to_string(),
+        serde_json::json!({
+            "claudeAiOauth": {
+                "accessToken": "newer-legacy",
+                "expiresAt": 9_999_999_999_999_i64,
+            }
+        })
+        .to_string(),
+    ] {
+        let dir = tempfile::tempdir().expect("Claude home");
+        fs::write(dir.path().join("credentials.json"), legacy).unwrap();
+        fs::write(
+            dir.path().join(".credentials.json"),
+            r#"{"claudeAiOauth":{"accessToken":"canonical","expiresAt":1000}}"#,
+        )
+        .unwrap();
+
+        let token = SubscriptionReader::new(SubscriptionProvider::Claude, dir.path())
+            .read_token()
+            .expect("canonical credential");
+        assert_eq!(token.access_token, "canonical");
+    }
 }
 
 /// The document is handed back verbatim, so fields the router does not model
@@ -745,14 +777,14 @@ fn the_import_source_keeps_fields_the_token_does_not_model() {
     assert!(source.document.contains("auth_mode"));
 }
 
-/// The reported credential is the installed one (issue #280).
+/// The reported credential is the selected one (issue #280).
 ///
 /// Import read the source twice through two methods that select the platform
 /// store by different rules: the document consulted the store for any home,
 /// while the token describing it consulted the store only for the vendor's
 /// default home. An import always names a source that differs from the
 /// destination — otherwise there is nothing to adopt — so on macOS the two
-/// disagreed on every run, and a live Keychain credential was installed under
+/// disagreed on every run, and a live Keychain credential was selected under
 /// the stale file's verdict: `EXPIRED 3 days ago ... REJECTED by the vendor`
 /// for a credential that served traffic seconds later.
 ///
@@ -783,7 +815,7 @@ fn the_described_credential_is_the_installed_one() {
     );
     assert_eq!(
         source.document, store,
-        "the store credential is what gets installed"
+        "the store credential is the selected document"
     );
     assert_eq!(
         source.token.access_token, "keychain-access",

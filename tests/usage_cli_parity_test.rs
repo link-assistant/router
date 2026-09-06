@@ -38,7 +38,9 @@ fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token(
                 {"provider":"anthropic","state":"available","status":"available","windows":[],"additional_limits":[]},
                 {"provider":"openai","state":"available","status":"available","windows":[],"additional_limits":[]},
                 {"provider":"z-ai","state":"unverified","status":"usage_unverified","windows":[],"additional_limits":[]},
-                {"provider":"lefine","state":"unavailable","status":"usage_source_unavailable","windows":[],"additional_limits":[]}
+                {"provider":"lefine","state":"unavailable","status":"usage_source_unavailable","windows":[],"additional_limits":[]},
+                {"provider":"gemini","state":"unverified","status":"live_limits_unavailable","windows":[],"additional_limits":[]},
+                {"provider":"qwen","state":"unverified","status":"live_limits_unavailable","windows":[],"additional_limits":[]}
             ]
         })
         .to_string();
@@ -103,7 +105,7 @@ fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token(
     }
     assert_eq!(remote.stdout, local.stdout);
     let answer: serde_json::Value = serde_json::from_slice(&local.stdout).unwrap();
-    assert_eq!(answer["subscriptions"].as_array().unwrap().len(), 4);
+    assert_eq!(answer["subscriptions"].as_array().unwrap().len(), 6);
     assert_eq!(answer["subscriptions"][3]["state"], "unavailable");
     let captured = captured.lock().unwrap();
     assert_eq!(captured.len(), 2);

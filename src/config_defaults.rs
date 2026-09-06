@@ -5,12 +5,6 @@
 
 use std::time::Duration;
 
-/// Default Gonka source URL.
-#[must_use]
-pub fn default_gonka_source_url() -> String {
-    "https://node4.gonka.ai".to_string()
-}
-
 /// Gonka has no synthetic default model.
 ///
 /// Operators may declare one with `GONKA_MODEL`; otherwise the provider only

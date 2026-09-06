@@ -109,8 +109,9 @@ destination authority, TLS/HTTP connection fingerprint, credential, and
 transport framing inherent to proxying; it does not claim transport-level
 invisibility.
 Streaming and tool calls use the same final authorization. Claude Code
-`/api/services/anthropic/v1/messages/count_tokens` applies the same mapping locally and never calls a
-forbidden provider.
+`/api/services/anthropic/v1/messages/count_tokens` applies the same live-model
+policy locally, then returns an explicit unavailable error because z.ai does
+not expose a proven exact non-inference counter. It never starts inference.
 
 ## Claude Code model discovery
 

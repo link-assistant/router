@@ -181,14 +181,12 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
         }
     }
 
-    let user_home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let catalog_error = link_assistant_router::doctor::subscription_catalog_diagnostics_in(
-        active_provider,
-        &config.claude_code_home,
-        &user_home,
-        &config.data_dir,
-    )
-    .await;
+    let catalog_error =
+        link_assistant_router::doctor::subscription_catalog_diagnostics_for_readers(
+            config.subscription_readers(),
+            Some(&config.data_dir),
+        )
+        .await;
 
     // Probe data dir.
     if config.data_dir.exists() {

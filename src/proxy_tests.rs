@@ -4,7 +4,7 @@ use log_lazy::{LogLazy, levels};
 
 use crate::proxy::{
     INGRESS_NETWORK_HEADERS, OAUTH_BETA_FLAG, build_upstream_headers, extract_client_token,
-    merge_oauth_beta, request_routing_context, retry_after_duration,
+    merge_oauth_beta, native_request_headers, request_routing_context, retry_after_duration,
 };
 
 #[test]
@@ -212,6 +212,56 @@ fn connection_nominated_request_headers_never_reach_the_upstream() {
     assert_eq!(upstream["x-native-end-to-end"], "preserved");
 }
 
+#[test]
+fn native_websocket_handshake_headers_are_regenerated_per_connection() {
+    let mut incoming = HeaderMap::new();
+    incoming.insert("upgrade", HeaderValue::from_static("websocket"));
+    incoming.insert("connection", HeaderValue::from_static("upgrade"));
+    incoming.insert(
+        "sec-websocket-key",
+        HeaderValue::from_static("downstream-connection-key"),
+    );
+    incoming.insert("sec-websocket-version", HeaderValue::from_static("13"));
+    incoming.insert(
+        "sec-websocket-extensions",
+        HeaderValue::from_static("permessage-deflate"),
+    );
+    incoming.insert(
+        "sec-websocket-accept",
+        HeaderValue::from_static("downstream-response-only"),
+    );
+    incoming.append(
+        "sec-websocket-protocol",
+        HeaderValue::from_static("realtime"),
+    );
+    incoming.append(
+        "sec-websocket-protocol",
+        HeaderValue::from_static("openai-insecure-api-key.downstream"),
+    );
+
+    let upstream = native_request_headers(&incoming, "upstream-secret");
+
+    for regenerated in [
+        "upgrade",
+        "connection",
+        "sec-websocket-key",
+        "sec-websocket-version",
+        "sec-websocket-extensions",
+        "sec-websocket-accept",
+    ] {
+        assert!(
+            upstream.get(regenerated).is_none(),
+            "{regenerated} must be generated for the upstream connection"
+        );
+    }
+    assert_eq!(
+        upstream.get_all("sec-websocket-protocol").iter().count(),
+        2,
+        "application-level subprotocol offers remain end-to-end"
+    );
+    assert_eq!(upstream["authorization"], "Bearer upstream-secret");
+}
+
 #[tokio::test]
 async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream() {
     use axum::body::Body;
@@ -230,6 +280,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
                 [
                     ("content-type", "application/json"),
                     ("x-request-id", "provider-anthropic-request"),
+                    ("anthropic-auth-token", "provider-anthropic-secret"),
                 ],
                 "{}",
             )
@@ -272,6 +323,14 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
             r#"{"model":"claude-live","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
         ))
         .unwrap();
+    request.headers_mut().append(
+        axum::http::HeaderName::from_bytes(b"AnThRoPiC-AuTh-ToKeN").unwrap(),
+        HeaderValue::from_static("incoming-anthropic-secret-a"),
+    );
+    request.headers_mut().append(
+        axum::http::HeaderName::from_static("anthropic-auth-token"),
+        HeaderValue::from_static("incoming-anthropic-secret-b"),
+    );
     for &name in INGRESS_NETWORK_HEADERS {
         request.headers_mut().append(
             axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
@@ -288,6 +347,7 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
         response.headers()["x-request-id"],
         "provider-anthropic-request"
     );
+    assert!(!response.headers().contains_key("anthropic-auth-token"));
     let _ = response.into_body().collect().await.unwrap();
 
     let captured = captured.lock().unwrap();
@@ -468,6 +528,29 @@ fn retry_after_http_date_is_used_for_account_cooldown() {
     let parsed = retry_after_duration(&headers).unwrap();
     assert!(parsed >= std::time::Duration::from_secs(118));
     assert!(parsed <= std::time::Duration::from_secs(120));
+}
+
+#[test]
+fn retry_after_is_bounded_for_maximum_delta_and_far_future_date() {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "retry-after",
+        HeaderValue::from_static("18446744073709551615"),
+    );
+    assert_eq!(
+        retry_after_duration(&headers),
+        Some(crate::request_routing::MAX_RETRY_AFTER)
+    );
+
+    let retry_at = chrono::Utc::now() + chrono::Duration::days(3650);
+    headers.insert(
+        "retry-after",
+        HeaderValue::from_str(&retry_at.to_rfc2822()).unwrap(),
+    );
+    assert_eq!(
+        retry_after_duration(&headers),
+        Some(crate::request_routing::MAX_RETRY_AFTER)
+    );
 }
 
 #[tokio::test]

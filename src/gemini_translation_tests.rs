@@ -65,7 +65,56 @@ fn finish_reasons_map_onto_the_openai_vocabulary() {
         assert_eq!(map_finish_reason(blocked), "content_filter", "{blocked}");
     }
     assert_eq!(map_finish_reason("STOP"), "stop");
-    assert_eq!(map_finish_reason("SOMETHING_NEW"), "stop");
+    assert_eq!(map_finish_reason("SOMETHING_NEW"), "content_filter");
+}
+
+#[test]
+fn buffered_tool_calls_preserve_identity_arguments_finish_and_usage_on_both_surfaces() {
+    let gemini = json!({
+        "candidates": [{
+            "content": {"parts": [{"functionCall": {
+                "id": "call_7", "name": "lookup", "args": {"key": "value"}
+            }}]},
+            "finishReason": "STOP"
+        }],
+        "usageMetadata": {"promptTokenCount": 2, "candidatesTokenCount": 3}
+    });
+    let chat = gemini_response_to_chat(&gemini, "served-model");
+    assert_eq!(chat["choices"][0]["finish_reason"], "tool_calls");
+    let call = &chat["choices"][0]["message"]["tool_calls"][0];
+    assert_eq!(call["id"], "call_7");
+    assert_eq!(call["function"]["name"], "lookup");
+    assert_eq!(call["function"]["arguments"], "{\"key\":\"value\"}");
+    assert_eq!(chat["usage"]["total_tokens"], 5);
+
+    let response = responses::from_chat(
+        &chat,
+        "requested-model",
+        responses::Finish::from_gemini(gemini_finish_reason(&gemini).unwrap()),
+    );
+    assert_eq!(response["status"], "completed");
+    assert_eq!(response["output"][0]["type"], "function_call");
+    assert_eq!(response["output"][0]["call_id"], "call_7");
+    assert_eq!(response["output"][0]["name"], "lookup");
+    assert_eq!(response["output"][0]["arguments"], "{\"key\":\"value\"}");
+    assert_eq!(response["usage"]["total_tokens"], 5);
+}
+
+#[test]
+fn buffered_prompt_blocks_do_not_become_successful_empty_responses() {
+    let gemini = json!({"promptFeedback": {"blockReason": "SAFETY"}});
+    let chat = gemini_response_to_chat(&gemini, "served-model");
+    assert_eq!(chat["choices"][0]["finish_reason"], "content_filter");
+    let response = responses::from_chat(
+        &chat,
+        "requested-model",
+        responses::Finish::from_gemini(gemini_finish_reason(&gemini).unwrap()),
+    );
+    assert_eq!(response["status"], "incomplete");
+    assert_eq!(
+        response["incomplete_details"],
+        json!({"reason": "content_filter"})
+    );
 }
 
 #[test]
@@ -80,40 +129,19 @@ fn message_text_is_extracted_from_both_content_shapes() {
     assert_eq!(extract_message_text(Some(&json!(42))), "");
 }
 
-/// The synthetic stream is part of the public OpenAI-compatible contract: it
-/// must retain the alias the caller selected while exposing the model the
-/// upstream actually served in metadata on every emitted chunk.
-#[tokio::test]
-async fn synthetic_chat_stream_preserves_both_model_identities() {
-    use http_body_util::BodyExt as _;
+/// Incremental output retains the alias the caller selected without
+/// Router-private metadata.
+#[test]
+fn incremental_chat_stream_preserves_requested_model_only() {
+    let mut translator = stream::OpenAiStreamTranslator::new("catalog-alias");
+    let payload = translator
+        .push(
+            br#"data: {"response":{"modelVersion":"future-upstream-model","candidates":[{"content":{"parts":[{"text":"hello"}]},"finishReason":"STOP"}]}}
 
-    let response = sse_from_chat_completion(
-        &json!({
-            "id": "chatcmpl-live",
-            "created": 42,
-            "model": "future-upstream-model",
-            "choices": [{"message": {"role": "assistant", "content": "hello"}}]
-        }),
-        "catalog-alias",
-        Some("future-upstream-model"),
-    );
-
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
-        "future-upstream-model"
-    );
-    assert_eq!(response.headers()["content-type"], "text/event-stream");
-    let payload = String::from_utf8(
-        response
-            .into_body()
-            .collect()
-            .await
-            .expect("synthetic stream body")
-            .to_bytes()
-            .to_vec(),
-    )
-    .expect("UTF-8 SSE");
+"#,
+        )
+        .expect("translate Gemini SSE");
+    let payload = String::from_utf8(payload.to_vec()).expect("UTF-8 SSE");
     let chunks: Vec<Value> = payload
         .lines()
         .filter_map(|line| line.strip_prefix("data: "))
@@ -123,10 +151,7 @@ async fn synthetic_chat_stream_preserves_both_model_identities() {
     assert_eq!(chunks.len(), 3);
     for chunk in chunks {
         assert_eq!(chunk["model"], "catalog-alias");
-        assert_eq!(
-            chunk[crate::output_limit::UPSTREAM_MODEL_FIELD],
-            "future-upstream-model"
-        );
+        assert!(chunk.get("x_router_upstream_model").is_none());
     }
     assert!(payload.ends_with("data: [DONE]\n\n"));
 }

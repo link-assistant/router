@@ -5,15 +5,8 @@
 //! parsed by [`lino_arguments::Parser`] (which is a clap-compatible drop-in
 //! that additionally reads `.lenv` files at startup).
 //!
-//! Subcommands:
-//!
-//! - `serve` (default) — start the HTTP server.
-//! - `tokens issue|list|revoke|expire|show` — manage persistent tokens
-//!   without going through the HTTP layer (useful for ops scripts).
-//! - `accounts list` — show configured accounts and their health.
-//! - `clients list|setup|show|remove|doctor` — configure local agentic CLIs.
-//! - `doctor` — report on environment, OAuth credential discoverability,
-//!   storage paths, and other config.
+//! The main subcommands serve HTTP, manage tokens and accounts, configure
+//! local agentic clients, and diagnose environment, OAuth, and storage state.
 
 // The CLI struct intentionally has many independent boolean toggles
 // (`--disable-openai-api`, `--disable-anthropic-api`, etc.). Refactoring
@@ -31,6 +24,7 @@ use crate::config::{
     ApiFormat, BuildArgs, Config, ConfigError, RoutingMode, StoragePolicy, UpstreamProvider,
     default_activitypub_public_key_pem, default_data_dir,
 };
+use crate::subscription::SubscriptionProvider;
 
 mod auth_ops;
 mod client_ops;
@@ -179,7 +173,7 @@ fn parse_truthy(value: &str) -> Result<bool, String> {
 }
 
 /// Top-level CLI parser.
-#[derive(Debug, LinoParser)]
+#[derive(LinoParser)]
 // `router` is the canonical name — what the project, its repository and its
 // documentation call this tool (issue #222). It is pinned here rather than
 // taken from `argv[0]` so `--version` reads the same whichever of the two
@@ -261,18 +255,15 @@ pub struct Cli {
     #[arg(long, env = "UPSTREAM_PROVIDER", default_value = "auto", global = true)]
     pub upstream_provider: String,
 
-    /// Gonka private key used for request signing.
+    /// Gonka direct-wallet key (unsupported; rejected before startup).
     #[arg(long, env = "GONKA_PRIVATE_KEY", global = true, hide_env_values = true)]
     pub gonka_private_key: Option<String>,
-
-    /// Gonka source node URL.
-    #[arg(
-        long,
-        env = "GONKA_SOURCE_URL",
-        default_value = "https://node4.gonka.ai",
-        global = true
-    )]
-    pub gonka_source_url: String,
+    /// API key for a Gonka-compatible broker.
+    #[arg(long, env = "GONKA_API_KEY", global = true, hide_env_values = true)]
+    pub gonka_api_key: Option<String>,
+    /// Explicit Gonka-compatible broker URL.
+    #[arg(long, env = "GONKA_SOURCE_URL", global = true)]
+    pub gonka_source_url: Option<String>,
 
     /// Optional Gonka model declared by the operator and used when omitted.
     #[arg(long, env = "GONKA_MODEL", default_value = "", global = true)]
@@ -844,12 +835,21 @@ impl Cli {
     pub fn into_config(&self) -> Result<Config, ConfigError> {
         let port = self.port.to_string();
         let token_secret = self.token_secret.clone();
+        let process_home = std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .map_or_else(|| PathBuf::from("/root"), PathBuf::from);
+        let client_home = self.home.clone().unwrap_or_else(|| process_home.clone());
         let claude_home = self.claude_code_home.clone().unwrap_or_else(|| {
-            std::env::var("HOME")
-                .map_or_else(|_| "/root/.claude".to_string(), |h| format!("{h}/.claude"))
+            client_home
+                .join(SubscriptionProvider::Claude.home_subdir())
+                .to_string_lossy()
+                .into_owned()
         });
-        let codex_home = crate::subscription::SubscriptionProvider::Codex
-            .resolve_home(&std::env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
+        let codex_home = if self.home.is_some() {
+            client_home.join(SubscriptionProvider::Codex.home_subdir())
+        } else {
+            SubscriptionProvider::Codex.resolve_home(&process_home.to_string_lossy())
+        };
         let api_format = self
             .api_format
             .as_deref()
@@ -912,7 +912,7 @@ impl Cli {
             models: self.openai_compatible_models.clone(),
             supported_clients: self.openai_compatible_supported_clients.clone(),
         };
-        Config::build(BuildArgs {
+        let mut config = Config::build(BuildArgs {
             host: &self.host,
             port: &port,
             token_secret: token_secret.as_deref(),
@@ -928,7 +928,8 @@ impl Cli {
             codex_cli_bin: self.codex_cli_bin.clone(),
             upstream_provider,
             gonka_private_key: self.gonka_private_key.clone().filter(|s| !s.is_empty()),
-            gonka_source_url: self.gonka_source_url.clone(),
+            gonka_api_key: self.gonka_api_key.clone().filter(|s| !s.is_empty()),
+            gonka_source_url: self.gonka_source_url.clone().filter(|s| !s.is_empty()),
             gonka_model: self.gonka_model.clone(),
             bridge_model: self.bridge_model.clone().filter(|s| !s.is_empty()),
             bridge_model_policy: self.bridge_model_policy.clone(),
@@ -982,7 +983,10 @@ impl Cli {
                 recipient: self.mpp_recipient.clone().unwrap_or_default(),
                 method: self.mpp_method.clone().filter(|s| !s.is_empty()),
             },
-        })
+        })?;
+        config.client_home = client_home;
+        config.isolated_client_home = self.home.is_some();
+        Ok(config)
     }
 }
 

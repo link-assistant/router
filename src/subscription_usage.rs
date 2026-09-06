@@ -1,10 +1,10 @@
-//! Client-scoped, non-inference provider usage probes.
-
 use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+#[cfg(test)]
 use base64::Engine as _;
-use serde::{Deserialize, Serialize};
+use bytes::{Bytes, BytesMut};
+use futures_util::StreamExt as _;
 use serde_json::Value;
 
 use crate::app_state::AppState;
@@ -12,116 +12,23 @@ use crate::client_policy::ClientProtocol;
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 const SCHEMA_VERSION: u8 = 1;
-const MAX_VENDOR_BODY: usize = 2 * 1024 * 1024;
+pub(crate) const MAX_USAGE_BODY: usize = 2 * 1024 * 1024;
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
-pub enum UsageProvider {
-    #[value(name = "anthropic")]
-    #[serde(rename = "anthropic")]
-    Anthropic,
-    #[value(name = "openai")]
-    #[serde(rename = "openai")]
-    OpenAi,
-    #[value(name = "z-ai")]
-    #[serde(rename = "z-ai")]
-    ZAi,
-    #[value(name = "lefine")]
-    #[serde(rename = "lefine")]
-    Lefine,
-}
+#[path = "subscription_usage_types.rs"]
+mod types;
+pub use types::{
+    Credits, ExtraUsage, NamedLimit, SpendControl, SpendLimit, SubscriptionUsage, UsageEnvelope,
+    UsageProvider, UsageState, UsageWindow,
+};
 
-impl UsageProvider {
-    pub const ALL: [Self; 4] = [Self::Anthropic, Self::OpenAi, Self::ZAi, Self::Lefine];
-
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Anthropic => "anthropic",
-            Self::OpenAi => "openai",
-            Self::ZAi => "z-ai",
-            Self::Lefine => "lefine",
-        }
-    }
-
-    const fn subscription(self) -> Option<SubscriptionProvider> {
-        match self {
-            Self::Anthropic => Some(SubscriptionProvider::Claude),
-            Self::OpenAi => Some(SubscriptionProvider::Codex),
-            Self::ZAi | Self::Lefine => None,
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UsageEnvelope {
-    pub schema_version: u8,
-    pub subscriptions: Vec<SubscriptionUsage>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SubscriptionUsage {
-    pub provider: UsageProvider,
-    pub state: UsageState,
-    pub status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub plan: Option<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub windows: Vec<UsageWindow>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub additional_limits: Vec<NamedLimit>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credits: Option<Credits>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscription_end: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_end: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscription_created: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub retry_after_seconds: Option<u64>,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum UsageState {
-    Available,
-    Unavailable,
-    Unverified,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct UsageWindow {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub used_percentage: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub remaining_percentage: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resets_at: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub window_seconds: Option<u64>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct NamedLimit {
-    pub name: String,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub windows: Vec<UsageWindow>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub used: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub limit: Option<f64>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Credits {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub balance: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unlimited: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub overage_limit_reached: Option<bool>,
-}
+#[path = "subscription_usage_normalize.rs"]
+mod normalize;
+#[cfg(test)]
+use normalize::{anthropic_windows, openai_claim, window_from};
+use normalize::{
+    apply_anthropic_profile, empty_usage, normalize_anthropic, normalize_openai, normalize_zai,
+    openai_claims, recognizable_anthropic_usage, recognizable_openai_usage,
+};
 
 #[derive(Default)]
 struct SafeCredentialMetadata {
@@ -143,7 +50,34 @@ enum VendorResponse {
     Unavailable,
 }
 
-/// `GET /api/usage` — every configured subscription visible to this token.
+#[derive(Debug)]
+pub(crate) enum BoundedBodyError {
+    TooLarge,
+    Read,
+}
+
+pub(crate) async fn bounded_response_bytes(
+    response: reqwest::Response,
+    maximum: usize,
+) -> Result<Bytes, BoundedBodyError> {
+    if response
+        .content_length()
+        .is_some_and(|length| length > maximum as u64)
+    {
+        return Err(BoundedBodyError::TooLarge);
+    }
+    let mut bytes = BytesMut::new();
+    let mut stream = response.bytes_stream();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|_| BoundedBodyError::Read)?;
+        if bytes.len().saturating_add(chunk.len()) > maximum {
+            return Err(BoundedBodyError::TooLarge);
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+    Ok(bytes.freeze())
+}
+
 pub async fn usage(
     State(state): State<AppState>,
     OriginalUri(uri): OriginalUri,
@@ -152,17 +86,13 @@ pub async fn usage(
     usage_impl(state, uri.path(), headers, None).await
 }
 
-/// `GET /api/usage/{provider}` — one authorized public provider name.
 pub async fn usage_provider(
     State(state): State<AppState>,
     OriginalUri(uri): OriginalUri,
     Path(provider): Path<String>,
     headers: HeaderMap,
 ) -> Response {
-    let Some(provider) = parse_provider(&provider) else {
-        return error(StatusCode::NOT_FOUND, "unknown usage provider");
-    };
-    usage_impl(state, uri.path(), headers, Some(provider)).await
+    usage_impl(state, uri.path(), headers, Some(&provider)).await
 }
 
 fn parse_provider(provider: &str) -> Option<UsageProvider> {
@@ -171,6 +101,8 @@ fn parse_provider(provider: &str) -> Option<UsageProvider> {
         "openai" => Some(UsageProvider::OpenAi),
         "z-ai" => Some(UsageProvider::ZAi),
         "lefine" => Some(UsageProvider::Lefine),
+        "gemini" => Some(UsageProvider::Gemini),
+        "qwen" => Some(UsageProvider::Qwen),
         _ => None,
     }
 }
@@ -179,7 +111,7 @@ async fn usage_impl(
     state: AppState,
     path: &str,
     headers: HeaderMap,
-    selected: Option<UsageProvider>,
+    selected: Option<&str>,
 ) -> Response {
     let claims = match crate::proxy::authenticate_client(&state, &headers) {
         Ok(claims) => claims,
@@ -197,6 +129,14 @@ async fn usage_impl(
             "request evidence does not match the token's managed-client binding",
         );
     }
+
+    let selected = match selected {
+        Some(name) => match parse_provider(name) {
+            Some(provider) => Some(provider),
+            None => return error(StatusCode::NOT_FOUND, "unknown usage provider"),
+        },
+        None => None,
+    };
 
     let providers = selected.map_or_else(|| UsageProvider::ALL.to_vec(), |one| vec![one]);
     let mut subscriptions = Vec::new();
@@ -295,6 +235,9 @@ async fn probe_oauth_loaded_at(
     loaded: SubscriptionToken,
     refresh_url_override: Option<&str>,
 ) -> ProbeResult {
+    if matches!(provider, UsageProvider::Gemini | UsageProvider::Qwen) {
+        return ProbeResult::Usage(Box::new(live_limits_unavailable(provider)));
+    }
     let now_ms = chrono::Utc::now().timestamp_millis();
     let Ok(token) = state
         .subscription_cache
@@ -307,7 +250,10 @@ async fn probe_oauth_loaded_at(
     let probe = async |token: &SubscriptionToken| match provider {
         UsageProvider::Anthropic => probe_anthropic(state, token, &metadata).await,
         UsageProvider::OpenAi => probe_openai(state, token, &metadata).await,
-        UsageProvider::ZAi | UsageProvider::Lefine => unreachable!(),
+        UsageProvider::ZAi
+        | UsageProvider::Lefine
+        | UsageProvider::Gemini
+        | UsageProvider::Qwen => unreachable!(),
     };
     let first = probe(&token).await;
     if first.status != "authentication_rejected" {
@@ -413,15 +359,15 @@ async fn probe_anthropic(
         &token.access_token,
     )
     .await;
-    let mut result = empty_usage(UsageProvider::Anthropic);
-    match usage {
+    let mut result = match usage {
         VendorResponse::Json(value) => {
-            result.state = UsageState::Available;
-            result.status = "available".into();
-            result.windows = anthropic_windows(&value);
+            if !recognizable_anthropic_usage(&value) {
+                return unverified_usage(UsageProvider::Anthropic);
+            }
+            normalize_anthropic(&value)
         }
         other => return vendor_failure(UsageProvider::Anthropic, &other),
-    }
+    };
     match send_anthropic(
         state,
         &format!("{base}/api/oauth/profile"),
@@ -456,6 +402,11 @@ async fn probe_openai(
     token: &SubscriptionToken,
     metadata: &SafeCredentialMetadata,
 ) -> SubscriptionUsage {
+    let client = crate::upstream_client::subscription_client(
+        &state.client,
+        SubscriptionProvider::Codex,
+        state.subscription_base_url.is_some(),
+    );
     let base = state
         .subscription_base_url
         .as_deref()
@@ -463,8 +414,7 @@ async fn probe_openai(
         .trim_end_matches('/')
         .trim_end_matches("/codex");
     let response = send_json(
-        state
-            .client
+        client
             .get(format!("{base}/wham/usage"))
             .bearer_auth(&token.access_token)
             .headers(crate::codex_identity::headers(token.account_id.as_deref())),
@@ -472,6 +422,9 @@ async fn probe_openai(
     .await;
     match response {
         VendorResponse::Json(value) => {
+            if !recognizable_openai_usage(&value) {
+                return unverified_usage(UsageProvider::OpenAi);
+            }
             let mut usage = normalize_openai(&value, token);
             if usage.plan.is_none() {
                 usage.plan.clone_from(&metadata.plan);
@@ -588,6 +541,12 @@ fn unavailable_lefine_usage() -> SubscriptionUsage {
     usage
 }
 
+fn live_limits_unavailable(provider: UsageProvider) -> SubscriptionUsage {
+    let mut usage = empty_usage(provider);
+    usage.status = "live_limits_unavailable".into();
+    usage
+}
+
 fn zai_request(state: &AppState, url: &str, key: &str) -> reqwest::RequestBuilder {
     state
         .client
@@ -609,14 +568,21 @@ fn provider_origin(base: &str) -> String {
 }
 
 fn zai_payload(value: Value) -> Result<Value, VendorResponse> {
-    crate::zai_coding_plan::accepted_non_inference_payload(value).map_err(|error| {
-        use crate::zai_coding_plan::ZaiProbeFailureKind as Kind;
-        match error.kind() {
-            Kind::CredentialRejected => VendorResponse::AuthenticationRejected,
-            Kind::RateLimited => VendorResponse::RateLimited(None),
-            Kind::Unverified => VendorResponse::Unavailable,
-        }
-    })
+    let payload =
+        crate::zai_coding_plan::accepted_non_inference_payload(value).map_err(|error| {
+            use crate::zai_coding_plan::ZaiProbeFailureKind as Kind;
+            match error.kind() {
+                Kind::CredentialRejected => VendorResponse::AuthenticationRejected,
+                Kind::RateLimited => VendorResponse::RateLimited(None),
+                Kind::Unverified => VendorResponse::Unavailable,
+            }
+        })?;
+    payload
+        .get("limits")
+        .and_then(Value::as_array)
+        .is_some_and(|limits| !limits.is_empty())
+        .then_some(payload)
+        .ok_or(VendorResponse::Unavailable)
 }
 
 async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
@@ -635,240 +601,16 @@ async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {
     if !status.is_success() {
         return VendorResponse::Unavailable;
     }
-    let bytes = match response.bytes().await {
-        Ok(bytes) if bytes.len() <= MAX_VENDOR_BODY => bytes,
-        _ => return VendorResponse::Malformed,
+    let Ok(bytes) = bounded_response_bytes(response, MAX_USAGE_BODY).await else {
+        return VendorResponse::Malformed;
     };
     serde_json::from_slice(&bytes).map_or(VendorResponse::Malformed, VendorResponse::Json)
 }
 
-fn anthropic_windows(value: &Value) -> Vec<UsageWindow> {
-    [
-        ("five_hour", "five_hour"),
-        ("seven_day", "seven_day"),
-        ("seven_day_sonnet", "seven_day_sonnet"),
-        ("seven_day_oauth_apps", "seven_day_oauth_apps"),
-    ]
-    .into_iter()
-    .filter_map(|(name, key)| {
-        let window = value.get(key)?.as_object()?;
-        Some(window_from(
-            name,
-            window.get("utilization").and_then(Value::as_f64),
-            window
-                .get("resets_at")
-                .and_then(Value::as_str)
-                .map(str::to_string),
-            None,
-        ))
-    })
-    .collect()
-}
-
-fn apply_anthropic_profile(usage: &mut SubscriptionUsage, profile: &Value) {
-    let organization = profile.get("organization").unwrap_or(profile);
-    usage.status = organization
-        .get("subscription_status")
-        .and_then(Value::as_str)
-        .unwrap_or("available")
-        .to_string();
-    usage.plan = organization
-        .get("subscription_type")
-        .or_else(|| profile.get("subscription_type"))
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.subscription_created = organization
-        .get("subscription_created_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.trial_end = organization
-        .get("claude_code_trial_ends_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-    usage.subscription_end = organization
-        .get("subscription_ends_at")
-        .and_then(Value::as_str)
-        .map(str::to_string);
-}
-
-fn normalize_openai(value: &Value, token: &SubscriptionToken) -> SubscriptionUsage {
-    let rate_limit = value.get("rate_limit").unwrap_or(&Value::Null);
-    let mut result = empty_usage(UsageProvider::OpenAi);
-    result.state = UsageState::Available;
-    result.status = if rate_limit.get("limit_reached").and_then(Value::as_bool) == Some(true) {
-        "limit_reached".into()
-    } else {
-        "available".into()
-    };
-    result.plan = value
-        .get("plan_type")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .or_else(|| openai_claim(token, "chatgpt_plan_type"));
-    result.subscription_end = openai_claim(token, "chatgpt_subscription_active_until");
-    result.windows = codex_windows(rate_limit);
-    result.additional_limits = value
-        .get("additional_rate_limits")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(|limit| {
-            let name = limit
-                .get("limit_name")
-                .or_else(|| limit.get("metered_feature"))
-                .and_then(Value::as_str)?;
-            Some(NamedLimit {
-                name: name.to_string(),
-                windows: codex_windows(limit.get("rate_limit").unwrap_or(&Value::Null)),
-                used: None,
-                limit: None,
-            })
-        })
-        .collect();
-    result.credits = value.get("credits").and_then(|credits| {
-        let balance = credits.get("balance").and_then(|value| {
-            value
-                .as_str()
-                .map(str::to_string)
-                .or_else(|| value.as_f64().map(|n| n.to_string()))
-        });
-        let unlimited = credits.get("unlimited").and_then(Value::as_bool);
-        let overage_limit_reached = credits
-            .get("overage_limit_reached")
-            .and_then(Value::as_bool);
-        (balance.is_some() || unlimited.is_some() || overage_limit_reached.is_some()).then_some(
-            Credits {
-                balance,
-                unlimited,
-                overage_limit_reached,
-            },
-        )
-    });
+fn unverified_usage(provider: UsageProvider) -> SubscriptionUsage {
+    let mut result = empty_usage(provider);
+    result.status = "usage_response_unverified".into();
     result
-}
-
-fn codex_windows(value: &Value) -> Vec<UsageWindow> {
-    [
-        ("primary", "primary_window"),
-        ("secondary", "secondary_window"),
-    ]
-    .into_iter()
-    .filter_map(|(name, key)| {
-        let window = value.get(key)?;
-        let resets_at = window
-            .get("reset_at")
-            .and_then(Value::as_i64)
-            .and_then(|seconds| chrono::DateTime::from_timestamp(seconds, 0))
-            .map(|time| time.to_rfc3339());
-        Some(window_from(
-            name,
-            window.get("used_percent").and_then(Value::as_f64),
-            resets_at,
-            window.get("limit_window_seconds").and_then(Value::as_u64),
-        ))
-    })
-    .collect()
-}
-
-fn openai_claim(token: &SubscriptionToken, key: &str) -> Option<String> {
-    openai_claims(&token.access_token)?
-        .get(key)
-        .and_then(Value::as_str)
-        .map(str::to_string)
-}
-
-fn openai_claims(token: &str) -> Option<Value> {
-    let payload = token.split('.').nth(1)?;
-    let bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(payload)
-        .ok()?;
-    let claims: Value = serde_json::from_slice(&bytes).ok()?;
-    claims
-        .get("https://api.openai.com/auth")?
-        .as_object()
-        .cloned()
-        .map(Value::Object)
-}
-
-fn normalize_zai(value: &Value, partial: bool) -> SubscriptionUsage {
-    let mut result = empty_usage(UsageProvider::ZAi);
-    result.state = UsageState::Available;
-    result.status = if partial {
-        "quota_available_details_unverified".into()
-    } else {
-        "available".into()
-    };
-    let limits = value
-        .get("limits")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten();
-    for limit in limits {
-        let kind = limit
-            .get("type")
-            .and_then(Value::as_str)
-            .unwrap_or("additional");
-        let percentage = limit.get("percentage").and_then(Value::as_f64);
-        if kind == "TOKENS_LIMIT" {
-            result.windows.push(window_from(
-                "five_hour_tokens",
-                percentage,
-                limit
-                    .get("resetsAt")
-                    .or_else(|| limit.get("resets_at"))
-                    .and_then(Value::as_str)
-                    .map(str::to_string),
-                None,
-            ));
-        } else {
-            result.additional_limits.push(NamedLimit {
-                name: if kind == "TIME_LIMIT" {
-                    "monthly_mcp".into()
-                } else {
-                    kind.to_ascii_lowercase()
-                },
-                windows: percentage
-                    .map(|used| window_from("limit", Some(used), None, None))
-                    .into_iter()
-                    .collect(),
-                used: limit.get("currentValue").and_then(Value::as_f64),
-                limit: limit.get("usage").and_then(Value::as_f64),
-            });
-        }
-    }
-    result
-}
-
-fn window_from(
-    name: &str,
-    used: Option<f64>,
-    resets_at: Option<String>,
-    window_seconds: Option<u64>,
-) -> UsageWindow {
-    let used = used.filter(|value| value.is_finite() && (0.0..=100.0).contains(value));
-    UsageWindow {
-        name: name.to_string(),
-        used_percentage: used,
-        remaining_percentage: used.map(|value| (100.0 - value).clamp(0.0, 100.0)),
-        resets_at,
-        window_seconds,
-    }
-}
-
-fn empty_usage(provider: UsageProvider) -> SubscriptionUsage {
-    SubscriptionUsage {
-        provider,
-        state: UsageState::Unverified,
-        status: "unverified".into(),
-        plan: None,
-        windows: Vec::new(),
-        additional_limits: Vec::new(),
-        credits: None,
-        subscription_end: None,
-        trial_end: None,
-        subscription_created: None,
-        retry_after_seconds: None,
-    }
 }
 
 fn vendor_failure(provider: UsageProvider, failure: &VendorResponse) -> SubscriptionUsage {
@@ -907,3 +649,7 @@ mod tests;
 #[cfg(test)]
 #[path = "subscription_usage_http_tests.rs"]
 mod http_tests;
+
+#[cfg(test)]
+#[path = "subscription_usage_current_tests.rs"]
+mod current_tests;

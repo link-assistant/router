@@ -59,9 +59,9 @@ async fn serve(
 /// hard to notice: the command claimed to describe the subscription in use and
 /// described a different one.
 #[tokio::test]
-async fn status_reports_the_accounts_of_the_targeted_router() {
+async fn status_reports_provider_acceptance_from_the_targeted_router() {
     let (origin, requests, handle) = serve(vec![
-        r#"{"accounts":[{"name":"primary","credential":"rejected","home":"/data/claude"}]}"#,
+        r#"{"credentials":[{"provider":"claude","state":"rejected","home":"/data/claude"}]}"#,
     ])
     .await;
     let target = ResolvedServer::at(origin, Some("admin".into()), "test");
@@ -76,7 +76,7 @@ async fn status_reports_the_accounts_of_the_targeted_router() {
     );
     let seen = handle.await.unwrap();
     assert!(
-        seen[0].starts_with("GET /api/management/accounts"),
+        seen[0].starts_with("GET /api/management/auth/status"),
         "{}",
         seen[0]
     );
@@ -279,7 +279,7 @@ async fn a_reply_without_a_login_id_is_an_error() {
 /// A router with no accounts says so plainly rather than printing nothing.
 #[tokio::test]
 async fn a_router_without_accounts_says_so() {
-    let (origin, requests, _handle) = serve(vec![r#"{"accounts":[]}"#]).await;
+    let (origin, requests, _handle) = serve(vec![r#"{"credentials":[]}"#]).await;
     let target = ResolvedServer::at(origin, Some("admin".into()), "test");
 
     let code = status(&target).await;

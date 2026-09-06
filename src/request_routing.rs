@@ -2,6 +2,14 @@
 
 use std::time::Duration;
 
+/// Maximum operational cooldown accepted from an untrusted upstream hint.
+pub const MAX_RETRY_AFTER: Duration = Duration::from_secs(24 * 60 * 60);
+
+#[must_use]
+pub fn bounded_retry_after(duration: Duration) -> Duration {
+    duration.min(MAX_RETRY_AFTER)
+}
+
 use axum::http::HeaderMap;
 
 use crate::accounts::RoutingContext;
@@ -35,6 +43,7 @@ pub fn request_routing_context(
             .map(ToString::to_string)
     });
     let body_session = [
+        "/context/session_id",
         "/metadata/session_id",
         "/metadata/conversation_id",
         "/session_id",
@@ -58,14 +67,16 @@ pub fn request_routing_context(
 pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
     let value = headers.get("retry-after")?.to_str().ok()?.trim();
     if let Ok(seconds) = value.parse::<u64>() {
-        return Some(Duration::from_secs(seconds));
+        return Some(bounded_retry_after(Duration::from_secs(seconds)));
     }
     let retry_at = chrono::DateTime::parse_from_rfc2822(value).ok()?;
     let seconds = retry_at
         .signed_duration_since(chrono::Utc::now())
         .num_seconds()
         .max(0);
-    Some(Duration::from_secs(u64::try_from(seconds).ok()?))
+    Some(bounded_retry_after(Duration::from_secs(
+        u64::try_from(seconds).ok()?,
+    )))
 }
 
 /// Record what the Anthropic upstream just said about the Claude credential.

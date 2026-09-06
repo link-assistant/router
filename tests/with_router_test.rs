@@ -81,7 +81,7 @@ fn mock_router() -> (String, thread::JoinHandle<Vec<String>>) {
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/api/services/anthropic/v1/models" | "/api/services/codex/v1/models" => (
+                "/api/services/anthropic/v1/models" | "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
@@ -118,7 +118,7 @@ fn mock_admin_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.68.0"}"#),
                 "/api/management/tokens" => ("200 OK", r#"{"data":[]}"#),
                 "/api/management/tokens/client" => ("200 OK", issued.as_str()),
-                "/api/services/codex/v1/models" => (
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
@@ -186,7 +186,7 @@ fn mock_split_inference() -> (String, thread::JoinHandle<Vec<String>>) {
                 .unwrap_or("");
             let (status, body) = match path {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
-                "/api/services/codex/v1/models" => (
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"},{"effort":"xhigh","description":"Extra deep reasoning"}]}]}"#,
                 ),
@@ -245,7 +245,7 @@ fn mock_rejected_token_router(message: &'static str) -> (String, thread::JoinHan
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#.to_string(),
                 ),
-                "/api/services/codex/v1/models" => (
+                "/api/models" => (
                     "401 Unauthorized",
                     format!(r#"{{"error":{{"message":"{message}"}}}}"#),
                 ),
@@ -406,11 +406,19 @@ fn assert_codex_overlay_launch(standalone: bool) {
         .lines()
         .map(str::to_string)
         .collect::<Vec<_>>();
+    let provider = args[1]
+        .strip_prefix("model_provider=")
+        .and_then(|value| serde_json::from_str::<String>(value).ok())
+        .expect("process-local provider argument");
+    assert!(provider.starts_with("link-assistant-run-"), "{provider}");
     assert_eq!(
         args,
         [
             "-c".to_string(),
-            "model_provider=\"link-assistant\"".to_string(),
+            format!(
+                "model_provider={}",
+                serde_json::to_string(&provider).unwrap()
+            ),
             "-c".to_string(),
             format!(
                 "model_catalog_json={}",
@@ -423,13 +431,17 @@ fn assert_codex_overlay_launch(standalone: bool) {
                 .expect("catalog path JSON")
             ),
             "-c".to_string(),
-            "model_providers.link-assistant.name=\"Link.Assistant.Router\"".to_string(),
+            format!(
+                "model_providers.{provider}={{ name = \"OpenAI\", base_url = \"{server}/api/services/codex/v1\", wire_api = \"responses\", requires_openai_auth = true, supports_websockets = true, supports_standalone_web_search = true }}"
+            ),
             "-c".to_string(),
-            format!("model_providers.link-assistant.base_url=\"{server}/api/services/codex/v1\""),
+            format!("chatgpt_base_url=\"{server}/api/services/codex/backend-api\""),
             "-c".to_string(),
-            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"".to_string(),
+            format!("experimental_realtime_ws_base_url=\"{server}/api/services/codex/v1\""),
             "-c".to_string(),
-            "model_providers.link-assistant.wire_api=\"responses\"".to_string(),
+            format!(
+                "experimental_realtime_webrtc_call_base_url=\"{server}/api/services/codex/v1\""
+            ),
             "exec".to_string(),
             "--global".to_string(),
             "hi".to_string(),
@@ -458,7 +470,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
     assert!(!stale.exists(), "a later run must sweep crash leftovers");
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/api/health,/api/management/tokens,/api/services/codex/v1/models"
+        "/api/health,/api/management/tokens,/api/models"
     );
 }
 
@@ -528,7 +540,7 @@ fn interrupt_reaches_client_and_still_cleans_temporary_home() {
     assert!(std::path::Path::new(router_home.trim()).is_dir());
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/api/health,/api/management/tokens,/api/services/codex/v1/models"
+        "/api/health,/api/management/tokens,/api/models"
     );
 }
 
@@ -794,7 +806,7 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
             "/api/health",
             "/api/management/tokens",
             "/api/management/tokens/client",
-            "/api/services/codex/v1/models",
+            "/api/models",
             "/api/management/tokens/revoke"
         ]
     );
@@ -856,7 +868,7 @@ fn wrapper_keeps_split_route_classes_on_their_own_listeners() {
             .all(|request| request.contains("/api/management/"))
     );
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
     assert!(
         inference
             .iter()

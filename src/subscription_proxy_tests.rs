@@ -47,16 +47,13 @@ fn codex_normalizes_responses_body_for_chatgpt_backend() {
     assert_eq!(body["instructions"], "You are a helpful assistant.");
     // ChatGPT subscription inference requires stateless requests.
     assert_eq!(body["store"], serde_json::Value::Bool(false));
-    assert!(
-        body.get("temperature").is_none(),
-        "temperature must be stripped for the ChatGPT subscription backend"
-    );
+    assert_eq!(body["temperature"], 0.7);
     // Untouched fields are preserved.
     assert_eq!(body["reasoning"]["effort"], "none");
 }
 
 #[test]
-fn codex_strips_unsupported_top_p_without_narrowing_claude() {
+fn native_subscription_controls_are_preserved_for_live_validation() {
     let mut codex = serde_json::json!({
         "model": "gpt-5.6-sol",
         "input": "hi",
@@ -67,7 +64,7 @@ fn codex_strips_unsupported_top_p_without_narrowing_claude() {
         &mut codex,
         CodexResponsesMode::Standard,
     );
-    assert!(codex.get("top_p").is_none(), "{codex:#}");
+    assert_eq!(codex["top_p"], 0.9, "{codex:#}");
 
     let mut claude = serde_json::json!({
         "model": "claude-opus-4-7",
@@ -264,9 +261,47 @@ fn codex_sse_collapses_to_completed_response() {
 }
 
 #[test]
+fn codex_sse_collapses_incomplete_with_indexed_partial_output_and_metadata() {
+    let sse = concat!(
+        "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
+        "data: {\"type\":\"response.refusal.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":1,\"delta\":\"cannot comply\"}\n\n",
+        "data: {\"type\":\"response.refusal.done\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":1,\"refusal\":\"cannot comply\"}\n\n",
+        "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"id\":\"msg_1\",\"type\":\"message\",\"status\":\"incomplete\",\"role\":\"assistant\",\"content\":[]}}\n\n",
+        "data: {\"type\":\"response.output_item.added\",\"output_index\":1,\"item\":{\"id\":\"fc_1\",\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\",\"arguments\":\"{}\"}}\n\n",
+        "data: {\"type\":\"response.incomplete\",\"response\":{\"id\":\"resp_incomplete\",\"model\":\"exact-model\",\"status\":\"incomplete\",\"incomplete_details\":{\"reason\":\"max_output_tokens\"},\"usage\":{\"input_tokens\":3,\"output_tokens\":4,\"total_tokens\":7},\"output\":[]}}\n\n"
+    );
+    let out = codex_sse_to_response_json(sse.as_bytes()).expect("incomplete payload");
+    let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
+
+    assert_eq!(value["id"], "resp_incomplete");
+    assert_eq!(value["model"], "exact-model");
+    assert_eq!(value["status"], "incomplete");
+    assert_eq!(value["incomplete_details"]["reason"], "max_output_tokens");
+    assert_eq!(value["usage"]["total_tokens"], 7);
+    assert_eq!(value["output"][0]["content"][0]["text"], "partial");
+    assert_eq!(value["output"][0]["content"][1]["refusal"], "cannot comply");
+    assert_eq!(value["output"][1]["call_id"], "call_1");
+}
+
+#[test]
 fn codex_sse_without_completed_returns_none() {
     let sse = "event: response.created\ndata: {\"type\":\"response.created\"}\n\n";
     assert!(codex_sse_to_response_json(sse.as_bytes()).is_none());
+}
+
+#[test]
+fn codex_sse_collapses_to_failed_response_without_losing_the_error() {
+    let sse = concat!(
+        "data: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_1\",\"output_index\":0,\"content_index\":0,\"delta\":\"partial\"}\n\n",
+        "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"message\":\"buffered boom\",\"code\":\"server_error\"}}}\n\n",
+        "data: [DONE]\n\n"
+    );
+    let out = codex_sse_to_response_json(sse.as_bytes()).expect("failed payload");
+    let value: serde_json::Value = serde_json::from_slice(&out).unwrap();
+
+    assert_eq!(value["id"], "resp_failed");
+    assert_eq!(value["status"], "failed");
+    assert_eq!(value["error"]["message"], "buffered boom");
 }
 
 #[test]
@@ -344,6 +379,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
                 [
                     ("content-type", "application/json"),
                     ("x-request-id", "provider-codex-request"),
+                    ("anthropic-auth-token", "provider-anthropic-secret"),
                 ],
                 r#"{"id":"resp_1","status":"completed","output":[]}"#,
             )
@@ -392,6 +428,14 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
         HeaderValue::from_static("By=spiffe://private;Subject=client"),
     );
     headers.insert("x-native-end-to-end", HeaderValue::from_static("preserved"));
+    headers.append(
+        axum::http::HeaderName::from_bytes(b"AnThRoPiC-AuTh-ToKeN").unwrap(),
+        HeaderValue::from_static("incoming-anthropic-secret-a"),
+    );
+    headers.append(
+        axum::http::HeaderName::from_static("anthropic-auth-token"),
+        HeaderValue::from_static("incoming-anthropic-secret-b"),
+    );
     for &name in crate::proxy::INGRESS_NETWORK_HEADERS {
         headers.append(
             axum::http::HeaderName::from_bytes(name.to_ascii_uppercase().as_bytes()).unwrap(),
@@ -413,6 +457,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     .await;
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["x-request-id"], "provider-codex-request");
+    assert!(!response.headers().contains_key("anthropic-auth-token"));
     let _ = response.into_body().collect().await.unwrap();
 
     let captured = captured.lock().unwrap();
@@ -422,7 +467,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
     assert_eq!(headers["x-native-end-to-end"], "preserved");
     assert_eq!(headers.get_all("originator").iter().count(), 1);
     assert!(!headers.contains_key("x-request-id"));
-    for removed in ["connection", "x-hop-secret"] {
+    for removed in ["connection", "x-hop-secret", "anthropic-auth-token"] {
         assert!(!headers.contains_key(removed), "{removed} leaked upstream");
     }
     for name in crate::proxy::INGRESS_NETWORK_HEADERS {
@@ -502,6 +547,7 @@ async fn claude_to_codex_translation_preserves_the_client_request_id() {
             entitlement: Some(crate::client_policy::EntitlementDecision::Override),
             native_route: false,
         },
+        None,
     )
     .await;
     assert_eq!(response.status(), StatusCode::OK);
@@ -560,6 +606,11 @@ fn safe_upstream_response_headers_are_selected() {
     );
     headers.insert("x-api-key", HeaderValue::from_static("upstream-secret"));
     headers.insert("set-cookie", HeaderValue::from_static("session=secret"));
+    headers.insert("x-router-debug", HeaderValue::from_static("private"));
+    headers.insert(
+        "x-link-assistant-debug",
+        HeaderValue::from_static("private"),
+    );
     headers.insert("connection", HeaderValue::from_static("x-remove-me"));
     headers.insert("x-remove-me", HeaderValue::from_static("hop-by-hop"));
     headers.insert("content-length", HeaderValue::from_static("999"));
@@ -581,6 +632,8 @@ fn safe_upstream_response_headers_are_selected() {
         "x-remove-me",
         "content-length",
         "x-codex-active-limit",
+        "x-router-debug",
+        "x-link-assistant-debug",
     ] {
         assert!(!selected.contains_key(excluded), "relayed {excluded}");
     }

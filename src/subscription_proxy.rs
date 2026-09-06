@@ -17,7 +17,6 @@ use axum::body::Body;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::Response;
 use futures_util::StreamExt;
-use std::collections::BTreeMap;
 
 use crate::metrics::Surface;
 use crate::proxy::{
@@ -25,6 +24,10 @@ use crate::proxy::{
     retry_after_duration,
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
+
+#[path = "subscription_proxy_sse.rs"]
+mod sse;
+use sse::codex_sse_to_response_json;
 
 const CODEX_RESPONSES_LITE_HEADER: &str = "x-openai-internal-codex-responses-lite";
 
@@ -72,6 +75,7 @@ pub async fn forward_subscription_openai(
             entitlement: None,
             native_route: false,
         },
+        None,
     )
     .await
 }
@@ -107,6 +111,36 @@ pub(crate) async fn forward_subscription_openai_routed(
             entitlement: context.entitlement,
             native_route: context.native_route,
         },
+        None,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn forward_subscription_openai_routed_native(
+    state: &AppState,
+    headers: &HeaderMap,
+    body: serde_json::Value,
+    routing_body: &serde_json::Value,
+    path: &str,
+    surface: Surface,
+    context: RoutedSubscriptionContext<'_>,
+    native_body: Option<crate::encoded_request_body::NativeBody>,
+) -> Response {
+    forward_subscription_openai_inner(
+        state,
+        headers,
+        body,
+        routing_body,
+        ForwardOptions {
+            path,
+            surface,
+            response_shape: SubscriptionResponseShape::Passthrough,
+            validated: context.validated,
+            entitlement: context.entitlement,
+            native_route: context.native_route,
+        },
+        native_body,
     )
     .await
 }
@@ -133,6 +167,7 @@ pub async fn forward_codex_chat_completions(
             entitlement: None,
             native_route: false,
         },
+        None,
     )
     .await
 }
@@ -158,6 +193,7 @@ pub(crate) async fn forward_codex_chat_completions_routed(
             entitlement: context.entitlement,
             native_route: context.native_route,
         },
+        None,
     )
     .await
 }
@@ -183,6 +219,7 @@ async fn forward_subscription_openai_inner(
     mut body: serde_json::Value,
     routing_body: &serde_json::Value,
     options: ForwardOptions<'_>,
+    native_body: Option<crate::encoded_request_body::NativeBody>,
 ) -> Response {
     let ForwardOptions {
         path,
@@ -395,14 +432,17 @@ async fn forward_subscription_openai_inner(
         normalize_subscription_request(provider, &mut body, responses_mode);
     }
 
-    let serialized = match serde_json::to_vec(&body) {
-        Ok(v) => v,
+    let serialized = native_body.filter(|_| native_protocol).map_or_else(
+        || {
+            serde_json::to_vec(&body)
+                .map_err(|error| format!("failed to serialize request JSON: {error}"))
+        },
+        |native| native.encode(&body),
+    );
+    let serialized = match serialized {
+        Ok(value) => value,
         Err(e) => {
-            return error_response(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "api_error",
-                &format!("failed to serialize subscription request body: {e}"),
-            );
+            return error_response(StatusCode::INTERNAL_SERVER_ERROR, "api_error", &e);
         }
     };
     let bytes_sent = serialized.len() as u64;
@@ -412,9 +452,14 @@ async fn forward_subscription_openai_inner(
         .clone()
         .unwrap_or_else(|| sub_token.base_url(provider));
     let upstream_url = join_subscription_url(provider, &base_url, path);
+    let upstream_client = crate::upstream_client::subscription_client(
+        &state.client,
+        provider,
+        state.subscription_base_url.is_some(),
+    );
 
     let build_request = |token: &crate::subscription::SubscriptionToken| {
-        let mut request = state.client.post(upstream_url.clone());
+        let mut request = upstream_client.post(upstream_url.clone());
         if native_protocol {
             let mut native_headers =
                 crate::proxy::native_request_headers(headers, &token.access_token);
@@ -442,7 +487,7 @@ async fn forward_subscription_openai_inner(
     let correlation_id = crate::request_log::correlation_id(headers);
     let mut upstream_resp = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, build_request(&sub_token))
+        .send_upstream(&correlation_id, upstream_client, build_request(&sub_token))
         .await
     {
         Ok(resp) => resp,
@@ -484,7 +529,7 @@ async fn forward_subscription_openai_inner(
         );
         match state
             .request_log
-            .send_upstream(&correlation_id, &state.client, build_request(&refreshed))
+            .send_upstream(&correlation_id, upstream_client, build_request(&refreshed))
             .await
         {
             // Only one retry: a second 401 is surfaced rather than looped.
@@ -632,14 +677,9 @@ async fn forward_subscription_openai_inner(
         return response;
     }
 
-    // The Codex backend always streams Server-Sent Events even when the client
-    // asked for a non-streaming (`stream:false`) response, and labels that SSE
-    // body `application/json`. A non-streaming client (e.g. OpenClaw's gateway)
-    // then parses the raw event stream as a single JSON object and fails with an
-    // incomplete result. Collapse the SSE into the final `response.completed`
-    // payload and return it as a normal JSON Responses object.
+    // Codex returns SSE even for `stream:false`, labelled as JSON. Collapse it
+    // to the final Responses object for non-streaming clients.
     let mut response_body = upstream_body;
-    let mut upstream_model: Option<String> = None;
     if codex && status.is_success() {
         if let Some(json) = codex_sse_to_response_json(&response_body) {
             response_body = bytes::Bytes::from(json);
@@ -670,10 +710,6 @@ async fn forward_subscription_openai_inner(
             if let Some(limit) = emulated_output_limit {
                 crate::output_limit::enforce_chat_limit(&mut translated, limit);
             }
-            upstream_model = translated
-                .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-                .and_then(serde_json::Value::as_str)
-                .map(str::to_string);
             response_body = bytes::Bytes::from(
                 serde_json::to_vec(&translated).expect("JSON values always serialize"),
             );
@@ -682,8 +718,7 @@ async fn forward_subscription_openai_inner(
                 .get("model")
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or_default();
-            upstream_model =
-                crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+            crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
             if let Some(limit) = emulated_output_limit {
                 crate::output_limit::enforce_response_limit(&mut parsed, limit);
             }
@@ -698,13 +733,6 @@ async fn forward_subscription_openai_inner(
         response
             .headers_mut()
             .insert("content-type", HeaderValue::from_static("application/json"));
-        if let Some(served) = upstream_model.as_deref()
-            && let Ok(value) = HeaderValue::from_str(served)
-        {
-            response
-                .headers_mut()
-                .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-        }
         return response;
     }
 
@@ -716,17 +744,13 @@ async fn forward_subscription_openai_inner(
             .get("model")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        upstream_model = crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+        crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
         response_body =
             bytes::Bytes::from(serde_json::to_vec(&parsed).expect("JSON values always serialize"));
     }
 
-    // An upstream failure is re-shaped into the dialect of the surface the
-    // caller used, as the Anthropic and Gemini surfaces already do. Relaying the
-    // vendor body verbatim left an OpenAI client unable to classify the error,
-    // and forwarded fields describing the operator's own subscription
-    // (`plan_type`, `eligible_promo`) to a caller who is often a different party
-    // (issue #213). The raw body stays in the request log for diagnosis.
+    // Re-shape failures to the caller's dialect and remove operator subscription
+    // metadata. The raw body stays in the request log for diagnosis (#213).
     let (response_body, content_type) = if status.is_success() {
         (response_body, content_type)
     } else {
@@ -743,125 +767,7 @@ async fn forward_subscription_openai_inner(
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
-    if let Some(served) = upstream_model.as_deref()
-        && let Ok(value) = HeaderValue::from_str(served)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
-}
-
-/// Collapse a Codex Responses SSE body into the final Responses JSON object.
-///
-/// The `ChatGPT` Codex backend only streams (`text/event-stream`-style `event:` /
-/// `data:` lines). For non-streaming clients we extract the `response` object
-/// carried by the terminal `response.completed` event and return it verbatim, so
-/// the client receives the single JSON object it expects. Returns `None` if no
-/// completed event is present (caller falls back to the raw body).
-fn codex_sse_to_response_json(body: &[u8]) -> Option<Vec<u8>> {
-    let text = std::str::from_utf8(body).ok()?;
-    let mut completed: Option<serde_json::Value> = None;
-    let mut output = BTreeMap::<u64, serde_json::Value>::new();
-    for line in text.lines() {
-        let Some(payload) = line.strip_prefix("data:") else {
-            continue;
-        };
-        let payload = payload.trim();
-        if payload.is_empty() || payload == "[DONE]" {
-            continue;
-        }
-        let Ok(event) = serde_json::from_str::<serde_json::Value>(payload) else {
-            continue;
-        };
-        match event.get("type").and_then(serde_json::Value::as_str) {
-            Some("response.output_item.added" | "response.output_item.done") => {
-                if let Some(item) = event.get("item") {
-                    let index = event
-                        .get("output_index")
-                        .and_then(serde_json::Value::as_u64)
-                        .unwrap_or(output.len() as u64);
-                    output.insert(index, item.clone());
-                }
-            }
-            Some("response.output_text.delta") => {
-                update_codex_output_text(&mut output, &event, false);
-            }
-            Some("response.output_text.done") => {
-                update_codex_output_text(&mut output, &event, true);
-            }
-            Some("response.completed") => {
-                if let Some(response) = event.get("response") {
-                    completed = Some(response.clone());
-                }
-            }
-            _ => {}
-        }
-    }
-    if let Some(response) = completed.as_mut() {
-        let missing_output = response
-            .get("output")
-            .and_then(serde_json::Value::as_array)
-            .is_none_or(Vec::is_empty);
-        if missing_output && !output.is_empty() {
-            response["output"] = serde_json::Value::Array(output.into_values().collect());
-        }
-    }
-    completed.and_then(|value| serde_json::to_vec(&value).ok())
-}
-
-fn update_codex_output_text(
-    output: &mut BTreeMap<u64, serde_json::Value>,
-    event: &serde_json::Value,
-    done: bool,
-) {
-    let output_index = event
-        .get("output_index")
-        .and_then(serde_json::Value::as_u64)
-        .unwrap_or(0);
-    let content_index = event
-        .get("content_index")
-        .and_then(serde_json::Value::as_u64)
-        .and_then(|index| usize::try_from(index).ok())
-        .unwrap_or(0);
-    let item_id = event
-        .get("item_id")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("");
-    let item = output.entry(output_index).or_insert_with(|| {
-        serde_json::json!({
-            "id": item_id,
-            "type": "message",
-            "status": "in_progress",
-            "role": "assistant",
-            "content": []
-        })
-    });
-    let Some(content) = item
-        .get_mut("content")
-        .and_then(serde_json::Value::as_array_mut)
-    else {
-        return;
-    };
-    content.resize(content_index + 1, serde_json::Value::Null);
-    if content[content_index].is_null() {
-        content[content_index] =
-            serde_json::json!({"type": "output_text", "text": "", "annotations": []});
-    }
-    let text = if done {
-        event.get("text")
-    } else {
-        event.get("delta")
-    }
-    .and_then(serde_json::Value::as_str)
-    .unwrap_or("");
-    if done {
-        content[content_index]["text"] = serde_json::Value::String(text.to_string());
-        item["status"] = serde_json::Value::String("completed".to_string());
-    } else if let Some(current) = content[content_index]["text"].as_str() {
-        content[content_index]["text"] = serde_json::Value::String(format!("{current}{text}"));
-    }
 }
 
 /// Provider-specific extra headers required by the upstream.
@@ -892,13 +798,12 @@ fn subscription_headers(
     out
 }
 
-/// Map a router route to the provider's upstream path.
-///
-/// Qwen mirrors the `OpenAI`-compatible scheme (base already ends in `/v1`), so
-/// the router's `/v1/...` prefix is stripped. Codex exposes a flat
-/// `.../codex/responses` endpoint, so `/v1/responses` collapses to
-/// `/responses`.
-fn join_subscription_url(provider: SubscriptionProvider, base_url: &str, path: &str) -> String {
+/// Map a route to a flat Codex endpoint or an `OpenAI`-compatible `/v1` base.
+pub(crate) fn join_subscription_url(
+    provider: SubscriptionProvider,
+    base_url: &str,
+    path: &str,
+) -> String {
     let base = base_url.trim_end_matches('/');
     match provider {
         SubscriptionProvider::Codex => {

@@ -1,6 +1,57 @@
 //! Black-box coverage for provider authorization commands.
 
 use std::process::{Command, Output};
+use std::sync::{Arc, Mutex};
+
+fn start_import_catalog() -> (String, Arc<Mutex<Vec<String>>>, std::thread::JoinHandle<()>) {
+    use std::io::{Read as _, Write as _};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("catalog listener");
+    listener.set_nonblocking(true).expect("nonblocking catalog");
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let captured = Arc::clone(&requests);
+    let task = std::thread::spawn(move || {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let (mut stream, _) = loop {
+            match listener.accept() {
+                Ok(connection) => break connection,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    if std::time::Instant::now() >= deadline {
+                        return;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                Err(error) => panic!("catalog accept: {error}"),
+            }
+        };
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(10)))
+            .expect("catalog read timeout");
+        let mut bytes = Vec::new();
+        let mut buffer = [0_u8; 1024];
+        while !bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+            let read = stream.read(&mut buffer).expect("catalog request");
+            if read == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buffer[..read]);
+        }
+        let request = String::from_utf8_lossy(&bytes);
+        captured
+            .lock()
+            .expect("captured requests")
+            .push(request.lines().next().unwrap_or_default().to_string());
+        let body = r#"{"data":[{"id":"model"}],"models":[{"id":"model","slug":"model","name":"models/model","supportedGenerationMethods":["generateContent"]}]}"#;
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+            body.len()
+        )
+        .expect("catalog response");
+    });
+    (origin, requests, task)
+}
 
 fn router(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
@@ -8,6 +59,18 @@ fn router(args: &[&str]) -> Output {
         .env("TOKEN_SECRET", "auth-cli-test-secret")
         .output()
         .expect("router CLI should run")
+}
+
+fn assert_refresh_chain_was_not_imported(output: &Output) {
+    let seen = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        (seen.contains("candidate refresh chain")
+            && (seen.contains("was not verified") || seen.contains("was rejected")))
+            || (seen.contains("external")
+                && seen.contains("candidate")
+                && seen.contains("refresh token was not spent")),
+        "{output:?}"
+    );
 }
 
 #[test]
@@ -419,8 +482,8 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
 }
 
 /// A synthetic credential cannot be adopted merely because it parses and says
-/// it has not expired. Import now proves the live access token at the vendor
-/// without spending the source refresh link.
+/// it has not expired. Import validates its current access token without
+/// spending the externally owned refresh token.
 #[test]
 fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
@@ -454,12 +517,7 @@ fn an_unverified_claude_login_is_not_adopted() {
         !destination.join(".credentials.json").exists(),
         "an unverified credential reached the destination"
     );
-    let seen = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        seen.contains("candidate was rejected by the vendor catalog")
-            && seen.contains("refresh token was not spent"),
-        "{seen}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
 }
 
 /// Codex follows the same fail-closed public path; preservation of its complete
@@ -491,11 +549,113 @@ fn an_unverified_codex_login_is_not_adopted() {
         .expect("router CLI should run");
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join("auth.json").exists());
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{output:?}"
-    );
+    assert_refresh_chain_was_not_imported(&output);
+}
+
+#[test]
+fn public_fresh_import_paths_reference_one_source_without_oauth_exchange() {
+    let cases = [
+        (
+            "claude",
+            ".credentials.json",
+            "CLAUDE_CODE_HOME",
+            r#"{"claudeAiOauth":{"accessToken":"source-access","refreshToken":"source-refresh","expiresAt":99999999999999},"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "codex",
+            "auth.json",
+            "CODEX_HOME",
+            r#"{"auth_mode":"chatgpt","tokens":{"access_token":"source-access","refresh_token":"source-refresh"},"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "gemini",
+            "oauth_creds.json",
+            "GEMINI_HOME",
+            r#"{"access_token":"source-access","refresh_token":"source-refresh","expiry_date":99999999999999,"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "qwen",
+            "oauth_creds.json",
+            "QWEN_HOME",
+            r#"{"access_token":"source-access","refresh_token":"source-refresh","expiry_date":99999999999999,"resource_url":"portal.qwen.ai","vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "claude",
+            ".credentials.json",
+            "CLAUDE_CODE_HOME",
+            r#"{"claudeAiOauth":{"accessToken":"source-access","refreshToken":"source-refresh","expiresAt":99999999999999},"vendor_marker":"kept"}"#,
+            true,
+        ),
+        (
+            "codex",
+            "auth.json",
+            "CODEX_HOME",
+            r#"{"auth_mode":"chatgpt","tokens":{"access_token":"source-access","refresh_token":"source-refresh"},"vendor_marker":"kept"}"#,
+            true,
+        ),
+    ];
+
+    for (provider, filename, destination_env, document, legacy) in cases {
+        let root = tempfile::tempdir().expect("root");
+        let source = root.path().join("source");
+        let destination = root.path().join("destination");
+        std::fs::create_dir_all(&source).expect("source");
+        std::fs::create_dir_all(&destination).expect("destination");
+        let source_path = source.join(filename);
+        std::fs::write(&source_path, document).expect("source credential");
+        let (catalog, requests, task) = start_import_catalog();
+        let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+        if legacy {
+            let flag = match provider {
+                "claude" => "--from-claude-home",
+                "codex" => "--from-codex-home",
+                _ => unreachable!(),
+            };
+            command.args(["auth", provider, flag, source.to_str().unwrap(), "--local"]);
+        } else {
+            command.args([
+                "auth",
+                "import",
+                provider,
+                source.to_str().unwrap(),
+                "--local",
+            ]);
+        }
+        let output = command
+            .env("TOKEN_SECRET", "auth-cli-test-secret")
+            .env("HOME", root.path())
+            .env(destination_env, &destination)
+            .env("DATA_DIR", root.path().join("data"))
+            .env("LINK_ASSISTANT_ROUTER_TEST_CATALOG_BASE_URL", &catalog)
+            .env(
+                "LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL",
+                format!("{catalog}/token"),
+            )
+            .output()
+            .expect("router CLI should run");
+        task.join().expect("catalog task");
+
+        assert!(
+            output.status.success(),
+            "{provider} legacy={legacy}: {output:?}"
+        );
+        let requests = requests.lock().unwrap().clone();
+        assert_eq!(requests.len(), 1, "{provider} legacy={legacy}");
+        assert!(
+            requests[0].starts_with("GET "),
+            "{provider} made an OAuth exchange: {requests:?}",
+        );
+        assert_eq!(std::fs::read_to_string(source_path).unwrap(), document);
+        let installed = std::fs::read_to_string(destination.join(filename)).expect("reference");
+        assert!(installed.contains("credential_source"), "{installed}");
+        for secret in ["source-access", "source-refresh", "vendor_marker"] {
+            assert!(!installed.contains(secret), "destination copied {secret}");
+        }
+    }
 }
 
 /// Importing a home onto itself is refused rather than silently rewriting the
@@ -750,7 +910,7 @@ fn conditional_import_rejects_unsupported_flag_combinations() {
 }
 
 #[test]
-fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
+fn conditional_import_does_not_read_a_malformed_candidate_when_destination_exists() {
     let root = tempfile::tempdir().expect("root");
     let source = root.path().join("source");
     let destination = root.path().join("destination");
@@ -776,214 +936,18 @@ fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
         .output()
         .expect("router CLI should run");
 
-    assert!(!output.status.success(), "malformed candidate must fail");
+    assert!(output.status.success(), "{output:?}");
     assert_eq!(
         std::fs::read(destination.join("oauth_creds.json")).unwrap(),
         current
     );
-}
-
-/// The import verb and the legacy per-provider spelling share the same safe
-/// validator; neither can install an unverified credential.
-#[test]
-fn the_import_subcommand_cannot_bypass_validation() {
-    let home = tempfile::tempdir().expect("temp home");
-    let source = home.path().join("source");
-    let destination = home.path().join("router-claude");
-    std::fs::create_dir_all(&source).expect("source home");
-    std::fs::write(
-        source.join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
-    )
-    .expect("plant a credential");
-
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args([
-            "auth",
-            "import",
-            "claude",
-            source.to_str().expect("utf-8 path"),
-            "--local",
-        ])
-        .env("TOKEN_SECRET", "auth-cli-test-secret")
-        .env("HOME", home.path())
-        .env("CLAUDE_CODE_HOME", &destination)
-        .output()
-        .expect("router CLI should run");
-
-    assert!(!output.status.success(), "{output:?}");
-    assert!(!destination.join(".credentials.json").exists());
     assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
+        String::from_utf8_lossy(&output.stdout).contains("already present"),
         "{output:?}"
     );
 }
 
-/// An unqualified import reads the *vendor's* home, not the router's.
-///
-/// `resolve_home` honours `CLAUDE_CODE_HOME`, which in a deployment names the
-/// destination — resolving the source that way made every unqualified import
-/// refuse itself as a self-import (issue #278).
-#[test]
-fn an_unqualified_import_reads_the_vendors_own_home() {
-    let home = tempfile::tempdir().expect("temp home");
-    let vendor = home.path().join(".claude");
-    let destination = home.path().join("router-claude");
-    std::fs::create_dir_all(&vendor).expect("vendor home");
-    std::fs::write(
-        vendor.join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
-    )
-    .expect("plant a credential");
-
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "import", "claude", "--local"])
-        .env("TOKEN_SECRET", "auth-cli-test-secret")
-        .env("HOME", home.path())
-        .env("CLAUDE_CODE_HOME", &destination)
-        .output()
-        .expect("router CLI should run");
-
-    assert!(!output.status.success(), "{output:?}");
-    assert!(
-        !destination.join(".credentials.json").exists(),
-        "an unverified credential must not reach the router's home"
-    );
-    let error = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        error.contains("candidate was rejected by the vendor catalog"),
-        "{error}"
-    );
-    assert!(
-        !error.contains("no claude credential"),
-        "the vendor home was not read: {error}"
-    );
-}
-
-/// `--all` reports absent providers but fails when a present candidate cannot
-/// be positively validated; a sweep must not claim successful provisioning.
-///
-/// A workstation logged in to two of five providers is the ordinary case, not
-/// an error, so one absent login must not abort the rest.
-#[test]
-fn importing_everything_adopts_what_exists_and_reports_what_does_not() {
-    let home = tempfile::tempdir().expect("temp home");
-    let vendor = home.path().join(".claude");
-    let destination = home.path().join("router-claude");
-    std::fs::create_dir_all(&vendor).expect("vendor home");
-    std::fs::write(
-        vendor.join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"synthetic","refreshToken":"r","expiresAt":99999999999999}}"#,
-    )
-    .expect("plant a credential");
-
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["auth", "import", "--all", "--local"])
-        .env("TOKEN_SECRET", "auth-cli-test-secret")
-        .env("HOME", home.path())
-        .env("CLAUDE_CODE_HOME", &destination)
-        .env("CODEX_HOME", home.path().join("router-codex"))
-        .env("DATA_DIR", home.path().join("data"))
-        .output()
-        .expect("router CLI should run");
-
-    assert!(
-        !output.status.success(),
-        "unsafe sweep succeeded: {output:?}"
-    );
-    assert!(
-        !destination.join(".credentials.json").exists(),
-        "an unverified login was adopted"
-    );
-    let seen = String::from_utf8_lossy(&output.stdout);
-    assert!(seen.contains("nothing to adopt"), "{seen}");
-    assert!(
-        String::from_utf8_lossy(&output.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{output:?}"
-    );
-}
-
-/// Naming a provider and asking for everything are contradictory.
-#[test]
-fn import_all_cannot_also_name_one_provider() {
-    let output = router(&["auth", "import", "claude", "--all"]);
-    assert!(!output.status.success(), "{output:?}");
-}
-
-/// `auth gh` accepts the same target flags every other `auth` subcommand does
-/// (issue #283).
-///
-/// It was the only one of the five that took none, so `--server` was rejected
-/// outright — and without the flag there was no way to say which deployment a
-/// GitHub credential was meant for.
-#[test]
-fn gh_accepts_the_target_flags_the_other_subcommands_take() {
-    let help = router(&["auth", "gh", "--help"]);
-    let seen = String::from_utf8_lossy(&help.stdout);
-
-    for flag in ["--local", "--server", "--managed"] {
-        assert!(
-            seen.contains(flag),
-            "auth gh must offer {flag} like its siblings: {seen}"
-        );
-    }
-}
-
-/// Storing a credential while a server is selected must not act on this
-/// machine (issue #283).
-///
-/// The router reads a GitHub credential from its own data directory at
-/// startup, so there is nowhere remote to put one. Acting locally under a
-/// success message left the workstation holding a GitHub token it never needed
-/// while the deployment that did need one still had none — the failure that
-/// costs an operator a leaked token, which a plain error does not.
-#[test]
-fn storing_a_gh_credential_for_a_selected_server_refuses_rather_than_acting_locally() {
-    use std::io::Write as _;
-
-    let home = tempfile::tempdir().expect("temp home");
-    let data = home.path().join("data");
-    std::fs::create_dir_all(&data).expect("data dir");
-
-    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        // Selected through the environment rather than `--server`, which is how
-        // the leak actually happened: with no flag to reject, the old build
-        // parsed this cleanly and stored the token here. A router that cannot
-        // be reached is enough — the refusal must not depend on contacting one.
-        .args(["auth", "gh", "--token-stdin"])
-        .env("ROUTER_URL", "http://127.0.0.1:1")
-        .env("TOKEN_SECRET", "auth-cli-test-secret")
-        .env("HOME", home.path())
-        .env("DATA_DIR", &data)
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .expect("router CLI should run");
-    child
-        .stdin
-        .take()
-        .expect("stdin")
-        .write_all(b"gho_must_not_be_stored_here\n")
-        .expect("write the token");
-    let output = child.wait_with_output().expect("wait");
-
-    assert!(
-        !output.status.success(),
-        "a credential that could not be stored where it was aimed must not report success"
-    );
-    assert!(
-        !data.join("github-credential").exists(),
-        "the token must not land on this machine when another target was named"
-    );
-    assert!(
-        !String::from_utf8_lossy(&output.stdout).contains("stored the GitHub credential"),
-        "success must not be reported for a store that did not happen: {}",
-        String::from_utf8_lossy(&output.stdout)
-    );
-}
+include!("auth_cli_test/import_tests.rs");
 
 #[path = "auth_cli_test/remote_import.rs"]
 mod remote_import_tests;

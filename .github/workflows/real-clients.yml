@@ -26,7 +26,7 @@ env:
 
 jobs:
   real-client-capture:
-    name: Claude Code, Codex, and OpenCode
+    name: Claude Code, Codex, Gemini, Qwen, and OpenCode
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -49,9 +49,13 @@ jobs:
           npm install --global \
             @anthropic-ai/claude-code@2.1.261 \
             @openai/codex@0.153.4 \
+            @google/gemini-cli@0.58.0 \
+            @qwen-code/qwen-code@0.23.0 \
             opencode-ai@1.18.29
           claude --version | grep -F '2.1.261'
           codex --version | grep -F '0.153.4'
+          gemini --version | grep -F '0.58.0'
+          qwen --version | grep -F '0.23.0'
           opencode --version | grep -Fx '1.18.29'
 
       - name: Capture native requests against the offline mock
@@ -65,6 +69,7 @@ jobs:
           ROUTER_LIVE_CODEX_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CODEX_CREDENTIAL_JSON }}
           ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
           LEFINE_API_KEY: ${{ secrets.LEFINE_API_KEY }}
+          LEFINE_INFERENCE_ACCEPTANCE: ${{ vars.LEFINE_INFERENCE_ACCEPTANCE }}
         run: |
           cargo test --locked --test subscription_usage_live_test -- --test-threads=1
-          cargo test --locked --test lefine_live_test -- --test-threads=1
+          cargo test --locked --test lefine_live_test -- --test-threads=1 --nocapture

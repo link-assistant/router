@@ -66,6 +66,10 @@ impl GitHubProxyConfig {
     /// Returns an operator-readable message when a named credential file or
     /// policy file cannot be read.
     pub fn from_env_with_data_dir(data_dir: Option<&Path>) -> Result<Self, String> {
+        let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
+            .unwrap_or_else(|_| "https://api.github.com".into())
+            .trim_end_matches('/')
+            .to_string();
         let mut token = std::env::var("GITHUB_PROXY_TOKEN")
             .ok()
             .filter(|token| !token.is_empty());
@@ -87,11 +91,14 @@ impl GitHubProxyConfig {
                 .and_then(|name| std::env::var(name).ok())
                 .filter(|token| !token.is_empty())
         });
-        token = token.or_else(|| reusable_credential(data_dir, gh_config_directory().as_deref()));
-        let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
-            .unwrap_or_else(|_| "https://api.github.com".into())
-            .trim_end_matches('/')
-            .to_string();
+        let credential_host = github_credential_host(&base_url);
+        token = token.or_else(|| {
+            reusable_credential(
+                data_dir,
+                gh_config_directory().as_deref(),
+                credential_host.as_deref(),
+            )
+        });
         let policy = std::env::var("GITHUB_PROXY_POLICY")
             .ok()
             .filter(|path| !path.is_empty())
@@ -525,11 +532,15 @@ pub async fn proxy(State(state): State<AppState>, request: Request) -> Response 
 /// configuration: both are existing logins (issue #263). Consulted only after
 /// every explicit environment setting, so this never overrides one.
 #[must_use]
-pub fn reusable_credential(data_dir: Option<&Path>, gh_config: Option<&Path>) -> Option<String> {
+pub fn reusable_credential(
+    data_dir: Option<&Path>,
+    gh_config: Option<&Path>,
+    host: Option<&str>,
+) -> Option<String> {
     data_dir
         .filter(|dir| !dir.as_os_str().is_empty())
         .and_then(stored_credential)
-        .or_else(|| gh_config.and_then(token_from_gh_config))
+        .or_else(|| gh_config.and_then(|directory| token_from_gh_config(directory, host?)))
 }
 
 /// Where a credential stored by `router auth gh` lives.
@@ -615,14 +626,44 @@ pub fn gh_config_directory() -> Option<PathBuf> {
 /// `gh` in a fixed shape, and a whole parser for one scalar would be more to
 /// go wrong than it saves.
 #[must_use]
-pub fn token_from_gh_config(directory: &Path) -> Option<String> {
+pub fn token_from_gh_config(directory: &Path, expected_host: &str) -> Option<String> {
     let contents = std::fs::read_to_string(directory.join("hosts.yml")).ok()?;
-    contents.lines().find_map(|line| {
-        let (key, value) = line.split_once(':')?;
-        (key.trim() == "oauth_token")
-            .then(|| value.trim().trim_matches(['"', '\'']).to_string())
-            .filter(|token| !token.is_empty())
+    let mut current_host: Option<&str> = None;
+    for line in contents.lines() {
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        if !line.as_bytes().first().is_some_and(u8::is_ascii_whitespace) {
+            current_host = Some(key.trim().trim_matches(['"', '\'']));
+            continue;
+        }
+        if key.trim() == "oauth_token"
+            && current_host.is_some_and(|host| host.eq_ignore_ascii_case(expected_host))
+        {
+            let token = value.trim().trim_matches(['"', '\'']).to_string();
+            if !token.is_empty() {
+                return Some(token);
+            }
+        }
+    }
+    None
+}
+
+fn github_credential_host(base_url: &str) -> Option<String> {
+    let host = reqwest::Url::parse(base_url).ok()?.host_str()?.to_string();
+    Some(if host.eq_ignore_ascii_case("api.github.com") {
+        "github.com".to_string()
+    } else {
+        host
     })
+}
+
+/// Host whose `gh` credential matches the configured GitHub API origin.
+#[must_use]
+pub fn configured_credential_host() -> Option<String> {
+    let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
+        .unwrap_or_else(|_| "https://api.github.com".to_string());
+    github_credential_host(&base_url)
 }
 
 /// The `owner/repo` a GitHub REST path acts on, when it names one.
@@ -726,16 +767,7 @@ async fn forward(
     };
     let status = response.status();
     let headers = crate::proxy::relay_response_headers(response.headers());
-    let bytes = match response.bytes().await {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            return github_error(
-                StatusCode::BAD_GATEWAY,
-                &format!("GitHub upstream response failed: {error}"),
-            );
-        }
-    };
-    let mut result = Response::new(Body::from(bytes));
+    let mut result = Response::new(Body::from_stream(response.bytes_stream()));
     *result.status_mut() = status;
     *result.headers_mut() = headers;
     result

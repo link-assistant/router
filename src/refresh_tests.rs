@@ -14,29 +14,6 @@ fn token(refresh: Option<&str>, exp: Option<i64>) -> SubscriptionToken {
     }
 }
 
-#[test]
-fn config_present_for_subscription_providers() {
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Codex).token_url,
-        "https://auth.openai.com/oauth/token"
-    );
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Gemini).client_secret_env,
-        Some(GEMINI_CLIENT_SECRET_ENV)
-    );
-    assert_eq!(
-        refresh_config(SubscriptionProvider::Qwen).style,
-        BodyStyle::Form
-    );
-    // Claude is refreshed by the router too: the runtime image has no
-    // Claude CLI to keep the credential file current.
-    let claude = refresh_config(SubscriptionProvider::Claude);
-    assert_eq!(claude.token_url, CLAUDE_TOKEN_URL);
-    assert_eq!(claude.client_id, CLAUDE_CLIENT_ID);
-    assert!(claude.client_secret_env.is_none());
-    assert_eq!(claude.style, BodyStyle::Json);
-}
-
 /// Serve one JSON response on loopback and hand back the request that was
 /// received, so a test can assert the exact refresh body sent upstream.
 async fn stub_token_endpoint(
@@ -579,7 +556,38 @@ fn merge_rotates_refresh_token_when_present() {
 fn merge_requires_access_token() {
     let prev = token(Some("r1"), Some(0));
     let resp = RefreshResponse::default();
-    assert!(merge_refresh_response(&prev, &resp, 1_000).is_none());
+    assert!(matches!(
+        merge_refresh_response(&prev, &resp, 1_000),
+        Err(RefreshError::Parse(_))
+    ));
+}
+
+#[test]
+fn merge_accepts_zero_expiry_without_treating_it_as_missing() {
+    let prev = token(Some("r1"), Some(0));
+    let resp = RefreshResponse {
+        access_token: Some("new-access".into()),
+        refresh_token: None,
+        expires_in: Some(0),
+    };
+    let merged = merge_refresh_response(&prev, &resp, 1_000).unwrap();
+    assert_eq!(merged.expires_at_ms, Some(1_000));
+}
+
+#[test]
+fn merge_rejects_negative_or_unrepresentable_expiry() {
+    let prev = token(Some("r1"), Some(0));
+    for expires_in in [-1, i64::MAX] {
+        let resp = RefreshResponse {
+            access_token: Some("must-not-escape".into()),
+            refresh_token: Some("must-not-rotate".into()),
+            expires_in: Some(expires_in),
+        };
+        assert!(matches!(
+            merge_refresh_response(&prev, &resp, 1_000),
+            Err(RefreshError::Parse(_))
+        ));
+    }
 }
 
 #[tokio::test]

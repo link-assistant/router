@@ -16,12 +16,20 @@ fn usage_app(state: AppState) -> axum::Router {
 }
 
 fn issue_client(state: &AppState, client: crate::clients::ClientKind) -> String {
+    issue_client_for(state, client, "primary")
+}
+
+fn issue_client_for(
+    state: &AppState,
+    client: crate::clients::ClientKind,
+    principal: &str,
+) -> String {
     state
         .token_manager
         .issue(&crate::token::IssueRequest {
             ttl_hours: 1,
             label: "usage HTTP contract",
-            account: Some("primary"),
+            account: Some(principal),
             max_requests: None,
             max_tokens: None,
             rate_limit_per_minute: None,
@@ -29,9 +37,20 @@ fn issue_client(state: &AppState, client: crate::clients::ClientKind) -> String 
             github_repos: Vec::new(),
             sliding_window_seconds: None,
             client_kind: Some(client.canonical_name()),
-            principal_id: Some("primary"),
+            principal_id: Some(principal),
         })
         .unwrap()
+}
+
+fn native_usage_request_header(
+    client: crate::clients::ClientKind,
+    token: String,
+) -> (&'static str, String) {
+    if client == crate::clients::ClientKind::GeminiCli {
+        ("x-goog-api-key", token)
+    } else {
+        ("authorization", format!("Bearer {token}"))
+    }
 }
 
 async fn request(
@@ -167,6 +186,82 @@ async fn filtered_http_contract_preserves_schema_types_timestamps_and_no_secrets
 }
 
 #[tokio::test]
+async fn empty_and_error_shaped_successes_are_unverified_over_http() {
+    for body in [json!({}), json!({"error": {"message": "denied"}})] {
+        for (provider, subscription, client) in [
+            (
+                "anthropic",
+                SubscriptionProvider::Claude,
+                crate::clients::ClientKind::ClaudeCode,
+            ),
+            (
+                "openai",
+                SubscriptionProvider::Codex,
+                crate::clients::ClientKind::Codex,
+            ),
+        ] {
+            let response_body = body.clone();
+            let vendor = axum::Router::new().fallback(move || {
+                let response_body = response_body.clone();
+                async move { axum::Json(response_body) }
+            });
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let address = listener.local_addr().unwrap();
+            let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+            let directory = tempfile::tempdir().unwrap();
+            let credential_home = directory.path().join(provider);
+            std::fs::create_dir_all(&credential_home).unwrap();
+            match subscription {
+                SubscriptionProvider::Claude => std::fs::write(
+                    credential_home.join(".credentials.json"),
+                    json!({"claudeAiOauth": {
+                        "accessToken": format!("{provider}-access"),
+                        "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+                    }})
+                    .to_string(),
+                )
+                .unwrap(),
+                SubscriptionProvider::Codex => std::fs::write(
+                    credential_home.join("auth.json"),
+                    json!({"tokens": {
+                        "access_token": format!("{provider}-access"),
+                        "account_id": "account"
+                    }})
+                    .to_string(),
+                )
+                .unwrap(),
+                _ => unreachable!(),
+            }
+            let mut state = AppState::for_tests(directory.path());
+            state.subscription_base_url = Some(format!("http://{address}"));
+            state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+                subscription,
+                &credential_home,
+            )];
+            state.register_credential_recovery_in(
+                directory.path(),
+                &crate::app_state::VendorClis::default(),
+            );
+            let token = issue_client(&state, client);
+
+            let (status, response) = request(
+                usage_app(state),
+                &format!("/api/usage/{provider}"),
+                Some(("authorization", format!("Bearer {token}"))),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK);
+            assert_eq!(response["subscriptions"][0]["state"], "unverified");
+            assert_eq!(
+                response["subscriptions"][0]["status"],
+                "usage_response_unverified"
+            );
+            server.abort();
+        }
+    }
+}
+
+#[tokio::test]
 async fn all_managed_client_credential_carriers_reach_the_unfiltered_route() {
     let directory = tempfile::tempdir().unwrap();
     let state = AppState::for_tests(directory.path());
@@ -216,6 +311,8 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     let app = usage_app(state);
 
     let (absent_status, absent) = request(app.clone(), "/api/usage/anthropic", None).await;
+    let (unknown_absent_status, unknown_absent) =
+        request(app.clone(), "/api/usage/not-a-provider", None).await;
     let (invalid_status, invalid) = request(
         app.clone(),
         "/api/usage/anthropic",
@@ -242,11 +339,19 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     .await;
 
     assert_eq!(absent_status, StatusCode::UNAUTHORIZED);
+    assert_eq!(unknown_absent_status, StatusCode::UNAUTHORIZED);
     assert_eq!(invalid_status, StatusCode::UNAUTHORIZED);
     assert_eq!(admin_status, StatusCode::FORBIDDEN);
     assert_eq!(wrong_provider_status, StatusCode::FORBIDDEN);
     assert_eq!(unknown_status, StatusCode::NOT_FOUND);
-    for body in [absent, invalid, admin_body, wrong_provider, unknown] {
+    for body in [
+        absent,
+        unknown_absent,
+        invalid,
+        admin_body,
+        wrong_provider,
+        unknown,
+    ] {
         let rendered = body.to_string();
         for forbidden in ["primary", "subscriptionType", "vendor-secret"] {
             assert!(
@@ -384,4 +489,239 @@ async fn rate_limited_usage_is_cached_with_the_vendor_retry_hint() {
         "second request must use the cache"
     );
     server.abort();
+}
+
+#[tokio::test]
+async fn concurrent_identical_usage_requests_share_one_provider_probe() {
+    let hits = Arc::new(Mutex::new(0usize));
+    let entered = Arc::new(tokio::sync::Notify::new());
+    let release = Arc::new(tokio::sync::Notify::new());
+    let hits_for_server = Arc::clone(&hits);
+    let entered_for_server = Arc::clone(&entered);
+    let release_for_server = Arc::clone(&release);
+    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+        let hits = Arc::clone(&hits_for_server);
+        let entered = Arc::clone(&entered_for_server);
+        let release = Arc::clone(&release_for_server);
+        async move {
+            *hits.lock().unwrap() += 1;
+            if request.uri().path().ends_with("/usage") {
+                entered.notify_one();
+                release.notified().await;
+                axum::Json(json!({
+                    "five_hour": {"utilization": 10.0, "resets_at": "2030-01-01T00:00:00Z"}
+                }))
+            } else {
+                axum::Json(json!({"organization": {"subscription_status": "active"}}))
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+    let directory = tempfile::tempdir().unwrap();
+    let claude_home = directory.path().join("claude");
+    std::fs::create_dir_all(&claude_home).unwrap();
+    std::fs::write(
+        claude_home.join(".credentials.json"),
+        json!({"claudeAiOauth": {
+            "accessToken": "coalesced-access",
+            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+        }})
+        .to_string(),
+    )
+    .unwrap();
+    let mut state = AppState::for_tests(directory.path());
+    state.subscription_base_url = Some(format!("http://{address}"));
+    state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+        SubscriptionProvider::Claude,
+        &claude_home,
+    )];
+    state.register_credential_recovery_in(
+        directory.path(),
+        &crate::app_state::VendorClis::default(),
+    );
+    let token = issue_client(&state, crate::clients::ClientKind::ClaudeCode);
+    let app = usage_app(state);
+    let first_app = app.clone();
+    let first_token = token.clone();
+    let first = tokio::spawn(async move {
+        request(
+            first_app,
+            "/api/usage/anthropic",
+            Some(("authorization", format!("Bearer {first_token}"))),
+        )
+        .await
+    });
+    let second = tokio::spawn(async move {
+        request(
+            app,
+            "/api/usage/anthropic",
+            Some(("authorization", format!("Bearer {token}"))),
+        )
+        .await
+    });
+
+    entered.notified().await;
+    tokio::task::yield_now().await;
+    assert_eq!(*hits.lock().unwrap(), 1, "duplicate provider probe started");
+    release.notify_waiters();
+    for result in [first.await.unwrap(), second.await.unwrap()] {
+        assert_eq!(result.0, StatusCode::OK);
+        assert_eq!(result.1["subscriptions"][0]["state"], "available");
+    }
+    assert_eq!(
+        *hits.lock().unwrap(),
+        2,
+        "usage and profile must run once each"
+    );
+    server.abort();
+}
+
+#[tokio::test]
+async fn gemini_and_qwen_are_visible_without_inference_only_to_their_native_clients() {
+    for (subscription, provider, client, other_client) in [
+        (
+            SubscriptionProvider::Gemini,
+            "gemini",
+            crate::clients::ClientKind::GeminiCli,
+            crate::clients::ClientKind::QwenCode,
+        ),
+        (
+            SubscriptionProvider::Qwen,
+            "qwen",
+            crate::clients::ClientKind::QwenCode,
+            crate::clients::ClientKind::GeminiCli,
+        ),
+    ] {
+        let vendor_hits = Arc::new(Mutex::new(0usize));
+        let vendor_hits_for_server = Arc::clone(&vendor_hits);
+        let vendor = axum::Router::new().fallback(move || {
+            let hits = Arc::clone(&vendor_hits_for_server);
+            async move {
+                *hits.lock().unwrap() += 1;
+                (StatusCode::INTERNAL_SERVER_ERROR, "inference must not run")
+            }
+        });
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+
+        let directory = tempfile::tempdir().unwrap();
+        let credential_home = directory.path().join(provider);
+        std::fs::create_dir_all(&credential_home).unwrap();
+        let secret = format!("{provider}-private-credential");
+        std::fs::write(
+            credential_home.join(subscription.canonical_credential_filename()),
+            json!({"access_token": secret, "refresh_token": "private-refresh"}).to_string(),
+        )
+        .unwrap();
+        let mut state = AppState::for_tests(directory.path());
+        state.subscription_base_url = Some(format!("http://{address}/inference"));
+        state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+            subscription,
+            &credential_home,
+        )];
+        state.register_credential_recovery_in(
+            directory.path(),
+            &crate::app_state::VendorClis::default(),
+        );
+        let token = issue_client(&state, client);
+        let app = usage_app(state.clone());
+
+        for path in [format!("/api/usage/{provider}"), "/api/usage".into()] {
+            let (status, body) = request(
+                app.clone(),
+                &path,
+                Some(native_usage_request_header(client, token.clone())),
+            )
+            .await;
+            assert_eq!(status, StatusCode::OK, "{provider}: {body}");
+            assert_eq!(body["subscriptions"].as_array().unwrap().len(), 1);
+            let usage = &body["subscriptions"][0];
+            assert_eq!(usage["provider"], provider);
+            assert_eq!(usage["state"], "unverified");
+            assert_eq!(usage["status"], "live_limits_unavailable");
+            assert_eq!(usage["windows"], json!([]));
+            let rendered = body.to_string();
+            for private in [&secret, "private-refresh", "access_token", "refresh_token"] {
+                assert!(!rendered.contains(private), "leaked {private}: {rendered}");
+            }
+        }
+        assert_eq!(*vendor_hits.lock().unwrap(), 0);
+
+        let other_token = issue_client(&state, other_client);
+        let (denied_status, denied) = request(
+            app,
+            &format!("/api/usage/{provider}"),
+            Some(native_usage_request_header(other_client, other_token)),
+        )
+        .await;
+        assert_eq!(denied_status, StatusCode::FORBIDDEN, "{provider}: {denied}");
+        assert_eq!(*vendor_hits.lock().unwrap(), 0);
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn gemini_and_qwen_select_credentials_by_principal_and_fail_closed() {
+    for (subscription, provider, client) in [
+        (
+            SubscriptionProvider::Gemini,
+            "gemini",
+            crate::clients::ClientKind::GeminiCli,
+        ),
+        (
+            SubscriptionProvider::Qwen,
+            "qwen",
+            crate::clients::ClientKind::QwenCode,
+        ),
+    ] {
+        let directory = tempfile::tempdir().unwrap();
+        let primary_home = directory.path().join(format!("{provider}-primary"));
+        let account_home = directory.path().join(format!("{provider}-account-1"));
+        std::fs::create_dir_all(&primary_home).unwrap();
+        std::fs::create_dir_all(&account_home).unwrap();
+        std::fs::write(
+            account_home.join(subscription.canonical_credential_filename()),
+            r#"{"access_token":"principal-private"}"#,
+        )
+        .unwrap();
+        let mut state = AppState::for_tests(directory.path());
+        state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+            subscription,
+            &primary_home,
+        )];
+        state.account_router = Some(crate::accounts::AccountRouter::new_for_provider(
+            primary_home,
+            &[account_home],
+            subscription,
+            crate::accounts::AccountRouterOptions::default(),
+        ));
+        state.register_credential_recovery_in(
+            directory.path(),
+            &crate::app_state::VendorClis::default(),
+        );
+        let account_token = issue_client_for(&state, client, "account-1");
+        let primary_token = issue_client_for(&state, client, "primary");
+        let app = usage_app(state);
+        let (account_status, account_body) = request(
+            app.clone(),
+            &format!("/api/usage/{provider}"),
+            Some(native_usage_request_header(client, account_token)),
+        )
+        .await;
+        assert_eq!(account_status, StatusCode::OK, "{account_body}");
+        assert_eq!(account_body["subscriptions"][0]["provider"], provider);
+        assert_eq!(account_body["subscriptions"][0]["state"], "unverified");
+        assert!(!account_body.to_string().contains("principal-private"));
+
+        let (status, body) = request(
+            app,
+            &format!("/api/usage/{provider}"),
+            Some(native_usage_request_header(client, primary_token)),
+        )
+        .await;
+        assert_eq!(status, StatusCode::NOT_FOUND, "{body}");
+    }
 }

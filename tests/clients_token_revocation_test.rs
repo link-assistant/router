@@ -453,7 +453,7 @@ impl Router {
         let router = Self { child, port };
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while std::time::Instant::now() < deadline {
-            if http_post(&router.url("/api/health"), None, "").is_some() {
+            if http_post(&router.url("/api/health"), None, &[], "").is_some() {
                 return router;
             }
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -467,7 +467,7 @@ impl Router {
 }
 
 /// Minimal blocking POST; the crate's `reqwest` is async-only here.
-fn http_post(url: &str, bearer: Option<&str>, body: &str) -> Option<u16> {
+fn http_post(url: &str, bearer: Option<&str>, headers: &[(&str, &str)], body: &str) -> Option<u16> {
     use std::io::{Read as _, Write as _};
 
     let rest = url.strip_prefix("http://")?;
@@ -484,6 +484,12 @@ fn http_post(url: &str, bearer: Option<&str>, body: &str) -> Option<u16> {
     if let Some(bearer) = bearer {
         request.push_str("Authorization: Bearer ");
         request.push_str(bearer);
+        request.push_str("\r\n");
+    }
+    for (name, value) in headers {
+        request.push_str(name);
+        request.push_str(": ");
+        request.push_str(value);
         request.push_str("\r\n");
     }
     request.push_str("\r\n");
@@ -522,9 +528,13 @@ fn a_removed_client_credential_is_rejected_by_a_live_router() {
         );
         assert!(created.status.success(), "setup: {}", text(&created));
         let token = environment_token(home, "codex");
-        let probe = format!("{base_url}/api/services/openai/v1/chat/completions");
-        let body = r#"{"model":"gpt-5.6-sol","messages":[{"role":"user","content":"hi"}]}"#;
-        let before = http_post(&probe, Some(&token), body).expect("router answers");
+        let probe = format!("{base_url}/api/services/codex/v1/responses");
+        let body = r#"{"model":"gpt-5.6-sol","input":"hi"}"#;
+        let evidence = [
+            ("User-Agent", "codex_exec/revocation-test"),
+            ("X-Codex-Turn-Metadata", "revocation-test"),
+        ];
+        let before = http_post(&probe, Some(&token), &evidence, body).expect("router answers");
         assert!(
             before != 401 && before != 403,
             "{storage}: the freshly minted credential should authenticate, got {before}"
@@ -533,7 +543,7 @@ fn a_removed_client_credential_is_rejected_by_a_live_router() {
         let removed = router(home, storage, &["clients", "remove", "codex"]);
         assert!(removed.status.success(), "remove: {}", text(&removed));
 
-        let after = http_post(&probe, Some(&token), body).expect("router answers");
+        let after = http_post(&probe, Some(&token), &evidence, body).expect("router answers");
         assert!(
             after == 401 || after == 403,
             "{storage}: the router still accepts a credential that `clients remove` deleted, got {after}"

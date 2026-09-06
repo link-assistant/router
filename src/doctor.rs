@@ -5,7 +5,7 @@ use crate::login::LoginConfig;
 use crate::model_catalog::{
     CatalogAcceptance, classify_catalog_acceptance, fetch_provider_catalog,
 };
-use crate::subscription::{SubscriptionProvider, all_subscription_readers};
+use crate::subscription::{SubscriptionProvider, SubscriptionReader, all_subscription_readers};
 
 /// One line per Claude login mode, saying whether it can run here and which
 /// scopes it would request.
@@ -170,6 +170,22 @@ async fn subscription_catalog_diagnostics_with_token_url(
     token_url: Option<(SubscriptionProvider, &str)>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
+    subscription_catalog_diagnostics_for_readers_with_token_url(readers, data_dir, token_url).await
+}
+
+/// Diagnose exact credential roots already resolved by CLI configuration.
+pub async fn subscription_catalog_diagnostics_for_readers(
+    readers: Vec<SubscriptionReader>,
+    data_dir: Option<&std::path::Path>,
+) -> bool {
+    subscription_catalog_diagnostics_for_readers_with_token_url(readers, data_dir, None).await
+}
+
+async fn subscription_catalog_diagnostics_for_readers_with_token_url(
+    readers: Vec<SubscriptionReader>,
+    data_dir: Option<&std::path::Path>,
+    token_url: Option<(SubscriptionProvider, &str)>,
+) -> bool {
     let client = reqwest::Client::new();
     let token_cache = data_dir.map_or_else(
         || {

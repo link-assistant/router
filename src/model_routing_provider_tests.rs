@@ -127,7 +127,7 @@ async fn live_catalog_upstream(models: &[&str]) -> (String, tokio::task::JoinHan
 
 async fn captured_model_upstream() -> (
     String,
-    Arc<Mutex<Vec<(String, serde_json::Value)>>>,
+    Arc<Mutex<Vec<(String, serde_json::Value, HeaderMap)>>>,
     tokio::task::JoinHandle<()>,
 ) {
     let requests = Arc::new(Mutex::new(Vec::new()));
@@ -142,9 +142,13 @@ async fn captured_model_upstream() -> (
                     "data": [{"id": "shared-future", "object": "model"}]
                 }));
             }
+            let headers = request.headers().clone();
             let bytes = request.into_body().collect().await.unwrap().to_bytes();
             let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-            captured.lock().unwrap().push((path.clone(), payload));
+            captured
+                .lock()
+                .unwrap()
+                .push((path.clone(), payload, headers));
             if path.ends_with("/responses") {
                 axum::Json(serde_json::json!({
                     "id": "resp_1",
@@ -277,6 +281,25 @@ pub(super) fn bearer_for(state: &AppState, client: crate::clients::ClientKind) -
     headers
 }
 
+fn provider_forwarding_headers(state: &AppState, client: crate::clients::ClientKind) -> HeaderMap {
+    let mut headers = bearer_for(state, client);
+    if client == crate::clients::ClientKind::Codex {
+        headers.insert("user-agent", HeaderValue::from_static("codex/test-fixture"));
+        headers.insert(
+            "x-codex-turn-metadata",
+            HeaderValue::from_static("turn-fixture"),
+        );
+    }
+    headers.insert("x-session-id", HeaderValue::from_static("provider-test"));
+    headers.insert("x-client-feature", HeaderValue::from_static("preserved"));
+    headers.insert("cookie", HeaderValue::from_static("private=1"));
+    headers.insert("x-forwarded-for", HeaderValue::from_static("203.0.113.1"));
+    headers.insert("x-router-internal", HeaderValue::from_static("private"));
+    headers.insert("connection", HeaderValue::from_static("x-hop-secret"));
+    headers.insert("x-hop-secret", HeaderValue::from_static("private-hop"));
+    headers
+}
+
 /// The bug in issue #260: a stored provider was reachable only by pinning
 /// `UPSTREAM_PROVIDER`, which pins the whole deployment — so one router could
 /// serve vendor subscriptions or a local endpoint, never both.
@@ -307,16 +330,18 @@ async fn a_stored_providers_declared_model_routes_in_automatic_mode() {
 }
 
 #[tokio::test]
-async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
+async fn ordinary_openai_compatible_routes_preserve_safe_metadata_and_replace_credentials() {
     let (base_url, requests, task) = captured_model_upstream().await;
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
     store_provider_at(&state, "formal-ai", &base_url, &["shared-future"]);
 
+    let headers = provider_forwarding_headers(&state, crate::clients::ClientKind::Opencode);
+
     let response = crate::proxy::openai_chat_completions(
         State(state.clone()),
         Query(BTreeMap::new()),
-        bearer(&state),
+        headers.clone(),
         Ok(axum::Json(serde_json::json!({
             "model": "shared-future",
             "messages": [{"role": "user", "content": "hello"}]
@@ -330,10 +355,51 @@ async fn a_compatible_client_reaches_an_ordinary_provider_end_to_end() {
     assert_eq!(payload["model"], "shared-future");
     assert_eq!(payload["choices"][0]["message"]["content"], "ok");
 
+    let response = crate::proxy::openai_responses(
+        State(state.clone()),
+        provider_forwarding_headers(&state, crate::clients::ClientKind::Codex),
+        Ok(axum::Json(serde_json::json!({
+            "model": "shared-future",
+            "input": "hello"
+        }))),
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(payload["model"], "shared-future");
+    assert_eq!(payload["object"], "response");
+
     let requests = requests.lock().unwrap();
-    assert_eq!(requests.len(), 1);
+    assert_eq!(requests.len(), 2);
     assert_eq!(requests[0].0, "/v1/chat/completions");
     assert_eq!(requests[0].1["model"], "shared-future");
+    assert_eq!(requests[1].0, "/v1/responses");
+    assert_eq!(requests[1].1["model"], "shared-future");
+    for ((_, _, headers), expected_user_agent) in requests
+        .iter()
+        .zip(["opencode/test-fixture", "codex/test-fixture"])
+    {
+        assert_eq!(headers["authorization"], "Bearer provider-key");
+        assert_eq!(headers["user-agent"], expected_user_agent);
+        assert_eq!(headers["x-session-id"], "provider-test");
+        assert_eq!(headers["x-client-feature"], "preserved");
+        if expected_user_agent.starts_with("codex") {
+            assert_eq!(headers["x-codex-turn-metadata"], "turn-fixture");
+        }
+        for filtered in [
+            "cookie",
+            "x-forwarded-for",
+            "x-router-internal",
+            "connection",
+            "x-hop-secret",
+        ] {
+            assert!(
+                !headers.contains_key(filtered),
+                "{filtered} leaked upstream"
+            );
+        }
+    }
     drop(requests);
     task.abort();
 }
@@ -492,6 +558,17 @@ async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
         let data_dir = tempfile::tempdir().expect("data dir");
         let mut state = auto_state(Vec::new(), data_dir.path());
         state.upstream_provider = provider;
+        let gonka_task = if provider == UpstreamProvider::Gonka {
+            let (base_url, task) = live_catalog_upstream(&["gonka-live"]).await;
+            state.gonka = crate::gonka::GonkaConfig::new(
+                Some("broker-secret".into()),
+                Some(base_url.trim_end_matches("/v1")),
+                String::new(),
+            );
+            Some(task)
+        } else {
+            None
+        };
         let response = models(
             State(state.clone()),
             OriginalUri("/api/services/openai/v1/models".parse().unwrap()),
@@ -502,8 +579,9 @@ async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
         let data = catalog["data"].as_array().expect("OpenAI model list");
-        if provider == UpstreamProvider::Crater {
-            assert!(!data.is_empty(), "{provider:?}");
+        assert!(!data.is_empty(), "{provider:?}");
+        if let Some(task) = gonka_task {
+            task.abort();
         }
     }
 }
@@ -766,7 +844,7 @@ async fn stored_provider_collisions_fail_before_any_upstream_request() {
 
     let responses = crate::proxy::openai_responses(
         State(state.clone()),
-        bearer(&state),
+        provider_forwarding_headers(&state, crate::clients::ClientKind::Codex),
         Ok(axum::Json(serde_json::json!({
             "model": exposed,
             "input": "hello"
@@ -778,208 +856,5 @@ async fn stored_provider_collisions_fail_before_any_upstream_request() {
     task.abort();
 }
 
-/// A disabled provider advertises nothing, so disabling one takes its models
-/// out of both the catalog and the routing table.
-#[tokio::test]
-async fn a_disabled_provider_advertises_nothing() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    store_provider(&state, "formal-ai", &["formal-ai-mini"]);
-    state
-        .provider_store
-        .upsert(crate::providers::ProviderUpsert {
-            name: "formal-ai".to_string(),
-            kind: None,
-            base_url: "https://provider.example/v1".to_string(),
-            default_model: None,
-            models: Some(vec!["formal-ai-mini".to_string()]),
-            supported_clients: Some(vec!["opencode".to_string()]),
-            api_key: None,
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(false),
-            subscriber_id: None,
-            acknowledge_intermediary_risk: None,
-            acknowledge_unsupported_clients: None,
-            if_absent: false,
-        })
-        .expect("disable the provider");
-
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "formal-ai-mini"}))
-            .await
-    else {
-        panic!("a disabled provider must not route");
-    };
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-}
-
-/// A provider-looking name is still an exact id, never a Router alias.
-#[tokio::test]
-async fn a_provider_looking_name_is_not_interpreted_as_an_alias() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    let (base_url, task) = live_catalog_upstream(&["formal-ai-mini"]).await;
-    store_provider_at(&state, "formal-ai", &base_url, &["formal-ai-mini"]);
-
-    let Err(error) = crate::model_routing::route_state_with_subscription_for_client(
-        &state,
-        &serde_json::json!({"model": "formal-ai/not-declared"}),
-        &[],
-        Some(crate::clients::ClientKind::Opencode),
-        false,
-    )
-    .await
-    else {
-        panic!("an undeclared qualified model must be refused");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-    task.abort();
-}
-
-/// A qualified name for a provider that does not exist falls through to
-/// ordinary routing rather than being treated as a provider reference.
-#[tokio::test]
-async fn an_unknown_provider_prefix_is_not_a_provider_reference() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-
-    let Err(error) =
-        crate::model_routing::route_state(&state, &serde_json::json!({"model": "nobody/model"}))
-            .await
-    else {
-        panic!("nothing advertises this model");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::NotFound(_)),
-        "{error:?}"
-    );
-}
-
-/// A stored model whose exact id collides with a subscription fails explicitly.
-#[tokio::test]
-async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-    let (base_url, task) = live_catalog_upstream(&["shared-id"]).await;
-    store_provider_at(&state, "formal-ai", &base_url, &["shared-id"]);
-
-    let mut catalog = serde_json::json!({
-        "object": "list",
-        "data": [{"id": "shared-id", "object": "model", "owned_by": "anthropic"}]
-    });
-    let (claims, headers) = opencode_catalog_identity();
-    let result = crate::model_routing::append_stored_provider_models(
-        &state,
-        &claims,
-        &headers,
-        "/api/services/openai/v1/models",
-        &mut catalog,
-    )
-    .await;
-    assert!(matches!(
-        result,
-        Err(crate::model_routing::ModelRouteError::Conflict(_))
-    ));
-
-    let ids: Vec<&str> = catalog["data"]
-        .as_array()
-        .expect("data")
-        .iter()
-        .filter_map(|entry| entry["id"].as_str())
-        .collect();
-    assert!(
-        ids.contains(&"shared-id"),
-        "the subscription keeps its id: {ids:?}"
-    );
-    assert!(!ids.contains(&"formal-ai/shared-id"), "no aliases: {ids:?}");
-    task.abort();
-}
-
-#[tokio::test]
-async fn a_subscription_collision_fails_instead_of_selecting_by_merge_order() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let claude = tempfile::tempdir().expect("Claude home");
-    fs::write(
-        claude.path().join(".credentials.json"),
-        r#"{"claudeAiOauth":{"accessToken":"claude-live"}}"#,
-    )
-    .expect("Claude credential");
-    let state = auto_state(
-        vec![crate::subscription::SubscriptionReader::new(
-            crate::subscription::SubscriptionProvider::Claude,
-            claude.path(),
-        )],
-        data_dir.path(),
-    );
-    state.model_catalogs.record_success(
-        crate::subscription::SubscriptionProvider::Claude,
-        vec!["shared-id".to_string()],
-    );
-    let (base_url, task) = live_catalog_upstream(&["shared-id"]).await;
-    store_provider_at(&state, "formal-ai", &base_url, &["shared-id"]);
-
-    let bare = crate::model_routing::route_state_with_subscription_for_client(
-        &state,
-        &serde_json::json!({"model": "shared-id"}),
-        &[crate::subscription::SubscriptionProvider::Claude],
-        Some(crate::clients::ClientKind::Opencode),
-        false,
-    )
-    .await;
-    assert!(matches!(
-        bare,
-        Err(crate::model_routing::ModelRouteError::Conflict(_))
-    ));
-
-    let qualified = crate::model_routing::route_state_with_subscription_for_client(
-        &state,
-        &serde_json::json!({"model": "formal-ai/shared-id"}),
-        &[crate::subscription::SubscriptionProvider::Claude],
-        Some(crate::clients::ClientKind::Opencode),
-        false,
-    )
-    .await;
-    assert!(qualified.is_err(), "qualified aliases are not exposed");
-    task.abort();
-}
-
-/// A request with no model is refused before any provider is consulted.
-#[tokio::test]
-async fn a_request_without_a_model_is_refused() {
-    let data_dir = tempfile::tempdir().expect("data dir");
-    let state = auto_state(Vec::new(), data_dir.path());
-
-    let Err(error) = crate::model_routing::route_state(&state, &serde_json::json!({})).await else {
-        panic!("a model is required in automatic mode");
-    };
-
-    assert!(
-        matches!(error, crate::model_routing::ModelRouteError::ModelRequired),
-        "{error:?}"
-    );
-}
-
-#[test]
-fn automatic_routing_errors_never_expose_catalog_bodies_accounts_or_paths() {
-    let catalogs = ModelCatalogCache::new();
-    let sentinel = "vendor-body account-secret /private/credentials/codex.json";
-    catalogs.record_failure(SubscriptionProvider::Codex, sentinel, true);
-
-    let error = available_provider_for_model("gpt-secret", &[], &catalogs)
-        .expect_err("a failed catalog is not routable")
-        .to_string();
-
-    assert!(error.contains("codex"));
-    assert!(!error.contains("vendor-body"), "{error}");
-    assert!(!error.contains("account-secret"), "{error}");
-    assert!(!error.contains("/private/credentials"), "{error}");
-}
+#[path = "model_routing_provider_tests/routing_boundaries.rs"]
+mod routing_boundaries;

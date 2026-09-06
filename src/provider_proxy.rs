@@ -191,7 +191,7 @@ pub(crate) async fn forward_openai_compatible_routed(
             surface,
             copy_anthropic_headers: false,
             protocol: protocol_for_request(surface, path),
-            native_protocol: false,
+            native_protocol: true,
         },
     )
     .await
@@ -426,15 +426,6 @@ pub(crate) async fn forward_provider_at_routed(
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
         response.headers_mut().insert("content-type", content_type);
-        if !native_protocol
-            && !resolved_model.is_empty()
-            && resolved_model != requested_model
-            && let Ok(value) = HeaderValue::from_str(&resolved_model)
-        {
-            response
-                .headers_mut()
-                .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-        }
         return response;
     }
 
@@ -461,12 +452,11 @@ pub(crate) async fn forward_provider_at_routed(
     }
 
     let mut response_body = upstream_body;
-    let mut served_model = None;
     if !native_protocol
         && status.is_success()
         && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
     {
-        served_model = crate::output_limit::preserve_model_identity(&mut payload, &requested_model);
+        crate::output_limit::preserve_model_identity(&mut payload, &requested_model);
         response_body =
             bytes::Bytes::from(serde_json::to_vec(&payload).expect("JSON values always serialize"));
     }
@@ -475,13 +465,6 @@ pub(crate) async fn forward_provider_at_routed(
     *response.status_mut() = status;
     *response.headers_mut() = response_headers;
     response.headers_mut().insert("content-type", content_type);
-    if let Some(served) = served_model.as_deref()
-        && let Ok(value) = HeaderValue::from_str(served)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 
@@ -730,7 +713,9 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
     serde_json::json!({"object": "list", "data": data})
 }
 
-fn resolve_openai_compatible_provider(state: &AppState) -> Result<ResolvedProvider, ProviderError> {
+pub(crate) fn resolve_openai_compatible_provider(
+    state: &AppState,
+) -> Result<ResolvedProvider, ProviderError> {
     if state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
         return crate::zai_coding_plan::resolve(state)
             .map_err(ProviderError::Invalid)?
@@ -742,7 +727,7 @@ fn resolve_openai_compatible_provider(state: &AppState) -> Result<ResolvedProvid
         .map(|provider| provider.unwrap_or_else(|| state.openai_compatible.resolve()))
 }
 
-fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
+pub(crate) fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
     let base = base_url.trim_end_matches('/');
     if base.ends_with("/v1") {
         let suffix = path.strip_prefix("/v1").unwrap_or(path);

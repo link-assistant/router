@@ -34,7 +34,7 @@ containment controls local to the operator.
 - **Multi-account routing** — manage multiple account-bound credentials with session affinity, strict token pins, selection strategies, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration/revocation plus immutable managed-client and subscriber bindings
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
-- **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, subscription health at `/api/management/health/subscriptions`
+- **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, provider-verified credential state at `/api/management/auth/status`, subscription health at `/api/management/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
 - **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor|repair`, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
@@ -58,8 +58,9 @@ Anthropic API (api.anthropic.com)
 
 When `UPSTREAM_PROVIDER=gonka`, clients still authenticate to the router with
 `Authorization: Bearer la_sk_...`, but upstream OpenAI-compatible requests are
-sent to Gonka with Gonka signing headers instead of the client token. This
-project remains Link.Assistant.Router; Gonka is an optional backend.
+sent to the configured Gonka broker with its separate API key instead of the
+client token. This project remains Link.Assistant.Router; Gonka is an optional
+backend.
 
 When `UPSTREAM_PROVIDER=openai-compatible`, clients still authenticate to the
 router with `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...`. The
@@ -505,7 +506,7 @@ in a browser *or* in a chat. See
 |---|---|---|
 | `/api/services/anthropic/v1/models` | GET | Native client catalogue filtered by the signed Claude client policy |
 | `/api/services/anthropic/v1/messages` | POST | Anthropic Messages — preserves SSE streaming |
-| `/api/services/anthropic/v1/messages/count_tokens` | POST | Token-count helper |
+| `/api/services/anthropic/v1/messages/count_tokens` | POST | Native token count, or explicit unavailable error on bridges without an exact counter |
 | `/api/services/bedrock/invoke` | POST | Bedrock-format invoke |
 | `/api/services/bedrock/invoke-with-response-stream` | POST | Bedrock streaming invoke |
 | `/api/services/vertex/v1/projects/{project}/locations/{location}/publishers/anthropic/models/{model}:rawPredict` | POST | Vertex rawPredict pass-through |
@@ -517,7 +518,11 @@ in a browser *or* in a chat. See
 | `/api/services/openai/v1/chat/completions` | POST | Generic OpenAI Chat Completions service |
 | `/api/services/openai/v1/responses` | POST | Generic OpenAI Responses service |
 | `/api/services/openai/v1/models` | GET | Authenticated client/principal-specific intersection of healthy allowed models |
-| `/api/services/codex/v1/*` | GET/POST | Codex namespace; Responses is the subscription's native protocol |
+| `/api/services/{anthropic,openai,codex,qwen}/v1/models/{model}` | GET | Exact metadata for one currently visible model, without probing unknown IDs |
+| `/api/services/{openai,codex,qwen}/v1/conversations[/{id}[/items[/{item_id}]]]` | GET/POST/PATCH/DELETE | Native Conversations resources with exact provider/account affinity |
+| `/api/services/codex/v1/responses` | POST/WebSocket | Native Codex Responses, including stateful WebSocket sessions |
+| `/api/services/codex/v1/alpha/{history,notes}/v2/*` | POST | Ten native Codex history/notes operations with exact account affinity and opaque byte-preserving responses |
+| `/api/services/codex/v1/*` | GET/POST | Remaining registered Codex subscription routes |
 | `/api/services/qwen/v1/*` | GET/POST | Qwen namespace; forwards its native OpenAI-compatible protocol |
 | `/api/services/gemini/v1beta/models` | GET | Native Gemini model list filtered by the signed Gemini client policy |
 | `/api/services/gemini/v1beta/models/{model}` | GET | Native Gemini model metadata |
@@ -529,34 +534,54 @@ Provider-specific namespaces still enforce the matching signed client,
 principal, protocol evidence, and healthy credential; pinning never grants
 authority.
 
+Codex's optional history/notes extension is activated through Router's
+process-local `at-` identity; Router never creates or modifies Codex
+`auth.json`. Its account handle is scoped to the signed Router principal and
+resolved back to exactly one live ChatGPT account. History text, note paths,
+searches, session/agent identifiers, encrypted output, and attachments remain
+opaque and never enter request or audit logs; only a fixed operation name may
+be audited as control-plane activity.
+
 ### Provider-neutral client surface
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
 | `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
-| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, or `lefine` usage/status record without revealing disallowed providers |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, `lefine`, `gemini`, or `qwen` usage/status record without revealing disallowed providers |
 
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
 only healthy models compatible with its signed client kind and principal. Each
 entry carries the one lossless vendor `id` (including Gemini's `models/`
-prefix) and the canonical Router `service` path segment. Repeated
+prefix when the live provider supplies it) and the canonical Router `service`
+path segment. Repeated
 entries from one provider are deduplicated; the same exact id claimed by two
 providers returns HTTP 409 rather than choosing or inventing a qualified id.
 Provider-reported context window, output cap, modalities, pricing, and
 deprecation date are normalized when present and omitted when absent. Native
-service catalogues remain in their original protocol shapes.
+service catalogues remain in their original protocol shapes and contain no
+Router ownership, health, degradation, conflict, fetch-time, or fallback
+diagnostics. Anthropic model lists implement `after_id`, `before_id`, and
+`limit` pagination over the final visible exact-ID catalogue.
 
 `GET /api/usage` uses the same signed client binding and provider-entitlement
 matrix. It returns schema version `1` with normalized plan/status, usage
 windows, used and remaining percentages, reset timestamps, named limits,
 credits, and subscription or trial dates only when the vendor actually reports
-them. An authorized configured credential that cannot currently be checked is
+them. Claude output includes current named windows, dynamic model-scoped limits,
+and enabled monthly extra usage. Codex output retains main and additional
+allow/reached state, both the stable metered feature and display name, safe
+numeric message estimates, spend-control amounts and resets, the reached-limit
+reason, and the read-only reset-credit count. An authorized configured credential that cannot currently be checked is
 kept visible with an explicit `unavailable` or `unverified` state. Router reads
 only the vendors' non-inference usage/profile endpoints, refreshes OAuth
 credentials through the shared safe refresh path, briefly caches normalized
 results, and honors `429 Retry-After`; checking usage consumes no model tokens.
+Gemini and Qwen remain visible as `unverified` with
+`live_limits_unavailable` and empty windows when no proven non-inference quota
+endpoint exists; Router never substitutes an inference request or hard-coded
+limit.
 The response never includes credentials, account identifiers, email addresses,
 credential documents, or unrestricted vendor response bodies. This client
 surface is separate from the administrator-only `/api/management/usage`, which
@@ -581,17 +606,16 @@ same-ID collision between healthy owners fails explicitly with HTTP 409; Router
 does not resolve it by provider order, model-name prefix, or a manufactured
 `<provider>/<model>` alias. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
-default. Buffered and streaming responses retain both requested and resolved
-identity consistently.
+default. Buffered and streaming responses retain the requested identity
+consistently; the concrete upstream response remains in the local request log.
 
 #### Model identity and output limits
 
 Responses always report the model id the client requested, including catalog
 aliases such as `codex-auto-review`, in `model` — for buffered replies and for
 every streamed chunk on each OpenAI surface. When the provider serves a
-different concrete model, the router reports it separately in the
-`x_router_upstream_model` response field and the `x-router-upstream-model`
-response header, instead of replacing the requested identity.
+different concrete model, Router keeps that diagnostic in its local request
+log instead of extending a vendor protocol with private fields or headers.
 
 Codex subscriptions accept `max_output_tokens`, `max_tokens`, and
 `max_completion_tokens`. The ChatGPT backend rejects an explicit cap, so the
@@ -604,9 +628,13 @@ not observable, so the cap bounds visible output rather than billed tokens.
 
 With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
 `/api/services/openai/v1/responses` forward OpenAI-compatible JSON to Gonka
-without Anthropic translation. Gonka advertises a model only when the operator
-declares it with `GONKA_MODEL`. Without that declaration, each request must name
-its model explicitly.
+without Anthropic translation and relay SSE frames as they arrive. Availability
+comes only from the broker's authenticated `GET /v1/models` response.
+`GONKA_MODEL` is an optional request default and exact catalog narrowing rule;
+it never invents a model absent from that live catalog. In automatic mode,
+subscription, stored, and z.ai catalogs take precedence for an already-listed
+canonical ID; a duplicate Gonka entry is omitted and dispatch follows the same
+precedence.
 
 With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
 configured provider. This supports LiteLLM proxy deployments by setting the
@@ -648,6 +676,7 @@ method-specific verifier is configured.
 | `/api/management/metrics` | GET | Admin Prometheus text-exposition aggregate counters, plus a subscription-health gauge |
 | `/api/management/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
 | `/api/management/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
+| `/api/management/auth/status` | GET | Admin-only provider acceptance for every configured subscription credential; uses non-inference catalog probes |
 
 `/api/management/metrics` deliberately contains no token ids, labels, or account names. The `link_assistant_subscription_healthy`
 gauge is labelled by vendor name only, never by account, and answers `0` for a
@@ -695,7 +724,8 @@ rejected locally rather than forwarded. The proxy:
 - Validates the `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...` token
 - Replaces it with the selected upstream credential
 - On a native route, preserves the signed official client's end-to-end headers, real `user-agent`, version/session metadata, request JSON semantics, response bytes, and SSE sequence
-- Removes authentication, hop-by-hop/framing, forwarding-IP, cookie, and Router-internal headers; it never identifies itself upstream or synthesizes a missing official-client identity
+- Removes authentication, hop-by-hop/framing, forwarding-IP, caller-cookie, and Router-internal headers; it never identifies itself upstream or synthesizes a missing official-client identity
+- For canonical Codex traffic only, privately retains the official allowlist of Cloudflare infrastructure cookies across requests; account/session/auth cookies, custom bases, other providers, logs, and downstream responses never receive that state
 - Restricts request/response transformations to an explicitly authorized cross-protocol bridge
 - Preserves safe upstream status, request IDs, rate-limit fields, and other end-to-end response metadata
 
@@ -760,7 +790,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first. The store's total is this bound times the number of tokens with recorded traffic — cap that with the row below |
 | `--request-log-max-total-bytes` / `REQUEST_LOG_MAX_TOTAL_BYTES` | `4294967296` (4 GiB) | No | Bound across the whole request store; the least recently written token directories are removed first. `0` disables the total cap |
-| `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded |
+| `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded. Native Anthropic Files and Skills multipart uploads are bounded and spooled to temporary disk before relay; set this to `524288000` to permit Claude's full 500 MiB upload maximum, with matching free disk space |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### GitHub API credential proxy
@@ -768,7 +798,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 The opt-in GitHub proxy lets an agent authenticate with its router-issued task
 token while the real GitHub credential remains inside the router. The ordinary
 HTTP/TLS listener serves REST, GraphQL, and git under the canonical
-`/api/services/github/api/*`, `/api/services/github/graphql`, and
+`/api/services/github/api/*`, `/api/services/github/api/graphql`, and
 `/api/services/github/git/*` routes. GitHub CLI's fixed `/api/v3/*` and
 `/api/graphql` paths, plus root `/git/*`, are aliases on the dedicated Unix
 adapter only — see **GitHub CLI** below.
@@ -883,7 +913,7 @@ is provisioned without a browser round-trip — run on the deployment itself,
 where a login already exists or has been mounted:
 
 ```bash
-router auth import claude        # from ~/.claude, or the Keychain if it is newer
+router auth import claude        # from ~/.claude; a Keychain-only login is refused safely
 router auth import codex         # from ~/.codex
 router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
 router auth import claude /path  # or name the source, read exactly as given
@@ -916,21 +946,22 @@ and `promotion`. The JSON never includes diagnostic prose, credential documents,
 access tokens, refresh tokens, or secret file contents. Operational failures
 still use a non-zero process status.
 
-Before anything reaches the destination, import forces a direct OAuth refresh
-in a private Router staging store, persists and rereads the result, then proves
-that fresh access token at the vendor's non-inference model catalog. A rejected,
-malformed, timed-out, unreachable, or non-refreshable candidate is never
-installed. A definite OAuth rejection reports `exchange_rejected` with
-`previous_credential_safe: true`. Any exchange, persistence, catalog, or
-promotion uncertainty after the provider may have advanced the rotating chain
-reports `successor_retained`, sets `previous_credential_safe: false`, and
-includes its opaque recovery transaction ID. Conditional provisioning that
-finds a destination before candidate validation reports `already_present`.
+Before anything reaches the destination, a fresh import proves the current
+access token at the vendor's non-inference model catalog without calling the
+OAuth token endpoint. It then installs an atomic reference to the one writable
+vendor credential file, so Router and the vendor client advance the same
+refresh chain. Expired or near-expiry, Keychain-only, read-only, rejected,
+malformed, timed-out, or unreachable candidates fail without spending a refresh
+token or changing the destination. Conditional provisioning that finds a
+destination returns `already_present` before reading the candidate. A retained
+`--resume` transaction is already Router-owned and keeps the isolated
+refresh-chain recovery behavior and opaque transaction result described above.
 
-Gemini's installed-app refresh grant also requires
-`GEMINI_OAUTH_CLIENT_SECRET`, set to the OAuth client secret shipped with the
-Gemini CLI. Router checks this before creating a staging transaction or making
-a network request and names the missing variable directly.
+Router includes Gemini CLI's public installed-app OAuth client configuration,
+so an imported standard login needs no copied secret. A custom client remains
+available by setting both `GEMINI_OAUTH_CLIENT_ID` and
+`GEMINI_OAUTH_CLIENT_SECRET`; a partial override fails before a rotating refresh
+token is spent.
 
 Subscription imports use the same durable provider/account lock as refresh and
 native login. Ordinary import is an explicit replacement operation.
@@ -940,26 +971,20 @@ never replaces a login that already exists or appeared while it waited. A
 candidate must pass the same positive refresh-chain and catalog checks in both
 modes; there is no force bypass. Deployment tooling can pass
 `--safe-refresh-chain-import-v1` as a stable capability assertion: older Router
-versions reject the flag, while versions that accept it guarantee isolated
-refresh-chain validation plus locked atomic promotion.
+versions reject the flag, while versions that accept it guarantee
+non-destructive access-token validation plus a locked atomic reference to one
+writable authoritative source.
 
-On macOS the live Claude credential is in the login Keychain rather than the
-file beside it, so an import from the vendor's own home consults both and takes
-whichever is newer — the same rule the serving path uses. Naming a source
-directory means *this* credential from *there*, so the machine-wide store is
-left out of it and the named directory is read exactly as given. Without that
-distinction a pool of per-account directories collapses onto whichever account
-happens to be logged in interactively.
-
-Refresh-chain validation advances the candidate before installation, so the
-source copy may contain the spent predecessor after a successful import. If a
-concurrent credential wins the conditional race or catalog validation fails
-after refresh, Router retains the advanced candidate under a non-secret
-transaction identifier instead of deleting the only current chain link. The
-candidate remains private under Router's data directory. Resume it with
+On macOS an unqualified Claude import still consults both the conventional file
+and login Keychain. If the Keychain wins, import refuses before any provider
+request because Router cannot durably update that store; let Claude Code renew
+and expose a current writable file first. Naming a source directory means
+*this* credential from *there*, so the machine-wide store is left out and the
+named directory is read exactly as given. Without that distinction a pool of
+per-account directories collapses onto whichever account happens to be logged
+in interactively. Retained Router-owned transactions can be resumed with
 `router auth import --resume <transaction-id> --local`; callers do not discover
-or construct an internal path, and the same refresh-chain validation and locked
-promotion run again. To withdraw an installed credential:
+or construct an internal path. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh
@@ -1073,27 +1098,32 @@ shared host — so it is a last resort rather than the documented path.
 
 ### Gonka provider
 
-Gonka support is optional. Set `UPSTREAM_PROVIDER=gonka` to pin the deployment
-to it instead of using automatic subscription routing.
+Gonka support is optional. Configure an OpenAI-compatible Gonka broker with an
+API key, then set `UPSTREAM_PROVIDER=gonka` to pin the deployment to it. With
+`UPSTREAM_PROVIDER=auto`, compatible clients can also route exact IDs from its
+live catalog alongside other healthy providers.
 
 ```env
 TOKEN_SECRET=your-router-token-secret
 
 UPSTREAM_PROVIDER=gonka
-GONKA_PRIVATE_KEY=your_gonka_private_key
-GONKA_SOURCE_URL=https://node4.gonka.ai
+GONKA_API_KEY=your_gonka_broker_api_key
+GONKA_SOURCE_URL=https://your-gonka-broker.example
+# Optional exact default/narrowing rule:
 GONKA_MODEL=your-current-gonka-model
 ```
 
 | Flag / env | Default | Required | Description |
 |---|---|---|---|
-| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Yes, for Gonka | Private key used to sign Gonka upstream requests |
-| `--gonka-source-url` / `GONKA_SOURCE_URL` | `https://node4.gonka.ai` | No | Gonka source node URL |
-| `--gonka-model` / `GONKA_MODEL` | — | No | Operator-declared model to advertise and use when a request omits `model` |
+| `--gonka-api-key` / `GONKA_API_KEY` | — | Yes, for Gonka | Bearer key for the configured Gonka-compatible broker |
+| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Unsupported | Direct-wallet mode is rejected before startup; Router does not implement the official endpoint-resolution and secp256k1 signing protocol |
+| `--gonka-source-url` / `GONKA_SOURCE_URL` | — | Yes, with `GONKA_API_KEY` | Explicit Gonka-compatible broker URL; official direct-wallet nodes are not assumed to accept broker API keys |
+| `--gonka-model` / `GONKA_MODEL` | — | No | Default model when omitted and exact narrowing of the live catalog; never a synthetic catalog entry |
 
-Your Gonka account must be activated for inference, funded, and have a
-published on-chain public key. Participant registration is only needed for
-hosting.
+Direct-wallet credentials must be used through an implementation of Gonka's
+official protocol, such as a compatible broker. Router will not substitute its
+own signature format, and deliberately has no official-node URL default in
+broker mode.
 
 ### Crater ForgeFed provider
 
@@ -1226,7 +1256,7 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `_CODEX` | per provider | Override the recovery probe for one provider; wins over the global form |
 | `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential homes for the active subscription provider |
 | `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
-| `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins |
+| `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins, capped at 24 hours |
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
 
@@ -1347,6 +1377,8 @@ LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
 LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
 LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
 LINK_ASSISTANT_TOKEN=<client-token> router usage lefine --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage gemini --json
+LINK_ASSISTANT_TOKEN=<client-token> router usage qwen --json
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.
