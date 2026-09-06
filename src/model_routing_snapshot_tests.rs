@@ -878,3 +878,52 @@ async fn automatic_gemini_subscription_is_denied_on_both_openai_surfaces() {
     assert_eq!(forwarded.load(Ordering::SeqCst), 0);
     stub_task.abort();
 }
+
+#[tokio::test]
+async fn mismatched_bound_client_is_denied_before_unknown_model_routing() {
+    let forwarded = Arc::new(AtomicUsize::new(0));
+    let forwarded_for_stub = Arc::clone(&forwarded);
+    let stub = axum::Router::new().fallback(move || {
+        let forwarded = Arc::clone(&forwarded_for_stub);
+        async move {
+            forwarded.fetch_add(1, Ordering::SeqCst);
+            (StatusCode::OK, "{}")
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let stub_task = tokio::spawn(async move {
+        axum::serve(listener, stub).await.unwrap();
+    });
+
+    let data = tempdir().unwrap();
+    let mut state = auto_state(Vec::new(), data.path());
+    state.upstream_base_url = base_url;
+    state.model_catalogs.record_success(
+        SubscriptionProvider::Codex,
+        vec!["known-codex-model".into()],
+    );
+    let token =
+        super::tests::bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+    );
+    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.261"));
+    headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
+
+    let response = crate::proxy::openai_responses(
+        State(state),
+        headers,
+        Ok(axum::Json(json!({
+            "model": "definitely-not-a-model",
+            "input": "hello"
+        }))),
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert_eq!(forwarded.load(Ordering::SeqCst), 0);
+    stub_task.abort();
+}

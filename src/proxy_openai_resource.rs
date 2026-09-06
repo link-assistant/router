@@ -29,14 +29,24 @@ pub(crate) async fn route_openai_request(
             .map_err(|error| crate::model_routing::model_route_error_response(&error));
     }
     let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
-    let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
-        state, &claims, headers, protocol, path,
-    )?;
     let client = crate::client_policy::bound_client(&claims)
         .map(|(client, _)| client)
         .map_err(|error| {
             crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
         })?;
+    if !crate::client_policy::request_evidence(client, protocol, path, headers) {
+        return Err(crate::proxy::error_response(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            &format!(
+                "request evidence does not match the token's {} client binding",
+                client.canonical_name()
+            ),
+        ));
+    }
+    let entitled = crate::client_policy::entitled_subscription_providers_for_claims(
+        state, &claims, headers, protocol, path,
+    )?;
     crate::model_routing::route_state_with_subscription_for_client(
         state,
         body,
