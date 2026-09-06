@@ -71,6 +71,12 @@ pub(super) fn anthropic_effort(body: &Value) -> Result<Option<&'static str>, Str
             let config = config
                 .as_object()
                 .ok_or_else(|| "output_config must be an object".to_string())?;
+            if let Some(field) = config
+                .keys()
+                .find(|field| !matches!(field.as_str(), "effort" | "format"))
+            {
+                return Err(format!("unsupported output_config field: {field}"));
+            }
             match config.get("effort") {
                 None | Some(Value::Null) => None,
                 Some(effort) => {
@@ -100,4 +106,52 @@ pub(super) fn anthropic_effort(body: &Value) -> Result<Option<&'static str>, Str
         }
     }
     Ok(effort)
+}
+
+pub(super) fn anthropic_response_format(body: &Value) -> Result<Option<Value>, String> {
+    let Some(format) = body
+        .get("output_config")
+        .filter(|value| !value.is_null())
+        .and_then(|value| value.get("format"))
+        .filter(|value| !value.is_null())
+    else {
+        return Ok(None);
+    };
+    let object = format
+        .as_object()
+        .ok_or_else(|| "output_config.format must be an object".to_string())?;
+    if let Some(field) = object
+        .keys()
+        .find(|field| !matches!(field.as_str(), "type" | "schema"))
+    {
+        return Err(format!("unsupported output_config.format field: {field}"));
+    }
+    if object.get("type").and_then(Value::as_str) != Some("json_schema") {
+        return Err("output_config.format.type must be json_schema".into());
+    }
+    let schema = object
+        .get("schema")
+        .filter(|schema| schema.is_object())
+        .ok_or_else(|| "output_config.format.schema must be an object".to_string())?;
+    Ok(Some(json!({
+        "type": "json_schema",
+        "json_schema": {
+            "name": "anthropic_output",
+            "strict": true,
+            "schema": schema,
+        }
+    })))
+}
+
+pub(super) fn anthropic_parallel_tool_calls(body: &Value) -> Result<Option<bool>, String> {
+    let Some(choice) = body.get("tool_choice").filter(|value| !value.is_null()) else {
+        return Ok(None);
+    };
+    let Some(disable) = choice.get("disable_parallel_tool_use") else {
+        return Ok(None);
+    };
+    disable
+        .as_bool()
+        .map(|disable| Some(!disable))
+        .ok_or_else(|| "tool_choice.disable_parallel_tool_use must be a boolean".into())
 }

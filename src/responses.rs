@@ -64,6 +64,14 @@ pub struct OpenAIResponseRequest {
     pub stream_options: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub safety_identifier: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context_management: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_logprobs: Option<u32>,
 }
 
 /// Translate an `OpenAI` Responses-API request to Anthropic Messages.
@@ -156,7 +164,7 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
         (None, Some(top_p)) => body["top_p"] = json!(top_p),
         (None, None) => {}
     }
-    if let Some(identifier) = &req.safety_identifier {
+    if let Some(identifier) = req.safety_identifier.as_ref().or(req.user.as_ref()) {
         body["metadata"] = json!({"user_id": identifier});
     }
     if req.stream == Some(true) {

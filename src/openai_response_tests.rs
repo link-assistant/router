@@ -42,6 +42,8 @@ fn translates_tool_call_blocks() {
         logprobs: None,
         top_logprobs: None,
         safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["tools"][0]["name"], "search");

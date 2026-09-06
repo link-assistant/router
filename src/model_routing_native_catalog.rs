@@ -97,6 +97,7 @@ fn openai_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
         ("object".into(), Value::String("model".into())),
     ]);
     copy_number(raw, &mut model, "created");
+    copy_string(raw, &mut model, "owned_by");
     model
 }
 

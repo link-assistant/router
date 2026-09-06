@@ -51,10 +51,14 @@ pub fn translate_parts(parts: &[Value]) -> Vec<Value> {
                 }
                 "input_image" => {
                     let url = p.get("image_url").and_then(Value::as_str).unwrap_or("");
-                    Some(json!({
+                    let mut block = json!({
                         "type": "image",
                         "source": {"type": "url", "url": url}
-                    }))
+                    });
+                    if p.get("prompt_cache_breakpoint").is_some() {
+                        block["cache_control"] = json!({"type": "ephemeral"});
+                    }
+                    Some(block)
                 }
                 _ => None,
             }

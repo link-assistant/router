@@ -22,6 +22,23 @@ pub fn validate_openai_value(value: Option<&Value>) -> Result<(), String> {
     }
 }
 
+pub fn validate_openai_user(user: Option<&str>) -> Result<(), String> {
+    if user.is_some_and(|value| value.chars().count() > OPENAI_MAX_CHARACTERS) {
+        return Err(format!(
+            "user must contain at most {OPENAI_MAX_CHARACTERS} characters"
+        ));
+    }
+    Ok(())
+}
+
+pub fn validate_openai_user_value(value: Option<&Value>) -> Result<(), String> {
+    match value {
+        None | Some(Value::Null) => Ok(()),
+        Some(Value::String(user)) => validate_openai_user(Some(user)),
+        Some(_) => Err("user must be a string".into()),
+    }
+}
+
 /// Read and validate Anthropic's optional metadata identifier for an `OpenAI` target.
 pub fn anthropic_user_id(body: &Value) -> Result<Option<&str>, String> {
     let Some(metadata) = body.get("metadata") else {

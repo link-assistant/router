@@ -6,7 +6,10 @@ use serde_json::{Value, json};
 #[path = "bridge_request_tools.rs"]
 mod tools;
 pub use tools::system_text;
-use tools::{anthropic_effort, translate_tool_choice, translate_tools};
+use tools::{
+    anthropic_effort, anthropic_parallel_tool_calls, anthropic_response_format,
+    translate_tool_choice, translate_tools,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BridgeTarget {
@@ -47,7 +50,7 @@ pub fn anthropic_to_chat_request(body: &Value, upstream_model: &str) -> Value {
             .and_then(Value::as_u64)
             .unwrap_or(crate::anthropic_bridge::DEFAULT_MAX_TOKENS),
     });
-    for key in ["temperature", "top_p"] {
+    for key in ["temperature", "top_p", "top_k"] {
         if let Some(value) = body.get(key) {
             out[key] = value.clone();
         }
@@ -73,6 +76,12 @@ pub fn anthropic_to_chat_request(body: &Value, upstream_model: &str) -> Value {
     if let Ok(Some(identifier)) = crate::safety_identifier::anthropic_user_id(body) {
         out["safety_identifier"] = Value::String(identifier.into());
     }
+    if let Ok(Some(format)) = anthropic_response_format(body) {
+        out["response_format"] = format;
+    }
+    if let Ok(Some(parallel)) = anthropic_parallel_tool_calls(body) {
+        out["parallel_tool_calls"] = Value::Bool(parallel);
+    }
     out
 }
 
@@ -90,8 +99,20 @@ pub fn anthropic_to_responses_request(body: &Value, upstream_model: &str) -> Res
 /// Validate every Anthropic history block for a translated target.
 pub fn validate_anthropic_request(body: &Value, target: BridgeTarget) -> Result<(), String> {
     anthropic_effort(body)?;
+    anthropic_response_format(body)?;
+    anthropic_parallel_tool_calls(body)?;
     crate::safety_identifier::anthropic_user_id(body)?;
     crate::bridge_controls::reject_anthropic_provider_controls(body)?;
+    match body.get("top_k") {
+        None | Some(Value::Null) => {}
+        Some(value) if target == BridgeTarget::Gemini && value.as_u64().is_some() => {}
+        Some(value) if value.as_u64().is_none() => {
+            return Err("top_k must be a non-negative integer".into());
+        }
+        Some(_) => {
+            return Err("top_k cannot be represented by the selected provider".into());
+        }
+    }
     if let Some(system) = body.get("system") {
         match system {
             Value::String(_) => {}
@@ -445,10 +466,14 @@ pub fn responses_output_to_anthropic(output: Option<&Value>, path: &str) -> Resu
 
 fn responses_output_part_to_anthropic(part: &Value, path: &str) -> Result<Value, String> {
     match part.get("type").and_then(Value::as_str) {
-        Some("input_text") => Ok(json!({
-            "type": "text",
-            "text": require_string(part, "text", path)?,
-        })),
+        Some("input_text") => {
+            let mut block = json!({
+                "type": "text",
+                "text": require_string(part, "text", path)?,
+            });
+            copy_responses_cache_control(part, &mut block);
+            Ok(block)
+        }
         Some("input_image") => responses_image_to_anthropic(part, path),
         Some("input_file") => responses_file_to_anthropic(part, path),
         Some(kind) => Err(format!("{path} has unsupported output type {kind}")),
@@ -492,7 +517,9 @@ fn responses_image_to_anthropic(part: &Value, path: &str) -> Result<Value, Strin
             json!({"type": "url", "url": url})
         }
     };
-    Ok(json!({"type": "image", "source": source}))
+    let mut image = json!({"type": "image", "source": source});
+    copy_responses_cache_control(part, &mut image);
+    Ok(image)
 }
 
 fn responses_file_to_anthropic(part: &Value, path: &str) -> Result<Value, String> {
@@ -545,7 +572,14 @@ fn responses_file_to_anthropic(part: &Value, path: &str) -> Result<Value, String
     if let Some(filename) = nonempty(part, "filename") {
         document["title"] = Value::String(filename.to_string());
     }
+    copy_responses_cache_control(part, &mut document);
     Ok(document)
+}
+
+fn copy_responses_cache_control(source: &Value, target: &mut Value) {
+    if source.get("prompt_cache_breakpoint").is_some() {
+        target["cache_control"] = json!({"type":"ephemeral"});
+    }
 }
 
 fn anthropic_tool_result_to_responses(

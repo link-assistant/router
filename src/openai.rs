@@ -93,6 +93,10 @@ pub struct OpenAIChatCompletionRequest {
     pub top_logprobs: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub safety_identifier: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream_options: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -100,13 +104,33 @@ pub struct OpenAIChatCompletionRequest {
 #[must_use]
 pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value {
     let mut system_chunks: Vec<String> = Vec::new();
+    let mut system_blocks: Vec<Value> = Vec::new();
+    let block_system = req.messages.iter().any(|message| {
+        matches!(message.role.as_str(), "system" | "developer")
+            && message.content.as_array().is_some_and(|parts| {
+                parts
+                    .iter()
+                    .any(|part| part.get("prompt_cache_breakpoint").is_some())
+            })
+    });
     let mut messages: Vec<Value> = Vec::new();
 
     for msg in &req.messages {
         let role = msg.role.as_str();
         match role {
             "system" | "developer" => {
-                if let Some(text) = extract_text(&msg.content) {
+                if block_system {
+                    if !system_blocks.is_empty() {
+                        system_blocks.push(json!({"type":"text", "text":"\n\n"}));
+                    }
+                    match &msg.content {
+                        Value::String(text) => {
+                            system_blocks.push(json!({"type":"text", "text":text}));
+                        }
+                        Value::Array(parts) => system_blocks.extend(translate_parts(parts)),
+                        _ => {}
+                    }
+                } else if let Some(text) = extract_text(&msg.content) {
                     system_chunks.push(text);
                 }
             }
@@ -149,14 +173,17 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
             "tool" => {
                 // OpenAI uses role=tool for tool results; Anthropic models
                 // these as a `tool_result` user content block.
-                let txt = extract_text(&msg.content).unwrap_or_default();
+                let content = match &msg.content {
+                    Value::Array(parts) => Value::Array(translate_parts(parts)),
+                    _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
+                };
                 messages.push(json!({
                     "role": "user",
                     "content": [
                         {
                             "type": "tool_result",
                             "tool_use_id": msg.tool_call_id.clone().unwrap_or_default(),
-                            "content": txt
+                            "content": content
                         }
                     ]
                 }));
@@ -174,10 +201,12 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
         "messages": messages,
     });
 
-    if !system_chunks.is_empty() {
+    if block_system && !system_blocks.is_empty() {
+        body["system"] = Value::Array(system_blocks);
+    } else if !system_chunks.is_empty() {
         body["system"] = Value::String(system_chunks.join("\n\n"));
     }
-    if let Some(identifier) = &req.safety_identifier {
+    if let Some(identifier) = req.safety_identifier.as_ref().or(req.user.as_ref()) {
         body["metadata"] = json!({"user_id": identifier});
     }
     // Anthropic rejects a request specifying both, and Gemini CLI sends both by
@@ -234,10 +263,8 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     body
 }
 
-/// Reconcile request parameters with the selected subscription backend.
-///
-/// `ChatGPT` subscription inference rejects `temperature` for every advertised
-/// model. Claude 5 rejects it too, while older Claude generations retain it.
+/// Reconcile only provider wire-shape requirements that are known from the
+/// selected protocol. Model names are never treated as capability metadata.
 pub(crate) fn reconcile_subscription_parameters(
     provider: crate::subscription::SubscriptionProvider,
     body: &mut Value,
@@ -252,15 +279,6 @@ pub(crate) fn reconcile_subscription_parameters_with_limit_origin(
 ) {
     let model = body.get("model").and_then(Value::as_str);
     let adaptive_thinking = crate::capabilities::claude_uses_adaptive_thinking(model);
-    let capabilities = crate::capabilities::subscription(provider, model);
-    if let Some(object) = body.as_object_mut() {
-        if capabilities.temperature == crate::capabilities::Capability::Unsupported {
-            object.remove("temperature");
-        }
-        if capabilities.top_p == crate::capabilities::Capability::Unsupported {
-            object.remove("top_p");
-        }
-    }
     if provider == crate::subscription::SubscriptionProvider::Claude {
         reconcile_claude_thinking(body, adaptive_thinking, output_limit_was_explicit);
     }
@@ -584,6 +602,10 @@ pub use tools::{
 #[cfg(test)]
 #[path = "openai_request_tests.rs"]
 mod request_tests;
+
+#[cfg(test)]
+#[path = "openai_tool_filter_tests.rs"]
+mod tool_filter_tests;
 
 #[cfg(test)]
 #[path = "openai_response_tests.rs"]

@@ -6,6 +6,7 @@ use serde_json::{Value, json};
 
 /// Translate a validated Chat request to a Responses request.
 pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
+    crate::bridge_controls::validate_openai_prompt_cache_breakpoints(body, true)?;
     let model = body.get("model").and_then(Value::as_str).unwrap_or("");
     let messages = body
         .get("messages")
@@ -36,7 +37,12 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
         }
         match role {
             "system" | "developer" => {
-                instructions.push(instruction_text(message.get("content"), &path)?);
+                if contains_prompt_cache_breakpoint(message.get("content")) {
+                    let content = message_content(message.get("content"), role, &path)?;
+                    input.push(json!({"role":role, "content":content}));
+                } else {
+                    instructions.push(instruction_text(message.get("content"), &path)?);
+                }
             }
             "user" => {
                 let content = message_content(message.get("content"), role, &path)?;
@@ -114,6 +120,7 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
         "temperature",
         "top_p",
         "safety_identifier",
+        "user",
         "service_tier",
         "prompt_cache_key",
         "prompt_cache_options",
@@ -121,6 +128,8 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
         "moderation",
         "store",
         "metadata",
+        "parallel_tool_calls",
+        "stream_options",
     ] {
         if let Some(value) = body.get(field) {
             out[field] = value.clone();
@@ -134,6 +143,11 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
     }
     if body.get("stream").and_then(Value::as_bool) == Some(true) {
         out["stream"] = Value::Bool(true);
+    }
+    if let Some(format) =
+        crate::structured_output::chat_to_responses_format(body.get("response_format"))?
+    {
+        out["text"] = json!({"format": format});
     }
     Ok(out)
 }
@@ -240,6 +254,7 @@ fn map_image(part: &Value, path: &str) -> Result<Value, String> {
         }
         mapped["detail"] = detail.clone();
     }
+    copy_prompt_cache_breakpoint(part, &mut mapped);
     Ok(mapped)
 }
 
@@ -271,6 +286,7 @@ fn map_file(part: &Value, path: &str) -> Result<Value, String> {
             "{path}.file requires a non-empty file_data or file_id"
         ));
     }
+    copy_prompt_cache_breakpoint(part, &mut mapped);
     Ok(mapped)
 }
 
@@ -326,9 +342,9 @@ fn checked_tool_calls(
         .collect()
 }
 
-fn tool_output(content: Option<&Value>, path: &str) -> Result<String, String> {
+fn tool_output(content: Option<&Value>, path: &str) -> Result<Value, String> {
     match content {
-        Some(Value::String(output)) => Ok(output.clone()),
+        Some(Value::String(output)) => Ok(Value::String(output.clone())),
         Some(Value::Array(parts)) => parts
             .iter()
             .enumerate()
@@ -336,14 +352,36 @@ fn tool_output(content: Option<&Value>, path: &str) -> Result<String, String> {
                 if part.get("type").and_then(Value::as_str) != Some("text") {
                     return Err(format!("{path}.content[{index}] must be a text part"));
                 }
-                part.get("text")
+                let text = part
+                    .get("text")
                     .and_then(Value::as_str)
-                    .map(str::to_string)
-                    .ok_or_else(|| format!("{path}.content[{index}].text must be a string"))
+                    .ok_or_else(|| format!("{path}.content[{index}].text must be a string"))?;
+                let mut mapped = part.clone();
+                mapped["type"] = Value::String("input_text".into());
+                mapped["text"] = Value::String(text.into());
+                Ok(mapped)
             })
             .collect::<Result<Vec<_>, _>>()
-            .map(|parts| parts.join("")),
+            .map(Value::Array),
         _ => Err(format!("{path}.content must be a string or text array")),
+    }
+}
+
+fn contains_prompt_cache_breakpoint(value: Option<&Value>) -> bool {
+    match value {
+        Some(Value::Object(object)) => object.iter().any(|(key, child)| {
+            key == "prompt_cache_breakpoint" || contains_prompt_cache_breakpoint(Some(child))
+        }),
+        Some(Value::Array(values)) => values
+            .iter()
+            .any(|value| contains_prompt_cache_breakpoint(Some(value))),
+        _ => false,
+    }
+}
+
+fn copy_prompt_cache_breakpoint(source: &Value, target: &mut Value) {
+    if let Some(breakpoint) = source.get("prompt_cache_breakpoint") {
+        target["prompt_cache_breakpoint"] = breakpoint.clone();
     }
 }
 
@@ -440,6 +478,69 @@ mod tests {
                 {"type":"function_call","call_id":"call_1","name":"inspect","arguments":"{\"id\":1}"},
                 {"type":"function_call_output","call_id":"call_1","output":"done"}
             ])
+        );
+    }
+
+    #[test]
+    fn current_prompt_cache_breakpoints_preserve_parts_and_order() {
+        let breakpoint = json!({"mode":"explicit"});
+        let converted = try_chat_completion_to_responses(&json!({
+            "model":"gpt-5",
+            "messages":[
+                {"role":"system","content":[{
+                    "type":"text","text":"policy",
+                    "prompt_cache_breakpoint":breakpoint
+                }]},
+                {"role":"developer","content":[{
+                    "type":"text","text":"application",
+                    "prompt_cache_breakpoint":breakpoint
+                }]},
+                {"role":"user","content":[
+                    {"type":"image_url","image_url":{"url":"https://example.com/image.png"},
+                     "prompt_cache_breakpoint":breakpoint},
+                    {"type":"file","file":{"file_data":"data:application/pdf;base64,AAA","filename":"fixture.pdf"},
+                     "prompt_cache_breakpoint":breakpoint}
+                ]},
+                {"role":"assistant","content":null,"tool_calls":[{
+                    "id":"call_1","type":"function",
+                    "function":{"name":"inspect","arguments":"{}"}
+                }]},
+                {"role":"tool","tool_call_id":"call_1","content":[{
+                    "type":"text","text":"done"
+                }]}
+            ]
+        }))
+        .unwrap();
+
+        assert_eq!(converted["input"][0]["role"], "system");
+        assert_eq!(converted["input"][1]["role"], "developer");
+        for pointer in [
+            "/input/0/content/0/prompt_cache_breakpoint",
+            "/input/1/content/0/prompt_cache_breakpoint",
+            "/input/2/content/0/prompt_cache_breakpoint",
+            "/input/2/content/1/prompt_cache_breakpoint",
+        ] {
+            assert_eq!(converted.pointer(pointer), Some(&breakpoint), "{pointer}");
+        }
+        assert!(converted["input"][4]["output"].is_array());
+
+        let tool_output = try_chat_completion_to_responses(&json!({
+            "model":"gpt-5",
+            "messages":[
+                {"role":"assistant","content":null,"tool_calls":[{
+                    "id":"call_1","type":"function",
+                    "function":{"name":"inspect","arguments":"{}"}
+                }]},
+                {"role":"tool","tool_call_id":"call_1","content":[{
+                    "type":"text","text":"done",
+                    "prompt_cache_breakpoint":breakpoint
+                }]}
+            ]
+        }))
+        .unwrap();
+        assert_eq!(
+            tool_output.pointer("/input/1/output/0/prompt_cache_breakpoint"),
+            Some(&breakpoint)
         );
     }
 

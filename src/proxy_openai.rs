@@ -22,30 +22,7 @@ struct RequiredChatFields {
     messages: Vec<openai::ChatMessage>,
 }
 
-/// Record dropped tools locally without extending a public vendor protocol.
-fn report_dropped_tools(
-    state: &AppState,
-    headers: &HeaderMap,
-    response: Response,
-    dropped: &[String],
-) -> Response {
-    if dropped.is_empty() {
-        return response;
-    }
-    let summary = dropped.join(", ");
-    state.logger.debug(|| {
-        format!(
-            "dropped {} tool(s) Anthropic cannot represent: {summary}",
-            dropped.len()
-        )
-    });
-    state.request_log.record(
-        &crate::request_log::correlation_id(headers),
-        "translation_diagnostic",
-        serde_json::json!({"dropped_tools": dropped}),
-    );
-    response
-}
+include!("proxy_openai_diagnostics.rs");
 
 pub async fn openai_chat_completions(
     State(state): State<AppState>,
@@ -367,8 +344,65 @@ async fn openai_chat_completions_with_subscription(
         .await;
     }
     if state.upstream_provider == UpstreamProvider::Codex {
+        if let Some(reason) = crate::bridge_controls::codex_instruction_cache_breakpoint(&body) {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
         if let Err(reason) =
             crate::safety_identifier::validate_openai_value(body.get("safety_identifier"))
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        if let Err(reason) = crate::safety_identifier::validate_openai_user_value(body.get("user"))
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        let request =
+            match serde_json::from_value::<openai::OpenAIChatCompletionRequest>(body.clone()) {
+                Ok(request) => request,
+                Err(error) => {
+                    return crate::api_error::error_response_for_surface(
+                        crate::metrics::Surface::OpenAIChat,
+                        StatusCode::BAD_REQUEST,
+                        "invalid_request_error",
+                        &format!("invalid OpenAI chat completion request: {error}"),
+                    );
+                }
+            };
+        if let Err(reason) =
+            crate::structured_output::chat_to_responses_format(request.response_format.as_ref())
+        {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        if let Some(reason) = crate::structured_output::unsupported_chat_output_contract(&request) {
+            return crate::api_error::error_response_for_surface(
+                crate::metrics::Surface::OpenAIChat,
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &reason,
+            );
+        }
+        if let Some(reason) =
+            crate::structured_output::unsupported_chat_generation_control(&request)
         {
             return crate::api_error::error_response_for_surface(
                 crate::metrics::Surface::OpenAIChat,
@@ -445,6 +479,14 @@ async fn openai_chat_completions_with_subscription(
     let stream_requested = req.stream.unwrap_or(false) || stream_from_query;
     if let Err(reason) = crate::safety_identifier::validate_openai(req.safety_identifier.as_deref())
     {
+        return crate::api_error::error_response_for_surface(
+            crate::metrics::Surface::OpenAIChat,
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            &reason,
+        );
+    }
+    if let Err(reason) = crate::safety_identifier::validate_openai_user(req.user.as_deref()) {
         return crate::api_error::error_response_for_surface(
             crate::metrics::Surface::OpenAIChat,
             StatusCode::BAD_REQUEST,
@@ -940,42 +982,5 @@ async fn openai_responses_with_route(
 }
 
 #[cfg(test)]
-mod routed_model_tests {
-    use super::*;
-
-    #[test]
-    fn native_claude_routes_ignore_the_anthropic_bridge_override() {
-        assert_eq!(
-            resource::canonical_openai_model(
-                UpstreamProvider::Anthropic,
-                true,
-                Some("unrelated-codex-bridge-model"),
-                "claude-future-native",
-            ),
-            "claude-future-native"
-        );
-    }
-
-    #[test]
-    fn dropped_tools_are_logged_locally_without_a_wire_header() {
-        let data = tempfile::tempdir().expect("data dir");
-        let state = AppState::for_tests(data.path());
-        let response = report_dropped_tools(
-            &state,
-            &HeaderMap::new(),
-            Response::new(axum::body::Body::empty()),
-            &["multi_agent_v1".to_string()],
-        );
-
-        assert!(response.headers().get("x-router-dropped-tools").is_none());
-        let written = std::fs::read_to_string(
-            state
-                .request_log
-                .path()
-                .join("unauthenticated/requests.lino"),
-        )
-        .expect("translation diagnostic");
-        assert!(written.contains("translation_diagnostic"));
-        assert!(written.contains("multi_agent_v1"));
-    }
-}
+#[path = "proxy_openai_tests.rs"]
+mod routed_model_tests;

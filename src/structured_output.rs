@@ -52,6 +52,78 @@ pub fn responses_format(text: Option<&Value>) -> Result<Option<Value>, String> {
     }
 }
 
+pub fn chat_to_responses_format(value: Option<&Value>) -> Result<Option<Value>, String> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    let kind = required_type(value, "response_format")?;
+    match kind {
+        "text" => Ok(Some(json!({"type": "text"}))),
+        "json_object" => Ok(Some(json!({"type": "json_object"}))),
+        "json_schema" => {
+            let definition = value
+                .get("json_schema")
+                .and_then(Value::as_object)
+                .ok_or_else(|| "response_format.json_schema must be an object".to_string())?;
+            validate_name_and_strict(
+                definition.get("name"),
+                definition.get("strict"),
+                "response_format.json_schema",
+            )?;
+            let schema = definition
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| {
+                    "response_format.json_schema.schema must be an object".to_string()
+                })?;
+            let mut format = json!({
+                "type": "json_schema",
+                "name": definition["name"],
+                "schema": schema,
+            });
+            if let Some(strict) = definition.get("strict") {
+                format["strict"] = strict.clone();
+            }
+            Ok(Some(format))
+        }
+        other => Err(format!("unsupported response_format type: {other}")),
+    }
+}
+
+pub fn responses_to_chat_format(text: Option<&Value>) -> Result<Option<Value>, String> {
+    let Some(text) = text else {
+        return Ok(None);
+    };
+    let object = text
+        .as_object()
+        .ok_or_else(|| "text must be an object".to_string())?;
+    let Some(format) = object.get("format").filter(|value| !value.is_null()) else {
+        return Ok(None);
+    };
+    match required_type(format, "text.format")? {
+        "text" => Ok(Some(json!({"type": "text"}))),
+        "json_object" => Ok(Some(json!({"type": "json_object"}))),
+        "json_schema" => {
+            validate_name_and_strict(format.get("name"), format.get("strict"), "text.format")?;
+            let schema = format
+                .get("schema")
+                .filter(|schema| schema.is_object())
+                .ok_or_else(|| "text.format.schema must be an object".to_string())?;
+            let mut definition = json!({
+                "name": format["name"],
+                "schema": schema,
+            });
+            if let Some(strict) = format.get("strict") {
+                definition["strict"] = strict.clone();
+            }
+            Ok(Some(
+                json!({"type": "json_schema", "json_schema": definition}),
+            ))
+        }
+        other => Err(format!("unsupported text.format type: {other}")),
+    }
+}
+
 pub fn install_format(body: &mut Value, format: Option<Value>) {
     if let Some(format) = format {
         if !body.get("output_config").is_some_and(Value::is_object) {
@@ -79,7 +151,7 @@ pub fn unsupported_chat_output_contract(
     request: &crate::openai::OpenAIChatCompletionRequest,
 ) -> Option<String> {
     if request.n.is_some_and(|count| count != 1) {
-        return Some("n must be 1 when routing Chat Completions to Anthropic".into());
+        return Some("n must be 1 on the selected translated provider route".into());
     }
     if let Some(modalities) = request.modalities.as_ref() {
         let text_only = modalities.as_array().is_some_and(|modalities| {
@@ -87,19 +159,19 @@ pub fn unsupported_chat_output_contract(
         });
         if !text_only {
             return Some(
-                "non-text modalities cannot be represented by the selected Anthropic provider"
+                "non-text modalities cannot be represented by the selected translated provider"
                     .into(),
             );
         }
     }
     if request.audio.as_ref().is_some_and(|audio| !audio.is_null()) {
         return Some(
-            "audio output cannot be represented by the selected Anthropic provider".into(),
+            "audio output cannot be represented by the selected translated provider".into(),
         );
     }
     if request.logprobs == Some(true) || request.top_logprobs.is_some_and(|count| count > 0) {
         return Some(
-            "log probabilities cannot be represented by the selected Anthropic provider".into(),
+            "log probabilities cannot be represented by the selected translated provider".into(),
         );
     }
     None
@@ -123,7 +195,7 @@ pub fn unsupported_chat_generation_control(
             }
             if value != 0.0 {
                 return Some(format!(
-                    "{name} cannot be represented by the selected Anthropic provider"
+                    "{name} cannot be represented by the selected translated provider"
                 ));
             }
         }
@@ -133,11 +205,11 @@ pub fn unsupported_chat_generation_control(
         .as_ref()
         .is_some_and(|biases| !biases.is_empty())
     {
-        return Some("logit_bias cannot be represented by the selected Anthropic provider".into());
+        return Some("logit_bias cannot be represented by the selected translated provider".into());
     }
     request
         .seed
-        .map(|_| "seed cannot be represented by the selected Anthropic provider".to_string())
+        .map(|_| "seed cannot be represented by the selected translated provider".to_string())
 }
 
 fn required_type<'a>(value: &'a Value, path: &str) -> Result<&'a str, String> {

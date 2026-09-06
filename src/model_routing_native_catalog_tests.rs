@@ -9,7 +9,7 @@ fn diagnostic_catalog(ids: &[&str]) -> Value {
             "native_id": id,
             "provider": "private-provider",
             "router_fetched_at": 1_893_456_000_i64,
-            "owned_by": "private-owner",
+            "owned_by": "synthetic-owner",
             "object": "model",
             "type": "model",
             "display_name": format!("Model {index}"),
@@ -49,7 +49,6 @@ fn assert_no_router_fields(value: &Value) {
         "degraded_providers",
         "degraded_reasons",
         "catalog_conflicts",
-        "private-owner",
         "must-not-survive",
     ] {
         assert!(
@@ -171,7 +170,7 @@ fn anthropic_invalid_limits_and_cursors_fail_closed() {
 }
 
 #[test]
-fn openai_codex_and_qwen_shapes_have_no_router_diagnostics() {
+fn openai_codex_and_qwen_shapes_keep_standard_ownership_without_router_diagnostics() {
     let catalog = diagnostic_catalog(&["synthetic-live"]);
     for path in [
         "/api/services/openai/v1/models",
@@ -186,7 +185,8 @@ fn openai_codex_and_qwen_shapes_have_no_router_diagnostics() {
                 "data": [{
                     "id": "synthetic-live",
                     "object": "model",
-                    "created": 0
+                    "created": 0,
+                    "owned_by": "synthetic-owner"
                 }]
             }),
             "{path}"

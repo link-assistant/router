@@ -28,13 +28,29 @@ pub fn chat_to_gemini_request_checked(body: &Value) -> Result<Value, String> {
             "max_tokens",
             "temperature",
             "top_p",
+            "top_k",
+            "frequency_penalty",
+            "presence_penalty",
+            "logit_bias",
+            "seed",
             "stop",
             "stream",
+            "response_format",
+            "parallel_tool_calls",
+            "n",
+            "modalities",
+            "audio",
+            "logprobs",
+            "top_logprobs",
+            "user",
+            "safety_identifier",
+            "stream_options",
             "tools",
             "tool_choice",
         ],
         "request",
     )?;
+    validate_chat_contract(body)?;
     if body
         .get("max_completion_tokens")
         .is_some_and(|v| !v.is_null())
@@ -156,6 +172,12 @@ pub fn responses_to_chat_checked(body: &Value) -> Result<Value, String> {
             "tool_choice",
             "previous_response_id",
             "conversation",
+            "text",
+            "parallel_tool_calls",
+            "top_logprobs",
+            "user",
+            "metadata",
+            "context_management",
         ],
         "request",
     )?;
@@ -164,6 +186,7 @@ pub fn responses_to_chat_checked(body: &Value) -> Result<Value, String> {
             return Err(format!("{field} cannot be resolved by a Gemini bridge"));
         }
     }
+    validate_responses_contract(body)?;
     let mut messages = Vec::new();
     if let Some(instructions) = body.get("instructions") {
         messages.push(json!({
@@ -256,6 +279,14 @@ pub fn responses_to_chat_checked(body: &Value) -> Result<Value, String> {
     }
     if let Some(choice) = responses_tool_choice_to_chat(body.get("tool_choice"))? {
         chat["tool_choice"] = choice;
+    }
+    if let Some(format) = crate::structured_output::responses_to_chat_format(body.get("text"))? {
+        chat["response_format"] = format;
+    }
+    for field in ["parallel_tool_calls", "top_logprobs"] {
+        if let Some(value) = body.get(field) {
+            chat[field] = value.clone();
+        }
     }
     Ok(chat)
 }
@@ -586,6 +617,10 @@ fn generation_config(body: &Value) -> Result<Map<String, Value>, String> {
         ("max_completion_tokens", "maxOutputTokens"),
         ("temperature", "temperature"),
         ("top_p", "topP"),
+        ("frequency_penalty", "frequencyPenalty"),
+        ("presence_penalty", "presencePenalty"),
+        ("seed", "seed"),
+        ("top_k", "topK"),
     ] {
         if let Some(value) = body.get(chat_key) {
             config.insert(gemini_key.into(), value.clone());
@@ -606,7 +641,110 @@ fn generation_config(body: &Value) -> Result<Map<String, Value>, String> {
             },
         );
     }
+    if let Some(format) = crate::structured_output::chat_format(body.get("response_format"))? {
+        config.insert(
+            "responseMimeType".into(),
+            Value::String("application/json".into()),
+        );
+        config.insert("responseJsonSchema".into(), format["schema"].clone());
+    }
     Ok(config)
+}
+
+fn validate_chat_contract(body: &Value) -> Result<(), String> {
+    match body.get("n") {
+        None | Some(Value::Null) => {}
+        Some(value) if value.as_u64() == Some(1) => {}
+        Some(value) if value.as_u64().is_none() => return Err("n must be an integer".into()),
+        Some(_) => return Err("n must be 1 on a Gemini bridge".into()),
+    }
+    if let Some(modalities) = body.get("modalities").filter(|value| !value.is_null())
+        && modalities
+            .as_array()
+            .is_none_or(|values| values.len() != 1 || values[0].as_str() != Some("text"))
+    {
+        return Err("non-text modalities cannot be represented by Gemini".into());
+    }
+    for field in ["audio", "user", "safety_identifier", "stream_options"] {
+        if body.get(field).is_some_and(|value| !value.is_null()) {
+            return Err(format!("{field} cannot be represented by Gemini"));
+        }
+    }
+    match body.get("logprobs") {
+        None | Some(Value::Null | Value::Bool(false)) => {}
+        Some(Value::Bool(true)) => {
+            return Err("log probabilities are not implemented by the Gemini bridge".into());
+        }
+        Some(_) => return Err("logprobs must be a boolean".into()),
+    }
+    match body.get("top_logprobs") {
+        None | Some(Value::Null) => {}
+        Some(value) if value.as_u64() == Some(0) => {}
+        Some(value) if value.as_u64().is_none() => {
+            return Err("top_logprobs must be a non-negative integer".into());
+        }
+        Some(_) => {
+            return Err("log probabilities are not implemented by the Gemini bridge".into());
+        }
+    }
+    match body.get("parallel_tool_calls") {
+        None | Some(Value::Null | Value::Bool(true)) => {}
+        Some(Value::Bool(false)) => {
+            return Err("parallel_tool_calls=false cannot be represented by Gemini".into());
+        }
+        Some(_) => return Err("parallel_tool_calls must be a boolean".into()),
+    }
+    match body.get("logit_bias") {
+        None | Some(Value::Null) => {}
+        Some(Value::Object(values)) if values.is_empty() => {}
+        Some(Value::Object(_)) => return Err("logit_bias cannot be represented by Gemini".into()),
+        Some(_) => return Err("logit_bias must be an object".into()),
+    }
+    for field in ["frequency_penalty", "presence_penalty"] {
+        if let Some(value) = body.get(field).filter(|value| !value.is_null()) {
+            let value = value
+                .as_f64()
+                .ok_or_else(|| format!("{field} must be a number"))?;
+            if !(-2.0..=2.0).contains(&value) {
+                return Err(format!("{field} must be between -2 and 2"));
+            }
+        }
+    }
+    if body
+        .get("seed")
+        .is_some_and(|value| !value.is_null() && value.as_i64().is_none())
+    {
+        return Err("seed must be an integer".into());
+    }
+    if body
+        .get("top_k")
+        .is_some_and(|value| !value.is_null() && value.as_u64().is_none())
+    {
+        return Err("top_k must be a non-negative integer".into());
+    }
+    Ok(())
+}
+
+fn validate_responses_contract(body: &Value) -> Result<(), String> {
+    for field in ["user"] {
+        if body.get(field).is_some_and(|value| !value.is_null()) {
+            return Err(format!("{field} cannot be represented by Gemini"));
+        }
+    }
+    if body.get("metadata").is_some_and(|value| {
+        !value.is_null() && value.as_object().is_none_or(|values| !values.is_empty())
+    }) {
+        return Err("metadata cannot be represented by Gemini".into());
+    }
+    if body.get("context_management").is_some_and(|value| {
+        !value.is_null() && value.as_array().is_none_or(|values| !values.is_empty())
+    }) {
+        return Err("context_management cannot be represented by Gemini".into());
+    }
+    validate_chat_contract(&json!({
+        "parallel_tool_calls": body.get("parallel_tool_calls").cloned().unwrap_or(Value::Null),
+        "top_logprobs": body.get("top_logprobs").cloned().unwrap_or(Value::Null),
+    }))
 }
 
 fn validate_gemini_cli_defaults(config: &Value) -> Result<(), String> {
@@ -778,168 +916,7 @@ fn chat_tool_choice_to_gemini(choice: Option<&Value>) -> Result<Option<Value>, S
     Ok(Some(config))
 }
 
-fn responses_tool_choice_to_chat(choice: Option<&Value>) -> Result<Option<Value>, String> {
-    let Some(choice) = choice else {
-        return Ok(None);
-    };
-    if choice.is_string() {
-        return Ok(Some(choice.clone()));
-    }
-    if choice.get("type").and_then(Value::as_str) == Some("function") {
-        reject_unknown_fields(choice, &["type", "name"], "tool_choice")?;
-        return Ok(Some(json!({
-            "type": "function",
-            "function": {"name": required_nonempty_string(choice, "name", "tool_choice")?}
-        })));
-    }
-    Err("tool_choice cannot be represented by Gemini".into())
-}
-
-fn gemini_tool_choice_to_chat(config: Option<&Value>) -> Result<Option<Value>, String> {
-    let Some(config) = config else {
-        return Ok(None);
-    };
-    reject_unknown_fields(
-        config,
-        &["functionCallingConfig", "function_calling_config"],
-        "toolConfig",
-    )?;
-    let calling = config
-        .get("functionCallingConfig")
-        .or_else(|| config.get("function_calling_config"))
-        .ok_or_else(|| "toolConfig.functionCallingConfig is required".to_string())?;
-    reject_unknown_fields(
-        calling,
-        &["mode", "allowedFunctionNames", "allowed_function_names"],
-        "toolConfig.functionCallingConfig",
-    )?;
-    let mode = required_nonempty_string(calling, "mode", "toolConfig")?.to_ascii_uppercase();
-    let allowed = calling
-        .get("allowedFunctionNames")
-        .or_else(|| calling.get("allowed_function_names"));
-    match (mode.as_str(), allowed) {
-        ("AUTO", None) => Ok(Some(json!("auto"))),
-        ("NONE", None) => Ok(Some(json!("none"))),
-        ("ANY", None) => Ok(Some(json!("required"))),
-        ("ANY", Some(Value::Array(names))) if names.len() == 1 => Ok(Some(json!({
-            "type": "function",
-            "function": {"name": names[0].as_str().ok_or_else(|| {
-                "toolConfig.allowedFunctionNames must contain strings".to_string()
-            })?}
-        }))),
-        _ => Err("toolConfig function-calling policy cannot be represented exactly".into()),
-    }
-}
-
-fn responses_content_to_chat(
-    content: Option<&Value>,
-    role: &str,
-    path: &str,
-) -> Result<Value, String> {
-    match content {
-        Some(Value::String(text)) => Ok(Value::String(text.clone())),
-        Some(Value::Array(parts)) => parts
-            .iter()
-            .enumerate()
-            .map(|(index, part)| {
-                let path = format!("{path}.content[{index}]");
-                match part.get("type").and_then(Value::as_str) {
-                    Some("input_text" | "output_text" | "text") => {
-                        reject_unknown_fields(part, &["type", "text"], &path)?;
-                        Ok(json!({
-                            "type": "text", "text": required_string(part, "text", &path)?
-                        }))
-                    }
-                    Some("input_image") if role == "user" => {
-                        reject_unknown_fields(
-                            part,
-                            &["type", "image_url", "file_id", "detail"],
-                            &path,
-                        )?;
-                        if part.get("file_id").is_some_and(|value| !value.is_null()) {
-                            return Err(format!("{path}.file_id is provider-specific"));
-                        }
-                        reject_image_detail(part.get("detail"), &path)?;
-                        Ok(json!({
-                            "type": "image_url",
-                            "image_url": {"url": required_nonempty_string(
-                                part, "image_url", &path
-                            )?}
-                        }))
-                    }
-                    Some(kind) => Err(format!(
-                        "{path} content type {kind} cannot be represented by Gemini"
-                    )),
-                    None => Err(format!("{path} is missing a string type")),
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map(Value::Array),
-        _ => Err(format!("{path}.content must be a string or array")),
-    }
-}
-
-fn responses_tool_output(output: Option<&Value>, path: &str) -> Result<Value, String> {
-    match output {
-        Some(Value::String(text)) => Ok(Value::String(text.clone())),
-        Some(Value::Array(parts)) => {
-            let mut text = String::new();
-            for (index, part) in parts.iter().enumerate() {
-                reject_unknown_fields(part, &["type", "text"], &format!("{path}.output[{index}]"))?;
-                if part.get("type").and_then(Value::as_str) != Some("input_text") {
-                    return Err(format!(
-                        "{path}.output[{index}] cannot be represented in a Gemini function response"
-                    ));
-                }
-                text.push_str(required_string(part, "text", path)?);
-            }
-            Ok(Value::String(text))
-        }
-        _ => Err(format!(
-            "{path}.output must be a string or input_text array"
-        )),
-    }
-}
-
-fn tool_response(content: Option<&Value>, path: &str) -> Result<Value, String> {
-    let text = match content {
-        Some(Value::String(text)) => text.clone(),
-        Some(Value::Array(parts)) => {
-            let mut text = String::new();
-            for (index, part) in parts.iter().enumerate() {
-                reject_unknown_fields(
-                    part,
-                    &["type", "text"],
-                    &format!("{path}.content[{index}]"),
-                )?;
-                if part.get("type").and_then(Value::as_str) != Some("text") {
-                    return Err(format!("{path}.content[{index}] is not a text tool result"));
-                }
-                text.push_str(required_string(part, "text", path)?);
-            }
-            text
-        }
-        _ => return Err(format!("{path}.content must be text")),
-    };
-    Ok(serde_json::from_str(&text)
-        .ok()
-        .filter(Value::is_object)
-        .unwrap_or_else(|| json!({"output": text})))
-}
-
-fn parse_image_data_url<'a>(url: &'a str, path: &str) -> Result<(&'a str, &'a str), String> {
-    let encoded = url
-        .strip_prefix("data:")
-        .ok_or_else(|| format!("{path} must be a data URL"))?;
-    let (media, data) = encoded
-        .split_once(";base64,")
-        .ok_or_else(|| format!("{path} must be a base64 data URL"))?;
-    validate_image_media(media, path)?;
-    if data.is_empty() || decode_base64(data).is_err() {
-        return Err(format!("{path} contains invalid base64 image data"));
-    }
-    Ok((media, data))
-}
+include!("gemini_bridge_request_reverse.rs");
 
 #[cfg(test)]
 #[path = "gemini_bridge_request_tests.rs"]

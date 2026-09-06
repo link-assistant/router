@@ -12,8 +12,10 @@ async fn chat_to_codex_preserves_supported_history_and_rejects_the_rest_before_u
                     "messages":[
                         {"role":"user","content":[
                             {"type":"text","text":"inspect"},
-                            {"type":"image_url","image_url":{"url":"https://example.test/image.png","detail":"high"}},
-                            {"type":"file","file":{"file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt"}}
+                            {"type":"image_url","image_url":{"url":"https://example.test/image.png","detail":"high"},
+                             "prompt_cache_breakpoint":{"mode":"explicit"}},
+                            {"type":"file","file":{"file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt"},
+                             "prompt_cache_breakpoint":{"mode":"explicit"}}
                         ]},
                         {"role":"assistant","content":[
                             {"type":"text","text":"checking"},
@@ -22,7 +24,10 @@ async fn chat_to_codex_preserves_supported_history_and_rejects_the_rest_before_u
                             "id":"call_1","type":"function",
                             "function":{"name":"inspect","arguments":"{\"id\":1}"}
                         }]},
-                        {"role":"tool","tool_call_id":"call_1","content":"done"}
+                        {"role":"tool","tool_call_id":"call_1","content":[{
+                            "type":"text","text":"done",
+                            "prompt_cache_breakpoint":{"mode":"explicit"}
+                        }]}
                     ]
                 }),
             )
@@ -41,13 +46,15 @@ async fn chat_to_codex_preserves_supported_history_and_rejects_the_rest_before_u
             assert_eq!(
                 request["input"][0]["content"][1],
                 json!({
-                    "type":"input_image","image_url":"https://example.test/image.png","detail":"high"
+                    "type":"input_image","image_url":"https://example.test/image.png","detail":"high",
+                    "prompt_cache_breakpoint":{"mode":"explicit"}
                 })
             );
             assert_eq!(
                 request["input"][0]["content"][2],
                 json!({
-                    "type":"input_file","file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt"
+                    "type":"input_file","file_data":"data:text/plain;base64,SGk=","filename":"fixture.txt",
+                    "prompt_cache_breakpoint":{"mode":"explicit"}
                 })
             );
             assert_eq!(
@@ -58,10 +65,34 @@ async fn chat_to_codex_preserves_supported_history_and_rejects_the_rest_before_u
             );
             assert_eq!(request["input"][2]["type"], "function_call");
             assert_eq!(request["input"][3]["type"], "function_call_output");
+            assert_eq!(
+                request["input"][3]["output"][0]["prompt_cache_breakpoint"],
+                json!({"mode":"explicit"})
+            );
         }
     }
 
     let before = router.requests.lock().expect("stub requests").len();
+    for messages in [
+        json!([{"role":"system","content":[{
+            "type":"text","text":"policy",
+            "prompt_cache_breakpoint":{"mode":"explicit"}
+        }]}]),
+        json!([{"role":"user","content":[{
+            "type":"text","text":"hello",
+            "prompt_cache_breakpoint":{"type":"default"}
+        }]}]),
+    ] {
+        let response = router
+            .post(
+                "/api/services/openai/v1/chat/completions",
+                &json!({"model":"gpt-5","messages":messages}),
+            )
+            .send()
+            .await
+            .expect("rejected incompatible cache history");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
     for messages in [
         json!([{"role":"user","content":[{"type":"input_audio","input_audio":{"data":"AAA","format":"wav"}}]}]),
         json!([{"role":"assistant","content":"prior","audio":{"id":"audio_1"}}]),

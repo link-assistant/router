@@ -375,3 +375,77 @@ fn anthropic_effort_maps_to_codex_without_default_overwrite() {
         assert!(validate_anthropic_request(&body, BridgeTarget::Responses).is_err());
     }
 }
+
+#[test]
+fn anthropic_output_parallel_and_top_k_contracts_reach_compatible_targets() {
+    let body = json!({
+        "messages": [{"role": "user", "content": "answer"}],
+        "output_config": {"format": {
+            "type": "json_schema", "schema": {"type": "object"}
+        }},
+        "tool_choice": {"type": "auto", "disable_parallel_tool_use": true},
+        "top_k": 17
+    });
+    assert!(validate_anthropic_request(&body, BridgeTarget::Gemini).is_ok());
+    let chat = anthropic_to_chat_request(&body, "gemini-test");
+    assert_eq!(chat["response_format"]["type"], "json_schema");
+    assert_eq!(chat["parallel_tool_calls"], false);
+    assert_eq!(chat["top_k"], 17);
+
+    let mut without_top_k = body.clone();
+    without_top_k.as_object_mut().unwrap().remove("top_k");
+    let responses = anthropic_to_responses_request(&without_top_k, "gpt-test").unwrap();
+    assert_eq!(responses["text"]["format"]["type"], "json_schema");
+    assert_eq!(responses["parallel_tool_calls"], false);
+
+    for target in [BridgeTarget::Chat, BridgeTarget::Responses] {
+        let error = validate_anthropic_request(&body, target).unwrap_err();
+        assert!(error.contains("top_k"), "{target:?}: {error}");
+    }
+}
+
+#[test]
+fn responses_prompt_cache_breakpoints_map_on_text_image_file_and_tool_output() {
+    let breakpoint = json!({"mode":"explicit"});
+    let content = json!([
+        {"type":"input_text","text":"one","prompt_cache_breakpoint":breakpoint},
+        {"type":"input_image","image_url":"https://example.com/image.png",
+         "prompt_cache_breakpoint":breakpoint},
+        {"type":"input_file","file_data":"data:application/pdf;base64,AAA",
+         "prompt_cache_breakpoint":breakpoint}
+    ]);
+    let mapped =
+        crate::bridge_request::responses_message_content_to_anthropic(&content, "user", "input[0]")
+            .unwrap();
+    for index in 0..3 {
+        assert_eq!(mapped[index]["cache_control"], json!({"type":"ephemeral"}));
+    }
+
+    let output = crate::bridge_request::responses_output_to_anthropic(
+        Some(&json!([{
+            "type":"input_text","text":"done","prompt_cache_breakpoint":breakpoint
+        }])),
+        "input[1].output",
+    )
+    .unwrap();
+    assert_eq!(output[0]["cache_control"], json!({"type":"ephemeral"}));
+}
+
+#[test]
+fn anthropic_top_level_cache_control_is_explicitly_rejected_on_bridges() {
+    for target in [
+        BridgeTarget::Chat,
+        BridgeTarget::Responses,
+        BridgeTarget::Gemini,
+    ] {
+        let error = validate_anthropic_request(
+            &json!({
+                "messages":[{"role":"user","content":"hello"}],
+                "cache_control":{"type":"ephemeral"}
+            }),
+            target,
+        )
+        .unwrap_err();
+        assert!(error.contains("cache_control"), "{error}");
+    }
+}

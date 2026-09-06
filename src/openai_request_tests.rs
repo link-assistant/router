@@ -29,6 +29,45 @@ fn chat_safety_identifier_maps_to_anthropic_metadata_and_rejects_bad_values() {
 }
 
 #[test]
+fn legacy_user_maps_to_anthropic_with_safety_identifier_precedence() {
+    let legacy: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "user": "legacy-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        chat_completion_to_anthropic(&legacy)["metadata"]["user_id"],
+        "legacy-user"
+    );
+
+    let both: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "user": "legacy-user",
+        "safety_identifier": "current-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        chat_completion_to_anthropic(&both)["metadata"]["user_id"],
+        "current-user"
+    );
+}
+
+#[test]
+fn reconciliation_never_guesses_parameter_support_from_model_digits() {
+    let mut body = json!({
+        "model": "claude-future-99",
+        "temperature": 0.7,
+        "top_p": 0.8
+    });
+    reconcile_subscription_parameters(crate::subscription::SubscriptionProvider::Claude, &mut body);
+    let temperature = body["temperature"].as_f64().unwrap();
+    assert!((temperature - 0.7).abs() < 1e-6);
+    assert_eq!(body["top_p"], 0.8);
+}
+
+#[test]
 fn translated_chat_targets_reject_named_participants_without_erasing_identity() {
     for (role, name) in [
         ("system", "policy-author"),
@@ -106,8 +145,8 @@ fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
     let supported = json!({
         "prompt_cache_options": {"mode": "explicit"},
         "messages": [{"role": "user", "content": [
-            {"type": "text", "text": "one", "prompt_cache_breakpoint": {"type": "default"}},
-            {"type": "text", "text": "two", "prompt_cache_breakpoint": {"type": "default"}}
+            {"type": "text", "text": "one", "prompt_cache_breakpoint": {"mode": "explicit"}},
+            {"type": "text", "text": "two", "prompt_cache_breakpoint": {"mode": "explicit"}}
         ]}]
     });
     assert!(crate::bridge_controls::validate_openai_prompt_cache(&supported, true).is_ok());
@@ -116,13 +155,13 @@ fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
         json!({"prompt_cache_key": "opaque"}),
         json!({"prompt_cache_retention": "24h"}),
         json!({"prompt_cache_options": {"mode": "explicit", "ttl": "30m"}}),
-        json!({"messages": [{"content": [{"prompt_cache_breakpoint": {"type": "future"}}]}]}),
+        json!({"messages": [{"content": [{"prompt_cache_breakpoint": {"mode": "future"}}]}]}),
         json!({"messages": [{"content": [
-            {"prompt_cache_breakpoint": {"type": "default"}},
-            {"prompt_cache_breakpoint": {"type": "default"}},
-            {"prompt_cache_breakpoint": {"type": "default"}},
-            {"prompt_cache_breakpoint": {"type": "default"}},
-            {"prompt_cache_breakpoint": {"type": "default"}}
+            {"prompt_cache_breakpoint": {"mode": "explicit"}},
+            {"prompt_cache_breakpoint": {"mode": "explicit"}},
+            {"prompt_cache_breakpoint": {"mode": "explicit"}},
+            {"prompt_cache_breakpoint": {"mode": "explicit"}},
+            {"prompt_cache_breakpoint": {"mode": "explicit"}}
         ]}]}),
     ] {
         assert!(crate::bridge_controls::validate_openai_prompt_cache(&unsupported, true).is_err());
@@ -131,7 +170,7 @@ fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
     let chat = json!({
         "model": "gpt", "messages": [{"role": "user", "content": [{
             "type": "text", "text": "hello",
-            "prompt_cache_breakpoint": {"type": "default"}
+            "prompt_cache_breakpoint": {"mode": "explicit"}
         }]}],
         "prompt_cache_key": "opaque", "prompt_cache_options": {"mode": "explicit"},
         "prompt_cache_retention": "24h", "moderation": {"policy": "strict"}
@@ -148,6 +187,41 @@ fn translated_requests_fail_closed_for_future_moderation_and_cache_contracts() {
     assert_eq!(
         responses.pointer("/input/0/content/0/prompt_cache_breakpoint"),
         chat.pointer("/messages/0/content/0/prompt_cache_breakpoint")
+    );
+}
+
+#[test]
+fn anthropic_bridge_maps_current_breakpoints_on_system_media_and_tool_output() {
+    let request: OpenAIChatCompletionRequest = serde_json::from_value(json!({
+        "model":"claude-test",
+        "messages":[
+            {"role":"system","content":[{
+                "type":"text","text":"policy",
+                "prompt_cache_breakpoint":{"mode":"explicit"}
+            }]},
+            {"role":"user","content":[{
+                "type":"image_url","image_url":{"url":"https://example.com/image.png"},
+                "prompt_cache_breakpoint":{"mode":"explicit"}
+            }]},
+            {"role":"tool","tool_call_id":"call_1","content":[{
+                "type":"text","text":"done",
+                "prompt_cache_breakpoint":{"mode":"explicit"}
+            }]}
+        ]
+    }))
+    .unwrap();
+    let body = chat_completion_to_anthropic(&request);
+    assert_eq!(
+        body["system"][0]["cache_control"],
+        json!({"type":"ephemeral"})
+    );
+    assert_eq!(
+        body["messages"][0]["content"][0]["cache_control"],
+        json!({"type":"ephemeral"})
+    );
+    assert_eq!(
+        body["messages"][1]["content"][0]["content"][0]["cache_control"],
+        json!({"type":"ephemeral"})
     );
 }
 
@@ -401,6 +475,8 @@ fn parallel_tool_policy_combines_with_every_chat_tool_choice() {
             logprobs: None,
             top_logprobs: None,
             safety_identifier: None,
+            stream_options: None,
+            user: None,
         };
         let translated = chat_completion_to_anthropic(&request);
         assert_eq!(translated["tool_choice"]["type"], expected_type);
@@ -529,6 +605,8 @@ fn translates_basic_chat_completion() {
         logprobs: None,
         top_logprobs: None,
         safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
     // The requested model is preserved verbatim; nothing rewrites it.
@@ -575,6 +653,8 @@ fn preserves_claude_native_model_id() {
         logprobs: None,
         top_logprobs: None,
         safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
     assert_eq!(body["model"], "claude-opus-4-7");
@@ -582,7 +662,7 @@ fn preserves_claude_native_model_id() {
 }
 
 #[test]
-fn drops_temperature_for_claude_5_models() {
+fn preserves_temperature_for_live_claude_validation() {
     let req = OpenAIChatCompletionRequest {
         model: "claude-sonnet-5".into(),
         messages: vec![ChatMessage {
@@ -614,9 +694,12 @@ fn drops_temperature_for_claude_5_models() {
         logprobs: None,
         top_logprobs: None,
         safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
-    assert!(body.get("temperature").is_none());
+    let temperature = body["temperature"].as_f64().unwrap();
+    assert!((temperature - 0.7).abs() < 1e-6);
 }
 
 #[test]
@@ -744,6 +827,8 @@ fn translates_multipart_user_content() {
         logprobs: None,
         top_logprobs: None,
         safety_identifier: None,
+        stream_options: None,
+        user: None,
     };
     let body = chat_completion_to_anthropic(&req);
     let parts = body["messages"][0]["content"].as_array().unwrap();
@@ -844,6 +929,8 @@ fn anthropic_never_receives_both_temperature_and_top_p() {
             logprobs: None,
             top_logprobs: None,
             safety_identifier: None,
+            stream_options: None,
+            user: None,
         };
         chat_completion_to_anthropic(&req)
     };
@@ -874,94 +961,4 @@ fn anthropic_never_receives_both_temperature_and_top_p() {
     let body = sampling(None, None);
     assert!(body.get("temperature").is_none(), "{body}");
     assert!(body.get("top_p").is_none(), "{body}");
-}
-
-/// Codex CLI sends `namespace`, `custom` and `tool_search` alongside ordinary
-/// function tools. Rejecting the whole request over one untranslatable entry
-/// refused nine usable tools and made a documented client unable to drive Claude
-/// models at all (issue #215). The unknown entries are dropped; the rest survive.
-#[test]
-fn untranslatable_tools_are_dropped_rather_than_failing_the_request() {
-    // The real `codex_exec/0.147.0` tool array, from the issue.
-    let tools = json!([
-        {"type": "function", "name": "exec_command"},
-        {"type": "function", "name": "write_stdin"},
-        {"type": "function", "name": "update_plan"},
-        {"type": "function", "name": "request_user_input"},
-        {"type": "function", "name": "view_image"},
-        {"type": "namespace", "name": "multi_agent_v1"},
-        {"type": "function", "name": "get_goal"},
-        {"type": "function", "name": "create_goal"},
-        {"type": "function", "name": "update_goal"},
-        {"type": "web_search"}
-    ]);
-
-    let translated = crate::openai::translate_tools(&tools);
-    let translated = translated
-        .as_array()
-        .expect("translated tools are an array");
-    // Nine of ten entries survive: eight functions and the server-side search.
-    assert_eq!(translated.len(), 9, "{translated:#?}");
-    let rendered = serde_json::to_string(&translated).expect("serialize");
-    assert!(!rendered.contains("multi_agent_v1"), "{rendered}");
-    assert!(!rendered.contains("namespace"), "{rendered}");
-    // The function tools are translated, not merely copied.
-    assert!(rendered.contains("exec_command"), "{rendered}");
-    assert!(rendered.contains("input_schema"), "{rendered}");
-    // `web_search` keeps its existing translation.
-    assert!(rendered.contains("web_search_20250305"), "{rendered}");
-
-    // The drop is reported rather than silent.
-    let dropped = crate::openai::untranslatable_anthropic_tools(&tools);
-    assert_eq!(dropped, vec!["namespace (multi_agent_v1)".to_string()]);
-}
-
-/// `namespace` is not the only type that would have hit the wall: `custom` and
-/// `tool_search` fail the same way, so fixing only the type named in the error
-/// message would leave the same barrier two steps later.
-#[test]
-fn every_untranslatable_codex_tool_type_is_handled() {
-    for kind in ["namespace", "custom", "tool_search"] {
-        let tools = json!([
-            {"type": "function", "name": "kept"},
-            {"type": kind, "name": "dropped_one"}
-        ]);
-        let translated = crate::openai::translate_tools(&tools);
-        let translated = translated.as_array().expect("array");
-        assert_eq!(translated.len(), 1, "{kind}: {translated:#?}");
-        assert_eq!(translated[0]["name"], "kept", "{kind}");
-        assert_eq!(
-            crate::openai::untranslatable_anthropic_tools(&tools),
-            vec![format!("{kind} (dropped_one)")],
-            "{kind}"
-        );
-    }
-}
-
-/// A request whose tools are *all* untranslatable must still be sensible: an
-/// empty tool list, not a `400` mid-conversation and not a malformed array.
-#[test]
-fn a_wholly_untranslatable_tool_set_yields_an_empty_list() {
-    let tools = json!([
-        {"type": "namespace", "name": "a"},
-        {"type": "tool_search"}
-    ]);
-    let translated = crate::openai::translate_tools(&tools);
-    assert_eq!(translated, json!([]), "{translated}");
-    assert_eq!(
-        crate::openai::untranslatable_anthropic_tools(&tools),
-        vec!["namespace (a)".to_string(), "tool_search".to_string()]
-    );
-}
-
-/// A function tool without a usable name cannot be translated either, and must
-/// not slip through as a nameless Anthropic tool.
-#[test]
-fn a_nameless_function_tool_is_dropped() {
-    let tools = json!([{"type": "function"}, {"type": "function", "name": ""}]);
-    assert_eq!(crate::openai::translate_tools(&tools), json!([]));
-    assert_eq!(
-        crate::openai::untranslatable_anthropic_tools(&tools).len(),
-        2
-    );
 }

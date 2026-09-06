@@ -51,6 +51,63 @@ fn chat_tool_contract_and_two_turn_history_are_exact() {
 }
 
 #[test]
+fn gemini_generation_controls_and_structured_output_map_exactly() {
+    let request = chat_to_gemini_request_checked(&json!({
+        "messages": [{"role": "user", "content": "answer"}],
+        "stop": ["END"],
+        "frequency_penalty": 1.25,
+        "presence_penalty": -0.5,
+        "seed": 1234,
+        "top_k": 17,
+        "response_format": {"type": "json_schema", "json_schema": {
+            "name": "answer", "strict": true, "schema": {"type": "object"}
+        }},
+        "parallel_tool_calls": true,
+        "n": 1,
+        "modalities": ["text"],
+        "logprobs": false,
+        "top_logprobs": 0
+    }))
+    .unwrap();
+
+    assert_eq!(request["generationConfig"]["stopSequences"], json!(["END"]));
+    assert_eq!(request["generationConfig"]["frequencyPenalty"], 1.25);
+    assert_eq!(request["generationConfig"]["presencePenalty"], -0.5);
+    assert_eq!(request["generationConfig"]["seed"], 1234);
+    assert_eq!(request["generationConfig"]["topK"], 17);
+    assert_eq!(
+        request["generationConfig"]["responseMimeType"],
+        "application/json"
+    );
+    assert_eq!(
+        request["generationConfig"]["responseJsonSchema"]["type"],
+        "object"
+    );
+}
+
+#[test]
+fn responses_structured_output_reaches_gemini_generation_config() {
+    let chat = responses_to_chat_checked(&json!({
+        "model": "gemini-test",
+        "input": "answer",
+        "text": {"format": {
+            "type": "json_schema", "name": "answer", "strict": true,
+            "schema": {"type": "object"}
+        }}
+    }))
+    .unwrap();
+    let request = chat_to_gemini_request_checked(&chat).unwrap();
+    assert_eq!(
+        request["generationConfig"]["responseMimeType"],
+        "application/json"
+    );
+    assert_eq!(
+        request["generationConfig"]["responseJsonSchema"]["type"],
+        "object"
+    );
+}
+
+#[test]
 fn responses_tool_contract_and_two_turn_history_are_exact() {
     let body = json!({
         "model": "live-model",
@@ -272,4 +329,17 @@ fn unsupported_tools_images_and_interleaving_fail_closed() {
     }
 
     assert!(responses_to_chat_checked(&json!({"input": "x", "future_field": true})).is_err());
+}
+
+#[test]
+fn gemini_cached_content_is_rejected_before_cross_provider_translation() {
+    let error = gemini_request_to_chat_checked(
+        "model",
+        &json!({
+            "cachedContent":"cachedContents/synthetic-cache",
+            "contents":[{"role":"user","parts":[{"text":"continue"}]}]
+        }),
+    )
+    .unwrap_err();
+    assert!(error.contains("cachedContent"), "{error}");
 }

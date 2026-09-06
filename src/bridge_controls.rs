@@ -66,6 +66,9 @@ const RESPONSE_FIELDS: &[&str] = &[
     "metadata",
     "include",
     "prompt",
+    "user",
+    "context_management",
+    "top_logprobs",
 ];
 
 #[must_use]
@@ -109,6 +112,7 @@ pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
         "container",
         "mcp_servers",
         "betas",
+        "cache_control",
     ];
     if let Some(reason) = unknown_field(body, FIELDS) {
         return Err(reason);
@@ -126,6 +130,15 @@ pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
                 "{field} cannot be represented by the selected provider"
             ));
         }
+    }
+    if body
+        .get("cache_control")
+        .is_some_and(|value| !value.is_null())
+    {
+        return Err(
+            "cache_control automatic placement cannot be represented by the selected provider"
+                .into(),
+        );
     }
     Ok(())
 }
@@ -241,13 +254,23 @@ pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Res
             );
         }
     }
+    validate_openai_prompt_cache_breakpoints(body, anthropic_target)
+}
+
+/// Validate the current `OpenAI` content-level breakpoint shape. Responses
+/// targets can preserve these fields directly, while provider bridges choose
+/// whether the target has an exact semantic equivalent.
+pub fn validate_openai_prompt_cache_breakpoints(
+    body: &Value,
+    target_supports_breakpoints: bool,
+) -> Result<(), String> {
     let mut breakpoints = Vec::new();
     collect_named_values(body, "prompt_cache_breakpoint", &mut breakpoints);
     if breakpoints.len() > 4 {
-        return Err("Anthropic supports at most four prompt cache breakpoints".into());
+        return Err("OpenAI supports at most four prompt cache breakpoints".into());
     }
     for breakpoint in breakpoints {
-        if !anthropic_target {
+        if !target_supports_breakpoints {
             return Err(
                 "prompt_cache_breakpoint cannot be represented by the selected provider".into(),
             );
@@ -255,11 +278,39 @@ pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Res
         let Some(object) = breakpoint.as_object() else {
             return Err("prompt_cache_breakpoint must be an object".into());
         };
-        if object.len() != 1 || object.get("type").and_then(Value::as_str) != Some("default") {
-            return Err("only prompt_cache_breakpoint type=default is supported".into());
+        if object.len() != 1 || object.get("mode").and_then(Value::as_str) != Some("explicit") {
+            return Err("only prompt_cache_breakpoint mode=explicit is supported".into());
         }
     }
     Ok(())
+}
+
+#[must_use]
+pub fn codex_instruction_cache_breakpoint(body: &Value) -> Option<String> {
+    for (index, message) in body
+        .get("messages")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .enumerate()
+    {
+        if !matches!(
+            message.get("role").and_then(Value::as_str),
+            Some("system" | "developer")
+        ) {
+            continue;
+        }
+        let mut found = Vec::new();
+        if let Some(content) = message.get("content") {
+            collect_named_values(content, "prompt_cache_breakpoint", &mut found);
+        }
+        if !found.is_empty() {
+            return Some(format!(
+                "messages[{index}] prompt_cache_breakpoint cannot be preserved when Codex hoists system or developer content into instructions"
+            ));
+        }
+    }
+    None
 }
 
 fn collect_named_values<'a>(value: &'a Value, name: &str, found: &mut Vec<&'a Value>) {
@@ -284,6 +335,7 @@ fn collect_named_values<'a>(value: &'a Value, name: &str, found: &mut Vec<&'a Va
 
 pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> Result<(), String> {
     crate::safety_identifier::validate_openai(request.safety_identifier.as_deref())?;
+    crate::safety_identifier::validate_openai_user(request.user.as_deref())?;
     if request
         .top_p
         .is_some_and(|top_p| !(0.0..=1.0).contains(&top_p))
@@ -304,6 +356,19 @@ pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> 
             "stored responses cannot be created through an Anthropic bridge; use store=false"
                 .into(),
         );
+    }
+    if request.metadata.as_ref().is_some_and(|metadata| {
+        !metadata.is_null() && metadata.as_object().is_none_or(|v| !v.is_empty())
+    }) {
+        return Err("metadata cannot be represented by an Anthropic bridge".into());
+    }
+    if request.context_management.as_ref().is_some_and(|context| {
+        !context.is_null() && context.as_array().is_none_or(|items| !items.is_empty())
+    }) {
+        return Err("context_management cannot be represented by an Anthropic bridge".into());
+    }
+    if request.top_logprobs.is_some_and(|count| count > 0) {
+        return Err("top_logprobs cannot be represented by an Anthropic bridge".into());
     }
     if request
         .truncation

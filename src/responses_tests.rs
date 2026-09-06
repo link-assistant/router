@@ -37,6 +37,71 @@ fn responses_safety_identifier_and_top_p_reach_anthropic_losslessly() {
 }
 
 #[test]
+fn responses_legacy_user_maps_to_anthropic_with_current_identifier_precedence() {
+    let legacy: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer", "user": "legacy-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        response_to_anthropic(&legacy)["metadata"]["user_id"],
+        "legacy-user"
+    );
+
+    let both: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer",
+        "user": "legacy-user", "safety_identifier": "current-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        response_to_anthropic(&both)["metadata"]["user_id"],
+        "current-user"
+    );
+}
+
+#[test]
+fn chat_to_responses_preserves_compatible_controls_and_schema() {
+    let translated = try_chat_completion_to_responses(&json!({
+        "model": "gpt-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "response_format": {"type": "json_schema", "json_schema": {
+            "name": "answer", "strict": true, "schema": {"type": "object"}
+        }},
+        "parallel_tool_calls": false,
+        "stream": true,
+        "stream_options": {"include_obfuscation": true},
+        "user": "legacy-user"
+    }))
+    .unwrap();
+
+    assert_eq!(translated["text"]["format"]["type"], "json_schema");
+    assert_eq!(translated["text"]["format"]["name"], "answer");
+    assert_eq!(translated["text"]["format"]["strict"], true);
+    assert_eq!(translated["text"]["format"]["schema"]["type"], "object");
+    assert_eq!(translated["parallel_tool_calls"], false);
+    assert_eq!(translated["stream_options"]["include_obfuscation"], true);
+    assert_eq!(translated["user"], "legacy-user");
+}
+
+#[test]
+fn responses_bridge_retains_fields_that_must_be_validated() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer",
+        "metadata": {"case": "synthetic"},
+        "context_management": [{"type": "compaction", "compact_threshold": 12000}],
+        "top_logprobs": 5,
+        "user": "legacy-user"
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(request).unwrap();
+    for field in ["metadata", "context_management", "top_logprobs", "user"] {
+        assert!(
+            retained.get(field).is_some(),
+            "discarded {field}: {retained}"
+        );
+    }
+}
+
+#[test]
 fn responses_structured_output_and_parallel_tool_policy_reach_anthropic() {
     let request: OpenAIResponseRequest = serde_json::from_value(json!({
         "model": "claude-test",
@@ -139,6 +204,10 @@ fn responses_api_translation() {
         store: None,
         stream_options: None,
         safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
     let body = response_to_anthropic(&req);
     // The requested model is preserved verbatim (issue #192).
@@ -252,6 +321,10 @@ fn responses_structured_input_translates_to_anthropic() {
         store: None,
         stream_options: None,
         safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
 
     let body = response_to_anthropic(&req);
@@ -528,7 +601,7 @@ fn normalizes_string_input_and_preserves_typed_input() {
 }
 
 #[test]
-fn drops_temperature_for_claude_5_models() {
+fn preserves_temperature_for_live_claude_validation() {
     let req = OpenAIResponseRequest {
         model: "claude-opus-5".into(),
         input: Value::String("hello".into()),
@@ -548,9 +621,14 @@ fn drops_temperature_for_claude_5_models() {
         store: None,
         stream_options: None,
         safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
     let body = response_to_anthropic(&req);
-    assert!(body.get("temperature").is_none());
+    let temperature = body["temperature"].as_f64().unwrap();
+    assert!((temperature - 0.7).abs() < 1e-6);
 }
 
 #[test]
