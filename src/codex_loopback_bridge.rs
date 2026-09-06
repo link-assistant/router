@@ -1,6 +1,7 @@
 //! Loopback transport accepted by Codex's remote-control origin policy.
 
 use std::collections::HashSet;
+use std::io::Read as _;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::time::Duration;
@@ -29,6 +30,8 @@ const DAEMON_LISTEN_ENV: &str = "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_LIS
 const START_TIMEOUT: Duration = Duration::from_secs(5);
 const STOP_TIMEOUT: Duration = Duration::from_secs(3);
 const POLL_INTERVAL: Duration = Duration::from_millis(25);
+#[cfg(any(windows, test))]
+const WINDOWS_RUNTIME_ENV: [&str; 4] = ["SystemRoot", "WINDIR", "TEMP", "TMP"];
 
 #[derive(Clone)]
 struct BridgeState {
@@ -351,6 +354,10 @@ async fn spawn_daemon(
     let executable = std::env::current_exe()
         .map_err(|error| format!("could not locate the Router executable: {error}"))?;
     let mut command = std::process::Command::new(executable);
+    // A custom Windows environment block must retain its system root, and the
+    // standard/runtime temporary-directory APIs need TEMP or TMP. Keep only
+    // those OS values rather than inheriting credentials into the daemon.
+    let runtime_environment = windows_runtime_environment();
     command
         .env_clear()
         .env(DAEMON_MARKER_ENV, "1")
@@ -365,7 +372,8 @@ async fn spawn_daemon(
         )
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stderr(Stdio::piped());
+    command.envs(runtime_environment);
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt as _;
@@ -374,6 +382,7 @@ async fn spawn_daemon(
     let mut child = command
         .spawn()
         .map_err(|error| format!("could not start the Codex bridge: {error}"))?;
+    let mut child_stderr = child.stderr.take();
     let deadline = tokio::time::Instant::now() + START_TIMEOUT;
     loop {
         if let Some(state) = read_state(state_path)?
@@ -384,13 +393,16 @@ async fn spawn_daemon(
         {
             return Ok(state);
         }
-        if child
+        if let Some(status) = child
             .try_wait()
             .map_err(|error| format!("could not inspect the Codex bridge: {error}"))?
-            .is_some()
         {
             remove_file_if_present(state_path)?;
-            return Err("Codex bridge exited before becoming ready".into());
+            let mut detail = String::new();
+            if let Some(stderr) = child_stderr.as_mut() {
+                let _ = stderr.read_to_string(&mut detail);
+            }
+            return Err(daemon_exit_message(status, &detail));
         }
         if tokio::time::Instant::now() >= deadline {
             let _ = child.kill();
@@ -400,6 +412,53 @@ async fn spawn_daemon(
         }
         tokio::time::sleep(POLL_INTERVAL).await;
     }
+}
+
+#[cfg(windows)]
+fn windows_runtime_environment() -> Vec<(&'static str, std::ffi::OsString)> {
+    select_windows_runtime_environment(std::env::var_os)
+}
+
+#[cfg(not(windows))]
+const fn windows_runtime_environment() -> Vec<(&'static str, std::ffi::OsString)> {
+    Vec::new()
+}
+
+#[cfg(any(windows, test))]
+pub(crate) fn select_windows_runtime_environment(
+    mut get: impl FnMut(&str) -> Option<std::ffi::OsString>,
+) -> Vec<(&'static str, std::ffi::OsString)> {
+    WINDOWS_RUNTIME_ENV
+        .into_iter()
+        .filter_map(|name| get(name).map(|value| (name, value)))
+        .collect()
+}
+
+fn daemon_exit_message(status: std::process::ExitStatus, stderr: &str) -> String {
+    format_daemon_exit(&status.to_string(), stderr)
+}
+
+pub(crate) fn format_daemon_exit(status: &str, stderr: &str) -> String {
+    let detail = stderr.split_whitespace().collect::<Vec<_>>().join(" ");
+    if detail.is_empty() {
+        format!("Codex bridge exited before becoming ready ({status})")
+    } else {
+        format!(
+            "Codex bridge exited before becoming ready ({status}): {}",
+            truncate_diagnostic(&detail, 512)
+        )
+    }
+}
+
+fn truncate_diagnostic(value: &str, limit: usize) -> &str {
+    if value.len() <= limit {
+        return value;
+    }
+    let mut boundary = limit;
+    while !value.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    &value[..boundary]
 }
 
 async fn stop_state(state_path: &Path, state: &PersistentState) -> Result<(), String> {

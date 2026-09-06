@@ -5,6 +5,36 @@ use http_body_util::BodyExt as _;
 use std::sync::{Arc, Mutex};
 
 #[test]
+fn persistent_windows_bridge_inherits_only_required_runtime_environment() {
+    let selected = crate::codex_loopback_bridge::select_windows_runtime_environment(|name| {
+        Some(format!("value-for-{name}").into())
+    });
+    let names = selected.iter().map(|(name, _)| *name).collect::<Vec<_>>();
+    assert_eq!(names, ["SystemRoot", "WINDIR", "TEMP", "TMP"]);
+    assert!(!names.contains(&"TOKEN_SECRET"));
+    assert!(!names.contains(&"LINK_ASSISTANT_TOKEN"));
+}
+
+#[test]
+fn persistent_bridge_exit_diagnostic_is_compact_and_bounded() {
+    assert_eq!(
+        crate::codex_loopback_bridge::format_daemon_exit("exit code: 1", " \n\t"),
+        "Codex bridge exited before becoming ready (exit code: 1)"
+    );
+    let message = crate::codex_loopback_bridge::format_daemon_exit(
+        "exit code: 2",
+        &format!("first line\n{}", "é".repeat(300)),
+    );
+    assert!(
+        message
+            .starts_with("Codex bridge exited before becoming ready (exit code: 2): first line é")
+    );
+    assert!(message.is_char_boundary(message.len()));
+    assert_eq!(message.matches('\n').count(), 0);
+    assert!(message.len() <= 580, "{message}");
+}
+
+#[test]
 fn only_external_router_origins_need_a_codex_loopback_bridge() {
     for local in [
         "http://localhost:8080",
