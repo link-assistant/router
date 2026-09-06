@@ -790,7 +790,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--request-log` / `REQUEST_LOG` | `$DATA_DIR/requests` | No | Root directory for redacted per-token JSONL exchange logs, tied together by `correlation_id` |
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first. The store's total is this bound times the number of tokens with recorded traffic — cap that with the row below |
 | `--request-log-max-total-bytes` / `REQUEST_LOG_MAX_TOTAL_BYTES` | `4294967296` (4 GiB) | No | Bound across the whole request store; the least recently written token directories are removed first. `0` disables the total cap |
-| `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded |
+| `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded. Native Anthropic Files and Skills multipart uploads are bounded and spooled to temporary disk before relay; set this to `524288000` to permit Claude's full 500 MiB upload maximum, with matching free disk space |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### GitHub API credential proxy

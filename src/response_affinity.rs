@@ -277,6 +277,7 @@ impl ResponseAffinityStore {
                 record.namespace == namespace
                     && record.response_id == response_id
                     && record.owner == owner
+                    && record.parent_id == parent_id
             }) {
                 return if existing.destination == destination && existing.parent_id == parent_id {
                     Ok(RecordOutcome::Existing)
@@ -333,12 +334,49 @@ impl ResponseAffinityStore {
             let mut file = self.load()?;
             let before = file.records.len();
             prune(&mut file.records, now);
+            let mut matching = file.records.iter().filter(|record| {
+                record.namespace == namespace
+                    && record.response_id == response_id
+                    && &record.owner == owner
+            });
+            let found = matching.next().cloned();
+            let found = if matching.next().is_some() {
+                None
+            } else {
+                found
+            };
+            if file.records.len() != before {
+                self.flush(&file)?;
+            }
+            Ok(found)
+        })
+    }
+
+    pub(crate) fn lookup_child(
+        &self,
+        namespace: ResponseNamespace,
+        response_id: &str,
+        parent_id: &str,
+        owner: &ResponseOwner,
+    ) -> Result<Option<ResponseAffinity>, StoreError> {
+        if validate_response_id(response_id).is_err()
+            || validate_response_id(parent_id).is_err()
+            || validate_owner(owner).is_err()
+        {
+            return Ok(None);
+        }
+        crate::durable_file::with_exclusive_lock(&self.lock_path, || {
+            crate::durable_file::recover_transactional_write(&self.path)?;
+            let mut file = self.load()?;
+            let before = file.records.len();
+            prune(&mut file.records, chrono::Utc::now().timestamp());
             let found = file
                 .records
                 .iter()
                 .find(|record| {
                     record.namespace == namespace
                         && record.response_id == response_id
+                        && record.parent_id.as_deref() == Some(parent_id)
                         && &record.owner == owner
                 })
                 .cloned();

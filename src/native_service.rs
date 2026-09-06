@@ -48,6 +48,12 @@ struct NativeResourceRequest {
     parent_id: Option<String>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct NativeListRequest {
+    namespace: ResponseNamespace,
+    parent_id: Option<String>,
+}
+
 pub struct Target {
     pub client: reqwest::Client,
     pub url: String,
@@ -211,6 +217,14 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     };
     let routing_body = body.routing_bytes();
     let resource = native_resource_request(&method, path);
+    let list = native_list_request(&method, path);
+    let list_destination = match list.as_ref() {
+        Some(list) => match native_list_destination(&state, &owner, list) {
+            Ok(destination) => destination,
+            Err(response) => return response,
+        },
+        None => None,
+    };
     let existing = match resource.as_ref() {
         Some(resource) => match existing_resource(&state, &owner, resource) {
             Ok(affinity) => affinity,
@@ -248,7 +262,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         service,
         &uri,
         routing_body,
-        existing.as_ref().map(|affinity| &affinity.destination),
+        existing
+            .as_ref()
+            .map(|affinity| &affinity.destination)
+            .or(list_destination.as_ref()),
     )
     .await
     {
@@ -275,6 +292,9 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         return response;
     }
     let mut response = relay_native_http(&state, &method, body, target).await;
+    if let Some(list) = list {
+        response = filter_native_list_response(&state, &owner, &list, response).await;
+    }
     if let Some(resource) = resource {
         if matches!(
             resource.namespace,
@@ -747,6 +767,69 @@ fn native_resource_request(method: &Method, path: &str) -> Option<NativeResource
     None
 }
 
+fn native_list_request(method: &Method, path: &str) -> Option<NativeListRequest> {
+    if method != Method::GET {
+        return None;
+    }
+    match path {
+        "/api/services/anthropic/v1/files" => Some(NativeListRequest {
+            namespace: ResponseNamespace::AnthropicFiles,
+            parent_id: None,
+        }),
+        "/api/services/anthropic/v1/messages/batches" => Some(NativeListRequest {
+            namespace: ResponseNamespace::AnthropicBatches,
+            parent_id: None,
+        }),
+        "/api/services/anthropic/v1/skills" => Some(NativeListRequest {
+            namespace: ResponseNamespace::AnthropicSkills,
+            parent_id: None,
+        }),
+        _ => path
+            .strip_prefix("/api/services/anthropic/v1/skills/")
+            .and_then(|tail| {
+                let segments = split_tail(tail);
+                let [skill_id, "versions"] = segments.as_slice() else {
+                    return None;
+                };
+                Some(NativeListRequest {
+                    namespace: ResponseNamespace::AnthropicSkillVersions,
+                    parent_id: Some((*skill_id).to_string()),
+                })
+            }),
+    }
+}
+
+fn native_list_destination(
+    state: &AppState,
+    owner: &ResponseOwner,
+    list: &NativeListRequest,
+) -> Result<Option<AffinityDestination>, Response> {
+    let affinities = state
+        .provider_store
+        .response_affinities()
+        .list(list.namespace, owner)
+        .map_err(|_| unavailable("native resource affinity is unavailable"))?;
+    let mut destinations = affinities
+        .into_iter()
+        .filter(|affinity| {
+            list.parent_id
+                .as_ref()
+                .is_none_or(|parent| affinity.parent_id.as_ref() == Some(parent))
+        })
+        .map(|affinity| affinity.destination);
+    let Some(first) = destinations.next() else {
+        return Ok(None);
+    };
+    if destinations.any(|destination| destination != first) {
+        return Err(anthropic_error(
+            StatusCode::CONFLICT,
+            "invalid_request_error",
+            "the requested native resources span multiple subscription accounts",
+        ));
+    }
+    Ok(Some(first))
+}
+
 fn call_resource(
     method: &Method,
     tail: &str,
@@ -804,23 +887,33 @@ fn simple_resource(
 
 fn skill_resource(method: &Method, tail: &str) -> Option<NativeResourceRequest> {
     let segments = split_tail(tail);
-    if ((method == Method::GET || method == Method::POST) && segments.len() == 1)
+    if ((method == Method::GET || method == Method::POST || method == Method::DELETE)
+        && segments.len() == 1)
         || (method == Method::GET && matches!(segments.as_slice(), [_, "versions"]))
     {
         return Some(resource_use(
             ResponseNamespace::AnthropicSkills,
             segments[0],
-            NativeResourceAction::Use,
+            if method == Method::DELETE {
+                NativeResourceAction::Delete
+            } else {
+                NativeResourceAction::Use
+            },
             None,
         ));
     }
-    if ((method == Method::GET || method == Method::POST) && segments.len() == 3)
+    if ((method == Method::GET || method == Method::POST || method == Method::DELETE)
+        && segments.len() == 3)
         || (method == Method::GET && matches!(segments.as_slice(), [_, "versions", _, "content"]))
     {
         return Some(resource_use(
             ResponseNamespace::AnthropicSkillVersions,
             segments[2],
-            NativeResourceAction::Use,
+            if method == Method::DELETE {
+                NativeResourceAction::Delete
+            } else {
+                NativeResourceAction::Use
+            },
             Some(segments[0]),
         ));
     }
@@ -882,11 +975,12 @@ fn existing_resource(
     let Some((namespace, id)) = lookup else {
         return Ok(None);
     };
-    match state
-        .provider_store
-        .response_affinities()
-        .lookup(namespace, id, owner)
-    {
+    let store = state.provider_store.response_affinities();
+    let found = resource.parent_id.as_deref().map_or_else(
+        || store.lookup(namespace, id, owner),
+        |parent_id| store.lookup_child(namespace, id, parent_id, owner),
+    );
+    match found {
         Ok(Some(affinity))
             if resource.action == NativeResourceAction::Create
                 || resource.parent_id.is_none()
@@ -931,19 +1025,120 @@ async fn finish_resource_request(
                 .await
         }
         NativeResourceAction::Delete if response.status().is_success() => {
-            if let Some(affinity) = existing
-                && state
-                    .provider_store
-                    .response_affinities()
-                    .remove_if_matches(&affinity)
-                    .is_err()
-            {
-                return unavailable("native resource affinity could not be removed");
+            if let Some(affinity) = existing {
+                let store = state.provider_store.response_affinities();
+                if resource.namespace == ResponseNamespace::AnthropicSkills
+                    && store
+                        .remove_children(
+                            ResponseNamespace::AnthropicSkillVersions,
+                            &affinity.response_id,
+                            &owner,
+                            &affinity.destination,
+                        )
+                        .is_err()
+                {
+                    return unavailable("native child resource affinities could not be removed");
+                }
+                if store.remove_if_matches(&affinity).is_err() {
+                    return unavailable("native resource affinity could not be removed");
+                }
             }
             response
         }
         NativeResourceAction::Use | NativeResourceAction::Delete => response,
     }
+}
+
+async fn filter_native_list_response(
+    state: &AppState,
+    owner: &ResponseOwner,
+    list: &NativeListRequest,
+    response: Response,
+) -> Response {
+    if !response.status().is_success() {
+        return response;
+    }
+    let (mut parts, body) = response.into_parts();
+    let Ok(bytes) = axum::body::to_bytes(body, state.max_proxy_request_bytes).await else {
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "upstream native resource list exceeds the proxy limit",
+        );
+    };
+    let Ok(serde_json::Value::Object(mut document)) =
+        serde_json::from_slice::<serde_json::Value>(&bytes)
+    else {
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "upstream native resource list is not a JSON object",
+        );
+    };
+    let Ok(affinities) = state
+        .provider_store
+        .response_affinities()
+        .list(list.namespace, owner)
+    else {
+        return unavailable("native resource affinity is unavailable");
+    };
+    let owned_ids = affinities
+        .into_iter()
+        .filter(|affinity| {
+            list.parent_id
+                .as_ref()
+                .is_none_or(|parent| affinity.parent_id.as_ref() == Some(parent))
+        })
+        .map(|affinity| affinity.response_id)
+        .collect::<std::collections::HashSet<_>>();
+    let Some(data) = document
+        .get_mut("data")
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            "upstream native resource list has no data array",
+        );
+    };
+    data.retain(|item| list_item_id(item, list.namespace).is_some_and(|id| owned_ids.contains(id)));
+    let first_id = data
+        .first()
+        .and_then(|item| list_item_id(item, list.namespace))
+        .map(str::to_string);
+    let last_id = data
+        .last()
+        .and_then(|item| list_item_id(item, list.namespace))
+        .map(str::to_string);
+    if document.contains_key("first_id") {
+        document.insert(
+            "first_id".to_string(),
+            first_id.map_or(serde_json::Value::Null, serde_json::Value::String),
+        );
+    }
+    if document.contains_key("last_id") {
+        document.insert(
+            "last_id".to_string(),
+            last_id.map_or(serde_json::Value::Null, serde_json::Value::String),
+        );
+    }
+    let Ok(encoded) = serde_json::to_vec(&serde_json::Value::Object(document)) else {
+        return unavailable("native resource list could not be encoded");
+    };
+    parts.headers.remove("content-length");
+    Response::from_parts(parts, Body::from(encoded))
+}
+
+fn list_item_id(item: &serde_json::Value, namespace: ResponseNamespace) -> Option<&str> {
+    let field = if namespace == ResponseNamespace::AnthropicSkillVersions {
+        "version"
+    } else {
+        "id"
+    };
+    item.get(field)
+        .or_else(|| item.get("id"))
+        .and_then(serde_json::Value::as_str)
+        .filter(|id| !id.is_empty())
 }
 
 fn previous_response_namespace(
@@ -1864,6 +2059,20 @@ mod tests {
                 Some("skill_1"),
             ),
             (
+                Method::DELETE,
+                "/api/services/anthropic/v1/skills/skill_1",
+                ResponseNamespace::AnthropicSkills,
+                NativeResourceAction::Delete,
+                Some("skill_1"),
+            ),
+            (
+                Method::DELETE,
+                "/api/services/anthropic/v1/skills/skill_1/versions/7",
+                ResponseNamespace::AnthropicSkillVersions,
+                NativeResourceAction::Delete,
+                Some("7"),
+            ),
+            (
                 Method::GET,
                 "/api/services/anthropic/v1/skills/skill_1/versions/7/content",
                 ResponseNamespace::AnthropicSkillVersions,
@@ -2346,6 +2555,86 @@ mod tests {
             ["Bearer primary-upstream", "Bearer primary-upstream"]
         );
         server.abort();
+    }
+
+    #[tokio::test]
+    async fn native_lists_expose_only_resources_owned_by_the_router_principal() {
+        let data = tempfile::tempdir().unwrap();
+        let state = AppState::for_tests(data.path());
+        let destination = AffinityDestination::Subscription {
+            provider: SubscriptionProvider::Claude,
+            account: "account-a".to_string(),
+            upstream_account_id: Some("workspace-a".to_string()),
+            base_url: "https://api.anthropic.test".to_string(),
+        };
+        let owner = ResponseOwner::new("claude", "owner-a");
+        let foreign = ResponseOwner::new("claude", "owner-b");
+        state
+            .provider_store
+            .response_affinities()
+            .record(
+                ResponseNamespace::AnthropicFiles,
+                "file_owned",
+                owner.clone(),
+                destination.clone(),
+            )
+            .unwrap();
+        state
+            .provider_store
+            .response_affinities()
+            .record(
+                ResponseNamespace::AnthropicFiles,
+                "file_foreign",
+                foreign,
+                destination,
+            )
+            .unwrap();
+        let mut response = Response::new(Body::from(
+            serde_json::json!({
+                "data": [
+                    {"id": "file_foreign", "filename": "private.txt"},
+                    {"id": "file_owned", "filename": "owned.txt", "future": true}
+                ],
+                "first_id": "file_foreign",
+                "last_id": "file_owned",
+                "has_more": true,
+                "next_page": "opaque-cursor",
+                "future_top_level": {"kept": true}
+            })
+            .to_string(),
+        ));
+        response
+            .headers_mut()
+            .insert("content-type", HeaderValue::from_static("application/json"));
+
+        let filtered = filter_native_list_response(
+            &state,
+            &owner,
+            &NativeListRequest {
+                namespace: ResponseNamespace::AnthropicFiles,
+                parent_id: None,
+            },
+            response,
+        )
+        .await;
+
+        assert_eq!(filtered.status(), StatusCode::OK);
+        let value: serde_json::Value =
+            serde_json::from_slice(&filtered.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({
+                "data": [
+                    {"id": "file_owned", "filename": "owned.txt", "future": true}
+                ],
+                "first_id": "file_owned",
+                "last_id": "file_owned",
+                "has_more": true,
+                "next_page": "opaque-cursor",
+                "future_top_level": {"kept": true}
+            })
+        );
     }
 
     #[tokio::test]

@@ -252,3 +252,55 @@ fn safe_punctuation_is_accepted_but_path_breakout_is_refused() {
             .is_err()
     );
 }
+
+#[test]
+fn child_ids_are_scoped_by_parent_resource() {
+    let directory = tempfile::tempdir().unwrap();
+    let store = ResponseAffinityStore::open(directory.path()).unwrap();
+    let owner = owner("principal-a");
+    store
+        .record_child(
+            ResponseNamespace::AnthropicSkillVersions,
+            "1",
+            "skill-a",
+            owner.clone(),
+            provider("alpha"),
+        )
+        .unwrap();
+    store
+        .record_child(
+            ResponseNamespace::AnthropicSkillVersions,
+            "1",
+            "skill-b",
+            owner.clone(),
+            provider("beta"),
+        )
+        .expect("version numbers may repeat across skills");
+
+    assert_eq!(
+        store
+            .lookup_child(
+                ResponseNamespace::AnthropicSkillVersions,
+                "1",
+                "skill-a",
+                &owner,
+            )
+            .unwrap()
+            .unwrap()
+            .destination,
+        provider("alpha")
+    );
+    assert_eq!(
+        store
+            .lookup_child(
+                ResponseNamespace::AnthropicSkillVersions,
+                "1",
+                "skill-b",
+                &owner,
+            )
+            .unwrap()
+            .unwrap()
+            .destination,
+        provider("beta")
+    );
+}

@@ -162,3 +162,153 @@ async fn neutral_catalog_retains_router_service_metadata() {
     assert_eq!(catalog["data"][0]["service"], "codex");
     assert_eq!(catalog["data"][0]["owned_by"], "openai");
 }
+
+#[test]
+fn anthropic_message_resources_resolve_to_one_principal_owned_destination() {
+    let data = tempfile::tempdir().unwrap();
+    let state = AppState::for_tests(data.path());
+    let owner = crate::response_affinity::ResponseOwner::new("claude", "principal-a");
+    let destination = crate::response_affinity::AffinityDestination::Subscription {
+        provider: SubscriptionProvider::Claude,
+        account: "account-a".to_string(),
+        upstream_account_id: Some("workspace-a".to_string()),
+        base_url: "https://api.anthropic.test".to_string(),
+    };
+    let store = state.provider_store.response_affinities();
+    store
+        .record(
+            crate::response_affinity::ResponseNamespace::AnthropicFiles,
+            "file_owned",
+            owner.clone(),
+            destination.clone(),
+        )
+        .unwrap();
+    store
+        .record(
+            crate::response_affinity::ResponseNamespace::AnthropicSkills,
+            "skill_owned",
+            owner.clone(),
+            destination.clone(),
+        )
+        .unwrap();
+    store
+        .record_child(
+            crate::response_affinity::ResponseNamespace::AnthropicSkillVersions,
+            "7",
+            "skill_owned",
+            owner.clone(),
+            destination.clone(),
+        )
+        .unwrap();
+    let body = json!({
+        "model": "claude-live",
+        "container": {
+            "skills": [{"type": "custom", "skill_id": "skill_owned", "version": "7"}]
+        },
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "document", "source": {"type": "file", "file_id": "file_owned"}},
+                {"type": "container_upload", "file_id": "file_owned"}
+            ]
+        }]
+    });
+
+    assert_eq!(
+        anthropic_message_resource_destination(&state, &owner, &body).unwrap(),
+        Some(destination)
+    );
+
+    let foreign = crate::response_affinity::ResponseOwner::new("claude", "principal-b");
+    let response = anthropic_message_resource_destination(&state, &foreign, &body).unwrap_err();
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn anthropic_message_file_reference_binds_the_creator_account_before_dispatch() {
+    let data = tempfile::tempdir().unwrap();
+    let primary = tempfile::tempdir().unwrap();
+    let additional = tempfile::tempdir().unwrap();
+    for (home, token) in [
+        (&primary, "primary-token"),
+        (&additional, "account-one-token"),
+    ] {
+        fs::write(
+            home.path().join(".credentials.json"),
+            json!({
+                "claudeAiOauth": {
+                    "accessToken": token,
+                    "expiresAt": 9_999_999_999_999_i64
+                }
+            })
+            .to_string(),
+        )
+        .unwrap();
+    }
+    let primary_reader = SubscriptionReader::new(SubscriptionProvider::Claude, primary.path());
+    let mut state = auto_state(vec![primary_reader], data.path());
+    let account_router = crate::accounts::AccountRouter::new_for_provider(
+        primary.path().to_path_buf(),
+        &[additional.path().to_path_buf()],
+        SubscriptionProvider::Claude,
+        crate::accounts::AccountRouterOptions::default(),
+    );
+    account_router.register_credential_stores_in(&state.subscription_cache, data.path());
+    state.account_router = Some(account_router);
+    for account in ["primary", "account-1"] {
+        state.model_catalogs.record_success_for_account(
+            SubscriptionProvider::Claude,
+            account,
+            None,
+            vec!["claude-resource-model".to_string()],
+        );
+    }
+    let token = bound_client_token(&state, crate::clients::ClientKind::ClaudeCode, None);
+    let claims = state.token_manager.validate_token(&token).unwrap();
+    let owner = crate::response_affinity::ResponseOwner::from_claims(&claims).unwrap();
+    state
+        .provider_store
+        .response_affinities()
+        .record(
+            crate::response_affinity::ResponseNamespace::AnthropicFiles,
+            "file_account_one",
+            owner,
+            crate::response_affinity::AffinityDestination::Subscription {
+                provider: SubscriptionProvider::Claude,
+                account: "account-1".to_string(),
+                upstream_account_id: None,
+                base_url: SubscriptionProvider::Claude.default_base_url().to_string(),
+            },
+        )
+        .unwrap();
+    let request = axum::http::Request::builder()
+        .method("POST")
+        .uri("/api/services/anthropic/v1/messages")
+        .header("x-api-key", token)
+        .header("user-agent", "claude-code/exact-fixture")
+        .body(axum::body::Body::from(
+            json!({
+                "model": "claude-resource-model",
+                "max_tokens": 32,
+                "messages": [{
+                    "role": "user",
+                    "content": [{
+                        "type": "document",
+                        "source": {"type": "file", "file_id": "file_account_one"}
+                    }]
+                }]
+            })
+            .to_string(),
+        ))
+        .unwrap();
+
+    let (routed, _) = route_anthropic_request_with_subscription(&state, request)
+        .await
+        .unwrap();
+
+    assert_eq!(routed.state.upstream_provider, UpstreamProvider::Anthropic);
+    assert_eq!(
+        routed.subscription.unwrap().account_name(),
+        Some("account-1")
+    );
+}
