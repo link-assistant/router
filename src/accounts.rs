@@ -621,10 +621,10 @@ impl AccountRouter {
             .position(|a| a.name == account_name)
         {
             self.record_error(idx, err);
-            self.start_cooldown(
-                idx,
-                retry_after.map_or(self.inner.cooldown, |retry| retry.max(self.inner.cooldown)),
-            );
+            let duration = retry_after
+                .map(crate::request_routing::bounded_retry_after)
+                .map_or(self.inner.cooldown, |retry| retry.max(self.inner.cooldown));
+            self.start_cooldown(idx, duration);
         }
     }
 
@@ -643,7 +643,8 @@ impl AccountRouter {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let now = Instant::now();
         let proposed = now
-            .checked_add(crate::request_routing::bounded_retry_after(duration))
+            .checked_add(duration)
+            .or_else(|| now.checked_add(crate::request_routing::MAX_RETRY_AFTER))
             .unwrap_or(now);
         if guard.is_none_or(|current| current < proposed) {
             *guard = Some(proposed);

@@ -568,14 +568,21 @@ fn provider_origin(base: &str) -> String {
 }
 
 fn zai_payload(value: Value) -> Result<Value, VendorResponse> {
-    crate::zai_coding_plan::accepted_non_inference_payload(value).map_err(|error| {
-        use crate::zai_coding_plan::ZaiProbeFailureKind as Kind;
-        match error.kind() {
-            Kind::CredentialRejected => VendorResponse::AuthenticationRejected,
-            Kind::RateLimited => VendorResponse::RateLimited(None),
-            Kind::Unverified => VendorResponse::Unavailable,
-        }
-    })
+    let payload =
+        crate::zai_coding_plan::accepted_non_inference_payload(value).map_err(|error| {
+            use crate::zai_coding_plan::ZaiProbeFailureKind as Kind;
+            match error.kind() {
+                Kind::CredentialRejected => VendorResponse::AuthenticationRejected,
+                Kind::RateLimited => VendorResponse::RateLimited(None),
+                Kind::Unverified => VendorResponse::Unavailable,
+            }
+        })?;
+    payload
+        .get("limits")
+        .and_then(Value::as_array)
+        .is_some_and(|limits| !limits.is_empty())
+        .then_some(payload)
+        .ok_or(VendorResponse::Unavailable)
 }
 
 async fn send_json(request: reqwest::RequestBuilder) -> VendorResponse {

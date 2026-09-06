@@ -45,18 +45,20 @@ pub(super) fn recognizable_anthropic_usage(value: &Value) -> bool {
 }
 
 pub(super) fn recognizable_openai_usage(value: &Value) -> bool {
-    ["rate_limit", "credits", "spend_control"]
-        .into_iter()
-        .any(|key| {
-            value
-                .get(key)
-                .and_then(Value::as_object)
-                .is_some_and(|object| !object.is_empty())
-        })
-        || value
-            .get("additional_rate_limits")
-            .and_then(Value::as_array)
-            .is_some_and(|limits| !limits.is_empty())
+    value.get("rate_limit").is_some_and(|rate_limit| {
+        rate_limit.get("allowed").and_then(Value::as_bool).is_some()
+            || rate_limit
+                .get("limit_reached")
+                .and_then(Value::as_bool)
+                .is_some()
+            || codex_windows(rate_limit).iter().any(|window| {
+                window.used_percentage.is_some()
+                    || window.resets_at.is_some()
+                    || window.window_seconds.is_some()
+            })
+    }) || openai_credits(value).is_some()
+        || openai_spend_control(value).is_some()
+        || !openai_additional_limits(value).is_empty()
         || value
             .pointer("/rate_limit_reached_type/type")
             .and_then(Value::as_str)

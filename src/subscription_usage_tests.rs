@@ -79,7 +79,12 @@ fn anthropic_fields_are_normalized_and_missing_values_stay_absent() {
 
 #[test]
 fn empty_and_error_usage_envelopes_are_not_recognized_as_available() {
-    for value in [json!({}), json!({"error": {"message": "denied"}})] {
+    for value in [
+        json!({}),
+        json!({"error": {"message": "denied"}}),
+        json!({"rate_limit": {"error": "denied"}}),
+        json!({"credits": {"error": "denied"}}),
+    ] {
         assert!(!recognizable_anthropic_usage(&value));
         assert!(!recognizable_openai_usage(&value));
     }
@@ -185,6 +190,16 @@ fn zai_http_200_error_bodies_are_not_treated_as_healthy() {
             zai_payload(payload),
             Err(VendorResponse::AuthenticationRejected)
         ));
+    }
+    for payload in [
+        json!({}),
+        json!({"error": "denied"}),
+        json!({"success": true, "code": 200, "data": {}}),
+    ] {
+        assert!(
+            matches!(zai_payload(payload), Err(VendorResponse::Unavailable)),
+            "an HTTP 200 body without quota data must remain unavailable"
+        );
     }
     let healthy = zai_payload(json!({"success": true, "code": 200, "data": {
         "limits": [{"type": "TOKENS_LIMIT", "percentage": 12.0}]
