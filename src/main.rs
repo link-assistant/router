@@ -482,7 +482,18 @@ async fn run_server(
         state.clone(),
         link_assistant_router::request_log::log_http_exchange,
     ))
-    .layer(TraceLayer::new_for_http());
+    .layer(TraceLayer::new_for_http().make_span_with(
+        |request: &axum::http::Request<axum::body::Body>| {
+            let uri =
+                link_assistant_router::request_log::safe_http_uri(request.method(), request.uri());
+            tracing::debug_span!(
+                "http request",
+                method = %request.method(),
+                uri = %uri,
+                version = ?request.version()
+            )
+        },
+    ));
 
     tracing::info!("Listening on {}", config.listen_addr);
 
@@ -497,7 +508,20 @@ async fn run_server(
                     state.clone(),
                     link_assistant_router::request_log::log_http_exchange,
                 ))
-                .layer(TraceLayer::new_for_http());
+                .layer(TraceLayer::new_for_http().make_span_with(
+                    |request: &axum::http::Request<axum::body::Body>| {
+                        let uri = link_assistant_router::request_log::safe_http_uri(
+                            request.method(),
+                            request.uri(),
+                        );
+                        tracing::debug_span!(
+                            "http request",
+                            method = %request.method(),
+                            uri = %uri,
+                            version = ?request.version()
+                        )
+                    },
+                ));
         let admin_shutdown = shutdown.notified();
         let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
         tracing::info!("Admin UI listening on {admin_addr}");

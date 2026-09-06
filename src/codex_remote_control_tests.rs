@@ -8,6 +8,16 @@ use axum::response::IntoResponse as _;
 use http_body_util::BodyExt as _;
 use std::sync::{Arc, Mutex};
 
+fn request_logs(root: &std::path::Path) -> String {
+    std::fs::read_dir(root.join("requests"))
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .filter_map(|entry| std::fs::read_to_string(entry.path().join("requests.lino")).ok())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn record(expires_at: i64, upstream_token: &str) -> EnrollmentRecord {
     EnrollmentRecord {
         identity: EnrollmentIdentity {
@@ -124,6 +134,10 @@ fn environment_authorization_is_bound_to_principal_and_account_even_after_expiry
 
 #[tokio::test]
 async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
+    use axum::middleware::from_fn_with_state;
+    use lino_arguments::Parser as _;
+    use tower::ServiceExt as _;
+
     type Capture = (String, HeaderMap, Bytes);
     let captured = Arc::new(Mutex::new(Vec::<Capture>::new()));
     let upstream_capture = Arc::clone(&captured);
@@ -151,7 +165,17 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
                     "expires_at": "2099-01-02T03:04:05Z"
                 }))
                 .into_response(),
-                _ => StatusCode::NOT_FOUND.into_response(),
+                "/wham/remote/control/server/refresh" => axum::Json(serde_json::json!({
+                    "server_id": "server-private",
+                    "environment_id": "environment-private",
+                    "remote_control_token": "upstream-refreshed-private",
+                    "expires_at": "2099-01-02T03:04:05Z"
+                }))
+                .into_response(),
+                _ => axum::Json(serde_json::json!({
+                    "private": "remote-control-response-private"
+                }))
+                .into_response(),
             }
         }
     });
@@ -181,6 +205,29 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
         None,
     );
     let primary = crate::token::codex_token_alias(&primary).unwrap();
+    let data_dir = data.path().to_str().unwrap();
+    let config = crate::cli::Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--data-dir",
+        data_dir,
+        "--upstream-provider",
+        "codex",
+        "--disable-login-api",
+    ])
+    .unwrap()
+    .into_config()
+    .unwrap();
+    let app = crate::server_router::router_for_listener(
+        state.clone(),
+        &config,
+        crate::route_contract::ListenerKind::Combined,
+    )
+    .layer(from_fn_with_state(
+        state.clone(),
+        crate::request_log::log_http_exchange,
+    ));
 
     let enroll_body = Bytes::from_static(
         br#"{"name":"name-private","os":"macos","arch":"aarch64","app_server_version":"0.153.4","installation_id":"installation-private"}"#,
@@ -196,7 +243,7 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
     // this fixture omit it so the same selected account is used directly.
     let mut enroll = enroll;
     enroll.headers_mut().remove("chatgpt-account-id");
-    let response = crate::native_service::codex_backend(State(state.clone()), enroll).await;
+    let response = app.clone().oneshot(enroll).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
     assert!(
@@ -209,24 +256,99 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
     assert!(continuation.starts_with("la_rc_"));
     assert_eq!(body["future"]["preserved"], true);
 
+    for (method, path, authorization, body) in [
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/environments/environment-private/clients",
+            primary.as_str(),
+            "",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/codex/backend-api/wham/remote/control/environments/environment-private/clients/client-private",
+            primary.as_str(),
+            "",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair",
+            continuation.as_str(),
+            r#"{"manual_code":false}"#,
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair/status",
+            continuation.as_str(),
+            r#"{"pairing_code":"pair-status-private"}"#,
+        ),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method)
+                    .uri(path)
+                    .header("authorization", format!("Bearer {authorization}"))
+                    .header("x-codex-installation-id", "installation-private")
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        response.into_body().collect().await.unwrap();
+    }
+    let refresh = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/services/codex/backend-api/wham/remote/control/server/refresh")
+                .header("authorization", format!("Bearer {primary}"))
+                .body(Body::from(
+                    r#"{"server_id":"server-private","installation_id":"installation-private"}"#,
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(refresh.status(), StatusCode::OK);
+    let refresh: serde_json::Value =
+        serde_json::from_slice(&refresh.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let refreshed_continuation = refresh["remote_control_token"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(refreshed_continuation.starts_with("la_rc_"));
+
     // Reopen all Router-side state to prove that an active remote-control
     // continuation does not depend on process memory.
+    drop(app);
     drop(state);
     let mut restarted = crate::app_state::AppState::for_tests(data.path());
     restarted.subscription_base_url = Some(origin);
+    let restarted_app = crate::server_router::router_for_listener(
+        restarted.clone(),
+        &config,
+        crate::route_contract::ListenerKind::Combined,
+    )
+    .layer(from_fn_with_state(
+        restarted,
+        crate::request_log::log_http_exchange,
+    ));
     let pair_body = Bytes::from_static(br#"{"manual_code":false}"#);
     let pair = Request::builder()
         .method(Method::POST)
         .uri("/api/services/codex/backend-api/wham/remote/control/server/pair")
-        .header("authorization", format!("Bearer {continuation}"))
+        .header("authorization", format!("Bearer {refreshed_continuation}"))
         .header("x-codex-installation-id", "installation-private")
         .body(Body::from(pair_body.clone()))
         .unwrap();
-    let response = crate::native_service::codex_backend(State(restarted), pair).await;
+    let response = restarted_app.oneshot(pair).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let captured = captured.lock().unwrap();
-    assert_eq!(captured.len(), 2);
+    assert_eq!(captured.len(), 7);
     assert_eq!(captured[0].0, "/wham/remote/control/server/enroll");
     assert_eq!(captured[0].1["authorization"], "Bearer primary-private");
     assert_eq!(
@@ -234,19 +356,57 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
         "account-upstream-private"
     );
     assert_eq!(captured[0].2, enroll_body);
-    assert_eq!(captured[1].0, "/wham/remote/control/server/pair");
-    assert_eq!(captured[1].1["authorization"], "Bearer upstream-private");
+    let first_pair = captured
+        .iter()
+        .find(|(path, headers, _)| {
+            path == "/wham/remote/control/server/pair"
+                && headers["authorization"] == "Bearer upstream-private"
+        })
+        .unwrap();
+    assert_eq!(first_pair.0, "/wham/remote/control/server/pair");
+    assert_eq!(first_pair.1["authorization"], "Bearer upstream-private");
     assert_eq!(
-        captured[1].1["x-codex-installation-id"],
+        first_pair.1["x-codex-installation-id"],
         "installation-private"
     );
-    assert_eq!(captured[1].2, pair_body);
+    assert_eq!(first_pair.2, pair_body);
     for (_, headers, _) in captured.iter() {
         let authorization = headers["authorization"].to_str().unwrap();
         assert!(!authorization.contains("at-"));
         assert!(!authorization.contains("la_rc_"));
     }
     drop(captured);
+    let logs = request_logs(data.path());
+    for private in [
+        "name-private",
+        "installation-private",
+        "server-private",
+        "environment-private",
+        "upstream-private",
+        "pairing-private",
+        "pair-status-private",
+        "client-private",
+        "remote-control-response-private",
+        "upstream-refreshed-private",
+        "primary-private",
+        "account-upstream-private",
+        &continuation,
+        &refreshed_continuation,
+    ] {
+        assert!(
+            !logs.contains(private),
+            "request log leaked {private}: {logs}"
+        );
+    }
+    assert!(logs.contains("/api/services/codex/backend-api/wham/remote/control/server/enroll"));
+    assert!(logs.contains("/api/services/codex/backend-api/wham/remote/control/server/pair"));
+    assert!(logs.contains("/api/services/codex/backend-api/wham/remote/control/server/refresh"));
+    assert!(logs.contains(
+        "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients"
+    ));
+    assert!(logs.contains(
+        "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients/{client_id}"
+    ));
     server.abort();
 }
 
@@ -385,8 +545,10 @@ async fn refresh_rejects_mismatched_identity_then_rotates_without_replaying() {
 async fn continuation_websocket_substitutes_auth_and_preserves_messages() {
     use axum::extract::WebSocketUpgrade;
     use axum::extract::ws::Message;
-    use axum::routing::{any, get};
+    use axum::middleware::from_fn_with_state;
+    use axum::routing::get;
     use futures_util::{SinkExt as _, StreamExt as _};
+    use lino_arguments::Parser as _;
     use tokio_tungstenite::tungstenite::client::IntoClientRequest as _;
 
     let upstream_headers = Arc::new(Mutex::new(None::<HeaderMap>));
@@ -430,12 +592,29 @@ async fn continuation_websocket_substitutes_auth_and_preserves_messages() {
             expires_at: 4_070_995_200,
         })
         .unwrap();
-    let router = axum::Router::new()
-        .route(
-            "/api/services/codex/backend-api/{*native_path}",
-            any(crate::native_service::codex_backend),
-        )
-        .with_state(state);
+    let data_dir = data.path().to_str().unwrap();
+    let config = crate::cli::Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--data-dir",
+        data_dir,
+        "--upstream-provider",
+        "codex",
+        "--disable-login-api",
+    ])
+    .unwrap()
+    .into_config()
+    .unwrap();
+    let router = crate::server_router::router_for_listener(
+        state.clone(),
+        &config,
+        crate::route_contract::ListenerKind::Combined,
+    )
+    .layer(from_fn_with_state(
+        state.clone(),
+        crate::request_log::log_http_exchange,
+    ));
     let router_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let router_address = router_listener.local_addr().unwrap();
     let router_server =
@@ -499,6 +678,26 @@ async fn continuation_websocket_substitutes_auth_and_preserves_messages() {
             .unwrap()
             .contains("la_rc_")
     );
+    drop(headers);
+    let request_log =
+        std::fs::read_to_string(data.path().join("requests/unauthenticated/requests.lino"))
+            .unwrap();
+    assert!(request_log.contains("/api/services/codex/backend-api/wham/remote/control/server"));
+    for private in [
+        "cursor=private",
+        "cursor-private",
+        "server-private",
+        "installation-private",
+        "principal-private",
+        "account-private",
+        "upstream-private",
+        &continuation,
+    ] {
+        assert!(
+            !request_log.contains(private),
+            "request log leaked {private}: {request_log}"
+        );
+    }
     router_server.abort();
     upstream_server.abort();
 }

@@ -230,6 +230,33 @@ impl RequestLog {
         self.append_bounded(&identity.hash, &line);
     }
 
+    /// Persist only route-level facts for private Codex control-plane traffic.
+    ///
+    /// The token still selects its owner-only log directory, but neither its
+    /// identity fields nor any protocol headers or body fields are serialized.
+    fn record_opaque(&self, correlation_id: &str, phase: &str, fields: Value) {
+        let identity = self.identity(correlation_id);
+        let mut event = Map::new();
+        event.insert(
+            "time".into(),
+            Value::String(chrono::Utc::now().to_rfc3339()),
+        );
+        event.insert(
+            "correlation_id".into(),
+            Value::String(correlation_id.to_string()),
+        );
+        event.insert("phase".into(), Value::String(phase.to_string()));
+        if let Value::Object(fields) = fields {
+            event.extend(fields);
+        }
+        let Ok(rendered) = crate::lino_json::encode_line(&Value::Object(event)) else {
+            return;
+        };
+        let mut line = rendered.into_bytes();
+        line.push(b'\n');
+        self.append_bounded(&identity.hash, &line);
+    }
+
     fn identity(&self, correlation_id: &str) -> LogIdentity {
         self.routes
             .lock()
@@ -628,6 +655,39 @@ fn eagerly_capture_json(headers: &HeaderMap) -> bool {
     json && bounded_length
 }
 
+/// Return the public route template when protocol payloads must be opaque.
+///
+/// Templates remove remote-control environment/client IDs, while matching the
+/// canonical contract also prevents a lookalike or wrong-method route from
+/// silently receiving the stronger policy.
+fn opaque_codex_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
+    let route = crate::route_contract::route_for_path(method, path)?;
+    let template = route.template;
+    let history_or_notes = template.starts_with("/api/services/codex/v1/alpha/history/v2/")
+        || template.starts_with("/api/services/codex/v1/alpha/notes/v2/");
+    let remote_control =
+        template.starts_with("/api/services/codex/backend-api/wham/remote/control/");
+    let analytics = template == "/api/services/codex/backend-api/codex/analytics-events/events";
+    (history_or_notes || remote_control || analytics).then_some(template)
+}
+
+fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
+    ["x-request-id", "x-oai-request-id"]
+        .into_iter()
+        .find_map(|name| headers.get(name)?.to_str().ok())
+        .filter(|value| !value.is_empty() && value.len() <= 512)
+}
+
+/// URI safe for process diagnostics and HTTP tracing.
+///
+/// Private Codex control-plane routes are reduced to their static route
+/// template; ordinary routes retain their path and generically redacted query.
+#[must_use]
+pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
+    opaque_codex_route(method, uri.path())
+        .map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
+}
+
 impl Drop for ClientRequestCapture {
     fn drop(&mut self) {
         self.record();
@@ -676,7 +736,52 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    let logged_uri = redacted_uri(&parts.uri.to_string());
+    if let Some(route) = opaque_codex_route(&parts.method, parts.uri.path()) {
+        parts
+            .extensions
+            .insert(RequestCorrelationId(correlation_id.clone()));
+        let method = parts.method.clone();
+        let started = Instant::now();
+        state.request_log.record_opaque(
+            &correlation_id,
+            "client_request",
+            json!({"method": method.as_str(), "uri": route}),
+        );
+        let response = ACTIVE_CORRELATION_ID
+            .scope(
+                correlation_id.clone(),
+                next.run(Request::from_parts(parts, body)),
+            )
+            .await;
+        let upstream_request_id = upstream_request_id(response.headers());
+        tracing::info!(
+            request_id = %correlation_id,
+            method = %method,
+            uri = route,
+            "private request"
+        );
+        state.request_log.record_opaque(
+            &correlation_id,
+            "client_response",
+            json!({
+                "status": response.status().as_u16(),
+                "latency_ms": started.elapsed().as_millis(),
+                "uri": route,
+                "upstream_request_id": upstream_request_id,
+            }),
+        );
+        tracing::info!(
+            request_id = %correlation_id,
+            status = response.status().as_u16(),
+            latency_ms = started.elapsed().as_millis(),
+            uri = route,
+            upstream_request_id = upstream_request_id.unwrap_or("-"),
+            "private response"
+        );
+        drop(route_guard);
+        return response;
+    }
+    let logged_uri = safe_http_uri(&parts.method, &parts.uri);
     let requested_model = Arc::new(Mutex::new(None));
     let capture = ClientRequestCapture {
         logger: Arc::clone(&state.request_log),
@@ -822,6 +927,10 @@ mod tests;
 #[cfg(test)]
 #[path = "request_log_isolation_tests.rs"]
 mod isolation_tests;
+
+#[cfg(test)]
+#[path = "request_log_private_tests.rs"]
+mod private_tests;
 
 /// One record saying that older records were discarded to stay inside
 /// `REQUEST_LOG_MAX_BYTES`.

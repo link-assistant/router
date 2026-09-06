@@ -354,6 +354,18 @@ fn operation(method: &Method, path: &str) -> Option<Operation> {
     }
 }
 
+/// Whether the route authenticates a Router-issued continuation itself.
+///
+/// The ordinary inference middleware cannot validate `la_rc_` credentials;
+/// these handlers resolve their encrypted, identity-bound state before ever
+/// reading a request body.
+pub fn authenticates_continuation(method: &Method, path: &str) -> bool {
+    matches!(
+        operation(method, path),
+        Some(Operation::WebSocket | Operation::Pair | Operation::PairStatus)
+    )
+}
+
 fn dynamic_operation(method: &Method, path: &str) -> Option<Operation> {
     let tail = path.strip_prefix(ENVIRONMENTS)?;
     let segments = tail.split('/').collect::<Vec<_>>();

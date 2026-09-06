@@ -477,6 +477,9 @@ async fn authenticate_client_route(
     next: Next,
 ) -> Response {
     let path = request.uri().path();
+    if crate::codex_remote_control::authenticates_continuation(request.method(), path) {
+        return next.run(request).await;
+    }
     if is_openai_payment_path(path)
         && let Some(response) = proxy::maybe_mpp_challenge(&state, request.headers(), path)
     {
