@@ -765,6 +765,30 @@ impl ClientManager {
         })?;
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
         let existing_marker = claude_marker(&marker_path)?;
+        // Claude Code treats presence, including the old Router value `"0"`,
+        // as the disable switch. Migrate only a value our marker proves we
+        // installed; an unmarked value belongs to the user and stays intact.
+        if let Some((_, _, entries)) = existing_marker.as_ref()
+            && let Some((_, _, previous)) = entries.iter().find(|(key, managed, _)| {
+                key == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" && managed.as_deref() == Some("0")
+            })
+            && env
+                .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+                .and_then(Value::as_str)
+                == Some("0")
+        {
+            match previous {
+                Some(previous) => {
+                    env.insert(
+                        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".into(),
+                        Value::String(previous.clone()),
+                    );
+                }
+                None => {
+                    env.remove("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC");
+                }
+            }
+        }
         // Recorded before it is replaced, so removal can put it back — the
         // mechanism `setup_codex` already uses for `model_provider` (#302).
         let previous = env
@@ -792,7 +816,6 @@ impl ClientManager {
             managed_gateway_env.push((key.to_string(), managed.map(str::to_string), previous));
         };
         manage("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1"));
-        manage("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0"));
         manage("ANTHROPIC_AUTH_TOKEN", None);
         manage("ANTHROPIC_API_KEY", None);
         let gateway_model = claude_gateway_model(models, None);

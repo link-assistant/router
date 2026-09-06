@@ -1,9 +1,9 @@
 //! Codex loopback bridge state and configuration inspection.
 
 use super::{
-    CODEX_PROVIDER, CODEX_TOKEN_ENV, ClientError, ClientKind, ClientManager, DocumentMut, Item,
-    OWNERSHIP_MARKER, PathBuf, SetupResult, Table, fs, read_codex_marker, read_or_empty, unchanged,
-    value, write_codex_marker, write_if_changed,
+    CODEX_PROVIDER, ClientError, ClientKind, ClientManager, DocumentMut, Item, OWNERSHIP_MARKER,
+    PathBuf, SetupResult, Table, fs, read_codex_marker, read_or_empty, unchanged, value,
+    write_codex_marker, write_if_changed,
 };
 
 impl ClientManager {
@@ -69,7 +69,7 @@ impl ClientManager {
             })?;
         provider.insert("name", value("OpenAI"));
         provider.insert("base_url", value(base_url));
-        provider.insert("env_key", value(CODEX_TOKEN_ENV));
+        provider.remove("env_key");
         provider.insert("wire_api", value("responses"));
         provider.insert("requires_openai_auth", value(true));
         provider.insert("supports_websockets", value(true));

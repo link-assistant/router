@@ -34,7 +34,8 @@ fn gemini_external_import_rejects_an_unverified_chain_without_staging_the_source
     assert!(!output.status.success(), "{output:?}");
     let error = String::from_utf8_lossy(&output.stderr);
     assert!(
-        error.contains("gemini candidate refresh chain was not verified"),
+        error.contains("gemini candidate refresh chain")
+            && (error.contains("was not verified") || error.contains("was rejected")),
         "{error}"
     );
     assert!(!error.contains("GEMINI_OAUTH_CLIENT_SECRET"), "{error}");

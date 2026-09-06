@@ -15,7 +15,16 @@ fn current_codex_activates_history_notes_through_the_router_identity() {
     std::fs::create_dir_all(&codex_home).expect("create Codex home");
     std::fs::write(
         codex_home.join("config.toml"),
-        "[token_budget]\nuse_history_notes_extension = true\n",
+        concat!(
+            "[features.token_budget]\n",
+            "enabled = true\n",
+            "use_history_notes_extension = true\n\n",
+            "[model_providers.link-assistant]\n",
+            "name = \"Legacy Router profile\"\n",
+            "base_url = \"http://127.0.0.1:9/v1\"\n",
+            "env_key = \"LINK_ASSISTANT_TOKEN\"\n",
+            "wire_api = \"responses\"\n",
+        ),
     )
     .expect("enable the current history/notes extension");
     let version = version_output(CODEX, home.path());
@@ -52,7 +61,12 @@ fn current_codex_activates_history_notes_through_the_router_identity() {
             })
             .cloned()
     }
-    .expect("current Codex did not request its history/notes thread hint");
+    .unwrap_or_else(|| {
+        panic!(
+            "current Codex did not request its history/notes thread hint; routes: {:?}",
+            router.routes()
+        )
+    });
     let expected_alias = format!("Bearer {}", run_token(CODEX).replacen("la_sk_", "at-", 1));
     assert_eq!(hint.header("authorization"), Some(expected_alias.as_str()));
     assert_eq!(hint.header("chatgpt-account-id"), Some("acct_offline"));

@@ -113,11 +113,11 @@ fn the_users_configuration_is_kept_by_default() {
             .map(String::as_str),
         Some("1")
     );
-    assert_eq!(
-        environment
-            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
-            .map(String::as_str),
-        Some("0")
+    assert!(
+        !names
+            .iter()
+            .any(|name| name == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"),
+        "the run must inherit the user's setting instead of installing the presence-based disable switch"
     );
     assert_eq!(
         environment.get("ANTHROPIC_API_KEY").map(String::as_str),
@@ -316,10 +316,13 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         .get_args()
         .map(|argument| argument.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
-    assert_eq!(
-        arguments[0..3],
-        ["-c", "model_provider=\"link-assistant\"", "-c"]
-    );
+    assert_eq!(arguments[0], "-c");
+    let provider = arguments[1]
+        .strip_prefix("model_provider=")
+        .and_then(|value| serde_json::from_str::<String>(value).ok())
+        .expect("process-local model provider argument");
+    assert!(provider.starts_with("link-assistant-run-"), "{provider}");
+    assert_eq!(arguments[2], "-c");
     let catalog_path = arguments[3]
         .strip_prefix("model_catalog_json=")
         .and_then(|value| serde_json::from_str::<String>(value).ok())
@@ -336,23 +339,17 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         json!([{"effort": "high", "description": "Deep reasoning"}])
     );
     assert_eq!(catalog["models"].as_array().unwrap().len(), 1);
+    assert_eq!(arguments[4], "-c");
     assert_eq!(
-        arguments[4..],
+        arguments[5],
+        format!(
+            "model_providers.{provider}={{ name = \"OpenAI\", base_url = \"http://router.test/path?tenant=one/api/services/codex/v1\", wire_api = \"responses\", requires_openai_auth = true, supports_websockets = true, supports_standalone_web_search = true }}"
+        )
+    );
+    assert!(!arguments[5].contains("env_key"));
+    assert_eq!(
+        arguments[6..],
         [
-            "-c",
-            "model_providers.link-assistant.name=\"OpenAI\"",
-            "-c",
-            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
-            "-c",
-            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
-            "-c",
-            "model_providers.link-assistant.wire_api=\"responses\"",
-            "-c",
-            "model_providers.link-assistant.requires_openai_auth=true",
-            "-c",
-            "model_providers.link-assistant.supports_websockets=true",
-            "-c",
-            "model_providers.link-assistant.supports_standalone_web_search=true",
             "-c",
             "chatgpt_base_url=\"http://127.0.0.1:43123/api/services/codex/backend-api\"",
         ]

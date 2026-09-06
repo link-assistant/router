@@ -447,8 +447,7 @@ impl TemporaryClient {
                 // outranks the auth token, so the run would leave the router.
                 command
                     .env("ANTHROPIC_API_KEY", "")
-                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
-                    .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
                 // Claude Code's built-in family aliases describe Anthropic
                 // models. A z.ai-only catalog needs only the same exact pair
                 // of main/subagent pins as persistent setup. Assigning one GLM
@@ -550,37 +549,22 @@ fn append_codex_router_overrides(
     codex_backend_base_url: Option<&str>,
     catalog: &Path,
 ) -> Result<(), AnyError> {
+    let provider_id = format!("link-assistant-run-{}", uuid::Uuid::new_v4().simple());
+    let provider_key = format!("model_providers.{provider_id}");
+    let provider_base_url = endpoint(
+        base_url,
+        crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+    );
+    let provider = format!(
+        "{{ name = {}, base_url = {}, wire_api = \"responses\", requires_openai_auth = true, \
+         supports_websockets = true, supports_standalone_web_search = true }}",
+        serde_json::to_string("OpenAI")?,
+        serde_json::to_string(&provider_base_url)?,
+    );
     for (key, value) in [
-        ("model_provider", "link-assistant".to_string()),
+        ("model_provider", provider_id),
         ("model_catalog_json", catalog.to_string_lossy().into_owned()),
-        ("model_providers.link-assistant.name", "OpenAI".to_string()),
-        (
-            "model_providers.link-assistant.base_url",
-            endpoint(
-                base_url,
-                crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
-            ),
-        ),
-        (
-            "model_providers.link-assistant.env_key",
-            "LINK_ASSISTANT_TOKEN".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.wire_api",
-            "responses".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.requires_openai_auth",
-            "true".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.supports_websockets",
-            "true".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.supports_standalone_web_search",
-            "true".to_string(),
-        ),
+        (provider_key.as_str(), provider),
         (
             "chatgpt_base_url",
             codex_backend_base_url.map_or_else(
@@ -589,12 +573,7 @@ fn append_codex_router_overrides(
             ),
         ),
     ] {
-        let rendered = if matches!(
-            key,
-            "model_providers.link-assistant.requires_openai_auth"
-                | "model_providers.link-assistant.supports_websockets"
-                | "model_providers.link-assistant.supports_standalone_web_search"
-        ) {
+        let rendered = if key == provider_key.as_str() {
             value
         } else {
             serde_json::to_string(&value)?

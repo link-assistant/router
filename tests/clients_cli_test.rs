@@ -214,7 +214,7 @@ fn codex_setup_merges_idempotently_and_remove_is_surgical() {
     assert!(configured.contains("[custom]"));
     assert!(configured.contains("[model_providers.link-assistant]"));
     assert!(configured.contains("wire_api = \"responses\""));
-    assert!(configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
+    assert!(!configured.contains("env_key = \"LINK_ASSISTANT_TOKEN\""));
     assert!(configured.contains("name = \"OpenAI\""));
     assert!(configured.contains("requires_openai_auth = true"));
     assert!(configured.contains("supports_websockets = true"));

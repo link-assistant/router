@@ -75,11 +75,6 @@ impl ClientManager {
                 "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
             )
             .expect("writing to a String cannot fail");
-            writeln!(
-                &mut contents,
-                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
-            )
-            .expect("writing to a String cannot fail");
         }
         atomic_write(&path, contents.as_bytes())?;
         #[cfg(unix)]

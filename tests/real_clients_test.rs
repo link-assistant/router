@@ -671,8 +671,8 @@ fn assert_real_client_capture(case: ClientCase) {
             .collect::<Vec<_>>()
     };
     assert!(
-        catalogs.iter().any(|path| path == case.catalog_path),
-        "{} did not discover its enabled native catalog: {catalogs:?}",
+        catalogs.iter().any(|path| path == "/api/models"),
+        "{} did not discover its client-scoped normalized catalog: {catalogs:?}",
         case.client
     );
     assert!(
@@ -727,7 +727,11 @@ fn assert_real_client_capture(case: ClientCase) {
         case.client,
         request.header("user-agent")
     );
-    let token = run_token(case);
+    let token = if case.client == "codex" {
+        run_token(case).replacen("la_sk_", "at-", 1)
+    } else {
+        run_token(case)
+    };
     let expected_credential = if case.credential_header == "authorization" {
         format!("Bearer {token}")
     } else {
@@ -758,6 +762,7 @@ fn assert_real_client_capture(case: ClientCase) {
     match case.client {
         "claude" => assert_eq!(request.header("anthropic-version"), Some("2023-06-01")),
         "codex" => {
+            assert_eq!(request.header("chatgpt-account-id"), Some("acct_offline"));
             assert_eq!(request.header("originator"), Some("codex_exec"));
             assert!(request.header("x-codex-turn-metadata").is_some());
             let requests = router.inference_requests(case.inference_path);

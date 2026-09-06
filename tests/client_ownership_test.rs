@@ -60,6 +60,12 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
     );
     let requests = catalog.join().expect("catalog server");
     assert!(requests[0].starts_with("GET /api/models "));
+    let configured: serde_json::Value =
+        serde_json::from_slice(&fs::read(&settings).unwrap()).unwrap();
+    assert_eq!(
+        configured["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"], "1",
+        "setup must preserve a user-owned value"
+    );
     assert_eq!(
         manager
             .analyze(ClientKind::ClaudeCode)
@@ -70,7 +76,7 @@ fn claude_ownership_distinguishes_foreign_intact_drifted_and_ambiguous() {
 
     let mut value: serde_json::Value =
         serde_json::from_slice(&fs::read(&settings).unwrap()).unwrap();
-    value["env"]["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = "1".into();
+    value["env"]["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"] = "0".into();
     fs::write(&settings, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
     assert_eq!(
         manager
