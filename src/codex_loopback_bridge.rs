@@ -416,7 +416,7 @@ async fn spawn_daemon(
 
 #[cfg(windows)]
 fn windows_runtime_environment() -> Vec<(&'static str, std::ffi::OsString)> {
-    select_windows_runtime_environment(std::env::var_os)
+    select_windows_runtime_environment(|name| std::env::var_os(name))
 }
 
 #[cfg(not(windows))]
