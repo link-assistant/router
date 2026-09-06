@@ -572,6 +572,14 @@ fn append_codex_router_overrides(
                 str::to_string,
             ),
         ),
+        (
+            "experimental_realtime_ws_base_url",
+            provider_base_url.clone(),
+        ),
+        (
+            "experimental_realtime_webrtc_call_base_url",
+            provider_base_url,
+        ),
     ] {
         let rendered = if key == provider_key.as_str() {
             value

@@ -356,8 +356,10 @@ fn external_codex_configure_owns_and_removes_a_loopback_bridge() {
     let home = directory.path().join("home");
     let codex_home = home.join(".codex");
     fs::create_dir_all(&codex_home).expect("create Codex home");
-    let original =
-        "model_reasoning_effort = \"high\"\nchatgpt_base_url = \"https://user.example/backend\"\n";
+    let original = "model_reasoning_effort = \"high\"\n\
+chatgpt_base_url = \"https://user.example/backend\"\n\
+experimental_realtime_ws_base_url = \"wss://user.example/realtime\"\n\
+experimental_realtime_webrtc_call_base_url = \"https://user.example/calls\"\n";
     fs::write(codex_home.join("config.toml"), original).expect("seed Codex config");
     fs::write(codex_home.join("auth.json"), b"auth-private").expect("seed Codex auth");
     fs::write(
@@ -396,6 +398,18 @@ fn external_codex_configure_owns_and_removes_a_loopback_bridge() {
     );
     assert!(
         config.contains("/api/services/codex/backend-api\""),
+        "{config}"
+    );
+    assert!(
+        config.contains(&format!(
+            "experimental_realtime_ws_base_url = \"{server}/api/services/codex/v1\""
+        )),
+        "{config}"
+    );
+    assert!(
+        config.contains(&format!(
+            "experimental_realtime_webrtc_call_base_url = \"{server}/api/services/codex/v1\""
+        )),
         "{config}"
     );
     let metadata: serde_json::Value = serde_json::from_slice(
@@ -546,7 +560,7 @@ fn external_codex_configure_owns_and_removes_a_loopback_bridge() {
         [
             "/api/health",
             "/api/management/tokens",
-            "/api/services/codex/v1/models",
+            "/api/models",
             "/api/health",
             "/api/models",
             "/api/health",

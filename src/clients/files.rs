@@ -11,7 +11,14 @@ use serde_json::{Value, json};
 
 use super::{ClientError, ClientKind, ClientManager, SetupResult};
 
-pub(super) type CodexMarker = (Option<String>, Option<String>, Option<String>);
+pub(super) struct CodexMarker {
+    pub(super) previous_provider: Option<String>,
+    pub(super) managed_chatgpt_base_url: Option<String>,
+    pub(super) previous_chatgpt_base_url: Option<String>,
+    pub(super) managed_realtime_base_url: Option<String>,
+    pub(super) previous_realtime_ws_base_url: Option<String>,
+    pub(super) previous_realtime_call_base_url: Option<String>,
+}
 
 impl ClientManager {
     /// Store the client's shell exports without exposing the token on stdout.
@@ -260,13 +267,19 @@ pub(super) fn write_codex_marker(
     previous_provider: Option<&str>,
     managed_chatgpt_base_url: &str,
     previous_chatgpt_base_url: Option<&str>,
+    managed_realtime_base_url: &str,
+    previous_realtime_ws_base_url: Option<&str>,
+    previous_realtime_call_base_url: Option<&str>,
 ) -> Result<(), ClientError> {
     let rendered = format!(
         "{}\n",
         serde_json::to_string_pretty(&json!({
             "previous_model_provider": previous_provider,
             "managed_chatgpt_base_url": managed_chatgpt_base_url,
-            "previous_chatgpt_base_url": previous_chatgpt_base_url
+            "previous_chatgpt_base_url": previous_chatgpt_base_url,
+            "managed_realtime_base_url": managed_realtime_base_url,
+            "previous_realtime_ws_base_url": previous_realtime_ws_base_url,
+            "previous_realtime_call_base_url": previous_realtime_call_base_url
         }))?
     );
     let parent = path
@@ -279,21 +292,40 @@ pub(super) fn write_codex_marker(
 pub(super) fn read_codex_marker(path: &Path) -> Result<CodexMarker, ClientError> {
     let source = read_or_empty(path)?;
     if source.trim().is_empty() {
-        return Ok((None, None, None));
+        return Ok(CodexMarker {
+            previous_provider: None,
+            managed_chatgpt_base_url: None,
+            previous_chatgpt_base_url: None,
+            managed_realtime_base_url: None,
+            previous_realtime_ws_base_url: None,
+            previous_realtime_call_base_url: None,
+        });
     }
     let marker: Value = serde_json::from_str(&source)?;
-    Ok((
-        marker
+    Ok(CodexMarker {
+        previous_provider: marker
             .get("previous_model_provider")
             .and_then(Value::as_str)
             .map(str::to_string),
-        marker
+        managed_chatgpt_base_url: marker
             .get("managed_chatgpt_base_url")
             .and_then(Value::as_str)
             .map(str::to_string),
-        marker
+        previous_chatgpt_base_url: marker
             .get("previous_chatgpt_base_url")
             .and_then(Value::as_str)
             .map(str::to_string),
-    ))
+        managed_realtime_base_url: marker
+            .get("managed_realtime_base_url")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        previous_realtime_ws_base_url: marker
+            .get("previous_realtime_ws_base_url")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+        previous_realtime_call_base_url: marker
+            .get("previous_realtime_call_base_url")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+    })
 }

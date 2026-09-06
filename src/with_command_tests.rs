@@ -352,6 +352,10 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         [
             "-c",
             "chatgpt_base_url=\"http://127.0.0.1:43123/api/services/codex/backend-api\"",
+            "-c",
+            "experimental_realtime_ws_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
+            "-c",
+            "experimental_realtime_webrtc_call_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
         ]
     );
 

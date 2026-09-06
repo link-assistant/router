@@ -51,6 +51,14 @@ impl ClientManager {
             .get("chatgpt_base_url")
             .and_then(Item::as_str)
             .map(str::to_string);
+        let previous_realtime_ws_base_url = document
+            .get("experimental_realtime_ws_base_url")
+            .and_then(Item::as_str)
+            .map(str::to_string);
+        let previous_realtime_call_base_url = document
+            .get("experimental_realtime_webrtc_call_base_url")
+            .and_then(Item::as_str)
+            .map(str::to_string);
         document["model_provider"] = value(CODEX_PROVIDER);
         if document.get("model_providers").is_none() {
             document["model_providers"] = Item::Table(Table::new());
@@ -79,16 +87,40 @@ impl ClientManager {
             str::to_string,
         );
         document["chatgpt_base_url"] = value(&backend_base);
+        document["experimental_realtime_ws_base_url"] = value(base_url);
+        document["experimental_realtime_webrtc_call_base_url"] = value(base_url);
         let result = write_if_changed(&path, &source, &document.to_string())?;
-        if let Some((original_provider, managed_backend, original_backend)) = existing_marker {
-            if previous_chatgpt_base_url.as_deref() == managed_backend.as_deref() {
-                write_codex_marker(
-                    &marker,
-                    original_provider.as_deref(),
-                    &backend_base,
-                    original_backend.as_deref(),
-                )?;
-            }
+        if let Some(existing) = existing_marker {
+            let original_backend = if previous_chatgpt_base_url.as_deref()
+                == existing.managed_chatgpt_base_url.as_deref()
+            {
+                existing.previous_chatgpt_base_url
+            } else {
+                previous_chatgpt_base_url
+            };
+            let original_ws = if previous_realtime_ws_base_url.as_deref()
+                == existing.managed_realtime_base_url.as_deref()
+            {
+                existing.previous_realtime_ws_base_url
+            } else {
+                previous_realtime_ws_base_url
+            };
+            let original_call = if previous_realtime_call_base_url.as_deref()
+                == existing.managed_realtime_base_url.as_deref()
+            {
+                existing.previous_realtime_call_base_url
+            } else {
+                previous_realtime_call_base_url
+            };
+            write_codex_marker(
+                &marker,
+                existing.previous_provider.as_deref(),
+                &backend_base,
+                original_backend.as_deref(),
+                base_url,
+                original_ws.as_deref(),
+                original_call.as_deref(),
+            )?;
         } else {
             let previous_provider = previous_provider.filter(|value| value != CODEX_PROVIDER);
             write_codex_marker(
@@ -96,6 +128,9 @@ impl ClientManager {
                 previous_provider.as_deref(),
                 &backend_base,
                 previous_chatgpt_base_url.as_deref(),
+                base_url,
+                previous_realtime_ws_base_url.as_deref(),
+                previous_realtime_call_base_url.as_deref(),
             )?;
         }
         Ok(result)
@@ -114,10 +149,9 @@ impl ClientManager {
         let mut document = source.parse::<DocumentMut>().map_err(|error| {
             ClientError::message(format!("invalid TOML in {}: {error}", path.display()))
         })?;
-        let (previous_provider, managed_chatgpt_base_url, previous_chatgpt_base_url) =
-            read_codex_marker(&marker_path)?;
+        let marker = read_codex_marker(&marker_path)?;
         if document.get("model_provider").and_then(Item::as_str) == Some(CODEX_PROVIDER) {
-            if let Some(previous_provider) = previous_provider {
+            if let Some(previous_provider) = marker.previous_provider {
                 document["model_provider"] = value(previous_provider);
             } else {
                 document.as_table_mut().remove("model_provider");
@@ -130,18 +164,46 @@ impl ClientManager {
             providers.remove(CODEX_PROVIDER);
         }
         if document.get("chatgpt_base_url").and_then(Item::as_str)
-            == managed_chatgpt_base_url.as_deref()
+            == marker.managed_chatgpt_base_url.as_deref()
         {
-            if let Some(previous) = previous_chatgpt_base_url {
+            if let Some(previous) = marker.previous_chatgpt_base_url {
                 document["chatgpt_base_url"] = value(previous);
             } else {
                 document.as_table_mut().remove("chatgpt_base_url");
             }
         }
+        restore_owned_value(
+            &mut document,
+            "experimental_realtime_ws_base_url",
+            marker.managed_realtime_base_url.as_deref(),
+            marker.previous_realtime_ws_base_url,
+        );
+        restore_owned_value(
+            &mut document,
+            "experimental_realtime_webrtc_call_base_url",
+            marker.managed_realtime_base_url.as_deref(),
+            marker.previous_realtime_call_base_url,
+        );
         let result = write_if_changed(&path, &source, &document.to_string())?;
         if marker_path.exists() {
             fs::remove_file(marker_path)?;
         }
         Ok(result)
+    }
+}
+
+fn restore_owned_value(
+    document: &mut DocumentMut,
+    key: &str,
+    managed: Option<&str>,
+    previous: Option<String>,
+) {
+    if document.get(key).and_then(Item::as_str) != managed {
+        return;
+    }
+    if let Some(previous) = previous {
+        document[key] = value(previous);
+    } else {
+        document.as_table_mut().remove(key);
     }
 }
