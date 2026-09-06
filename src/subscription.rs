@@ -62,15 +62,14 @@ fn credential_file_lock_path(path: &Path) -> PathBuf {
     PathBuf::from(lock)
 }
 
-/// One credential selected for adoption: the bytes, and what they say.
+/// One credential selected for adoption: its bytes, parsed token, and owner.
 ///
-/// A single selection produces all three, so a report about the credential and
-/// the credential that gets installed cannot describe different things. They
-/// did before, because the document and the token were read through two
-/// methods that select the platform store by different rules (issue #280).
+/// A single selection produces all fields, so validation and reporting cannot
+/// describe different credentials. Fresh imports reference `path`; retained
+/// Router-owned transactions may promote `document` (issue #280).
 #[derive(Debug, Clone)]
 pub struct ImportSource {
-    /// The credential exactly as stored, to be installed verbatim.
+    /// The credential exactly as stored, used for validation and recovery.
     ///
     /// Not re-serialized from `token`: that type models no `id_token`,
     /// `auth_mode`, or `scope`, and Codex derives its account id from
@@ -78,7 +77,7 @@ pub struct ImportSource {
     pub document: String,
     /// What `document` parses to, for reporting expiry and probing the vendor.
     pub token: SubscriptionToken,
-    /// Which store `document` came from, for naming it in the report.
+    /// Which store `document` came from, for ownership and reporting.
     pub origin: crate::platform_keychain::Origin,
     /// Writable file holding the selected document, when it has one.
     pub path: Option<PathBuf>,

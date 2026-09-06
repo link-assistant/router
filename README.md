@@ -913,7 +913,7 @@ is provisioned without a browser round-trip — run on the deployment itself,
 where a login already exists or has been mounted:
 
 ```bash
-router auth import claude        # from ~/.claude, or the Keychain if it is newer
+router auth import claude        # from ~/.claude; a Keychain-only login is refused safely
 router auth import codex         # from ~/.codex
 router auth import gh            # from $GH_CONFIG_DIR, else ~/.config/gh
 router auth import claude /path  # or name the source, read exactly as given
@@ -946,16 +946,16 @@ and `promotion`. The JSON never includes diagnostic prose, credential documents,
 access tokens, refresh tokens, or secret file contents. Operational failures
 still use a non-zero process status.
 
-Before anything reaches the destination, import forces a direct OAuth refresh
-in a private Router staging store, persists and rereads the result, then proves
-that fresh access token at the vendor's non-inference model catalog. A rejected,
-malformed, timed-out, unreachable, or non-refreshable candidate is never
-installed. A definite OAuth rejection reports `exchange_rejected` with
-`previous_credential_safe: true`. Any exchange, persistence, catalog, or
-promotion uncertainty after the provider may have advanced the rotating chain
-reports `successor_retained`, sets `previous_credential_safe: false`, and
-includes its opaque recovery transaction ID. Conditional provisioning that
-finds a destination before candidate validation reports `already_present`.
+Before anything reaches the destination, a fresh import proves the current
+access token at the vendor's non-inference model catalog without calling the
+OAuth token endpoint. It then installs an atomic reference to the one writable
+vendor credential file, so Router and the vendor client advance the same
+refresh chain. Expired or near-expiry, Keychain-only, read-only, rejected,
+malformed, timed-out, or unreachable candidates fail without spending a refresh
+token or changing the destination. Conditional provisioning that finds a
+destination returns `already_present` before reading the candidate. A retained
+`--resume` transaction is already Router-owned and keeps the isolated
+refresh-chain recovery behavior and opaque transaction result described above.
 
 Router includes Gemini CLI's public installed-app OAuth client configuration,
 so an imported standard login needs no copied secret. A custom client remains
@@ -971,26 +971,20 @@ never replaces a login that already exists or appeared while it waited. A
 candidate must pass the same positive refresh-chain and catalog checks in both
 modes; there is no force bypass. Deployment tooling can pass
 `--safe-refresh-chain-import-v1` as a stable capability assertion: older Router
-versions reject the flag, while versions that accept it guarantee isolated
-refresh-chain validation plus locked atomic promotion.
+versions reject the flag, while versions that accept it guarantee
+non-destructive access-token validation plus a locked atomic reference to one
+writable authoritative source.
 
-On macOS the live Claude credential is in the login Keychain rather than the
-file beside it, so an import from the vendor's own home consults both and takes
-whichever is newer — the same rule the serving path uses. Naming a source
-directory means *this* credential from *there*, so the machine-wide store is
-left out of it and the named directory is read exactly as given. Without that
-distinction a pool of per-account directories collapses onto whichever account
-happens to be logged in interactively.
-
-Refresh-chain validation advances the candidate before installation, so the
-source copy may contain the spent predecessor after a successful import. If a
-concurrent credential wins the conditional race or catalog validation fails
-after refresh, Router retains the advanced candidate under a non-secret
-transaction identifier instead of deleting the only current chain link. The
-candidate remains private under Router's data directory. Resume it with
+On macOS an unqualified Claude import still consults both the conventional file
+and login Keychain. If the Keychain wins, import refuses before any provider
+request because Router cannot durably update that store; let Claude Code renew
+and expose a current writable file first. Naming a source directory means
+*this* credential from *there*, so the machine-wide store is left out and the
+named directory is read exactly as given. Without that distinction a pool of
+per-account directories collapses onto whichever account happens to be logged
+in interactively. Retained Router-owned transactions can be resumed with
 `router auth import --resume <transaction-id> --local`; callers do not discover
-or construct an internal path, and the same refresh-chain validation and locked
-promotion run again. To withdraw an installed credential:
+or construct an internal path. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh

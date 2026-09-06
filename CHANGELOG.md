@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Make fresh subscription credential imports non-destructive: validate only the current access token, refuse Keychain-only, near-expiry, or non-writable sources before OAuth, and atomically reference one writable vendor-owned file so Router and the vendor client share the same rotating refresh chain ([#435](https://github.com/link-assistant/router/issues/435), [#439](https://github.com/link-assistant/router/issues/439)).
+
 - Enable current Codex history/notes through Router's schema-valid process-local identity, expose only the ten native POST routes, pin every request to its principal-scoped ChatGPT account handle and session, relay native bodies and special headers byte-for-byte, and audit only fixed control-plane operation names ([#534](https://github.com/link-assistant/router/issues/534)).
 
 - Keep native model-list routes protocol-pure: preserve exact live IDs, remove Router-only diagnostics, implement Anthropic cursor pagination after catalogue merging, and retain ownership and trusted capabilities on the neutral `/api/models` surface ([#535](https://github.com/link-assistant/router/issues/535)).

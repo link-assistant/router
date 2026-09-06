@@ -1,6 +1,57 @@
 //! Black-box coverage for provider authorization commands.
 
 use std::process::{Command, Output};
+use std::sync::{Arc, Mutex};
+
+fn start_import_catalog() -> (String, Arc<Mutex<Vec<String>>>, std::thread::JoinHandle<()>) {
+    use std::io::{Read as _, Write as _};
+
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("catalog listener");
+    listener.set_nonblocking(true).expect("nonblocking catalog");
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let captured = Arc::clone(&requests);
+    let task = std::thread::spawn(move || {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let (mut stream, _) = loop {
+            match listener.accept() {
+                Ok(connection) => break connection,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    if std::time::Instant::now() >= deadline {
+                        return;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                Err(error) => panic!("catalog accept: {error}"),
+            }
+        };
+        stream
+            .set_read_timeout(Some(std::time::Duration::from_secs(2)))
+            .expect("catalog read timeout");
+        let mut bytes = Vec::new();
+        let mut buffer = [0_u8; 1024];
+        while !bytes.windows(4).any(|window| window == b"\r\n\r\n") {
+            let read = stream.read(&mut buffer).expect("catalog request");
+            if read == 0 {
+                break;
+            }
+            bytes.extend_from_slice(&buffer[..read]);
+        }
+        let request = String::from_utf8_lossy(&bytes);
+        captured
+            .lock()
+            .expect("captured requests")
+            .push(request.lines().next().unwrap_or_default().to_string());
+        let body = r#"{"data":[{"id":"model"}],"models":[{"id":"model","slug":"model","name":"models/model","supportedGenerationMethods":["generateContent"]}]}"#;
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+            body.len()
+        )
+        .expect("catalog response");
+    });
+    (origin, requests, task)
+}
 
 fn router(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
@@ -13,8 +64,11 @@ fn router(args: &[&str]) -> Output {
 fn assert_refresh_chain_was_not_imported(output: &Output) {
     let seen = String::from_utf8_lossy(&output.stderr);
     assert!(
-        seen.contains("candidate refresh chain")
-            && (seen.contains("was not verified") || seen.contains("was rejected")),
+        (seen.contains("candidate refresh chain")
+            && (seen.contains("was not verified") || seen.contains("was rejected")))
+            || (seen.contains("external")
+                && seen.contains("candidate")
+                && seen.contains("refresh token was not spent")),
         "{output:?}"
     );
 }
@@ -428,8 +482,8 @@ fn clear_cannot_be_combined_with_authorizing_flags() {
 }
 
 /// A synthetic credential cannot be adopted merely because it parses and says
-/// it has not expired. Import now validates the refresh chain in isolated
-/// Router-owned storage before promotion.
+/// it has not expired. Import validates its current access token without
+/// spending the externally owned refresh token.
 #[test]
 fn an_unverified_claude_login_is_not_adopted() {
     let home = tempfile::tempdir().expect("temp home");
@@ -496,6 +550,112 @@ fn an_unverified_codex_login_is_not_adopted() {
     assert!(!output.status.success(), "{output:?}");
     assert!(!destination.join("auth.json").exists());
     assert_refresh_chain_was_not_imported(&output);
+}
+
+#[test]
+fn public_fresh_import_paths_reference_one_source_without_oauth_exchange() {
+    let cases = [
+        (
+            "claude",
+            ".credentials.json",
+            "CLAUDE_CODE_HOME",
+            r#"{"claudeAiOauth":{"accessToken":"source-access","refreshToken":"source-refresh","expiresAt":99999999999999},"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "codex",
+            "auth.json",
+            "CODEX_HOME",
+            r#"{"auth_mode":"chatgpt","tokens":{"access_token":"source-access","refresh_token":"source-refresh"},"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "gemini",
+            "oauth_creds.json",
+            "GEMINI_HOME",
+            r#"{"access_token":"source-access","refresh_token":"source-refresh","expiry_date":99999999999999,"vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "qwen",
+            "oauth_creds.json",
+            "QWEN_HOME",
+            r#"{"access_token":"source-access","refresh_token":"source-refresh","expiry_date":99999999999999,"resource_url":"portal.qwen.ai","vendor_marker":"kept"}"#,
+            false,
+        ),
+        (
+            "claude",
+            ".credentials.json",
+            "CLAUDE_CODE_HOME",
+            r#"{"claudeAiOauth":{"accessToken":"source-access","refreshToken":"source-refresh","expiresAt":99999999999999},"vendor_marker":"kept"}"#,
+            true,
+        ),
+        (
+            "codex",
+            "auth.json",
+            "CODEX_HOME",
+            r#"{"auth_mode":"chatgpt","tokens":{"access_token":"source-access","refresh_token":"source-refresh"},"vendor_marker":"kept"}"#,
+            true,
+        ),
+    ];
+
+    for (provider, filename, destination_env, document, legacy) in cases {
+        let root = tempfile::tempdir().expect("root");
+        let source = root.path().join("source");
+        let destination = root.path().join("destination");
+        std::fs::create_dir_all(&source).expect("source");
+        std::fs::create_dir_all(&destination).expect("destination");
+        let source_path = source.join(filename);
+        std::fs::write(&source_path, document).expect("source credential");
+        let (catalog, requests, task) = start_import_catalog();
+        let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+        if legacy {
+            let flag = match provider {
+                "claude" => "--from-claude-home",
+                "codex" => "--from-codex-home",
+                _ => unreachable!(),
+            };
+            command.args(["auth", provider, flag, source.to_str().unwrap(), "--local"]);
+        } else {
+            command.args([
+                "auth",
+                "import",
+                provider,
+                source.to_str().unwrap(),
+                "--local",
+            ]);
+        }
+        let output = command
+            .env("TOKEN_SECRET", "auth-cli-test-secret")
+            .env("HOME", root.path())
+            .env(destination_env, &destination)
+            .env("DATA_DIR", root.path().join("data"))
+            .env("LINK_ASSISTANT_ROUTER_TEST_CATALOG_BASE_URL", &catalog)
+            .env(
+                "LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL",
+                format!("{catalog}/token"),
+            )
+            .output()
+            .expect("router CLI should run");
+        task.join().expect("catalog task");
+
+        assert!(
+            output.status.success(),
+            "{provider} legacy={legacy}: {output:?}"
+        );
+        let requests = requests.lock().unwrap().clone();
+        assert_eq!(requests.len(), 1, "{provider} legacy={legacy}");
+        assert!(
+            requests[0].starts_with("GET "),
+            "{provider} made an OAuth exchange: {requests:?}",
+        );
+        assert_eq!(std::fs::read_to_string(source_path).unwrap(), document);
+        let installed = std::fs::read_to_string(destination.join(filename)).expect("reference");
+        assert!(installed.contains("credential_source"), "{installed}");
+        for secret in ["source-access", "source-refresh", "vendor_marker"] {
+            assert!(!installed.contains(secret), "destination copied {secret}");
+        }
+    }
 }
 
 /// Importing a home onto itself is refused rather than silently rewriting the
@@ -750,7 +910,7 @@ fn conditional_import_rejects_unsupported_flag_combinations() {
 }
 
 #[test]
-fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
+fn conditional_import_does_not_read_a_malformed_candidate_when_destination_exists() {
     let root = tempfile::tempdir().expect("root");
     let source = root.path().join("source");
     let destination = root.path().join("destination");
@@ -776,10 +936,14 @@ fn malformed_conditional_candidate_does_not_hide_behind_existing_destination() {
         .output()
         .expect("router CLI should run");
 
-    assert!(!output.status.success(), "malformed candidate must fail");
+    assert!(output.status.success(), "{output:?}");
     assert_eq!(
         std::fs::read(destination.join("oauth_creds.json")).unwrap(),
         current
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("already present"),
+        "{output:?}"
     );
 }
 
