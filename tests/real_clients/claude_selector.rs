@@ -8,6 +8,7 @@ fn catalog_model(id: &str, owner: &str) -> Value {
 }
 
 fn seed_home(home: &Path, working_directory: &Path) {
+    std::fs::create_dir_all(home).expect("create synthetic Claude profile");
     let mut projects = serde_json::Map::new();
     projects.insert(
         working_directory.to_string_lossy().into_owned(),
@@ -28,7 +29,8 @@ fn seed_home(home: &Path, working_directory: &Path) {
 
 fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> String {
     let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
-    seed_home(home, working_directory);
+    let profile = home.join(".config/link-assistant-router/clients/claude/home");
+    seed_home(&profile, working_directory);
     let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
     command.args([
         "--server",
@@ -73,12 +75,18 @@ fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> St
             Duration::from_millis(250),
             Duration::from_secs(20),
         )
-        .unwrap_or_else(|error| panic!("Claude /model did not settle: {error}"));
+        .unwrap_or_else(|error| {
+            panic!(
+                "Claude /model did not settle: {error}; routes: {:?}; transcript: {}",
+                router.routes(),
+                session.transcript_tail(2_000)
+            )
+        });
     session.kill();
     transcript
 }
 
-fn assert_scenario(models: &[(&str, &str)], visible: &[&str], hidden: &[&str]) {
+fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool) {
     let router = MockRouter::start_with_models(
         CLAUDE,
         models
@@ -88,6 +96,10 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], hidden: &[&str]) {
     );
     let home = tempfile::tempdir().expect("temporary Claude home");
     let transcript = selector_transcript(home.path(), &router, visible);
+    assert!(
+        !home.path().join(".claude").exists() && !home.path().join(".claude.json").exists(),
+        "a default Router launch must not create or change the normal Claude tree"
+    );
     let compact = transcript
         .chars()
         .filter(|character| !character.is_whitespace())
@@ -111,14 +123,10 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], hidden: &[&str]) {
             }
         }
     }
-    for model in hidden {
-        assert!(
-            !transcript.contains(model),
-            "hidden model was fabricated into a family row"
-        );
-    }
-
-    let selected = models[0].0;
+    let selected = models
+        .iter()
+        .find_map(|(model, owner)| (*owner == "z.ai").then_some(*model))
+        .unwrap_or(models[0].0);
     let output = run_wrapper_with_model(
         CLAUDE,
         Path::new(env!("CARGO_MANIFEST_DIR")),
@@ -137,6 +145,31 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], hidden: &[&str]) {
         .expect("selected exact model reaches inference");
     let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
     assert_eq!(body["model"], selected);
+
+    if verify_reset {
+        let output = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            Some(selected),
+            &["--reset-to-default-configuration", PROMPT],
+        );
+        assert!(
+            output.status.success(),
+            "Claude did not serve the exact model after resetting its Router profile: {}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let request = router
+            .inference_requests(CLAUDE.inference_path)
+            .into_iter()
+            .last()
+            .expect("post-reset exact model reaches inference");
+        let body: Value =
+            serde_json::from_slice(&request.body).expect("post-reset Claude inference JSON");
+        assert_eq!(body["model"], selected);
+    }
 
     if models.iter().all(|(_, owner)| *owner == "z.ai") {
         let before = router.inference_requests(CLAUDE.inference_path).len();
@@ -210,22 +243,22 @@ fn current_claude_model_selector_keeps_exact_provider_models_distinct() {
         command_exists("claude"),
         "the real-client gate requires claude"
     );
-    assert_scenario(&[("future-glm-only", "z.ai")], &["future-glm-only"], &[]);
+    assert_scenario(&[("future-glm-only", "z.ai")], &["future-glm-only"], false);
     assert_scenario(
         &[
             ("future-glm-alpha", "z.ai"),
             ("future-glm-beta", "z.ai"),
             ("future-glm-gamma", "z.ai"),
         ],
-        &["future-glm-alpha"],
-        &["future-glm-beta", "future-glm-gamma"],
+        &["future-glm-alpha", "future-glm-beta", "future-glm-gamma"],
+        false,
     );
     assert_scenario(
         &[
             ("future-claude-native", "anthropic"),
             ("future-glm-mixed", "z.ai"),
         ],
-        &[],
-        &["future-glm-mixed"],
+        &["future-claude-native", "future-glm-mixed"],
+        true,
     );
 }

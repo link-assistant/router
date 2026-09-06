@@ -26,6 +26,9 @@ fn start_import_catalog() -> (String, Arc<Mutex<Vec<String>>>, std::thread::Join
             }
         };
         stream
+            .set_nonblocking(false)
+            .expect("blocking catalog stream");
+        stream
             .set_read_timeout(Some(std::time::Duration::from_secs(10)))
             .expect("catalog read timeout");
         let mut bytes = Vec::new();

@@ -36,3 +36,7 @@ bump: minor
 - Reject provider-specific Responses reasoning and custom-tool output on Anthropic bridges instead of silently returning an empty successful message, without exposing private output state.
 - Match the current Claude, Codex, Gemini, and Qwen OAuth refresh wire contracts, including versioned client identity and Gemini's public installed-app configuration.
 - Preserve only allowlisted Cloudflare infrastructure-cookie continuity on canonical Codex ChatGPT HTTP and WebSocket traffic, with RFC scoping and strict size/count bounds.
+- Give default Claude wrapper launches a persistent minimal Router-owned profile, with explicit normal-profile extension, disposable isolation, active-session-safe reset, rollback, and recoverable owner-only backups.
+- Extend Claude's process-local model picker with each exact authorized model hidden by gateway discovery, without aliases, fake family rows, model-cache writes, or duplicate IDs.
+- Rewind native multipart uploads portably and keep the Codex loopback bridge alive on Windows clients without a console.
+- Expose authenticated Responses WebSocket routing and lifecycle behavior with full cross-provider protocol and revocation coverage.

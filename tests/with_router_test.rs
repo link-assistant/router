@@ -447,10 +447,16 @@ fn assert_codex_overlay_launch(standalone: bool) {
             "hi".to_string(),
         ]
     );
-    let managed_catalog: serde_json::Value = serde_json::from_slice(
-        &fs::read(capture.join("model-catalog.json")).expect("captured managed catalog"),
-    )
-    .expect("valid managed catalog");
+    let managed_catalog_bytes =
+        fs::read(capture.join("model-catalog.json")).unwrap_or_else(|error| {
+            panic!(
+                "captured managed catalog: {error}; args={args:?}; stdout={}; stderr={}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            )
+        });
+    let managed_catalog: serde_json::Value =
+        serde_json::from_slice(&managed_catalog_bytes).expect("valid managed catalog");
     assert_eq!(managed_catalog["models"][0]["slug"], "gpt-5.6-sol");
     assert_eq!(managed_catalog["models"].as_array().unwrap().len(), 1);
     assert_eq!(
@@ -920,5 +926,7 @@ fn persisted_remote_token_is_private_and_never_echoed() {
     );
 }
 
+#[path = "with_router/claude_profile_test.rs"]
+mod claude_profile_test;
 #[path = "with_router/session_test.rs"]
 mod session_test;

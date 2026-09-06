@@ -49,3 +49,34 @@ fn the_sweep_only_removes_this_users_directories() {
     assert!(owner_of(&ours).is_some());
     let _ = fs::remove_dir_all(&ours);
 }
+
+#[test]
+fn the_sweep_keeps_a_leased_directory_even_if_its_name_claims_a_dead_pid() {
+    let temporary = std::env::temp_dir();
+    let ours = temporary.join(format!(
+        "link-assistant-router-with-{}-lease-sweep-self",
+        std::process::id()
+    ));
+    let leased = temporary.join("link-assistant-router-with-4294967294-lease-active");
+    let _ = fs::remove_dir_all(&ours);
+    let _ = fs::remove_dir_all(&leased);
+    fs::create_dir_all(&ours).expect("create our directory");
+    fs::create_dir_all(&leased).expect("create leased directory");
+    let lease = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(leased.join(".active.lock"))
+        .expect("open lease");
+    lease.lock().expect("hold lease");
+
+    sweep_stale_directories(&ours);
+    assert!(leased.is_dir(), "a live lease must prevent cleanup");
+
+    lease.unlock().expect("release lease");
+    drop(lease);
+    sweep_stale_directories(&ours);
+    assert!(!leased.exists(), "an abandoned lease can be cleaned");
+    let _ = fs::remove_dir_all(&ours);
+}

@@ -11,6 +11,8 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         interactive: false,
         extend_global_config: false,
         isolated_config: false,
+        reset_to_default_configuration: false,
+        yes: false,
         pick_model: false,
         server: None,
         management_server: None,

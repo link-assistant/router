@@ -69,6 +69,21 @@ pub fn protect_client_arguments(arguments: Vec<OsString>, nested: bool) -> Vec<O
         }
         let explicit = forwarded.first().is_some_and(|argument| argument == "--");
         let forwarded = if explicit { &forwarded[1..] } else { forwarded };
+        if !explicit
+            && matches!(value.as_str(), "claude" | "claude-code")
+            && forwarded
+                .first()
+                .is_some_and(|argument| argument == "--reset-to-default-configuration")
+        {
+            let mut normalized = arguments[..position].to_vec();
+            normalized.push("--reset-to-default-configuration".into());
+            normalized.push(arguments[position].clone());
+            if forwarded.len() > 1 {
+                normalized.push("--".into());
+                normalized.extend(forwarded[1..].iter().cloned());
+            }
+            return normalized;
+        }
         // The forward itself is silent. Narrating a rule that behaved exactly
         // as documented turned a settled design decision (issue #299) into a
         // recurring interruption printed into the client's own terminal, once
@@ -150,26 +165,23 @@ pub struct WithArgs {
     /// Force the client's interactive mode.
     #[arg(long, conflicts_with = "non_interactive")]
     pub interactive: bool,
-    /// (deprecated, no-op) Keep the user's own configuration.
+    /// Extend the client's normal user configuration for this launch.
     ///
-    /// This is the default, and has been since issue #277. Kept as an accepted
-    /// flag so existing scripts keep working; passing it changes nothing. The
-    /// marker is in the first line because a reader scanning flag names could
-    /// not otherwise tell the live options from the retired one (issue #312).
+    /// Claude uses a dedicated persistent Router-owned profile by default.
+    /// This explicitly restores the older process-overlay behavior, without
+    /// writing the user's Claude files. Other extensible clients already use
+    /// their normal configuration and accept this for compatibility (#536).
     #[arg(long)]
     pub extend_global_config: bool,
     /// Give the client a configuration directory of its own.
     ///
-    /// `with` changes how the client reaches the model and nothing else, so the
-    /// user's theme, permissions, MCP servers, `settings.json` and `projects/`
-    /// are left in place by default — starting a configured client in first-run
-    /// onboarding, with `/resume` listing nothing, is a much larger side effect
-    /// than choosing a connection route implies (issue #277).
+    /// Claude uses a persistent profile owned by Router by default, so
+    /// onboarding happens once and Router sessions remain resumable without
+    /// inheriting the user's theme, permissions, MCP servers, credentials, or
+    /// model cache. Other clients retain their existing profile behavior.
     ///
-    /// Extending adds only the two connection variables to the environment of
-    /// the one process being launched; nothing the user owns is written or
-    /// modified. A client configured through a file rather than environment
-    /// variables cannot be extended, and is given its own directory regardless.
+    /// `--extend-global-config` explicitly layers Claude routing onto the real
+    /// profile instead. Nothing the user owns is written or modified.
     ///
     /// Isolation remains right for CI and clean-room reproductions, where
     /// passing a flag is normal and cheap.
@@ -182,6 +194,12 @@ pub struct WithArgs {
     /// (issue #298); `--isolated-config` makes that profile disposable.
     #[arg(long, conflicts_with = "extend_global_config")]
     pub isolated_config: bool,
+    /// Replace only the persistent Router-owned Claude profile before launch.
+    #[arg(long, conflicts_with_all = ["global", "undo", "isolated_config", "extend_global_config"])]
+    pub reset_to_default_configuration: bool,
+    /// Confirm a requested profile reset without an interactive prompt.
+    #[arg(long, requires = "reset_to_default_configuration")]
+    pub yes: bool,
     /// Start a disposable managed container even if a router is already
     /// listening locally.
     ///
@@ -427,6 +445,54 @@ mod tests {
         assert_eq!(
             split(&["with-router", "codex"], false),
             ["with-router", "codex"]
+        );
+    }
+
+    /// The one documented post-client Router operation is deliberately
+    /// normalized before clap sees the client boundary. Every other argument
+    /// remains protected by issue #299's forwarding rule (issue #536).
+    #[test]
+    fn the_exact_claude_reset_operation_moves_before_the_client_boundary() {
+        assert_eq!(
+            split(
+                &[
+                    "router",
+                    "with",
+                    "claude",
+                    "--reset-to-default-configuration",
+                    "--resume",
+                    "session-id",
+                ],
+                true,
+            ),
+            [
+                "router",
+                "with",
+                "--reset-to-default-configuration",
+                "claude",
+                "--",
+                "--resume",
+                "session-id",
+            ]
+        );
+        assert_eq!(
+            split(
+                &[
+                    "router",
+                    "with",
+                    "codex",
+                    "--reset-to-default-configuration"
+                ],
+                true,
+            ),
+            [
+                "router",
+                "with",
+                "codex",
+                "--",
+                "--reset-to-default-configuration",
+            ],
+            "the exception must not claim the same client argument from another client"
         );
     }
 

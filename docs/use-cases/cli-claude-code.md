@@ -9,14 +9,34 @@
 router with claude "hi"
 ```
 
-The wrapper supplies `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN` while
-preserving the normal Claude settings. Add `--isolated-config` when a disposable
-`CLAUDE_CONFIG_DIR` is required for CI or a clean-room reproduction. It also
-enables gateway discovery; Claude Code >= 2.1.255 is required. See
-[with-router.md](with-router.md) for server and token options.
+The wrapper supplies `ANTHROPIC_BASE_URL` plus `ANTHROPIC_AUTH_TOKEN` and points
+`CLAUDE_CONFIG_DIR` at a persistent owner-only Router profile. Router creates
+only the directory; Claude owns everything inside it, so onboarding happens
+once and Router sessions stay resumable without importing the normal Claude
+settings, credentials, MCP servers, permissions, theme, account data, or model
+cache. Add `--extend-global-config` before `claude` to use the normal profile
+explicitly, or `--isolated-config` for a disposable clean-room profile.
 
-Wrapper flags may appear before or after `claude`; an explicit `--`
-forwards every later token verbatim. See
+Reset only the Router profile before launching Claude with:
+
+```bash
+router with claude --reset-to-default-configuration
+# Non-interactive confirmation:
+router with --yes claude --reset-to-default-configuration
+```
+
+Reset retains a recoverable owner-only backup, rolls back setup/spawn failures,
+and refuses while another Router-launched Claude uses the profile.
+
+Gateway discovery supplies native Claude IDs. A process-local `--settings`
+extension adds every other compatible, authorized exact ID to Claude's
+`modelPicker` once, including GLM IDs, without aliases or cache writes. Claude
+Code >= 2.1.255 is required. See [with-router.md](with-router.md) for server and
+token options.
+
+Wrapper flags go before `claude`; arguments after it are forwarded verbatim.
+The exact reset spelling above is the sole Router operation recognized there;
+an explicit `--` forwards even that token. See
 [with-router.md](with-router.md#arguments-interaction-and-models).
 
 ## Manual or permanent configuration
@@ -101,7 +121,7 @@ curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $ANTHROPIC_AUTH_TOKEN" \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
-  -H "User-Agent: claude-cli/2.1.261" \
+  -H "User-Agent: claude-cli/2.1.263" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":32,
        "messages":[{"role":"user","content":"ping"}]}' | jq -r '.content[0].text'
 ```

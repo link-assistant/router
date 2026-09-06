@@ -354,6 +354,22 @@ router with claude
 # or: router clients setup claude
 ```
 
+The wrapper uses a persistent, owner-only Claude profile below Router's user
+configuration directory. It does not copy or edit the normal Claude profile;
+onboarding happens once and sessions started through Router remain resumable.
+Use `--extend-global-config` before `claude` to opt into the normal Claude
+profile, or `--isolated-config` for a disposable clean-room profile.
+
+Reset only the Router-owned profile, retain a recoverable private backup, and
+launch Claude against a new empty profile with:
+
+```bash
+router with --yes claude --reset-to-default-configuration
+```
+
+Omit `--yes` for an interactive confirmation. Reset refuses while another
+Router-launched Claude process is using the profile.
+
 ### Step 3: Manual configuration only with an already bound token
 
 ```bash
@@ -441,15 +457,14 @@ The equivalent one-shot forms accept the same `--management-server` option,
 including `router with`, `router configure`, authentication/provider commands,
 and `router clients setup --server <url> --management-server <admin-url>`.
 
-`with` changes how the client reaches the model and nothing else: the user's
-theme, permissions, MCP servers, `settings.json` and `projects/` are left in
-place, so `/resume` still lists prior sessions and a configured client does not
-restart in first-run onboarding. Only the two connection variables are added,
-to the one process being launched; nothing the user owns is written. Pass
-`--isolated-config` for CI and clean-room reproductions, where a fresh
-directory is the point. A client configured through a file rather than
-environment variables — Gemini CLI, whose routing depends on a settings file
-the router writes — is given its own directory regardless.
+`with` never rewrites the user's normal client files. Claude defaults to a
+persistent Router-owned profile; use `--extend-global-config` to expose the
+normal Claude profile explicitly. Other extensible clients receive only
+process-local connection settings. Pass `--isolated-config` for CI and
+clean-room reproductions, where a fresh directory is the point. A client
+configured through a file rather than environment variables — Gemini CLI,
+whose routing depends on a settings file the router writes — is given its own
+Router profile regardless.
 
 When nothing is selected at all, `with` and `auth` use a router that is already
 listening on this machine — including one reached over an SSH tunnel — and only

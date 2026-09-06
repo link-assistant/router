@@ -8,7 +8,7 @@ pub const CLAUDE_CODE_SYSTEM_PROMPT: &str =
     "You are Claude Code, Anthropic's official CLI for Claude.";
 
 /// Claude Code version installed by the real-client release gate.
-pub const DEFAULT_CLIENT_VERSION: &str = "2.1.261";
+pub const DEFAULT_CLIENT_VERSION: &str = "2.1.263";
 
 /// The supported Claude Code version, with an operator override for staged
 /// client upgrades.

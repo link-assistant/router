@@ -1,7 +1,7 @@
 {
   "captured_on": "2026-09-05",
   "claude": {
-    "client_version": "2.1.261",
+    "client_version": "2.1.263",
     "sdk_version": "0.112.1",
     "method": "POST",
     "body_style": "json",

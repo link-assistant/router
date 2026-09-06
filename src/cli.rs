@@ -695,11 +695,10 @@ pub enum Command {
         #[command(subcommand)]
         op: ClientOp,
     },
-    /// Launch an agentic CLI against this router, keeping its own configuration.
+    /// Launch an agentic CLI against this router with a safe client profile.
     ///
-    /// Isolation stopped being the default in issue #277, and this line went on
-    /// saying the opposite twelve lines above the flag that says so — the
-    /// document contradicted itself before the options began (issue #312).
+    /// Claude defaults to a persistent Router-owned profile; other clients keep
+    /// their documented extension or profile behavior (issue #536).
     ///
     /// Everything after the client name is passed to the client verbatim;
     /// router options go before it (issue #299).

@@ -32,6 +32,7 @@ pub mod chat_config;
 mod chat_lifecycle;
 pub mod claude_auth;
 pub mod claude_identity;
+mod claude_profile;
 pub mod cli;
 pub mod client_command;
 pub mod client_global;

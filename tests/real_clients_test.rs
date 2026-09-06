@@ -30,7 +30,7 @@ use wait_timeout::ChildExt as _;
 mod anthropic_mock;
 use anthropic_mock::anthropic_answer;
 
-const CLAUDE_VERSION: &str = "2.1.261";
+const CLAUDE_VERSION: &str = "2.1.263";
 const CODEX_VERSION: &str = "0.153.4";
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
@@ -59,7 +59,7 @@ const CLAUDE: ClientCase = ClientCase {
     owner: "anthropic",
     catalog_path: "/api/services/anthropic/v1/models",
     inference_path: "/api/services/anthropic/v1/messages",
-    user_agent_prefix: "claude-cli/2.1.261",
+    user_agent_prefix: "claude-cli/2.1.263",
     credential_header: "authorization",
 };
 
@@ -575,6 +575,9 @@ fn run_wrapper_with_options(
     command.args(["--server", server, "--token", "offline-admin"]);
     if let Some(model) = model {
         command.args(["--model", model]);
+    }
+    if forwarded.first() == Some(&"--reset-to-default-configuration") {
+        command.arg("--yes");
     }
     command.args(["--non-interactive", case.client]);
     command.args(forwarded);
