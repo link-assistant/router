@@ -655,20 +655,22 @@ fn eagerly_capture_json(headers: &HeaderMap) -> bool {
     json && bounded_length
 }
 
-/// Return the public route template when protocol payloads must be opaque.
+/// Return the public route template for byte-transparent native services.
 ///
-/// Templates remove remote-control environment/client IDs, while matching the
-/// canonical contract also prevents a lookalike or wrong-method route from
-/// silently receiving the stronger policy.
-fn opaque_codex_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
+/// Their provider-owned payloads can contain uploads, workspace data, account
+/// state, and future fields Router cannot safely classify. Templates also
+/// remove resource IDs, while exact contract matching prevents a lookalike or
+/// wrong-method route from silently receiving this stronger policy.
+fn opaque_native_route(method: &axum::http::Method, path: &str) -> Option<&'static str> {
     let route = crate::route_contract::route_for_path(method, path)?;
-    let template = route.template;
-    let history_or_notes = template.starts_with("/api/services/codex/v1/alpha/history/v2/")
-        || template.starts_with("/api/services/codex/v1/alpha/notes/v2/");
-    let remote_control =
-        template.starts_with("/api/services/codex/backend-api/wham/remote/control/");
-    let analytics = template == "/api/services/codex/backend-api/codex/analytics-events/events";
-    (history_or_notes || remote_control || analytics).then_some(template)
+    matches!(
+        route.id,
+        crate::route_contract::RouteId::NativeOpenAi
+            | crate::route_contract::RouteId::NativeAnthropic
+            | crate::route_contract::RouteId::NativeCodex
+            | crate::route_contract::RouteId::NativeCodexBackend
+    )
+    .then_some(route.template)
 }
 
 fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
@@ -680,11 +682,11 @@ fn upstream_request_id(headers: &HeaderMap) -> Option<&str> {
 
 /// URI safe for process diagnostics and HTTP tracing.
 ///
-/// Private Codex control-plane routes are reduced to their static route
-/// template; ordinary routes retain their path and generically redacted query.
+/// Native vendor routes are reduced to their static route template; ordinary
+/// routes retain their path and generically redacted query.
 #[must_use]
 pub fn safe_http_uri(method: &axum::http::Method, uri: &axum::http::Uri) -> String {
-    opaque_codex_route(method, uri.path())
+    opaque_native_route(method, uri.path())
         .map_or_else(|| redacted_uri(&uri.to_string()), str::to_string)
 }
 
@@ -736,7 +738,7 @@ pub async fn log_http_exchange(
         logger: Arc::clone(&state.request_log),
         correlation_id: correlation_id.clone(),
     };
-    if let Some(route) = opaque_codex_route(&parts.method, parts.uri.path()) {
+    if let Some(route) = opaque_native_route(&parts.method, parts.uri.path()) {
         parts
             .extensions
             .insert(RequestCorrelationId(correlation_id.clone()));

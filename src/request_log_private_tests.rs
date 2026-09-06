@@ -24,16 +24,19 @@ fn every_private_codex_control_plane_route_is_opaque_and_uses_its_template() {
     ];
     for path in exact_post {
         assert_eq!(
-            opaque_codex_route(&Method::POST, path),
+            opaque_native_route(&Method::POST, path),
             Some(path),
             "{path}"
         );
     }
 
     let websocket = "/api/services/codex/backend-api/wham/remote/control/server";
-    assert_eq!(opaque_codex_route(&Method::GET, websocket), Some(websocket));
     assert_eq!(
-        opaque_codex_route(
+        opaque_native_route(&Method::GET, websocket),
+        Some(websocket)
+    );
+    assert_eq!(
+        opaque_native_route(
             &Method::GET,
             "/api/services/codex/backend-api/wham/remote/control/environments/private-environment/clients",
         ),
@@ -42,7 +45,7 @@ fn every_private_codex_control_plane_route_is_opaque_and_uses_its_template() {
         )
     );
     assert_eq!(
-        opaque_codex_route(
+        opaque_native_route(
             &Method::DELETE,
             "/api/services/codex/backend-api/wham/remote/control/environments/private-environment/clients/private-client",
         ),
@@ -53,20 +56,44 @@ fn every_private_codex_control_plane_route_is_opaque_and_uses_its_template() {
 }
 
 #[test]
+fn every_native_vendor_service_route_is_opaque() {
+    use crate::route_contract::{RouteId, route_specs};
+
+    for route in route_specs().iter().filter(|route| {
+        matches!(
+            route.id,
+            RouteId::NativeOpenAi
+                | RouteId::NativeAnthropic
+                | RouteId::NativeCodex
+                | RouteId::NativeCodexBackend
+        )
+    }) {
+        let method = Method::from_bytes(route.method.as_str().as_bytes()).unwrap();
+        assert_eq!(
+            opaque_native_route(&method, route.template),
+            Some(route.template),
+            "{} {}",
+            route.method.as_str(),
+            route.template
+        );
+    }
+}
+
+#[test]
 fn ordinary_and_wrong_method_routes_keep_the_normal_logging_policy() {
     assert_eq!(
-        opaque_codex_route(&Method::POST, "/api/services/codex/v1/responses"),
+        opaque_native_route(&Method::POST, "/api/services/codex/v1/responses"),
         None
     );
     assert_eq!(
-        opaque_codex_route(
+        opaque_native_route(
             &Method::GET,
             "/api/services/codex/v1/alpha/notes/v2/read_file"
         ),
         None
     );
     assert_eq!(
-        opaque_codex_route(
+        opaque_native_route(
             &Method::POST,
             "/api/services/codex/backend-api/wham/remote/control/not-a-route"
         ),

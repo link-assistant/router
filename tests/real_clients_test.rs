@@ -147,12 +147,21 @@ impl MockRouter {
             while !stopped.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
-                        let request = read_request(&mut stream);
+                        let Some(request) = read_request(&mut stream) else {
+                            continue;
+                        };
                         let response = mock_response(case, &models, &request);
                         captured.lock().expect("capture request").push(request);
-                        stream
-                            .write_all(&response)
-                            .expect("write offline Router response");
+                        if let Err(error) = stream.write_all(&response)
+                            && !matches!(
+                                error.kind(),
+                                std::io::ErrorKind::BrokenPipe
+                                    | std::io::ErrorKind::ConnectionReset
+                                    | std::io::ErrorKind::ConnectionAborted
+                            )
+                        {
+                            panic!("write offline Router response: {error}");
+                        }
                     }
                     Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
                         thread::sleep(Duration::from_millis(10));
@@ -218,21 +227,32 @@ fn command_exists(command: &str) -> bool {
     })
 }
 
-fn read_request(stream: &mut TcpStream) -> CapturedRequest {
+fn read_request(stream: &mut TcpStream) -> Option<CapturedRequest> {
     stream
         .set_read_timeout(Some(Duration::from_secs(10)))
         .expect("set mock read timeout");
     let mut bytes = Vec::new();
     let mut buffer = [0_u8; 16 * 1024];
     loop {
-        let count = stream.read(&mut buffer).expect("read mock request");
-        assert_ne!(count, 0, "client closed an incomplete HTTP request");
+        let count = match stream.read(&mut buffer) {
+            Ok(0) => return None,
+            Ok(count) => count,
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                return None;
+            }
+            Err(error) => panic!("read mock request: {error}"),
+        };
         bytes.extend_from_slice(&buffer[..count]);
         if request_is_complete(&bytes) {
             break;
         }
     }
-    parse_request(&bytes)
+    Some(parse_request(&bytes))
 }
 
 fn request_is_complete(bytes: &[u8]) -> bool {
