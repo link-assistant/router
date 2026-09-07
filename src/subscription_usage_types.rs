@@ -79,7 +79,7 @@ pub struct SubscriptionUsage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plan: Option<String>,
     pub windows: Vec<UsageWindow>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub additional_limits: Vec<NamedLimit>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credits: Option<Credits>,
@@ -154,7 +154,7 @@ pub struct NamedLimit {
     pub allowed: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit_reached: Option<bool>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub windows: Vec<UsageWindow>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub used: Option<f64>,
