@@ -96,6 +96,16 @@ ChatGPT. Exact cross-client experimentation requires
 and is audited. Gemini and Qwen rows cannot be overridden until their consumer
 terms are recorded. Protocol compatibility alone never grants access.
 
+A trusted proxy may deliberately present a non-native caller under an existing
+Codex-bound token with `--allow-proxied-client codex` (or
+`PROXIED_CLIENT_OVERRIDES=codex`). This separate, default-off exception accepts
+`X-Link-Assistant-Proxied-Client: codex` plus Bearer authentication for canonical Codex
+`POST responses` without the native Codex CLI fingerprint. Canonical `GET
+models` already accepts a Codex-bound token plus the ordinary
+`X-Link-Assistant-Client: codex` classifier without the exception. It
+neither grants a generic token subscription access nor enables any other Codex
+route; proxied inference is marked in audit records when auditing is enabled.
+
 The credential files are produced by each vendor's own CLI (run its `login`
 once). The router refreshes expiring access tokens with the vendor's public
 OAuth client. When the vendor rotates the refresh token, the router preserves
@@ -833,6 +843,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
+| `--allow-proxied-client` / `PROXIED_CLIENT_OVERRIDES` | — | No | Repeatable reviewed proxy identity; currently only `codex`, permitting a Codex-bound Bearer token plus `X-Link-Assistant-Proxied-Client: codex` to call canonical Codex Responses without the native CLI fingerprint |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
 | `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |

@@ -3,8 +3,9 @@ use axum::extract::{OriginalUri, State};
 use axum::http::{HeaderMap, Request, StatusCode};
 
 use crate::client_policy::{
-    ClientProtocol, EntitlementDecision, SubscriptionEntitlementPolicy, authorize_subscription,
-    request_evidence,
+    ClientProtocol, EntitlementDecision, PROXIED_CLIENT_EVIDENCE_HEADER,
+    PROXIED_CODEX_EVIDENCE_VALUE, RequestEvidence, SubscriptionEntitlementPolicy,
+    authorize_subscription, request_evidence,
 };
 use crate::clients::ClientKind;
 use crate::subscription::SubscriptionProvider;
@@ -173,6 +174,166 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
         "/v1/responses",
         &spoofed
     ));
+}
+
+fn proxied_codex_headers() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    headers.insert(
+        PROXIED_CLIENT_EVIDENCE_HEADER,
+        PROXIED_CODEX_EVIDENCE_VALUE.parse().unwrap(),
+    );
+    headers
+}
+
+#[test]
+fn proxied_codex_evidence_is_off_by_default_and_exact_when_enabled() {
+    let disabled = SubscriptionEntitlementPolicy::default();
+    let enabled = SubscriptionEntitlementPolicy::default()
+        .with_proxied_clients(["codex"])
+        .expect("reviewed proxy contract");
+    let mut catalog_headers = HeaderMap::new();
+    catalog_headers.insert("authorization", "Bearer redacted".parse().unwrap());
+    catalog_headers.insert("x-link-assistant-client", "codex".parse().unwrap());
+
+    assert_eq!(
+        disabled.request_evidence(
+            ClientKind::Codex,
+            ClientProtocol::Catalog,
+            "/api/services/codex/v1/models",
+            &catalog_headers,
+        ),
+        RequestEvidence::Native,
+        "canonical catalog marker is existing v1.3.1 native evidence"
+    );
+    assert_eq!(
+        enabled.request_evidence(
+            ClientKind::Codex,
+            ClientProtocol::Catalog,
+            "/api/services/codex/v1/models",
+            &catalog_headers,
+        ),
+        RequestEvidence::Native
+    );
+    let headers = proxied_codex_headers();
+    assert_eq!(
+        disabled.request_evidence(
+            ClientKind::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &headers,
+        ),
+        RequestEvidence::Denied
+    );
+    assert_eq!(
+        enabled.request_evidence(
+            ClientKind::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &headers,
+        ),
+        RequestEvidence::Proxied
+    );
+
+    for (protocol, path) in [
+        (ClientProtocol::OpenAIResponses, "/v1/responses"),
+        (
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses/response-1",
+        ),
+        (
+            ClientProtocol::OpenAIChat,
+            "/api/services/codex/v1/responses",
+        ),
+    ] {
+        assert_eq!(
+            enabled.request_evidence(ClientKind::Codex, protocol, path, &headers),
+            RequestEvidence::Denied,
+            "unexpected proxy evidence for {protocol:?} {path}"
+        );
+    }
+
+    let mut no_bearer = HeaderMap::new();
+    no_bearer.insert("x-api-key", "redacted".parse().unwrap());
+    no_bearer.insert(
+        PROXIED_CLIENT_EVIDENCE_HEADER,
+        PROXIED_CODEX_EVIDENCE_VALUE.parse().unwrap(),
+    );
+    assert_eq!(
+        enabled.request_evidence(
+            ClientKind::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &no_bearer,
+        ),
+        RequestEvidence::Denied
+    );
+}
+
+#[test]
+fn proxied_codex_authorization_is_distinct_and_provider_scoped() {
+    let policy = SubscriptionEntitlementPolicy::parse(["codex:claude"])
+        .unwrap()
+        .with_proxied_clients(["codex"])
+        .unwrap();
+    let headers = proxied_codex_headers();
+
+    assert_eq!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &headers,
+        ),
+        Ok(EntitlementDecision::Proxied)
+    );
+    assert!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Claude,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &headers,
+        )
+        .is_err(),
+        "the proxy evidence must not activate a separate bridge override"
+    );
+
+    let mut spoofed_native = headers;
+    spoofed_native.insert("user-agent", "codex_exec/0.153.0".parse().unwrap());
+    spoofed_native.insert(
+        "x-openai-internal-codex-responses-lite",
+        "true".parse().unwrap(),
+    );
+    assert_eq!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &spoofed_native,
+        ),
+        Ok(EntitlementDecision::Proxied),
+        "the dedicated proxy marker must prevent spoofed native passthrough semantics"
+    );
+
+    spoofed_native.remove(PROXIED_CLIENT_EVIDENCE_HEADER);
+    assert_eq!(
+        authorize_subscription(
+            &policy,
+            &bound_claims("codex"),
+            SubscriptionProvider::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+            &spoofed_native,
+        ),
+        Ok(EntitlementDecision::Native),
+        "real native evidence remains native without the proxy marker"
+    );
 }
 
 #[test]

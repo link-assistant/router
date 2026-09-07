@@ -85,6 +85,47 @@ codex "explain this repository"
 | `openai-compatible`, `gonka`, `crater` | ordinary provider credential/transport rules apply |
 | `z.ai-coding-plan` | experimental exact-ID live-catalog Responses route — see [zai-coding-plan.md](zai-coding-plan.md) |
 
+## Trusted proxy compatibility
+
+By default a Codex-bound token must also carry the native Codex request
+fingerprint. A deployment with a trusted fixed proxy can opt into the narrower
+proxy contract:
+
+```bash
+router serve --allow-proxied-client codex
+# equivalent: PROXIED_CLIENT_OVERRIDES=codex
+```
+
+The proxied request must use `Authorization: Bearer ...` with a Router-issued
+token whose signed `client_kind` is `codex`, and must include:
+
+```http
+X-Link-Assistant-Proxied-Client: codex
+```
+
+Canonical catalog discovery already accepts a Codex-bound token plus the
+ordinary `X-Link-Assistant-Client: codex` classifier without this option:
+
+```text
+GET  /api/services/codex/v1/models
+```
+
+The option adds only this exact inference operation:
+
+```text
+POST /api/services/codex/v1/responses
+```
+
+The dedicated proxy marker takes precedence over native fingerprint headers, so
+a proxy caller cannot obtain native passthrough merely by copying Codex's
+User-Agent or internal turn headers. The option does not accept legacy or
+unbound tokens, `X-Api-Key`, `/v1`
+aliases, response lifecycle endpoints, conversations, Realtime, or Codex
+control-plane routes. It also cannot combine with a subscription bridge to
+reach a provider other than Codex. Router strips the marker before dispatch,
+uses its own upstream Codex identity, emits a startup warning, and writes
+`"proxied_client_override":"codex"` on authorised inference audit records.
+
 ### Tools that do not cross to another vendor
 
 Codex CLI sends a tool set richer than the `function` and server-side tools

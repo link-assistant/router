@@ -15,6 +15,9 @@ use tokio::sync::Barrier;
 
 const MODEL: &str = "generation-evidence-model";
 
+#[path = "proxied_codex_tests.rs"]
+mod proxied_codex_tests;
+
 struct StreamDropSignal(Option<tokio::sync::oneshot::Sender<()>>);
 
 impl Drop for StreamDropSignal {

@@ -253,10 +253,13 @@ async fn forward_subscription_openai_inner(
     // evidence must instead be checked against the client-facing protocol;
     // otherwise a legitimate Claude request bridged to Codex is compared with
     // `/v1/responses` and denied before dispatch.
-    let client_path = match surface {
-        Surface::Anthropic => "/v1/messages",
-        Surface::OpenAIChat => "/v1/chat/completions",
-        Surface::OpenAIResponses => "/v1/responses",
+    let client_path = match (surface, native_route, provider) {
+        (Surface::OpenAIResponses, true, SubscriptionProvider::Codex) => {
+            "/api/services/codex/v1/responses"
+        }
+        (Surface::Anthropic, _, _) => "/v1/messages",
+        (Surface::OpenAIChat, _, _) => "/v1/chat/completions",
+        (Surface::OpenAIResponses, _, _) => "/v1/responses",
     };
     let entitlement = match entitlement {
         Some(entitlement) => entitlement,
@@ -288,13 +291,14 @@ async fn forward_subscription_openai_inner(
         reserved,
     );
     let resolved_model = body.get("model").and_then(serde_json::Value::as_str);
-    crate::audit::record_authorised_request_with_resolved_model(
+    crate::audit::record_authorised_request_with_resolved_model_and_entitlement(
         state,
         &claims,
         surface,
         path,
         Some(routing_body),
         resolved_model,
+        Some(entitlement),
     );
 
     let responses_mode = codex_responses_mode(provider, headers);

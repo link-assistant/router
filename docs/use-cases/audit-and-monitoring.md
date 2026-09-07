@@ -107,6 +107,9 @@ One JSON object per line is appended as each request is authorised:
 | `provider` | Upstream that served it: `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible` |
 | `surface` | Client-facing dialect: `anthropic`, `openai_chat`, `openai_responses` |
 | `path` | Request path as the router saw it |
+| `client_kind` | Signed managed-client binding, when present |
+| `subscription_override` | Exact cross-provider bridge used, when present |
+| `proxied_client_override` | Native identity accepted through an enabled trusted-proxy contract, such as `codex` |
 | `model` | Model the client asked for, when the body carried one (omitted otherwise) |
 
 ### What the log deliberately does not contain

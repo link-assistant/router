@@ -485,6 +485,10 @@ impl Config {
             .ok()
             .map(|raw| parse_csv(&raw))
             .unwrap_or_default();
+        let proxied_client_overrides = env::var("PROXIED_CLIENT_OVERRIDES")
+            .ok()
+            .map(|raw| parse_csv(&raw))
+            .unwrap_or_default();
         let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
         let allow_anonymous_admin = env::var("ALLOW_ANONYMOUS_ADMIN")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
@@ -551,6 +555,7 @@ impl Config {
             account_request_limits,
             experimental_compatibility,
             subscription_bridge_overrides,
+            proxied_client_overrides,
             admin_key,
             allow_anonymous_admin,
             mpp,
@@ -656,7 +661,9 @@ impl Config {
                 crate::client_policy::SubscriptionEntitlementPolicy::parse(
                     args.subscription_bridge_overrides,
                 )
-                .map_err(ConfigError::InvalidSubscriptionBridgePolicy)?,
+                .map_err(ConfigError::InvalidSubscriptionBridgePolicy)?
+                .with_proxied_clients(args.proxied_client_overrides)
+                .map_err(ConfigError::InvalidProxiedClientPolicy)?,
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
             mpp: args.mpp,
@@ -711,6 +718,8 @@ pub struct BuildArgs<'a> {
     pub account_request_limits: Vec<usize>,
     pub experimental_compatibility: bool,
     pub subscription_bridge_overrides: Vec<String>,
+    /// Native client identities whose reviewed proxy fingerprint is enabled.
+    pub proxied_client_overrides: Vec<String>,
     pub admin_key: Option<String>,
     pub allow_anonymous_admin: bool,
     pub mpp: crate::mpp::MppConfig,
@@ -808,6 +817,8 @@ pub enum ConfigError {
     InvalidBridgeModelPolicy(String),
     /// A consumer-subscription bridge override was not an exact reviewed cell.
     InvalidSubscriptionBridgePolicy(String),
+    /// A proxied-client override did not name a reviewed proxy contract.
+    InvalidProxiedClientPolicy(String),
     /// The multi-account strategy was not recognised.
     InvalidAccountRoutingStrategy,
     /// An account request cap was not a non-negative integer.
@@ -848,7 +859,8 @@ impl std::fmt::Display for ConfigError {
                 "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
             ),
             Self::InvalidBridgeModelPolicy(message)
-            | Self::InvalidSubscriptionBridgePolicy(message) => write!(f, "{message}"),
+            | Self::InvalidSubscriptionBridgePolicy(message)
+            | Self::InvalidProxiedClientPolicy(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

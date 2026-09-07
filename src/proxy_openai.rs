@@ -693,12 +693,17 @@ async fn openai_responses_with_route(
         Err(response) => return response,
     };
     let routing_body = body.clone();
+    let client_path = if native_route {
+        "/api/services/codex/v1/responses"
+    } else {
+        "/v1/responses"
+    };
     let routed = match route_openai_request(
         &state,
         &headers,
         &body,
         crate::client_policy::ClientProtocol::OpenAIResponses,
-        "/v1/responses",
+        client_path,
     )
     .await
     {
@@ -740,7 +745,7 @@ async fn openai_responses_with_route(
             &headers,
             provider,
             crate::client_policy::ClientProtocol::OpenAIResponses,
-            "/v1/responses",
+            client_path,
         )
     {
         return response;

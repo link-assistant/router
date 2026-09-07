@@ -213,6 +213,44 @@ fn connection_nominated_request_headers_never_reach_the_upstream() {
 }
 
 #[test]
+fn repeated_client_identity_markers_never_reach_the_upstream() {
+    let mut incoming = HeaderMap::new();
+    incoming.append("x-link-assistant-client", HeaderValue::from_static("codex"));
+    incoming.append(
+        "x-link-assistant-client",
+        HeaderValue::from_static("spoofed-second-value"),
+    );
+    incoming.append(
+        crate::client_policy::PROXIED_CLIENT_EVIDENCE_HEADER,
+        HeaderValue::from_static(crate::client_policy::PROXIED_CODEX_EVIDENCE_VALUE),
+    );
+    incoming.append(
+        crate::client_policy::PROXIED_CLIENT_EVIDENCE_HEADER,
+        HeaderValue::from_static("spoofed-second-value"),
+    );
+    incoming.append(
+        "x-link-assistant-trace",
+        HeaderValue::from_static("private"),
+    );
+
+    let upstream = native_request_headers(&incoming, "upstream-secret");
+
+    assert_eq!(
+        upstream.get_all("x-link-assistant-client").iter().count(),
+        0
+    );
+    assert_eq!(
+        upstream
+            .get_all(crate::client_policy::PROXIED_CLIENT_EVIDENCE_HEADER)
+            .iter()
+            .count(),
+        0
+    );
+    assert!(upstream.get("x-link-assistant-trace").is_none());
+    assert_eq!(upstream["authorization"], "Bearer upstream-secret");
+}
+
+#[test]
 fn native_websocket_handshake_headers_are_regenerated_per_connection() {
     let mut incoming = HeaderMap::new();
     incoming.insert("upgrade", HeaderValue::from_static("websocket"));

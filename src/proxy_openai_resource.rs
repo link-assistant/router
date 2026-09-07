@@ -34,7 +34,19 @@ pub(crate) async fn route_openai_request(
         .map_err(|error| {
             crate::proxy::error_response(StatusCode::FORBIDDEN, "permission_error", &error)
         })?;
-    if !crate::client_policy::request_evidence(client, protocol, path, headers) {
+    let policy = state
+        .provider_store
+        .subscription_entitlement_policy()
+        .map_err(|error| {
+            crate::proxy::error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &format!("could not read subscription entitlement policy: {error}"),
+            )
+        })?;
+    if policy.request_evidence(client, protocol, path, headers)
+        == crate::client_policy::RequestEvidence::Denied
+    {
         return Err(crate::proxy::error_response(
             StatusCode::FORBIDDEN,
             "permission_error",
