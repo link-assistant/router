@@ -174,6 +174,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.3.2] - 2026-09-07
+
+### Added
+- Nix flake (`flake.nix` / `flake.lock`) exposing `packages.default`, `apps.default` (plus `apps.with-router`), `devShells.default` and `checks`, so `nix build`, `nix run .`, `nix develop` and `nix flake check` work from a clean checkout. `cargo build`, release binaries, Docker and CI are unaffected.
+
 ## [1.3.1] - 2026-09-07
 
 ### Fixed
