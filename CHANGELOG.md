@@ -177,6 +177,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.4.2] - 2026-09-07
+
+### Fixed
+- Let `router usage` deserialize same-version server responses that omit empty additional-limit and nested window collections ([#543](https://github.com/link-assistant/router/issues/543)).
+
 ## [1.4.1] - 2026-09-07
 
 ### Fixed
