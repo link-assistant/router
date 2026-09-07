@@ -136,7 +136,11 @@ fn setup(home: &Path, storage: &str, client: &str, token: Option<&str>) -> Outpu
         mock_router(&[model], 1)
     });
     let base_url = catalog.as_ref().map_or_else(
-        || "http://router.test:8080".to_string(),
+        // This suite owns managed-token persistence and revocation. Keep its
+        // non-catalog clients on loopback so it cannot also create a detached
+        // Codex bridge whose Windows process lifetime is intentionally longer
+        // than the setup command that launched it.
+        || "http://127.0.0.1:9".to_string(),
         |(url, _)| url.clone(),
     );
     let mut args = vec!["clients", "setup", client, "--base-url", &base_url];
