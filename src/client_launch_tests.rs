@@ -302,6 +302,51 @@ fn codex_cloud_is_rejected_before_launch_planning() {
     assert!(unsupported_native_command(&args(ClientKind::ClaudeCode, &["cloud"])).is_none());
 }
 
+/// Claude Code 2.1.263 resolves authentication once for the whole process.
+/// A Router bearer therefore makes every Claude.ai-only operation fail even
+/// when the untouched stored login has the required scopes (issue #520).
+/// Reject explicit requests before server discovery or token minting instead
+/// of launching a client that cannot perform what was requested.
+#[test]
+fn claude_ai_only_operations_are_rejected_before_launch() {
+    for arguments in [
+        vec!["remote-control"],
+        vec!["--remote-control"],
+        vec!["--remote-control=work"],
+        vec!["--rc"],
+        vec!["--cloud", "audit"],
+        vec!["--cloud=session_synthetic"],
+        vec!["--environment", "ccpool_synthetic"],
+        vec!["--teleport", "session_synthetic"],
+        vec!["ultrareview", "main"],
+        vec!["--", "--remote-control"],
+    ] {
+        let error = unsupported_native_command(&args(ClientKind::ClaudeCode, &arguments))
+            .unwrap_or_else(|| panic!("{arguments:?} must fail before launch"));
+        assert!(error.contains("Claude.ai"), "{arguments:?}: {error}");
+        assert!(
+            error.contains("no Router token was minted"),
+            "{arguments:?}: {error}"
+        );
+    }
+}
+
+#[test]
+fn ordinary_claude_inference_arguments_remain_routable() {
+    for arguments in [
+        vec!["fix the tests"],
+        vec!["--model", "sonnet", "fix the tests"],
+        vec!["--resume", "local-session"],
+        vec!["--chrome", "fix the tests"],
+        vec!["mcp", "list"],
+    ] {
+        assert!(
+            unsupported_native_command(&args(ClientKind::ClaudeCode, &arguments)).is_none(),
+            "{arguments:?} is not an explicit Claude.ai-only operation"
+        );
+    }
+}
+
 #[test]
 fn codex_cloud_is_found_after_every_current_root_option_shape() {
     for arguments in [

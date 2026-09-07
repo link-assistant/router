@@ -43,6 +43,12 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     // reversal and the client list were four separate disagreements between
     // them (issue #296).
     if args.global || args.undo {
+        if args.client == ClientKind::ClaudeCode && !args.undo {
+            eprintln!(
+                "warning: {}",
+                crate::client_launch::CLAUDE_NATIVE_SERVICES_LIMITATION
+            );
+        }
         return Ok(crate::configure::run(&args.as_configure()).await);
     }
     if args.reset_to_default_configuration && args.client != ClientKind::ClaudeCode {
@@ -50,9 +56,6 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     }
     if args.reset_to_default_configuration {
         confirm_claude_profile_reset(args.yes)?;
-    }
-    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
-        return Err(error.into());
     }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
@@ -63,6 +66,15 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     }
     if args.client == ClientKind::ClaudeCode {
         crate::clients::require_claude_gateway_version()?;
+    }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
+    }
+    if args.client == ClientKind::ClaudeCode {
+        eprintln!(
+            "warning: {}",
+            crate::client_launch::CLAUDE_NATIVE_SERVICES_LIMITATION
+        );
     }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)
