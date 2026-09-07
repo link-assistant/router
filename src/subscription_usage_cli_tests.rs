@@ -147,10 +147,8 @@ fn human_output_explains_pool_coverage_and_distinct_reset_times() {
     });
     usage.windows[0].resets_at = None;
     usage.windows[0].contributors = Some(2);
-    usage.windows[0].reset_times = vec![
-        "2030-01-01T00:00:00Z".into(),
-        "2030-01-01T01:00:00Z".into(),
-    ];
+    usage.windows[0].reset_times =
+        vec!["2030-01-01T00:00:00Z".into(), "2030-01-01T01:00:00Z".into()];
 
     let output = format_envelope(&envelope, false).unwrap();
 
@@ -159,9 +157,8 @@ fn human_output_explains_pool_coverage_and_distinct_reset_times() {
         "{output}"
     );
     assert!(
-        output.contains(
-            "resets vary: 2030-01-01T00:00:00Z, 2030-01-01T01:00:00Z, 2 contributor(s)"
-        ),
+        output
+            .contains("resets vary: 2030-01-01T00:00:00Z, 2030-01-01T01:00:00Z, 2 contributor(s)"),
         "{output}"
     );
 }

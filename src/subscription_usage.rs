@@ -6,6 +6,7 @@ use base64::Engine as _;
 use bytes::{Bytes, BytesMut};
 use futures_util::StreamExt as _;
 use serde_json::Value;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::app_state::AppState;
 use crate::client_policy::ClientProtocol;
@@ -18,7 +19,7 @@ pub(crate) const MAX_USAGE_BODY: usize = 2 * 1024 * 1024;
 mod types;
 pub use types::{
     Credits, ExtraUsage, NamedLimit, SpendControl, SpendLimit, SubscriptionUsage, UsageEnvelope,
-    UsageProvider, UsageState, UsageWindow,
+    UsagePool, UsageProvider, UsageState, UsageWindow,
 };
 
 #[path = "subscription_usage_normalize.rs"]
@@ -117,6 +118,16 @@ async fn usage_impl(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let selected = match selected {
+        Some(name) => match parse_provider(name) {
+            Some(provider) => Some(provider),
+            None => return error(StatusCode::NOT_FOUND, "unknown usage provider"),
+        },
+        None => None,
+    };
+    if claims.is_admin() {
+        return administrative_usage(state, &claims.sub, selected).await;
+    }
     let Ok((client, principal)) = crate::client_policy::bound_client(&claims) else {
         return error(
             StatusCode::FORBIDDEN,
@@ -129,14 +140,6 @@ async fn usage_impl(
             "request evidence does not match the token's managed-client binding",
         );
     }
-
-    let selected = match selected {
-        Some(name) => match parse_provider(name) {
-            Some(provider) => Some(provider),
-            None => return error(StatusCode::NOT_FOUND, "unknown usage provider"),
-        },
-        None => None,
-    };
 
     let providers = selected.map_or_else(|| UsageProvider::ALL.to_vec(), |one| vec![one]);
     let mut subscriptions = Vec::new();
@@ -169,6 +172,164 @@ async fn usage_impl(
         }),
     )
         .into_response()
+}
+
+async fn administrative_usage(
+    state: AppState,
+    subject: &str,
+    selected: Option<UsageProvider>,
+) -> Response {
+    let providers = selected.map_or_else(|| UsageProvider::ALL.to_vec(), |one| vec![one]);
+    let mut subscriptions = Vec::new();
+    for provider in providers {
+        if let Some(usage) = administrative_provider_usage(&state, subject, provider).await {
+            subscriptions.push(usage);
+        } else if selected.is_some() {
+            return error(
+                StatusCode::NOT_FOUND,
+                "the requested subscription provider is not configured",
+            );
+        }
+    }
+    (
+        StatusCode::OK,
+        axum::Json(UsageEnvelope {
+            schema_version: SCHEMA_VERSION,
+            subscriptions,
+        }),
+    )
+        .into_response()
+}
+
+async fn administrative_provider_usage(
+    state: &AppState,
+    subject: &str,
+    provider: UsageProvider,
+) -> Option<SubscriptionUsage> {
+    let pooled_accounts = provider.subscription().and_then(|subscription| {
+        state
+            .account_router
+            .as_ref()
+            .filter(|router| router.provider() == subscription)
+            .map(crate::accounts::AccountRouter::subscription_readers)
+    });
+    if let Some(accounts) = pooled_accounts {
+        let configured = accounts.len();
+        let mut samples = Vec::with_capacity(configured);
+        for (principal, _) in accounts {
+            let sample = match cache::cached_or_probe(state, subject, &principal, provider).await {
+                ProbeResult::Usage(usage) => Some(*usage),
+                ProbeResult::NotConfigured => None,
+            };
+            samples.push(sample);
+        }
+        return Some(aggregate_pool_usage(provider, configured, &samples));
+    }
+
+    match cache::cached_or_probe(
+        state,
+        subject,
+        crate::credential_recovery_store::PRIMARY_ACCOUNT,
+        provider,
+    )
+    .await
+    {
+        ProbeResult::Usage(usage) => Some(*usage),
+        ProbeResult::NotConfigured => None,
+    }
+}
+
+#[derive(Default)]
+struct AggregateWindow {
+    used: Vec<f64>,
+    remaining: Vec<f64>,
+    resets: BTreeSet<String>,
+    contributors: usize,
+}
+
+fn aggregate_pool_usage(
+    provider: UsageProvider,
+    configured: usize,
+    samples: &[Option<SubscriptionUsage>],
+) -> SubscriptionUsage {
+    let contributing = samples
+        .iter()
+        .flatten()
+        .filter(|sample| sample.state == UsageState::Available)
+        .count();
+    let mut windows: BTreeMap<(String, Option<u64>), AggregateWindow> = BTreeMap::new();
+    for sample in samples.iter().flatten() {
+        if sample.state != UsageState::Available {
+            continue;
+        }
+        for window in &sample.windows {
+            let aggregate = windows
+                .entry((window.name.clone(), window.window_seconds))
+                .or_default();
+            let supplied_percentage =
+                window.used_percentage.is_some() || window.remaining_percentage.is_some();
+            if let Some(used) = window.used_percentage {
+                aggregate.used.push(used);
+            }
+            if let Some(remaining) = window.remaining_percentage {
+                aggregate.remaining.push(remaining);
+            }
+            if let Some(reset) = &window.resets_at {
+                aggregate.resets.insert(reset.clone());
+            }
+            aggregate.contributors += usize::from(supplied_percentage);
+        }
+    }
+
+    let windows = windows
+        .into_iter()
+        .map(|((name, window_seconds), aggregate)| {
+            let reset_times = aggregate.resets.into_iter().collect::<Vec<_>>();
+            let resets_at = (reset_times.len() == 1).then(|| reset_times[0].clone());
+            let reset_times = if reset_times.len() > 1 {
+                reset_times
+            } else {
+                Vec::new()
+            };
+            UsageWindow {
+                name,
+                used_percentage: mean(&aggregate.used),
+                remaining_percentage: mean(&aggregate.remaining),
+                resets_at,
+                window_seconds,
+                contributors: Some(aggregate.contributors),
+                reset_times,
+            }
+        })
+        .collect();
+    let mut usage = empty_usage(provider);
+    usage.state = if contributing == 0 {
+        UsageState::Unavailable
+    } else {
+        UsageState::Available
+    };
+    usage.status = if contributing == 0 {
+        "all_accounts_unavailable"
+    } else if contributing < configured {
+        "partial"
+    } else {
+        "pooled"
+    }
+    .into();
+    usage.pool = Some(UsagePool {
+        configured_accounts: configured,
+        contributing_accounts: contributing,
+        unavailable_accounts: configured.saturating_sub(contributing),
+    });
+    usage.windows = windows;
+    usage
+}
+
+fn mean(values: &[f64]) -> Option<f64> {
+    let (sum, count) = values
+        .iter()
+        .fold((0.0, 0.0), |(sum, count), value| (sum + value, count + 1.0));
+    (count > 0.0).then_some(sum / count)
 }
 
 fn authorized(

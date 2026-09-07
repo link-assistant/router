@@ -418,11 +418,8 @@ mod tests {
         assert!(described.get("reasoning_metadata_source").is_none());
 
         let claude = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
-        for model in claude["data"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|entry| {
+        for model in
+            claude["data"].as_array().unwrap().iter().filter(|entry| {
                 entry["owned_by"] == "z.ai" && entry["id"] != "glm-provider-described"
             })
         {
@@ -437,11 +434,7 @@ mod tests {
             .find(|entry| entry["id"] == "glm-provider-described")
             .unwrap();
         assert_eq!(claude_described["default_reasoning_level"], "high");
-        assert!(
-            claude_described
-                .get("reasoning_metadata_source")
-                .is_none()
-        );
+        assert!(claude_described.get("reasoning_metadata_source").is_none());
     }
 
     #[test]

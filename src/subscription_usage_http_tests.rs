@@ -502,6 +502,7 @@ async fn administrative_usage_aggregates_available_pool_accounts_without_identif
         hits.iter()
             .all(|(path, _)| matches!(path.as_str(), "/api/oauth/usage" | "/api/oauth/profile"))
     );
+    drop(hits);
     server.abort();
 }
 
