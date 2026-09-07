@@ -33,6 +33,95 @@ pub struct RouterReasoningLevel {
     pub description: String,
 }
 
+/// Reasoning capabilities documented for one provider's Codex protocol.
+///
+/// This is intentionally provider-scoped rather than model-scoped: z.ai's
+/// authenticated catalogue is authoritative for the current model IDs, while
+/// its Codex integration guide publishes one capability profile for models
+/// served through the Responses adapter.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct CodexReasoningProfile {
+    default: &'static str,
+    levels: &'static [(&'static str, &'static str)],
+    source: &'static str,
+}
+
+impl CodexReasoningProfile {
+    #[must_use]
+    pub(crate) const fn default(self) -> &'static str {
+        self.default
+    }
+
+    #[must_use]
+    pub(crate) fn levels(self) -> Vec<RouterReasoningLevel> {
+        self.levels
+            .iter()
+            .map(|(effort, description)| RouterReasoningLevel {
+                effort: (*effort).to_string(),
+                description: (*description).to_string(),
+            })
+            .collect()
+    }
+
+    #[must_use]
+    pub(crate) fn supports(self, effort: &str) -> bool {
+        self.levels
+            .iter()
+            .any(|(supported, _)| *supported == effort)
+    }
+
+    #[must_use]
+    pub(crate) const fn source(self) -> &'static str {
+        self.source
+    }
+}
+
+/// Provider-level metadata for Codex-compatible catalogues whose live model
+/// records do not carry Codex's local-picker fields.
+#[must_use]
+pub(crate) fn codex_reasoning_profile(owner: &str) -> Option<CodexReasoningProfile> {
+    (owner == super::ZAI_MODEL_OWNER).then_some(CodexReasoningProfile {
+        default: "max",
+        levels: &[
+            ("low", "Light reasoning"),
+            ("high", "Enhanced reasoning"),
+            ("max", "Deep reasoning"),
+        ],
+        source: "provider-protocol:z.ai-codex",
+    })
+}
+
+fn apply_codex_reasoning_profile(model: &mut RouterModel) {
+    let Some(profile) = codex_reasoning_profile(&model.owned_by) else {
+        return;
+    };
+    if model.supported_reasoning_levels.is_none()
+        && model
+            .default_reasoning_level
+            .as_deref()
+            .is_none_or(|default| profile.supports(default))
+    {
+        model.supported_reasoning_levels = Some(profile.levels());
+    }
+    if model.default_reasoning_level.is_none()
+        && model
+            .supported_reasoning_levels
+            .as_ref()
+            .is_some_and(|levels| levels.iter().any(|level| level.effort == profile.default()))
+    {
+        model.default_reasoning_level = Some(profile.default().to_string());
+    }
+}
+
+/// Apply only reviewed provider-level fallbacks for the requesting client.
+pub(crate) fn apply_codex_reasoning_profiles(client: ClientKind, models: &mut [RouterModel]) {
+    if client == ClientKind::Codex {
+        for model in models {
+            apply_codex_reasoning_profile(model);
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct RouterCatalog {
     data: Vec<RouterModel>,
@@ -78,6 +167,7 @@ impl ClientManager {
             .into_iter()
             .filter(|model| !model.id.trim().is_empty())
             .collect::<Vec<_>>();
+        apply_codex_reasoning_profiles(client, &mut models);
         models.sort_by(|left, right| {
             left.id
                 .cmp(&right.id)

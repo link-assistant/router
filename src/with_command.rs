@@ -734,12 +734,41 @@ fn write_codex_model_catalog(
     if models.is_empty() {
         return Err("the Router advertised no models for Codex".into());
     }
+    let mut described = Vec::with_capacity(models.len());
+    let mut omitted = Vec::new();
     for model in models {
-        validate_codex_reasoning_metadata(model)?;
+        match validate_codex_reasoning_metadata(model) {
+            Ok(()) => described.push(model),
+            Err(error) if selected_model == Some(model.id.as_str()) => return Err(error),
+            Err(error) => omitted.push((model.id.as_str(), error.to_string())),
+        }
+    }
+    if !omitted.is_empty() {
+        let ids = omitted
+            .iter()
+            .map(|(id, _)| *id)
+            .collect::<Vec<_>>()
+            .join(", ");
+        eprintln!(
+            "warning: omitted Codex model(s) with unavailable reasoning metadata: {ids}; \
+             fully described models remain available"
+        );
+    }
+    if described.is_empty() {
+        let ids = omitted
+            .iter()
+            .map(|(id, _)| *id)
+            .collect::<Vec<_>>()
+            .join(", ");
+        return Err(format!(
+            "the live Codex catalog has no model with usable reasoning metadata; omitted: {ids}"
+        )
+        .into());
     }
     if let (Some(effort), Some(selected)) = (configured_effort, selected_model) {
-        let model = models
+        let model = described
             .iter()
+            .copied()
             .find(|model| model.id == selected)
             .ok_or_else(|| format!("the Router advertised no Codex model named `{selected}`"))?;
         if !model_supports_reasoning_effort(model, effort) {
@@ -750,8 +779,8 @@ fn write_codex_model_catalog(
             .into());
         }
     }
-    let compatible = models
-        .iter()
+    let compatible = described
+        .into_iter()
         .filter(|model| {
             configured_effort.is_none_or(|effort| model_supports_reasoning_effort(model, effort))
         })

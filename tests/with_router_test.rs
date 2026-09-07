@@ -532,68 +532,80 @@ fn standalone_with_router_uses_the_same_safe_contract() {
 
 #[test]
 fn router_with_codex_launches_with_live_chatgpt_and_zai_catalogs() {
-    let directory = tempfile::tempdir().expect("temporary test directory");
-    let home = directory.path().join("home");
-    let bin = directory.path().join("bin");
-    let capture = directory.path().join("capture");
-    let codex_home = home.join("codex-state");
-    fs::create_dir_all(&codex_home).expect("create Codex home");
-    fs::create_dir_all(&capture).expect("create capture directory");
-    fs::write(
-        codex_home.join("config.toml"),
-        "model_reasoning_effort = \"high\"\n",
-    )
-    .expect("seed explicit reasoning effort");
-    fake_codex(&bin);
-    let (server, requests) = mock_chatgpt_and_zai_catalog_router();
+    for (effort, expected_ids) in [
+        (
+            "high",
+            &["glm-live", "glm-newly-discovered", "gpt-live"][..],
+        ),
+        ("xhigh", &["gpt-live"][..]),
+    ] {
+        let directory = tempfile::tempdir().expect("temporary test directory");
+        let home = directory.path().join("home");
+        let bin = directory.path().join("bin");
+        let capture = directory.path().join("capture");
+        let codex_home = home.join("codex-state");
+        fs::create_dir_all(&codex_home).expect("create Codex home");
+        fs::create_dir_all(&capture).expect("create capture directory");
+        let original = format!("model_reasoning_effort = \"{effort}\"\n");
+        fs::write(codex_home.join("config.toml"), &original)
+            .expect("seed explicit reasoning effort");
+        fake_codex(&bin);
+        let (server, requests) = mock_chatgpt_and_zai_catalog_router();
 
-    let output = run_with(
-        env!("CARGO_BIN_EXE_link-assistant-router"),
-        &home,
-        &bin,
-        &capture,
-        &server,
-        false,
-    );
+        let output = run_with(
+            env!("CARGO_BIN_EXE_link-assistant-router"),
+            &home,
+            &bin,
+            &capture,
+            &server,
+            false,
+        );
 
-    assert_eq!(
-        output.status.code(),
-        Some(23),
-        "the child stub was not invoked; stdout: {}; stderr: {}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(
-        String::from_utf8_lossy(&output.stderr).contains("incomplete-unrelated"),
-        "the omitted capability limitation was not explicit: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    let catalog: serde_json::Value = serde_json::from_slice(
-        &fs::read(capture.join("model-catalog.json")).expect("captured model catalog"),
-    )
-    .expect("valid generated model catalog");
-    let models = catalog["models"].as_array().unwrap();
-    let ids = models
-        .iter()
-        .map(|model| model["slug"].as_str().unwrap())
-        .collect::<Vec<_>>();
-    assert_eq!(ids, ["glm-live", "glm-newly-discovered", "gpt-live"]);
-    for model in models {
-        let default = model["default_reasoning_level"].as_str().unwrap();
+        assert_eq!(
+            output.status.code(),
+            Some(23),
+            "the child stub was not invoked for {effort}; stdout: {}; stderr: {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
         assert!(
-            model["supported_reasoning_levels"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .any(|level| level["effort"] == default),
-            "invalid reasoning metadata for {model}"
+            String::from_utf8_lossy(&output.stderr).contains("incomplete-unrelated"),
+            "the omitted capability limitation was not explicit: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            fs::read_to_string(capture.join("config")).expect("captured real config"),
+            original,
+            "the wrapper must preserve the caller's {effort} configuration"
+        );
+        let catalog: serde_json::Value = serde_json::from_slice(
+            &fs::read(capture.join("model-catalog.json")).expect("captured model catalog"),
+        )
+        .expect("valid generated model catalog");
+        let models = catalog["models"].as_array().unwrap();
+        let mut ids = models
+            .iter()
+            .map(|model| model["slug"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        ids.sort_unstable();
+        assert_eq!(ids, expected_ids, "wrong {effort} compatibility filter");
+        for model in models {
+            let default = model["default_reasoning_level"].as_str().unwrap();
+            assert!(
+                model["supported_reasoning_levels"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|level| level["effort"] == default),
+                "invalid reasoning metadata for {model}"
+            );
+        }
+        assert_eq!(
+            requests.join().expect("mock router thread"),
+            ["/api/health", "/api/management/tokens", "/api/models"],
+            "catalog generation must not send inference"
         );
     }
-    assert_eq!(
-        requests.join().expect("mock router thread"),
-        ["/api/health", "/api/management/tokens", "/api/models"],
-        "catalog generation must not send inference"
-    );
 }
 
 #[test]

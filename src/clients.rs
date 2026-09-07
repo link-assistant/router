@@ -28,11 +28,12 @@ pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipSt
 pub use repair::{RepairPlan, RepairResult};
 pub use types::{ClientError, ClientStatus, SetupResult};
 
-pub(crate) use catalog::RouterModel;
 #[cfg(test)]
 pub(crate) use catalog::RouterReasoningLevel;
+pub(crate) use catalog::apply_codex_reasoning_profiles;
 pub(crate) use catalog::claude_gateway_model;
 use catalog::doctor_model;
+pub(crate) use catalog::{CodexReasoningProfile, RouterModel};
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
 pub(crate) use doctor::require_claude_gateway_version;
@@ -82,6 +83,10 @@ pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
 /// (issue #309).
 const DOCTOR_MAX_TOKENS: u32 = 64;
 pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
+
+pub(crate) fn codex_reasoning_profile(owner: &str) -> Option<CodexReasoningProfile> {
+    catalog::codex_reasoning_profile(owner)
+}
 
 /// How a client can be isolated from its normal user configuration.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
