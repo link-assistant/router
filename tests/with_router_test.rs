@@ -930,3 +930,5 @@ fn persisted_remote_token_is_private_and_never_echoed() {
 mod claude_profile_test;
 #[path = "with_router/session_test.rs"]
 mod session_test;
+#[path = "with_router/zai_catalog_test.rs"]
+mod zai_catalog_test;

@@ -30,7 +30,7 @@ async fn run_with_limit(
 ) -> ExitCode {
     let Some(token) = token.filter(|token| !token.is_empty()) else {
         eprintln!(
-            "error: subscription usage requires a Router client token; set LINK_ASSISTANT_TOKEN or select a server with a client token"
+            "error: subscription usage requires a Router credential; set LINK_ASSISTANT_TOKEN or select a server with a saved client or administrative token"
         );
         return ExitCode::from(2);
     };
@@ -126,6 +126,13 @@ fn format_envelope(envelope: &UsageEnvelope, json: bool) -> Result<String, Strin
 fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
     let _ = writeln!(output, "{}", usage.provider.as_str());
     let _ = writeln!(output, "  status: {}", usage.status);
+    if let Some(pool) = &usage.pool {
+        let _ = writeln!(
+            output,
+            "  accounts: {} configured, {} contributing, {} unavailable",
+            pool.configured_accounts, pool.contributing_accounts, pool.unavailable_accounts
+        );
+    }
     if let Some(allowed) = usage.allowed {
         let _ = writeln!(output, "  allowed: {allowed}");
     }
@@ -148,13 +155,22 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             .as_deref()
             .map(|value| format!(", resets {value}"))
             .unwrap_or_default();
+        let varied_resets = if window.reset_times.is_empty() {
+            String::new()
+        } else {
+            format!(", resets vary: {}", window.reset_times.join(", "))
+        };
+        let contributors = window
+            .contributors
+            .map(|count| format!(", {count} contributor(s)"))
+            .unwrap_or_default();
         let duration = window
             .window_seconds
             .map(|seconds| format!(", window {}", readable_duration(seconds)))
             .unwrap_or_default();
         let _ = writeln!(
             output,
-            "  {}: {used}{remaining}{duration}{reset}",
+            "  {}: {used}{remaining}{duration}{reset}{varied_resets}{contributors}",
             window.name
         );
     }

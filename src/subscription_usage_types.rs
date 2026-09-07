@@ -68,6 +68,10 @@ pub struct SubscriptionUsage {
     pub provider: UsageProvider,
     pub state: UsageState,
     pub status: String,
+    /// Redacted account-pool coverage. Present only for an administrative
+    /// aggregate; account names and credential metadata never cross the API.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pool: Option<UsagePool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allowed: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -97,12 +101,19 @@ pub struct SubscriptionUsage {
     pub retry_after_seconds: Option<u64>,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum UsageState {
     Available,
     Unavailable,
     Unverified,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct UsagePool {
+    pub configured_accounts: usize,
+    pub contributing_accounts: usize,
+    pub unavailable_accounts: usize,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -116,6 +127,14 @@ pub struct UsageWindow {
     pub resets_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub window_seconds: Option<u64>,
+    /// Number of pool accounts that supplied comparable percentages for this
+    /// aggregate window.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contributors: Option<usize>,
+    /// Distinct provider reset times when pooled accounts disagree. In that
+    /// case `resets_at` stays absent rather than inventing one timestamp.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reset_times: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

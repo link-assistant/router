@@ -609,8 +609,8 @@ be audited as control-plane activity.
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/models` | GET | Healthy model catalogue filtered by the signed client kind, principal, and provider entitlement |
-| `/api/usage` | GET | Normalized subscription limits for every configured provider the signed client token may use |
-| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, `lefine`, `gemini`, or `qwen` usage/status record without revealing disallowed providers |
+| `/api/usage` | GET | Client-filtered limits, or an administrator's redacted all-configured subscription view |
+| `/api/usage/{provider}` | GET | One authorized `anthropic`, `openai`, `z-ai`, `lefine`, `gemini`, or `qwen` usage/status record without revealing credentials or account identities |
 
 `GET /api/models` is the additional provider-neutral catalogue. It accepts the
 same Router client token carrier as that token's native client, then returns
@@ -627,8 +627,22 @@ Router ownership, health, degradation, conflict, fetch-time, or fallback
 diagnostics. Anthropic model lists implement `after_id`, `before_id`, and
 `limit` pagination over the final visible exact-ID catalogue.
 
-`GET /api/usage` uses the same signed client binding and provider-entitlement
-matrix. It returns schema version `1` with normalized plan/status, usage
+With a client token, `GET /api/usage` uses the same signed client binding and
+provider-entitlement matrix. With an administrative credential, the same path
+returns a redacted all-configured view, which lets a persisted local, tunneled,
+or remote server selection run `router usage` without replacing its management
+credential or exporting a separate client token. Generic API-key providers are
+not presented as subscriptions.
+
+For a multi-account subscription pool, administrative output reports configured,
+contributing, and unavailable account counts without account names. Comparable
+used and remaining percentages are arithmetic means of available samples;
+unavailable samples are excluded. Every aggregate window reports its contributor
+count. A common reset remains `resets_at`; differing provider reset times remain
+as `reset_times`, with no invented aggregate timestamp. A partial or entirely
+unavailable pool is explicit in `status` and `state`.
+
+The endpoint returns schema version `1` with normalized plan/status, usage
 windows, used and remaining percentages, reset timestamps, named limits,
 credits, and subscription or trial dates only when the vendor actually reports
 them. Claude output includes current named windows, dynamic model-scoped limits,
@@ -1433,8 +1447,7 @@ router clients doctor codex
 router clients remove codex
 
 # Show subscription limits visible to one signed client token. The environment
-# token takes precedence over a saved server token, and the same command works
-# with a selected server or an explicit `--server`.
+# token takes precedence over a saved server token.
 LINK_ASSISTANT_TOKEN=<client-token> router usage
 LINK_ASSISTANT_TOKEN=<client-token> router usage anthropic
 LINK_ASSISTANT_TOKEN=<client-token> router usage openai --json
@@ -1442,6 +1455,12 @@ LINK_ASSISTANT_TOKEN=<client-token> router usage z-ai
 LINK_ASSISTANT_TOKEN=<client-token> router usage lefine --json
 LINK_ASSISTANT_TOKEN=<client-token> router usage gemini --json
 LINK_ASSISTANT_TOKEN=<client-token> router usage qwen --json
+
+# A selected server may retain its administrative credential. No extra token
+# is needed: the Router returns its redacted all-configured/pool view.
+router server use https://router.example --token-stdin
+router usage --json
+router usage anthropic
 
 # Print resolved configuration + credential / store probes. Reports on the
 # machine it runs on, so with another router selected it says so and names it.

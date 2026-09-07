@@ -622,6 +622,22 @@ mod tests {
         token_bodies: Mutex<Vec<String>>,
     }
 
+    async fn listener_eventually_releases(port: u16) -> bool {
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
+        loop {
+            if tokio::net::TcpListener::bind(("127.0.0.1", port))
+                .await
+                .is_ok()
+            {
+                return true;
+            }
+            if tokio::time::Instant::now() >= deadline {
+                return false;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+    }
+
     async fn issue_device_code(Json(body): Json<serde_json::Value>) -> Json<serde_json::Value> {
         assert_eq!(body["client_id"], CODEX_CLIENT_ID);
         Json(serde_json::json!({
@@ -928,13 +944,7 @@ mod tests {
         let port = login.port();
 
         drop(login);
-        tokio::task::yield_now().await;
-
-        assert!(
-            tokio::net::TcpListener::bind(("127.0.0.1", port))
-                .await
-                .is_ok()
-        );
+        assert!(listener_eventually_releases(port).await);
     }
 
     #[tokio::test]

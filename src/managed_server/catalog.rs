@@ -29,7 +29,7 @@ pub(super) async fn fetch_models(
     if status.is_success() {
         let value: Value = serde_json::from_str(&body)
             .map_err(|error| format!("router model catalog returned invalid JSON: {error}"))?;
-        let models: Vec<RouterModel> = value
+        let mut models: Vec<RouterModel> = value
             .get("data")
             .and_then(Value::as_array)
             .ok_or("router model catalog did not contain a data array")?
@@ -37,6 +37,7 @@ pub(super) async fn fetch_models(
             .filter_map(|model| serde_json::from_value::<RouterModel>(model.clone()).ok())
             .filter(|model| !model.id.trim().is_empty())
             .collect();
+        crate::clients::apply_codex_reasoning_profiles(client, &mut models);
         if models.is_empty() {
             return Err(
                 "router catalog contains no models authorized for this client token".into(),

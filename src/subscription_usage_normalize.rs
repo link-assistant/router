@@ -546,6 +546,8 @@ pub(super) fn window_from(
         remaining_percentage: used.map(|value| (100.0 - value).clamp(0.0, 100.0)),
         resets_at,
         window_seconds,
+        contributors: None,
+        reset_times: Vec::new(),
     }
 }
 
@@ -554,6 +556,7 @@ pub(super) fn empty_usage(provider: UsageProvider) -> SubscriptionUsage {
         provider,
         state: UsageState::Unverified,
         status: "unverified".into(),
+        pool: None,
         allowed: None,
         limit_reached: None,
         plan: None,

@@ -9,7 +9,7 @@ use crate::model_routing::ModelRouteError;
 
 pub(super) fn project_catalog(
     catalog: &Value,
-    _client: ClientKind,
+    client: ClientKind,
 ) -> Result<Value, ModelRouteError> {
     let entries = catalog
         .get("data")
@@ -29,7 +29,7 @@ pub(super) fn project_catalog(
                 "exact model id collision across healthy providers: {id}"
             )));
         }
-        data.push(Value::Object(project_model(raw, id)));
+        data.push(Value::Object(project_model(raw, id, client)));
     }
     data.sort_by(|left, right| {
         left.get("id")
@@ -39,7 +39,7 @@ pub(super) fn project_catalog(
     Ok(json!({"object": "list", "data": data}))
 }
 
-fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
+fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<String, Value> {
     let service = service(raw);
     let owner = raw
         .get("owned_by")
@@ -97,6 +97,9 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     if let Some(levels) = normalized_reasoning_levels(raw) {
         projected.insert("supported_reasoning_levels".into(), levels);
     }
+    if client == ClientKind::Codex {
+        apply_provider_reasoning_profile(&mut projected, owner);
+    }
     if projected.len() > 3 {
         projected.insert(
             "metadata_source".into(),
@@ -113,6 +116,48 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
         }
     }
     projected
+}
+
+fn apply_provider_reasoning_profile(projected: &mut Map<String, Value>, owner: &str) {
+    let Some(profile) = crate::clients::codex_reasoning_profile(owner) else {
+        return;
+    };
+    let mut applied = false;
+    if !projected.contains_key("supported_reasoning_levels") {
+        let compatible_default = projected
+            .get("default_reasoning_level")
+            .and_then(Value::as_str)
+            .is_none_or(|default| profile.supports(default));
+        if compatible_default {
+            projected.insert(
+                "supported_reasoning_levels".into(),
+                serde_json::to_value(profile.levels()).expect("reasoning levels serialize"),
+            );
+            applied = true;
+        }
+    }
+    if !projected.contains_key("default_reasoning_level")
+        && projected
+            .get("supported_reasoning_levels")
+            .and_then(Value::as_array)
+            .is_some_and(|levels| {
+                levels.iter().any(|level| {
+                    level.get("effort").and_then(Value::as_str) == Some(profile.default())
+                })
+            })
+    {
+        projected.insert(
+            "default_reasoning_level".into(),
+            Value::String(profile.default().to_string()),
+        );
+        applied = true;
+    }
+    if applied {
+        projected.insert(
+            "reasoning_metadata_source".into(),
+            Value::String(profile.source().to_string()),
+        );
+    }
 }
 
 fn normalized_reasoning_levels(raw: &Map<String, Value>) -> Option<Value> {
@@ -304,6 +349,92 @@ mod tests {
             assert_eq!(entries[0]["service"], "lefine", "{client:?}");
             assert_eq!(entries[1]["service"], "z.ai", "{client:?}");
         }
+    }
+
+    #[test]
+    fn codex_projection_applies_the_zai_protocol_profile_without_a_model_inventory() {
+        let catalog = json!({"data": [
+            {
+                "id": "gpt-live",
+                "owned_by": "openai",
+                "default_reasoning_level": "high",
+                "supported_reasoning_levels": [
+                    {"effort": "high", "description": "Deep reasoning"},
+                    {"effort": "xhigh", "description": "Extra deep reasoning"}
+                ]
+            },
+            {"id": "glm-live", "owned_by": "z.ai"},
+            {"id": "glm-newly-discovered", "owned_by": "z.ai"},
+            {
+                "id": "glm-provider-described",
+                "owned_by": "z.ai",
+                "default_reasoning_level": "high",
+                "supported_reasoning_levels": [
+                    {"effort": "high", "description": "Provider-defined reasoning"}
+                ]
+            }
+        ]});
+
+        let codex = project_catalog(&catalog, ClientKind::Codex).unwrap();
+        let entries = codex["data"].as_array().unwrap();
+        let ids = entries
+            .iter()
+            .map(|entry| entry["id"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            ids,
+            [
+                "glm-live",
+                "glm-newly-discovered",
+                "glm-provider-described",
+                "gpt-live"
+            ]
+        );
+        for id in ["glm-live", "glm-newly-discovered"] {
+            let model = entries.iter().find(|entry| entry["id"] == id).unwrap();
+            assert_eq!(model["default_reasoning_level"], "max");
+            assert_eq!(
+                model["supported_reasoning_levels"],
+                json!([
+                    {"effort": "low", "description": "Light reasoning"},
+                    {"effort": "high", "description": "Enhanced reasoning"},
+                    {"effort": "max", "description": "Deep reasoning"}
+                ])
+            );
+            assert_eq!(
+                model["reasoning_metadata_source"],
+                "provider-protocol:z.ai-codex"
+            );
+        }
+        let described = entries
+            .iter()
+            .find(|entry| entry["id"] == "glm-provider-described")
+            .unwrap();
+        assert_eq!(described["default_reasoning_level"], "high");
+        assert_eq!(
+            described["supported_reasoning_levels"],
+            json!([{"effort": "high", "description": "Provider-defined reasoning"}])
+        );
+        assert!(described.get("reasoning_metadata_source").is_none());
+
+        let claude = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
+        for model in
+            claude["data"].as_array().unwrap().iter().filter(|entry| {
+                entry["owned_by"] == "z.ai" && entry["id"] != "glm-provider-described"
+            })
+        {
+            assert!(model.get("default_reasoning_level").is_none());
+            assert!(model.get("supported_reasoning_levels").is_none());
+            assert!(model.get("reasoning_metadata_source").is_none());
+        }
+        let claude_described = claude["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["id"] == "glm-provider-described")
+            .unwrap();
+        assert_eq!(claude_described["default_reasoning_level"], "high");
+        assert!(claude_described.get("reasoning_metadata_source").is_none());
     }
 
     #[test]

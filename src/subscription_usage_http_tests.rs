@@ -321,7 +321,7 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     .await;
     let (admin_status, admin_body) = request(
         app.clone(),
-        "/api/usage/anthropic",
+        "/api/usage",
         Some(("authorization", format!("Bearer {admin}"))),
     )
     .await;
@@ -341,7 +341,8 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     assert_eq!(absent_status, StatusCode::UNAUTHORIZED);
     assert_eq!(unknown_absent_status, StatusCode::UNAUTHORIZED);
     assert_eq!(invalid_status, StatusCode::UNAUTHORIZED);
-    assert_eq!(admin_status, StatusCode::FORBIDDEN);
+    assert_eq!(admin_status, StatusCode::OK);
+    assert_eq!(admin_body["subscriptions"], json!([]));
     assert_eq!(wrong_provider_status, StatusCode::FORBIDDEN);
     assert_eq!(unknown_status, StatusCode::NOT_FOUND);
     for body in [
@@ -360,6 +361,189 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
             );
         }
     }
+}
+
+fn write_claude_pool_credential(home: &std::path::Path, access_token: &str) {
+    std::fs::create_dir_all(home).unwrap();
+    std::fs::write(
+        home.join(".credentials.json"),
+        json!({"claudeAiOauth": {
+            "accessToken": access_token,
+            "refreshToken": format!("refresh-{access_token}"),
+            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000,
+            "subscriptionType": "max"
+        }})
+        .to_string(),
+    )
+    .unwrap();
+}
+
+#[tokio::test]
+async fn administrative_usage_aggregates_available_pool_accounts_without_identifiers() {
+    let hits = Arc::new(Mutex::new(Vec::new()));
+    let hits_for_server = Arc::clone(&hits);
+    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+        let hits = Arc::clone(&hits_for_server);
+        async move {
+            let path = request.uri().path().to_string();
+            let authorization = request
+                .headers()
+                .get("authorization")
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or("")
+                .to_string();
+            hits.lock()
+                .unwrap()
+                .push((path.clone(), authorization.clone()));
+            match path.as_str() {
+                "/api/oauth/usage" => {
+                    let (used, reset) = if authorization.ends_with("pool-a-secret-543") {
+                        (20.0, "2030-01-01T00:00:00Z")
+                    } else if authorization.ends_with("pool-b-secret-543") {
+                        (60.0, "2030-01-01T01:00:00Z")
+                    } else if authorization.ends_with("pool-c-secret-543") {
+                        return (
+                            StatusCode::SERVICE_UNAVAILABLE,
+                            "synthetic unavailable usage source",
+                        )
+                            .into_response();
+                    } else {
+                        return (StatusCode::UNAUTHORIZED, "unknown credential").into_response();
+                    };
+                    axum::Json(json!({
+                        "five_hour": {"utilization": used, "resets_at": reset}
+                    }))
+                    .into_response()
+                }
+                "/api/oauth/profile" => axum::Json(json!({
+                    "email": "pool-private@example.invalid",
+                    "organization": {"subscription_status": "active"}
+                }))
+                .into_response(),
+                _ => (StatusCode::INTERNAL_SERVER_ERROR, "inference reached").into_response(),
+            }
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move { axum::serve(listener, vendor).await.unwrap() });
+
+    let directory = tempfile::tempdir().unwrap();
+    let primary = directory.path().join("private-primary-name");
+    let second = directory.path().join("private-second-name");
+    let unavailable = directory.path().join("private-unavailable-name");
+    write_claude_pool_credential(&primary, "pool-a-secret-543");
+    write_claude_pool_credential(&second, "pool-b-secret-543");
+    write_claude_pool_credential(&unavailable, "pool-c-secret-543");
+    let mut state = AppState::for_tests(directory.path());
+    state.subscription_base_url = Some(format!("http://{address}"));
+    state.subscription_readers = vec![crate::subscription::SubscriptionReader::new(
+        SubscriptionProvider::Claude,
+        &primary,
+    )];
+    state.account_router = Some(crate::accounts::AccountRouter::new_for_provider(
+        primary,
+        &[second, unavailable],
+        SubscriptionProvider::Claude,
+        crate::accounts::AccountRouterOptions::default(),
+    ));
+    state.register_credential_recovery_in(
+        directory.path(),
+        &crate::app_state::VendorClis::default(),
+    );
+    let admin = state
+        .token_manager
+        .issue_admin_token(1, "pooled usage admin")
+        .unwrap();
+
+    let (status, body) = request(
+        usage_app(state),
+        "/api/usage/anthropic",
+        Some(("authorization", format!("Bearer {admin}"))),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let usage = &body["subscriptions"][0];
+    assert_eq!(usage["provider"], "anthropic");
+    assert_eq!(usage["state"], "available");
+    assert_eq!(usage["status"], "partial");
+    assert_eq!(usage["pool"]["configured_accounts"], 3);
+    assert_eq!(usage["pool"]["contributing_accounts"], 2);
+    assert_eq!(usage["pool"]["unavailable_accounts"], 1);
+    assert_eq!(usage["windows"][0]["used_percentage"], 40.0);
+    assert_eq!(usage["windows"][0]["remaining_percentage"], 60.0);
+    assert_eq!(usage["windows"][0]["contributors"], 2);
+    assert!(usage["windows"][0].get("resets_at").is_none());
+    assert_eq!(
+        usage["windows"][0]["reset_times"],
+        json!(["2030-01-01T00:00:00Z", "2030-01-01T01:00:00Z"])
+    );
+    let rendered = body.to_string();
+    for private in [
+        "private-primary-name",
+        "private-second-name",
+        "private-unavailable-name",
+        "pool-a-secret-543",
+        "pool-b-secret-543",
+        "pool-c-secret-543",
+        "pool-private@example.invalid",
+        admin.as_str(),
+    ] {
+        assert!(!rendered.contains(private), "leaked {private}: {rendered}");
+    }
+    let hits = hits.lock().unwrap();
+    assert_eq!(
+        hits.len(),
+        5,
+        "usable accounts probe usage and profile; the failed usage probe stops"
+    );
+    assert!(
+        hits.iter()
+            .all(|(path, _)| matches!(path.as_str(), "/api/oauth/usage" | "/api/oauth/profile"))
+    );
+    drop(hits);
+    server.abort();
+}
+
+#[tokio::test]
+async fn administrative_usage_reports_a_configured_pool_with_no_usable_accounts() {
+    let directory = tempfile::tempdir().unwrap();
+    let primary = directory.path().join("empty-primary");
+    let second = directory.path().join("empty-second");
+    std::fs::create_dir_all(&primary).unwrap();
+    std::fs::create_dir_all(&second).unwrap();
+    let mut state = AppState::for_tests(directory.path());
+    state.account_router = Some(crate::accounts::AccountRouter::new_for_provider(
+        primary,
+        &[second],
+        SubscriptionProvider::Claude,
+        crate::accounts::AccountRouterOptions::default(),
+    ));
+    state.register_credential_recovery_in(
+        directory.path(),
+        &crate::app_state::VendorClis::default(),
+    );
+    let admin = state
+        .token_manager
+        .issue_admin_token(1, "empty pool usage admin")
+        .unwrap();
+
+    let (status, body) = request(
+        usage_app(state),
+        "/api/usage/anthropic",
+        Some(("authorization", format!("Bearer {admin}"))),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let usage = &body["subscriptions"][0];
+    assert_eq!(usage["state"], "unavailable");
+    assert_eq!(usage["status"], "all_accounts_unavailable");
+    assert_eq!(usage["pool"]["configured_accounts"], 2);
+    assert_eq!(usage["pool"]["contributing_accounts"], 0);
+    assert_eq!(usage["pool"]["unavailable_accounts"], 2);
+    assert_eq!(usage["windows"], json!([]));
 }
 
 #[tokio::test]

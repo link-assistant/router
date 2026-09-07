@@ -22,6 +22,23 @@ fn run(args: &[&str], home: &std::path::Path) -> Output {
         .expect("run usage command")
 }
 
+fn run_with_persisted_selection(args: &[&str], home: &std::path::Path) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(args)
+        .env("HOME", home)
+        .env("XDG_CONFIG_HOME", home.join("config"))
+        .env("TOKEN_SECRET", "usage-cli-persisted-selection-secret")
+        .env_remove("DATA_DIR")
+        .env("NO_PROXY", "127.0.0.1,localhost")
+        .env("no_proxy", "127.0.0.1,localhost")
+        .env_remove("LINK_ASSISTANT_ROUTER_URL")
+        .env_remove("ROUTER_URL")
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .env_remove("LINK_ASSISTANT_TOKEN")
+        .output()
+        .expect("run usage command with selected server")
+}
+
 #[test]
 fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -115,6 +132,102 @@ fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token(
             request
                 .to_ascii_lowercase()
                 .contains("authorization: bearer token-from-environment"),
+            "{request}"
+        );
+    }
+}
+
+#[test]
+fn persisted_administrative_selection_runs_unfiltered_and_every_provider_filter() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let address = listener.local_addr().unwrap();
+    let stopped = Arc::new(AtomicBool::new(false));
+    let stop_for_server = Arc::clone(&stopped);
+    let captured = Arc::new(Mutex::new(Vec::new()));
+    let captured_for_server = Arc::clone(&captured);
+    let server = thread::spawn(move || {
+        while !stop_for_server.load(Ordering::Acquire) {
+            match listener.accept() {
+                Ok((mut socket, _)) => {
+                    socket.set_nonblocking(false).unwrap();
+                    socket
+                        .set_read_timeout(Some(Duration::from_secs(5)))
+                        .unwrap();
+                    let mut request = [0_u8; 8192];
+                    let read = socket.read(&mut request).unwrap();
+                    let head = String::from_utf8_lossy(&request[..read]).into_owned();
+                    let body = if head.starts_with("GET /api/health ") {
+                        r#"{"status":"ok","version":"test"}"#
+                    } else {
+                        captured_for_server.lock().unwrap().push(head);
+                        r#"{"schema_version":1,"subscriptions":[]}"#
+                    };
+                    write!(
+                        socket,
+                        "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                        body.len()
+                    )
+                    .unwrap();
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("accept selected usage request: {error}"),
+            }
+        }
+    });
+
+    let home = tempfile::tempdir().unwrap();
+    let selection = home.path().join("config/link-assistant-router");
+    std::fs::create_dir_all(&selection).unwrap();
+    std::fs::write(
+        selection.join("server.json"),
+        serde_json::json!({
+            "server": format!("http://{address}"),
+            "token": "persisted-administrative-token"
+        })
+        .to_string(),
+    )
+    .unwrap();
+
+    let cases = [
+        (None, "/api/usage"),
+        (Some("anthropic"), "/api/usage/anthropic"),
+        (Some("openai"), "/api/usage/openai"),
+        (Some("z-ai"), "/api/usage/z-ai"),
+        (Some("lefine"), "/api/usage/lefine"),
+        (Some("gemini"), "/api/usage/gemini"),
+        (Some("qwen"), "/api/usage/qwen"),
+    ];
+    for (provider, _) in cases {
+        let mut args = vec!["usage"];
+        if let Some(provider) = provider {
+            args.push(provider);
+        }
+        args.push("--json");
+        let output = run_with_persisted_selection(&args, home.path());
+        assert!(
+            output.status.success(),
+            "{args:?} failed without an exported client token: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    stopped.store(true, Ordering::Release);
+    let _ = TcpStream::connect(address);
+    server.join().unwrap();
+
+    let captured = captured.lock().unwrap();
+    assert_eq!(captured.len(), cases.len());
+    for (request, (_, expected_path)) in captured.iter().zip(cases) {
+        assert!(
+            request.starts_with(&format!("GET {expected_path} ")),
+            "{request}"
+        );
+        assert!(
+            request
+                .to_ascii_lowercase()
+                .contains("authorization: bearer persisted-administrative-token"),
             "{request}"
         );
     }

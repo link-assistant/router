@@ -33,6 +33,37 @@ pub struct RouterReasoningLevel {
     pub description: String,
 }
 
+fn apply_codex_reasoning_profile(model: &mut RouterModel) {
+    let Some(profile) = super::codex_reasoning_profile(&model.owned_by) else {
+        return;
+    };
+    if model.supported_reasoning_levels.is_none()
+        && model
+            .default_reasoning_level
+            .as_deref()
+            .is_none_or(|default| profile.supports(default))
+    {
+        model.supported_reasoning_levels = Some(profile.levels());
+    }
+    if model.default_reasoning_level.is_none()
+        && model
+            .supported_reasoning_levels
+            .as_ref()
+            .is_some_and(|levels| levels.iter().any(|level| level.effort == profile.default()))
+    {
+        model.default_reasoning_level = Some(profile.default().to_string());
+    }
+}
+
+/// Apply only reviewed provider-level fallbacks for the requesting client.
+pub(super) fn apply_codex_reasoning_profiles(client: ClientKind, models: &mut [RouterModel]) {
+    if client == ClientKind::Codex {
+        for model in models {
+            apply_codex_reasoning_profile(model);
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct RouterCatalog {
     data: Vec<RouterModel>,
@@ -78,6 +109,7 @@ impl ClientManager {
             .into_iter()
             .filter(|model| !model.id.trim().is_empty())
             .collect::<Vec<_>>();
+        apply_codex_reasoning_profiles(client, &mut models);
         models.sort_by(|left, right| {
             left.id
                 .cmp(&right.id)
