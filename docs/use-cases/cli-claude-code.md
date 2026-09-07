@@ -31,8 +31,37 @@ and refuses while another Router-launched Claude uses the profile.
 Gateway discovery supplies native Claude IDs. A process-local `--settings`
 extension adds every other compatible, authorized exact ID to Claude's
 `modelPicker` once, including GLM IDs, without aliases or cache writes. Claude
-Code >= 2.1.255 is required. See [with-router.md](with-router.md) for server and
+Code 2.1.255 through 2.1.263 is the reviewed range. Newer releases fail closed
+until the pinned hermetic real-client capture reviews their gateway and
+authentication behavior. See [with-router.md](with-router.md) for server and
 token options.
+
+## Claude.ai native-service boundary
+
+The released Claude client resolves one authentication source for the process.
+`ANTHROPIC_AUTH_TOKEN` and a custom `ANTHROPIC_BASE_URL` correctly send sampling
+and `/v1/models` discovery to Router, but they take precedence over the stored
+Claude.ai login. Claude Code offers no documented way to retain that independent
+identity for its first-party control-plane services.
+
+Router handles this explicitly:
+
+- it leaves the stored Claude login byte-for-byte untouched and never sends it
+  to Router or another provider;
+- it sends the per-run Router token only to Router sampling and catalog routes;
+- it names the unavailable services before an ordinary launch: Claude.ai MCP
+  connectors, Remote Control and `/remote-control`, `/schedule`, notification
+  preferences, cloud sessions, remote managed settings, and organization
+  policy; and
+- it rejects `--cloud`, `--environment`, `--remote-control`/`--rc`,
+  `--teleport`, `remote-control`, and `ultrareview` before contacting a Router,
+  minting a token, or launching Claude. Run those directly with Claude.ai
+  authentication.
+
+Router does not use `_CLAUDE_CODE_ASSUME_FIRST_PARTY_BASE_URL`, replace OAuth
+endpoints, or intercept TLS. When an official split-auth mechanism ships, the
+pinned client fixture must demonstrate separate authorities before Router
+adopts it.
 
 Wrapper flags go before `claude`; arguments after it are forwarded verbatim.
 The exact reset spelling above is the sole Router operation recognized there;
@@ -137,3 +166,4 @@ curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
 | Extended thinking missing | you are on a bridged upstream; `thinking` blocks are dropped (see the bridge document) |
 | GLM model missing after a policy/credential change | restart Claude Code to refresh `~/.claude/cache/gateway-models.json`; cached ghosts are still rejected locally |
 | Another tool's endpoint, credential, discovery flag, or model pin wins | run `router clients repair claude --dry-run --json`, then explicitly repair; Router backs up the public settings but never edits Claude credentials, account data, shell startup files, or model caches |
+| Claude.ai connector, Remote Control, cloud-session, schedule, notification, or organization-policy feature is unavailable | current Claude Code has no supported split-auth mechanism; run that operation directly with Claude.ai authentication |

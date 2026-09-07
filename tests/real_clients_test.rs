@@ -720,6 +720,9 @@ fn assert_real_client_capture(case: ClientCase) {
             String::from_utf8_lossy(&switched.stderr)
         );
     }
+    if case.client == "claude" {
+        claude_selector::assert_split_auth_boundary(directory.path(), &router);
+    }
     if let Some((config, before)) = foreign_codex_config {
         assert_eq!(
             std::fs::read(config).expect("read Codex config after run"),

@@ -51,9 +51,6 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if args.reset_to_default_configuration {
         confirm_claude_profile_reset(args.yes)?;
     }
-    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
-        return Err(error.into());
-    }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
             .client
@@ -63,6 +60,12 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     }
     if args.client == ClientKind::ClaudeCode {
         crate::clients::require_claude_gateway_version()?;
+    }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
+    }
+    if args.client == ClientKind::ClaudeCode {
+        crate::client_launch::report_claude_native_services_limitation(args.client);
     }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)

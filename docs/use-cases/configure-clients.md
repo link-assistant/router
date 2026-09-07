@@ -38,6 +38,14 @@ working. `router configure --all` skips clients whose vendor gates prevent
 file-based configuration — `cursor-agent` and `gemini` — and names them in the
 summary rather than failing the run.
 
+For Claude Code, permanent configuration has the same documented process-wide
+authentication boundary as a temporary launch. Router sampling and model
+discovery use the Router token, while Claude.ai connectors, Remote Control,
+cloud sessions, `/schedule`, notification preferences, remote managed settings,
+and organization policy remain unavailable. Configuration and repair never
+read or modify Claude's stored login; run a Claude.ai-only operation directly
+with Claude.ai authentication.
+
 The older `clients` command configures **this** deployment, because it mints
 from this machine's own token store. With another router selected it refuses
 and names `router configure`, rather than writing this CLI's `--host`/`--port`

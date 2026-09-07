@@ -153,6 +153,7 @@ async fn configure_one(
     server: &ResolvedServer,
     client: ClientKind,
 ) -> Result<(), AnyError> {
+    crate::client_launch::report_claude_native_services_limitation(client);
     let bridge = if client == ClientKind::Codex
         && crate::codex_loopback_bridge::required(&server.base_url)?
     {

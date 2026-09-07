@@ -143,9 +143,13 @@ pub fn probe_headers(
 }
 
 const MINIMUM_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 255);
+const MAXIMUM_REVIEWED_CLAUDE_GATEWAY_VERSION: (u64, u64, u64) = (2, 1, 263);
 
 /// Claude Code 2.1.255 includes current gateway alias resolution as well as
-/// the original discovery support introduced in 2.1.129.
+/// the original discovery support introduced in 2.1.129. The upper bound is
+/// deliberate: authentication eligibility is client-owned and has changed
+/// between releases, so a future binary must pass the hermetic real-client
+/// review before Router relies on its credential boundary (issue #520).
 fn claude_gateway_version_supported(output: &str) -> bool {
     output
         .split(|character: char| !(character.is_ascii_digit() || character == '.'))
@@ -157,7 +161,10 @@ fn claude_gateway_version_supported(output: &str) -> bool {
                 pieces.next()?.parse::<u64>().ok()?,
             ))
         })
-        .is_some_and(|version| version >= MINIMUM_CLAUDE_GATEWAY_VERSION)
+        .is_some_and(|version| {
+            version >= MINIMUM_CLAUDE_GATEWAY_VERSION
+                && version <= MAXIMUM_REVIEWED_CLAUDE_GATEWAY_VERSION
+        })
 }
 
 /// Fail with an actionable diagnostic when an installed Claude is too old.
@@ -178,7 +185,7 @@ pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
         return Ok(());
     }
     Err(ClientError::message(format!(
-        "Claude Code >= 2.1.255 is required for current Router gateway model discovery and aliases; installed version reports '{}'. Upgrade Claude Code, then restart it to refresh ~/.claude/cache/gateway-models.json",
+        "Claude Code 2.1.255 through 2.1.263 is required for the reviewed Router gateway model-discovery and authentication contract; installed version reports '{}'. Install a reviewed version or update Router after its real-client compatibility fixture has reviewed the newer release, then restart Claude to refresh ~/.claude/cache/gateway-models.json",
         version.trim()
     )))
 }
@@ -273,6 +280,11 @@ mod tests {
     fn gateway_discovery_requires_current_claude_alias_support() {
         assert!(!claude_gateway_version_supported("2.1.252 (Claude Code)"));
         assert!(claude_gateway_version_supported("2.1.255 (Claude Code)"));
-        assert!(claude_gateway_version_supported("Claude Code v2.2.0"));
+        assert!(claude_gateway_version_supported("2.1.263 (Claude Code)"));
+        assert!(
+            !claude_gateway_version_supported("2.1.264 (Claude Code)"),
+            "a newer client must be reviewed before Router trusts its auth boundary"
+        );
+        assert!(!claude_gateway_version_supported("Claude Code v2.2.0"));
     }
 }

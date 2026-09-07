@@ -205,7 +205,10 @@ fn claude_real_profile_extension_is_explicit() {
     fs::create_dir_all(home.join(".claude")).expect("create normal Claude profile");
     fs::create_dir_all(&capture).expect("create capture directory");
     let normal = b"{\"permissions\":{\"allow\":[\"Read\"]}}\n";
+    let credentials = b"{\"claudeAiOauth\":{\"accessToken\":\"synthetic-full-scope\",\"refreshToken\":\"synthetic-refresh\",\"expiresAt\":4102444800000,\"scopes\":[\"user:inference\",\"user:mcp_servers\",\"user:profile\",\"user:sessions:claude_code\"]}}\n";
     fs::write(home.join(".claude/settings.json"), normal).expect("seed normal settings");
+    fs::write(home.join(".claude/.credentials.json"), credentials)
+        .expect("seed synthetic Claude credentials");
     fake_claude(&bin);
     let token = bound_client_token("claude");
     let (server, requests) = mock_claude_router();
@@ -225,6 +228,20 @@ fn claude_real_profile_extension_is_explicit() {
         &[],
     );
     assert!(output.status.success(), "{output:?}");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    for unavailable in [
+        "Claude.ai connectors",
+        "Remote Control",
+        "/schedule",
+        "notification preferences",
+        "cloud sessions",
+        "organization policy",
+    ] {
+        assert!(
+            stderr.contains(unavailable),
+            "the pre-launch limitation must name {unavailable}: {stderr}"
+        );
+    }
     assert_eq!(requests.join().expect("mock Router requests").len(), 3);
     assert_eq!(
         fs::read_to_string(capture.join("claude-config-dir")).expect("captured config variable"),
@@ -233,6 +250,55 @@ fn claude_real_profile_extension_is_explicit() {
     assert_eq!(
         fs::read(home.join(".claude/settings.json")).expect("normal settings after extension"),
         normal
+    );
+    assert_eq!(
+        fs::read(home.join(".claude/.credentials.json"))
+            .expect("Claude credentials after extension"),
+        credentials,
+        "Router must leave the stored Claude login byte-identical"
+    );
+}
+
+#[test]
+fn explicit_claude_ai_operation_fails_before_router_access_or_client_launch() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(home.join(".claude")).expect("create normal Claude profile");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    let credentials = b"synthetic credential bytes that Router must not read or change\n";
+    fs::write(home.join(".claude/.credentials.json"), credentials)
+        .expect("seed synthetic credentials");
+    fake_claude(&bin);
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server",
+            "http://127.0.0.1:9",
+            "--token",
+            "synthetic-router-token",
+            "--extend-global-config",
+            "claude",
+            "--remote-control",
+        ],
+        &[],
+    );
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("Claude.ai"), "{stderr}");
+    assert!(stderr.contains("no Router token was minted"), "{stderr}");
+    assert!(
+        !capture.join("args").exists(),
+        "Claude must not be launched for an operation known to be unavailable"
+    );
+    assert_eq!(
+        fs::read(home.join(".claude/.credentials.json"))
+            .expect("Claude credentials after rejected launch"),
+        credentials
     );
 }
 

@@ -254,20 +254,63 @@ fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
     None
 }
 
-/// Commands whose vendor control plane cannot be routed through the supported
-/// Codex split-auth boundary. Detect these before server lookup or token mint.
+/// What the reviewed Claude client cannot preserve in a Router-directed
+/// process because its documented authentication precedence is process-wide.
+///
+/// Keep this concrete. "Some native features" made a launch look healthier
+/// than it was and left the user to discover each loss inside Claude (issue
+/// #520).
+pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &str = "Claude Code releases through 2.1.263 have no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
+
+/// Report the boundary anywhere Router creates, repairs, checks, or launches a
+/// Claude gateway configuration. A permanent setup that stayed silent merely
+/// deferred the surprise until the next direct `claude` launch.
+pub fn report_claude_native_services_limitation(client: ClientKind) {
+    if client == ClientKind::ClaudeCode {
+        eprintln!("warning: {CLAUDE_NATIVE_SERVICES_LIMITATION}");
+    }
+}
+
+const CLAUDE_NATIVE_SERVICE_REQUEST_ERROR: &str = "this Claude.ai operation cannot be routed by Claude Code 2.1.263 because the released client has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
+
+fn claude_native_service_request(arguments: &[OsString]) -> bool {
+    let arguments = arguments
+        .strip_prefix(&[OsString::from("--")])
+        .unwrap_or(arguments);
+    let command = arguments.first().and_then(|argument| argument.to_str());
+    if matches!(command, Some("remote-control" | "ultrareview")) {
+        return true;
+    }
+    arguments.iter().any(|argument| {
+        let argument = argument.to_string_lossy();
+        let name = argument
+            .split_once('=')
+            .map_or_else(|| argument.as_ref(), |(name, _)| name);
+        matches!(
+            name,
+            "--cloud" | "--environment" | "--remote-control" | "--rc" | "--teleport"
+        )
+    })
+}
+
+/// Commands whose vendor control plane cannot be routed through a supported
+/// split-auth boundary. Detect these before server lookup or token mint.
 #[must_use]
 pub fn unsupported_native_command(args: &WithArgs) -> Option<&'static str> {
-    if args.client != ClientKind::Codex {
-        return None;
+    if args.client == ClientKind::ClaudeCode && claude_native_service_request(&args.client_args) {
+        return Some(CLAUDE_NATIVE_SERVICE_REQUEST_ERROR);
     }
-    matches!(
-        codex_subcommand(&args.client_args),
-        Some("cloud" | "cloud-tasks")
-    )
-    .then_some(
-        "Codex Cloud tasks cannot be routed: the official Codex client does not support a split credential or custom backend for Cloud; no Router token was minted and no client was launched",
-    )
+    if args.client == ClientKind::Codex
+        && matches!(
+            codex_subcommand(&args.client_args),
+            Some("cloud" | "cloud-tasks")
+        )
+    {
+        return Some(
+            "Codex Cloud tasks cannot be routed: the official Codex client does not support a split credential or custom backend for Cloud; no Router token was minted and no client was launched",
+        );
+    }
+    None
 }
 
 /// Whether standard input and output both belong to a terminal.
