@@ -17,6 +17,17 @@ fn test_token(client: &str) -> String {
     bound_client_token(canonical, "cli-test-principal")
 }
 
+struct ManagedClientCleanup {
+    home: std::path::PathBuf,
+    client: &'static str,
+}
+
+impl Drop for ManagedClientCleanup {
+    fn drop(&mut self) {
+        let _ = router(&self.home, &["clients", "remove", self.client, "--force"]);
+    }
+}
+
 #[test]
 fn opencode_setup_populates_models_from_the_live_catalog() {
     let home = tempfile::tempdir().expect("temp home");
@@ -372,6 +383,10 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
             "http://router.test:8080",
         ],
     );
+    let _cleanup = setup.status.success().then(|| ManagedClientCleanup {
+        home: home.path().to_path_buf(),
+        client: "codex",
+    });
     assert!(
         setup.status.success(),
         "{}",
