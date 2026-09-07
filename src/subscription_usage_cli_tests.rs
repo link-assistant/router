@@ -1,6 +1,6 @@
 use super::*;
 use crate::subscription_usage::{
-    Credits, ExtraUsage, NamedLimit, SpendControl, SpendLimit, UsageState, UsageWindow,
+    Credits, ExtraUsage, NamedLimit, SpendControl, SpendLimit, UsagePool, UsageState, UsageWindow,
 };
 use axum::extract::Request;
 use axum::response::IntoResponse as _;
@@ -13,6 +13,7 @@ fn complete_envelope() -> UsageEnvelope {
             provider: UsageProvider::OpenAi,
             state: UsageState::Available,
             status: "available".into(),
+            pool: None,
             allowed: Some(true),
             limit_reached: Some(false),
             plan: Some("pro".into()),
@@ -22,6 +23,8 @@ fn complete_envelope() -> UsageEnvelope {
                 remaining_percentage: Some(80.0),
                 resets_at: Some("2030-01-01T00:00:00Z".into()),
                 window_seconds: Some(300),
+                contributors: None,
+                reset_times: Vec::new(),
             }],
             additional_limits: vec![NamedLimit {
                 name: "review".into(),
@@ -38,6 +41,8 @@ fn complete_envelope() -> UsageEnvelope {
                     remaining_percentage: Some(60.0),
                     resets_at: Some("2030-01-02T00:00:00Z".into()),
                     window_seconds: Some(600),
+                    contributors: None,
+                    reset_times: Vec::new(),
                 }],
                 used: Some(2.0),
                 limit: Some(10.0),
@@ -131,6 +136,37 @@ fn json_output_is_the_api_envelope_without_a_cli_projection() {
 }
 
 #[test]
+fn human_output_explains_pool_coverage_and_distinct_reset_times() {
+    let mut envelope = complete_envelope();
+    let usage = &mut envelope.subscriptions[0];
+    usage.status = "partial".into();
+    usage.pool = Some(UsagePool {
+        configured_accounts: 3,
+        contributing_accounts: 2,
+        unavailable_accounts: 1,
+    });
+    usage.windows[0].resets_at = None;
+    usage.windows[0].contributors = Some(2);
+    usage.windows[0].reset_times = vec![
+        "2030-01-01T00:00:00Z".into(),
+        "2030-01-01T01:00:00Z".into(),
+    ];
+
+    let output = format_envelope(&envelope, false).unwrap();
+
+    assert!(
+        output.contains("accounts: 3 configured, 2 contributing, 1 unavailable"),
+        "{output}"
+    );
+    assert!(
+        output.contains(
+            "resets vary: 2030-01-01T00:00:00Z, 2030-01-01T01:00:00Z, 2 contributor(s)"
+        ),
+        "{output}"
+    );
+}
+
+#[test]
 fn unfiltered_output_keeps_every_provider_and_renders_unavailable_state() {
     let subscriptions = UsageProvider::ALL
         .into_iter()
@@ -146,6 +182,7 @@ fn unfiltered_output_keeps_every_provider_and_renders_unavailable_state() {
             } else {
                 "available".into()
             },
+            pool: None,
             allowed: None,
             limit_reached: None,
             plan: None,
