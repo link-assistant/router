@@ -404,10 +404,42 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run tests
-        # Windows gives child processes and file-backed ownership tests stricter
-        # lifetime semantics. Run the same complete inventory serially there so
-        # independent fixtures cannot retain one another's handles.
-        run: cargo test --locked --all-features --verbose ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
+        if: runner.os != 'Windows'
+        run: cargo test --locked --all-features --verbose
+
+      - name: Compile Windows tests
+        if: runner.os == 'Windows'
+        run: cargo test --locked --all-features --verbose --no-run
+
+      - name: Run Windows library and binary tests
+        if: runner.os == 'Windows'
+        run: cargo test --locked --all-features --verbose --lib --bins -- --test-threads=1
+
+      - name: Run Windows integration tests with bounded targets
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $testFiles = Get-ChildItem tests -File -Filter '*_test.rs' | Sort-Object Name
+          foreach ($testFile in $testFiles) {
+            $target = $testFile.BaseName
+            Write-Host "::group::Windows integration target $target"
+            $arguments = @(
+              'test', '--locked', '--all-features', '--verbose',
+              '--test', $target, '--', '--test-threads=1'
+            )
+            $process = Start-Process -FilePath cargo -ArgumentList $arguments -NoNewWindow -PassThru
+            if (-not $process.WaitForExit(180000)) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              Write-Host '::endgroup::'
+              throw "Windows integration target $target exceeded 180 seconds"
+            }
+            $exitCode = $process.ExitCode
+            Write-Host '::endgroup::'
+            if ($exitCode -ne 0) {
+              exit $exitCode
+            }
+          }
 
       - name: Run doc tests
         run: cargo test --locked --doc --verbose

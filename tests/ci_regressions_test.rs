@@ -169,16 +169,17 @@ fn ci_compiles_through_a_compilation_level_cache() {
     );
 }
 
-/// Windows retains process and file handles more strictly than Unix runners.
-/// The complete suite remains the same, but its ownership fixtures must not
-/// overlap in the Windows test harness.
+/// A Windows child retaining a test target's handles must identify that target
+/// promptly instead of leaving the whole opaque Cargo invocation stuck until
+/// the job timeout.
 #[test]
-fn windows_ci_serializes_the_complete_test_inventory() {
+fn windows_ci_bounds_every_integration_test_target() {
     let workflow = read_lf(".github/workflows/release.yml");
 
-    assert!(workflow.contains(
-        "cargo test --locked --all-features --verbose ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}"
-    ));
+    assert!(workflow.contains("Get-ChildItem tests -File -Filter '*_test.rs'"));
+    assert!(workflow.contains("$process.WaitForExit(180000)"));
+    assert!(workflow.contains("Windows integration target $target exceeded 180 seconds"));
+    assert!(workflow.contains("--test', $target, '--', '--test-threads=1"));
 }
 
 /// `RUSTC_WRAPPER` must never be set where the binary is not installed.
