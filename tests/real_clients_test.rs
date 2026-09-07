@@ -631,28 +631,41 @@ fn run_wrapper_with_options(
     model: Option<&str>,
     forwarded: &[&str],
 ) -> Output {
-    run_wrapper_with_configuration_options(
+    run_wrapper_with_configuration_options(WrapperRun {
         case,
         working_directory,
         home,
         server,
         model,
-        &[],
+        wrapper_options: &[],
         forwarded,
-        None,
-    )
+        external_proxy: None,
+    })
 }
 
-fn run_wrapper_with_configuration_options(
+#[derive(Clone, Copy)]
+struct WrapperRun<'a> {
     case: ClientCase,
-    working_directory: &Path,
-    home: &Path,
-    server: &str,
-    model: Option<&str>,
-    wrapper_options: &[&str],
-    forwarded: &[&str],
-    external_proxy: Option<&str>,
-) -> Output {
+    working_directory: &'a Path,
+    home: &'a Path,
+    server: &'a str,
+    model: Option<&'a str>,
+    wrapper_options: &'a [&'a str],
+    forwarded: &'a [&'a str],
+    external_proxy: Option<&'a str>,
+}
+
+fn run_wrapper_with_configuration_options(run: WrapperRun<'_>) -> Output {
+    let WrapperRun {
+        case,
+        working_directory,
+        home,
+        server,
+        model,
+        wrapper_options,
+        forwarded,
+        external_proxy,
+    } = run;
     let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
     command.args(["--server", server, "--token", "offline-admin"]);
     if let Some(model) = model {
@@ -710,16 +723,16 @@ fn assert_claude_split_auth_boundary(home: &Path, router: &MockRouter) {
     let request_start = router.requests.lock().expect("read Router capture").len();
     let before = router.inference_requests(CLAUDE.inference_path).len();
     let external = ExternalTrafficGuard::start();
-    let output = run_wrapper_with_configuration_options(
-        CLAUDE,
-        Path::new(env!("CARGO_MANIFEST_DIR")),
+    let output = run_wrapper_with_configuration_options(WrapperRun {
+        case: CLAUDE,
+        working_directory: Path::new(env!("CARGO_MANIFEST_DIR")),
         home,
-        &router.origin,
-        Some(CLAUDE.model),
-        &["--extend-global-config"],
-        &[PROMPT],
-        Some(&external.origin),
-    );
+        server: &router.origin,
+        model: Some(CLAUDE.model),
+        wrapper_options: &["--extend-global-config"],
+        forwarded: &[PROMPT],
+        external_proxy: Some(&external.origin),
+    });
     assert!(
         output.status.success(),
         "Claude split-auth boundary capture failed; stdout: {}; stderr: {}",
@@ -760,20 +773,23 @@ fn assert_claude_split_auth_boundary(home: &Path, router: &MockRouter) {
         Some(format!("Bearer {}", run_token(CLAUDE)).as_str()),
         "sampling must carry only the Router credential"
     );
-    let captured = router.requests.lock().expect("read split-auth capture");
-    let routed = &captured[request_start..];
-    let router_credential = format!("Bearer {}", run_token(CLAUDE));
-    for request in routed
-        .iter()
-        .filter(|request| request.path.ends_with("/models"))
-    {
-        assert_eq!(
-            request.header("authorization"),
-            Some(router_credential.as_str()),
-            "model discovery must carry only the Router credential"
-        );
-    }
-    let capture = format!("{routed:?}");
+    let capture = {
+        let captured = router.requests.lock().expect("read split-auth capture");
+        let split_requests = captured[request_start..].to_vec();
+        drop(captured);
+        let router_credential = format!("Bearer {}", run_token(CLAUDE));
+        for request in split_requests
+            .iter()
+            .filter(|request| request.path.ends_with("/models"))
+        {
+            assert_eq!(
+                request.header("authorization"),
+                Some(router_credential.as_str()),
+                "model discovery must carry only the Router credential"
+            );
+        }
+        format!("{split_requests:?}")
+    };
     assert!(
         !capture.contains("synthetic-claude-oauth")
             && !capture.contains("synthetic-claude-refresh"),

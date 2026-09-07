@@ -285,7 +285,7 @@ fn claude_native_service_request(arguments: &[OsString]) -> bool {
         let argument = argument.to_string_lossy();
         let name = argument
             .split_once('=')
-            .map_or(argument.as_ref(), |(name, _)| name);
+            .map_or_else(|| argument.as_ref(), |(name, _)| name);
         matches!(
             name,
             "--cloud" | "--environment" | "--remote-control" | "--rc" | "--teleport"
