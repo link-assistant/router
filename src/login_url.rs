@@ -92,6 +92,7 @@ pub const REDACTED: &str = "[redacted]";
 const SECRET_PREFIXES: &[&str] = &[
     "sk-ant-",
     crate::token::TOKEN_PREFIX,
+    crate::token::CODEX_TOKEN_PREFIX,
     crate::admin::ADMIN_TOKEN_PREFIX,
 ];
 

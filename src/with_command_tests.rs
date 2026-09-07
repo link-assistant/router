@@ -53,12 +53,12 @@ fn the_gemini_client_is_pointed_at_the_isolated_home() {
 /// End to end: after preparing the client, the file Gemini CLI actually
 /// reads must exist and select the API-key flow. The router previously
 /// wrote a correct file the CLI never opened (issue #227).
-/// By default the client keeps its own configuration directory, so sessions
-/// started outside the router remain visible and a conversation can be
-/// resumed through it (issue #233), and an interactive user does not land in
-/// first-run onboarding (issue #277).
+/// A default Claude launch lives in a persistent Router-owned profile. The
+/// Router must not synthesize a settings file there: Claude owns the profile
+/// contents, while routing stays process-local (issue #536).
 #[test]
-fn the_users_configuration_is_kept_by_default() {
+fn default_claude_launch_uses_an_empty_persistent_router_profile() {
+    let profiles = tempfile::tempdir().expect("profile root");
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
@@ -71,9 +71,11 @@ fn the_users_configuration_is_kept_by_default() {
         model_override: None,
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: true,
-        profile_root: None,
+        profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare with the default configuration handling");
     let names: Vec<String> = extended
@@ -81,9 +83,21 @@ fn the_users_configuration_is_kept_by_default() {
         .get_envs()
         .map(|(name, _)| name.to_string_lossy().into_owned())
         .collect();
-    assert!(
-        !names.iter().any(|name| name == "CLAUDE_CONFIG_DIR"),
-        "the user's configuration directory must not be repointed: {names:?}"
+    let config_dir = extended
+        .command
+        .get_envs()
+        .find_map(|(name, value)| (name == "CLAUDE_CONFIG_DIR").then_some(value?))
+        .expect("default Claude launch must set CLAUDE_CONFIG_DIR");
+    let expected = profiles
+        .path()
+        .join("link-assistant-router/clients/claude/home");
+    assert_eq!(Path::new(config_dir), expected);
+    assert_eq!(
+        fs::read_dir(&expected)
+            .expect("read Router-owned Claude profile")
+            .count(),
+        0,
+        "Router must create only the empty profile and let Claude populate it"
     );
     // The router's actual contribution is still applied.
     for required in ["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"] {
@@ -112,11 +126,11 @@ fn the_users_configuration_is_kept_by_default() {
             .map(String::as_str),
         Some("1")
     );
-    assert_eq!(
-        environment
-            .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
-            .map(String::as_str),
-        Some("0")
+    assert!(
+        !names
+            .iter()
+            .any(|name| name == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"),
+        "the run must inherit the user's setting instead of installing the presence-based disable switch"
     );
     assert_eq!(
         environment.get("ANTHROPIC_API_KEY").map(String::as_str),
@@ -140,9 +154,11 @@ fn the_users_configuration_is_kept_by_default() {
         model_override: None,
         models: &models,
         isolated_config: true,
+        extend_user_configuration: false,
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated");
     assert!(
@@ -156,6 +172,7 @@ fn the_users_configuration_is_kept_by_default() {
 
 #[test]
 fn zai_only_claude_launch_pins_only_main_and_subagent() {
+    let profiles = tempfile::tempdir().expect("profile root");
     let models = [
         RouterModel {
             id: "future-first-2099".to_string(),
@@ -175,9 +192,11 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         model_override: None,
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: false,
-        profile_root: None,
+        profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare a resumed z.ai-only Claude session");
     let resumed_env = resumed
@@ -210,9 +229,11 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         model_override: Some("future-explicit-2099"),
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: true,
-        profile_root: None,
+        profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare an explicit z.ai Claude model");
     let explicit_env = explicit
@@ -239,6 +260,77 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
     }
 }
 
+/// Claude filters exact non-Anthropic gateway IDs out of `/model`. Router
+/// restores only those authorized compatible rows through Claude's supported
+/// process-local `--settings` surface, without aliases or duplicates (#419).
+#[test]
+fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
+    let profiles = tempfile::tempdir().expect("profile root");
+    let models = [
+        RouterModel {
+            id: "future-claude-native".to_string(),
+            owned_by: crate::clients::ANTHROPIC_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "future-glm-beta".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "future-glm-alpha".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "future-glm-alpha".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "sonnet".to_string(),
+            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+            ..RouterModel::default()
+        },
+    ];
+    let prepared = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+    })
+    .expect("prepare mixed Claude catalog");
+    let arguments = prepared
+        .command
+        .get_args()
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    let settings = arguments
+        .windows(2)
+        .find_map(|pair| (pair[0] == "--settings").then_some(&pair[1]))
+        .expect("Router must provide a process-local model picker");
+    let settings: serde_json::Value = serde_json::from_str(settings).expect("valid settings JSON");
+    assert_eq!(
+        settings,
+        json!({
+            "modelPicker": {
+                "options": [
+                    {"model": "future-glm-alpha", "label": "future-glm-alpha"},
+                    {"model": "future-glm-beta", "label": "future-glm-beta"}
+                ],
+                "replaceBuiltInOptions": false
+            }
+        })
+    );
+}
+
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does
 /// not require replacing `HOME` or `CODEX_HOME`. The overlay must precede the
 /// user's subcommand and arguments; `launch` appends those after preparation.
@@ -254,24 +346,26 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         }]),
     }];
     assert!(
-        extends_user_configuration(ClientKind::Codex, false),
+        extends_user_configuration(ClientKind::Codex, false, false),
         "ordinary Codex runs can layer routing through CLI configuration"
     );
     assert!(
-        !extends_user_configuration(ClientKind::Codex, true),
+        !extends_user_configuration(ClientKind::Codex, true, false),
         "explicit isolation must still replace the client configuration"
     );
 
     let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::Codex,
         base_url: "http://router.test/path?tenant=one",
-        token: "task-token",
+        token: "la_sk_header.payload.sig",
         model_override: None,
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: Some("http://127.0.0.1:43123/api/services/codex/backend-api"),
     })
     .expect("prepare Codex overlay");
 
@@ -287,7 +381,30 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             .get("LINK_ASSISTANT_TOKEN")
             .and_then(|value| *value)
             .map(|value| value.to_string_lossy()),
-        Some(std::borrow::Cow::Borrowed("task-token"))
+        Some(std::borrow::Cow::Borrowed("la_sk_header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_ACCESS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_CONNECTORS_TOKEN")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed("at-header.payload.sig"))
+    );
+    assert_eq!(
+        environment
+            .get("CODEX_AUTHAPI_BASE_URL")
+            .and_then(|value| *value)
+            .map(|value| value.to_string_lossy()),
+        Some(std::borrow::Cow::Borrowed(
+            "http://router.test/path?tenant=one/api/services/codex"
+        ))
     );
 
     let arguments = prepared
@@ -295,10 +412,13 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         .get_args()
         .map(|argument| argument.to_string_lossy().into_owned())
         .collect::<Vec<_>>();
-    assert_eq!(
-        arguments[0..3],
-        ["-c", "model_provider=\"link-assistant\"", "-c"]
-    );
+    assert_eq!(arguments[0], "-c");
+    let provider = arguments[1]
+        .strip_prefix("model_provider=")
+        .and_then(|value| serde_json::from_str::<String>(value).ok())
+        .expect("process-local model provider argument");
+    assert!(provider.starts_with("link-assistant-run-"), "{provider}");
+    assert_eq!(arguments[2], "-c");
     let catalog_path = arguments[3]
         .strip_prefix("model_catalog_json=")
         .and_then(|value| serde_json::from_str::<String>(value).ok())
@@ -315,17 +435,23 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         json!([{"effort": "high", "description": "Deep reasoning"}])
     );
     assert_eq!(catalog["models"].as_array().unwrap().len(), 1);
+    assert_eq!(arguments[4], "-c");
     assert_eq!(
-        arguments[4..],
+        arguments[5],
+        format!(
+            "model_providers.{provider}={{ name = \"OpenAI\", base_url = \"http://router.test/path?tenant=one/api/services/codex/v1\", wire_api = \"responses\", requires_openai_auth = true, supports_websockets = true, supports_standalone_web_search = true }}"
+        )
+    );
+    assert!(!arguments[5].contains("env_key"));
+    assert_eq!(
+        arguments[6..],
         [
             "-c",
-            "model_providers.link-assistant.name=\"Link.Assistant.Router\"",
+            "chatgpt_base_url=\"http://127.0.0.1:43123/api/services/codex/backend-api\"",
             "-c",
-            "model_providers.link-assistant.base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
+            "experimental_realtime_ws_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
             "-c",
-            "model_providers.link-assistant.env_key=\"LINK_ASSISTANT_TOKEN\"",
-            "-c",
-            "model_providers.link-assistant.wire_api=\"responses\"",
+            "experimental_realtime_webrtc_call_base_url=\"http://router.test/path?tenant=one/api/services/codex/v1\"",
         ]
     );
 
@@ -336,9 +462,11 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         model_override: None,
         models: &models,
         isolated_config: true,
+        extend_user_configuration: false,
         one_shot: true,
         profile_root: None,
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare isolated Codex");
     let isolated_home = isolated
@@ -515,15 +643,19 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         ..RouterModel::default()
     }];
     assert!(
-        !extends_user_configuration(ClientKind::Opencode, false),
+        !extends_user_configuration(ClientKind::Opencode, false, false),
         "opencode sets no base-url variable, so there is nothing to layer"
     );
     assert!(
-        extends_user_configuration(ClientKind::ClaudeCode, false),
-        "claude code sets both variables, so the default extends"
+        !extends_user_configuration(ClientKind::ClaudeCode, false, false),
+        "Claude defaults to its persistent Router-owned profile"
     );
     assert!(
-        !extends_user_configuration(ClientKind::ClaudeCode, true),
+        extends_user_configuration(ClientKind::ClaudeCode, false, true),
+        "--extend-global-config explicitly opts into the real Claude profile"
+    );
+    assert!(
+        !extends_user_configuration(ClientKind::ClaudeCode, true, true),
         "--isolated-config wins over the default"
     );
 
@@ -536,9 +668,11 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         model_override: None,
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("a file-configured client must still run");
 }
@@ -558,7 +692,7 @@ fn a_client_needing_a_written_file_is_isolated_despite_its_variables() {
         "the variables alone would otherwise qualify it for extending"
     );
     assert!(
-        !extends_user_configuration(ClientKind::GeminiCli, false),
+        !extends_user_configuration(ClientKind::GeminiCli, false, false),
         "routing depends on a file only isolation makes reachable"
     );
 }
@@ -578,9 +712,11 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         model_override: None,
         models: &models,
         isolated_config: false,
+        extend_user_configuration: false,
         one_shot: true,
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
+        codex_backend_base_url: None,
     })
     .expect("prepare gemini");
     let root = temporary.directory.path();
@@ -670,9 +806,11 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                     model_override: None,
                     models: &models,
                     isolated_config: false,
+                    extend_user_configuration: false,
                     one_shot: true,
                     profile_root: Some(profiles.path()),
                     codex_reasoning_effort: None,
+                    codex_backend_base_url: None,
                 })
                 .is_err()
             );
@@ -685,9 +823,11 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             model_override: None,
             models: &models,
             isolated_config: false,
+            extend_user_configuration: false,
             one_shot: true,
             profile_root: Some(profiles.path()),
             codex_reasoning_effort: None,
+            codex_backend_base_url: None,
         })
         .unwrap_or_else(|error| panic!("{client} failed setup: {error}"));
         let root = temporary.directory.path().to_path_buf();
@@ -718,7 +858,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                 );
             }
         }
-        let keeps_a_profile = !extends_user_configuration(client, false);
+        let keeps_a_profile = !extends_user_configuration(client, false, false);
         drop(temporary);
         assert_eq!(
             root.exists(),

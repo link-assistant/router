@@ -19,6 +19,28 @@ use crate::storage::{MemoryTokenStore, RequestAdmission, StorageError, TokenReco
 /// Prefix for all router-issued custom tokens.
 pub const TOKEN_PREFIX: &str = "la_sk_";
 
+/// Codex's supported environment-backed personal-access-token carrier.
+///
+/// This is an alias of the same signed JWT and durable token record, not a
+/// second grant. Revocation, expiry, account binding and budgets therefore
+/// apply identically to both representations (issue #519).
+pub const CODEX_TOKEN_PREFIX: &str = "at-";
+
+/// Convert a normal Router token into the Codex PAT spelling without changing
+/// its signed claims or durable authorization record.
+#[must_use]
+pub fn codex_token_alias(token: &str) -> Option<String> {
+    token
+        .strip_prefix(TOKEN_PREFIX)
+        .map(|jwt| format!("{CODEX_TOKEN_PREFIX}{jwt}"))
+}
+
+fn token_jwt(token: &str) -> Option<&str> {
+    token
+        .strip_prefix(TOKEN_PREFIX)
+        .or_else(|| token.strip_prefix(CODEX_TOKEN_PREFIX))
+}
+
 /// Scope claim marking a token as an administrative credential.
 ///
 /// A token carrying this scope unlocks the administrative endpoints
@@ -507,15 +529,13 @@ impl TokenManager {
 
     /// Validate a custom token string.
     ///
-    /// Strips the `la_sk_` prefix, decodes the JWT, checks expiration and
-    /// revocation status, and returns the claims if valid.
+    /// Strips either Router carrier prefix, decodes the same JWT, checks
+    /// expiration and revocation status, and returns the claims if valid.
     pub fn validate_token(&self, token: &str) -> Result<TokenClaims, TokenError> {
         if crate::token_secret::is_placeholder(&self.secret) {
             return Err(TokenError::Invalid(crate::token_secret::refusal()));
         }
-        let jwt = token
-            .strip_prefix(TOKEN_PREFIX)
-            .ok_or(TokenError::InvalidPrefix)?;
+        let jwt = token_jwt(token).ok_or(TokenError::InvalidPrefix)?;
 
         let token_data = decode::<TokenClaims>(
             jwt,
@@ -587,7 +607,7 @@ impl TokenManager {
     /// Test-only access to [`Self::decode_ignoring_expiry`].
     #[cfg(test)]
     pub(crate) fn decode_ignoring_expiry_for_test(&self, token: &str) -> Option<TokenClaims> {
-        let jwt = token.strip_prefix(TOKEN_PREFIX)?;
+        let jwt = token_jwt(token)?;
         self.decode_ignoring_expiry(jwt).map(|data| data.claims)
     }
 

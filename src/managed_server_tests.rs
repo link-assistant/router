@@ -223,7 +223,7 @@ async fn split_origins_never_cross_management_and_inference_routes() {
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(management[2].starts_with("POST /api/management/tokens/revoke "));
     assert!(
-        inference[0].starts_with("GET /api/services/anthropic/v1/models "),
+        inference[0].starts_with("GET /api/models "),
         "{}",
         inference[0]
     );
@@ -258,7 +258,7 @@ async fn inference_only_listener_accepts_a_verified_matching_client_token() {
     assert_eq!(credential.models()[0].id, "claude-live");
     let seen = server.join().expect("probe server");
     assert!(seen[0].starts_with("GET /api/management/tokens "));
-    assert!(seen[1].starts_with("GET /api/services/anthropic/v1/models "));
+    assert!(seen[1].starts_with("GET /api/models "));
 }
 
 #[tokio::test]

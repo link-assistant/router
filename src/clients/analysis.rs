@@ -261,7 +261,6 @@ fn marker_valid(
             marker.is_some_and(|(managed, _, entries)| {
                 let fixed = [
                     ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1")),
-                    ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0")),
                     ("ANTHROPIC_AUTH_TOKEN", None),
                     ("ANTHROPIC_API_KEY", None),
                 ]
@@ -294,7 +293,13 @@ fn marker_valid(
                                     .is_some_and(|(_, managed, _)| managed.is_none())
                             })
                 });
-                expected_endpoint.is_none_or(|expected| managed == expected) && fixed && models
+                let legacy_disable_absent = entries
+                    .iter()
+                    .all(|(key, _, _)| key != "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC");
+                expected_endpoint.is_none_or(|expected| managed == expected)
+                    && fixed
+                    && models
+                    && legacy_disable_absent
             })
         }),
         ClientKind::Codex => super::read_codex_marker(path).map(|_| true),
@@ -371,10 +376,7 @@ fn critical_conflicts(
         .unwrap_or_default();
     if client == ClientKind::ClaudeCode {
         let environment = manager.environment_path(client);
-        for (key, expected) in [
-            ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1"),
-            ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0"),
-        ] {
+        for (key, expected) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
             if read_environment_value(&environment, key)
                 .ok()
                 .flatten()
@@ -383,6 +385,14 @@ fn critical_conflicts(
             {
                 conflicts.push(format!("managed-environment:{key}"));
             }
+        }
+        if read_environment_value(&environment, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+            .ok()
+            .flatten()
+            .is_some()
+        {
+            conflicts
+                .push("managed-environment:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".to_string());
         }
         for key in std::iter::once("ANTHROPIC_API_KEY").chain(super::CLAUDE_MODEL_ENV) {
             if read_environment_value(&environment, key)
@@ -411,16 +421,19 @@ fn critical_conflicts(
                 conflicts.push(format!("ambient:{key}"));
             }
         }
-        for (key, wanted) in [
-            ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1"),
-            ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0"),
-        ] {
+        for (key, wanted) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
             if manager
                 .environment_var(key)
                 .is_some_and(|value| !value.is_empty() && value != wanted)
             {
                 conflicts.push(format!("ambient:{key}"));
             }
+        }
+        if manager
+            .environment_var("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+            .is_some_and(|value| !value.is_empty())
+        {
+            conflicts.push("ambient:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".to_string());
         }
     }
 
@@ -497,13 +510,13 @@ fn claude_conflicts(
             conflicts.push(format!("public-config:{key}"));
         }
     }
-    for (key, wanted) in [
-        ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1"),
-        ("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0"),
-    ] {
+    for (key, wanted) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
         if env.get(key).and_then(Value::as_str) != Some(wanted) {
             conflicts.push(format!("public-config:{key}"));
         }
+    }
+    if marker_entries.is_empty() && env.contains_key("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC") {
+        conflicts.push("public-config:CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".to_string());
     }
 }
 

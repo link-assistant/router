@@ -97,7 +97,7 @@ fn mock_managed_router(
                 "/api/management/tokens/client" => {
                     ("200 OK", format!(r#"{{"token":"{BOUND_CODEX_TOKEN}"}}"#))
                 }
-                "/api/services/codex/v1/models" => (
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","default_reasoning_level":"high","supported_reasoning_levels":[{"effort":"high","description":"Deep reasoning"}]}]}"#.to_string(),
                 ),
@@ -432,7 +432,7 @@ fn managed_admin_is_used_only_for_unclaimed_per_run_minting() {
             "/api/health",
             "/api/management/tokens",
             "/api/management/tokens/client",
-            "/api/services/codex/v1/models",
+            "/api/models",
             "/api/management/tokens/revoke"
         ]
     );
@@ -753,7 +753,7 @@ fn claimed_managed_router_accepts_an_explicit_ordinary_token() {
             "/api/health",
             "/api/health",
             "/api/management/tokens",
-            "/api/services/codex/v1/models"
+            "/api/models"
         ]
     );
 }

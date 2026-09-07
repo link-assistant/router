@@ -144,13 +144,16 @@ fn logged_records(root: &std::path::Path) -> Vec<Value> {
 }
 
 #[tokio::test]
-async fn real_lefine_catalog_inference_and_operator_surfaces_are_secret_free() {
+async fn real_lefine_catalog_and_operator_surfaces_are_secret_free() {
     let Ok(api_key) = std::env::var("LEFINE_API_KEY") else {
+        eprintln!("SKIP: LEFINE_API_KEY is not configured; live Lefine catalog check did not run");
         return;
     };
     if api_key.is_empty() {
+        eprintln!("SKIP: LEFINE_API_KEY is empty; live Lefine catalog check did not run");
         return;
     }
+    eprintln!("RUN: validating Lefine through the non-inference catalog endpoint");
 
     let data = tempfile::tempdir().expect("data dir");
     let (state, config) = live_state(data.path(), api_key.clone());
@@ -199,32 +202,7 @@ async fn real_lefine_catalog_inference_and_operator_surfaces_are_secret_free() {
         .and_then(|model| model["id"].as_str())
         .expect("live Lefine model")
         .to_string();
-
-    let body = serde_json::to_vec(&json!({
-        "model": model,
-        "messages": [{"role": "user", "content": "Reply with OK."}],
-        "stream": false
-    }))
-    .expect("inference body");
-    let inference = app
-        .clone()
-        .oneshot(request(
-            Method::POST,
-            "/api/services/openai/v1/chat/completions",
-            &headers,
-            Body::from(body),
-        ))
-        .await
-        .expect("inference response");
-    assert!(inference.status().is_success());
-    let inference_body = inference
-        .into_body()
-        .collect()
-        .await
-        .expect("inference body")
-        .to_bytes();
-    assert!(!inference_body.is_empty());
-    assert!(!String::from_utf8_lossy(&inference_body).contains(&api_key));
+    assert!(!model.is_empty());
 
     let management = app
         .oneshot(request(
@@ -247,12 +225,9 @@ async fn real_lefine_catalog_inference_and_operator_surfaces_are_secret_free() {
     let records = logged_records(&data.path().join("requests"));
     let correlation_id = records
         .iter()
-        .find(|record| {
-            record["phase"] == "upstream_request"
-                && record["body"]["model"].as_str() == Some(model.as_str())
-        })
+        .find(|record| record["correlation_id"].is_string())
         .and_then(|record| record["correlation_id"].as_str())
-        .expect("logged live inference correlation id");
+        .expect("logged live catalog correlation id");
     let raw_logs = records
         .iter()
         .map(Value::to_string)
@@ -281,4 +256,93 @@ async fn real_lefine_catalog_inference_and_operator_surfaces_are_secret_free() {
         assert!(!output.contains(&format!("Bearer {api_key}")));
         assert!(!output.contains(&client_token));
     }
+}
+
+#[tokio::test]
+async fn real_lefine_inference_requires_separate_explicit_opt_in() {
+    if std::env::var("LEFINE_INFERENCE_ACCEPTANCE").as_deref() != Ok("1") {
+        eprintln!(
+            "SKIP: LEFINE_INFERENCE_ACCEPTANCE=1 is not set; Lefine inference check did not run"
+        );
+        return;
+    }
+    let Ok(api_key) = std::env::var("LEFINE_API_KEY") else {
+        eprintln!("SKIP: LEFINE_API_KEY is not configured; Lefine inference check did not run");
+        return;
+    };
+    if api_key.is_empty() {
+        eprintln!("SKIP: LEFINE_API_KEY is empty; Lefine inference check did not run");
+        return;
+    }
+    eprintln!("RUN: explicitly enabled Lefine end-to-end inference acceptance");
+
+    let data = tempfile::tempdir().expect("data dir");
+    let (state, config) = live_state(data.path(), api_key.clone());
+    let client_token = state
+        .token_manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "Lefine explicit inference acceptance",
+            account: Some("primary"),
+            max_requests: None,
+            max_tokens: None,
+            rate_limit_per_minute: None,
+            scope: "",
+            github_repos: Vec::new(),
+            sliding_window_seconds: None,
+            client_kind: Some("opencode"),
+            principal_id: Some("primary"),
+        })
+        .expect("issue OpenCode token");
+    let app = link_assistant_router::server_router::router_for_listener(
+        state.clone(),
+        &config,
+        ListenerKind::Combined,
+    )
+    .layer(from_fn_with_state(state.clone(), log_http_exchange));
+    let headers = client_headers(&client_token);
+    let catalog = app
+        .clone()
+        .oneshot(request(Method::GET, "/api/models", &headers, Body::empty()))
+        .await
+        .expect("catalog response");
+    assert_eq!(catalog.status(), StatusCode::OK);
+    let catalog: Value = serde_json::from_slice(
+        &catalog
+            .into_body()
+            .collect()
+            .await
+            .expect("catalog body")
+            .to_bytes(),
+    )
+    .expect("catalog JSON");
+    let model = catalog["data"]
+        .as_array()
+        .and_then(|models| models.iter().find(|model| model["service"] == "lefine"))
+        .and_then(|model| model["id"].as_str())
+        .expect("live Lefine model");
+    let body = serde_json::to_vec(&json!({
+        "model": model,
+        "messages": [{"role": "user", "content": "Reply with OK."}],
+        "stream": false
+    }))
+    .expect("inference body");
+    let inference = app
+        .oneshot(request(
+            Method::POST,
+            "/api/services/openai/v1/chat/completions",
+            &headers,
+            Body::from(body),
+        ))
+        .await
+        .expect("inference response");
+    assert!(inference.status().is_success());
+    let response = inference
+        .into_body()
+        .collect()
+        .await
+        .expect("inference body")
+        .to_bytes();
+    assert!(!response.is_empty());
+    assert!(!String::from_utf8_lossy(&response).contains(&api_key));
 }

@@ -12,11 +12,11 @@
 //! front, because a single provider may emit either one depending on which
 //! endpoint the request was routed to.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::{Value, json};
 
-use crate::openai::{extract_sse_data, find_sse_separator};
+use crate::openai::extract_sse_data;
 
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
@@ -42,10 +42,8 @@ pub fn map_stop_reason(finish_reason: &str) -> &'static str {
 pub struct AnthropicStreamTranslator {
     /// Client-requested model identity preserved in every response shape.
     model: String,
-    /// Concrete upstream model, exposed separately when it differs.
-    upstream_model: Option<String>,
     id: String,
-    buffer: String,
+    buffer: Vec<u8>,
     started: bool,
     finished: bool,
     /// Index of the content block currently open, if any.
@@ -56,13 +54,18 @@ pub struct AnthropicStreamTranslator {
     /// the Anthropic content-block index.
     tool_indices: BTreeMap<i64, usize>,
     server_tool_indices: BTreeMap<i64, (usize, String)>,
+    refusal_indices: BTreeSet<(u64, u64)>,
     next_index: usize,
     stop_reason: Option<String>,
     stop_sequence: Option<String>,
     stop_filter: crate::stop_sequences::StopSequenceFilter,
     input_tokens: u64,
+    cached_input_tokens: u64,
     output_tokens: u64,
+    service_tier: Option<String>,
     web_search_requests: u64,
+    chat_text: String,
+    response_text: BTreeMap<(u64, u64), String>,
 }
 
 impl AnthropicStreamTranslator {
@@ -71,32 +74,27 @@ impl AnthropicStreamTranslator {
     pub fn new(requested_model: &str) -> Self {
         Self {
             model: requested_model.to_string(),
-            upstream_model: None,
             id: format!("msg_{}", uuid::Uuid::new_v4().simple()),
-            buffer: String::new(),
+            buffer: Vec::new(),
             started: false,
             finished: false,
             open_block: None,
             text_index: None,
             tool_indices: BTreeMap::new(),
             server_tool_indices: BTreeMap::new(),
+            refusal_indices: BTreeSet::new(),
             next_index: 0,
             stop_reason: None,
             stop_sequence: None,
             stop_filter: crate::stop_sequences::StopSequenceFilter::default(),
             input_tokens: 0,
+            cached_input_tokens: 0,
             output_tokens: 0,
+            service_tier: None,
             web_search_requests: 0,
+            chat_text: String::new(),
+            response_text: BTreeMap::new(),
         }
-    }
-
-    /// Attach the concrete model selected for the upstream request.
-    #[must_use]
-    pub fn with_upstream_model(mut self, upstream_model: &str) -> Self {
-        if !upstream_model.is_empty() && upstream_model != self.model {
-            self.upstream_model = Some(upstream_model.to_string());
-        }
-        self
     }
 
     /// Enforce Anthropic `stop_sequences` locally for translated backends.
@@ -108,11 +106,8 @@ impl AnthropicStreamTranslator {
 
     /// Push raw upstream bytes and return zero or more Anthropic SSE frames.
     pub fn push(&mut self, chunk: &[u8]) -> Vec<String> {
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut frames = Vec::new();
-        while let Some((idx, separator_len)) = find_sse_separator(&self.buffer) {
-            let block = self.buffer[..idx].to_string();
-            self.buffer.drain(..idx + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             frames.extend(self.translate_block(&block));
         }
         frames
@@ -144,7 +139,7 @@ impl AnthropicStreamTranslator {
         if event
             .get("type")
             .and_then(Value::as_str)
-            .is_some_and(|t| t.starts_with("response."))
+            .is_some_and(|t| t.starts_with("response.") || t == "error")
         {
             self.translate_response_event(&event)
         } else {
@@ -158,8 +153,9 @@ impl AnthropicStreamTranslator {
         if self.finished {
             return Vec::new();
         }
-        let mut frames = self.ensure_started();
         self.absorb_usage(event.get("usage"));
+        self.absorb_service_tier(event.get("service_tier"));
+        let mut frames = self.ensure_started();
 
         let Some(choice) = event
             .get("choices")
@@ -172,7 +168,18 @@ impl AnthropicStreamTranslator {
             if let Some(text) = delta.get("content").and_then(Value::as_str)
                 && !text.is_empty()
             {
+                self.chat_text.push_str(text);
                 frames.extend(self.text_delta(text));
+            }
+            if let Some(annotations) = delta.get("annotations") {
+                match crate::bridge_response::openai_annotations_to_anthropic(
+                    &self.chat_text,
+                    Some(annotations),
+                    true,
+                ) {
+                    Ok(citations) => frames.extend(self.citation_deltas(citations)),
+                    Err(error) => return self.fail_citation(&error),
+                }
             }
             if let Some(calls) = delta.get("tool_calls").and_then(Value::as_array) {
                 for call in calls {
@@ -242,10 +249,53 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         let kind = event.get("type").and_then(Value::as_str).unwrap_or("");
+        self.absorb_usage(
+            event
+                .get("usage")
+                .or_else(|| event.pointer("/response/usage")),
+        );
+        self.absorb_service_tier(
+            event
+                .get("service_tier")
+                .or_else(|| event.pointer("/response/service_tier")),
+        );
         let mut frames = self.ensure_started();
         match kind {
             "response.output_text.delta" => {
                 if let Some(text) = event.get("delta").and_then(Value::as_str)
+                    && !text.is_empty()
+                {
+                    self.response_text
+                        .entry(response_content_key(event))
+                        .or_default()
+                        .push_str(text);
+                    frames.extend(self.text_delta(text));
+                }
+            }
+            "response.output_text.annotation.added" => {
+                let key = response_content_key(event);
+                let text = self.response_text.get(&key).cloned().unwrap_or_default();
+                let annotation = event.get("annotation").cloned().unwrap_or(Value::Null);
+                match crate::bridge_response::openai_annotations_to_anthropic(
+                    &text,
+                    Some(&Value::Array(vec![annotation])),
+                    false,
+                ) {
+                    Ok(citations) => frames.extend(self.citation_deltas(citations)),
+                    Err(error) => return self.fail_citation(&error),
+                }
+            }
+            "response.refusal.delta" => {
+                self.refusal_indices.insert(response_content_key(event));
+                if let Some(text) = event.get("delta").and_then(Value::as_str)
+                    && !text.is_empty()
+                {
+                    frames.extend(self.text_delta(text));
+                }
+            }
+            "response.refusal.done" => {
+                if self.refusal_indices.insert(response_content_key(event))
+                    && let Some(text) = event.get("refusal").and_then(Value::as_str)
                     && !text.is_empty()
                 {
                     frames.extend(self.text_delta(text));
@@ -253,7 +303,8 @@ impl AnthropicStreamTranslator {
             }
             "response.output_item.added" | "response.output_item.done" => {
                 let item = event.get("item").unwrap_or(&Value::Null);
-                if item.get("type").and_then(Value::as_str) == Some("function_call") {
+                let item_kind = item.get("type").and_then(Value::as_str).unwrap_or("");
+                if item_kind == "function_call" {
                     let key = event
                         .get("output_index")
                         .and_then(Value::as_i64)
@@ -263,7 +314,7 @@ impl AnthropicStreamTranslator {
                         "id": item.get("call_id").or_else(|| item.get("id")).cloned().unwrap_or(Value::Null),
                         "function": {"name": item.get("name").cloned().unwrap_or(Value::Null)},
                     })));
-                } else if item.get("type").and_then(Value::as_str) == Some("web_search_call") {
+                } else if item_kind == "web_search_call" {
                     let key = event
                         .get("output_index")
                         .and_then(Value::as_i64)
@@ -273,6 +324,8 @@ impl AnthropicStreamTranslator {
                     } else if item.get("status").and_then(Value::as_str) == Some("completed") {
                         frames.extend(self.server_tool_result(key, item));
                     }
+                } else if item_kind != "message" {
+                    return self.fail_output_item(item_kind);
                 }
             }
             "response.function_call_arguments.delta" => {
@@ -287,7 +340,15 @@ impl AnthropicStreamTranslator {
                     })));
                 }
             }
-            "response.completed" | "response.incomplete" | "response.failed" => {
+            "error" | "response.failed" => {
+                let error = crate::responses::response_failed_error(event)["error"].clone();
+                self.finished = true;
+                frames.push(anthropic_frame(
+                    "error",
+                    &json!({"type": "error", "error": error}),
+                ));
+            }
+            "response.completed" | "response.incomplete" => {
                 let response = event.get("response").unwrap_or(&Value::Null);
                 self.absorb_usage(response.get("usage"));
                 if self.stop_reason.is_none() {
@@ -388,6 +449,18 @@ impl AnthropicStreamTranslator {
                 self.output_tokens = v;
             }
         }
+        self.cached_input_tokens = usage
+            .pointer("/input_tokens_details/cached_tokens")
+            .or_else(|| usage.pointer("/prompt_tokens_details/cached_tokens"))
+            .and_then(Value::as_u64)
+            .unwrap_or(self.cached_input_tokens)
+            .min(self.input_tokens);
+    }
+
+    fn absorb_service_tier(&mut self, tier: Option<&Value>) {
+        if let Some(tier) = crate::bridge_response::anthropic_service_tier_from_openai(tier) {
+            self.service_tier = Some(tier.into());
+        }
     }
 
     fn ensure_started(&mut self) -> Vec<String> {
@@ -395,7 +468,7 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         self.started = true;
-        let mut message = json!({
+        let message = json!({
             "id": self.id,
             "type": "message",
             "role": "assistant",
@@ -403,12 +476,13 @@ impl AnthropicStreamTranslator {
             "content": [],
             "stop_reason": Value::Null,
             "stop_sequence": Value::Null,
-            "usage": {"input_tokens": self.input_tokens, "output_tokens": 0},
+            "usage": {
+                "input_tokens": self.input_tokens.saturating_sub(self.cached_input_tokens),
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": self.cached_input_tokens,
+                "output_tokens": 0
+            },
         });
-        if let Some(upstream_model) = self.upstream_model.as_deref() {
-            message[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-                Value::String(upstream_model.to_string());
-        }
         vec![anthropic_frame(
             "message_start",
             &json!({
@@ -488,9 +562,14 @@ impl AnthropicStreamTranslator {
             .clone()
             .unwrap_or_else(|| "end_turn".to_string());
         let mut usage = json!({
-            "input_tokens": self.input_tokens,
+            "input_tokens": self.input_tokens.saturating_sub(self.cached_input_tokens),
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": self.cached_input_tokens,
             "output_tokens": self.output_tokens,
         });
+        if let Some(tier) = &self.service_tier {
+            usage["service_tier"] = Value::String(tier.clone());
+        }
         if self.web_search_requests > 0 {
             usage["server_tool_use"] = json!({
                 "web_search_requests": self.web_search_requests,
@@ -511,6 +590,68 @@ impl AnthropicStreamTranslator {
         ));
         frames
     }
+
+    fn citation_deltas(&self, citations: Vec<Value>) -> Vec<String> {
+        let Some(index) = self.open_block else {
+            return Vec::new();
+        };
+        citations
+            .into_iter()
+            .map(|citation| {
+                anthropic_frame(
+                    "content_block_delta",
+                    &json!({
+                        "type": "content_block_delta",
+                        "index": index,
+                        "delta": {"type": "citations_delta", "citation": citation},
+                    }),
+                )
+            })
+            .collect()
+    }
+
+    fn fail_citation(&mut self, error: &str) -> Vec<String> {
+        self.finished = true;
+        vec![anthropic_frame(
+            "error",
+            &json!({
+                "type": "error",
+                "error": {
+                    "type": "api_error",
+                    "message": format!("upstream returned an unrepresentable citation: {error}")
+                }
+            }),
+        )]
+    }
+
+    fn fail_output_item(&mut self, kind: &str) -> Vec<String> {
+        self.finished = true;
+        let reason = if kind.is_empty() {
+            "Responses output item type must be a non-empty string".to_string()
+        } else {
+            crate::anthropic_bridge::unrepresentable_responses_output(kind)
+        };
+        vec![anthropic_frame(
+            "error",
+            &json!({
+                "type": "error",
+                "error": {"type": "api_error", "message": reason},
+            }),
+        )]
+    }
+}
+
+fn response_content_key(event: &Value) -> (u64, u64) {
+    (
+        event
+            .get("output_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+        event
+            .get("content_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(0),
+    )
 }
 
 #[cfg(test)]
@@ -548,15 +689,14 @@ mod tests {
     }
 
     #[test]
-    fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
-        let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias")
-            .with_upstream_model("future-upstream-model");
+    fn streaming_bridge_preserves_requested_model_without_private_metadata() {
+        let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias");
         let output = joined(&translator.push(
             b"data: {\"object\":\"chat.completion.chunk\",\"model\":\"future-upstream-model\",\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
         ));
 
         assert!(output.contains("\"model\":\"claude/catalog-alias\""));
-        assert!(output.contains("\"x_router_upstream_model\":\"future-upstream-model\""));
+        assert!(!output.contains("x_router_"));
     }
 
     #[test]
@@ -602,6 +742,61 @@ mod tests {
     }
 
     #[test]
+    fn incomplete_responses_stream_uses_max_tokens() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let out = joined(&t.push(b"data: {\"type\":\"response.incomplete\",\"response\":{}}\n\n"));
+
+        assert!(out.contains("\"stop_reason\":\"max_tokens\""), "{out}");
+        assert!(out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn failed_responses_stream_after_deltas_emits_anthropic_error() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let mut out = joined(&t.push(
+            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+        ));
+        out.push_str(&joined(&t.push(b"data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"message\":\"boom\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\"}}}\n\ndata: [DONE]\n\n")));
+
+        assert!(out.contains("partial"), "{out}");
+        assert!(out.contains("event: error"), "{out}");
+        assert!(out.contains("\"message\":\"boom\""), "{out}");
+        assert!(out.contains("\"code\":\"upstream_failed\""), "{out}");
+        assert!(!out.contains("\"stop_reason\":\""), "{out}");
+        assert!(!out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn standalone_error_after_deltas_emits_anthropic_error() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let mut out = joined(&t.push(
+            b"data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\ndata: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\ndata: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",
+        ));
+        out.push_str(&joined(&t.push(b"data: {\"type\":\"error\",\"message\":\"standalone boom\",\"code\":\"server_error\",\"param\":\"input\",\"private_account\":\"secret\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\ndata: [DONE]\n\n")));
+
+        assert!(out.contains("partial"), "{out}");
+        assert!(out.contains("event: error"), "{out}");
+        assert!(out.contains("\"message\":\"standalone boom\""), "{out}");
+        assert!(out.contains("\"code\":\"server_error\""), "{out}");
+        assert!(!out.contains("private_account"), "{out}");
+        assert!(!out.contains("\"stop_reason\":\""), "{out}");
+        assert!(!out.contains("event: message_stop"), "{out}");
+    }
+
+    #[test]
+    fn streamed_refusal_is_displayed_in_source_order_without_duplication() {
+        let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
+        let out = joined(&t.push(b"data: {\"type\":\"response.output_text.delta\",\"output_index\":0,\"content_index\":0,\"delta\":\"before \"}\n\ndata: {\"type\":\"response.refusal.delta\",\"output_index\":0,\"content_index\":1,\"delta\":\"cannot comply\"}\n\ndata: {\"type\":\"response.refusal.done\",\"output_index\":0,\"content_index\":1,\"refusal\":\"cannot comply\"}\n\ndata: {\"type\":\"response.output_text.delta\",\"output_index\":1,\"content_index\":0,\"delta\":\" after\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{}}\n\n"));
+
+        let before = out.find("\"text\":\"before \"").unwrap();
+        let refusal = out.find("\"text\":\"cannot comply\"").unwrap();
+        let after = out.find("\"text\":\" after\"").unwrap();
+        assert!(before < refusal && refusal < after, "{out}");
+        assert_eq!(out.matches("\"text\":\"cannot comply\"").count(), 1);
+        assert!(out.contains("\"stop_reason\":\"end_turn\""), "{out}");
+    }
+
+    #[test]
     fn responses_function_calls_become_tool_use() {
         let mut t = AnthropicStreamTranslator::new("claude-opus-4-7");
         let mut out = String::new();
@@ -639,6 +834,44 @@ mod tests {
         assert!(out.contains("\"type\":\"web_search_tool_result\""));
         assert!(out.contains("\"web_search_requests\":1"));
         assert!(!out.contains("\"type\":\"tool_use\""));
+    }
+
+    #[test]
+    fn provider_specific_responses_output_fails_the_stream_without_exposing_content() {
+        for (item, marker, private_value) in [
+            (
+                json!({
+                    "type": "reasoning",
+                    "summary": [{"type": "summary_text", "text": "checked the constraints"}],
+                    "encrypted_content": "private-reasoning-state"
+                }),
+                "reasoning",
+                "private-reasoning-state",
+            ),
+            (
+                json!({
+                    "type": "custom_tool_call",
+                    "call_id": "call_1",
+                    "name": "apply_patch",
+                    "input": "private-tool-input"
+                }),
+                "custom_tool_call",
+                "private-tool-input",
+            ),
+        ] {
+            let mut translator = AnthropicStreamTranslator::new("claude-test");
+            let event = json!({
+                "type": "response.output_item.added",
+                "output_index": 0,
+                "item": item,
+            });
+            let out = joined(&translator.push(format!("data: {event}\n\n").as_bytes()));
+
+            assert!(out.contains("event: error"), "{marker}: {out}");
+            assert!(out.contains(marker), "{marker}: {out}");
+            assert!(!out.contains(private_value), "{marker}: {out}");
+            assert!(translator.finish().is_empty(), "{marker}");
+        }
     }
 
     #[test]

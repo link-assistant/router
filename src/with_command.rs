@@ -2,7 +2,7 @@
 
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
-use std::io::Write as _;
+use std::io::{IsTerminal as _, Write as _};
 use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::process::Stdio;
@@ -16,6 +16,12 @@ use crate::clients::{ClientIsolation, ClientKind, ClientManager, RouterModel};
 use crate::managed_server::{
     cleanup_run_credential, ensure_model_available, prepare_run_credential, resolve,
 };
+
+#[path = "with_command_sweep.rs"]
+mod sweep;
+use sweep::{DisposableRunDirectory, set_directory_owner_only};
+#[cfg(test)]
+use sweep::{owner_of, process_alive, sweep_stale_directories};
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -38,6 +44,15 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     // them (issue #296).
     if args.global || args.undo {
         return Ok(crate::configure::run(&args.as_configure()).await);
+    }
+    if args.reset_to_default_configuration && args.client != ClientKind::ClaudeCode {
+        return Err("--reset-to-default-configuration is available only for Claude".into());
+    }
+    if args.reset_to_default_configuration {
+        confirm_claude_profile_reset(args.yes)?;
+    }
+    if let Some(error) = crate::client_launch::unsupported_native_command(args) {
+        return Err(error.into());
     }
     if args.client.integration().isolation == ClientIsolation::Unsupported {
         return Err(args
@@ -124,16 +139,51 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         None
     };
-    let temporary = match TemporaryClient::prepare(&Preparation {
+    let codex_bridge = if args.client == ClientKind::Codex
+        && crate::codex_loopback_bridge::required(&server.base_url)?
+    {
+        Some(crate::codex_loopback_bridge::start_ephemeral(&server.base_url).await?)
+    } else {
+        None
+    };
+    let codex_backend_base_url = codex_bridge
+        .as_ref()
+        .map(crate::codex_loopback_bridge::EphemeralBridge::backend_base_url);
+    let mut claude_profile = if args.client == ClientKind::ClaudeCode
+        && !args.isolated_config
+        && !args.extend_global_config
+    {
+        let path = persistent_profile_path(args.client, None)?;
+        match crate::claude_profile::ProfileSession::prepare(
+            path.clone(),
+            args.reset_to_default_configuration,
+        )
+        .await
+        {
+            Ok(profile) => {
+                debug_assert_eq!(profile.path(), path);
+                Some(profile)
+            }
+            Err(error) => {
+                cleanup_after_setup_failure(credential).await;
+                return Err(error);
+            }
+        }
+    } else {
+        None
+    };
+    let mut temporary = match TemporaryClient::prepare(&Preparation {
         client: args.client,
         base_url: &server.base_url,
         token: &credential.token,
         model_override: selected.as_deref(),
         models: credential.models(),
         isolated_config: args.isolated_config,
+        extend_user_configuration: args.extend_global_config,
         one_shot: plan.one_shot,
         profile_root: None,
         codex_reasoning_effort: codex_reasoning_effort.as_deref(),
+        codex_backend_base_url,
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -141,8 +191,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             return Err(error);
         }
     };
+    temporary.codex_bridge = codex_bridge;
     let arguments = plan.arguments;
-    let launch = temporary.launch(&arguments).await;
+    let launch = temporary.launch(&arguments, claude_profile.as_mut()).await;
     if launch.as_ref().is_ok_and(|status| !status.success())
         && server.source == "managed local container"
         && let Some(hint) = crate::managed_server::managed_failure_hint()
@@ -155,6 +206,27 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
     Ok(exit_code(status))
+}
+
+fn confirm_claude_profile_reset(yes: bool) -> Result<(), AnyError> {
+    if yes {
+        return Ok(());
+    }
+    if !std::io::stdin().is_terminal() {
+        return Err(
+            "Claude profile reset requires interactive confirmation; rerun with --yes before the client name"
+                .into(),
+        );
+    }
+    eprint!("Reset the Router-owned Claude profile and keep a recoverable backup? [y/N] ");
+    std::io::stderr().flush()?;
+    let mut response = String::new();
+    std::io::stdin().read_line(&mut response)?;
+    if matches!(response.trim().to_ascii_lowercase().as_str(), "y" | "yes") {
+        Ok(())
+    } else {
+        Err("Claude profile reset cancelled; the previous profile is unchanged".into())
+    }
 }
 
 /// A short, non-identifying suffix distinguishing concurrent runs.
@@ -215,23 +287,20 @@ fn resolve_model(
 struct TemporaryClient {
     directory: RunDirectory,
     command: Command,
+    codex_bridge: Option<crate::codex_loopback_bridge::EphemeralBridge>,
 }
 
 /// Where a run that cannot layer onto the user's configuration keeps its files.
 ///
-/// Issue #277 established that `with` should not hand the client a directory of
-/// its own, because doing so drops the user into first-run onboarding with an
-/// empty `/resume`. For the clients that *cannot* be extended — they are routed
-/// through a file the router writes — the fallback directory was thrown away
-/// after every run, so every launch was a first launch: no session history,
-/// nothing to resume, onboarding and trust prompts answered again from scratch
-/// (issue #298). Those clients now keep one profile of their own, under the
-/// router's directory rather than in a shared `TMPDIR`.
+/// Claude and clients that require Router-written files keep a dedicated
+/// profile under Router's configuration root. Persistence makes onboarding a
+/// one-time event and keeps Router sessions resumable, without importing any
+/// normal user profile contents (issues #298, #536).
 ///
 /// Disposable is still right where it was asked for: `--isolated-config`, and
 /// the scratch directory an extending run never actually reads.
 enum RunDirectory {
-    Disposable(tempfile::TempDir),
+    Disposable(DisposableRunDirectory),
     Persistent(PathBuf),
 }
 
@@ -249,7 +318,7 @@ impl RunDirectory {
 /// Under the router's own per-user directory, so it is neither the user's own
 /// client configuration — nothing about the #277 boundary changes — nor a
 /// shared `TMPDIR`, which removes the cross-user question issue #313 is about.
-fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+fn persistent_profile_path(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
     let root = match root {
         Some(root) => root.to_path_buf(),
         // An empty variable is unset, not configured (issue #340).
@@ -260,21 +329,25 @@ fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf
             "the client profile directory",
         )?,
     };
-    let path = root
+    Ok(root
         .join("link-assistant-router/clients")
         .join(client.canonical_name())
-        .join("home");
+        .join("home"))
+}
+
+fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf, AnyError> {
+    let path = persistent_profile_path(client, root)?;
     fs::create_dir_all(&path)?;
     set_directory_owner_only(&path)?;
     Ok(path)
 }
 
-/// Whether this run layers the router's settings onto the user's own
+/// Whether this run layers the router's settings onto the user's normal
 /// configuration, rather than giving the client a directory of its own.
 ///
-/// Extending is the default: `with` changes how the client reaches the model,
-/// and discarding the user's theme, permissions, MCP servers and prior sessions
-/// is a far larger side effect than that implies (issue #277).
+/// Claude now opts into extension explicitly. Its default is a persistent
+/// minimal Router profile so unrelated user settings cannot affect Router runs
+/// while onboarding and sessions still persist (issue #536).
 ///
 /// A client the router can only point at the model by writing a file is
 /// isolated whatever was asked for, because the file is reachable only through
@@ -286,9 +359,16 @@ fn persistent_profile(client: ClientKind, root: Option<&Path>) -> Result<PathBuf
 /// it may set no connection variables at all, or it may set them and *still*
 /// need a router-written settings file — Gemini CLI does exactly that, so
 /// having both variables is not on its own enough to layer onto.
-const fn extends_user_configuration(client: ClientKind, isolated_config: bool) -> bool {
+const fn extends_user_configuration(
+    client: ClientKind,
+    isolated_config: bool,
+    extend_user_configuration: bool,
+) -> bool {
     if isolated_config {
         return false;
+    }
+    if matches!(client, ClientKind::ClaudeCode) {
+        return extend_user_configuration;
     }
     // Codex accepts repeatable global `-c key=TOML_VALUE` overlays before its
     // subcommand. That gives it router connection settings while its real
@@ -325,9 +405,11 @@ struct Preparation<'a> {
     model_override: Option<&'a str>,
     models: &'a [RouterModel],
     isolated_config: bool,
+    extend_user_configuration: bool,
     one_shot: bool,
     profile_root: Option<&'a Path>,
     codex_reasoning_effort: Option<&'a str>,
+    codex_backend_base_url: Option<&'a str>,
 }
 
 impl TemporaryClient {
@@ -339,17 +421,20 @@ impl TemporaryClient {
             model_override,
             models,
             isolated_config,
+            extend_user_configuration,
             one_shot,
             profile_root,
             codex_reasoning_effort,
+            codex_backend_base_url,
         } = request;
         // A client that can be extended never reads this directory — the
         // router's whole contribution is two environment variables — so it is
         // scratch and goes away. One that cannot is *living* here, and a
         // directory thrown away after every run made every launch a first
         // launch (issue #298).
-        let keeps_a_profile = !isolated_config && !extends_user_configuration(client, false);
-        if isolated_config && !extends_user_configuration(client, false) {
+        let keeps_a_profile = !isolated_config
+            && !extends_user_configuration(client, false, extend_user_configuration);
+        if isolated_config && needs_a_written_configuration(client) {
             // The flag changed nothing for this client: it is routed through a
             // file the router writes and never uses the user's own directory.
             // Accepting it silently left a script's author believing it had
@@ -362,11 +447,10 @@ impl TemporaryClient {
             );
         }
         let prefix = format!("link-assistant-router-with-{}-", std::process::id());
-        let disposable = tempfile::Builder::new().prefix(&prefix).tempdir()?;
-        set_directory_owner_only(disposable.path())?;
-        // Swept after this run's own directory exists, so it can serve as the
-        // reference for "owned by me" without a privileged call (issue #313).
-        sweep_stale_directories(disposable.path());
+        // The lease makes the cleanup decision independent of PID visibility:
+        // another concurrent wrapper cannot remove files this client has not
+        // opened yet, even in a restricted process environment.
+        let disposable = DisposableRunDirectory::create(&prefix)?;
         let directory = if keeps_a_profile {
             RunDirectory::Persistent(persistent_profile(client, profile_root)?)
         } else {
@@ -374,6 +458,10 @@ impl TemporaryClient {
         };
         let manager = ClientManager::isolated(directory.path());
         match client {
+            // A Router-directed Claude launch is configured entirely through its
+            // process environment and CLI settings. The profile belongs to
+            // Claude itself; Router creates only its directory (issue #536).
+            ClientKind::ClaudeCode => {}
             ClientKind::GeminiCli => write_gemini_settings(&manager.config_path(client))?,
             ClientKind::Cursor => {
                 return Err(client
@@ -382,12 +470,17 @@ impl TemporaryClient {
                     .into());
             }
             _ => {
-                manager.setup(client, base_url, models)?;
+                manager.setup_with_codex_backend(
+                    client,
+                    base_url,
+                    models,
+                    codex_backend_base_url,
+                )?;
             }
         }
         let integration = client.integration();
         let mut command = Command::new(integration.command);
-        if extends_user_configuration(client, isolated_config) {
+        if extends_user_configuration(client, isolated_config, extend_user_configuration) {
             // Layer the router's connection settings on top of the user's own
             // configuration rather than replacing it, so sessions and settings
             // stay visible and a conversation started outside the router can be
@@ -399,6 +492,17 @@ impl TemporaryClient {
         }
         if let Some(token_env) = integration.token_env {
             command.env(token_env, token);
+        }
+        if client == ClientKind::Codex
+            && let Some(alias) = crate::token::codex_token_alias(token)
+        {
+            command
+                .env("CODEX_ACCESS_TOKEN", &alias)
+                .env("CODEX_CONNECTORS_TOKEN", alias)
+                .env(
+                    "CODEX_AUTHAPI_BASE_URL",
+                    endpoint(base_url, "/api/services/codex"),
+                );
         }
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
@@ -412,12 +516,12 @@ impl TemporaryClient {
         // through the inherited environment as it would without the router.
         match client {
             ClientKind::ClaudeCode => {
+                append_claude_model_picker(&mut command, models)?;
                 // Emptied rather than left alone: an inherited API key
                 // outranks the auth token, so the run would leave the router.
                 command
                     .env("ANTHROPIC_API_KEY", "")
-                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
-                    .env("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "0");
+                    .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
                 // Claude Code's built-in family aliases describe Anthropic
                 // models. A z.ai-only catalog needs only the same exact pair
                 // of main/subagent pins as persistent setup. Assigning one GLM
@@ -462,20 +566,36 @@ impl TemporaryClient {
                         codex_reasoning_effort,
                         model_override,
                     )?;
-                    append_codex_router_overrides(&mut command, base_url, &catalog)?;
+                    append_codex_router_overrides(
+                        &mut command,
+                        base_url,
+                        codex_backend_base_url,
+                        &catalog,
+                    )?;
                 }
             }
             ClientKind::GrokCli | ClientKind::Opencode | ClientKind::Agent | ClientKind::Cursor => {
             }
         }
-        Ok(Self { directory, command })
+        Ok(Self {
+            directory,
+            command,
+            codex_bridge: None,
+        })
     }
 
     async fn launch(
         mut self,
         arguments: &[OsString],
+        profile: Option<&mut crate::claude_profile::ProfileSession>,
     ) -> Result<std::process::ExitStatus, AnyError> {
-        debug_assert!(self.directory.path().is_dir());
+        let _codex_bridge = self.codex_bridge.take();
+        // Keep process-local configuration alive until the client has fully
+        // exited. Once `self.command` is moved into Tokio, the compiler may
+        // otherwise drop this now-unused field while the child is still
+        // starting and before it opens files such as Codex's model catalog.
+        let directory = self.directory;
+        debug_assert!(directory.path().is_dir());
         self.command.args(arguments);
         let program = self.command.get_program().to_string_lossy().into_owned();
         let mut child = tokio::process::Command::from(self.command)
@@ -491,62 +611,117 @@ impl TemporaryClient {
                 format!("could not launch {program}: {error}").into()
             }
         })?;
-        tokio::select! {
+        if let Some(profile) = profile
+            && let Err(error) = profile.commit_launch(child.id().unwrap_or_else(std::process::id))
+        {
+            let _ = child.start_kill();
+            let _ = child.wait().await;
+            return Err(error);
+        }
+        let status = tokio::select! {
             result = child.wait() => result.map_err(Into::into),
             signal = tokio::signal::ctrl_c() => {
                 signal.map_err(|error| format!("could not listen for Ctrl-C: {error}"))?;
                 interrupt_child(&mut child).await
             }
-        }
+        };
+        drop(directory);
+        status
     }
 }
 
-/// Overlay only the connection provider for an ordinary Codex run.
-///
-/// Codex parses every value after `-c` as TOML. JSON string literals are also
-/// valid TOML basic strings and safely quote URLs and names without ever
-/// embedding the token, which remains in `LINK_ASSISTANT_TOKEN`.
+/// Extend Claude's native picker with exact compatible IDs that its gateway
+/// discovery filter removes. This is a command-line setting for this process
+/// only: neither the Router-owned profile nor the user's profile is rewritten.
+fn append_claude_model_picker(
+    command: &mut Command,
+    models: &[RouterModel],
+) -> Result<(), AnyError> {
+    const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
+
+    let mut ids = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+        .into_iter()
+        .map(|model| model.id)
+        .filter(|id| {
+            let folded = id.to_ascii_lowercase();
+            !folded.contains("claude")
+                && !folded.contains("anthropic")
+                && !BUILT_INS.contains(&folded.as_str())
+        })
+        .collect::<Vec<_>>();
+    ids.sort();
+    ids.dedup();
+    if ids.is_empty() {
+        return Ok(());
+    }
+    let options = ids
+        .into_iter()
+        .map(|id| json!({"label": id, "model": id}))
+        .collect::<Vec<_>>();
+    let settings = json!({
+        "modelPicker": {
+            "options": options,
+            "replaceBuiltInOptions": false,
+        }
+    });
+    command
+        .arg("--settings")
+        .arg(serde_json::to_string(&settings)?);
+    Ok(())
+}
+
+/// Overlay routing for an ordinary Codex run. Values after `-c` are TOML;
+/// JSON strings quote them safely while the token stays in the environment.
 fn append_codex_router_overrides(
     command: &mut Command,
     base_url: &str,
+    codex_backend_base_url: Option<&str>,
     catalog: &Path,
 ) -> Result<(), AnyError> {
+    let provider_id = format!("link-assistant-run-{}", uuid::Uuid::new_v4().simple());
+    let provider_key = format!("model_providers.{provider_id}");
+    let provider_base_url = endpoint(
+        base_url,
+        crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+    );
+    let provider = format!(
+        "{{ name = {}, base_url = {}, wire_api = \"responses\", requires_openai_auth = true, \
+         supports_websockets = true, supports_standalone_web_search = true }}",
+        serde_json::to_string("OpenAI")?,
+        serde_json::to_string(&provider_base_url)?,
+    );
     for (key, value) in [
-        ("model_provider", "link-assistant".to_string()),
+        ("model_provider", provider_id),
         ("model_catalog_json", catalog.to_string_lossy().into_owned()),
+        (provider_key.as_str(), provider),
         (
-            "model_providers.link-assistant.name",
-            "Link.Assistant.Router".to_string(),
-        ),
-        (
-            "model_providers.link-assistant.base_url",
-            endpoint(
-                base_url,
-                crate::route_contract::service_base_path(crate::route_contract::ServiceKind::Codex),
+            "chatgpt_base_url",
+            codex_backend_base_url.map_or_else(
+                || endpoint(base_url, "/api/services/codex/backend-api"),
+                str::to_string,
             ),
         ),
         (
-            "model_providers.link-assistant.env_key",
-            "LINK_ASSISTANT_TOKEN".to_string(),
+            "experimental_realtime_ws_base_url",
+            provider_base_url.clone(),
         ),
         (
-            "model_providers.link-assistant.wire_api",
-            "responses".to_string(),
+            "experimental_realtime_webrtc_call_base_url",
+            provider_base_url,
         ),
     ] {
-        command
-            .arg("-c")
-            .arg(format!("{key}={}", serde_json::to_string(&value)?));
+        let rendered = if key == provider_key.as_str() {
+            value
+        } else {
+            serde_json::to_string(&value)?
+        };
+        command.arg("-c").arg(format!("{key}={rendered}"));
     }
     Ok(())
 }
 
-/// Write the exact live Router catalog in Codex's process-local override shape.
-///
-/// Codex treats a user `model_catalog_json` as a complete replacement for its
-/// bundled catalog. A higher-precedence, disposable catalog prevents that file
-/// from authorizing foreign model ids without modifying the user's config or
-/// hiding their sessions, MCP servers, or ordinary preferences.
+/// Write the live Router catalog as a complete process-local Codex catalog,
+/// preventing foreign model ids without changing the user's configuration.
 fn write_codex_model_catalog(
     root: &Path,
     models: &[RouterModel],
@@ -653,9 +828,8 @@ fn model_supports_reasoning_effort(model: &RouterModel, effort: &str) -> bool {
         .is_some_and(|levels| levels.iter().any(|level| level.effort == effort))
 }
 
-/// Read only the preference needed to keep Codex's process-local model picker
-/// compatible. The real file remains the source of every other setting and is
-/// never rewritten by `with`.
+/// Read the preference needed by Codex's process-local model picker without
+/// rewriting its real configuration.
 fn configured_codex_reasoning_effort() -> Result<Option<String>, AnyError> {
     let path = ClientManager::from_env()?.config_path(ClientKind::Codex);
     let source = match fs::read_to_string(&path) {
@@ -722,9 +896,7 @@ fn configure_isolation(
                 .env_remove("QWEN_HOME");
         }
         ClientIsolation::ClaudeConfig => {
-            let config_path = manager.config_path(client);
-            let directory = config_path.parent().expect("Claude config has a parent");
-            command.env("CLAUDE_CONFIG_DIR", directory);
+            command.env("CLAUDE_CONFIG_DIR", root);
         }
         ClientIsolation::GeminiHome => {
             // Gemini CLI resolves its settings as `<home>/.gemini/settings.json`,
@@ -795,122 +967,6 @@ fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
     }
     let mut file = options.open(path)?;
     file.write_all(contents.as_bytes())?;
-    Ok(())
-}
-
-/// Remove leftovers from runs of *this user* that are no longer alive.
-///
-/// A pid is not a liveness token across a trust boundary. On a shared `TMPDIR`
-/// — the usual `/tmp`, any multi-user host, a build agent running jobs as
-/// different users — `kill(pid, 0)` on another user's live process fails with
-/// `EPERM`, and treating any failure as "dead" deleted that run's working
-/// directory, client configuration and credential while it was in use (issue
-/// #313). So ownership is checked first, and a process that exists but is not
-/// ours counts as alive.
-///
-/// `ours` is a directory this run just created, used as the reference for
-/// "mine": comparing owners needs no privileged call and no `unsafe`.
-fn sweep_stale_directories(ours: &Path) {
-    const PREFIX: &str = "link-assistant-router-with-";
-    let Some(uid) = owner_of(ours) else {
-        return;
-    };
-    let Ok(entries) = fs::read_dir(std::env::temp_dir()) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let name = entry.file_name();
-        let name = name.to_string_lossy();
-        let Some(rest) = name.strip_prefix(PREFIX) else {
-            continue;
-        };
-        let Some(pid) = rest.split('-').next().and_then(|value| value.parse().ok()) else {
-            continue;
-        };
-        if entry.path() == ours || owner_of(&entry.path()) != Some(uid) || process_alive(pid) {
-            continue;
-        }
-        if fs::remove_dir_all(entry.path()).is_ok() {
-            eprintln!("note: removed a leftover run directory from process {pid}");
-        }
-    }
-}
-
-/// The numeric owner of a path, where the platform has one.
-///
-/// `None` on non-unix, where every directory compares equal and the liveness
-/// check decides alone — there is no shared `TMPDIR` in the same sense.
-fn owner_of(path: &Path) -> Option<u32> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::MetadataExt as _;
-
-        fs::metadata(path).ok().map(|metadata| metadata.uid())
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = path;
-        Some(0)
-    }
-}
-
-/// Whether the process might still be running.
-///
-/// "Might" is the contract: a check that cannot tell "gone" from "not yours"
-/// must answer alive, because the cost of being wrong is deleting a live run's
-/// files, and the cost of being right late is one directory swept next time.
-fn process_alive(pid: u32) -> bool {
-    if pid == std::process::id() {
-        return true;
-    }
-    #[cfg(unix)]
-    {
-        let signalled = std::process::Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .is_ok_and(|status| status.success());
-        if signalled {
-            return true;
-        }
-        // `kill -0` fails both for "no such process" and for a live process
-        // owned by somebody else. `ps` answers the question that was actually
-        // asked — does this pid exist — for any owner, so `EPERM` can no
-        // longer read as "dead" (issue #313).
-        std::process::Command::new("ps")
-            .args(["-p", &pid.to_string()])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .output()
-            .is_ok_and(|output| {
-                String::from_utf8_lossy(&output.stdout)
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .count()
-                    > 1
-            })
-    }
-    #[cfg(windows)]
-    {
-        std::process::Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .is_ok_and(|output| {
-                output.status.success()
-                    && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
-            })
-    }
-}
-
-fn set_directory_owner_only(path: &Path) -> Result<(), std::io::Error> {
-    #[cfg(not(unix))]
-    let _ = path;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        fs::set_permissions(path, fs::Permissions::from_mode(0o700))?;
-    }
     Ok(())
 }
 

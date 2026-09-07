@@ -293,6 +293,41 @@ fn the_scope_rule_matches_the_rest_surface() {
 mod forwarding {
     use super::*;
     use axum::http::Request as HttpRequest;
+    use http_body_util::BodyExt as _;
+    use std::time::Duration;
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+    async fn controlled_chunked_upstream(
+        truncate: bool,
+    ) -> (
+        u16,
+        tokio::sync::oneshot::Receiver<()>,
+        tokio::sync::oneshot::Sender<()>,
+    ) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (first_tx, first_rx) = tokio::sync::oneshot::channel();
+        let (release_tx, release_rx) = tokio::sync::oneshot::channel();
+        tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0_u8; 8192];
+            let _ = socket.read(&mut request).await.unwrap();
+            socket
+                .write_all(
+                    b"HTTP/1.1 200 OK\r\ncontent-type: application/x-git-upload-pack-advertisement\r\nx-stream-fixture: preserved\r\ntransfer-encoding: chunked\r\nconnection: close\r\n\r\n1\r\nx\r\n",
+                )
+                .await
+                .unwrap();
+            socket.flush().await.unwrap();
+            let _ = first_tx.send(());
+            let _ = release_rx.await;
+            if !truncate {
+                socket.write_all(b"1\r\ny\r\n0\r\n\r\n").await.unwrap();
+            }
+            let _ = socket.shutdown().await;
+        });
+        (port, first_rx, release_tx)
+    }
 
     /// An upstream that echoes the credential it was presented.
     ///
@@ -636,6 +671,76 @@ mod forwarding {
         .await;
 
         assert_eq!(response.status(), axum::http::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn canonical_git_fetch_streams_headers_and_chunks_before_upstream_completion() {
+        let (port, first_chunk, release) = controlled_chunked_upstream(false).await;
+        let data_dir = tempfile::tempdir().unwrap();
+        let state = state_for(port, data_dir.path());
+        let task = tokio::spawn(async move {
+            forward(
+                &state,
+                &[],
+                HttpRequest::builder()
+                    .uri("/api/services/github/git/acme/demo.git/info/refs?service=git-upload-pack")
+                    .body(axum::body::Body::empty())
+                    .unwrap(),
+            )
+            .await
+        });
+        first_chunk.await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), task)
+            .await
+            .expect("response headers must not wait for the final chunk")
+            .unwrap();
+        assert_eq!(response.status(), axum::http::StatusCode::OK);
+        assert_eq!(response.headers()["x-stream-fixture"], "preserved");
+        let mut body = response.into_body();
+        let first = tokio::time::timeout(Duration::from_secs(1), body.frame())
+            .await
+            .expect("first chunk must be visible while upstream is paused")
+            .unwrap()
+            .unwrap()
+            .into_data()
+            .unwrap();
+        assert_eq!(first.as_ref(), b"x");
+        release.send(()).unwrap();
+        assert_eq!(body.collect().await.unwrap().to_bytes().as_ref(), b"y");
+    }
+
+    #[tokio::test]
+    async fn truncated_git_fetch_and_push_remain_body_stream_errors() {
+        let mut push = push_request(
+            "acme/demo",
+            &format!("{ZERO_OID} {NEW} refs/heads/feature\0report-status"),
+        );
+        *push.uri_mut() = "/api/services/github/git/acme/demo.git/git-receive-pack"
+            .parse()
+            .unwrap();
+        let requests = [
+            HttpRequest::builder()
+                .uri("/api/services/github/git/acme/demo.git/info/refs?service=git-upload-pack")
+                .body(axum::body::Body::empty())
+                .unwrap(),
+            push,
+        ];
+        for request in requests {
+            let (port, first_chunk, release) = controlled_chunked_upstream(true).await;
+            let data_dir = tempfile::tempdir().unwrap();
+            let state = state_for(port, data_dir.path());
+            let task = tokio::spawn(async move { forward(&state, &[], request).await });
+            first_chunk.await.unwrap();
+            let response = tokio::time::timeout(Duration::from_secs(1), task)
+                .await
+                .expect("response headers must not wait for stream completion")
+                .unwrap();
+            let mut body = response.into_body();
+            let first = body.frame().await.unwrap().unwrap().into_data().unwrap();
+            assert_eq!(first.as_ref(), b"x");
+            release.send(()).unwrap();
+            assert!(body.collect().await.is_err(), "truncation became clean EOF");
+        }
     }
 }
 

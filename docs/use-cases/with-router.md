@@ -28,7 +28,7 @@ disposable instead (issues #277, #298).
 | Tool | Dialect and router base | Temporary run | Permanent target |
 | --- | --- | --- | --- |
 | `codex` | Responses, `URL/api/services/codex/v1` | extends your own through `-c` overlays | `$CODEX_HOME/config.toml` or `~/.codex/config.toml` |
-| `claude` (`claude-code`) | Anthropic Messages, `URL/api/services/anthropic` | extends your own | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
+| `claude` (`claude-code`) | Anthropic Messages, `URL/api/services/anthropic` | persistent Router-owned profile | `$CLAUDE_CONFIG_DIR/settings.json` or `~/.claude/settings.json` |
 | `gemini` (`gemini-cli`) | Gemini native, `URL/api/services/gemini` | router profile | temporary only; API-key endpoint override is environmental |
 | `grok` (`grok-cli`) | Chat Completions, `URL/api/services/openai/v1` | extends your own | owner-only managed environment file |
 | `opencode` | Chat Completions, `URL/api/services/openai/v1` | router profile | `$XDG_CONFIG_HOME/opencode/opencode.json` |
@@ -51,25 +51,34 @@ Repeatable global `-c` arguments select only the router provider for that
 process, and `LINK_ASSISTANT_TOKEN` carries the credential. Use
 `--isolated-config` when a disposable Codex home is intentionally required.
 
-For Claude, the process overlay wins over persistent helper configuration: it
-sets Router's URL/token, clears the higher-priority API key, enables gateway
-discovery, and forces nonessential startup traffic on so the catalog request is
-not suppressed. Native Anthropic catalogs leave model pins clear. A z.ai-only
-catalog maps only Default/main turns and subagents to the first exact live
-model; an explicit z.ai `--model` wins. Opus, Sonnet, and Haiku remain Claude
-Code's native families instead of becoming duplicate labels for one GLM model.
-Current Claude Code exposes only that one custom default in `/model`; select
-another advertised z.ai ID explicitly with `--model`. With mixed Anthropic and
-z.ai catalogs Router leaves every family/default pin clear, so native family
-behavior stays intact; z.ai IDs remain available through explicit `--model`.
-The real settings, credentials, shell startup files, history and gateway cache
-remain byte-identical. Claude Code 2.1.255 or newer is required.
+For Claude, the default profile persists below
+`$XDG_CONFIG_HOME/link-assistant-router/clients/claude/home`. Router creates
+only the owner-only directory and lets Claude populate it. The normal settings,
+credentials, shell files, sessions, permissions, theme, account data and model
+cache remain byte-identical. `--extend-global-config` explicitly uses the
+normal Claude profile; `--isolated-config` uses a disposable empty profile.
+
+The process overlay sets Router's URL/token, clears the higher-priority API key,
+enables gateway discovery, and adds a dynamic `modelPicker` through Claude's
+supported `--settings` option. Gateway discovery supplies exact Claude IDs;
+the picker adds each compatible authorized ID that Claude's discovery filter
+would hide, including every exact GLM ID, once. It does not write a model cache,
+invent prefixes, or map GLM models onto Opus, Sonnet, or Haiku. Claude Code
+2.1.255 or newer is required.
+
+Reset only this Router-owned Claude profile before launch with
+`router with claude --reset-to-default-configuration`. The command asks for
+interactive confirmation; put `--yes` before `claude` to skip it. Reset is
+serialized, refuses an active profile, and retains an owner-only backup. Setup
+or spawn failure restores the previous profile.
 
 ## Arguments, interaction, and models
 
-Wrapper options are accepted before or after the tool name. After an explicit
-`--`, every remaining argument belongs to the tool, even when its name collides
-with a wrapper option:
+Wrapper options go before the tool name. Everything after the tool name belongs
+to the tool, even when its name collides with a wrapper option. The single
+documented exception is Claude's exact
+`--reset-to-default-configuration` operation immediately after `claude`; an
+explicit `--` forces even that spelling through to Claude:
 
 ```bash
 router with --non-interactive gemini "hi"

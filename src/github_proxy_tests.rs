@@ -5,7 +5,57 @@
 
 use super::*;
 use axum::http::Request as HttpRequest;
+use http_body_util::BodyExt as _;
+use std::time::Duration;
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+
+async fn controlled_chunked_upstream(
+    truncate: bool,
+) -> (
+    std::net::SocketAddr,
+    tokio::sync::oneshot::Receiver<()>,
+    tokio::sync::oneshot::Sender<()>,
+) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let (first_tx, first_rx) = tokio::sync::oneshot::channel();
+    let (release_tx, release_rx) = tokio::sync::oneshot::channel();
+    tokio::spawn(async move {
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut request = [0_u8; 8192];
+        let _ = socket.read(&mut request).await.unwrap();
+        socket
+            .write_all(
+                b"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\nx-stream-fixture: preserved\r\ntransfer-encoding: chunked\r\nconnection: close\r\n\r\n1\r\nx\r\n",
+            )
+            .await
+            .unwrap();
+        socket.flush().await.unwrap();
+        let _ = first_tx.send(());
+        let _ = release_rx.await;
+        if !truncate {
+            socket.write_all(b"1\r\ny\r\n0\r\n\r\n").await.unwrap();
+        }
+        let _ = socket.shutdown().await;
+    });
+    (address, first_rx, release_tx)
+}
+
+fn canonical_request(path: &str) -> HttpRequest<Body> {
+    HttpRequest::builder()
+        .method(if path.ends_with("graphql") {
+            "POST"
+        } else {
+            "GET"
+        })
+        .uri(path)
+        .body(if path.ends_with("graphql") {
+            Body::from(r#"{"query":"query { viewer { login } }"}"#)
+        } else {
+            Body::empty()
+        })
+        .unwrap()
+}
 
 #[test]
 fn enterprise_and_bare_paths_normalize_to_github_rest() {
@@ -294,6 +344,83 @@ async fn forwarding_contains_credentials_and_preserves_rate_limits() {
     assert!(!forwarded.contains("caller-placeholder"));
 }
 
+#[tokio::test]
+async fn canonical_rest_and_graphql_stream_before_upstream_completion() {
+    for path in [
+        "/api/services/github/api/v3/rate_limit",
+        "/api/services/github/api/graphql",
+    ] {
+        let (address, first_chunk, release) = controlled_chunked_upstream(false).await;
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
+        let request = canonical_request(path);
+        let task = tokio::spawn(async move {
+            forward(
+                &reqwest::Client::new(),
+                &config,
+                crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+                &[],
+                request,
+            )
+            .await
+        });
+        first_chunk.await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), task)
+            .await
+            .expect("response headers must not wait for the final upstream chunk")
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        assert_eq!(response.headers()["x-stream-fixture"], "preserved");
+        let mut body = response.into_body();
+        let first = tokio::time::timeout(Duration::from_secs(1), body.frame())
+            .await
+            .expect("first body chunk must be visible while upstream is paused")
+            .unwrap()
+            .unwrap()
+            .into_data()
+            .unwrap();
+        assert_eq!(first.as_ref(), b"x");
+        release.send(()).unwrap();
+        assert_eq!(body.collect().await.unwrap().to_bytes().as_ref(), b"y");
+    }
+}
+
+#[tokio::test]
+async fn canonical_rest_and_graphql_keep_midstream_failures_observable() {
+    for path in [
+        "/api/services/github/api/v3/rate_limit",
+        "/api/services/github/api/graphql",
+    ] {
+        let (address, first_chunk, release) = controlled_chunked_upstream(true).await;
+        let config =
+            GitHubProxyConfig::with_credential("operator-secret", &format!("http://{address}"));
+        let request = canonical_request(path);
+        let task = tokio::spawn(async move {
+            forward(
+                &reqwest::Client::new(),
+                &config,
+                crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+                &[],
+                request,
+            )
+            .await
+        });
+        first_chunk.await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), task)
+            .await
+            .expect("response headers must not wait for stream completion")
+            .unwrap();
+        let mut body = response.into_body();
+        let first = body.frame().await.unwrap().unwrap().into_data().unwrap();
+        assert_eq!(first.as_ref(), b"x");
+        release.send(()).unwrap();
+        assert!(
+            body.collect().await.is_err(),
+            "{path}: truncation became clean EOF"
+        );
+    }
+}
+
 /// A scoped token reaches only its own repositories.
 ///
 /// Without this, every token that could reach the proxy acted as the
@@ -429,7 +556,7 @@ fn a_gh_configuration_yields_its_credential() {
     .expect("write hosts.yml");
 
     assert_eq!(
-        token_from_gh_config(directory.path()),
+        token_from_gh_config(directory.path(), "github.com"),
         Some("gho_example".to_string())
     );
 }
@@ -439,7 +566,11 @@ fn a_gh_configuration_yields_its_credential() {
 #[test]
 fn a_quoted_or_absent_credential_is_handled() {
     let directory = tempfile::tempdir().expect("gh config dir");
-    assert_eq!(token_from_gh_config(directory.path()), None, "absent file");
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com"),
+        None,
+        "absent file"
+    );
 
     std::fs::write(
         directory.path().join("hosts.yml"),
@@ -447,7 +578,7 @@ fn a_quoted_or_absent_credential_is_handled() {
     )
     .expect("write hosts.yml");
     assert_eq!(
-        token_from_gh_config(directory.path()),
+        token_from_gh_config(directory.path(), "github.com"),
         Some("gho_quoted".to_string())
     );
 
@@ -456,7 +587,47 @@ fn a_quoted_or_absent_credential_is_handled() {
         "github.com:\n    user: someone\n",
     )
     .expect("rewrite");
-    assert_eq!(token_from_gh_config(directory.path()), None, "no token key");
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com"),
+        None,
+        "no token key"
+    );
+}
+
+#[test]
+fn a_multi_host_gh_configuration_selects_only_the_upstream_host() {
+    let directory = tempfile::tempdir().expect("gh config dir");
+    std::fs::write(
+        directory.path().join("hosts.yml"),
+        concat!(
+            "enterprise.example:\n",
+            "    oauth_token: enterprise-token\n",
+            "github.com:\n",
+            "    oauth_token: github-token\n",
+        ),
+    )
+    .expect("write hosts.yml");
+
+    assert_eq!(
+        token_from_gh_config(directory.path(), "github.com").as_deref(),
+        Some("github-token")
+    );
+    assert_eq!(
+        token_from_gh_config(directory.path(), "enterprise.example").as_deref(),
+        Some("enterprise-token")
+    );
+    assert_eq!(
+        token_from_gh_config(directory.path(), "missing.example"),
+        None
+    );
+    assert_eq!(
+        github_credential_host("https://api.github.com").as_deref(),
+        Some("github.com")
+    );
+    assert_eq!(
+        github_credential_host("https://enterprise.example/api/v3").as_deref(),
+        Some("enterprise.example")
+    );
 }
 
 /// A stored credential round-trips and is written owner-only, like every
@@ -516,14 +687,22 @@ fn a_reusable_credential_prefers_what_the_operator_stored() {
 
     // Only the gh login exists.
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
+        reusable_credential(
+            Some(data_dir.path()),
+            Some(gh_config.path()),
+            Some("github.com"),
+        ),
         Some("gho_from_gh".to_string())
     );
 
     // Once stored, the operator's own choice wins.
     store_credential(data_dir.path(), "gho_stored").expect("store one");
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), Some(gh_config.path())),
+        reusable_credential(
+            Some(data_dir.path()),
+            Some(gh_config.path()),
+            Some("github.com"),
+        ),
         Some("gho_stored".to_string())
     );
 }
@@ -558,10 +737,13 @@ fn a_credential_stored_under_a_flag_data_dir_is_found() {
 fn without_either_source_there_is_nothing_to_reuse() {
     let empty = tempfile::tempdir().expect("empty dir");
 
-    assert_eq!(reusable_credential(None, None), None);
-    assert_eq!(reusable_credential(Some(Path::new("")), None), None);
+    assert_eq!(reusable_credential(None, None, Some("github.com")), None);
     assert_eq!(
-        reusable_credential(Some(empty.path()), Some(empty.path())),
+        reusable_credential(Some(Path::new("")), None, Some("github.com")),
+        None
+    );
+    assert_eq!(
+        reusable_credential(Some(empty.path()), Some(empty.path()), Some("github.com"),),
         None
     );
 }
@@ -577,7 +759,7 @@ fn from_env_still_reads_the_environment_spelling() {
     store_credential(data_dir.path(), "gho_from_environment").expect("store one");
 
     assert_eq!(
-        reusable_credential(Some(data_dir.path()), None),
+        reusable_credential(Some(data_dir.path()), None, None),
         Some("gho_from_environment".to_string()),
         "the same lookup from_env delegates to must still find it"
     );

@@ -174,6 +174,35 @@ pub fn record_authorised_request(
     record_authorised_request_with_resolved_model(state, claims, surface, path, body, None);
 }
 
+/// Record a provider control-plane operation without treating it as inference.
+///
+/// `operation` must be a fixed public operation name, never a caller-supplied
+/// resource id or request field. Private history, notes, paths, session ids,
+/// account ids, and response data consequently never reach the audit stream.
+pub fn record_control_plane_request(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    provider: &str,
+    operation: &str,
+) {
+    state
+        .metrics
+        .record_token_request(&claims.sub, &claims.label);
+    if !state.audit.is_enabled() {
+        return;
+    }
+    let mut event = event(
+        &claims.sub,
+        &claims.label,
+        provider,
+        "control_plane",
+        operation,
+        None,
+    );
+    event.client_kind.clone_from(&claims.client_kind);
+    state.audit.record(&event);
+}
+
 /// Record an authorised request with both client and canonical model identity.
 pub fn record_authorised_request_with_resolved_model(
     state: &crate::app_state::AppState,

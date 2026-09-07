@@ -289,6 +289,253 @@ async fn refresh_chain_validation_precedes_promotion_for_every_provider() {
     }
 }
 
+/// A fresh import adopts one writable vendor-owned file. It must validate the
+/// current access token without redeeming the refresh token, then install only
+/// a reference to that source (issue #439).
+#[tokio::test]
+async fn fresh_import_keeps_one_authoritative_refresh_chain_for_every_provider() {
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, false, false).await;
+        let root = tempfile::tempdir().expect("import root");
+        let source_home = root.path().join("source");
+        let destination_home = root.path().join("destination");
+        let data_dir = root.path().join("data");
+        std::fs::create_dir_all(&source_home).expect("source home");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let source_path = source_home.join(provider.canonical_credential_filename());
+        let source_document = candidate_document(provider);
+        std::fs::write(&source_path, &source_document).expect("vendor credential");
+
+        let execution = import_provider_with_paths(
+            &data_dir,
+            root.path().to_str().expect("UTF-8 test path"),
+            &destination_home,
+            provider,
+            source_home.to_str().expect("UTF-8 source path"),
+            ImportPolicy::default(),
+            None,
+            Some(&url),
+        )
+        .await
+        .expect("fresh external import");
+
+        assert!(execution.is_promoted(), "{provider} was not promoted");
+        assert_eq!(
+            std::fs::read_to_string(&source_path).unwrap(),
+            source_document,
+            "{provider} source changed during import"
+        );
+        let destination_path = destination_home.join(provider.canonical_credential_filename());
+        let pointer = std::fs::read_to_string(&destination_path).expect("Router reference");
+        assert!(
+            pointer.contains("credential_source"),
+            "{provider}: {pointer}"
+        );
+        assert!(!pointer.contains("stale-access"), "{provider}: {pointer}");
+        assert!(!pointer.contains("stale-refresh"), "{provider}: {pointer}");
+        let reader = SubscriptionReader::new(provider, &destination_home);
+        let (token, origin) = reader.read_token_from().expect("read adopted source");
+        assert_eq!(
+            origin,
+            link_assistant_router::platform_keychain::Origin::AdoptedFile
+        );
+        assert_eq!(token.access_token, "stale-access");
+        assert_eq!(
+            requests.lock().expect("candidate requests").as_slice(),
+            &[(
+                "GET".to_string(),
+                match provider {
+                    SubscriptionProvider::Claude => "/v1/models".to_string(),
+                    SubscriptionProvider::Codex | SubscriptionProvider::Qwen => {
+                        "/models".to_string()
+                    }
+                    SubscriptionProvider::Gemini => "/v1beta/models".to_string(),
+                },
+                "Bearer stale-access".to_string(),
+            )],
+            "{provider} made an OAuth exchange"
+        );
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn fresh_import_refuses_near_expiry_before_any_vendor_request() {
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, false, false).await;
+        let root = tempfile::tempdir().expect("import root");
+        let source_home = root.path().join("source");
+        let destination_home = root.path().join("destination");
+        std::fs::create_dir_all(&source_home).expect("source home");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let mut document: serde_json::Value =
+            serde_json::from_str(&candidate_document(provider)).expect("candidate JSON");
+        let expired = chrono::Utc::now().timestamp_millis();
+        if provider == SubscriptionProvider::Claude {
+            document["claudeAiOauth"]["expiresAt"] = expired.into();
+        } else {
+            document["expiry_date"] = expired.into();
+        }
+        let source_document = document.to_string();
+        let source_path = source_home.join(provider.canonical_credential_filename());
+        std::fs::write(&source_path, &source_document).expect("vendor credential");
+
+        let Err(error) = import_provider_with_paths(
+            &root.path().join("data"),
+            root.path().to_str().expect("UTF-8 test path"),
+            &destination_home,
+            provider,
+            source_home.to_str().expect("UTF-8 source path"),
+            ImportPolicy::default(),
+            None,
+            Some(&url),
+        )
+        .await
+        else {
+            panic!("{provider} near-expiry external credential was imported");
+        };
+
+        assert!(
+            error.contains("expired or near expiry"),
+            "{provider}: {error}"
+        );
+        assert!(requests.lock().expect("candidate requests").is_empty());
+        assert_eq!(
+            std::fs::read_to_string(source_path).unwrap(),
+            source_document
+        );
+        assert!(
+            !destination_home
+                .join(provider.canonical_credential_filename())
+                .exists()
+        );
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn fresh_import_catalog_failure_spends_no_refresh_token_or_transaction() {
+    for provider in SubscriptionProvider::ALL {
+        let (url, requests, server) = start_candidate_vendor(provider, false, true).await;
+        let root = tempfile::tempdir().expect("import root");
+        let source_home = root.path().join("source");
+        let destination_home = root.path().join("destination");
+        std::fs::create_dir_all(&source_home).expect("source home");
+        std::fs::create_dir_all(&destination_home).expect("destination home");
+        let source_path = source_home.join(provider.canonical_credential_filename());
+        let source_document = candidate_document(provider);
+        std::fs::write(&source_path, &source_document).expect("vendor credential");
+
+        let Err(error) = import_provider_with_paths(
+            &root.path().join("data"),
+            root.path().to_str().expect("UTF-8 test path"),
+            &destination_home,
+            provider,
+            source_home.to_str().expect("UTF-8 source path"),
+            ImportPolicy::default(),
+            None,
+            Some(&url),
+        )
+        .await
+        else {
+            panic!("{provider} catalog failure was imported");
+        };
+
+        assert!(error.previous_credential_safe, "{provider}: {error}");
+        assert!(error.transaction_id.is_none(), "{provider}: {error}");
+        let seen = requests.lock().expect("candidate requests");
+        assert_eq!(seen.len(), 1, "{provider}: {seen:?}");
+        assert_eq!(seen[0].0, "GET", "{provider}: {seen:?}");
+        drop(seen);
+        assert_eq!(
+            std::fs::read_to_string(source_path).unwrap(),
+            source_document
+        );
+        assert!(
+            !destination_home
+                .join(provider.canonical_credential_filename())
+                .exists()
+        );
+        assert_eq!(
+            std::fs::read_dir(root.path().join("data/auth-import-candidates"))
+                .expect("staging root")
+                .count(),
+            0,
+            "{provider} retained an externally owned copy"
+        );
+        server.abort();
+    }
+}
+
+#[test]
+fn keychain_only_source_is_refused_before_validation() {
+    let root = tempfile::tempdir().expect("root");
+    let destination = SubscriptionReader::new(SubscriptionProvider::Claude, root.path());
+    let error = prepare_external_source(
+        SubscriptionProvider::Claude,
+        link_assistant_router::platform_keychain::Origin::Keychain,
+        None,
+        &destination,
+    )
+    .expect_err("Keychain-only import");
+    assert!(error.contains("platform keychain"), "{error}");
+    assert!(error.contains("writable credential file"), "{error}");
+}
+
+#[cfg(unix)]
+#[test]
+fn aliased_source_and_destination_file_is_refused() {
+    let root = tempfile::tempdir().expect("root");
+    let source_home = root.path().join("source");
+    let destination_home = root.path().join("destination");
+    std::fs::create_dir_all(&source_home).expect("source home");
+    std::fs::create_dir_all(&destination_home).expect("destination home");
+    let source = source_home.join("auth.json");
+    std::fs::write(&source, candidate_document(SubscriptionProvider::Codex))
+        .expect("source credential");
+    std::os::unix::fs::symlink(&source, destination_home.join("auth.json"))
+        .expect("destination alias");
+    let destination = SubscriptionReader::new(SubscriptionProvider::Codex, destination_home);
+
+    let error = prepare_external_source(
+        SubscriptionProvider::Codex,
+        link_assistant_router::platform_keychain::Origin::File,
+        Some(&source),
+        &destination,
+    )
+    .expect_err("source/destination alias");
+    assert!(error.contains("also a Router destination"), "{error}");
+}
+
+#[cfg(unix)]
+#[test]
+fn source_in_a_nonwritable_directory_is_refused_before_validation() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let root = tempfile::tempdir().expect("root");
+    let source_home = root.path().join("source");
+    let destination_home = root.path().join("destination");
+    std::fs::create_dir_all(&source_home).expect("source home");
+    std::fs::create_dir_all(&destination_home).expect("destination home");
+    let source = source_home.join("auth.json");
+    std::fs::write(&source, candidate_document(SubscriptionProvider::Codex))
+        .expect("source credential");
+    std::fs::set_permissions(&source_home, std::fs::Permissions::from_mode(0o500))
+        .expect("make source directory nonwritable");
+    let destination = SubscriptionReader::new(SubscriptionProvider::Codex, destination_home);
+
+    let result = prepare_external_source(
+        SubscriptionProvider::Codex,
+        link_assistant_router::platform_keychain::Origin::File,
+        Some(&source),
+        &destination,
+    );
+    std::fs::set_permissions(&source_home, std::fs::Permissions::from_mode(0o700))
+        .expect("restore source permissions");
+    let error = result.expect_err("nonwritable external source");
+    assert!(error.contains("cannot be replaced atomically"), "{error}");
+}
+
 /// A live access token paired with an already-spent refresh link is unsafe:
 /// catalog acceptance of that access token cannot authorize replacement.
 #[tokio::test]
@@ -705,205 +952,7 @@ fn every_import_target_has_the_expected_label_and_subscription() {
     }
 }
 
-/// GitHub import copies the exact credential from the explicitly named `gh`
-/// home into Router's durable credential store.
-#[test]
-fn github_import_adopts_the_named_login() {
-    let source = tempfile::tempdir().expect("gh config");
-    let data = tempfile::tempdir().expect("router data");
-    std::fs::write(
-        source.path().join("hosts.yml"),
-        "github.com:\n    oauth_token: gho_imported\n",
-    )
-    .expect("gh credential");
-
-    import_github(data.path(), source.path().to_str().unwrap()).expect("GitHub import");
-
-    assert_eq!(
-        link_assistant_router::github_proxy::stored_credential(data.path()).as_deref(),
-        Some("gho_imported")
-    );
-}
-
-/// A named `gh` home without a token fails closed and names the source rather
-/// than silently falling back to another machine credential.
-#[test]
-fn github_import_refuses_a_named_home_without_a_login() {
-    let source = tempfile::tempdir().expect("empty gh config");
-    let data = tempfile::tempdir().expect("router data");
-
-    let error = import_github(data.path(), source.path().to_str().unwrap())
-        .expect_err("an absent GitHub login must not import");
-
-    assert!(error.contains("no GitHub credential"), "{error}");
-    assert!(
-        error.contains(&source.path().display().to_string()),
-        "{error}"
-    );
-    assert!(link_assistant_router::github_proxy::stored_credential(data.path()).is_none());
-}
-
-/// Gemini's installed-app refresh grant requires the client secret shipped by
-/// Gemini CLI. Import must name that prerequisite before staging or contacting
-/// an OAuth endpoint.
-#[test]
-fn gemini_import_refresh_prerequisite_is_explicit() {
-    let absent = import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| None)
-        .expect_err("missing Gemini secret must fail closed");
-    assert!(
-        absent.contains(link_assistant_router::refresh::GEMINI_CLIENT_SECRET_ENV),
-        "{absent}"
-    );
-    assert!(
-        import_refresh_prerequisite(SubscriptionProvider::Gemini, |_| {
-            Some("configured".to_string())
-        })
-        .is_ok()
-    );
-    for provider in [
-        SubscriptionProvider::Claude,
-        SubscriptionProvider::Codex,
-        SubscriptionProvider::Qwen,
-    ] {
-        assert!(import_refresh_prerequisite(provider, |_| None).is_ok());
-    }
-}
-
-/// Lexically different paths can still name the same credential home. That
-/// must be detected before a rotating refresh link is spent.
-#[cfg(unix)]
-#[test]
-fn a_symlink_alias_is_the_same_credential_home() {
-    let root = tempfile::tempdir().expect("root");
-    let destination = root.path().join("destination");
-    let alias = root.path().join("alias");
-    std::fs::create_dir(&destination).expect("destination");
-    std::os::unix::fs::symlink(&destination, &alias).expect("source alias");
-
-    assert!(same_credential_home(&alias, &destination));
-}
-
-/// Once refresh succeeds, failure to obtain a positive catalog verdict keeps
-/// the fresh candidate durable without changing the serving destination.
-#[tokio::test]
-async fn an_unverified_catalog_retains_the_fresh_chain_for_every_provider() {
-    for provider in SubscriptionProvider::ALL {
-        let (url, requests, server) = start_candidate_vendor(provider, false, true).await;
-        let root = tempfile::tempdir().expect("import root");
-        let destination_home = root.path().join("destination");
-        std::fs::create_dir_all(&destination_home).expect("destination home");
-        let destination_path = destination_home.join(provider.canonical_credential_filename());
-        let current = candidate_document(provider).replace("stale-", "current-");
-        std::fs::write(&destination_path, &current).expect("current destination");
-
-        let error = validate_candidate_with(
-            root.path(),
-            provider,
-            &candidate_document(provider),
-            Some(&format!("{url}/token")),
-            Some(&url),
-        )
-        .await
-        .expect_err("unverified catalog must fail closed");
-
-        assert_eq!(error.outcome, ImportOutcome::SuccessorRetained);
-        assert_eq!(error.phase, ImportPhase::Catalog);
-        assert!(!error.previous_credential_safe);
-        assert!(error.transaction_id.is_some());
-        assert!(
-            error.contains("retained as transaction"),
-            "{provider}: {error}"
-        );
-        assert_eq!(
-            std::fs::read_to_string(&destination_path).unwrap(),
-            current,
-            "{provider} destination changed"
-        );
-        let transactions = std::fs::read_dir(root.path().join("auth-import-candidates"))
-            .expect("retained staging root")
-            .collect::<Result<Vec<_>, _>>()
-            .expect("retained transactions");
-        assert_eq!(transactions.len(), 1, "{provider}: {error}");
-        let retained = transactions[0]
-            .path()
-            .join(provider.as_str())
-            .join(provider.canonical_credential_filename());
-        let retained = std::fs::read_to_string(retained).expect("retained candidate document");
-        assert!(
-            retained.contains("fresh-access") && retained.contains("fresh-refresh"),
-            "{provider} retained stale candidate: {retained}"
-        );
-        let seen = requests.lock().expect("candidate requests");
-        assert_eq!(seen.len(), 2, "{provider}: {seen:?}");
-        assert_eq!(seen[0].0, "POST");
-        assert_eq!(seen[1].0, "GET");
-        drop(seen);
-        server.abort();
-    }
-}
-
-/// No import mode may install a credential the vendor did not positively
-/// accept. In particular, conditional provisioning has no force escape hatch
-/// that can turn a rejected candidate into a live deployment credential.
-#[tokio::test]
-async fn rejected_conditional_candidate_has_no_bypass() {
-    let home = tempfile::tempdir().expect("credential home");
-    let data = tempfile::tempdir().expect("router data");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Qwen, home.path());
-    let document = r#"{"access_token":"rejected","refresh_token":"r","scope":"openid"}"#;
-
-    let error = install_candidate(
-        &reader,
-        data.path(),
-        document,
-        CredentialProbe::Rejected,
-        ImportPolicy {
-            if_absent: true,
-            capability_asserted: false,
-            external_refresh_owner: false,
-        },
-    )
-    .await
-    .expect_err("rejected candidate must be refused");
-
-    assert!(error.contains("not accepted"), "{error}");
-    assert!(!error.contains("--force"), "{error}");
-    assert!(!home.path().join("oauth_creds.json").exists());
-}
-
-/// Candidate rejection is relevant only when installation would occur. A
-/// destination discovered under the lock remains a distinct successful
-/// `AlreadyPresent` result even without force.
-#[tokio::test]
-async fn rejected_candidate_without_force_reports_existing_destination_as_present() {
-    let home = tempfile::tempdir().expect("credential home");
-    let data = tempfile::tempdir().expect("router data");
-    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home.path());
-    let existing = home.path().join("auth.json");
-    let current =
-        r#"{"auth_mode":"chatgpt","tokens":{"access_token":"current","refresh_token":"rotated"}}"#;
-    std::fs::write(&existing, current).expect("current credential");
-
-    let outcome = install_candidate(
-        &reader,
-        data.path(),
-        r#"{"auth_mode":"chatgpt","tokens":{"access_token":"rejected","refresh_token":"stale"}}"#,
-        CredentialProbe::Rejected,
-        ImportPolicy {
-            if_absent: true,
-            capability_asserted: false,
-            external_refresh_owner: false,
-        },
-    )
-    .await
-    .expect("existing destination wins before rejection policy");
-
-    assert_eq!(
-        outcome,
-        InstallDocumentResult::AlreadyPresent(existing.clone())
-    );
-    assert_eq!(std::fs::read_to_string(existing).unwrap(), current);
-}
+include!("auth_import_adoption_tests.rs");
 
 #[path = "auth_import_rejection_tests.rs"]
 mod rejection_tests;

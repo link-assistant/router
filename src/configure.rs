@@ -8,6 +8,7 @@
 //! is reversed by its own name, through the hash-verified restore that was the
 //! better of the two mechanisms already present (issue #296).
 
+use std::path::Path;
 use std::process::ExitCode;
 
 use crate::cli::ConfigureArgs;
@@ -44,7 +45,12 @@ const fn environment_only(client: ClientKind) -> bool {
 
 /// Run one `router configure` invocation.
 pub async fn run(args: &ConfigureArgs) -> ExitCode {
-    match run_inner(args).await {
+    run_with_home(args, None).await
+}
+
+/// Run with an optional explicit client-home isolation boundary.
+pub async fn run_with_home(args: &ConfigureArgs, home: Option<&Path>) -> ExitCode {
+    match run_inner(args, home).await {
         Ok(code) => code,
         Err(error) => {
             eprintln!(
@@ -56,8 +62,11 @@ pub async fn run(args: &ConfigureArgs) -> ExitCode {
     }
 }
 
-async fn run_inner(args: &ConfigureArgs) -> Result<ExitCode, AnyError> {
-    let manager = ClientManager::from_env()?;
+async fn run_inner(args: &ConfigureArgs, home: Option<&Path>) -> Result<ExitCode, AnyError> {
+    let manager = match home {
+        Some(home) => ClientManager::isolated(home),
+        None => ClientManager::from_env()?,
+    };
     if args.undo {
         return undo(args, &manager).await;
     }
@@ -144,7 +153,29 @@ async fn configure_one(
     server: &ResolvedServer,
     client: ClientKind,
 ) -> Result<(), AnyError> {
+    let bridge = if client == ClientKind::Codex
+        && crate::codex_loopback_bridge::required(&server.base_url)?
+    {
+        Some(
+            crate::codex_loopback_bridge::ensure_persistent(
+                &manager.codex_loopback_bridge_state_path(),
+                &server.base_url,
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
+    let codex_backend_base_url = bridge
+        .as_ref()
+        .map(|bridge| bridge.backend_base_url().to_string());
+    let bridge_matches = bridge.as_ref().is_none_or(|bridge| {
+        manager
+            .codex_backend_matches(bridge.backend_base_url())
+            .unwrap_or(false)
+    });
     if manager.managed_target_matches(client, &server.base_url)?
+        && bridge_matches
         && (environment_only(client)
             || crate::client_global::undo_state_path(&manager.config_path(client)).exists())
         && let Some(token) = manager.managed_token(client)?
@@ -153,8 +184,56 @@ async fn configure_one(
             .await
             .is_ok()
     {
+        if client == ClientKind::Codex && bridge.is_none() {
+            crate::codex_loopback_bridge::stop_persistent(
+                &manager.codex_loopback_bridge_state_path(),
+            )
+            .await?;
+        }
         println!(
             "{} is already configured in {}",
+            client.display_name(),
+            manager.config_path(client).display()
+        );
+        println!(
+            "credentials: {} (mode 0600)",
+            manager.environment_path(client).display()
+        );
+        println!("undo: router configure --undo {client}");
+        if let Some(bridge) = bridge {
+            bridge.commit();
+        }
+        return Ok(());
+    }
+    if manager.managed_target_matches(client, &server.base_url)?
+        && (environment_only(client)
+            || crate::client_global::undo_state_path(&manager.config_path(client)).exists())
+        && let (Some(token), Some(metadata)) = (
+            manager.managed_token(client)?,
+            manager.credential_metadata(client)?,
+        )
+        && let Ok(models) = manager.catalog(client, &server.base_url, &token).await
+    {
+        let usable = crate::clients::usable_models(client, &models);
+        let repaired = manager.apply_repair_with_codex_backend(
+            client,
+            &server.base_url,
+            &token,
+            &metadata,
+            &usable,
+            codex_backend_base_url.as_deref(),
+        )?;
+        if let Err(error) = manager.catalog(client, &server.base_url, &token).await {
+            if let Some(id) = repaired.backup_id.as_deref() {
+                manager.rollback_repair(client, id)?;
+            }
+            return Err(format!("post-configuration catalog validation failed: {error}").into());
+        }
+        if let Some(bridge) = bridge {
+            bridge.commit();
+        }
+        println!(
+            "configured {} in {}",
             client.display_name(),
             manager.config_path(client).display()
         );
@@ -176,7 +255,16 @@ async fn configure_one(
         args.ttl_hours,
         false,
     )
-    .await?;
+    .await;
+    let credential = match credential {
+        Ok(credential) => credential,
+        Err(error) => {
+            if let Some(bridge) = bridge {
+                bridge.rollback().await?;
+            }
+            return Err(error);
+        }
+    };
     let record = ManagedCredential {
         client: client.to_string(),
         // Minted only when this command actually issued one: a token the
@@ -198,43 +286,66 @@ async fn configure_one(
         label: Some(format!("configure-{client}")),
         issued_at: Some(chrono::Utc::now().timestamp()),
         router: Some(server.base_url.clone()),
+        management_server: Some(server.management_url.clone()),
         principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
         config_sha256: None,
     };
     let models = crate::clients::usable_models(client, credential.models());
     let configured = if environment_only(client) {
         manager
-            .apply_setup_transaction(
+            .apply_setup_transaction_with_codex_backend(
                 client,
                 &server.base_url,
                 &credential.token,
                 &record,
                 &models,
+                codex_backend_base_url.as_deref(),
             )
             .map(|_| None)
     } else {
         manager
-            .apply_configure_transaction(
+            .apply_configure_transaction_with_codex_backend(
                 client,
                 &server.base_url,
                 &credential.token,
                 &record,
                 &models,
+                codex_backend_base_url.as_deref(),
             )
             .map(Some)
     };
     let configured = match configured {
         Ok(configured) => configured,
         Err(error) => {
+            let bridge_cleanup = if let Some(bridge) = bridge {
+                bridge.rollback().await.err()
+            } else {
+                None
+            };
             return match crate::managed_server::cleanup_run_credential(credential).await {
-                Ok(()) => Err(error.into()),
+                Ok(()) if bridge_cleanup.is_none() => Err(error.into()),
+                Ok(()) => Err(format!(
+                    "{error}; the unused Codex bridge could not be removed: {}",
+                    bridge_cleanup.expect("checked above")
+                )
+                .into()),
                 Err(cleanup) => Err(format!(
-                    "{error}; the unused minted credential could not be revoked: {cleanup}"
+                    "{error}; the unused minted credential could not be revoked: {cleanup}{}",
+                    bridge_cleanup.map_or_else(String::new, |bridge| format!(
+                        "; the unused Codex bridge could not be removed: {bridge}"
+                    ))
                 )
                 .into()),
             };
         }
     };
+    if client == ClientKind::Codex && bridge.is_none() {
+        crate::codex_loopback_bridge::stop_persistent(&manager.codex_loopback_bridge_state_path())
+            .await?;
+    }
+    if let Some(bridge) = bridge {
+        bridge.commit();
+    }
     if let Some(path) = configured {
         println!("configured {} in {}", client.display_name(), path.display());
     }
@@ -320,6 +431,10 @@ async fn undo_one(
     if metadata.exists() {
         std::fs::remove_file(&metadata)?;
     }
+    if client == ClientKind::Codex {
+        crate::codex_loopback_bridge::stop_persistent(&manager.codex_loopback_bridge_state_path())
+            .await?;
+    }
     match config {
         Some(path) => {
             println!("restored {} exactly", path.display());
@@ -356,7 +471,10 @@ async fn report_revocation(args: &ConfigureArgs, record: &ManagedCredential) {
         );
         return;
     };
-    let management = management_origin_for(args, router);
+    let management = record
+        .management_server
+        .clone()
+        .unwrap_or_else(|| management_origin_for(args, router));
     match crate::managed_server::revoke(&management, &admin, id).await {
         Ok(()) => println!("revoked token {id} on {router}"),
         Err(error) => {

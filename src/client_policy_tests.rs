@@ -176,7 +176,7 @@ fn request_evidence_requires_protocol_carrier_and_fixture_headers() {
 }
 
 #[test]
-fn claude_accepts_current_bearer_and_router_doctor_without_forging_identity() {
+fn every_supported_doctor_probe_matches_policy_without_forging_client_identity() {
     let mut native = HeaderMap::new();
     native.insert("authorization", "Bearer redacted".parse().unwrap());
     native.insert("anthropic-version", "2023-06-01".parse().unwrap());
@@ -194,26 +194,64 @@ fn claude_accepts_current_bearer_and_router_doctor_without_forging_identity() {
         &native,
     ));
 
-    let mut doctor = HeaderMap::new();
-    doctor.insert("authorization", "Bearer redacted".parse().unwrap());
-    doctor.insert("anthropic-version", "2023-06-01".parse().unwrap());
-    doctor.insert(
-        "x-link-assistant-client-check",
-        "reachability".parse().unwrap(),
-    );
-    assert!(request_evidence(
-        ClientKind::ClaudeCode,
-        ClientProtocol::AnthropicMessages,
-        "/api/services/anthropic/v1/messages",
-        &doctor,
-    ));
-    doctor.remove("authorization");
-    assert!(!request_evidence(
-        ClientKind::ClaudeCode,
-        ClientProtocol::AnthropicMessages,
-        "/api/services/anthropic/v1/messages",
-        &doctor,
-    ));
+    let cases = [
+        (
+            ClientKind::ClaudeCode,
+            ClientProtocol::AnthropicMessages,
+            "/api/services/anthropic/v1/messages",
+        ),
+        (
+            ClientKind::Codex,
+            ClientProtocol::OpenAIResponses,
+            "/api/services/codex/v1/responses",
+        ),
+        (
+            ClientKind::QwenCode,
+            ClientProtocol::OpenAIChat,
+            "/api/services/qwen/v1/chat/completions",
+        ),
+        (
+            ClientKind::Opencode,
+            ClientProtocol::OpenAIChat,
+            "/api/services/openai/v1/chat/completions",
+        ),
+        (
+            ClientKind::GrokCli,
+            ClientProtocol::OpenAIChat,
+            "/api/services/openai/v1/chat/completions",
+        ),
+        (
+            ClientKind::Agent,
+            ClientProtocol::OpenAIChat,
+            "/api/services/openai/v1/chat/completions",
+        ),
+    ];
+    for (client, protocol, path) in cases {
+        let mut doctor = crate::clients::doctor::probe_headers(client, "redacted").unwrap();
+        assert!(
+            request_evidence(client, protocol, path, &doctor),
+            "{client}"
+        );
+        for fingerprint in ["user-agent", "x-stainless-package-version", "x-session-id"] {
+            assert!(!doctor.contains_key(fingerprint), "{client}: {fingerprint}");
+        }
+
+        let provider = crate::proxy::native_request_headers(&doctor, "upstream-secret");
+        assert!(
+            !provider.contains_key(crate::clients::doctor::DOCTOR_EVIDENCE_HEADER),
+            "{client}: doctor marker leaked upstream"
+        );
+        assert!(!provider.values().any(|value| value == "router-doctor"));
+
+        doctor.insert(
+            crate::clients::doctor::DOCTOR_EVIDENCE_HEADER,
+            "reachability-other".parse().unwrap(),
+        );
+        assert!(
+            !request_evidence(client, protocol, path, &doctor),
+            "{client}"
+        );
+    }
 }
 
 #[test]

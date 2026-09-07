@@ -30,6 +30,7 @@ fn every_setup_write_is_rolled_back_for_every_supported_client() {
                 label: Some(format!("client-{client}")),
                 issued_at: Some(1),
                 router: Some("http://router.test:8080".into()),
+                management_server: None,
                 principal_id: Some("primary".into()),
                 config_sha256: None,
             };
@@ -82,6 +83,7 @@ fn every_configure_write_is_rolled_back_for_every_file_configurable_client() {
                 label: Some(format!("configure-{client}")),
                 issued_at: Some(1),
                 router: Some("http://router.test:8080".into()),
+                management_server: None,
                 principal_id: Some("primary".into()),
                 config_sha256: None,
             };
@@ -122,6 +124,7 @@ fn credential() -> ManagedCredential {
         label: None,
         issued_at: None,
         router: Some("http://router.test:8080".into()),
+        management_server: None,
         principal_id: Some("primary".into()),
         config_sha256: None,
     }
@@ -203,6 +206,7 @@ command = "kept-mcp"
         label: None,
         issued_at: None,
         router: Some("http://router.test:8080".into()),
+        management_server: None,
         principal_id: Some("primary".into()),
         config_sha256: None,
     };

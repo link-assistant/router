@@ -75,9 +75,5 @@ fn a_persisted_selection_also_refuses_a_local_import() {
         String::from_utf8_lossy(&local.stderr)
     );
     assert!(!destination.path().join(".credentials.json").exists());
-    assert!(
-        String::from_utf8_lossy(&local.stderr)
-            .contains("candidate was rejected by the vendor catalog"),
-        "{local:?}"
-    );
+    assert_refresh_chain_was_not_imported(&local);
 }

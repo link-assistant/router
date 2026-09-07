@@ -146,235 +146,7 @@ fn catalog_contains_current_generation(
         })
 }
 
-/// Translate an Anthropic Messages request body into an `OpenAI` Chat
-/// Completions request body.
-///
-/// Vendor blocks with no `OpenAI` equivalent (`thinking`, `redacted_thinking`)
-/// are dropped rather than guessed at; that limitation is documented in
-/// `docs/use-cases/chatgpt-in-claude-code.md`.
-#[must_use]
-pub fn anthropic_to_chat_request(body: &Value, upstream_model: &str) -> Value {
-    let mut messages: Vec<Value> = Vec::new();
-
-    if let Some(system) = body.get("system")
-        && let Some(text) = system_text(system)
-    {
-        messages.push(json!({"role": "system", "content": text}));
-    }
-
-    for message in body
-        .get("messages")
-        .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
-    {
-        let role = message
-            .get("role")
-            .and_then(Value::as_str)
-            .unwrap_or("user");
-        let content = message.get("content").unwrap_or(&Value::Null);
-        match content {
-            Value::String(text) => {
-                messages.push(json!({"role": role, "content": text}));
-            }
-            Value::Array(blocks) => translate_content_blocks(role, blocks, &mut messages),
-            _ => {}
-        }
-    }
-
-    let max_tokens = body
-        .get("max_tokens")
-        .and_then(Value::as_u64)
-        .unwrap_or(DEFAULT_MAX_TOKENS);
-
-    let mut out = json!({
-        "model": upstream_model,
-        "messages": messages,
-        "max_tokens": max_tokens,
-    });
-
-    for key in ["temperature", "top_p"] {
-        if let Some(value) = body.get(key) {
-            out[key] = value.clone();
-        }
-    }
-    if body.get("stream").and_then(Value::as_bool) == Some(true) {
-        out["stream"] = json!(true);
-    }
-    if let Some(stops) = body.get("stop_sequences") {
-        out["stop"] = stops.clone();
-    }
-    if let Some(tools) = body.get("tools").and_then(Value::as_array) {
-        let mapped = translate_tools(tools);
-        if !mapped.is_empty() {
-            out["tools"] = Value::Array(mapped);
-        }
-    }
-    if let Some(choice) = body.get("tool_choice")
-        && let Some(mapped) = translate_tool_choice(choice)
-    {
-        out["tool_choice"] = mapped;
-    }
-    out
-}
-
-/// `system` accepts a plain string or an array of text blocks.
-fn system_text(system: &Value) -> Option<String> {
-    match system {
-        Value::String(s) if !s.is_empty() => Some(s.clone()),
-        Value::Array(blocks) => {
-            let joined = blocks
-                .iter()
-                .filter_map(|b| b.get("text").and_then(Value::as_str))
-                .collect::<Vec<_>>()
-                .join("\n\n");
-            (!joined.is_empty()).then_some(joined)
-        }
-        _ => None,
-    }
-}
-
-/// Translate one Anthropic message's content blocks, appending the resulting
-/// `OpenAI` messages. `tool_result` blocks become separate `role: "tool"`
-/// messages, which is how the `OpenAI` dialect models the same thing.
-fn translate_content_blocks(role: &str, blocks: &[Value], messages: &mut Vec<Value>) {
-    let mut text = String::new();
-    let mut parts: Vec<Value> = Vec::new();
-    let mut tool_calls: Vec<Value> = Vec::new();
-    let mut tool_results: Vec<Value> = Vec::new();
-
-    for block in blocks {
-        match block.get("type").and_then(Value::as_str).unwrap_or("text") {
-            "text" => {
-                let value = block.get("text").and_then(Value::as_str).unwrap_or("");
-                text.push_str(value);
-                parts.push(json!({"type": "text", "text": value}));
-            }
-            "image" => {
-                if let Some(url) = image_data_url(block.get("source")) {
-                    parts.push(json!({"type": "image_url", "image_url": {"url": url}}));
-                }
-            }
-            "tool_use" => {
-                let input = block.get("input").cloned().unwrap_or_else(|| json!({}));
-                tool_calls.push(json!({
-                    "id": block.get("id").and_then(Value::as_str).unwrap_or_default(),
-                    "type": "function",
-                    "function": {
-                        "name": block.get("name").and_then(Value::as_str).unwrap_or_default(),
-                        "arguments": serde_json::to_string(&input).unwrap_or_else(|_| "{}".into()),
-                    }
-                }));
-            }
-            "tool_result" => {
-                tool_results.push(json!({
-                    "role": "tool",
-                    "tool_call_id": block
-                        .get("tool_use_id")
-                        .and_then(Value::as_str)
-                        .unwrap_or_default(),
-                    "content": tool_result_text(block.get("content")),
-                }));
-            }
-            // `thinking` / `redacted_thinking` and any future vendor block have
-            // no OpenAI equivalent and are dropped.
-            _ => {}
-        }
-    }
-
-    let has_image = parts
-        .iter()
-        .any(|p| p.get("type").and_then(Value::as_str) == Some("image_url"));
-    if !text.is_empty() || !tool_calls.is_empty() || has_image {
-        let content = if has_image {
-            Value::Array(parts)
-        } else {
-            Value::String(text)
-        };
-        let mut message = json!({"role": role, "content": content});
-        if !tool_calls.is_empty() {
-            message["tool_calls"] = Value::Array(tool_calls);
-        }
-        messages.push(message);
-    }
-    messages.extend(tool_results);
-}
-
-fn image_data_url(source: Option<&Value>) -> Option<String> {
-    let source = source?;
-    match source.get("type").and_then(Value::as_str) {
-        Some("url") => source.get("url").and_then(Value::as_str).map(String::from),
-        Some("base64") => {
-            let media = source.get("media_type").and_then(Value::as_str)?;
-            let data = source.get("data").and_then(Value::as_str)?;
-            Some(format!("data:{media};base64,{data}"))
-        }
-        _ => None,
-    }
-}
-
-fn tool_result_text(content: Option<&Value>) -> String {
-    match content {
-        Some(Value::String(s)) => s.clone(),
-        Some(Value::Array(blocks)) => blocks
-            .iter()
-            .filter_map(|b| b.get("text").and_then(Value::as_str))
-            .collect::<Vec<_>>()
-            .join("\n"),
-        Some(other) => other.to_string(),
-        None => String::new(),
-    }
-}
-
-fn translate_tools(tools: &[Value]) -> Vec<Value> {
-    tools
-        .iter()
-        .map(|tool| {
-            if tool
-                .get("type")
-                .and_then(Value::as_str)
-                .is_some_and(|kind| kind.starts_with("web_search_"))
-            {
-                return json!({"type": "web_search"});
-            }
-            if tool
-                .get("type")
-                .and_then(Value::as_str)
-                .is_some_and(|kind| kind.starts_with("web_fetch_"))
-            {
-                return json!({"type": "web_fetch"});
-            }
-            let name = tool.get("name").and_then(Value::as_str).unwrap_or_default();
-            json!({
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "description": tool
-                        .get("description")
-                        .cloned()
-                        .unwrap_or(Value::String(String::new())),
-                    "parameters": tool
-                        .get("input_schema")
-                        .cloned()
-                        .unwrap_or_else(|| json!({"type": "object", "properties": {}})),
-                }
-            })
-        })
-        .collect()
-}
-
-fn translate_tool_choice(choice: &Value) -> Option<Value> {
-    match choice.get("type").and_then(Value::as_str)? {
-        "auto" => Some(json!("auto")),
-        "any" => Some(json!("required")),
-        "none" => Some(json!("none")),
-        "tool" => {
-            let name = choice.get("name").and_then(Value::as_str)?;
-            Some(json!({"type": "function", "function": {"name": name}}))
-        }
-        _ => None,
-    }
-}
+pub use crate::bridge_request::anthropic_to_chat_request;
 
 /// Translate an `OpenAI` Chat Completions **or** Responses JSON object into an
 /// Anthropic `message` object.
@@ -384,6 +156,19 @@ fn translate_tool_choice(choice: &Value) -> Option<Value> {
 /// the others reply with a chat completion.
 #[must_use]
 pub fn openai_json_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+    try_openai_json_to_anthropic_message(payload, requested_model).unwrap_or_else(|message| {
+        json!({
+            "type": "error",
+            "error": {"type": "api_error", "message": message},
+        })
+    })
+}
+
+/// Translate an upstream object without silently discarding response items.
+pub fn try_openai_json_to_anthropic_message(
+    payload: &Value,
+    requested_model: &str,
+) -> Result<Value, String> {
     if payload.get("object").and_then(Value::as_str) == Some("response")
         || payload.get("output").is_some()
     {
@@ -393,7 +178,10 @@ pub fn openai_json_to_anthropic_message(payload: &Value, requested_model: &str) 
     }
 }
 
-fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+fn chat_completion_to_anthropic_message(
+    payload: &Value,
+    requested_model: &str,
+) -> Result<Value, String> {
     let choice = payload
         .get("choices")
         .and_then(Value::as_array)
@@ -406,7 +194,16 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
     if let Some(text) = message.get("content").and_then(Value::as_str)
         && !text.is_empty()
     {
-        content.push(json!({"type": "text", "text": text}));
+        let citations = crate::bridge_response::openai_annotations_to_anthropic(
+            text,
+            message.get("annotations"),
+            true,
+        )?;
+        let mut block = json!({"type": "text", "text": text});
+        if !citations.is_empty() {
+            block["citations"] = Value::Array(citations);
+        }
+        content.push(block);
     }
     for call in message
         .get("tool_calls")
@@ -424,7 +221,7 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
                 .and_then(|f| f.get("arguments"))
                 .and_then(Value::as_str)
                 .unwrap_or("{}"),
-        ));
+        )?);
     }
 
     let stop_reason = choice
@@ -432,41 +229,79 @@ fn chat_completion_to_anthropic_message(payload: &Value, requested_model: &str) 
         .and_then(Value::as_str)
         .map_or("end_turn", map_stop_reason);
     let usage = payload.get("usage");
-    message_envelope(
+    let mut translated = message_envelope(
         payload.get("id").and_then(Value::as_str),
         requested_model,
         &content,
         stop_reason,
         usage_field(usage, &["prompt_tokens", "input_tokens"]),
         usage_field(usage, &["completion_tokens", "output_tokens"]),
-    )
+    );
+    translated["usage"] = crate::bridge_response::openai_usage_to_anthropic(usage);
+    if let Some(tier) =
+        crate::bridge_response::anthropic_service_tier_from_openai(payload.get("service_tier"))
+    {
+        translated["usage"]["service_tier"] = Value::String(tier.into());
+    }
+    Ok(translated)
 }
 
-fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Value {
+fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Result<Value, String> {
     let mut content: Vec<Value> = Vec::new();
     let mut saw_tool_call = false;
     let mut web_search_requests = 0_u64;
-    for item in payload
+    let output = payload
         .get("output")
         .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
-    {
-        match item.get("type").and_then(Value::as_str).unwrap_or("") {
+        .ok_or_else(|| "Responses output must be an array".to_string())?;
+    for item in output {
+        let kind = item
+            .get("type")
+            .and_then(Value::as_str)
+            .filter(|kind| !kind.is_empty())
+            .ok_or_else(|| "Responses output item type must be a non-empty string".to_string())?;
+        match kind {
             "message" => {
-                let text: String = item
+                let mut combined_text = String::new();
+                let mut combined_citations = Vec::new();
+                let parts = item
                     .get("content")
                     .and_then(Value::as_array)
-                    .map(|parts| {
-                        parts
-                            .iter()
-                            .filter_map(|p| p.get("text").and_then(Value::as_str))
-                            .collect::<Vec<_>>()
-                            .join("")
-                    })
-                    .unwrap_or_default();
-                if !text.is_empty() {
-                    content.push(json!({"type": "text", "text": text}));
+                    .ok_or_else(|| "Responses message content must be an array".to_string())?;
+                for part in parts {
+                    let part_kind = part
+                        .get("type")
+                        .and_then(Value::as_str)
+                        .filter(|kind| !kind.is_empty())
+                        .ok_or_else(|| {
+                            "Responses message content type must be a non-empty string".to_string()
+                        })?;
+                    let text = match part_kind {
+                        "output_text" | "text" => part.get("text").and_then(Value::as_str),
+                        "refusal" => part.get("refusal").and_then(Value::as_str),
+                        other => {
+                            return Err(format!(
+                                "Responses message content type {other} cannot be represented by Anthropic"
+                            ));
+                        }
+                    };
+                    let Some(text) = text.filter(|text| !text.is_empty()) else {
+                        continue;
+                    };
+                    let citations = crate::bridge_response::openai_annotations_to_anthropic(
+                        text,
+                        part.get("annotations"),
+                        false,
+                    )?;
+                    combined_text.push_str(text);
+                    combined_citations.extend(citations);
+                }
+                if !combined_text.is_empty() {
+                    let mut block = json!({"type": "text", "text": combined_text});
+                    if !combined_citations.is_empty() {
+                        block["citations"] = Value::Array(combined_citations);
+                    }
+                    content.push(block);
                 }
             }
             "function_call" => {
@@ -480,7 +315,7 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                     item.get("arguments")
                         .and_then(Value::as_str)
                         .unwrap_or("{}"),
-                ));
+                )?);
             }
             "web_search_call" => {
                 let id = item.get("id").and_then(Value::as_str).unwrap_or_default();
@@ -499,7 +334,7 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
                     }));
                 }
             }
-            _ => {}
+            other => return Err(unrepresentable_responses_output(other)),
         }
     }
 
@@ -519,23 +354,34 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Val
         usage_field(usage, &["input_tokens", "prompt_tokens"]),
         usage_field(usage, &["output_tokens", "completion_tokens"]),
     );
+    message["usage"] = crate::bridge_response::openai_usage_to_anthropic(usage);
+    if let Some(tier) =
+        crate::bridge_response::anthropic_service_tier_from_openai(payload.get("service_tier"))
+    {
+        message["usage"]["service_tier"] = Value::String(tier.into());
+    }
     if web_search_requests > 0 {
         message["usage"]["server_tool_use"] = json!({
             "web_search_requests": web_search_requests,
             "web_fetch_requests": 0,
         });
     }
-    message
+    Ok(message)
 }
 
-fn tool_use_block(id: &str, name: &str, arguments: &str) -> Value {
-    let input = serde_json::from_str::<Value>(arguments).unwrap_or_else(|_| json!({}));
-    json!({
+pub(crate) fn unrepresentable_responses_output(kind: &str) -> String {
+    format!("Responses output item type {kind} cannot be represented by Anthropic")
+}
+
+fn tool_use_block(id: &str, name: &str, arguments: &str) -> Result<Value, String> {
+    let input = serde_json::from_str::<Value>(arguments)
+        .map_err(|_| "upstream function-call arguments must be valid JSON".to_string())?;
+    Ok(json!({
         "type": "tool_use",
         "id": if id.is_empty() { format!("toolu_{}", uuid::Uuid::new_v4().simple()) } else { id.to_string() },
         "name": name,
         "input": input,
-    })
+    }))
 }
 
 fn usage_field(usage: Option<&Value>, keys: &[&str]) -> u64 {
@@ -617,6 +463,18 @@ pub(crate) fn untranslatable_anthropic_tool(body: &Value) -> Option<String> {
             if tool.get("name").and_then(Value::as_str).is_none() {
                 return Some("client tool is missing a string name".into());
             }
+            if tool
+                .get("input_schema")
+                .is_some_and(|schema| !schema.is_object())
+            {
+                return Some("client tool input_schema must be an object".into());
+            }
+            if tool
+                .get("strict")
+                .is_some_and(|strict| !strict.is_boolean())
+            {
+                return Some("client tool strict must be a boolean".into());
+            }
         }
     }
     if let Some(choice) = body.get("tool_choice") {
@@ -633,51 +491,10 @@ pub(crate) fn untranslatable_anthropic_tool(body: &Value) -> Option<String> {
     None
 }
 
-/// Estimate the input token count of an Anthropic Messages request.
-///
-/// `POST /v1/messages/count_tokens` has no equivalent on the bridged
-/// upstreams, so the router answers locally. The estimate uses the widely
-/// quoted ~4 characters per token heuristic plus a small per-message overhead;
-/// it is documented as an estimate rather than an exact count.
-#[must_use]
-pub fn count_tokens_estimate(body: &Value) -> u64 {
-    let mut chars = 0usize;
-    let mut messages = 0usize;
-    if let Some(system) = body.get("system").and_then(system_text) {
-        chars += system.len();
-    }
-    for message in body
-        .get("messages")
-        .and_then(Value::as_array)
-        .map(Vec::as_slice)
-        .unwrap_or_default()
-    {
-        messages += 1;
-        chars += json_text_len(message.get("content").unwrap_or(&Value::Null));
-    }
-    if let Some(tools) = body.get("tools") {
-        chars += tools.to_string().len();
-    }
-    // 4 chars/token, plus ~4 tokens of role and delimiter overhead per message.
-    (chars as u64).div_ceil(4) + (messages as u64) * 4
-}
-
-fn json_text_len(content: &Value) -> usize {
-    match content {
-        Value::String(s) => s.len(),
-        Value::Array(blocks) => blocks.iter().map(json_text_len).sum(),
-        Value::Object(_) => content
-            .get("text")
-            .and_then(Value::as_str)
-            .map_or_else(|| content.to_string().len(), str::len),
-        _ => 0,
-    }
-}
-
 /// Entry point for the Anthropic surface when the upstream is not Anthropic.
 ///
-/// `/v1/messages/count_tokens` is answered locally because the bridged
-/// upstreams expose no equivalent endpoint; everything else is forwarded.
+/// Bridged routes fail closed for token counting unless an exact compatible,
+/// non-inference counter is available; everything else is forwarded.
 pub async fn handle_anthropic_surface(
     state: &AppState,
     headers: &HeaderMap,
@@ -724,13 +541,12 @@ pub(crate) async fn handle_anthropic_surface_routed(
             path,
             Some(&body),
         );
-        return (
-            StatusCode::OK,
-            axum::Json(json!({"input_tokens": count_tokens_estimate(&body)})),
-        )
-            .into_response();
+        return anthropic_error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            b"exact token counting is unavailable for the selected route",
+        );
     }
-    forward_anthropic_messages_routed(state, headers, body, subscription).await
+    forward_anthropic_messages_routed(state, headers, path, body, subscription).await
 }
 
 /// Validate the client token for a locally answered `count_tokens` request.
@@ -764,12 +580,13 @@ pub async fn forward_anthropic_messages(
     headers: &HeaderMap,
     anthropic_body: Value,
 ) -> Response {
-    forward_anthropic_messages_routed(state, headers, anthropic_body, None).await
+    forward_anthropic_messages_routed(state, headers, "/v1/messages", anthropic_body, None).await
 }
 
 async fn forward_anthropic_messages_routed(
     state: &AppState,
     headers: &HeaderMap,
+    path: &str,
     anthropic_body: Value,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
@@ -817,6 +634,19 @@ async fn forward_anthropic_messages_routed(
         return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
     }
     if let Some(reason) = untranslatable_anthropic_tool(&anthropic_body) {
+        if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
+            return *response;
+        }
+        return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
+    }
+    let bridge_target = match state.upstream_provider {
+        UpstreamProvider::Codex => crate::bridge_request::BridgeTarget::Responses,
+        UpstreamProvider::Gemini => crate::bridge_request::BridgeTarget::Gemini,
+        _ => crate::bridge_request::BridgeTarget::Chat,
+    };
+    if let Err(reason) =
+        crate::bridge_request::validate_anthropic_request(&anthropic_body, bridge_target)
+    {
         if let Err(response) = count_tokens_claims(&state.token_manager, headers) {
             return *response;
         }
@@ -886,16 +716,23 @@ async fn forward_anthropic_messages_routed(
             );
         }
     };
-    let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
-
     let upstream = match state.upstream_provider {
         UpstreamProvider::Codex => {
-            let responses_body = crate::responses::chat_completion_to_responses(&chat_body);
+            let responses_body = match crate::bridge_request::anthropic_to_responses_request(
+                &anthropic_body,
+                &upstream_model,
+            ) {
+                Ok(body) => body,
+                Err(reason) => {
+                    return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
+                }
+            };
+            let routing_body = responses_body.clone();
             crate::subscription_proxy::forward_subscription_openai_routed(
                 state,
                 headers,
                 responses_body,
-                &chat_body,
+                &routing_body,
                 "/v1/responses",
                 Surface::Anthropic,
                 crate::subscription_proxy::RoutedSubscriptionContext {
@@ -907,6 +744,7 @@ async fn forward_anthropic_messages_routed(
             .await
         }
         UpstreamProvider::Qwen => {
+            let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
             crate::subscription_proxy::forward_subscription_openai_routed(
                 state,
                 headers,
@@ -923,6 +761,7 @@ async fn forward_anthropic_messages_routed(
             .await
         }
         UpstreamProvider::Gemini => {
+            let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
             crate::gemini::forward_chat_completions_as_routed(
                 state,
                 headers,
@@ -933,12 +772,20 @@ async fn forward_anthropic_messages_routed(
             .await
         }
         _ => {
-            crate::provider_proxy::forward_openai_compatible(
+            let chat_body = anthropic_to_chat_request(&anthropic_body, &upstream_model);
+            crate::provider_proxy::forward_provider_at_routed(
                 state,
                 headers,
-                chat_body,
-                "/v1/chat/completions",
-                Surface::Anthropic,
+                chat_body.clone(),
+                &chat_body,
+                crate::provider_proxy::ProviderForwardOptions {
+                    path,
+                    upstream_path: "/v1/chat/completions",
+                    surface: Surface::Anthropic,
+                    copy_anthropic_headers: false,
+                    protocol: crate::client_policy::ClientProtocol::AnthropicMessages,
+                    native_protocol: false,
+                },
             )
             .await
         }

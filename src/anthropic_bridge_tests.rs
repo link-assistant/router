@@ -200,16 +200,19 @@ fn codex_projection_uses_native_responses_tool_items() {
 }
 
 #[test]
-fn drops_thinking_blocks() {
+fn translated_routes_reject_thinking_blocks_without_exposing_them() {
     let body = json!({
         "messages": [{"role": "assistant", "content": [
             {"type": "thinking", "thinking": "secret"},
             {"type": "text", "text": "visible"}
         ]}]
     });
-    let chat = anthropic_to_chat_request(&body, "m");
-    assert_eq!(chat["messages"][0]["content"], "visible");
-    assert!(!chat.to_string().contains("secret"));
+    let error = crate::bridge_request::validate_anthropic_request(
+        &body,
+        crate::bridge_request::BridgeTarget::Chat,
+    )
+    .unwrap_err();
+    assert!(!error.contains("secret"));
 }
 
 #[test]
@@ -293,8 +296,102 @@ fn responses_object_becomes_anthropic_message() {
     assert_eq!(msg["usage"]["input_tokens"], 5);
 }
 
+#[test]
+fn refusal_only_response_becomes_visible_anthropic_text() {
+    let payload = json!({
+        "id": "resp_refusal",
+        "object": "response",
+        "status": "completed",
+        "output": [{"type": "message", "content": [
+            {"type": "refusal", "refusal": "cannot comply"}
+        ]}]
+    });
+
+    let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
+
+    assert_eq!(
+        msg["content"][0],
+        json!({"type":"text","text":"cannot comply"})
+    );
+    assert_eq!(msg["stop_reason"], "end_turn");
+}
+
+#[test]
+fn mixed_response_keeps_text_and_refusal_in_display_order() {
+    let payload = json!({
+        "id": "resp_mixed",
+        "object": "response",
+        "status": "completed",
+        "output": [
+            {"type": "message", "content": [
+                {"type": "output_text", "text": "before "},
+                {"type": "refusal", "refusal": "cannot comply"},
+                {"type": "output_text", "text": " after"}
+            ]},
+            {"type": "message", "content": [
+                {"type": "refusal", "refusal": "second refusal"}
+            ]}
+        ]
+    });
+
+    let msg = openai_json_to_anthropic_message(&payload, "claude-opus-4-7");
+
+    assert_eq!(msg["content"][0]["text"], "before cannot comply after");
+    assert_eq!(msg["content"][1]["text"], "second refusal");
+    assert_eq!(msg["stop_reason"], "end_turn");
+}
+
 #[tokio::test]
-async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
+async fn buffered_responses_reject_provider_specific_output_instead_of_dropping_it() {
+    use axum::response::IntoResponse as _;
+    use http_body_util::BodyExt as _;
+
+    for (item, marker, private_value) in [
+        (
+            json!({
+                "id": "rs_1",
+                "type": "reasoning",
+                "summary": [{"type": "summary_text", "text": "checked the constraints"}],
+                "encrypted_content": "private-reasoning-state"
+            }),
+            "reasoning",
+            "private-reasoning-state",
+        ),
+        (
+            json!({
+                "id": "ct_1",
+                "type": "custom_tool_call",
+                "call_id": "call_1",
+                "name": "apply_patch",
+                "input": "private-tool-input"
+            }),
+            "custom_tool_call",
+            "private-tool-input",
+        ),
+    ] {
+        let upstream = (
+            StatusCode::OK,
+            axum::Json(json!({
+                "id": "resp_unsupported",
+                "object": "response",
+                "status": "completed",
+                "output": [item]
+            })),
+        )
+            .into_response();
+
+        let response =
+            translate_upstream_response(upstream, "claude-test", "upstream-test", false, &[]).await;
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY, "{marker}");
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body = String::from_utf8_lossy(&bytes);
+        assert!(body.contains(marker), "{marker}: {body}");
+        assert!(!body.contains(private_value), "{marker}: {body}");
+    }
+}
+
+#[tokio::test]
+async fn buffered_bridge_preserves_requested_without_private_metadata() {
     use axum::response::IntoResponse as _;
     use http_body_util::BodyExt as _;
 
@@ -320,27 +417,16 @@ async fn buffered_bridge_preserves_requested_and_reports_upstream_model() {
     )
     .await;
     assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(
-        response
-            .headers()
-            .get(crate::output_limit::UPSTREAM_MODEL_HEADER)
-            .unwrap(),
-        "future-upstream-model"
-    );
+    assert!(response.headers().get("x-router-upstream-model").is_none());
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(payload["model"], "claude/catalog-alias");
-    assert_eq!(
-        payload[crate::output_limit::UPSTREAM_MODEL_FIELD],
-        "future-upstream-model"
-    );
+    assert!(payload.get("x_router_upstream_model").is_none());
 }
 
-/// Streaming translation carries the same two model identities as buffered
-/// translation, including the response header used by logs and clients that
-/// do not inspect vendor-specific SSE fields.
+/// Streaming translation carries only the requested vendor-standard model.
 #[tokio::test]
-async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
+async fn streaming_bridge_preserves_requested_without_private_metadata() {
     use http_body_util::BodyExt as _;
 
     let mut upstream = Response::new(Body::from(concat!(
@@ -366,10 +452,7 @@ async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
     .await;
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(response.headers()["content-type"], "text/event-stream");
-    assert_eq!(
-        response.headers()[crate::output_limit::UPSTREAM_MODEL_HEADER],
-        "future-upstream-model"
-    );
+    assert!(response.headers().get("x-router-upstream-model").is_none());
     let payload = String::from_utf8(
         response
             .into_body()
@@ -384,7 +467,8 @@ async fn streaming_bridge_preserves_requested_and_reports_upstream_model() {
     assert!(payload.contains("content_block_delta"));
     assert!(payload.contains("message_stop"));
     assert!(payload.contains("claude/catalog-alias"));
-    assert!(payload.contains("future-upstream-model"));
+    assert!(!payload.contains("future-upstream-model"));
+    assert!(!payload.contains("x_router_"));
 }
 
 #[test]
@@ -394,18 +478,6 @@ fn max_tokens_finish_reason_maps_to_anthropic() {
     });
     let msg = openai_json_to_anthropic_message(&payload, "m");
     assert_eq!(msg["stop_reason"], "max_tokens");
-}
-
-#[test]
-fn count_tokens_estimate_scales_with_input() {
-    let small = count_tokens_estimate(&json!({"messages": [{"role": "user", "content": "hi"}]}));
-    let large = count_tokens_estimate(&json!({
-        "system": "s".repeat(400),
-        "messages": [{"role": "user", "content": "x".repeat(400)}]
-    }));
-    assert!(small >= 4, "per-message overhead is counted: {small}");
-    assert!(large > small);
-    assert!(large >= 200, "roughly 800 chars / 4: {large}");
 }
 
 #[test]

@@ -141,7 +141,7 @@ setup refreshes catalog models while preserving user-added OpenCode entries.
 
 | Client | File used | Base-URL setting | Token input | Arbitrary router URL? |
 | --- | --- | --- | --- | --- |
-| Codex CLI | `$CODEX_HOME/config.toml`, or `~/.codex/config.toml` | `model_providers.link-assistant.base_url` | `LINK_ASSISTANT_TOKEN` via `env_key` | Yes |
+| Codex CLI | `$CODEX_HOME/config.toml`, or `~/.codex/config.toml` | `model_providers.link-assistant.base_url` plus native `chatgpt_base_url` | `LINK_ASSISTANT_TOKEN` plus principal-bound `CODEX_ACCESS_TOKEN`/`CODEX_CONNECTORS_TOKEN` aliases in the managed environment | Yes |
 | Claude Code | `$CLAUDE_CONFIG_DIR/settings.json`, or `~/.claude/settings.json` | `env.ANTHROPIC_BASE_URL` | `ANTHROPIC_AUTH_TOKEN` | Yes |
 | OpenCode | `$XDG_CONFIG_HOME/opencode/opencode.json`, or `~/.config/opencode/opencode.json` | `provider.link-assistant.options.baseURL` | `LINK_ASSISTANT_TOKEN` via `{env:…}` | Yes |
 | Qwen Code | `$QWEN_HOME/settings.json`, or `~/.qwen/settings.json` | `modelProviders.openai[].baseUrl` | `LINK_ASSISTANT_TOKEN` via `envKey` | Yes |

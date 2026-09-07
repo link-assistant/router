@@ -413,10 +413,10 @@ pub(crate) async fn fetch_catalog(
                 )
             })?;
         if !seen.insert(id.to_string()) {
-            return Err(ZaiProbeFailure::new(
-                ZaiProbeFailureKind::Unverified,
-                "z.ai Coding Plan catalog contained duplicate model ids",
-            ));
+            // A provider can repeat an exact record across catalog pages or
+            // compatibility families. Preserve the first record so metadata
+            // selection is stable while publishing the exact id only once.
+            continue;
         }
         models.push(LiveProviderModel {
             id: id.to_string(),
@@ -746,15 +746,14 @@ pub async fn forward(
     .await
 }
 
-/// Answer Anthropic token counting locally after the same exact authorization.
+/// Enforce the Messages policy boundary, then fail closed because no exact,
+/// non-inference z.ai counter is currently available.
 pub fn count_tokens(
     state: &crate::app_state::AppState,
     headers: &axum::http::HeaderMap,
     path: &str,
     body: &serde_json::Value,
 ) -> axum::response::Response {
-    use axum::response::IntoResponse as _;
-
     let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
         Err(response) => return *response,
@@ -813,11 +812,8 @@ pub fn count_tokens(
         path,
         Some(body),
     );
-    (
-        axum::http::StatusCode::OK,
-        axum::Json(serde_json::json!({
-            "input_tokens": crate::anthropic_bridge::count_tokens_estimate(body)
-        })),
+    unavailable_error(
+        crate::metrics::Surface::Anthropic,
+        "exact token counting is unavailable for the selected route",
     )
-        .into_response()
 }

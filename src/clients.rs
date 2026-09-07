@@ -4,7 +4,7 @@
 //! set of Claude Code gateway environment keys. Unknown settings are parsed and merged, never
 //! replaced wholesale, and every changed existing file is backed up first.
 
-use std::fmt::{self, Write as _};
+use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -16,6 +16,7 @@ mod analysis;
 mod catalog;
 #[path = "clients/codex_catalog_constraint.rs"]
 mod codex_catalog_constraint;
+mod codex_loopback;
 pub mod credentials;
 pub(crate) mod doctor;
 mod files;
@@ -679,11 +680,22 @@ impl ClientManager {
         Ok(status)
     }
 
+    #[allow(dead_code)]
     pub(crate) fn setup(
         &self,
         client: ClientKind,
         base_url: &str,
         models: &[RouterModel],
+    ) -> Result<SetupResult, ClientError> {
+        self.setup_with_codex_backend(client, base_url, models, None)
+    }
+
+    pub(crate) fn setup_with_codex_backend(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
     ) -> Result<SetupResult, ClientError> {
         if let Some(limitation) = client.setup_limitation() {
             return Err(ClientError::message(limitation));
@@ -695,7 +707,7 @@ impl ClientManager {
             client.integration().endpoint_suffix
         );
         match client {
-            ClientKind::Codex => self.setup_codex(&endpoint),
+            ClientKind::Codex => self.setup_codex(&endpoint, codex_backend_base_url),
             ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
             ClientKind::Opencode | ClientKind::Agent => {
                 self.setup_json_provider(client, &endpoint, models)
@@ -730,99 +742,6 @@ impl ClientManager {
         Ok(result)
     }
 
-    /// Store the client's shell exports without exposing the token on stdout.
-    pub(crate) fn write_environment(
-        &self,
-        client: ClientKind,
-        base_url: &str,
-        token: &str,
-    ) -> Result<PathBuf, ClientError> {
-        let token_env = client
-            .token_env()
-            .ok_or_else(|| ClientError::message("client has no router token environment"))?;
-        let directory = self.config_home.join("link-assistant-router/clients");
-        fs::create_dir_all(&directory)?;
-        let path = self.environment_path(client);
-        let mut contents = String::new();
-        if let Some(base_url_env) = client.base_url_env() {
-            let endpoint = format!(
-                "{}{}",
-                base_url.trim_end_matches('/'),
-                client.integration().endpoint_suffix
-            );
-            writeln!(
-                &mut contents,
-                "export {base_url_env}={}",
-                shell_quote(&endpoint)
-            )
-            .expect("writing to a String cannot fail");
-        }
-        writeln!(&mut contents, "export {token_env}={}", shell_quote(token))
-            .expect("writing to a String cannot fail");
-        if client == ClientKind::ClaudeCode {
-            writeln!(
-                &mut contents,
-                "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1"
-            )
-            .expect("writing to a String cannot fail");
-            writeln!(
-                &mut contents,
-                "export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0"
-            )
-            .expect("writing to a String cannot fail");
-        }
-        atomic_write(&path, contents.as_bytes())?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
-        }
-        Ok(path)
-    }
-
-    fn setup_codex(&self, base_url: &str) -> Result<SetupResult, ClientError> {
-        let path = self.config_path(ClientKind::Codex);
-        let source = read_or_empty(&path)?;
-        let mut document = if source.trim().is_empty() {
-            DocumentMut::new()
-        } else {
-            source.parse::<DocumentMut>().map_err(|error| {
-                ClientError::message(format!("invalid TOML in {}: {error}", path.display()))
-            })?
-        };
-        let previous_provider = document
-            .get("model_provider")
-            .and_then(Item::as_str)
-            .map(str::to_string);
-        document["model_provider"] = value(CODEX_PROVIDER);
-        if document.get("model_providers").is_none() {
-            document["model_providers"] = Item::Table(Table::new());
-        }
-        let providers = document["model_providers"]
-            .as_table_like_mut()
-            .ok_or_else(|| ClientError::message("model_providers must be a TOML table"))?;
-        if providers.get(CODEX_PROVIDER).is_none() {
-            providers.insert(CODEX_PROVIDER, Item::Table(Table::new()));
-        }
-        let provider = providers
-            .get_mut(CODEX_PROVIDER)
-            .and_then(Item::as_table_like_mut)
-            .ok_or_else(|| {
-                ClientError::message("model_providers.link-assistant must be a TOML table")
-            })?;
-        provider.insert("name", value("Link.Assistant.Router"));
-        provider.insert("base_url", value(base_url));
-        provider.insert("env_key", value(CODEX_TOKEN_ENV));
-        provider.insert("wire_api", value("responses"));
-        let result = write_if_changed(&path, &source, &document.to_string())?;
-        let marker = self.codex_home.join(OWNERSHIP_MARKER);
-        if !marker.exists() {
-            let previous_provider = previous_provider.filter(|value| value != CODEX_PROVIDER);
-            write_codex_marker(&marker, previous_provider.as_deref())?;
-        }
-        Ok(result)
-    }
-
     fn setup_claude(
         &self,
         base_url: &str,
@@ -846,6 +765,30 @@ impl ClientManager {
         })?;
         let marker_path = self.claude_home.join(OWNERSHIP_MARKER);
         let existing_marker = claude_marker(&marker_path)?;
+        // Claude Code treats presence, including the old Router value `"0"`,
+        // as the disable switch. Migrate only a value our marker proves we
+        // installed; an unmarked value belongs to the user and stays intact.
+        if let Some((_, _, entries)) = existing_marker.as_ref()
+            && let Some((_, _, previous)) = entries.iter().find(|(key, managed, _)| {
+                key == "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" && managed.as_deref() == Some("0")
+            })
+            && env
+                .get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+                .and_then(Value::as_str)
+                == Some("0")
+        {
+            match previous {
+                Some(previous) => {
+                    env.insert(
+                        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC".into(),
+                        Value::String(previous.clone()),
+                    );
+                }
+                None => {
+                    env.remove("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC");
+                }
+            }
+        }
         // Recorded before it is replaced, so removal can put it back — the
         // mechanism `setup_codex` already uses for `model_provider` (#302).
         let previous = env
@@ -873,7 +816,6 @@ impl ClientManager {
             managed_gateway_env.push((key.to_string(), managed.map(str::to_string), previous));
         };
         manage("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1"));
-        manage("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Some("0"));
         manage("ANTHROPIC_AUTH_TOKEN", None);
         manage("ANTHROPIC_API_KEY", None);
         let gateway_model = claude_gateway_model(models, None);
@@ -898,40 +840,6 @@ impl ClientManager {
             previous.as_deref(),
             &managed_gateway_env,
         )?;
-        Ok(result)
-    }
-
-    fn remove_codex(&self) -> Result<SetupResult, ClientError> {
-        let path = self.config_path(ClientKind::Codex);
-        let source = read_or_empty(&path)?;
-        if source.trim().is_empty() {
-            return Ok(unchanged(path));
-        }
-        let marker_path = self.codex_home.join(OWNERSHIP_MARKER);
-        if !marker_path.exists() {
-            return Ok(unchanged(path));
-        }
-        let mut document = source.parse::<DocumentMut>().map_err(|error| {
-            ClientError::message(format!("invalid TOML in {}: {error}", path.display()))
-        })?;
-        let previous_provider = read_codex_marker(&marker_path)?;
-        if document.get("model_provider").and_then(Item::as_str) == Some(CODEX_PROVIDER) {
-            if let Some(previous_provider) = previous_provider {
-                document["model_provider"] = value(previous_provider);
-            } else {
-                document.as_table_mut().remove("model_provider");
-            }
-        }
-        if let Some(providers) = document
-            .get_mut("model_providers")
-            .and_then(Item::as_table_like_mut)
-        {
-            providers.remove(CODEX_PROVIDER);
-        }
-        let result = write_if_changed(&path, &source, &document.to_string())?;
-        if marker_path.exists() {
-            fs::remove_file(marker_path)?;
-        }
         Ok(result)
     }
 
@@ -993,7 +901,6 @@ impl ClientManager {
 mod util;
 use util::{
     command_exists, compact_body, normalize_base_url, read_claude_base_url, read_codex_base_url,
-    shell_quote,
 };
 #[cfg(test)]
 #[path = "clients_tests.rs"]

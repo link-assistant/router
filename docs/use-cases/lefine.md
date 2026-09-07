@@ -62,4 +62,7 @@ LINK_ASSISTANT_TOKEN=<opencode-client-token> router usage lefine --json
 
 A real catalog smoke test runs only when `LEFINE_API_KEY` is explicitly present
 in the test environment. It performs no inference request, verifies the log
-projection redacts the key, and never prints the key.
+projection redacts the key, and never prints the key. Its test output explicitly
+reports `RUN` or `SKIP`. End-to-end generation is a separate opt-in check and
+runs only when `LEFINE_INFERENCE_ACCEPTANCE=1` is also set; the repository's
+normal live credential gate never consumes model tokens.

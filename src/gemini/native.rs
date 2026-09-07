@@ -8,31 +8,36 @@ use axum::body::Body;
 use axum::extract::{OriginalUri, Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+use futures_util::StreamExt as _;
 use serde_json::{Value, json};
 
 use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_name(model: &str) -> String {
-    let model = model.trim_start_matches("models/");
-    format!("models/{model}")
-}
-
-fn native_model_document(model: &str, owner: &str) -> Value {
-    let name = native_model_name(model);
-    let model = name.trim_start_matches("models/");
-    json!({
-        "name": name,
-        "displayName": model,
-        "description": format!(
-            "{owner} model routed by Link.Assistant.Router over the native Gemini \
-             namespace"
-        ),
-        "inputTokenLimit": 1_048_576,
-        "outputTokenLimit": 65_536,
-        "supportedGenerationMethods": ["generateContent", "streamGenerateContent"]
-    })
+fn native_model_document(model: &str, raw: Option<&serde_json::Map<String, Value>>) -> Value {
+    let mut projected =
+        serde_json::Map::from_iter([("name".into(), Value::String(model.to_string()))]);
+    if let Some(raw) = raw {
+        for key in [
+            "baseModelId",
+            "version",
+            "displayName",
+            "description",
+            "inputTokenLimit",
+            "outputTokenLimit",
+            "supportedGenerationMethods",
+            "temperature",
+            "maxTemperature",
+            "topP",
+            "topK",
+        ] {
+            if let Some(value) = raw.get(key) {
+                projected.insert(key.into(), value.clone());
+            }
+        }
+    }
+    Value::Object(projected)
 }
 
 /// Subscriptions whose live catalogs the Gemini namespace may advertise.
@@ -42,7 +47,10 @@ fn native_model_document(model: &str, owner: &str) -> Value {
 async fn advertised_models(
     state: &AppState,
     principal: Option<&str>,
-) -> Vec<(crate::subscription::SubscriptionProvider, String)> {
+) -> Vec<(
+    crate::subscription::SubscriptionProvider,
+    crate::model_catalog::CatalogRecord,
+)> {
     let snapshot = crate::model_routing::configured_catalog_snapshot(state).await;
     let healthy = snapshot.healthy_providers();
     let providers = match state.upstream_provider {
@@ -58,7 +66,7 @@ async fn advertised_models(
         .flat_map(|provider| {
             principal
                 .map_or_else(
-                    || snapshot.models(provider),
+                    || snapshot.records(provider),
                     |principal| {
                         if state.subscription_cache.evidence_for(provider, principal)
                             == Some(crate::refresh::CredentialEvidence::Rejected)
@@ -67,12 +75,12 @@ async fn advertised_models(
                         } else {
                             state
                                 .model_catalogs
-                                .models_for_accounts(provider, &[principal.to_string()])
+                                .records_for_accounts(provider, &[principal.to_string()])
                         }
                     },
                 )
                 .into_iter()
-                .map(move |model| (provider, model))
+                .map(move |record| (provider, record))
         })
         .collect()
 }
@@ -116,21 +124,25 @@ pub async fn native_models(
     {
         return response;
     }
-    let mut seen = std::collections::HashSet::new();
-    for (_, model) in &advertised {
-        let name = native_model_name(model);
-        if !seen.insert(name.clone()) {
+    let mut seen = std::collections::HashMap::new();
+    for (provider, record) in &advertised {
+        if let Some(previous) = seen.insert(record.canonical_id.clone(), *provider)
+            && previous != *provider
+        {
             return native_error(
                 StatusCode::CONFLICT,
                 &format!(
-                    "exact native model id '{name}' is advertised by more than one healthy provider"
+                    "exact native model id '{}' is advertised by more than one healthy provider",
+                    record.canonical_id
                 ),
             );
         }
     }
+    let mut emitted = std::collections::HashSet::new();
     let mut models = advertised
         .into_iter()
-        .map(|(provider, model)| native_model_document(&model, provider.as_str()))
+        .filter(|(_, record)| emitted.insert(record.canonical_id.clone()))
+        .map(|(_, record)| native_model_document(&record.canonical_id, Some(&record.raw)))
         .collect::<Vec<_>>();
     if let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
         && let Ok((client, _)) =
@@ -141,8 +153,7 @@ pub async fn native_models(
     {
         for entry in registry {
             if models.iter().any(|model| {
-                model.get("name").and_then(Value::as_str)
-                    == Some(&format!("models/{}", entry.exposed_id))
+                model.get("name").and_then(Value::as_str) == Some(entry.exposed_id.as_str())
             }) {
                 return native_error(
                     StatusCode::CONFLICT,
@@ -152,7 +163,7 @@ pub async fn native_models(
                     ),
                 );
             }
-            models.push(native_model_document(&entry.exposed_id, entry.owner));
+            models.push(native_model_document(&entry.exposed_id, None));
         }
     }
     (StatusCode::OK, axum::Json(json!({"models": models}))).into_response()
@@ -169,12 +180,12 @@ pub async fn native_model(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let requested_name = native_model_name(&model);
+    let requested_id = model.trim_start_matches("models/");
     let mut owners = advertised_models(&state, claims.principal_id.as_deref())
         .await
         .into_iter()
         .filter_map(|(owner, candidate)| {
-            (native_model_name(&candidate) == requested_name
+            (candidate.canonical_id.trim_start_matches("models/") == requested_id
                 && crate::client_policy::enforce_subscription_for_claims(
                     &state,
                     &claims,
@@ -193,7 +204,8 @@ pub async fn native_model(
         return native_error(
             StatusCode::CONFLICT,
             &format!(
-                "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+                "exact native model id '{}' is advertised by more than one healthy provider",
+                owners[0].1.canonical_id
             ),
         );
     }
@@ -205,11 +217,11 @@ pub async fn native_model(
         && let Ok(live) = crate::zai_coding_plan::live_catalog(&state, &provider).await
         && live
             .iter()
-            .any(|entry| native_model_name(&entry.id) == requested_name)
+            .any(|entry| entry.id.trim_start_matches("models/") == requested_id)
     {
         return (
             StatusCode::OK,
-            axum::Json(native_model_document(&requested_name, "z.ai")),
+            axum::Json(native_model_document(requested_id, None)),
         )
             .into_response();
     }
@@ -221,14 +233,17 @@ pub async fn native_model(
                     StatusCode::NOT_FOUND,
                     axum::Json(crate::gemini_bridge::openai_error_to_gemini(
                         404,
-                        &json!({"error": {"message": format!("model '{requested_name}' is not available")}}),
+                        &json!({"error": {"message": format!("model '{requested_id}' is not available")}}),
                     )),
                 )
             },
-            |(owner, candidate)| {
+            |(_, candidate)| {
                 (
                     StatusCode::OK,
-                    axum::Json(native_model_document(&candidate, owner.as_str())),
+                    axum::Json(native_model_document(
+                        &candidate.canonical_id,
+                        Some(&candidate.raw),
+                    )),
                 )
             },
         )
@@ -346,26 +361,33 @@ async fn native_owner(
                 .is_ok()
             })
             .collect::<Vec<_>>();
-        let requested_name = native_model_name(model);
-        let mut exact_candidates = advertised_models(state, claims.principal_id.as_deref())
+        let requested_id = model.trim_start_matches("models/");
+        let exact_candidates = advertised_models(state, claims.principal_id.as_deref())
             .await
             .into_iter()
             .filter(|(provider, candidate)| {
-                entitled.contains(provider) && native_model_name(candidate) == requested_name
+                entitled.contains(provider)
+                    && candidate.canonical_id.trim_start_matches("models/") == requested_id
             })
-            .map(|(_, candidate)| candidate)
-            .collect::<Vec<_>>();
-        exact_candidates.sort();
-        exact_candidates.dedup();
+            .fold(
+                std::collections::HashMap::new(),
+                |mut candidates, (provider, record)| {
+                    candidates.entry(provider).or_insert(record.canonical_id);
+                    candidates
+                },
+            );
         if exact_candidates.len() > 1 {
             return Err(native_error(
                 StatusCode::CONFLICT,
                 &format!(
-                    "exact native model id '{requested_name}' is advertised by more than one healthy provider"
+                    "exact native model id '{requested_id}' is advertised by more than one healthy provider"
                 ),
             ));
         }
-        let routing_model = exact_candidates.first().map_or(model, String::as_str);
+        let routing_model = exact_candidates
+            .values()
+            .next()
+            .map_or(model, String::as_str);
         crate::model_routing::route_state_with_subscription_for_client(
             state,
             &json!({"model": routing_model}),
@@ -513,7 +535,7 @@ async fn forward_native_authorized_after_route(
         .await;
     }
     let state = &routed.state;
-    let routed = match route_gemini_token(
+    let mut routed = match route_gemini_token(
         state,
         headers,
         &body,
@@ -541,10 +563,14 @@ async fn forward_native_authorized_after_route(
     let base = routed
         .token
         .base_url(crate::subscription::SubscriptionProvider::Gemini);
-    // Code Assist accepts the same envelope for both client modes. A
-    // non-streaming upstream call lets us unwrap the native response reliably;
-    // stream callers receive that response as a valid Gemini SSE data event.
-    let upstream_url = format!("{}/v1internal:generateContent", base.trim_end_matches('/'));
+    let upstream_url = if streaming {
+        format!(
+            "{}/v1internal:streamGenerateContent?alt=sse",
+            base.trim_end_matches('/')
+        )
+    } else {
+        format!("{}/v1internal:generateContent", base.trim_end_matches('/'))
+    };
     let mut upstream_request = state
         .client
         .post(upstream_url)
@@ -554,6 +580,9 @@ async fn forward_native_authorized_after_route(
             format!("Bearer {}", routed.token.access_token),
         )
         .body(serialized.clone());
+    if streaming {
+        upstream_request = upstream_request.header("accept", "text/event-stream");
+    }
     if let Some(request_id) = crate::proxy::translated_request_id(headers) {
         upstream_request = upstream_request.header("x-request-id", request_id);
     }
@@ -591,6 +620,46 @@ async fn forward_native_authorized_after_route(
             status.as_u16(),
         )
         .await;
+    state
+        .metrics
+        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
+    if status == StatusCode::TOO_MANY_REQUESTS
+        && let Some(router) = state.account_router.as_ref()
+    {
+        router.report_failure_with_retry_after(
+            &routed.account,
+            "Gemini subscription upstream returned 429",
+            retry_after,
+        );
+    }
+
+    if status.is_success() && streaming {
+        state.metrics.record_bytes(serialized.len() as u64, 0);
+        let response_log = std::sync::Arc::clone(&state.request_log);
+        let metrics = std::sync::Arc::clone(&state.metrics);
+        let mut usage = routed.reservation.take().into_tracker();
+        let mut translator = super::stream::NativeStreamTranslator::default();
+        let stream = upstream.bytes_stream().map(move |chunk| {
+            chunk.map_or_else(
+                |error| Err(std::io::Error::other(error)),
+                |bytes| {
+                    response_log.record_upstream_body(&correlation_id, &bytes);
+                    metrics.record_bytes(0, bytes.len() as u64);
+                    usage.feed(&bytes);
+                    translator.push(&bytes)
+                },
+            )
+        });
+        let mut response = Response::new(Body::from_stream(stream));
+        *response.status_mut() = status;
+        *response.headers_mut() = response_headers;
+        response.headers_mut().insert(
+            "content-type",
+            axum::http::HeaderValue::from_static("text/event-stream"),
+        );
+        return response;
+    }
+
     let response_body = match upstream.bytes().await {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -607,18 +676,6 @@ async fn forward_native_authorized_after_route(
     state
         .metrics
         .record_bytes(serialized.len() as u64, response_body.len() as u64);
-    state
-        .metrics
-        .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    if status == StatusCode::TOO_MANY_REQUESTS
-        && let Some(router) = state.account_router.as_ref()
-    {
-        router.report_failure_with_retry_after(
-            &routed.account,
-            "Gemini subscription upstream returned 429",
-            retry_after,
-        );
-    }
     if !status.is_success() {
         let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
@@ -629,6 +686,8 @@ async fn forward_native_authorized_after_route(
         );
         return response;
     }
+    let mut usage = routed.reservation.take().into_tracker();
+    usage.feed(&response_body);
     let parsed: Value = match serde_json::from_slice(&response_body) {
         Ok(parsed) => parsed,
         Err(error) => {
@@ -640,16 +699,6 @@ async fn forward_native_authorized_after_route(
         }
     };
     let native = parsed.get("response").cloned().unwrap_or(parsed);
-    if streaming {
-        let mut response = Response::new(Body::from(format!("data: {native}\n\n")));
-        *response.status_mut() = StatusCode::OK;
-        *response.headers_mut() = response_headers;
-        response.headers_mut().insert(
-            "content-type",
-            axum::http::HeaderValue::from_static("text/event-stream"),
-        );
-        return response;
-    }
     let mut response = (StatusCode::OK, axum::Json(native)).into_response();
     *response.headers_mut() = response_headers;
     response.headers_mut().insert(
@@ -667,7 +716,10 @@ async fn forward_native_via_zai(
     streaming: bool,
     body: &Value,
 ) -> Response {
-    let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
+    let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
+        Ok(request) => request,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
+    };
     let full_path = format!("/api/services/gemini/{path}");
     let response = crate::zai_coding_plan::forward(
         &state,
@@ -696,7 +748,10 @@ async fn forward_native_via_chat(
     body: &Value,
     entitlement: crate::client_policy::EntitlementDecision,
 ) -> Response {
-    let chat_request = crate::gemini_bridge::gemini_request_to_chat(model, body);
+    let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
+        Ok(request) => request,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
+    };
     let state = routed.state;
     let response = crate::proxy::openai_chat_completions_routed(
         state.clone(),
@@ -765,4 +820,44 @@ async fn translated_chat_response(
         axum::http::HeaderValue::from_static("application/json"),
     );
     response
+}
+
+#[cfg(test)]
+mod catalog_projection_tests {
+    use super::*;
+
+    #[test]
+    fn gemini_model_projection_preserves_exact_id_and_only_native_fields() {
+        let raw = json!({
+            "name": "models/upstream-other",
+            "displayName": "Synthetic live model",
+            "description": "Provider description",
+            "inputTokenLimit": 123,
+            "outputTokenLimit": 45,
+            "supportedGenerationMethods": ["generateContent"],
+            "provider": "private-provider",
+            "canonical_id": "different-id",
+            "router_fetched_at": 1,
+            "private": "must-not-survive"
+        });
+        let projected = native_model_document("exact/live-id", raw.as_object());
+        assert_eq!(projected["name"], "exact/live-id");
+        assert_eq!(projected["displayName"], "Synthetic live model");
+        assert_eq!(projected["inputTokenLimit"], 123);
+        assert_eq!(projected["outputTokenLimit"], 45);
+        assert_eq!(
+            projected["supportedGenerationMethods"],
+            json!(["generateContent"])
+        );
+        let rendered = projected.to_string();
+        for forbidden in [
+            "models/upstream-other",
+            "private-provider",
+            "canonical_id",
+            "router_fetched_at",
+            "must-not-survive",
+        ] {
+            assert!(!rendered.contains(forbidden), "{rendered}");
+        }
+    }
 }

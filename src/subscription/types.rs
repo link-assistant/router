@@ -79,11 +79,9 @@ impl SubscriptionProvider {
     #[must_use]
     pub const fn credential_filenames(self) -> &'static [&'static str] {
         match self {
-            // Keep parity with the legacy OAuthProvider search order so
-            // enabling a pool does not make an existing Claude login vanish.
             Self::Claude => &[
-                "credentials.json",
                 ".credentials.json",
+                "credentials.json",
                 "auth.json",
                 "oauth.json",
                 "config.json",
@@ -115,8 +113,27 @@ impl SubscriptionProvider {
     /// The directory this provider's own home variable names, if it names one.
     #[must_use]
     pub fn named_home(self) -> Option<PathBuf> {
-        std::env::var(self.home_env())
-            .ok()
+        let official_gemini_root = (self == Self::Gemini)
+            .then(|| std::env::var_os("GEMINI_CLI_HOME"))
+            .flatten();
+        Self::named_home_from(
+            self,
+            official_gemini_root,
+            std::env::var_os(self.home_env()),
+        )
+    }
+
+    fn named_home_from(
+        provider: Self,
+        official_gemini_root: Option<std::ffi::OsString>,
+        legacy_direct_home: Option<std::ffi::OsString>,
+    ) -> Option<PathBuf> {
+        if provider == Self::Gemini
+            && let Some(root) = official_gemini_root.filter(|root| !root.is_empty())
+        {
+            return Some(PathBuf::from(root).join(provider.home_subdir()));
+        }
+        legacy_direct_home
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from)
     }
@@ -125,6 +142,21 @@ impl SubscriptionProvider {
     #[must_use]
     pub fn conventional_home(self, home: &str) -> PathBuf {
         PathBuf::from(home).join(self.home_subdir())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn official_gemini_cli_root_resolves_the_exact_credential_home() {
+        let home = SubscriptionProvider::named_home_from(
+            SubscriptionProvider::Gemini,
+            Some("/tmp/gemini-root".into()),
+            None,
+        );
+        assert_eq!(home, Some(PathBuf::from("/tmp/gemini-root/.gemini")));
     }
 }
 

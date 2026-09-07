@@ -63,13 +63,211 @@ fn is_one_shot(args: &WithArgs, forwarded: &[OsString], attached_to_a_terminal: 
     // A bare positional is a prompt; a flag is an option passed to a session.
     // Reading "any argument at all" as a task turned `--resume`, `--continue`,
     // `--verbose`, `--debug` and `--add-dir` into batch runs (issue #297).
-    carries_a_prompt(forwarded) || !attached_to_a_terminal
+    carries_a_prompt(args.client, forwarded) || !attached_to_a_terminal
 }
 
-fn carries_a_prompt(forwarded: &[OsString]) -> bool {
-    forwarded
-        .first()
-        .is_some_and(|argument| !argument.to_string_lossy().starts_with('-'))
+fn carries_a_prompt(client: ClientKind, forwarded: &[OsString]) -> bool {
+    forwarded.first().is_some_and(|argument| {
+        !argument.to_string_lossy().starts_with('-')
+            && !is_native_command(client, argument.to_string_lossy().as_ref())
+    })
+}
+
+/// Current native command inventory. The explicit `--` boundary below is the
+/// future-proof escape hatch for commands added after this Router release.
+const fn native_commands(client: ClientKind) -> &'static [&'static str] {
+    match client {
+        ClientKind::Codex => &[
+            "agents",
+            "exec",
+            "e",
+            "review",
+            "login",
+            "logout",
+            "mcp",
+            "plugin",
+            "mcp-server",
+            "app-server",
+            "remote-control",
+            "app",
+            "completion",
+            "update",
+            "doctor",
+            "sandbox",
+            "debug",
+            "apply",
+            "a",
+            "resume",
+            "queue",
+            "archive",
+            "delete",
+            "migrate-rollouts",
+            "unarchive",
+            "fork",
+            "cloud",
+            "cloud-tasks",
+            "exec-server",
+            "features",
+        ],
+        ClientKind::ClaudeCode => &[
+            "agents",
+            "attach",
+            "auth",
+            "auto-mode",
+            "doctor",
+            "gateway",
+            "import",
+            "install",
+            "logs",
+            "mcp",
+            "plugin",
+            "plugins",
+            "project",
+            "respawn",
+            "rm",
+            "setup-token",
+            "stop",
+            "kill",
+            "ultrareview",
+            "update",
+            "upgrade",
+        ],
+        ClientKind::Opencode => &[
+            "completion",
+            "acp",
+            "mcp",
+            "attach",
+            "run",
+            "debug",
+            "providers",
+            "auth",
+            "agent",
+            "upgrade",
+            "uninstall",
+            "serve",
+            "web",
+            "models",
+            "stats",
+            "export",
+            "import",
+            "github",
+            "pr",
+            "session",
+            "plugin",
+            "plug",
+            "db",
+        ],
+        ClientKind::GeminiCli => &[
+            "mcp",
+            "extensions",
+            "extension",
+            "skills",
+            "skill",
+            "hooks",
+            "hook",
+            "gemma",
+        ],
+        ClientKind::QwenCode => &["mcp", "extensions"],
+        ClientKind::GrokCli => &["git", "mcp"],
+        ClientKind::Agent => &["auth"],
+        ClientKind::Cursor => &[],
+    }
+}
+
+fn is_native_command(client: ClientKind, argument: &str) -> bool {
+    native_commands(client).contains(&argument)
+}
+
+fn codex_root_option_takes_value(argument: &str) -> bool {
+    matches!(
+        argument,
+        "-c" | "--config"
+            | "--enable"
+            | "--disable"
+            | "-i"
+            | "--image"
+            | "-m"
+            | "--model"
+            | "--local-provider"
+            | "--profile"
+            | "-s"
+            | "--sandbox"
+            | "-a"
+            | "--ask-for-approval"
+            | "-C"
+            | "--cd"
+            | "--add-dir"
+    )
+}
+
+fn codex_root_boolean_option(argument: &str) -> bool {
+    matches!(
+        argument,
+        "--oss"
+            | "--search"
+            | "--full-auto"
+            | "--dangerously-bypass-approvals-and-sandbox"
+            | "--no-alt-screen"
+            | "-h"
+            | "--help"
+            | "-V"
+            | "--version"
+    )
+}
+
+fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
+    let mut index = 0;
+    while let Some(argument) = arguments.get(index).and_then(|value| value.to_str()) {
+        if argument == "--" {
+            return arguments.get(index + 1)?.to_str();
+        }
+        if !argument.starts_with('-') || argument == "-" {
+            return Some(argument);
+        }
+        if codex_root_boolean_option(argument) {
+            index += 1;
+            continue;
+        }
+        if codex_root_option_takes_value(argument) {
+            arguments.get(index + 1)?;
+            index += 2;
+            continue;
+        }
+        if argument.starts_with("--") && argument.contains('=') {
+            let name = argument.split_once('=').map(|(name, _)| name)?;
+            if codex_root_option_takes_value(name) {
+                index += 1;
+                continue;
+            }
+        }
+        if ["-c", "-i", "-m", "-s", "-a", "-C"]
+            .iter()
+            .any(|option| argument.starts_with(option) && argument.len() > option.len())
+        {
+            index += 1;
+            continue;
+        }
+        // An unknown option can take a value. Guessing past it could mistake
+        // that value for a command, so leave it to Codex to diagnose.
+        return None;
+    }
+    None
+}
+
+/// Commands whose vendor control plane cannot be routed through the supported
+/// Codex split-auth boundary. Detect these before server lookup or token mint.
+#[must_use]
+pub fn unsupported_native_command(args: &WithArgs) -> Option<&'static str> {
+    if args.client != ClientKind::Codex {
+        return None;
+    }
+    matches!(
+        codex_subcommand(&args.client_args),
+        Some("cloud" | "cloud-tasks")
+    )
+    .then_some(
+        "Codex Cloud tasks cannot be routed: the official Codex client does not support a split credential or custom backend for Cloud; no Router token was minted and no client was launched",
+    )
 }
 
 /// Whether standard input and output both belong to a terminal.
@@ -90,10 +288,15 @@ pub fn attached_to_a_terminal() -> bool {
 pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_terminal: bool) -> Launch {
     let integration = args.client.integration();
     let mut forwarded = args.client_args.clone();
-    if forwarded.first().is_some_and(|value| value == "--") {
+    let exact_argv = forwarded.first().is_some_and(|value| value == "--");
+    if exact_argv {
         forwarded.remove(0);
     }
-    let non_interactive = is_one_shot(args, &forwarded, attached_to_a_terminal);
+    let native_command = exact_argv
+        || forwarded
+            .first()
+            .is_some_and(|value| is_native_command(args.client, value.to_string_lossy().as_ref()));
+    let non_interactive = !native_command && is_one_shot(args, &forwarded, attached_to_a_terminal);
     let mode = integration.non_interactive_arg;
     let has_mode = contains_native_mode(args.client, &forwarded);
     // No note here on purpose. A user who passed no prompt and got an
@@ -145,7 +348,9 @@ pub fn plan(args: &WithArgs, resolved_model: Option<&str>, attached_to_a_termina
         // flag there, that flag landed where the prompt belongs: Claude Code
         // fails loudly, these four risk having the next argument read as the
         // prompt text — a silent change of meaning (issue #297).
-        if integration.non_interactive_arg_takes_a_value && !carries_a_prompt(&forwarded) {
+        if integration.non_interactive_arg_takes_a_value
+            && !carries_a_prompt(args.client, &forwarded)
+        {
             note = Some(
                 "note: this client's one-shot mode takes the prompt as an argument and none was \
                  given, so it is launched as an ordinary session",

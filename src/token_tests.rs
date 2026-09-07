@@ -23,6 +23,28 @@ fn test_validate_valid_token() {
 }
 
 #[test]
+fn codex_pat_alias_is_the_same_authorization_record() {
+    let mgr = test_manager();
+    let token = mgr.issue_token(24, "codex").expect("should issue");
+    let alias = codex_token_alias(&token).expect("Router token has a Codex alias");
+    assert!(alias.starts_with(CODEX_TOKEN_PREFIX));
+    let ordinary = mgr.validate_token(&token).expect("ordinary carrier");
+    let codex = mgr.validate_token(&alias).expect("Codex carrier");
+    assert_eq!(ordinary.sub, codex.sub);
+    mgr.revoke_token(&ordinary.sub).expect("revoke one record");
+    assert!(matches!(
+        mgr.validate_token(&alias),
+        Err(TokenError::Revoked)
+    ));
+}
+
+#[test]
+fn arbitrary_non_router_tokens_cannot_become_codex_pats() {
+    assert!(codex_token_alias("vendor-secret").is_none());
+    assert!(codex_token_alias("at-already-a-pat").is_none());
+}
+
+#[test]
 fn test_validate_wrong_prefix() {
     let mgr = test_manager();
     let result = mgr.validate_token("wrong_prefix_abc");

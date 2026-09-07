@@ -77,7 +77,11 @@ impl std::fmt::Display for TokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidPrefix => {
-                write!(f, "Token must start with '{TOKEN_PREFIX}' prefix")
+                write!(
+                    f,
+                    "Token must start with '{TOKEN_PREFIX}' or '{}' prefix",
+                    crate::token::CODEX_TOKEN_PREFIX
+                )
             }
             Self::Expired(None) => write!(f, "Token has expired"),
             Self::Expired(Some(facts)) => write!(

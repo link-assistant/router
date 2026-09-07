@@ -3,6 +3,7 @@
 #![cfg(unix)]
 
 use base64::Engine as _;
+use sha2::{Digest as _, Sha256};
 use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -10,6 +11,24 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
+
+struct BridgeCleanup(std::path::PathBuf);
+
+impl Drop for BridgeCleanup {
+    fn drop(&mut self) {
+        let Ok(contents) = fs::read(&self.0) else {
+            return;
+        };
+        let Ok(state) = serde_json::from_slice::<serde_json::Value>(&contents) else {
+            return;
+        };
+        if let Some(pid) = state["pid"].as_u64() {
+            let _ = Command::new("/bin/kill")
+                .args(["-TERM", &pid.to_string()])
+                .status();
+        }
+    }
+}
 
 fn bound_client_token(client: &str) -> String {
     let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
@@ -78,7 +97,7 @@ fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
             let (status, body) = match path.as_str() {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"0.115.0"}"#),
                 "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
-                "/api/services/anthropic/v1/models" => (
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-5.6-sol","owned_by":"openai"}]}"#,
                 ),
@@ -95,6 +114,56 @@ fn mock_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
         paths
     });
     (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn mock_external_codex_router(requests: usize) -> (String, thread::JoinHandle<Vec<String>>) {
+    let listener = TcpListener::bind("0.0.0.0:0").expect("bind external mock router");
+    listener
+        .set_nonblocking(true)
+        .expect("nonblocking listener");
+    let port = listener.local_addr().expect("mock address").port();
+    let handle = thread::spawn(move || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let mut paths = Vec::new();
+        while paths.len() < requests {
+            let mut stream = match listener.accept() {
+                Ok((stream, _)) => stream,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    if std::time::Instant::now() >= deadline {
+                        return paths;
+                    }
+                    thread::sleep(Duration::from_millis(10));
+                    continue;
+                }
+                Err(error) => panic!("accept external mock request: {error}"),
+            };
+            let request = read_split_request(&mut stream);
+            let path = request
+                .lines()
+                .next()
+                .and_then(|line| line.split_whitespace().nth(1))
+                .unwrap_or("")
+                .to_string();
+            let (status, body) = match path.as_str() {
+                "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
+                "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
+                "/api/services/codex/v1/models" | "/api/models" => (
+                    "200 OK",
+                    r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
+                ),
+                _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
+            };
+            paths.push(path);
+            write!(
+                stream,
+                "HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .expect("write external mock response");
+        }
+        paths
+    });
+    (format!("http://0.0.0.0:{port}"), handle)
 }
 
 fn split_listener(
@@ -123,7 +192,7 @@ fn split_listener(
             } else {
                 match path {
                     "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
-                    "/api/services/codex/v1/models" => (
+                    "/api/models" => (
                         "200 OK",
                         r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
                     ),
@@ -274,11 +343,284 @@ fn configure_keeps_split_route_classes_on_their_own_listeners() {
     assert!(management[0].starts_with("GET /api/management/tokens "));
     assert!(management[1].starts_with("POST /api/management/tokens/client "));
     assert!(inference[0].starts_with("GET /api/health "));
-    assert!(inference[1].starts_with("GET /api/services/codex/v1/models "));
+    assert!(inference[1].starts_with("GET /api/models "));
     let config =
         fs::read_to_string(home.path().join(".codex/config.toml")).expect("configured Codex");
     assert!(config.contains(&base_url));
     assert!(!config.contains(&management_url));
+}
+
+#[test]
+fn external_codex_configure_owns_and_removes_a_loopback_bridge() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    let codex_home = home.join(".codex");
+    fs::create_dir_all(&codex_home).expect("create Codex home");
+    let original = "model_reasoning_effort = \"high\"\n\
+chatgpt_base_url = \"https://user.example/backend\"\n\
+experimental_realtime_ws_base_url = \"wss://user.example/realtime\"\n\
+experimental_realtime_webrtc_call_base_url = \"https://user.example/calls\"\n";
+    fs::write(codex_home.join("config.toml"), original).expect("seed Codex config");
+    fs::write(codex_home.join("auth.json"), b"auth-private").expect("seed Codex auth");
+    fs::write(
+        codex_home.join("remote-control.json"),
+        b"enrollment-private",
+    )
+    .expect("seed Codex enrollment");
+    let (server, requests) = mock_external_codex_router(8);
+    let token = bound_client_token("codex");
+    let state_path = home.join(".config/link-assistant-router/clients/codex.loopback-bridge.json");
+    let _bridge_cleanup = BridgeCleanup(state_path.clone());
+
+    let configured = router(
+        &home,
+        &[
+            "configure",
+            "codex",
+            "--server",
+            &server,
+            "--management-server",
+            &server,
+            "--token",
+            &token,
+        ],
+    );
+    assert!(
+        configured.status.success(),
+        "configure failed: {}{}",
+        String::from_utf8_lossy(&configured.stdout),
+        String::from_utf8_lossy(&configured.stderr)
+    );
+    let config = fs::read_to_string(codex_home.join("config.toml")).expect("configured Codex");
+    assert!(
+        config.contains("chatgpt_base_url = \"http://127.0.0.1:"),
+        "{config}"
+    );
+    assert!(
+        config.contains("/api/services/codex/backend-api\""),
+        "{config}"
+    );
+    assert!(
+        config.contains(&format!(
+            "experimental_realtime_ws_base_url = \"{server}/api/services/codex/v1\""
+        )),
+        "{config}"
+    );
+    assert!(
+        config.contains(&format!(
+            "experimental_realtime_webrtc_call_base_url = \"{server}/api/services/codex/v1\""
+        )),
+        "{config}"
+    );
+    let metadata: serde_json::Value = serde_json::from_slice(
+        &fs::read(home.join(".config/link-assistant-router/clients/codex.credential.json"))
+            .expect("credential metadata"),
+    )
+    .expect("credential metadata JSON");
+    assert_eq!(
+        metadata["config_sha256"],
+        hex::encode(Sha256::digest(config.as_bytes())),
+        "metadata must describe the committed configuration"
+    );
+    let state: serde_json::Value =
+        serde_json::from_slice(&fs::read(&state_path).expect("owned persistent bridge state"))
+            .expect("bridge state JSON");
+    assert_eq!(state["upstream_origin"], server);
+    assert!(state["pid"].as_u64().is_some());
+    assert_eq!(
+        fs::metadata(&state_path)
+            .expect("state metadata")
+            .permissions()
+            .mode()
+            & 0o777,
+        0o600
+    );
+    assert_eq!(
+        fs::read(codex_home.join("auth.json")).unwrap(),
+        b"auth-private"
+    );
+    assert_eq!(
+        fs::read(codex_home.join("remote-control.json")).unwrap(),
+        b"enrollment-private"
+    );
+    let loopback = url::Url::parse(state["loopback_origin"].as_str().unwrap()).unwrap();
+    let mut health =
+        std::net::TcpStream::connect((loopback.host_str().unwrap(), loopback.port().unwrap()))
+            .expect("persistent bridge is listening");
+    let nonce = state["nonce"].as_str().unwrap();
+    write!(
+        health,
+        "GET /__link_assistant_router/codex_bridge/{nonce} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n"
+    )
+    .unwrap();
+    let mut health_response = String::new();
+    health.read_to_string(&mut health_response).unwrap();
+    assert!(
+        health_response.starts_with("HTTP/1.1 200"),
+        "{health_response}"
+    );
+    assert!(
+        health_response
+            .to_ascii_lowercase()
+            .contains("x-link-assistant-router-codex-bridge:"),
+        "{health_response}"
+    );
+
+    let repeated = router(
+        &home,
+        &[
+            "configure",
+            "codex",
+            "--server",
+            &server,
+            "--management-server",
+            &server,
+            "--token",
+            &token,
+        ],
+    );
+    if !repeated.status.success() {
+        let shown = router(&home, &["clients", "show", "codex"]);
+        let current_state = fs::read_to_string(&state_path).unwrap_or_default();
+        let _ = router(&home, &["configure", "--undo", "codex"]);
+        let observed = requests.join().expect("external mock router");
+        panic!(
+            "repeat failed: {}\nstatus: {}{}\ninitial state: {state}\ncurrent state: {current_state}\nrequests: {observed:?}",
+            String::from_utf8_lossy(&repeated.stderr),
+            String::from_utf8_lossy(&shown.stdout),
+            String::from_utf8_lossy(&shown.stderr)
+        );
+    }
+    let repeated_state: serde_json::Value =
+        serde_json::from_slice(&fs::read(&state_path).expect("reused bridge state"))
+            .expect("bridge state JSON");
+    assert_eq!(repeated_state, state, "repeat started another bridge");
+
+    let stopped = Command::new("/bin/kill")
+        .args(["-TERM", &state["pid"].as_u64().unwrap().to_string()])
+        .status()
+        .expect("stop bridge to simulate a crash");
+    assert!(stopped.success());
+    for _ in 0..100 {
+        if !state_path.exists() {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    let recovered = router(
+        &home,
+        &[
+            "configure",
+            "codex",
+            "--server",
+            &server,
+            "--management-server",
+            &server,
+            "--token",
+            &token,
+        ],
+    );
+    assert!(
+        recovered.status.success(),
+        "{}",
+        String::from_utf8_lossy(&recovered.stderr)
+    );
+    let recovered_state: serde_json::Value =
+        serde_json::from_slice(&fs::read(&state_path).expect("recovered bridge state"))
+            .expect("bridge state JSON");
+    assert_ne!(recovered_state["pid"], state["pid"]);
+    let recovered_config = fs::read_to_string(codex_home.join("config.toml")).unwrap();
+    assert!(
+        recovered_config.contains(recovered_state["loopback_origin"].as_str().unwrap()),
+        "{recovered_config}"
+    );
+
+    let undone = router(&home, &["configure", "--undo", "codex"]);
+    assert!(
+        undone.status.success(),
+        "undo failed: {}{}",
+        String::from_utf8_lossy(&undone.stdout),
+        String::from_utf8_lossy(&undone.stderr)
+    );
+    assert_eq!(
+        fs::read_to_string(codex_home.join("config.toml")).unwrap(),
+        original
+    );
+    assert!(!state_path.exists(), "bridge state survived undo");
+    assert_eq!(
+        fs::read(codex_home.join("auth.json")).unwrap(),
+        b"auth-private"
+    );
+    assert_eq!(
+        fs::read(codex_home.join("remote-control.json")).unwrap(),
+        b"enrollment-private"
+    );
+    assert_eq!(
+        requests.join().expect("external mock router"),
+        [
+            "/api/health",
+            "/api/management/tokens",
+            "/api/models",
+            "/api/health",
+            "/api/models",
+            "/api/health",
+            "/api/models",
+            "/api/models"
+        ]
+    );
+}
+
+#[test]
+fn failed_external_codex_configure_removes_the_uncommitted_bridge() {
+    let directory = tempfile::tempdir().expect("temporary directory");
+    let home = directory.path().join("home");
+    let codex_home = home.join(".codex");
+    fs::create_dir_all(&codex_home).expect("create Codex home");
+    let invalid = b"model_provider = [\n";
+    fs::write(codex_home.join("config.toml"), invalid).expect("seed invalid Codex config");
+    fs::write(codex_home.join("auth.json"), b"auth-private").expect("seed Codex auth");
+    let (server, requests) = mock_external_codex_router(3);
+    let token = bound_client_token("codex");
+    let state_path = home.join(".config/link-assistant-router/clients/codex.loopback-bridge.json");
+    let _bridge_cleanup = BridgeCleanup(state_path.clone());
+
+    let configured = router(
+        &home,
+        &[
+            "configure",
+            "codex",
+            "--server",
+            &server,
+            "--management-server",
+            &server,
+            "--token",
+            &token,
+        ],
+    );
+    assert!(!configured.status.success());
+    assert!(
+        String::from_utf8_lossy(&configured.stderr).contains("invalid TOML"),
+        "{}",
+        String::from_utf8_lossy(&configured.stderr)
+    );
+    assert_eq!(fs::read(codex_home.join("config.toml")).unwrap(), invalid);
+    assert_eq!(
+        fs::read(codex_home.join("auth.json")).unwrap(),
+        b"auth-private"
+    );
+    let clients = state_path.parent().expect("clients directory");
+    assert!(!state_path.exists());
+    assert!(!clients.join("codex.env").exists());
+    assert!(!clients.join("codex.credential.json").exists());
+    assert!(
+        !codex_home
+            .join("config.toml.with-router-state.json")
+            .exists()
+    );
+    assert_eq!(
+        requests.join().expect("external mock router"),
+        ["/api/health", "/api/management/tokens", "/api/models"]
+    );
 }
 
 /// `with --global` is the same command under an older name, so it cannot

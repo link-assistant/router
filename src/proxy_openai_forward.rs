@@ -247,6 +247,15 @@ pub(super) async fn forward_openai(
             );
         }
     };
+    if let Err(error) =
+        crate::bridge_response::validate_anthropic_response_citations(anthropic.get("content"))
+    {
+        return error_response(
+            StatusCode::BAD_GATEWAY,
+            "api_error",
+            &format!("upstream returned an unrepresentable citation: {error}"),
+        );
+    }
     reservation
         .take()
         .settle(crate::usage::token_count(&anthropic).unwrap_or(0));

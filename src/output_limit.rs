@@ -12,7 +12,7 @@
 //!
 //! The budget is an estimate. The router has no upstream tokenizer, so it uses
 //! the same ~4 characters per token heuristic as
-//! [`crate::anthropic_bridge::count_tokens_estimate`], and hidden reasoning
+//! the bridge request-shape estimator, and hidden reasoning
 //! tokens are not observable at all. The cap is therefore a best-effort output
 //! bound, not an exact accounting of billed tokens.
 
@@ -20,16 +20,6 @@ use serde_json::{Value, json};
 
 /// Characters per token used by the router's local estimator.
 const CHARS_PER_TOKEN: u64 = 4;
-
-/// Response field and header carrying the concrete upstream model.
-///
-/// The requested model id (which may be a catalog alias such as
-/// `codex-auto-review`) stays in `model` so a client can reconcile the answer
-/// with the model it selected; the model the provider actually served is
-/// exposed separately instead of replacing that identity.
-pub const UPSTREAM_MODEL_FIELD: &str = "x_router_upstream_model";
-/// Response header spelling of [`UPSTREAM_MODEL_FIELD`].
-pub const UPSTREAM_MODEL_HEADER: &str = "x-router-upstream-model";
 
 /// Incremental budget over visible output text.
 #[derive(Clone, Debug, Default)]
@@ -116,10 +106,6 @@ pub fn preserve_model_identity(payload: &mut Value, requested_model: &str) -> Op
     if served == requested_model {
         return None;
     }
-    object.insert(
-        UPSTREAM_MODEL_FIELD.to_string(),
-        Value::String(served.clone()),
-    );
     Some(served)
 }
 
@@ -182,7 +168,7 @@ pub fn enforce_chat_limit(response: &mut Value, limit: u64) {
 pub struct ResponsesStreamRewriter {
     requested_model: String,
     limiter: OutputTokenLimiter,
-    buffer: String,
+    buffer: Vec<u8>,
     finished: bool,
     last_response: Option<Value>,
     upstream_model: Option<String>,
@@ -195,7 +181,7 @@ impl ResponsesStreamRewriter {
         Self {
             requested_model: requested_model.to_string(),
             limiter: OutputTokenLimiter::new(limit),
-            buffer: String::new(),
+            buffer: Vec::new(),
             finished: false,
             last_response: None,
             upstream_model: None,
@@ -219,11 +205,8 @@ impl ResponsesStreamRewriter {
         if self.finished {
             return String::new();
         }
-        self.buffer.push_str(&String::from_utf8_lossy(chunk));
         let mut out = String::new();
-        while let Some((index, separator_len)) = find_separator(&self.buffer) {
-            let block = self.buffer[..index].to_string();
-            self.buffer.drain(..index + separator_len);
+        for block in crate::sse::push_blocks(&mut self.buffer, chunk) {
             out.push_str(&self.rewrite_block(&block));
             if self.finished {
                 self.buffer.clear();
@@ -295,13 +278,6 @@ impl ResponsesStreamRewriter {
         let event = json!({"type": "response.incomplete", "response": response});
         format!("event: response.incomplete\ndata: {event}\n\n")
     }
-}
-
-fn find_separator(buffer: &str) -> Option<(usize, usize)> {
-    buffer
-        .find("\r\n\r\n")
-        .map(|index| (index, 4))
-        .or_else(|| buffer.find("\n\n").map(|index| (index, 2)))
 }
 
 fn data_payload(block: &str) -> Option<String> {

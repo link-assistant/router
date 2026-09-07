@@ -293,29 +293,6 @@ impl ModelCatalogCache {
             .collect()
     }
 
-    /// Routable models belonging to the supplied stable router accounts.
-    ///
-    /// Provider-wide listings use this after account health has been resolved,
-    /// so one rejected pool account cannot keep advertising models that no
-    /// remaining account can serve.
-    pub(crate) fn models_for_accounts(
-        &self,
-        provider: SubscriptionProvider,
-        accounts: &[String],
-    ) -> Vec<String> {
-        let mut models = accounts
-            .iter()
-            .flat_map(|account| {
-                self.status_for(provider, account)
-                    .routable_models()
-                    .to_vec()
-            })
-            .collect::<Vec<_>>();
-        models.sort();
-        models.dedup();
-        models
-    }
-
     pub(crate) fn records_for_accounts(
         &self,
         provider: SubscriptionProvider,
@@ -864,6 +841,8 @@ pub async fn fetch_provider_catalog_records(
     token: &SubscriptionToken,
     base_url_override: Option<&str>,
 ) -> Result<Vec<CatalogRecord>, String> {
+    let client =
+        crate::upstream_client::subscription_client(client, provider, base_url_override.is_some());
     let base = base_url_override.map_or_else(
         || catalog_base_url(provider, token),
         |value| value.trim_end_matches('/').to_string(),

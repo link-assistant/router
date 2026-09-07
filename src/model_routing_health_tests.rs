@@ -322,7 +322,8 @@ async fn malformed_and_unreadable_credentials_are_safely_degraded() {
     }
 
     let catalog = model_report(state).await;
-    assert_eq!(catalog["degraded_providers"], json!(["codex"]));
+    assert_eq!(catalog["data"], json!([]));
+    assert!(catalog.get("degraded_providers").is_none());
     let public = catalog.to_string();
     assert!(
         !public.contains(private_body),
@@ -363,8 +364,9 @@ async fn cold_start_moves_to_healthy_after_live_discovery() {
     assert_eq!(starting["healthy_providers"], json!([]));
     assert_eq!(starting["degraded_providers"], json!([]));
     let starting_models = model_report(state.clone()).await;
-    assert_eq!(starting_models["healthy_providers"], json!([]));
-    assert_eq!(starting_models["degraded_providers"], json!([]));
+    assert_eq!(starting_models["data"], json!([]));
+    assert!(starting_models.get("healthy_providers").is_none());
+    assert!(starting_models.get("degraded_providers").is_none());
     let metrics = metrics_report(state.clone()).await;
     assert!(
         metrics.contains("link_assistant_subscription_healthy{provider=\"codex\"} 1"),
@@ -380,9 +382,9 @@ async fn cold_start_moves_to_healthy_after_live_discovery() {
     assert_eq!(healthy["healthy_providers"], json!(["codex"]));
     assert_eq!(healthy["degraded_providers"], json!([]));
     let healthy_models = model_report(state).await;
-    assert_eq!(healthy_models["healthy_providers"], json!(["codex"]));
-    assert_eq!(healthy_models["degraded_providers"], json!([]));
     assert_eq!(healthy_models["data"][0]["id"], "gpt-live");
+    assert!(healthy_models.get("healthy_providers").is_none());
+    assert!(healthy_models.get("degraded_providers").is_none());
 }
 
 /// A provider-wide catalog cannot be reused after the credential changes to a
@@ -449,8 +451,8 @@ async fn credential_rotation_requires_discovery_for_the_current_account() {
     assert_eq!(account_b_starting["degraded_providers"], json!([]));
     let stale_catalog = model_report(state.clone()).await;
     assert_eq!(stale_catalog["data"], json!([]));
-    assert_eq!(stale_catalog["healthy_providers"], json!([]));
-    assert_eq!(stale_catalog["degraded_providers"], json!([]));
+    assert!(stale_catalog.get("healthy_providers").is_none());
+    assert!(stale_catalog.get("degraded_providers").is_none());
     let Err(stale_route) = route_state(&state, &json!({"model": "account-a-model"})).await else {
         panic!("a previous account's catalog must not route the current credential");
     };
@@ -552,8 +554,8 @@ async fn post_success_transient_failure_retains_models_but_rejection_removes_the
     assert_eq!(rejected["degraded_providers"][0]["provider"], "claude");
     let removed = model_report(state.clone()).await;
     assert_eq!(removed["data"], json!([]));
-    assert_eq!(removed["healthy_providers"], json!([]));
-    assert_eq!(removed["degraded_providers"], json!(["claude"]));
+    assert!(removed.get("healthy_providers").is_none());
+    assert!(removed.get("degraded_providers").is_none());
     assert!(
         metrics_report(state)
             .await
@@ -872,33 +874,18 @@ async fn no_provider_is_both_healthy_and_degraded() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let catalog: Value = serde_json::from_slice(&body).unwrap();
 
-    let healthy: Vec<&str> = catalog["healthy_providers"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|value| value.as_str().unwrap())
-        .collect();
-    let degraded: Vec<&str> = catalog["degraded_providers"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|value| value.as_str().unwrap())
-        .collect();
-    for provider in &degraded {
+    assert_eq!(catalog["data"][0]["id"], "gpt-live");
+    for router_only in [
+        "healthy_providers",
+        "degraded_providers",
+        "degraded_reasons",
+        "catalog_conflicts",
+    ] {
         assert!(
-            !healthy.contains(provider),
-            "{provider} is reported both healthy and degraded: {healthy:?} / {degraded:?}"
+            catalog.get(router_only).is_none(),
+            "native catalog leaked {router_only}: {catalog}"
         );
     }
-    assert!(degraded.contains(&"claude"), "the revoked one is named");
-    assert!(
-        !healthy.contains(&"qwen"),
-        "starting is not healthy: {catalog}"
-    );
-    assert!(
-        !degraded.contains(&"qwen"),
-        "starting is not degraded: {catalog}"
-    );
 }
 
 #[tokio::test]

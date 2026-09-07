@@ -97,6 +97,6 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
     );
     assert_eq!(
         requests.join().expect("mock router thread").join(","),
-        "/api/health,/api/management/tokens,/api/services/anthropic/v1/models"
+        "/api/health,/api/management/tokens,/api/models"
     );
 }

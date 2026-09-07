@@ -2,12 +2,13 @@
 
 use std::process::{Command, Output};
 
-const SECRET_ENV: [(&str, &str); 6] = [
+const SECRET_ENV: [(&str, &str); 7] = [
     ("TOKEN_SECRET", "secret-leak-probe-token"),
     ("TOKEN_ADMIN_KEY", "secret-leak-probe-admin"),
     ("TELEGRAM_BOT_TOKEN", "secret-leak-probe-telegram"),
     ("VK_BOT_TOKEN", "secret-leak-probe-vk"),
     ("GONKA_PRIVATE_KEY", "secret-leak-probe-gonka"),
+    ("GONKA_API_KEY", "secret-leak-probe-gonka-api"),
     (
         "OPENAI_COMPATIBLE_API_KEY",
         "secret-leak-probe-openai-compatible",

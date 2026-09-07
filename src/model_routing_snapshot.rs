@@ -161,6 +161,47 @@ impl ValidatedSubscription {
         Ok(snapshot)
     }
 
+    /// Bind a deferred or already-resolved subscription to the account that
+    /// owns a durable native resource, while retaining the model-catalog
+    /// requirements captured during routing.
+    pub(crate) async fn bind_to_account(
+        &self,
+        state: &AppState,
+        account: &str,
+    ) -> Result<Self, String> {
+        if self.account_name() == Some(account) {
+            return Ok(self.clone());
+        }
+        let mut snapshot =
+            subscription_snapshot_for_account(state, self.provider, account, None).await?;
+        snapshot.requires_live_catalog = self.requires_live_catalog;
+        snapshot.required_model.clone_from(&self.required_model);
+        let catalog = state.model_catalogs.status_for(self.provider, account);
+        if self.requires_live_catalog
+            && (!catalog.discovered
+                || !catalog.credential_healthy
+                || self
+                    .required_model
+                    .as_ref()
+                    .is_some_and(|model| !catalog.routable_models().contains(model)))
+        {
+            return Err(format!(
+                "the {} resource account cannot serve the requested model",
+                self.provider
+            ));
+        }
+        let selected_token = snapshot
+            .selected_token()
+            .expect("an exact account snapshot is immediately ready");
+        if catalog.discovered && !catalog_belongs_to(selected_token, catalog.account.as_deref()) {
+            return Err(format!(
+                "the discovered {} catalog belongs to a different account",
+                self.provider
+            ));
+        }
+        Ok(snapshot)
+    }
+
     /// Router account selected for this request-local credential snapshot.
     pub(crate) fn account_name(&self) -> Option<&str> {
         match &self.selection {
@@ -169,7 +210,7 @@ impl ValidatedSubscription {
         }
     }
 
-    const fn selected_token(&self) -> Option<&SubscriptionToken> {
+    pub(crate) const fn selected_token(&self) -> Option<&SubscriptionToken> {
         match &self.selection {
             CredentialSelection::Ready { selected, .. } => Some(&selected.token),
             CredentialSelection::AccountPool => None,

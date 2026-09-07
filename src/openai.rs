@@ -58,6 +58,14 @@ pub struct OpenAIChatCompletionRequest {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frequency_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presence_penalty: Option<f32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logit_bias: Option<BTreeMap<String, f32>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seed: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stream: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub stop: Option<Value>,
@@ -69,6 +77,26 @@ pub struct OpenAIChatCompletionRequest {
     pub reasoning_effort: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reasoning: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parallel_tool_calls: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub n: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub modalities: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logprobs: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_logprobs: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub safety_identifier: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stream_options: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
 }
 
 /// Translate an `OpenAI` Chat Completions request to an Anthropic Messages
@@ -76,13 +104,33 @@ pub struct OpenAIChatCompletionRequest {
 #[must_use]
 pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value {
     let mut system_chunks: Vec<String> = Vec::new();
+    let mut system_blocks: Vec<Value> = Vec::new();
+    let block_system = req.messages.iter().any(|message| {
+        matches!(message.role.as_str(), "system" | "developer")
+            && message.content.as_array().is_some_and(|parts| {
+                parts
+                    .iter()
+                    .any(|part| part.get("prompt_cache_breakpoint").is_some())
+            })
+    });
     let mut messages: Vec<Value> = Vec::new();
 
     for msg in &req.messages {
         let role = msg.role.as_str();
         match role {
             "system" | "developer" => {
-                if let Some(text) = extract_text(&msg.content) {
+                if block_system {
+                    if !system_blocks.is_empty() {
+                        system_blocks.push(json!({"type":"text", "text":"\n\n"}));
+                    }
+                    match &msg.content {
+                        Value::String(text) => {
+                            system_blocks.push(json!({"type":"text", "text":text}));
+                        }
+                        Value::Array(parts) => system_blocks.extend(translate_parts(parts)),
+                        _ => {}
+                    }
+                } else if let Some(text) = extract_text(&msg.content) {
                     system_chunks.push(text);
                 }
             }
@@ -125,14 +173,17 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
             "tool" => {
                 // OpenAI uses role=tool for tool results; Anthropic models
                 // these as a `tool_result` user content block.
-                let txt = extract_text(&msg.content).unwrap_or_default();
+                let content = match &msg.content {
+                    Value::Array(parts) => Value::Array(translate_parts(parts)),
+                    _ => Value::String(extract_text(&msg.content).unwrap_or_default()),
+                };
                 messages.push(json!({
                     "role": "user",
                     "content": [
                         {
                             "type": "tool_result",
                             "tool_use_id": msg.tool_call_id.clone().unwrap_or_default(),
-                            "content": txt
+                            "content": content
                         }
                     ]
                 }));
@@ -150,8 +201,13 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
         "messages": messages,
     });
 
-    if !system_chunks.is_empty() {
+    if block_system && !system_blocks.is_empty() {
+        body["system"] = Value::Array(system_blocks);
+    } else if !system_chunks.is_empty() {
         body["system"] = Value::String(system_chunks.join("\n\n"));
+    }
+    if let Some(identifier) = req.safety_identifier.as_ref().or(req.user.as_ref()) {
+        body["metadata"] = json!({"user_id": identifier});
     }
     // Anthropic rejects a request specifying both, and Gemini CLI sends both by
     // default with no way to suppress either — so a valid Gemini request and a
@@ -180,6 +236,20 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     if let Some(choice) = &req.tool_choice {
         body["tool_choice"] = translate_tool_choice(choice);
     }
+    crate::structured_output::install_parallel_tool_policy(
+        &mut body,
+        req.parallel_tool_calls,
+        req.tools
+            .as_ref()
+            .and_then(Value::as_array)
+            .is_some_and(|tools| !tools.is_empty()),
+    );
+    crate::structured_output::install_format(
+        &mut body,
+        crate::structured_output::chat_format(req.response_format.as_ref())
+            .ok()
+            .flatten(),
+    );
     if let Some(reasoning) = &req.reasoning {
         body["reasoning"] = reasoning.clone();
     } else if let Some(effort) = &req.reasoning_effort {
@@ -193,10 +263,8 @@ pub fn chat_completion_to_anthropic(req: &OpenAIChatCompletionRequest) -> Value 
     body
 }
 
-/// Reconcile request parameters with the selected subscription backend.
-///
-/// `ChatGPT` subscription inference rejects `temperature` for every advertised
-/// model. Claude 5 rejects it too, while older Claude generations retain it.
+/// Reconcile only provider wire-shape requirements that are known from the
+/// selected protocol. Model names are never treated as capability metadata.
 pub(crate) fn reconcile_subscription_parameters(
     provider: crate::subscription::SubscriptionProvider,
     body: &mut Value,
@@ -211,15 +279,6 @@ pub(crate) fn reconcile_subscription_parameters_with_limit_origin(
 ) {
     let model = body.get("model").and_then(Value::as_str);
     let adaptive_thinking = crate::capabilities::claude_uses_adaptive_thinking(model);
-    let capabilities = crate::capabilities::subscription(provider, model);
-    if let Some(object) = body.as_object_mut() {
-        if capabilities.temperature == crate::capabilities::Capability::Unsupported {
-            object.remove("temperature");
-        }
-        if capabilities.top_p == crate::capabilities::Capability::Unsupported {
-            object.remove("top_p");
-        }
-    }
     if provider == crate::subscription::SubscriptionProvider::Claude {
         reconcile_claude_thinking(body, adaptive_thinking, output_limit_was_explicit);
     }
@@ -274,7 +333,10 @@ fn reconcile_claude_thinking(
         let requested_budget = reasoning_budget(effort);
         if adaptive_thinking {
             body["thinking"] = json!({"type": "adaptive"});
-            body["output_config"] = json!({"effort": adaptive_effort(effort)});
+            if !body.get("output_config").is_some_and(Value::is_object) {
+                body["output_config"] = json!({});
+            }
+            body["output_config"]["effort"] = json!(adaptive_effort(effort));
             if !output_limit_was_explicit {
                 body["max_tokens"] = json!(
                     CLAUDE_DEFAULT_MAX_TOKENS
@@ -340,66 +402,50 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
         String::from,
     );
 
-    let mut content = String::new();
+    let (content, annotations) =
+        crate::bridge_response::anthropic_text_and_annotations(anthropic.get("content"));
     let mut tool_calls: Vec<Value> = Vec::new();
     if let Some(blocks) = anthropic.get("content").and_then(Value::as_array) {
         for block in blocks {
-            match block.get("type").and_then(Value::as_str) {
-                Some("text") => {
-                    if let Some(t) = block.get("text").and_then(Value::as_str) {
-                        content.push_str(t);
+            if block.get("type").and_then(Value::as_str) == Some("tool_use") {
+                let name = block.get("name").and_then(Value::as_str).unwrap_or("");
+                let input = block.get("input").cloned().unwrap_or(Value::Null);
+                let id = block.get("id").and_then(Value::as_str).unwrap_or("");
+                tool_calls.push(json!({
+                    "id": id,
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "arguments": serde_json::to_string(&input).unwrap_or_default(),
                     }
-                }
-                Some("tool_use") => {
-                    let name = block.get("name").and_then(Value::as_str).unwrap_or("");
-                    let input = block.get("input").cloned().unwrap_or(Value::Null);
-                    let id = block.get("id").and_then(Value::as_str).unwrap_or("");
-                    tool_calls.push(json!({
-                        "id": id,
-                        "type": "function",
-                        "function": {
-                            "name": name,
-                            "arguments": serde_json::to_string(&input).unwrap_or_default(),
-                        }
-                    }));
-                }
-                _ => {}
+                }));
             }
         }
     }
 
-    let mut message = json!({"role": "assistant", "content": content});
+    let stop = crate::bridge_response::stop_semantics(
+        anthropic.get("stop_reason").and_then(Value::as_str),
+    );
+    let mut message = if stop.refusal {
+        json!({"role": "assistant", "content": Value::Null, "refusal": content})
+    } else {
+        json!({"role": "assistant", "content": content})
+    };
+    if !stop.refusal && !annotations.is_empty() {
+        message["annotations"] =
+            Value::Array(crate::bridge_response::chat_annotations(&annotations));
+    }
     if !tool_calls.is_empty() {
         message["tool_calls"] = Value::Array(tool_calls);
     }
-
-    let finish_reason = match anthropic
-        .get("stop_reason")
-        .and_then(Value::as_str)
-        .unwrap_or("end_turn")
-    {
-        "max_tokens" => "length",
-        "end_turn" | "stop_sequence" => "stop",
-        "tool_use" => "tool_calls",
-        other => other,
-    };
-
-    let usage = anthropic.get("usage").cloned().unwrap_or(Value::Null);
-    let prompt_tokens = usage
-        .get("input_tokens")
-        .and_then(Value::as_i64)
-        .unwrap_or(0);
-    let completion_tokens = usage
-        .get("output_tokens")
-        .and_then(Value::as_i64)
-        .unwrap_or(0);
+    let usage = crate::bridge_response::AnthropicUsage::from_value(anthropic.get("usage"));
 
     let served_model = anthropic
         .get("model")
         .and_then(Value::as_str)
         .unwrap_or(resolved_model);
 
-    json!({
+    let mut response = json!({
         "id": id,
         "object": "chat.completion",
         "created": chrono::Utc::now().timestamp(),
@@ -408,22 +454,15 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
             {
                 "index": 0,
                 "message": message,
-                "finish_reason": finish_reason,
+                "finish_reason": stop.chat_finish_reason,
             }
         ],
-        "usage": {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": prompt_tokens + completion_tokens,
-        }
-    })
-}
-
-pub(crate) fn find_sse_separator(buffer: &str) -> Option<(usize, usize)> {
-    buffer
-        .find("\r\n\r\n")
-        .map(|idx| (idx, 4))
-        .or_else(|| buffer.find("\n\n").map(|idx| (idx, 2)))
+        "usage": usage.chat()
+    });
+    if let Some(tier) = usage.openai_service_tier() {
+        response["service_tier"] = Value::String(tier.into());
+    }
+    response
 }
 
 pub(crate) fn extract_sse_data(block: &str) -> String {
@@ -455,11 +494,7 @@ fn done_frame() -> String {
 }
 
 fn map_finish_reason(reason: &str) -> &'static str {
-    match reason {
-        "max_tokens" => "length",
-        "tool_use" => "tool_calls",
-        _ => "stop",
-    }
+    crate::bridge_response::stop_semantics(Some(reason)).chat_finish_reason
 }
 
 /// Resolve a model that the Anthropic-backed `OpenAI` surface can serve.
@@ -560,13 +595,17 @@ pub use stream::{OpenAIStreamShape, OpenAIStreamTranslator};
 
 pub(crate) use tools::{extract_text, translate_parts, translate_tool_choice, translate_tools};
 pub use tools::{
-    untranslatable_anthropic_tool_choice, untranslatable_anthropic_tools,
-    untranslatable_chat_tool_history,
+    invalid_anthropic_tool_definition, untranslatable_anthropic_tool_choice,
+    untranslatable_anthropic_tools, untranslatable_chat_tool_history,
 };
 
 #[cfg(test)]
 #[path = "openai_request_tests.rs"]
 mod request_tests;
+
+#[cfg(test)]
+#[path = "openai_tool_filter_tests.rs"]
+mod tool_filter_tests;
 
 #[cfg(test)]
 #[path = "openai_response_tests.rs"]

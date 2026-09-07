@@ -109,24 +109,23 @@ destination authority, TLS/HTTP connection fingerprint, credential, and
 transport framing inherent to proxying; it does not claim transport-level
 invisibility.
 Streaming and tool calls use the same final authorization. Claude Code
-`/api/services/anthropic/v1/messages/count_tokens` applies the same mapping locally and never calls a
-forbidden provider.
+`/api/services/anthropic/v1/messages/count_tokens` applies the same live-model
+policy locally, then returns an explicit unavailable error because z.ai does
+not expose a proven exact non-inference counter. It never starts inference.
 
 ## Claude Code model discovery
 
 Claude Code **2.1.255 or newer** is required. `router with claude` and
 `router clients setup claude` set
 `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1`, force nonessential startup
-traffic on for discovery, and clear higher-priority credentials. When z.ai is
-the only compatible live catalog, Router maps only Claude Code's Default/main
-turn and subagent boundary to the first exact currently advertised z.ai model.
-It does not map that model onto Opus, Sonnet, or Haiku, because doing so creates
-three duplicate, misleading family rows. Current Claude Code can show only the
-selected custom default in `/model`; use `router with --model <exact-id> claude`
-for another ID from a multi-model z.ai catalog. With a native Anthropic catalog
-all family/default pins stay clear, preserving native family behavior; select a
-z.ai ID explicitly when required. An explicit z.ai command-line model is also
-propagated to the subagent boundary.
+traffic on for discovery, and clear higher-priority credentials. Claude's
+gateway discovery supplies exact native Claude IDs. For `router with claude`,
+Router also builds a process-local `modelPicker` from the client-authorized live
+catalog, adding every exact GLM ID that Claude's discovery filter removes. Each
+ID appears once and reaches Router unchanged. Router never invents a prefix,
+writes Claude's model cache, or maps GLM onto Opus, Sonnet, or Haiku. When z.ai
+is the only compatible catalog, Default/main and subagent fallback still use
+the first exact live model; an explicit `--model` wins at both boundaries.
 Router validates every selected exact ID locally against the current signed
 client/provider registry, so a built-in or cached choice cannot silently select
 another credential.

@@ -58,17 +58,9 @@ pub(super) async fn fetch_models(
     .into())
 }
 
-pub(super) fn client_models_path(client: ClientKind) -> &'static str {
+pub(super) fn client_models_path(_client: ClientKind) -> &'static str {
     use crate::route_contract::{RouteId, route_template};
-    match client {
-        ClientKind::Codex => route_template(RouteId::CodexModels),
-        ClientKind::GeminiCli => route_template(RouteId::GeminiModels),
-        ClientKind::QwenCode => route_template(RouteId::QwenModels),
-        ClientKind::ClaudeCode => route_template(RouteId::AnthropicModels),
-        ClientKind::Opencode | ClientKind::GrokCli | ClientKind::Cursor | ClientKind::Agent => {
-            route_template(RouteId::OpenAiModels)
-        }
-    }
+    route_template(RouteId::AggregateModels)
 }
 
 fn token_rejection_reason(body: &str) -> &'static str {
@@ -97,26 +89,11 @@ mod tests {
     use crate::clients::ClientKind;
 
     #[test]
-    fn catalog_paths_are_namespaced_for_clients_with_non_anthropic_protocols() {
-        assert_eq!(
-            client_models_path(ClientKind::ClaudeCode),
-            "/api/services/anthropic/v1/models"
-        );
-        assert_eq!(
-            client_models_path(ClientKind::Codex),
-            "/api/services/codex/v1/models"
-        );
-        assert_eq!(
-            client_models_path(ClientKind::GeminiCli),
-            "/api/services/gemini/v1beta/models"
-        );
-        assert_eq!(
-            client_models_path(ClientKind::QwenCode),
-            "/api/services/qwen/v1/models"
-        );
-        assert_eq!(
-            client_models_path(ClientKind::Opencode),
-            "/api/services/openai/v1/models"
-        );
+    fn wrapped_clients_use_the_client_scoped_normalized_catalog() {
+        assert_eq!(client_models_path(ClientKind::ClaudeCode), "/api/models");
+        assert_eq!(client_models_path(ClientKind::Codex), "/api/models");
+        assert_eq!(client_models_path(ClientKind::GeminiCli), "/api/models");
+        assert_eq!(client_models_path(ClientKind::QwenCode), "/api/models");
+        assert_eq!(client_models_path(ClientKind::Opencode), "/api/models");
     }
 }

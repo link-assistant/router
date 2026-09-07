@@ -8,14 +8,14 @@ use serde_json::Value;
 
 use crate::anthropic_stream::AnthropicStreamTranslator;
 
-use super::{anthropic_error, enforce_anthropic_stop, openai_json_to_anthropic_message};
+use super::{anthropic_error, enforce_anthropic_stop, try_openai_json_to_anthropic_message};
 
 /// Convert the `OpenAI`-dialect response produced by a delegate forwarder into
 /// the Anthropic dialect.
 pub async fn translate_upstream_response(
     upstream: Response,
     requested_model: &str,
-    upstream_model: &str,
+    _upstream_model: &str,
     stream_requested: bool,
     stop_sequences: &[String],
 ) -> Response {
@@ -38,7 +38,6 @@ pub async fn translate_upstream_response(
         return anthropic_sse_response(
             body,
             requested_model,
-            upstream_model,
             &parts.headers,
             stop_sequences.to_vec(),
         );
@@ -59,30 +58,27 @@ pub async fn translate_upstream_response(
             b"Upstream returned a malformed response",
         );
     };
-    let served_model = payload
-        .get(crate::output_limit::UPSTREAM_MODEL_FIELD)
-        .or_else(|| payload.get("model"))
-        .and_then(Value::as_str)
-        .unwrap_or(upstream_model);
-    let mut translated = openai_json_to_anthropic_message(&payload, requested_model);
-    if !served_model.is_empty() && served_model != requested_model {
-        translated[crate::output_limit::UPSTREAM_MODEL_FIELD] =
-            Value::String(served_model.to_string());
+    if let Err(error) = crate::bridge_response::validate_openai_response_citations(&payload) {
+        return anthropic_error(
+            StatusCode::BAD_GATEWAY,
+            format!("upstream returned an unrepresentable citation: {error}").as_bytes(),
+        );
     }
+    let mut translated = match try_openai_json_to_anthropic_message(&payload, requested_model) {
+        Ok(translated) => translated,
+        Err(reason) => {
+            return anthropic_error(
+                StatusCode::BAD_GATEWAY,
+                format!("upstream returned an unrepresentable response: {reason}").as_bytes(),
+            );
+        }
+    };
     enforce_anthropic_stop(&mut translated, stop_sequences);
     let mut response = (StatusCode::OK, axum::Json(translated)).into_response();
     *response.headers_mut() = parts.headers;
     response
         .headers_mut()
         .insert("content-type", HeaderValue::from_static("application/json"));
-    if !served_model.is_empty()
-        && served_model != requested_model
-        && let Ok(value) = HeaderValue::from_str(served_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }
 
@@ -90,13 +86,11 @@ pub async fn translate_upstream_response(
 fn anthropic_sse_response(
     body: Body,
     requested_model: &str,
-    upstream_model: &str,
     upstream: &HeaderMap,
     stop_sequences: Vec<String>,
 ) -> Response {
-    let translator = AnthropicStreamTranslator::new(requested_model)
-        .with_upstream_model(upstream_model)
-        .with_stop_sequences(stop_sequences);
+    let translator =
+        AnthropicStreamTranslator::new(requested_model).with_stop_sequences(stop_sequences);
     let data = body.into_data_stream();
     let stream = futures_util::stream::unfold(
         (data, translator, false),
@@ -138,13 +132,5 @@ fn anthropic_sse_response(
     response
         .headers_mut()
         .insert("cache-control", HeaderValue::from_static("no-cache"));
-    if !upstream_model.is_empty()
-        && upstream_model != requested_model
-        && let Ok(value) = HeaderValue::from_str(upstream_model)
-    {
-        response
-            .headers_mut()
-            .insert(crate::output_limit::UPSTREAM_MODEL_HEADER, value);
-    }
     response
 }

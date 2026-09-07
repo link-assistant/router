@@ -1,7 +1,5 @@
 use super::*;
-use crate::config::{
-    default_gonka_model, default_gonka_source_url, default_openai_compatible_base_url,
-};
+use crate::config::{default_gonka_model, default_openai_compatible_base_url};
 use clap::CommandFactory as _;
 
 #[test]
@@ -21,6 +19,8 @@ fn usage_cli_accepts_public_provider_names_and_json() {
         ("openai", crate::subscription_usage::UsageProvider::OpenAi),
         ("z-ai", crate::subscription_usage::UsageProvider::ZAi),
         ("lefine", crate::subscription_usage::UsageProvider::Lefine),
+        ("gemini", crate::subscription_usage::UsageProvider::Gemini),
+        ("qwen", crate::subscription_usage::UsageProvider::Qwen),
     ] {
         let cli = Cli::try_parse_from(["router", "usage", name, "--json"]).unwrap();
         let Some(Command::Usage { provider, json, .. }) = cli.command else {
@@ -109,7 +109,8 @@ fn cli_defaults_round_trip_to_config() {
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
         gonka_private_key: None,
-        gonka_source_url: default_gonka_source_url(),
+        gonka_api_key: None,
+        gonka_source_url: None,
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
@@ -178,6 +179,42 @@ fn cli_defaults_round_trip_to_config() {
 }
 
 #[test]
+fn explicit_home_is_the_credential_boundary_for_every_provider() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--home",
+        "/tmp/router-isolated-home",
+        "--claude-code-home",
+        "/tmp/router-explicit-claude",
+        "auth",
+        "status",
+        "--local",
+    ])
+    .expect("CLI");
+    let config = cli.into_config().expect("config");
+
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Claude),
+        PathBuf::from("/tmp/router-explicit-claude")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Codex),
+        PathBuf::from("/tmp/router-isolated-home/.codex")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Gemini),
+        PathBuf::from("/tmp/router-isolated-home/.gemini")
+    );
+    assert_eq!(
+        config.credential_home(SubscriptionProvider::Qwen),
+        PathBuf::from("/tmp/router-isolated-home/.qwen")
+    );
+    assert!(config.isolated_client_home);
+}
+
+#[test]
 fn cli_invalid_routing_mode_rejected() {
     let cli = Cli {
         command: None,
@@ -196,7 +233,8 @@ fn cli_invalid_routing_mode_rejected() {
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
         gonka_private_key: None,
-        gonka_source_url: default_gonka_source_url(),
+        gonka_api_key: None,
+        gonka_source_url: None,
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,

@@ -16,7 +16,7 @@ async fn conditional_import_refuses_an_unverified_candidate() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: false,
-            external_refresh_owner: false,
+            router_owned_candidate: false,
         },
     )
     .await
@@ -42,7 +42,7 @@ async fn capability_assertion_cannot_install_a_rejected_candidate() {
         ImportPolicy {
             if_absent: true,
             capability_asserted: true,
-            external_refresh_owner: false,
+            router_owned_candidate: false,
         },
     )
     .await
@@ -70,7 +70,7 @@ async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() 
         ImportPolicy {
             if_absent: false,
             capability_asserted: false,
-            external_refresh_owner: false,
+            router_owned_candidate: false,
         },
     )
     .await
@@ -109,7 +109,7 @@ async fn rejected_and_unverified_candidates_never_change_any_provider_destinatio
                     ImportPolicy {
                         if_absent,
                         capability_asserted: false,
-                        external_refresh_owner: false,
+                        router_owned_candidate: false,
                     },
                 )
                 .await;

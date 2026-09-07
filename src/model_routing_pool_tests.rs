@@ -642,10 +642,7 @@ async fn anthropic_bridge_selects_account_before_its_live_model() {
     assert_eq!(response.status(), StatusCode::OK);
     let response = json_body(response).await;
     assert_eq!(response["model"], "claude/catalog-choice");
-    assert_eq!(
-        response[crate::output_limit::UPSTREAM_MODEL_FIELD],
-        "secondary-bridge-model"
-    );
+    assert!(response.get("x_router_upstream_model").is_none());
     let captured = captured.lock().unwrap();
     assert_eq!(captured.len(), 1);
     assert_eq!(captured[0].0, "Bearer account-1-access");

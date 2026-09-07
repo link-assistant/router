@@ -76,6 +76,7 @@ fn replaced_or_transport_header(name: &str) -> bool {
             "authorization"
                 | "x-api-key"
                 | "x-goog-api-key"
+                | "anthropic-auth-token"
                 | "proxy-authorization"
                 | "proxy-authenticate"
                 | "host"
@@ -90,6 +91,10 @@ fn replaced_or_transport_header(name: &str) -> bool {
                 | "accept-encoding"
                 | "cookie"
                 | "chatgpt-account-id"
+                | "sec-websocket-key"
+                | "sec-websocket-version"
+                | "sec-websocket-extensions"
+                | "sec-websocket-accept"
         )
         || name.starts_with("x-link-assistant-")
         || name.starts_with("x-router-")

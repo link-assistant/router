@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
 use crate::route_contract::{
-    ListenerKind, RouteAuth, RouteClass, RouteId, ServiceKind, endpoint_base, management_endpoint,
-    route_for_path, route_specs,
+    ApiDialect, ListenerKind, RouteAuth, RouteClass, RouteId, ServiceKind, endpoint_base,
+    management_endpoint, route_for_path, route_specs,
 };
 
 #[test]
@@ -151,6 +151,77 @@ fn listener_eligibility_is_a_security_boundary() {
 }
 
 #[test]
+fn codex_remote_control_has_only_its_seven_canonical_service_routes() {
+    use http::Method;
+
+    let canonical = [
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/server",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/enroll",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/refresh",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair",
+        ),
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server/pair/status",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/environments/env%2Fone/clients",
+        ),
+        (
+            Method::DELETE,
+            "/api/services/codex/backend-api/wham/remote/control/environments/env%2Fone/clients/client%3Fone",
+        ),
+    ];
+    for (method, path) in canonical {
+        let route = route_for_path(&method, path)
+            .unwrap_or_else(|| panic!("missing remote-control route: {method} {path}"));
+        assert_eq!(route.id, RouteId::NativeCodexBackend);
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert_eq!(
+            route.listeners,
+            &[ListenerKind::Combined, ListenerKind::InferenceOnly]
+        );
+    }
+
+    for (method, path) in [
+        (
+            Method::POST,
+            "/api/services/codex/backend-api/wham/remote/control/server",
+        ),
+        (
+            Method::GET,
+            "/api/services/codex/backend-api/wham/remote/control/server/enroll",
+        ),
+        (Method::GET, "/wham/remote/control/server"),
+        (Method::GET, "/api/codex/wham/remote/control/server"),
+        (
+            Method::GET,
+            "/api/services/openai/v1/wham/remote/control/server",
+        ),
+        (Method::GET, "/api/management/wham/remote/control/server"),
+    ] {
+        assert!(
+            route_for_path(&method, path).is_none(),
+            "noncanonical remote-control alias exists: {method} {path}"
+        );
+    }
+}
+
+#[test]
 fn removed_paths_have_no_route_contract() {
     for (method, path) in [
         (http::Method::GET, "/health"),
@@ -180,5 +251,207 @@ fn removed_paths_have_no_route_contract() {
             route_for_path(&method, path).is_none(),
             "removed route still classified: {method} {path}"
         );
+    }
+}
+
+#[test]
+fn responses_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::GET, "resp_123"),
+            (http::Method::DELETE, "resp_123"),
+            (http::Method::POST, "resp_123/cancel"),
+            (http::Method::GET, "resp_123/input_items"),
+        ] {
+            let path = format!("/api/services/{service}/v1/responses/{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+            assert!(route.listeners.contains(&ListenerKind::Combined));
+            assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+            assert!(!route.listeners.contains(&ListenerKind::Admin));
+        }
+    }
+}
+
+#[test]
+fn conversations_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::POST, ""),
+            (http::Method::GET, "/conv_123"),
+            (http::Method::PATCH, "/conv_123"),
+            (http::Method::DELETE, "/conv_123"),
+            (http::Method::POST, "/conv_123/items"),
+            (http::Method::GET, "/conv_123/items"),
+            (http::Method::GET, "/conv_123/items/item_123"),
+            (http::Method::DELETE, "/conv_123/items/item_123"),
+        ] {
+            let path = format!("/api/services/{service}/v1/conversations{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+        }
+    }
+}
+
+#[test]
+fn single_model_routes_use_the_native_service_dialect() {
+    for (service, kind, dialect) in [
+        ("anthropic", ServiceKind::Anthropic, ApiDialect::Anthropic),
+        ("openai", ServiceKind::OpenAi, ApiDialect::OpenAi),
+        ("codex", ServiceKind::Codex, ApiDialect::OpenAi),
+        ("qwen", ServiceKind::Qwen, ApiDialect::OpenAi),
+    ] {
+        let path = format!("/api/services/{service}/v1/models/future-model");
+        let route = route_for_path(&http::Method::GET, &path)
+            .unwrap_or_else(|| panic!("missing route contract for GET {path}"));
+        assert_eq!(route.class, RouteClass::Service(kind));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, dialect);
+    }
+}
+
+#[test]
+fn codex_history_and_notes_have_only_the_ten_native_post_routes() {
+    let operations = [
+        "alpha/history/v2/list_windows",
+        "alpha/history/v2/list_items",
+        "alpha/history/v2/read_item",
+        "alpha/history/v2/search_contents",
+        "alpha/notes/v2/thread_hint",
+        "alpha/notes/v2/list_files_by_prefix",
+        "alpha/notes/v2/read_file",
+        "alpha/notes/v2/search_contents",
+        "alpha/notes/v2/append_to_file",
+        "alpha/notes/v2/write_file",
+    ];
+    for operation in operations {
+        let path = format!("/api/services/codex/v1/{operation}");
+        let route = route_for_path(&http::Method::POST, &path)
+            .unwrap_or_else(|| panic!("missing POST {path}"));
+        assert_eq!(route.id, RouteId::NativeCodex);
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert!(route.listeners.contains(&ListenerKind::Combined));
+        assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+        assert!(!route.listeners.contains(&ListenerKind::Admin));
+        assert!(route_for_path(&http::Method::GET, &path).is_none());
+        assert!(route_for_path(&http::Method::PUT, &path).is_none());
+        assert!(route_for_path(&http::Method::DELETE, &path).is_none());
+
+        for alias in [
+            format!("/{operation}"),
+            format!("/api/services/openai/v1/{operation}"),
+            format!("/api/services/anthropic/v1/{operation}"),
+            format!("/api/services/qwen/v1/{operation}"),
+            format!("/api/management/{operation}"),
+            path.replace("/alpha/", "/alpha%2F"),
+        ] {
+            assert!(
+                route_for_path(&http::Method::POST, &alias).is_none(),
+                "unexpected history/notes alias: {alias}"
+            );
+        }
+    }
+}
+
+#[test]
+fn codex_apps_mcp_and_plugins_have_only_the_native_backend_routes() {
+    let routes = [
+        (http::Method::GET, "/connectors/directory/list"),
+        (http::Method::GET, "/connectors/directory/list_workspace"),
+        (http::Method::POST, "/ps/apps/batch"),
+        (http::Method::GET, "/ps/mcp"),
+        (http::Method::POST, "/ps/mcp"),
+        (http::Method::DELETE, "/ps/mcp"),
+        (http::Method::GET, "/plugins/featured"),
+        (http::Method::POST, "/plugins/plugin%2Done/enable"),
+        (http::Method::POST, "/plugins/plugin%2Done/uninstall"),
+        (http::Method::GET, "/ps/plugins/suggested/codex"),
+        (http::Method::GET, "/ps/plugins/list"),
+        (http::Method::GET, "/ps/plugins/workspace/shared"),
+        (http::Method::GET, "/ps/plugins/installed"),
+        (http::Method::GET, "/ps/plugins/search"),
+        (http::Method::GET, "/ps/plugins/plugin%2Done"),
+        (
+            http::Method::GET,
+            "/ps/plugins/plugin%2Done/skills/skill%2Done",
+        ),
+        (http::Method::POST, "/ps/plugins/plugin%2Done/install"),
+        (http::Method::POST, "/ps/plugins/plugin%2Done/uninstall"),
+        (http::Method::GET, "/ps/plugins/workspace/created"),
+        (http::Method::POST, "/public/plugins/workspace/upload-url"),
+        (http::Method::POST, "/public/plugins/workspace"),
+        (http::Method::POST, "/public/plugins/workspace/plugin%2Done"),
+        (
+            http::Method::DELETE,
+            "/public/plugins/workspace/plugin%2Done",
+        ),
+        (http::Method::PUT, "/ps/plugins/plugin%2Done/shares"),
+    ];
+    for (method, suffix) in routes {
+        let path = format!("/api/services/codex/backend-api{suffix}");
+        let route = route_for_path(&method, &path)
+            .unwrap_or_else(|| panic!("missing Codex backend route for {method} {path}"));
+        assert_eq!(route.id, RouteId::NativeCodexBackend, "{method} {path}");
+        assert_eq!(route.class, RouteClass::Service(ServiceKind::Codex));
+        assert_eq!(route.auth, RouteAuth::Client);
+        assert_eq!(route.dialect, ApiDialect::OpenAi);
+        assert!(route.listeners.contains(&ListenerKind::Combined));
+        assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+        assert!(!route.listeners.contains(&ListenerKind::Admin));
+
+        for alias in [
+            suffix.to_string(),
+            format!("/api/codex/backend-api{suffix}"),
+            format!("/api/services/openai/backend-api{suffix}"),
+            format!("/api/management/codex/backend-api{suffix}"),
+        ] {
+            assert!(
+                route_for_path(&method, &alias).is_none(),
+                "unexpected Codex control-plane alias: {method} {alias}"
+            );
+        }
+    }
+}
+
+#[test]
+fn stored_chat_lifecycle_is_an_authenticated_openai_service_surface() {
+    for (service, kind) in [
+        ("openai", ServiceKind::OpenAi),
+        ("codex", ServiceKind::Codex),
+        ("qwen", ServiceKind::Qwen),
+    ] {
+        for (method, suffix) in [
+            (http::Method::GET, ""),
+            (http::Method::GET, "/chatcmpl_123"),
+            (http::Method::POST, "/chatcmpl_123"),
+            (http::Method::DELETE, "/chatcmpl_123"),
+            (http::Method::GET, "/chatcmpl_123/messages"),
+        ] {
+            let path = format!("/api/services/{service}/v1/chat/completions{suffix}");
+            let route = route_for_path(&method, &path)
+                .unwrap_or_else(|| panic!("missing route contract for {method} {path}"));
+            assert_eq!(route.class, RouteClass::Service(kind), "{method} {path}");
+            assert_eq!(route.auth, RouteAuth::Client, "{method} {path}");
+            assert_eq!(route.dialect, ApiDialect::OpenAi, "{method} {path}");
+            assert!(route.listeners.contains(&ListenerKind::Combined));
+            assert!(route.listeners.contains(&ListenerKind::InferenceOnly));
+            assert!(!route.listeners.contains(&ListenerKind::Admin));
+        }
     }
 }

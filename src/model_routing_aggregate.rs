@@ -88,6 +88,15 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     {
         projected.insert("deprecation_date".into(), value.clone());
     }
+    if let Some(value) = raw
+        .get("default_reasoning_level")
+        .filter(|value| value.is_string())
+    {
+        projected.insert("default_reasoning_level".into(), value.clone());
+    }
+    if let Some(levels) = normalized_reasoning_levels(raw) {
+        projected.insert("supported_reasoning_levels".into(), levels);
+    }
     if projected.len() > 3 {
         projected.insert(
             "metadata_source".into(),
@@ -104,6 +113,23 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
         }
     }
     projected
+}
+
+fn normalized_reasoning_levels(raw: &Map<String, Value>) -> Option<Value> {
+    let levels = raw.get("supported_reasoning_levels")?.as_array()?;
+    let normalized = levels
+        .iter()
+        .filter_map(Value::as_object)
+        .filter_map(|level| {
+            let effort = level.get("effort")?.as_str()?;
+            let mut value = Map::from_iter([("effort".into(), Value::String(effort.to_string()))]);
+            if let Some(description) = level.get("description").and_then(Value::as_str) {
+                value.insert("description".into(), Value::String(description.to_string()));
+            }
+            Some(Value::Object(value))
+        })
+        .collect::<Vec<_>>();
+    (!normalized.is_empty()).then_some(Value::Array(normalized))
 }
 
 fn service(raw: &Map<String, Value>) -> &str {

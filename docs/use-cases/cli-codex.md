@@ -17,10 +17,16 @@ router with codex "hi"
 This keeps the real `HOME`, `CODEX_HOME`, configuration, sessions, MCP servers,
 personality and reasoning effort. The wrapper prepends process-local `-c`
 overrides that select a `link-assistant` provider at the router URL, then passes
-the run token through `LINK_ASSISTANT_TOKEN`; it neither edits nor replaces the
-user's config. Pass `--isolated-config` to deliberately use a disposable Codex
-home instead. See [with-router.md](with-router.md) for remote servers and token
-input.
+the run token through `LINK_ASSISTANT_TOKEN`. The same principal-bound `at-`
+alias is supplied as `CODEX_ACCESS_TOKEN` and `CODEX_CONNECTORS_TOKEN`, while
+`chatgpt_base_url` and `CODEX_AUTHAPI_BASE_URL` point to Router's native Codex
+control plane. Apps, hosted MCP, remote plugins, workspace shares, files,
+account services, analytics, history/notes, and remote control therefore use
+the Router-selected ChatGPT account without exposing its OAuth credential.
+Signed bundle downloads and uploads remain direct between Codex and the
+provider-issued storage URL. The wrapper neither edits nor replaces the user's
+config. Pass `--isolated-config` to deliberately use a disposable Codex home
+instead. See [with-router.md](with-router.md) for remote servers and token input.
 
 Wrapper flags may appear before or after `codex`; an explicit `--` forwards
 every later token verbatim. See
@@ -88,9 +94,9 @@ ordinary use. Anthropic has no equivalent for these.
 Rather than refuse the whole turn, the router **drops the untranslatable
 entries and forwards the rest**: a model is never obliged to call a tool, so a
 request carrying its remaining usable tools is far more useful than an error
-naming the one that did not fit. Anything dropped is named in the
-`x-router-dropped-tools` response header and in the request log, so an agent
-that quietly never uses sub-agents is diagnosable rather than mysterious.
+naming the one that did not fit. Anything dropped is named in the local request
+log, so an agent that quietly never uses sub-agents is diagnosable without
+adding Router-private metadata to the public vendor protocol.
 
 ## Smoke test
 

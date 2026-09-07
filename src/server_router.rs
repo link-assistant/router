@@ -115,6 +115,10 @@ pub(crate) fn management_routes(
         .route(
             route_template(RouteId::AdminSummary),
             get(crate::admin_api::admin_summary),
+        )
+        .route(
+            route_template(RouteId::CredentialStatus),
+            get(proxy::credential_status_endpoint),
         );
 
     if login_enabled {
@@ -161,6 +165,10 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
     if config.enable_anthropic_api {
         routes = routes
             .route(
+                "/api/services/anthropic/v1/{*native_path}",
+                any(crate::native_service::anthropic),
+            )
+            .route(
                 route_template(RouteId::AnthropicMessages),
                 post(proxy::proxy_handler),
             )
@@ -183,45 +191,197 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
             .route(
                 route_template(RouteId::AnthropicModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::AnthropicModel),
+                get(crate::model_resource::retrieve),
             );
     }
     if config.enable_openai_api {
         routes = routes
             .route(
+                "/api/services/openai/v1/{*native_path}",
+                any(crate::native_service::openai),
+            )
+            .route(
+                "/api/services/codex/v1/{*native_path}",
+                any(crate::native_service::codex),
+            )
+            .route(
+                "/api/services/codex/backend-api/{*native_path}",
+                any(crate::native_service::codex_backend),
+            )
+            .route(
                 route_template(RouteId::OpenAiChatCompletions),
-                post(proxy::openai_chat_completions),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::OpenAiChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::OpenAiChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::OpenAiResponses),
-                post(proxy::openai_responses),
+                post(proxy::openai_responses_route).get(crate::responses_websocket::openai),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::OpenAiResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::OpenAiConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
             )
             .route(
                 route_template(RouteId::OpenAiModels),
                 get(proxy::openai_models),
             )
             .route(
+                route_template(RouteId::OpenAiModel),
+                get(crate::model_resource::retrieve),
+            )
+            .route(
                 route_template(RouteId::CodexChatCompletions),
-                post(proxy::openai_chat_completions),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::CodexChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::CodexChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::CodexResponses),
-                post(proxy::openai_responses_native),
+                post(proxy::openai_responses_route).get(crate::responses_websocket::codex),
+            )
+            .route(
+                route_template(RouteId::CodexResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::CodexResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::CodexResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
+            )
+            .route(
+                route_template(RouteId::CodexConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::CodexConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::CodexConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::CodexConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
             )
             .route(
                 route_template(RouteId::CodexModels),
                 get(proxy::openai_models),
             )
             .route(
+                route_template(RouteId::CodexModel),
+                get(crate::model_resource::retrieve),
+            )
+            .route(
                 route_template(RouteId::QwenChatCompletions),
-                post(proxy::openai_chat_completions_native),
+                post(proxy::openai_chat_completions_route).get(crate::chat_lifecycle::list),
+            )
+            .route(
+                route_template(RouteId::QwenChatCompletion),
+                get(crate::chat_lifecycle::retrieve)
+                    .post(crate::chat_lifecycle::update)
+                    .delete(crate::chat_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::QwenChatCompletionMessages),
+                get(crate::chat_lifecycle::messages),
             )
             .route(
                 route_template(RouteId::QwenResponses),
-                post(proxy::openai_responses),
+                post(proxy::openai_responses_route)
+                    .get(crate::responses_websocket::unsupported_qwen),
+            )
+            .route(
+                route_template(RouteId::QwenResponse),
+                get(crate::responses_lifecycle::retrieve)
+                    .delete(crate::responses_lifecycle::delete),
+            )
+            .route(
+                route_template(RouteId::QwenResponseCancel),
+                post(crate::responses_lifecycle::cancel),
+            )
+            .route(
+                route_template(RouteId::QwenResponseInputItems),
+                get(crate::responses_lifecycle::input_items),
+            )
+            .route(
+                route_template(RouteId::QwenConversations),
+                post(crate::conversations::create),
+            )
+            .route(
+                route_template(RouteId::QwenConversation),
+                get(crate::conversations::conversation)
+                    .patch(crate::conversations::conversation)
+                    .delete(crate::conversations::conversation),
+            )
+            .route(
+                route_template(RouteId::QwenConversationItems),
+                post(crate::conversations::items).get(crate::conversations::items),
+            )
+            .route(
+                route_template(RouteId::QwenConversationItem),
+                get(crate::conversations::item).delete(crate::conversations::item),
             )
             .route(
                 route_template(RouteId::QwenModels),
                 get(proxy::openai_models),
+            )
+            .route(
+                route_template(RouteId::QwenModel),
+                get(crate::model_resource::retrieve),
             )
             .route(
                 route_template(RouteId::GeminiModels),
@@ -317,6 +477,9 @@ async fn authenticate_client_route(
     next: Next,
 ) -> Response {
     let path = request.uri().path();
+    if crate::codex_remote_control::authenticates_continuation(request.method(), path) {
+        return next.run(request).await;
+    }
     if is_openai_payment_path(path)
         && let Some(response) = proxy::maybe_mpp_challenge(&state, request.headers(), path)
     {

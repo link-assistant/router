@@ -41,7 +41,9 @@ use crate::api_error::malformed_json_response;
 pub use crate::app_state::AppState;
 use crate::config::UpstreamProvider;
 pub use crate::model_routing::models as openai_models;
-pub use crate::monitoring_api::{accounts_endpoint, metrics_endpoint, usage_endpoint};
+pub use crate::monitoring_api::{
+    accounts_endpoint, credential_status_endpoint, metrics_endpoint, usage_endpoint,
+};
 use crate::openai;
 use crate::request_routing::ResolvedUpstreamCredential;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
@@ -78,6 +80,7 @@ const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
     "set-cookie2",
     "x-api-key",
     "x-goog-api-key",
+    "anthropic-auth-token",
 ];
 
 /// Select end-to-end upstream response headers that are safe to relay to a client.
@@ -104,6 +107,8 @@ pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
         if HOP_BY_HOP_HEADERS.contains(&name_lower)
             || RESPONSE_CREDENTIAL_HEADERS.contains(&name_lower)
             || is_operator_subscription_header(name_lower)
+            || name_lower.starts_with("x-router-")
+            || name_lower.starts_with("x-link-assistant-")
             || name_lower == "content-length"
             || connection_headers.contains(name_lower)
         {
@@ -753,9 +758,10 @@ pub(crate) mod openai_handlers;
 
 pub(crate) use openai_handlers::openai_chat_completions_routed;
 pub use openai_handlers::{
-    openai_chat_completions, openai_chat_completions_native, openai_responses,
-    openai_responses_native,
+    openai_chat_completions, openai_chat_completions_native, openai_chat_completions_route,
+    openai_responses, openai_responses_native, openai_responses_route,
 };
+pub(crate) use openai_handlers::{rewrite_routed_model, route_openai_request};
 
 #[path = "proxy_openai_forward.rs"]
 mod openai_forward;

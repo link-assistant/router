@@ -4,17 +4,19 @@ pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
     let request = serde_json::from_slice::<Value>(request_body).unwrap_or(Value::Null);
     let rendered = request.to_string();
     if rendered.contains(SUBAGENT_PROMPT) && !rendered.contains("tool_result") {
-        let tool_name = request["tools"]
-            .as_array()
-            .and_then(|tools| {
-                tools.iter().find_map(|tool| {
-                    tool["name"]
-                        .as_str()
-                        .filter(|name| matches!(*name, "Agent" | "Task"))
-                })
+        let tool_name = request["tools"].as_array().and_then(|tools| {
+            tools.iter().find_map(|tool| {
+                tool["name"]
+                    .as_str()
+                    .filter(|name| matches!(*name, "Agent" | "Task"))
             })
-            .expect("current Claude Code advertises its subagent tool");
-        return subagent_call(model, tool_name);
+        });
+        // Auxiliary requests such as title generation can repeat the user's
+        // text without advertising interactive tools. Only turn the actual
+        // tool-capable request into the synthetic subagent cycle.
+        if let Some(tool_name) = tool_name {
+            return subagent_call(model, tool_name);
+        }
     }
     let message = json!({
         "id": "msg_offline", "type": "message", "role": "assistant", "model": model,

@@ -23,7 +23,7 @@ pub(super) fn journal_request(
     provider: SubscriptionProvider,
     token_url: &str,
     content_type: &str,
-    headers: &[(&str, &str)],
+    headers: &[(String, String)],
     body_fields: &[&str],
 ) {
     tracing::debug!(
@@ -36,7 +36,7 @@ pub(super) fn journal_request(
 fn exchange_shape(
     token_url: &str,
     content_type: &str,
-    headers: &[(&str, &str)],
+    headers: &[(String, String)],
     body_fields: &[&str],
 ) -> String {
     let mut sent = vec![format!("content-type: {content_type}")];
@@ -61,19 +61,16 @@ fn exchange_shape(
 #[must_use]
 pub fn direct_exchange_shape(provider: SubscriptionProvider) -> String {
     let config = refresh_config(provider);
+    let headers = super::refresh_headers(provider);
     let content_type = match config.style {
         BodyStyle::Json => "application/json",
         BodyStyle::Form => "application/x-www-form-urlencoded",
     };
     let mut fields = vec!["grant_type", "refresh_token", "client_id"];
-    if config
-        .client_secret_env
-        .and_then(|key| std::env::var(key).ok())
-        .is_some_and(|secret| !secret.is_empty())
-    {
+    if provider == SubscriptionProvider::Gemini {
         fields.push("client_secret");
     }
-    exchange_shape(config.token_url, content_type, config.headers, &fields)
+    exchange_shape(config.token_url, content_type, &headers, &fields)
 }
 
 /// Record which fields a successful token response carried.

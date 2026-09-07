@@ -79,9 +79,10 @@ pub enum AuthOp {
         /// shared refresh/login lock.
         #[arg(long, conflicts_with = "all")]
         if_absent: bool,
-        /// Assert support for isolated refresh-chain validation and locked
-        /// promotion. Older Router versions reject this spelling, allowing
-        /// deployment tooling to fail closed before importing a credential.
+        /// Assert support for non-destructive access-token validation and an
+        /// atomic reference to one writable vendor-owned credential file.
+        /// Older Router versions reject this spelling, allowing deployment
+        /// tooling to fail closed before importing a credential.
         ///
         /// The internal field keeps its historical name for source
         /// compatibility; this flag never bypasses positive validation.

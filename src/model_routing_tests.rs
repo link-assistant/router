@@ -153,8 +153,24 @@ fn account_catalog_union_reports_provider_healthy_when_any_account_is_healthy() 
     assert_eq!(catalog["data"][0]["id"], "secondary-model");
 }
 
+#[test]
+fn same_provider_duplicate_ids_collapse_before_native_projection() {
+    let catalogs = ModelCatalogCache::new();
+    for account in ["primary", "secondary"] {
+        catalogs.record_success_for_account(
+            SubscriptionProvider::Codex,
+            account,
+            Some(account.to_string()),
+            vec!["same-live-id".into()],
+        );
+    }
+    let catalog = model_catalog(&[SubscriptionProvider::Codex], &catalogs);
+    assert_eq!(catalog["data"].as_array().unwrap().len(), 1);
+    assert_eq!(catalog["data"][0]["id"], "same-live-id");
+}
+
 #[tokio::test]
-async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it() {
+async fn native_models_omit_rejected_providers_without_exposing_health_details() {
     let data = tempdir().unwrap();
     let claude = tempdir().unwrap();
     let codex = tempdir().unwrap();
@@ -209,32 +225,15 @@ async fn models_reports_a_rejected_provider_as_degraded_rather_than_omitting_it(
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let catalog: Value = serde_json::from_slice(&body).unwrap();
 
-    // Codex has discovered nothing in this test, so it is starting and appears
-    // in neither verdict list. It contributes no models until discovery.
-    assert_eq!(catalog["healthy_providers"], json!([]));
-    // Claude is degraded, and that is the point of issue #318: a revoked
-    // subscription used to vanish from `data` with `degraded_providers` left
-    // empty, so a monitor could not tell it from a provider that was never
-    // configured on this deployment. It is now named, with a reason.
-    assert_eq!(catalog["degraded_providers"], json!(["claude"]));
-    assert!(
-        catalog["degraded_reasons"]["claude"]
-            .as_str()
-            .unwrap_or_default()
-            .contains("rejected upstream"),
-        "a degraded provider must say why: {}",
-        catalog["degraded_reasons"]
-    );
-    // The provider is the key, so the value carries the verdict and nothing
-    // that identifies a credential: `/v1/models` answers any client token.
-    assert!(
-        !catalog["degraded_reasons"]["claude"]
-            .as_str()
-            .unwrap_or_default()
-            .contains('/'),
-        "a client must not be told where the credential lives: {}",
-        catalog["degraded_reasons"]
-    );
+    assert_eq!(catalog["data"], json!([]));
+    for router_only in [
+        "healthy_providers",
+        "degraded_providers",
+        "degraded_reasons",
+        "catalog_conflicts",
+    ] {
+        assert!(catalog.get(router_only).is_none(), "{catalog}");
+    }
     assert!(
         catalog["data"]
             .as_array()

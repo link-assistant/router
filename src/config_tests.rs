@@ -23,7 +23,8 @@ fn default_args(secret: Option<&'static str>) -> BuildArgs<'static> {
         codex_cli_bin: None,
         upstream_provider: UpstreamProvider::Auto,
         gonka_private_key: None,
-        gonka_source_url: default_gonka_source_url(),
+        gonka_api_key: None,
+        gonka_source_url: None,
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
@@ -123,22 +124,26 @@ fn account_limit_parser_accepts_zero_as_unlimited() {
 }
 
 #[test]
-fn gonka_provider_requires_private_key() {
+fn gonka_provider_requires_broker_api_key() {
     let result = Config::build(gonka_args(None));
-    assert!(matches!(result, Err(ConfigError::MissingGonkaPrivateKey)));
+    assert!(matches!(result, Err(ConfigError::MissingGonkaApiKey)));
 }
 
 #[test]
-fn gonka_provider_builds_with_private_key_and_defaults() {
+fn gonka_provider_builds_with_broker_api_key_and_defaults() {
     let config =
-        Config::build(gonka_args(Some("gonka-private-key"))).expect("gonka config should build");
+        Config::build(gonka_args(Some("gonka-api-key"))).expect("gonka config should build");
     assert_eq!(config.upstream_provider, UpstreamProvider::Gonka);
-    assert_eq!(config.gonka_source_url, default_gonka_source_url());
-    assert_eq!(config.gonka_model, default_gonka_model());
     assert_eq!(
-        config.gonka_private_key.as_deref(),
-        Some("gonka-private-key")
+        config.gonka_source_url.as_deref(),
+        Some("https://broker.gonka.test")
     );
+    assert_eq!(config.gonka_model, default_gonka_model());
+    assert_eq!(config.gonka_api_key.as_deref(), Some("gonka-api-key"));
+    let debug = format!("{config:?}");
+    assert!(debug.contains("[REDACTED]"));
+    assert!(!debug.contains("gonka-api-key"));
+    assert!(!debug.contains("secret"));
 }
 
 #[test]
@@ -171,7 +176,7 @@ fn crater_provider_builds_with_forgefed_inbox() {
     );
 }
 
-fn gonka_args(private_key: Option<&str>) -> BuildArgs<'static> {
+fn gonka_args(api_key: Option<&str>) -> BuildArgs<'static> {
     BuildArgs {
         host: "0.0.0.0",
         port: "8080",
@@ -187,8 +192,9 @@ fn gonka_args(private_key: Option<&str>) -> BuildArgs<'static> {
         claude_cli_bin: None,
         codex_cli_bin: None,
         upstream_provider: UpstreamProvider::Gonka,
-        gonka_private_key: private_key.map(str::to_string),
-        gonka_source_url: default_gonka_source_url(),
+        gonka_private_key: None,
+        gonka_api_key: api_key.map(str::to_string),
+        gonka_source_url: Some("https://broker.gonka.test".into()),
         gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
@@ -418,19 +424,37 @@ fn build_rejects_configurations_that_cannot_serve_requests() {
 fn build_requires_the_credentials_the_selected_provider_needs() {
     let mut args = default_args(Some("secret"));
     args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_private_key = None;
+    args.gonka_api_key = None;
     assert!(matches!(
         Config::build(args),
-        Err(ConfigError::MissingGonkaPrivateKey)
+        Err(ConfigError::MissingGonkaApiKey)
+    ));
+
+    let mut args = default_args(Some("secret"));
+    args.upstream_provider = UpstreamProvider::Gonka;
+    args.gonka_api_key = Some("broker-key".into());
+    args.gonka_source_url = None;
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::MissingGonkaSourceUrl)
     ));
 
     // An empty key is treated as absent.
     let mut args = default_args(Some("secret"));
     args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_private_key = Some(String::new());
+    args.gonka_api_key = Some(String::new());
     assert!(matches!(
         Config::build(args),
-        Err(ConfigError::MissingGonkaPrivateKey)
+        Err(ConfigError::MissingGonkaApiKey)
+    ));
+
+    let mut args = default_args(Some("secret"));
+    args.upstream_provider = UpstreamProvider::Gonka;
+    args.gonka_private_key = Some("wallet-key".into());
+    args.gonka_api_key = Some("broker-key".into());
+    assert!(matches!(
+        Config::build(args),
+        Err(ConfigError::UnsupportedGonkaDirectWallet)
     ));
 
     // Crater needs an inbox to deliver its Offer activities to.

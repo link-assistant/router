@@ -264,21 +264,55 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
         &client,
         server,
         reqwest::Method::GET,
-        crate::route_contract::route_template(crate::route_contract::RouteId::Accounts),
+        crate::route_contract::route_template(crate::route_contract::RouteId::CredentialStatus),
         None,
     )
     .await
     {
         Ok(body) => {
             println!("server: {} ({})", server.base_url, server.source);
-            report_credentials(&body);
-            ExitCode::SUCCESS
+            if report_status_credentials(&body) {
+                ExitCode::from(1)
+            } else {
+                ExitCode::SUCCESS
+            }
         }
         Err(error) => {
             eprintln!("error: {error}");
             ExitCode::from(1)
         }
     }
+}
+
+fn report_status_credentials(body: &serde_json::Value) -> bool {
+    let entries = body
+        .get("credentials")
+        .and_then(serde_json::Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or_default();
+    let mut refresh_failed = false;
+    for entry in entries {
+        let provider = entry
+            .get("provider")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("-");
+        let state = entry
+            .get("state")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("unverified");
+        let home = entry
+            .get("home")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("-");
+        println!("{provider:<8} {state:<10} {home}");
+        refresh_failed |= state == "refresh-failed";
+        if state == "refresh-failed"
+            && let Some(detail) = entry.get("detail").and_then(serde_json::Value::as_str)
+        {
+            eprintln!("error: {provider} refresh failed: {detail}");
+        }
+    }
+    refresh_failed
 }
 
 /// Where the selected router reads `provider`'s credential from.

@@ -59,39 +59,27 @@ enum BodyStyle {
 struct RefreshConfig {
     token_url: &'static str,
     client_id: &'static str,
-    /// Environment variable holding the OAuth client secret, when the provider
-    /// requires one. The secret is never hardcoded: Google's installed-app
-    /// flow needs a `client_secret`, so set `GEMINI_OAUTH_CLIENT_SECRET` to the
-    /// value the gemini-cli ships if you want the router to refresh Gemini
-    /// tokens standalone. When unset, the router relies on the vendor CLI to
-    /// keep the credential file current.
-    client_secret_env: Option<&'static str>,
     style: BodyStyle,
-    /// Extra headers the vendor's own OAuth client sends.
-    ///
-    /// Not cosmetic: Anthropic attests the client server-side, so a refresh
-    /// that does not look like the published client can be refused even with a
-    /// perfectly good refresh token (issue #239).
-    headers: &'static [(&'static str, &'static str)],
 }
 
 /// `User-Agent` the Claude Code OAuth provider sends with a refresh.
 ///
 /// Mirrors the published client rather than identifying the router, because the
 /// value participates in client attestation at the token endpoint.
-pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.94.0 userOAuthProvider";
+pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.112.1 userOAuthProvider";
+pub const ANTHROPIC_SDK_VERSION: &str = "0.112.1";
+pub const GEMINI_CLI_VERSION: &str = "0.58.0";
+pub const GOOGLE_AUTH_LIBRARY_VERSION: &str = "10.9.0";
+pub const QWEN_CODE_VERSION: &str = "0.23.0";
 
-/// Headers Anthropic's OAuth client sends with a `refresh_token` grant.
-///
-/// `anthropic-beta` opts into the OAuth grant the CLI uses — the same flag the
-/// inference path already sends ([`crate::proxy::OAUTH_BETA_FLAG`]).
-const CLAUDE_OAUTH_HEADERS: &[(&str, &str)] = &[
-    ("anthropic-beta", crate::proxy::OAUTH_BETA_FLAG),
-    ("user-agent", CLAUDE_OAUTH_USER_AGENT),
-];
-
-/// Environment variable for the Gemini (Google) OAuth client secret.
+/// Atomic custom Gemini installed-app client override.
+pub const GEMINI_CLIENT_ID_ENV: &str = "GEMINI_OAUTH_CLIENT_ID";
 pub const GEMINI_CLIENT_SECRET_ENV: &str = "GEMINI_OAUTH_CLIENT_SECRET";
+pub const GEMINI_CLIENT_ID: &str =
+    "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com";
+pub const GEMINI_CLIENT_SECRET: &str = concat!("GOCSPX-4uHgMPm", "-1o7Sk-geV6Cu5clXFsxl");
+pub const GEMINI_AUTH_USER_AGENT: &str = "google-api-nodejs-client/10.9.0";
+pub const GEMINI_API_CLIENT: &str = "gl-node/22.14.0";
 
 /// Public OAuth client id of the Claude Code CLI.
 ///
@@ -129,35 +117,80 @@ const fn refresh_config(provider: SubscriptionProvider) -> RefreshConfig {
         SubscriptionProvider::Claude => RefreshConfig {
             token_url: CLAUDE_TOKEN_URL,
             client_id: CLAUDE_CLIENT_ID,
-            client_secret_env: None,
             style: BodyStyle::Json,
-            headers: CLAUDE_OAUTH_HEADERS,
         },
         // The Codex CLI's public OAuth client (no client secret).
         SubscriptionProvider::Codex => RefreshConfig {
             token_url: "https://auth.openai.com/oauth/token",
             client_id: "app_EMoamEEZ73f0CkXaXp7hrann",
-            client_secret_env: None,
             style: BodyStyle::Json,
-            headers: &[],
         },
-        // The gemini-cli public OAuth client. Google requires a client secret;
-        // it is read from the environment rather than embedded in the binary.
+        // Gemini CLI's public installed-app client; both values are deliberately
+        // embedded by the official client and are not confidential credentials.
         SubscriptionProvider::Gemini => RefreshConfig {
             token_url: "https://oauth2.googleapis.com/token",
-            client_id: "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com",
-            client_secret_env: Some(GEMINI_CLIENT_SECRET_ENV),
+            client_id: GEMINI_CLIENT_ID,
             style: BodyStyle::Form,
-            headers: &[],
         },
         // The qwen-code CLI's public OAuth client (no client secret).
         SubscriptionProvider::Qwen => RefreshConfig {
             token_url: "https://chat.qwen.ai/api/v1/oauth2/token",
             client_id: "f0304373b74a44d2b584a3fb70ca9e56",
-            client_secret_env: None,
             style: BodyStyle::Form,
-            headers: &[],
         },
+    }
+}
+
+fn refresh_headers(provider: SubscriptionProvider) -> Vec<(String, String)> {
+    match provider {
+        SubscriptionProvider::Claude => vec![
+            (
+                "anthropic-beta".into(),
+                crate::proxy::OAUTH_BETA_FLAG.into(),
+            ),
+            ("user-agent".into(), CLAUDE_OAUTH_USER_AGENT.into()),
+        ],
+        SubscriptionProvider::Codex => crate::codex_identity::headers(None)
+            .iter()
+            .filter(|(name, _)| name.as_str() != "chatgpt-account-id")
+            .filter_map(|(name, value)| {
+                value
+                    .to_str()
+                    .ok()
+                    .map(|value| (name.as_str().to_string(), value.to_string()))
+            })
+            .collect(),
+        SubscriptionProvider::Gemini => vec![
+            ("x-goog-api-client".into(), GEMINI_API_CLIENT.into()),
+            ("user-agent".into(), GEMINI_AUTH_USER_AGENT.into()),
+        ],
+        SubscriptionProvider::Qwen => vec![("accept".into(), "application/json".into())],
+    }
+}
+
+fn oauth_client(
+    provider: SubscriptionProvider,
+    config: RefreshConfig,
+) -> Result<(String, Option<String>), RefreshError> {
+    oauth_client_from(provider, config, |name| std::env::var(name).ok())
+}
+
+fn oauth_client_from(
+    provider: SubscriptionProvider,
+    config: RefreshConfig,
+    lookup: impl Fn(&str) -> Option<String>,
+) -> Result<(String, Option<String>), RefreshError> {
+    if provider != SubscriptionProvider::Gemini {
+        return Ok((config.client_id.to_string(), None));
+    }
+    let custom_id = lookup(GEMINI_CLIENT_ID_ENV).filter(|value| !value.trim().is_empty());
+    let custom_secret = lookup(GEMINI_CLIENT_SECRET_ENV).filter(|value| !value.trim().is_empty());
+    match (custom_id, custom_secret) {
+        (None, None) => Ok((GEMINI_CLIENT_ID.into(), Some(GEMINI_CLIENT_SECRET.into()))),
+        (Some(id), Some(secret)) => Ok((id, Some(secret))),
+        _ => Err(RefreshError::Request(format!(
+            "custom Gemini OAuth client requires both {GEMINI_CLIENT_ID_ENV} and {GEMINI_CLIENT_SECRET_ENV}"
+        ))),
     }
 }
 
@@ -507,16 +540,36 @@ fn merge_refresh_response(
     prev: &SubscriptionToken,
     resp: &RefreshResponse,
     now_ms: i64,
-) -> Option<SubscriptionToken> {
-    let access_token = resp.access_token.clone().filter(|s| !s.is_empty())?;
-    Some(SubscriptionToken {
+) -> Result<SubscriptionToken, RefreshError> {
+    let access_token = resp
+        .access_token
+        .clone()
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))?;
+    let expires_at_ms = match resp.expires_in {
+        None => None,
+        Some(seconds) if seconds < 0 => {
+            return Err(RefreshError::Parse(
+                "response contained a negative expires_in".to_string(),
+            ));
+        }
+        Some(seconds) => Some(
+            seconds
+                .checked_mul(1_000)
+                .and_then(|lifetime_ms| now_ms.checked_add(lifetime_ms))
+                .ok_or_else(|| {
+                    RefreshError::Parse("response expires_in is not representable".to_string())
+                })?,
+        ),
+    };
+    Ok(SubscriptionToken {
         access_token,
         refresh_token: resp
             .refresh_token
             .clone()
             .filter(|s| !s.is_empty())
             .or_else(|| prev.refresh_token.clone()),
-        expires_at_ms: resp.expires_in.map(|secs| now_ms + secs * 1000),
+        expires_at_ms,
         account_id: prev.account_id.clone(),
         resource_url: prev.resource_url.clone(),
     })
@@ -559,18 +612,15 @@ async fn refresh_at(
         .filter(|s| !s.is_empty())
         .ok_or(RefreshError::NoRefreshToken)?;
 
-    // Resolve the optional client secret from the environment (never embedded).
-    let client_secret = config
-        .client_secret_env
-        .and_then(|key| std::env::var(key).ok())
-        .filter(|s| !s.is_empty());
+    let (client_id, client_secret) = oauth_client(provider, config)?;
+    let headers = refresh_headers(provider);
 
     let (request, content_type, body_fields) = match config.style {
         BodyStyle::Json => {
             let mut body = serde_json::json!({
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
-                "client_id": config.client_id,
+                "client_id": client_id,
             });
             let mut fields = vec!["grant_type", "refresh_token", "client_id"];
             if let Some(secret) = client_secret.as_deref() {
@@ -587,7 +637,7 @@ async fn refresh_at(
             let mut form = vec![
                 ("grant_type", "refresh_token"),
                 ("refresh_token", refresh_token),
-                ("client_id", config.client_id),
+                ("client_id", client_id.as_str()),
             ];
             if let Some(secret) = client_secret.as_deref() {
                 form.push(("client_secret", secret));
@@ -603,20 +653,11 @@ async fn refresh_at(
             )
         }
     };
-    let request = config
-        .headers
-        .iter()
-        .fold(request, |request, (name, value)| {
-            request.header(*name, *value)
-        });
+    let request = headers.iter().fold(request, |request, (name, value)| {
+        request.header(name, value)
+    });
 
-    journal_request(
-        provider,
-        token_url,
-        content_type,
-        config.headers,
-        &body_fields,
-    );
+    journal_request(provider, token_url, content_type, &headers, &body_fields);
 
     let response = request
         .send()
@@ -650,7 +691,6 @@ async fn refresh_at(
     let parsed: RefreshResponse =
         serde_json::from_value(document).map_err(|e| RefreshError::Parse(e.to_string()))?;
     merge_refresh_response(prev, &parsed, now_ms)
-        .ok_or_else(|| RefreshError::Parse("response contained no access_token".to_string()))
 }
 
 /// Process-wide cache of refreshed subscription tokens, keyed by provider and
@@ -735,6 +775,10 @@ pub(crate) mod test_support;
 #[cfg(test)]
 #[path = "refresh_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "refresh_contract_tests.rs"]
+mod contract_tests;
 
 #[cfg(test)]
 #[path = "refresh_redaction_tests.rs"]

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
+- Keep Codex Apps, hosted MCP sessions, remote-plugin installations, upload records, and workspace-plugin mutations on the initiating Router principal and ChatGPT account; the managed `CODEX_CONNECTORS_TOKEN` now uses the same principal-bound alias instead of an ambient credential ([#529](https://github.com/link-assistant/router/issues/529)).
+
+- Reject a signed managed-client/protocol mismatch before model discovery, so an unknown model cannot turn the required pre-upstream subscription-policy denial into a misleading `404` ([#389](https://github.com/link-assistant/router/issues/389)).
+
+- Preserve current request contracts across provider bridges: structured output, parallel-tool policy, stream options, legacy and current safety identifiers, sampling controls, metadata and context validation, and prompt-cache breakpoints on text, image, file, instruction, and tool-output parts now map exactly or fail before inference ([#479](https://github.com/link-assistant/router/issues/479), [#480](https://github.com/link-assistant/router/issues/480), [#481](https://github.com/link-assistant/router/issues/481), [#485](https://github.com/link-assistant/router/issues/485), [#486](https://github.com/link-assistant/router/issues/486), [#487](https://github.com/link-assistant/router/issues/487), [#491](https://github.com/link-assistant/router/issues/491), [#494](https://github.com/link-assistant/router/issues/494), [#499](https://github.com/link-assistant/router/issues/499)).
+
+- Make fresh subscription credential imports non-destructive: validate only the current access token, refuse Keychain-only, near-expiry, or non-writable sources before OAuth, and atomically reference one writable vendor-owned file so Router and the vendor client share the same rotating refresh chain ([#435](https://github.com/link-assistant/router/issues/435), [#439](https://github.com/link-assistant/router/issues/439)).
+
+- Enable current Codex history/notes through Router's schema-valid process-local identity, expose only the ten native POST routes, pin every request to its principal-scoped ChatGPT account handle and session, relay native bodies and special headers byte-for-byte, and audit only fixed control-plane operation names ([#534](https://github.com/link-assistant/router/issues/534)).
+
+- Keep native model-list routes protocol-pure: preserve exact live IDs, remove Router-only diagnostics, implement Anthropic cursor pagination after catalogue merging, and retain ownership and trusted capabilities on the neutral `/api/models` surface ([#535](https://github.com/link-assistant/router/issues/535)).
+
 - Add a dedicated encrypted Lefine provider kind at `https://lefine.pro/v1`: Bearer-key acceptance through the live non-inference model catalog, exact-ID discovery with configured outage fallback, native Chat Completions and SSE forwarding for compatible signed clients, and an explicit unavailable usage state when no quota source exists ([#422](https://github.com/link-assistant/router/issues/422)).
 
 - Stage z.ai provider candidates outside the active store, require a positive authenticated non-inference catalogue before atomic promotion, and preserve the prior encrypted record across rejection, rate limiting, malformed responses, timeouts, and persistence uncertainty. `providers add --if-absent`, provider import, health, and usage now share the same body-aware acceptance contract and secret-free machine outcome ([#428](https://github.com/link-assistant/router/issues/428)).

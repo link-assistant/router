@@ -1,6 +1,189 @@
 use super::*;
 
 #[test]
+fn responses_safety_identifier_and_top_p_reach_anthropic_losslessly() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "answer",
+        "safety_identifier": "synthetic-user-42",
+        "top_p": 0.25
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["metadata"]["user_id"], "synthetic-user-42");
+    assert_eq!(translated["top_p"], 0.25);
+
+    for top_p in [0.0, 1.0] {
+        let request: OpenAIResponseRequest = serde_json::from_value(json!({
+            "model": "claude-test", "input": "answer", "top_p": top_p
+        }))
+        .unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_ok());
+    }
+    for body in [
+        json!({"model": "claude-test", "input": "answer", "top_p": -0.1}),
+        json!({"model": "claude-test", "input": "answer", "top_p": 1.1}),
+        json!({"model": "claude-test", "input": "answer", "temperature": 0.5, "top_p": 0.5}),
+    ] {
+        let request: OpenAIResponseRequest = serde_json::from_value(body).unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_err());
+    }
+    assert!(
+        serde_json::from_value::<OpenAIResponseRequest>(json!({
+            "model": "claude-test", "input": "answer", "top_p": "high"
+        }))
+        .is_err()
+    );
+}
+
+#[test]
+fn responses_legacy_user_maps_to_anthropic_with_current_identifier_precedence() {
+    let legacy: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer", "user": "legacy-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        response_to_anthropic(&legacy)["metadata"]["user_id"],
+        "legacy-user"
+    );
+
+    let both: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer",
+        "user": "legacy-user", "safety_identifier": "current-user"
+    }))
+    .unwrap();
+    assert_eq!(
+        response_to_anthropic(&both)["metadata"]["user_id"],
+        "current-user"
+    );
+}
+
+#[test]
+fn chat_to_responses_preserves_compatible_controls_and_schema() {
+    let translated = try_chat_completion_to_responses(&json!({
+        "model": "gpt-test",
+        "messages": [{"role": "user", "content": "answer"}],
+        "response_format": {"type": "json_schema", "json_schema": {
+            "name": "answer", "strict": true, "schema": {"type": "object"}
+        }},
+        "parallel_tool_calls": false,
+        "stream": true,
+        "stream_options": {"include_obfuscation": true},
+        "user": "legacy-user"
+    }))
+    .unwrap();
+
+    assert_eq!(translated["text"]["format"]["type"], "json_schema");
+    assert_eq!(translated["text"]["format"]["name"], "answer");
+    assert_eq!(translated["text"]["format"]["strict"], true);
+    assert_eq!(translated["text"]["format"]["schema"]["type"], "object");
+    assert_eq!(translated["parallel_tool_calls"], false);
+    assert_eq!(translated["stream_options"]["include_obfuscation"], true);
+    assert_eq!(translated["user"], "legacy-user");
+}
+
+#[test]
+fn responses_bridge_retains_fields_that_must_be_validated() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "answer",
+        "metadata": {"case": "synthetic"},
+        "context_management": [{"type": "compaction", "compact_threshold": 12000}],
+        "top_logprobs": 5,
+        "user": "legacy-user"
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(request).unwrap();
+    for field in ["metadata", "context_management", "top_logprobs", "user"] {
+        assert!(
+            retained.get(field).is_some(),
+            "discarded {field}: {retained}"
+        );
+    }
+}
+
+#[test]
+fn responses_structured_output_and_parallel_tool_policy_reach_anthropic() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "answer",
+        "text": {"format": {
+            "type": "json_schema", "name": "answer", "strict": true,
+            "schema": {"type": "object", "required": ["answer"]}
+        }},
+        "parallel_tool_calls": false,
+        "tools": [{"type": "function", "name": "lookup", "parameters": {"type": "object"}}],
+        "tool_choice": {"type": "function", "name": "lookup"}
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["output_config"]["format"]["type"], "json_schema");
+    assert_eq!(
+        translated["output_config"]["format"]["schema"],
+        json!({"type": "object", "required": ["answer"]})
+    );
+    assert_eq!(translated["tool_choice"]["type"], "tool");
+    assert_eq!(translated["tool_choice"]["name"], "lookup");
+    assert_eq!(translated["tool_choice"]["disable_parallel_tool_use"], true);
+}
+
+#[test]
+fn responses_flat_function_tool_strictness_is_preserved() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test",
+        "input": "use tools",
+        "tools": [
+            {"type": "function", "name": "strict_tool", "strict": true, "parameters": {"type": "object"}},
+            {"type": "function", "name": "loose_tool", "strict": false, "parameters": {"type": "object"}},
+            {"type": "function", "name": "default_tool", "parameters": {"type": "object"}}
+        ]
+    }))
+    .unwrap();
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["tools"][0]["strict"], true);
+    assert_eq!(translated["tools"][1]["strict"], false);
+    assert!(translated["tools"][2].get("strict").is_none());
+}
+
+#[test]
+fn responses_execution_controls_are_retained_mapped_or_rejected() {
+    let request: OpenAIResponseRequest = serde_json::from_value(json!({
+        "model": "claude-test", "input": "search",
+        "background": false, "max_tool_calls": 1, "truncation": "disabled",
+        "store": false, "stream": true, "stream_options": {},
+        "tools": [{"type": "web_search"}]
+    }))
+    .unwrap();
+    let retained = serde_json::to_value(&request).unwrap();
+    for field in [
+        "background",
+        "max_tool_calls",
+        "truncation",
+        "store",
+        "stream_options",
+    ] {
+        assert!(retained.get(field).is_some(), "discarded {field}");
+    }
+    assert_eq!(crate::bridge_controls::validate_responses(&request), Ok(()));
+    let translated = response_to_anthropic(&request);
+    assert_eq!(translated["tools"][0]["max_uses"], 1);
+
+    for fields in [
+        json!({"background": true}),
+        json!({"store": true}),
+        json!({"truncation": "auto"}),
+        json!({"stream": true, "stream_options": {"include_obfuscation": true}}),
+        json!({"max_tool_calls": 2, "tools": [{"type": "web_search"}, {"type": "web_fetch"}]}),
+    ] {
+        let mut body = json!({"model": "claude-test", "input": "answer"});
+        body.as_object_mut()
+            .unwrap()
+            .extend(fields.as_object().unwrap().clone());
+        let request: OpenAIResponseRequest = serde_json::from_value(body).unwrap();
+        assert!(crate::bridge_controls::validate_responses(&request).is_err());
+    }
+}
+
+#[test]
 fn responses_api_translation() {
     let req = OpenAIResponseRequest {
         model: "gpt-4o".into(),
@@ -8,10 +191,23 @@ fn responses_api_translation() {
         instructions: Some("be poetic".into()),
         max_output_tokens: Some(128),
         temperature: Some(0.9),
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
     let body = response_to_anthropic(&req);
     // The requested model is preserved verbatim (issue #192).
@@ -112,10 +308,23 @@ fn responses_structured_input_translates_to_anthropic() {
         instructions: Some("follow policy".into()),
         max_output_tokens: None,
         temperature: None,
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
 
     let body = response_to_anthropic(&req);
@@ -284,6 +493,71 @@ fn codex_response_converts_to_chat_completion() {
 }
 
 #[test]
+fn failed_codex_response_converts_to_openai_error() {
+    let response = json!({
+        "id": "resp_failed",
+        "status": "failed",
+        "error": {
+            "message": "buffered boom",
+            "type": "server_error",
+            "code": "upstream_failed",
+            "param": "input",
+            "private_account": "secret"
+        },
+        "output": [{"type": "message", "content": [{"type": "output_text", "text": "partial"}]}]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert_eq!(out["error"]["message"], "buffered boom");
+    assert_eq!(out["error"]["type"], "server_error");
+    assert_eq!(out["error"]["code"], "upstream_failed");
+    assert_eq!(out["error"]["param"], "input");
+    assert!(out.get("choices").is_none());
+    assert!(!out.to_string().contains("private_account"));
+}
+
+#[test]
+fn refusal_only_codex_response_uses_the_chat_refusal_field() {
+    let response = json!({
+        "id": "resp_refusal",
+        "status": "completed",
+        "output": [{"type": "message", "content": [
+            {"type": "refusal", "refusal": "cannot comply"}
+        ]}]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert!(out["choices"][0]["message"]["content"].is_null());
+    assert_eq!(out["choices"][0]["message"]["refusal"], "cannot comply");
+    assert_eq!(out["choices"][0]["finish_reason"], "stop");
+}
+
+#[test]
+fn mixed_codex_response_preserves_text_and_refusal_order_within_each_field() {
+    let response = json!({
+        "id": "resp_mixed",
+        "status": "completed",
+        "output": [
+            {"type": "message", "content": [
+                {"type": "output_text", "text": "before "},
+                {"type": "refusal", "refusal": "cannot "},
+                {"type": "output_text", "text": "after"}
+            ]},
+            {"type": "message", "content": [
+                {"type": "refusal", "refusal": "comply"}
+            ]}
+        ]
+    });
+
+    let out = response_to_chat_completion(&response, "gpt-5.6-sol");
+
+    assert_eq!(out["choices"][0]["message"]["content"], "before after");
+    assert_eq!(out["choices"][0]["message"]["refusal"], "cannot comply");
+}
+
+#[test]
 fn codex_function_calls_convert_to_chat_tool_calls() {
     let response = json!({
         "id": "resp_tools",
@@ -327,20 +601,34 @@ fn normalizes_string_input_and_preserves_typed_input() {
 }
 
 #[test]
-fn drops_temperature_for_claude_5_models() {
+fn preserves_temperature_for_live_claude_validation() {
     let req = OpenAIResponseRequest {
         model: "claude-opus-5".into(),
         input: Value::String("hello".into()),
         instructions: None,
         max_output_tokens: None,
         temperature: Some(0.7),
+        top_p: None,
         stream: None,
         tools: None,
         tool_choice: None,
         reasoning: None,
+        text: None,
+        parallel_tool_calls: None,
+        background: None,
+        max_tool_calls: None,
+        truncation: None,
+        store: None,
+        stream_options: None,
+        safety_identifier: None,
+        user: None,
+        metadata: None,
+        context_management: None,
+        top_logprobs: None,
     };
     let body = response_to_anthropic(&req);
-    assert!(body.get("temperature").is_none());
+    let temperature = body["temperature"].as_f64().unwrap();
+    assert!((temperature - 0.7).abs() < 1e-6);
 }
 
 #[test]
@@ -375,4 +663,55 @@ fn prior_function_items_survive_responses_to_anthropic_translation() {
     assert_eq!(body["messages"][0]["content"][0]["id"], "call_1");
     assert_eq!(body["messages"][1]["content"][0]["type"], "tool_result");
     assert_eq!(body["messages"][1]["content"][0]["tool_use_id"], "call_1");
+}
+
+#[test]
+fn chat_projection_keeps_service_tier_moderation_and_citation_results() {
+    let response = json!({
+        "id": "resp_contract", "status": "completed", "service_tier": "priority",
+        "moderation": {"status": "completed", "results": [{"flagged": false}]},
+        "output": [{"type": "message", "content": [{
+            "type": "output_text", "text": "Rust",
+            "annotations": [{"type": "url_citation", "url": "https://example.test",
+                "title": "Rust", "start_index": 0, "end_index": 4}]
+        }]}],
+        "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2}
+    });
+    let chat = response_to_chat_completion(&response, "gpt-test");
+    assert_eq!(chat["service_tier"], "priority");
+    assert_eq!(chat["moderation"], response["moderation"]);
+    assert_eq!(
+        chat.pointer("/choices/0/message/annotations/0/url_citation/url"),
+        Some(&json!("https://example.test"))
+    );
+
+    let mut stream = ResponsesChatStreamTranslator::new("gpt-test");
+    let output = stream
+        .push(br#"data: {"type":"response.output_text.delta","delta":"Rust"}
+
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","url":"https://example.test","title":"Rust","start_index":0,"end_index":4}}
+
+data: {"type":"response.completed","response":{"status":"completed","service_tier":"priority","moderation":{"status":"completed","results":[{"flagged":false}]},"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}
+
+"#)
+        .join("");
+    assert!(
+        output.contains("\"url\":\"https://example.test\""),
+        "{output}"
+    );
+    assert!(output.contains("\"service_tier\":\"priority\""), "{output}");
+    assert!(output.contains("\"moderation\":{"), "{output}");
+}
+
+#[test]
+fn chat_storage_and_metadata_survive_the_chat_to_responses_projection() {
+    let body = json!({
+        "model": "gpt-next",
+        "messages": [{"role": "user", "content": "hello"}],
+        "store": true,
+        "metadata": {"case": "synthetic"}
+    });
+    let responses = chat_completion_to_responses(&body);
+    assert_eq!(responses["store"], true);
+    assert_eq!(responses["metadata"], json!({"case": "synthetic"}));
 }

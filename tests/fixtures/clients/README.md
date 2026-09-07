@@ -5,6 +5,10 @@ shape that the real binary demonstrably sends. `tests/client_fixture_test.rs`
 replays each one against the router and asserts it authenticates, dispatches to
 the expected surface, and is answered in the expected dialect.
 
+The directory also contains authorization and refresh contract snapshots.
+Those do not declare `credential_carrier` and are intentionally excluded from
+request replay.
+
 The point is to make the fast tests assert against something a real client
 actually sent, rather than against a shape written by hand. Issue #206 is the
 worked example: every unit test passed while the documented Gemini CLI setup
