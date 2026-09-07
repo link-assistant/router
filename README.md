@@ -360,6 +360,19 @@ onboarding happens once and sessions started through Router remain resumable.
 Use `--extend-global-config` before `claude` to opt into the normal Claude
 profile, or `--isolated-config` for a disposable clean-room profile.
 
+Claude Code 2.1.263 still resolves authentication once for the whole process:
+the Router bearer and non-Anthropic base URL correctly route inference and
+model discovery, but take precedence over a stored Claude.ai login. Router
+therefore prints the exact limitation before launch and rejects explicit
+Claude.ai-only operations (`--cloud`, `--environment`, `--remote-control`,
+`--teleport`, and `ultrareview`) before server discovery or token minting.
+Connectors, Remote Control, `/schedule`, notification preferences, cloud
+sessions, remote managed settings, and organization policy are unavailable in
+that Router-directed process. Run those operations directly with Claude.ai
+authentication. Router never reads, copies, patches, logs, or deletes the
+stored Claude login; a future Claude release is refused until its auth boundary
+passes the pinned real-client review.
+
 Reset only the Router-owned profile, retain a recoverable private backup, and
 launch Claude against a new empty profile with:
 
@@ -384,7 +397,9 @@ export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 claude
 ```
 
-Claude Code will work exactly as normal, with all requests transparently proxied through the router.
+Inference and `/v1/models` discovery use only the Router token. The native
+Claude.ai services listed above are not proxied and remain unavailable until
+Claude Code exposes an officially supported split-auth mechanism.
 
 ## API Endpoints
 

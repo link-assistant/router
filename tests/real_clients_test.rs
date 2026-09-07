@@ -127,6 +127,66 @@ struct MockRouter {
     thread: Option<thread::JoinHandle<()>>,
 }
 
+struct ExternalTrafficGuard {
+    origin: String,
+    attempts: Arc<Mutex<Vec<CapturedRequest>>>,
+    stop: Arc<AtomicBool>,
+    thread: Option<thread::JoinHandle<()>>,
+}
+
+impl ExternalTrafficGuard {
+    fn start() -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind external traffic guard");
+        listener
+            .set_nonblocking(true)
+            .expect("configure external traffic guard");
+        let address = listener
+            .local_addr()
+            .expect("external traffic guard address");
+        let attempts = Arc::new(Mutex::new(Vec::new()));
+        let captured = Arc::clone(&attempts);
+        let stop = Arc::new(AtomicBool::new(false));
+        let stopped = Arc::clone(&stop);
+        let thread = thread::spawn(move || {
+            while !stopped.load(Ordering::Acquire) {
+                match listener.accept() {
+                    Ok((mut stream, _)) => {
+                        if let Some(request) = read_request(&mut stream) {
+                            captured
+                                .lock()
+                                .expect("capture external attempt")
+                                .push(request);
+                        }
+                        let _ = stream.write_all(
+                            b"HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                        );
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(error) => panic!("accept external traffic attempt: {error}"),
+                }
+            }
+        });
+        Self {
+            origin: format!("http://{address}"),
+            attempts,
+            stop,
+            thread: Some(thread),
+        }
+    }
+}
+
+impl Drop for ExternalTrafficGuard {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Release);
+        let _ = TcpStream::connect(self.origin.trim_start_matches("http://"));
+        if let Some(thread) = self.thread.take() {
+            thread.join().expect("stop external traffic guard");
+        }
+    }
+}
+
 impl MockRouter {
     fn start(case: ClientCase) -> Self {
         Self::start_with_models(case, default_models(case))
@@ -571,16 +631,40 @@ fn run_wrapper_with_options(
     model: Option<&str>,
     forwarded: &[&str],
 ) -> Output {
+    run_wrapper_with_configuration_options(
+        case,
+        working_directory,
+        home,
+        server,
+        model,
+        &[],
+        forwarded,
+        None,
+    )
+}
+
+fn run_wrapper_with_configuration_options(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: Option<&str>,
+    wrapper_options: &[&str],
+    forwarded: &[&str],
+    external_proxy: Option<&str>,
+) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
     command.args(["--server", server, "--token", "offline-admin"]);
     if let Some(model) = model {
         command.args(["--model", model]);
     }
+    command.args(wrapper_options);
     if forwarded.first() == Some(&"--reset-to-default-configuration") {
         command.arg("--yes");
     }
     command.args(["--non-interactive", case.client]);
     command.args(forwarded);
+    let external_proxy = external_proxy.unwrap_or("http://127.0.0.1:9");
     let mut child = command
         .current_dir(working_directory)
         .env("HOME", home)
@@ -590,9 +674,9 @@ fn run_wrapper_with_options(
         .env("NO_COLOR", "1")
         .env("NO_PROXY", "127.0.0.1,localhost")
         .env("no_proxy", "127.0.0.1,localhost")
-        .env("HTTP_PROXY", "http://127.0.0.1:9")
-        .env("HTTPS_PROXY", "http://127.0.0.1:9")
-        .env("ALL_PROXY", "http://127.0.0.1:9")
+        .env("HTTP_PROXY", external_proxy)
+        .env("HTTPS_PROXY", external_proxy)
+        .env("ALL_PROXY", external_proxy)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -614,6 +698,95 @@ fn run_wrapper_with_options(
     child
         .wait_with_output()
         .expect("collect real-client output")
+}
+
+fn assert_claude_split_auth_boundary(home: &Path, router: &MockRouter) {
+    let claude_home = home.join(".claude");
+    std::fs::create_dir_all(&claude_home).expect("create synthetic Claude profile");
+    let credentials = b"{\"claudeAiOauth\":{\"accessToken\":\"synthetic-claude-oauth\",\"refreshToken\":\"synthetic-claude-refresh\",\"expiresAt\":4102444800000,\"subscriptionType\":\"max\",\"scopes\":[\"user:inference\",\"user:mcp_servers\",\"user:file_upload\",\"user:profile\",\"user:sessions:claude_code\"]}}\n";
+    std::fs::write(claude_home.join(".credentials.json"), credentials)
+        .expect("write synthetic Claude login");
+
+    let request_start = router.requests.lock().expect("read Router capture").len();
+    let before = router.inference_requests(CLAUDE.inference_path).len();
+    let external = ExternalTrafficGuard::start();
+    let output = run_wrapper_with_configuration_options(
+        CLAUDE,
+        Path::new(env!("CARGO_MANIFEST_DIR")),
+        home,
+        &router.origin,
+        Some(CLAUDE.model),
+        &["--extend-global-config"],
+        &[PROMPT],
+        Some(&external.origin),
+    );
+    assert!(
+        output.status.success(),
+        "Claude split-auth boundary capture failed; stdout: {}; stderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    for unavailable in [
+        "Claude.ai connectors",
+        "Remote Control",
+        "/schedule",
+        "notification preferences",
+        "cloud sessions",
+        "remote managed settings",
+        "organization policy",
+    ] {
+        assert!(
+            stderr.contains(unavailable),
+            "the real-client diagnostic omitted {unavailable}: {stderr}"
+        );
+    }
+    assert_eq!(
+        std::fs::read(claude_home.join(".credentials.json"))
+            .expect("read synthetic Claude login after capture"),
+        credentials,
+        "Router must leave the released client's stored login byte-identical"
+    );
+
+    let requests = router.inference_requests(CLAUDE.inference_path);
+    assert_eq!(
+        requests.len(),
+        before + 1,
+        "the limitation must not disable Router inference"
+    );
+    let request = requests.last().expect("split-auth inference request");
+    assert_eq!(
+        request.header("authorization"),
+        Some(format!("Bearer {}", run_token(CLAUDE)).as_str()),
+        "sampling must carry only the Router credential"
+    );
+    let captured = router.requests.lock().expect("read split-auth capture");
+    let routed = &captured[request_start..];
+    let router_credential = format!("Bearer {}", run_token(CLAUDE));
+    for request in routed
+        .iter()
+        .filter(|request| request.path.ends_with("/models"))
+    {
+        assert_eq!(
+            request.header("authorization"),
+            Some(router_credential.as_str()),
+            "model discovery must carry only the Router credential"
+        );
+    }
+    let capture = format!("{routed:?}");
+    assert!(
+        !capture.contains("synthetic-claude-oauth")
+            && !capture.contains("synthetic-claude-refresh"),
+        "the stored Claude identity must never reach Router"
+    );
+    assert!(
+        external
+            .attempts
+            .lock()
+            .expect("read external traffic attempts")
+            .is_empty(),
+        "the unsupported split-auth path must make zero first-party or other external calls"
+    );
 }
 
 fn assert_real_client_capture(case: ClientCase) {
@@ -719,6 +892,9 @@ fn assert_real_client_capture(case: ClientCase) {
             String::from_utf8_lossy(&switched.stdout),
             String::from_utf8_lossy(&switched.stderr)
         );
+    }
+    if case.client == "claude" {
+        assert_claude_split_auth_boundary(directory.path(), &router);
     }
     if let Some((config, before)) = foreign_codex_config {
         assert_eq!(

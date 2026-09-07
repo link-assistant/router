@@ -72,13 +72,16 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
             )
             .await
         }
-        ClientOp::Doctor { client } => match manager.doctor(*client).await {
-            Ok(message) => {
-                println!("ok: {message}");
-                ExitCode::SUCCESS
+        ClientOp::Doctor { client } => {
+            crate::client_launch::report_claude_native_services_limitation(*client);
+            match manager.doctor(*client).await {
+                Ok(message) => {
+                    println!("ok: {message}");
+                    ExitCode::SUCCESS
+                }
+                Err(error) => failed(error),
             }
-            Err(error) => failed(error),
-        },
+        }
     }
 }
 
@@ -195,6 +198,7 @@ async fn setup(
         );
         return ExitCode::from(2);
     }
+    crate::client_launch::report_claude_native_services_limitation(client);
     if let Some(management_server) = management_server {
         let Some(base_url) = base_url else {
             return failed("--management-server requires --server");

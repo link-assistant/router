@@ -23,6 +23,9 @@ pub async fn repair(
     } else {
         return failed("choose one client or pass --all");
     };
+    if rollback.is_none() && clients.contains(&ClientKind::ClaudeCode) {
+        crate::client_launch::report_claude_native_services_limitation(ClientKind::ClaudeCode);
+    }
 
     if let Some(id) = rollback {
         let result = manager.rollback_repair(clients[0], id);
