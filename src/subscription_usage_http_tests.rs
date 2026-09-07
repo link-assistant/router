@@ -321,7 +321,7 @@ async fn authentication_and_authorization_denials_are_non_enumerating_and_hit_no
     .await;
     let (admin_status, admin_body) = request(
         app.clone(),
-        "/api/usage/anthropic",
+        "/api/usage",
         Some(("authorization", format!("Bearer {admin}"))),
     )
     .await;
