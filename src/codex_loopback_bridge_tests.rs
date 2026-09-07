@@ -133,3 +133,11 @@ async fn ephemeral_bridge_preserves_http_request_and_stops_on_drop() {
     assert!(reqwest::get(&health).await.is_err());
     server.abort();
 }
+
+#[test]
+fn windows_owned_bridge_shutdown_forcefully_terminates_the_process_tree() {
+    assert_eq!(
+        super::codex_loopback_bridge::windows_terminate_arguments(42),
+        ["/PID", "42", "/T", "/F"].map(String::from)
+    );
+}

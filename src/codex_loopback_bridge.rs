@@ -488,8 +488,9 @@ fn signal_terminate(pid: u32) -> Result<(), String> {
 
 #[cfg(windows)]
 fn signal_terminate(pid: u32) -> Result<(), String> {
+    let arguments = windows_terminate_arguments(pid);
     let status = std::process::Command::new("taskkill")
-        .args(["/PID", &pid.to_string(), "/T"])
+        .args(arguments)
         .status()
         .map_err(|error| format!("could not stop the owned Codex bridge: {error}"))?;
     if status.success() {
@@ -497,6 +498,11 @@ fn signal_terminate(pid: u32) -> Result<(), String> {
     } else {
         Err("could not stop the owned Codex bridge".into())
     }
+}
+
+#[cfg(any(windows, test))]
+pub(crate) fn windows_terminate_arguments(pid: u32) -> [String; 4] {
+    ["/PID".into(), pid.to_string(), "/T".into(), "/F".into()]
 }
 
 async fn healthy(state: &PersistentState) -> bool {
