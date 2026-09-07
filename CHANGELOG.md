@@ -175,6 +175,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.4.0] - 2026-09-07
+
+### Added
+- Add a default-off `--allow-proxied-client codex` / `PROXIED_CLIENT_OVERRIDES=codex` contract for trusted fixed proxies using Codex-bound tokens on the canonical Codex Responses route without the native CLI fingerprint. Canonical catalog marker compatibility is unchanged; proxied inference is provider-scoped, warned at startup, and identified in audit records.
+
 ## [1.3.2] - 2026-09-07
 
 ### Added
