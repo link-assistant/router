@@ -551,22 +551,47 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
     assert_eq!(catalog["models"][1]["default_reasoning_level"], "xhigh");
 }
 
-/// Missing capability metadata is different from an authoritative empty list:
-/// launching with unknown metadata would make Codex silently discard an
-/// explicit user effort after `/model`, so Router must stop with a useful error.
+/// One incomplete provider must not keep fully described models from launching.
+/// The incomplete model is excluded rather than offered to Codex, where choosing
+/// it could silently discard the user's explicit effort.
 #[test]
-fn codex_catalog_rejects_unknown_reasoning_metadata() {
+fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_models() {
     let root = tempfile::tempdir().expect("temporary catalog directory");
-    let models = [RouterModel {
-        id: "future-reasoning-unknown".to_string(),
-        owned_by: "openai".to_string(),
-        default_reasoning_level: None,
-        supported_reasoning_levels: None,
-    }];
+    let models = [
+        RouterModel {
+            id: "future-reasoning-unknown".to_string(),
+            owned_by: "unknown-provider".to_string(),
+            default_reasoning_level: None,
+            supported_reasoning_levels: None,
+        },
+        RouterModel {
+            id: "future-reasoning-known".to_string(),
+            owned_by: "openai".to_string(),
+            default_reasoning_level: Some("high".to_string()),
+            supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+                effort: "high".to_string(),
+                description: "Deep reasoning".to_string(),
+            }]),
+        },
+    ];
 
-    let error = write_codex_model_catalog(root.path(), &models, None, None)
-        .expect_err("unknown reasoning metadata must not silently reset the user's setting")
-        .to_string();
+    let path = write_codex_model_catalog(root.path(), &models, None, None)
+        .expect("the fully described model must remain launchable");
+    let catalog: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(path).expect("read generated catalog"))
+            .expect("parse generated catalog");
+    let slugs = catalog["models"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|model| model["slug"].as_str().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(slugs, ["future-reasoning-known"]);
+
+    let error =
+        write_codex_model_catalog(root.path(), &models, None, Some("future-reasoning-unknown"))
+            .expect_err("an explicitly selected incomplete model must remain a hard error")
+            .to_string();
     assert!(error.contains("future-reasoning-unknown"), "{error}");
     assert!(error.contains("reasoning metadata"), "{error}");
 }
