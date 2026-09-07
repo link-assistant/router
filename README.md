@@ -172,6 +172,28 @@ cargo build --release
 
 The binary will be at `target/release/link-assistant-router`.
 
+#### Nix
+
+The repository ships a flake, so a machine with Nix (flakes enabled) needs no
+Rust toolchain of its own:
+
+```bash
+nix build                 # builds router, link-assistant-router and with-router
+./result/bin/router --help
+
+nix run . -- --help       # run the CLI without installing it
+nix run . -- doctor
+nix run .#with-router -- claude
+
+nix develop               # dev shell with cargo, rustfmt, clippy and the
+                          # native dependencies; cargo build/test/fmt/clippy
+                          # all work inside it
+nix flake check           # builds the package and checks formatting
+```
+
+Nix is an additional path, not a replacement: `cargo build`, the released
+binaries, the Docker image and CI are unchanged.
+
 ### 3. Set up Claude Code credentials
 
 The router reads OAuth credentials from the Claude Code home directory. By default, it looks in `~/.claude` for credential files. Make sure you have an active Claude Code session:
