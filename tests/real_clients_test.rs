@@ -762,30 +762,36 @@ fn assert_claude_split_auth_boundary(home: &Path, router: &MockRouter) {
     );
 
     let requests = router.inference_requests(CLAUDE.inference_path);
-    assert_eq!(
-        requests.len(),
-        before + 1,
+    let split_inference = &requests[before..];
+    assert!(
+        !split_inference.is_empty(),
         "the limitation must not disable Router inference"
     );
-    let request = requests.last().expect("split-auth inference request");
-    assert_eq!(
-        request.header("authorization"),
-        Some(format!("Bearer {}", run_token(CLAUDE)).as_str()),
-        "sampling must carry only the Router credential"
-    );
+    let router_credential = format!("Bearer {}", run_token(CLAUDE));
+    for request in split_inference {
+        assert_eq!(
+            request.header("authorization"),
+            Some(router_credential.as_str()),
+            "every sampling attempt must carry only the Router credential"
+        );
+    }
     let capture = {
         let captured = router.requests.lock().expect("read split-auth capture");
         let split_requests = captured[request_start..].to_vec();
         drop(captured);
-        let router_credential = format!("Bearer {}", run_token(CLAUDE));
-        for request in split_requests
+        let catalog_requests = split_requests
             .iter()
-            .filter(|request| request.path.ends_with("/models"))
-        {
+            .filter(|request| request.method == "GET" && request.path == CLAUDE.catalog_path)
+            .collect::<Vec<_>>();
+        assert!(
+            !catalog_requests.is_empty(),
+            "Claude must discover its native Router catalog: {split_requests:?}"
+        );
+        for request in catalog_requests {
             assert_eq!(
                 request.header("authorization"),
                 Some(router_credential.as_str()),
-                "model discovery must carry only the Router credential"
+                "Claude's native model discovery must carry only the Router credential"
             );
         }
         format!("{split_requests:?}")

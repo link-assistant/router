@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- changelog-insert-here -->
 
-- Detect Claude Code's process-wide authentication boundary before launch, reject explicit Claude.ai-only operations before Router access or token minting, fail closed on unreviewed client releases, preserve the stored login byte-for-byte, and keep Router inference/model discovery available with a precise native-service diagnostic ([#520](https://github.com/link-assistant/router/issues/520)).
-
 - Keep Codex Apps, hosted MCP sessions, remote-plugin installations, upload records, and workspace-plugin mutations on the initiating Router principal and ChatGPT account; the managed `CODEX_CONNECTORS_TOKEN` now uses the same principal-bound alias instead of an ambient credential ([#529](https://github.com/link-assistant/router/issues/529)).
 
 - Reject a signed managed-client/protocol mismatch before model discovery, so an unknown model cannot turn the required pre-upstream subscription-policy denial into a misleading `404` ([#389](https://github.com/link-assistant/router/issues/389)).
