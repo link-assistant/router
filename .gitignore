@@ -65,3 +65,7 @@ ui/node_modules/
 
 # Build-artifact sweep marker (scripts/sweep-build-artifacts.sh)
 sweep.timestamp
+
+# `nix build` symlinks its output here.
+/result
+/result-*
