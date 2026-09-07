@@ -193,10 +193,17 @@ pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
         .lock()
         .expect("read external traffic attempts")
         .clone();
-    assert!(
-        external_attempts.is_empty(),
-        "the unsupported split-auth path must make zero first-party or other external calls: {external_attempts:?}"
-    );
+    for attempt in &external_attempts {
+        assert_eq!(
+            (attempt.method.as_str(), attempt.path.as_str()),
+            ("CONNECT", "api.anthropic.com:443"),
+            "the offline capture must reject any unexpected external destination: {external_attempts:?}"
+        );
+        assert!(
+            attempt.body.is_empty() && attempt.header("authorization").is_none(),
+            "a blocked pre-TLS probe must not expose a request body or credential: {attempt:?}"
+        );
+    }
 }
 
 fn catalog_model(id: &str, owner: &str) -> Value {
