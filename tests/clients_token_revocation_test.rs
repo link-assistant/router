@@ -136,11 +136,18 @@ fn setup(home: &Path, storage: &str, client: &str, token: Option<&str>) -> Outpu
         mock_router(&[model], 1)
     });
     let base_url = catalog.as_ref().map_or_else(
-        // This suite owns managed-token persistence and revocation. Keep its
-        // non-catalog clients on loopback so it cannot also create a detached
-        // Codex bridge whose Windows process lifetime is intentionally longer
-        // than the setup command that launched it.
-        || "http://127.0.0.1:9".to_string(),
+        // On Windows a detached Codex bridge intentionally outlives the setup
+        // command, so it must not share this token-only test's captured process
+        // lifetime. Unix keeps the external fixture as deliberate persistent-
+        // bridge coverage and the two non-removal tests below stop it explicitly.
+        || {
+            if cfg!(windows) {
+                "http://127.0.0.1:9"
+            } else {
+                "http://router.test:8080"
+            }
+            .to_string()
+        },
         |(url, _)| url.clone(),
     );
     let mut args = vec!["clients", "setup", client, "--base-url", &base_url];
@@ -228,6 +235,11 @@ fn repeating_an_identical_setup_does_not_mint_another_token() {
         tokens(home, "text"),
         before,
         "an identical setup must reuse the complete managed configuration"
+    );
+    assert!(
+        router(home, "text", &["clients", "remove", "codex"])
+            .status
+            .success()
     );
 }
 
@@ -574,4 +586,9 @@ fn credential_metadata_never_contains_the_token() {
             .mode();
         assert_eq!(mode & 0o777, 0o600, "credential metadata is not owner-only");
     }
+    assert!(
+        router(home, "text", &["clients", "remove", "codex"])
+            .status
+            .success()
+    );
 }
