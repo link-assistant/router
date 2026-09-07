@@ -380,7 +380,10 @@ fn setup_can_mint_a_persisted_token_and_status_never_discloses_it() {
             "setup",
             "codex",
             "--base-url",
-            "http://router.test:8080",
+            // This test covers persisted credentials and status redaction. A
+            // loopback target keeps it independent from the separately tested
+            // persistent bridge lifecycle and fails doctor immediately.
+            "http://127.0.0.1:9",
         ],
     );
     let _cleanup = setup.status.success().then(|| ManagedClientCleanup {
