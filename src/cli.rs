@@ -517,8 +517,7 @@ pub struct Cli {
         global = true
     )]
     pub subscription_bridge_overrides: Vec<String>,
-
-    /// Trust one reviewed proxy fingerprint for a native client identity.
+    /// Trust a reviewed proxy fingerprint for a native client identity.
     #[arg(
         long = "allow-proxied-client",
         env = "PROXIED_CLIENT_OVERRIDES",
@@ -526,14 +525,10 @@ pub struct Cli {
         global = true
     )]
     pub proxied_client_overrides: Vec<String>,
-
-    /// Flat bootstrap Bearer key accepted by the admin endpoints alongside
-    /// admin-scoped `la_sk_...` tokens.
+    /// Flat bootstrap Bearer key accepted alongside admin-scoped tokens.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true, hide_env_values = true)]
     pub admin_key: Option<String>,
-
-    /// Port for the admin UI, served on its own listener. Omitted or `0`
-    /// keeps the admin UI disabled, so upgrading exposes no new surface.
+    /// Admin UI listener port; omitted or `0` keeps it disabled.
     #[arg(long, env = "ADMIN_PORT", global = true)]
     pub admin_port: Option<u16>,
 
