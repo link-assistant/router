@@ -404,7 +404,10 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Run tests
-        run: cargo test --locked --all-features --verbose
+        # Windows gives child processes and file-backed ownership tests stricter
+        # lifetime semantics. Run the same complete inventory serially there so
+        # independent fixtures cannot retain one another's handles.
+        run: cargo test --locked --all-features --verbose ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}
 
       - name: Run doc tests
         run: cargo test --locked --doc --verbose

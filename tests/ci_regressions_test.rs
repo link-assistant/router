@@ -169,6 +169,18 @@ fn ci_compiles_through_a_compilation_level_cache() {
     );
 }
 
+/// Windows retains process and file handles more strictly than Unix runners.
+/// The complete suite remains the same, but its ownership fixtures must not
+/// overlap in the Windows test harness.
+#[test]
+fn windows_ci_serializes_the_complete_test_inventory() {
+    let workflow = read_lf(".github/workflows/release.yml");
+
+    assert!(workflow.contains(
+        "cargo test --locked --all-features --verbose ${{ runner.os == 'Windows' && '-- --test-threads=1' || '' }}"
+    ));
+}
+
 /// `RUSTC_WRAPPER` must never be set where the binary is not installed.
 ///
 /// Setting it workflow-wide made every cargo invocation in jobs without the
