@@ -8,6 +8,8 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+use link_assistant_router::subscription_usage::UsageEnvelope;
+
 fn run(args: &[&str], home: &std::path::Path) -> Output {
     Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args(args)
@@ -39,6 +41,35 @@ fn run_with_persisted_selection(args: &[&str], home: &std::path::Path) -> Output
         .expect("run usage command with selected server")
 }
 
+fn same_version_serialized_usage_body() -> String {
+    let envelope: UsageEnvelope = serde_json::from_value(serde_json::json!({
+        "schema_version": 1,
+        "subscriptions": [
+            {
+                "provider": "anthropic",
+                "state": "available",
+                "status": "available",
+                "windows": [],
+                "additional_limits": [{"name": "monthly", "windows": []}]
+            },
+            {"provider": "openai", "state": "available", "status": "available", "windows": [], "additional_limits": []},
+            {"provider": "z-ai", "state": "unverified", "status": "usage_unverified", "windows": [], "additional_limits": []},
+            {"provider": "lefine", "state": "unavailable", "status": "usage_source_unavailable", "windows": [], "additional_limits": []},
+            {"provider": "gemini", "state": "unverified", "status": "live_limits_unavailable", "windows": [], "additional_limits": []},
+            {"provider": "qwen", "state": "unverified", "status": "live_limits_unavailable", "windows": [], "additional_limits": []}
+        ]
+    }))
+    .unwrap();
+    let body = serde_json::to_value(envelope).unwrap();
+    assert!(
+        body["subscriptions"][0]["additional_limits"][0]
+            .get("windows")
+            .is_none()
+    );
+    assert!(body["subscriptions"][1].get("additional_limits").is_none());
+    serde_json::to_string(&body).unwrap()
+}
+
 #[test]
 fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
@@ -49,18 +80,7 @@ fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token(
     let captured = Arc::new(Mutex::new(Vec::new()));
     let captured_for_server = Arc::clone(&captured);
     let server = thread::spawn(move || {
-        let body = serde_json::json!({
-            "schema_version": 1,
-            "subscriptions": [
-                {"provider":"anthropic","state":"available","status":"available","windows":[],"additional_limits":[]},
-                {"provider":"openai","state":"available","status":"available","windows":[],"additional_limits":[]},
-                {"provider":"z-ai","state":"unverified","status":"usage_unverified","windows":[],"additional_limits":[]},
-                {"provider":"lefine","state":"unavailable","status":"usage_source_unavailable","windows":[],"additional_limits":[]},
-                {"provider":"gemini","state":"unverified","status":"live_limits_unavailable","windows":[],"additional_limits":[]},
-                {"provider":"qwen","state":"unverified","status":"live_limits_unavailable","windows":[],"additional_limits":[]}
-            ]
-        })
-        .to_string();
+        let body = same_version_serialized_usage_body();
         while !stop_for_server.load(Ordering::Acquire) {
             match listener.accept() {
                 Ok((mut socket, _)) => {
