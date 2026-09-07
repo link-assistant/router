@@ -329,6 +329,12 @@ async fn run_server(
             "consumer-subscription bridge override enabled for exact cell {accepted}; operator accepted intermediary and provider-terms risk"
         );
     }
+    for client in config.subscription_entitlement_policy.proxied_clients() {
+        tracing::warn!(
+            client = client.canonical_name(),
+            "proxied-client request evidence enabled; a trusted intermediary may use this native client identity only on its reviewed canonical routes"
+        );
+    }
 
     let client = link_assistant_router::upstream_client::build_upstream_client()?;
     let crater_provider =

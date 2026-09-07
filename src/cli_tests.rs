@@ -10,6 +10,24 @@ fn login_cli_defaults_to_bare_tui() {
 }
 
 #[test]
+fn proxied_client_override_is_repeatable_and_comma_delimited() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "--allow-proxied-client",
+        "codex,codex",
+        "--token-secret",
+        "test-secret",
+    ])
+    .unwrap();
+    assert_eq!(cli.proxied_client_overrides, ["codex", "codex"]);
+    let config = cli.into_config().expect("reviewed proxy contract");
+    assert_eq!(
+        config.subscription_entitlement_policy.proxied_clients(),
+        [crate::clients::ClientKind::Codex]
+    );
+}
+
+#[test]
 fn usage_cli_accepts_public_provider_names_and_json() {
     for (name, expected) in [
         (
@@ -144,6 +162,7 @@ fn cli_defaults_round_trip_to_config() {
         account_request_limits: vec![],
         experimental_compatibility: false,
         subscription_bridge_overrides: vec![],
+        proxied_client_overrides: vec![],
         admin_port: None,
         admin_host: "127.0.0.1".into(),
         admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,
@@ -268,6 +287,7 @@ fn cli_invalid_routing_mode_rejected() {
         account_request_limits: vec![],
         experimental_compatibility: false,
         subscription_bridge_overrides: vec![],
+        proxied_client_overrides: vec![],
         admin_port: None,
         admin_host: "127.0.0.1".into(),
         admin_claim_ttl_secs: crate::admin::DEFAULT_CANDIDATE_TTL_SECS,

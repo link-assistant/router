@@ -51,6 +51,9 @@ pub struct AuditEvent {
     /// Exact risk-accepted matrix cell, when native entitlement was not used.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subscription_override: Option<String>,
+    /// Native client identity accepted through an operator-enabled proxy.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proxied_client_override: Option<String>,
     /// Model requested by the client, when the body carried one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
@@ -142,6 +145,7 @@ pub fn event(
         path: path.to_string(),
         client_kind: None,
         subscription_override: None,
+        proxied_client_override: None,
         model: model.map(String::from),
         resolved_model: None,
     }
@@ -212,6 +216,28 @@ pub fn record_authorised_request_with_resolved_model(
     body: Option<&serde_json::Value>,
     resolved_model: Option<&str>,
 ) {
+    record_authorised_request_with_resolved_model_and_entitlement(
+        state,
+        claims,
+        surface,
+        path,
+        body,
+        resolved_model,
+        None,
+    );
+}
+
+/// Record an authorised subscription request including how its client
+/// evidence was accepted.
+pub(crate) fn record_authorised_request_with_resolved_model_and_entitlement(
+    state: &crate::app_state::AppState,
+    claims: &crate::token::TokenClaims,
+    surface: crate::metrics::Surface,
+    path: &str,
+    body: Option<&serde_json::Value>,
+    resolved_model: Option<&str>,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
+) {
     state
         .metrics
         .record_token_request(&claims.sub, &claims.label);
@@ -233,6 +259,11 @@ pub fn record_authorised_request_with_resolved_model(
         .filter(|resolved| Some(*resolved) != model)
         .map(str::to_string);
     event.client_kind.clone_from(&claims.client_kind);
+    if entitlement == Some(crate::client_policy::EntitlementDecision::Proxied) {
+        event
+            .proxied_client_override
+            .clone_from(&claims.client_kind);
+    }
     if let (Some(client), Some(provider)) = (
         claims
             .client_kind
@@ -431,6 +462,46 @@ mod tests {
             serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
         assert_eq!(event["client_kind"], "codex");
         assert_eq!(event["subscription_override"], "codex:claude");
+    }
+
+    #[test]
+    fn proxied_client_evidence_is_explicit_in_the_audit_record() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file = dir.path().join("audit.jsonl");
+        let mut state = crate::app_state::AppState::for_tests(dir.path());
+        state.upstream_provider = crate::config::UpstreamProvider::Codex;
+        state.audit = std::sync::Arc::new(AuditLog::to_path(file.to_str()));
+        let claims = crate::token::TokenClaims {
+            sub: "token-id".into(),
+            iat: 1,
+            exp: i64::MAX,
+            label: "proxied-codex".into(),
+            scope: String::new(),
+            github_repos: Vec::new(),
+            client_kind: Some("codex".into()),
+            principal_id: Some("primary".into()),
+        };
+
+        record_authorised_request_with_resolved_model_and_entitlement(
+            &state,
+            &claims,
+            crate::metrics::Surface::OpenAIResponses,
+            "/v1/responses",
+            None,
+            Some("gpt-5.5"),
+            Some(crate::client_policy::EntitlementDecision::Proxied),
+        );
+
+        let event: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(file).unwrap()).unwrap();
+        assert_eq!(event["client_kind"], "codex");
+        assert_eq!(event["proxied_client_override"], "codex");
+        assert!(event.get("subscription_override").is_none());
+        assert_eq!(
+            crate::metrics::usage_snapshot(&state.metrics).token_calls["token-id"].requests,
+            1,
+            "recording the evidence decision must not double-count token usage"
+        );
     }
 
     #[test]

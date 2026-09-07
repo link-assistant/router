@@ -14,6 +14,12 @@ use axum::response::Response;
 use crate::clients::ClientKind;
 use crate::subscription::SubscriptionProvider;
 
+/// Dedicated trusted-proxy evidence header. Unlike the ordinary client marker,
+/// its presence forces the opt-in proxy contract and never native passthrough.
+pub const PROXIED_CLIENT_EVIDENCE_HEADER: &str = "x-link-assistant-proxied-client";
+/// The only reviewed trusted-proxy identity value.
+pub const PROXIED_CODEX_EVIDENCE_VALUE: &str = "codex";
+
 /// Client-facing protocol used by one request.
 #[derive(
     Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, serde::Deserialize, serde::Serialize,
@@ -37,6 +43,8 @@ pub enum ClientProtocol {
 pub enum EntitlementDecision {
     /// The provider's documented native client.
     Native,
+    /// A native client identity accepted through an explicitly trusted proxy.
+    Proxied,
     /// One exact client/provider bridge was risk-accepted.
     Override,
     /// No reviewed entitlement exists.
@@ -76,17 +84,28 @@ pub fn authorize_subscription(
     headers: &HeaderMap,
 ) -> Result<EntitlementDecision, String> {
     let (client, _) = bound_client(claims)?;
-    if !request_evidence(client, protocol, path, headers) {
+    let evidence = policy.request_evidence(client, protocol, path, headers);
+    if evidence == RequestEvidence::Denied {
         return Err(format!(
             "request evidence does not match the token's {} client binding",
             client.canonical_name()
         ));
     }
-    match policy.decide(Some(client), provider, protocol) {
+    if evidence == RequestEvidence::Proxied && provider != SubscriptionProvider::Codex {
+        return Err(format!(
+            "proxied {} request evidence is limited to the Codex consumer subscription",
+            client.canonical_name()
+        ));
+    }
+    let entitlement = policy.decide(Some(client), provider, protocol);
+    match entitlement {
         EntitlementDecision::Denied => Err(format!(
             "{} is not entitled to use the {provider} consumer subscription",
             client.display_name()
         )),
+        EntitlementDecision::Native if evidence == RequestEvidence::Proxied => {
+            Ok(EntitlementDecision::Proxied)
+        }
         decision => Ok(decision),
     }
 }
@@ -175,6 +194,7 @@ impl std::fmt::Display for SubscriptionOverride {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct SubscriptionEntitlementPolicy {
     overrides: HashSet<SubscriptionOverride>,
+    proxied_clients: HashSet<ClientKind>,
 }
 
 impl SubscriptionEntitlementPolicy {
@@ -216,7 +236,38 @@ impl SubscriptionEntitlementPolicy {
             }
             overrides.insert(SubscriptionOverride { client, provider });
         }
-        Ok(Self { overrides })
+        Ok(Self {
+            overrides,
+            proxied_clients: HashSet::new(),
+        })
+    }
+
+    /// Add explicitly trusted proxy identities to this policy.
+    ///
+    /// Only Codex is supported because its proxy contract is deliberately
+    /// narrow: the signed token remains Codex-bound and the override applies
+    /// only to the canonical Responses route. Canonical catalog discovery
+    /// already has native signed-client evidence and needs no override.
+    pub fn with_proxied_clients<I, S>(mut self, values: I) -> Result<Self, String>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        for value in values {
+            let value = value.as_ref().trim();
+            if value.contains('*') {
+                return Err("proxied client overrides cannot contain wildcards".to_string());
+            }
+            let client = ClientKind::from_str_opt(value)
+                .ok_or_else(|| format!("unknown Router client in proxied override '{value}'"))?;
+            if client != ClientKind::Codex {
+                return Err(format!(
+                    "{client} has no reviewed proxied-client request contract"
+                ));
+            }
+            self.proxied_clients.insert(client);
+        }
+        Ok(self)
     }
 
     /// Decide one client/provider/protocol cell without consulting model names.
@@ -263,6 +314,53 @@ impl SubscriptionEntitlementPolicy {
         values.sort_by_key(ToString::to_string);
         values
     }
+
+    /// Sorted proxy identities enabled by the operator.
+    #[must_use]
+    pub fn proxied_clients(&self) -> Vec<ClientKind> {
+        let mut values = self.proxied_clients.iter().copied().collect::<Vec<_>>();
+        values.sort_by_key(|client| client.canonical_name());
+        values
+    }
+
+    /// Match the exact operator-enabled proxy contract when its dedicated
+    /// marker is present; otherwise preserve the native request evidence.
+    /// Caller-controlled headers are never authority by themselves;
+    /// [`authorize_subscription`] separately validates the signed binding.
+    #[must_use]
+    pub fn request_evidence(
+        &self,
+        client: ClientKind,
+        protocol: ClientProtocol,
+        path: &str,
+        headers: &HeaderMap,
+    ) -> RequestEvidence {
+        if header_present(headers, PROXIED_CLIENT_EVIDENCE_HEADER) {
+            return if self.proxied_clients.contains(&client)
+                && proxied_request_evidence(client, protocol, path, headers)
+            {
+                RequestEvidence::Proxied
+            } else {
+                RequestEvidence::Denied
+            };
+        }
+        if request_evidence(client, protocol, path, headers) {
+            RequestEvidence::Native
+        } else {
+            RequestEvidence::Denied
+        }
+    }
+}
+
+/// How a request matched the client fingerprint policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RequestEvidence {
+    /// It matches the real client's recorded request fixture.
+    Native,
+    /// It matches an operator-enabled trusted proxy contract.
+    Proxied,
+    /// It matches neither contract.
+    Denied,
 }
 
 /// Whether a protocol is native to the claimed Router adapter.
@@ -397,6 +495,23 @@ pub fn request_evidence(
         }
         ClientKind::Cursor | ClientKind::Agent => false,
     }
+}
+
+fn proxied_request_evidence(
+    client: ClientKind,
+    protocol: ClientProtocol,
+    path: &str,
+    headers: &HeaderMap,
+) -> bool {
+    client == ClientKind::Codex
+        && header_present(headers, "authorization")
+        && header_equals(
+            headers,
+            PROXIED_CLIENT_EVIDENCE_HEADER,
+            PROXIED_CODEX_EVIDENCE_VALUE,
+        )
+        && protocol == ClientProtocol::OpenAIResponses
+        && path == "/api/services/codex/v1/responses"
 }
 
 fn credential_carrier_matches(client: ClientKind, headers: &HeaderMap) -> bool {

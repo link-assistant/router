@@ -518,6 +518,15 @@ pub struct Cli {
     )]
     pub subscription_bridge_overrides: Vec<String>,
 
+    /// Trust one reviewed proxy fingerprint for a native client identity.
+    #[arg(
+        long = "allow-proxied-client",
+        env = "PROXIED_CLIENT_OVERRIDES",
+        value_delimiter = ',',
+        global = true
+    )]
+    pub proxied_client_overrides: Vec<String>,
+
     /// Flat bootstrap Bearer key accepted by the admin endpoints alongside
     /// admin-scoped `la_sk_...` tokens.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true, hide_env_values = true)]
@@ -952,6 +961,7 @@ impl Cli {
             account_request_limits: self.account_request_limits.clone(),
             experimental_compatibility: self.experimental_compatibility,
             subscription_bridge_overrides: self.subscription_bridge_overrides.clone(),
+            proxied_client_overrides: self.proxied_client_overrides.clone(),
             admin_key: self.admin_key.clone().filter(|s| !s.is_empty()),
             admin_ui: crate::config::admin_ui_config(
                 self.admin_port,

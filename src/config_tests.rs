@@ -44,6 +44,7 @@ fn default_args(secret: Option<&'static str>) -> BuildArgs<'static> {
         account_request_limits: vec![],
         experimental_compatibility: false,
         subscription_bridge_overrides: vec![],
+        proxied_client_overrides: vec![],
         admin_key: None,
         allow_anonymous_admin: false,
         mpp: default_mpp_config(),
@@ -99,6 +100,26 @@ fn subscription_bridges_are_exact_and_validated_at_boot() {
         Config::build(args),
         Err(ConfigError::InvalidSubscriptionBridgePolicy(_))
     ));
+}
+
+#[test]
+fn proxied_clients_are_opt_in_and_codex_only() {
+    let mut args = default_args(Some("secret"));
+    args.proxied_client_overrides = vec!["codex".into()];
+    let config = Config::build(args).expect("reviewed Codex proxy contract");
+    assert_eq!(
+        config.subscription_entitlement_policy.proxied_clients(),
+        vec![crate::clients::ClientKind::Codex]
+    );
+
+    for value in ["*", "agent", "unknown"] {
+        let mut args = default_args(Some("secret"));
+        args.proxied_client_overrides = vec![value.into()];
+        assert!(matches!(
+            Config::build(args),
+            Err(ConfigError::InvalidProxiedClientPolicy(_))
+        ));
+    }
 }
 
 #[test]
@@ -214,6 +235,7 @@ fn gonka_args(api_key: Option<&str>) -> BuildArgs<'static> {
         account_request_limits: vec![],
         experimental_compatibility: false,
         subscription_bridge_overrides: vec![],
+        proxied_client_overrides: vec![],
         admin_key: None,
         allow_anonymous_admin: false,
         mpp: default_mpp_config(),
