@@ -339,7 +339,15 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
             .split("#[cfg(test)]")
             .next()
             .expect("production section");
-        if let Some(matched) = concrete_vendor_model(production) {
+        // `behaves_as` is a reviewed client capability identity, not an
+        // advertised provider model or routing default. The provider's live
+        // catalog ID still remains the only ID sent on the wire (#546).
+        let catalog_candidates = production
+            .lines()
+            .filter(|line| !line.trim_start().starts_with("behaves_as:"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        if let Some(matched) = concrete_vendor_model(&catalog_candidates) {
             offenders.push(format!(
                 "{} still hardcodes {}",
                 path.strip_prefix(&root).unwrap_or(&path).display(),
