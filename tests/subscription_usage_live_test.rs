@@ -1,9 +1,12 @@
-//! Opt-in, non-inference smoke tests for the three real subscription-usage
-//! sources. Each test is a no-op unless its protected environment variable is
-//! present; secret values are never printed or included in assertion output.
+//! Opt-in acceptance tests for protected subscription credentials.
+//!
+//! Usage probes do not call inference. The Codex model-identity regression uses
+//! the smallest streaming request for each currently advertised model. Every
+//! test is a no-op unless its protected environment variable is present;
+//! secret values are never printed or included in assertion output.
 
 use axum::body::to_bytes;
-use axum::extract::{OriginalUri, Path as AxumPath, State};
+use axum::extract::{Json, OriginalUri, Path as AxumPath, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use link_assistant_router::app_state::{AppState, VendorClis};
 use link_assistant_router::clients::ClientKind;
@@ -188,6 +191,124 @@ async fn real_openai_usage_source_is_normalized_without_inference() {
         ClientKind::Codex,
     )
     .await;
+}
+
+/// Issue #548: the real subscription catalog can advertise a stable alias such
+/// as `codex-auto-review` while inference reports the concrete selected model.
+/// Every advertised id must remain the public identity on both lifecycle
+/// events that carry a complete Responses object.
+#[tokio::test]
+async fn every_real_codex_model_keeps_its_native_stream_identity() {
+    let Some(document) = protected("ROUTER_LIVE_CODEX_CREDENTIAL_JSON") else {
+        return;
+    };
+    assert!(
+        serde_json::from_str::<Value>(&document).is_ok(),
+        "protected credential is not a JSON document"
+    );
+    let root = tempfile::tempdir().expect("live Codex identity data dir");
+    let home = root.path().join("codex");
+    std::fs::create_dir_all(&home).expect("create isolated Codex home");
+    std::fs::write(
+        home.join(SubscriptionProvider::Codex.canonical_credential_filename()),
+        &document,
+    )
+    .expect("write isolated credential copy");
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, home);
+    let mut state = test_state(root.path());
+    state.upstream_provider = link_assistant_router::config::UpstreamProvider::Codex;
+    state.subscription_reader = Some(reader.clone());
+    state.subscription_readers = vec![reader.clone()];
+    state.register_credential_recovery_in(root.path(), &VendorClis::default());
+    link_assistant_router::model_catalog::refresh_catalogs(
+        &state.client,
+        &[reader],
+        &state.subscription_cache,
+        &state.model_catalogs,
+    )
+    .await;
+
+    let headers = client_headers(&state, ClientKind::Codex);
+    let catalog_path = "/api/services/codex/v1/models";
+    let catalog_response = link_assistant_router::model_routing::models(
+        State(state.clone()),
+        OriginalUri(catalog_path.parse().expect("catalog URI")),
+        headers.clone(),
+    )
+    .await;
+    assert_eq!(catalog_response.status(), StatusCode::OK);
+    let catalog_bytes = to_bytes(catalog_response.into_body(), 4 * 1024 * 1024)
+        .await
+        .expect("bounded live catalog response");
+    let catalog: Value = serde_json::from_slice(&catalog_bytes).expect("live Codex catalog JSON");
+    let models = catalog["data"]
+        .as_array()
+        .expect("live Codex catalog data")
+        .iter()
+        .filter_map(|model| model["id"].as_str().map(str::to_string))
+        .collect::<Vec<_>>();
+    assert!(
+        !models.is_empty(),
+        "live Codex catalog must advertise models"
+    );
+
+    for model in models {
+        let response = link_assistant_router::proxy::openai_responses_native(
+            State(state.clone()),
+            headers.clone(),
+            Ok(Json(serde_json::json!({
+                "model": model,
+                "input": [{
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Reply with one word: test"}]
+                }],
+                "tools": [],
+                "tool_choice": "auto",
+                "parallel_tool_calls": false,
+                "reasoning": {"effort": "low", "summary": "auto", "context": "all_turns"},
+                "include": ["reasoning.encrypted_content"],
+                "store": false,
+                "stream": true
+            }))),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK, "native Responses status");
+        assert!(
+            response
+                .headers()
+                .keys()
+                .all(|name| !name.as_str().starts_with("x-router-")),
+            "native Responses emitted a Router-specific header"
+        );
+        let bytes = to_bytes(response.into_body(), 16 * 1024 * 1024)
+            .await
+            .expect("bounded native Responses stream");
+        let stream = std::str::from_utf8(&bytes).expect("UTF-8 native Responses stream");
+        assert!(!stream.contains("x_router_"));
+        let mut created = false;
+        let mut completed = false;
+        for event in stream
+            .lines()
+            .filter_map(|line| line.strip_prefix("data: "))
+            .filter(|payload| *payload != "[DONE]")
+            .filter_map(|payload| serde_json::from_str::<Value>(payload).ok())
+        {
+            match event["type"].as_str() {
+                Some("response.created") => {
+                    assert_eq!(event["response"]["model"], model);
+                    created = true;
+                }
+                Some("response.completed") => {
+                    assert_eq!(event["response"]["model"], model);
+                    completed = true;
+                }
+                _ => {}
+            }
+        }
+        assert!(created, "native Responses omitted response.created");
+        assert!(completed, "native Responses omitted response.completed");
+    }
 }
 
 #[tokio::test]
