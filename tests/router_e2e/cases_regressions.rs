@@ -896,49 +896,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             assert_eq!(model, id.as_str(), "streamed responses identity: {event}");
         }
 
-        // Client-scoped native Responses, buffered at the caller boundary.
-        let response = codex
-            .post(
-                "/api/services/codex/v1/responses",
-                &json!({"model": id, "input": "hi", "stream": false}),
-            )
-            .send()
-            .await
-            .expect("native buffered responses response");
-        assert!(response.headers().get("x-router-upstream-model").is_none());
-        let payload = response_payload(response).await;
-        assert_eq!(
-            payload["model"],
-            id.as_str(),
-            "native buffered responses identity"
-        );
-        assert!(payload.get("x_router_upstream_model").is_none());
-
-        // Client-scoped native streaming Responses. Every lifecycle event that
-        // carries response.model must retain the exact advertised selection.
-        let stream = codex
-            .post(
-                "/api/services/codex/v1/responses",
-                &json!({"model": id, "input": "hi", "stream": true}),
-            )
-            .send()
-            .await
-            .expect("native streamed responses response");
-        assert!(stream.headers().get("x-router-upstream-model").is_none());
-        let stream = stream.text().await.expect("native Responses SSE body");
-        let lifecycle_models = stream
-            .lines()
-            .filter_map(|line| line.strip_prefix("data: "))
-            .filter(|payload| *payload != "[DONE]")
-            .filter_map(|payload| serde_json::from_str::<Value>(payload).ok())
-            .filter_map(|event| event["response"]["model"].as_str().map(str::to_string))
-            .collect::<Vec<_>>();
-        assert_eq!(
-            lifecycle_models,
-            [id.as_str(), id.as_str()],
-            "native lifecycle model identity"
-        );
-        assert!(!stream.contains("x_router_"));
+        codex_identity::assert_native_responses_identity(&codex, id).await;
     }
 }
 
@@ -1006,3 +964,6 @@ async fn an_admin_credential_manages_tokens_without_inheriting_subscription_acce
 
 #[path = "cases_regressions_server_tools.rs"]
 mod server_tools;
+
+#[path = "cases_regressions_codex_identity.rs"]
+mod codex_identity;
