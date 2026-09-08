@@ -62,6 +62,7 @@ printf '%s\n' "$@" > "$CAPTURE_ARGS"
 {
   printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC-<unset>}"
   printf '%s\n' "DISABLE_TELEMETRY=${DISABLE_TELEMETRY-<unset>}"
+  printf '%s\n' "DO_NOT_TRACK=${DO_NOT_TRACK-<unset>}"
   printf '%s\n' "DISABLE_ERROR_REPORTING=${DISABLE_ERROR_REPORTING-<unset>}"
   printf '%s\n' "DISABLE_AUTOUPDATER=${DISABLE_AUTOUPDATER-<unset>}"
   printf '%s\n' "DISABLE_FEEDBACK_COMMAND=${DISABLE_FEEDBACK_COMMAND-<unset>}"
@@ -121,6 +122,7 @@ fn run_claude_with(
     for name in [
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
         "DISABLE_TELEMETRY",
+        "DO_NOT_TRACK",
         "DISABLE_ERROR_REPORTING",
         "DISABLE_AUTOUPDATER",
         "DISABLE_FEEDBACK_COMMAND",
@@ -180,6 +182,7 @@ fn claude_default_profile_persists_without_touching_the_normal_profile() {
         fs::read_to_string(capture.join("privacy-env")).expect("captured privacy overlay"),
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=<unset>\n\
 DISABLE_TELEMETRY=<unset>\n\
+DO_NOT_TRACK=<unset>\n\
 DISABLE_ERROR_REPORTING=1\n\
 DISABLE_AUTOUPDATER=1\n\
 DISABLE_FEEDBACK_COMMAND=1\n",
@@ -245,6 +248,7 @@ fn claude_launch_preserves_user_privacy_values_and_warns_before_spawn() {
                 "operator-choice",
             ),
             ("DISABLE_TELEMETRY", "0"),
+            ("DO_NOT_TRACK", "1"),
             ("DISABLE_ERROR_REPORTING", "keep-error-choice"),
             ("DISABLE_AUTOUPDATER", "keep-update-choice"),
             ("DISABLE_FEEDBACK_COMMAND", "keep-feedback-choice"),
@@ -261,6 +265,7 @@ fn claude_launch_preserves_user_privacy_values_and_warns_before_spawn() {
         fs::read_to_string(capture.join("privacy-env")).expect("captured privacy overlay"),
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=operator-choice\n\
 DISABLE_TELEMETRY=0\n\
+DO_NOT_TRACK=1\n\
 DISABLE_ERROR_REPORTING=keep-error-choice\n\
 DISABLE_AUTOUPDATER=keep-update-choice\n\
 DISABLE_FEEDBACK_COMMAND=keep-feedback-choice\n",
@@ -268,7 +273,7 @@ DISABLE_FEEDBACK_COMMAND=keep-feedback-choice\n",
     );
     let stderr = String::from_utf8_lossy(&output.stderr);
     let warning = stderr
-        .find("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY")
+        .find("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY and DO_NOT_TRACK")
         .unwrap_or_else(|| panic!("warning omitted the exact blockers: {stderr}"));
     assert!(
         stderr.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),

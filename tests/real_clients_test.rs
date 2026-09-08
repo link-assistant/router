@@ -611,6 +611,7 @@ fn run_wrapper_with_options_and_env(
     for key in [
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
         "DISABLE_TELEMETRY",
+        "DO_NOT_TRACK",
         "DISABLE_ERROR_REPORTING",
         "DISABLE_AUTOUPDATER",
         "DISABLE_FEEDBACK_COMMAND",

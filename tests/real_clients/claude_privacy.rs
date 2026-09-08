@@ -1,8 +1,9 @@
 use super::*;
 
-const PRIVACY_ENVIRONMENT: [&str; 5] = [
+const PRIVACY_ENVIRONMENT: [&str; 6] = [
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
     "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
     "DISABLE_ERROR_REPORTING",
     "DISABLE_AUTOUPDATER",
     "DISABLE_FEEDBACK_COMMAND",
@@ -134,6 +135,13 @@ fn claude_2_1_265_privacy_matrix_keeps_monitor_when_feature_evaluation_is_enable
         "unexpected four-variable doctor output: {granular_doctor}"
     );
 
+    let do_not_track = tempfile::tempdir().expect("DO_NOT_TRACK doctor home");
+    let do_not_track_doctor = doctor_output(do_not_track.path(), &[("DO_NOT_TRACK", "1")]);
+    assert!(
+        do_not_track_doctor.contains("Feature-flag evaluation disabled (disabled by DO_NOT_TRACK)"),
+        "unexpected DO_NOT_TRACK doctor output: {do_not_track_doctor}"
+    );
+
     let compatible = tempfile::tempdir().expect("compatible doctor home");
     let compatible_three = [
         ("DISABLE_ERROR_REPORTING", "1"),
@@ -162,6 +170,14 @@ fn claude_2_1_265_privacy_matrix_keeps_monitor_when_feature_evaluation_is_enable
     assert!(
         granular_diagnostics.contains("DISABLE_TELEMETRY"),
         "Router did not explain the inherited blocker: {granular_diagnostics}"
+    );
+
+    let (do_not_track_monitor, do_not_track_diagnostics) =
+        monitor_is_advertised(&[("DO_NOT_TRACK", "1")]);
+    assert!(!do_not_track_monitor, "DO_NOT_TRACK unexpectedly exposed Monitor");
+    assert!(
+        do_not_track_diagnostics.contains("DO_NOT_TRACK"),
+        "Router did not explain the inherited blocker: {do_not_track_diagnostics}"
     );
 
     let (compatible_monitor, compatible_diagnostics) = monitor_is_advertised(&compatible_three);
