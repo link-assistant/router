@@ -178,6 +178,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.4.3] - 2026-09-08
+
+### Fixed
+- Resolve server network aliases to one concrete bind address and log the address actually bound.
+- Give dynamic z.ai Claude models a verified capability profile, preserve native thinking streams, and keep ordinary successful launches quiet.
+
 ## [1.4.2] - 2026-09-07
 
 ### Fixed
