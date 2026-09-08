@@ -29,6 +29,17 @@ use codex_catalog::write_codex_model_catalog;
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
+const CLAUDE_PRIVACY_DEFAULT_ENV: [&str; 3] = [
+    "DISABLE_ERROR_REPORTING",
+    "DISABLE_AUTOUPDATER",
+    "DISABLE_FEEDBACK_COMMAND",
+];
+const CLAUDE_FEATURE_FLAG_BLOCKING_ENV: [&str; 3] = [
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
+];
+
 /// Execute one wrapper invocation and preserve the client's exit status.
 pub async fn run(args: &WithArgs) -> ExitCode {
     match run_inner(args).await {
@@ -526,6 +537,7 @@ impl TemporaryClient {
                 command
                     .env("ANTHROPIC_API_KEY", "")
                     .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
+                apply_claude_privacy_overlay(&mut command);
                 // Claude Code's built-in family aliases describe Anthropic
                 // models. A z.ai-only catalog needs only the same exact pair
                 // of main/subagent pins as persistent setup. Assigning one GLM
@@ -631,6 +643,43 @@ impl TemporaryClient {
         };
         drop(directory);
         status
+    }
+}
+
+/// Apply privacy defaults that do not disable Claude Code's remote feature
+/// evaluation, while preserving every value the invoking user already owns.
+///
+/// The umbrella switch, `DISABLE_TELEMETRY`, and a truthy `DO_NOT_TRACK`
+/// disable the feature flags that gate tools such as `Monitor` in Claude Code
+/// 2.1.265. Router therefore never installs or clears them. The remaining
+/// controls are process-local defaults rather than persistent settings (issue
+/// #551).
+fn apply_claude_privacy_overlay(command: &mut Command) {
+    for key in CLAUDE_PRIVACY_DEFAULT_ENV {
+        if std::env::var_os(key).is_none() {
+            command.env(key, "1");
+        }
+    }
+
+    let blockers = CLAUDE_FEATURE_FLAG_BLOCKING_ENV
+        .into_iter()
+        .filter(|key| {
+            std::env::var_os(key).is_some_and(|value| {
+                if *key == "DO_NOT_TRACK" {
+                    value == "1" || value.eq_ignore_ascii_case("true")
+                } else {
+                    !value.is_empty()
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+    if !blockers.is_empty() {
+        eprintln!(
+            "warning: inherited {} preserves your privacy choice but disables Claude Code \
+             feature-flag evaluation; feature-flag-gated tools such as `Monitor` may be \
+             unavailable; Router leaves the user-owned value unchanged",
+            blockers.join(" and ")
+        );
     }
 }
 

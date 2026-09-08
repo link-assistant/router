@@ -392,7 +392,18 @@ onboarding happens once and sessions started through Router remain resumable.
 Use `--extend-global-config` before `claude` to opt into the normal Claude
 profile, or `--isolated-config` for a disposable clean-room profile.
 
-Claude Code 2.1.263 still resolves authentication once for the whole process:
+For `router with claude`, Router defaults error reporting, automatic updates,
+and the feedback command off in the child process. It deliberately leaves
+`DISABLE_TELEMETRY`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, and
+`DO_NOT_TRACK` unset because Claude Code 2.1.265 also uses those controls to
+disable the feature evaluation needed by built-in tools such as `Monitor`.
+An inherited user value is never cleared; Router names each active blocker
+before launch and explains that gated tools may be unavailable. Claude Code
+currently provides no supported environment
+combination that both disables usage telemetry and guarantees freshly evaluated
+remote feature flags.
+
+Claude Code 2.1.265 still resolves authentication once for the whole process:
 the Router bearer and non-Anthropic base URL correctly route inference and
 model discovery, but take precedence over a stored Claude.ai login. Router
 therefore prints the exact limitation during setup, repair, and status checks,

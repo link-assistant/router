@@ -203,7 +203,7 @@ fn client_headers(state: &AppState, client: ClientKind) -> HeaderMap {
     );
     match client {
         ClientKind::ClaudeCode => {
-            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.263"));
+            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.265"));
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
         }
         ClientKind::Codex => {

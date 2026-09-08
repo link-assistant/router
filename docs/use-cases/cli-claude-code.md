@@ -31,10 +31,36 @@ and refuses while another Router-launched Claude uses the profile.
 Gateway discovery supplies native Claude IDs. A process-local `--settings`
 extension adds every other compatible, authorized exact ID to Claude's
 `modelPicker` once, including GLM IDs, without aliases or cache writes. Claude
-Code 2.1.255 through 2.1.263 is the reviewed range. Newer releases fail closed
+Code 2.1.255 through 2.1.265 is the reviewed range. Newer releases fail closed
 until the pinned hermetic real-client capture reviews their gateway and
 authentication behavior. See [with-router.md](with-router.md) for server and
 token options.
+
+## Privacy defaults and feature-gated tools
+
+`router with claude` applies three child-process defaults without changing
+Claude settings or the invoking shell:
+
+```text
+DISABLE_ERROR_REPORTING=1
+DISABLE_AUTOUPDATER=1
+DISABLE_FEEDBACK_COMMAND=1
+```
+
+An explicit ambient value remains unchanged, including a value that enables a
+facility. Router does not set or clear `DISABLE_TELEMETRY`,
+`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, or `DO_NOT_TRACK`. Claude Code
+2.1.265 disables remote feature evaluation when either of the first two is
+non-empty or `DO_NOT_TRACK` is truthy, so a gated built-in tool such as
+`Monitor` can disappear. Router preserves that user-owned privacy choice and
+names every active variable before launching Claude.
+
+There is no supported Claude Code 2.1.265 environment combination that both
+disables usage telemetry and guarantees freshly evaluated remote feature flags.
+The commonly suggested four-variable combination includes
+`DISABLE_TELEMETRY=1`, so it does not provide both properties. This limitation
+must be re-evaluated when Claude exposes separate controls or makes `Monitor`
+independent of remote feature evaluation.
 
 ## Claude.ai native-service boundary
 
@@ -150,7 +176,7 @@ curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
   -H "Authorization: Bearer $ANTHROPIC_AUTH_TOKEN" \
   -H "Content-Type: application/json" \
   -H "anthropic-version: 2023-06-01" \
-  -H "User-Agent: claude-cli/2.1.263" \
+  -H "User-Agent: claude-cli/2.1.265" \
   -d '{"model":"claude-sonnet-4-5-20250929","max_tokens":32,
        "messages":[{"role":"user","content":"ping"}]}' | jq -r '.content[0].text'
 ```
@@ -164,6 +190,7 @@ curl -s http://127.0.0.1:8080/api/services/anthropic/v1/messages \
 | `429 rate_limit_error` whose message is just `"Error"` | the upstream rejected the request because the Claude Code identity system block was missing — the router adds it for OAuth credentials, so this indicates an API-key upstream ([details](claude-max-in-codex.md#the-claude-code-identity-block)) |
 | `503` naming an account | the pinned account is in a `Retry-After` cooldown |
 | Extended thinking missing | you are on a bridged upstream; `thinking` blocks are dropped (see the bridge document) |
+| `Monitor` or another feature-gated tool is missing | `DISABLE_TELEMETRY`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, or `DO_NOT_TRACK` may be inherited; Router preserves the value and names it before launch because Claude Code currently couples telemetry privacy to feature evaluation |
 | GLM model missing after a policy/credential change | restart Claude Code to refresh `~/.claude/cache/gateway-models.json`; cached ghosts are still rejected locally |
 | Another tool's endpoint, credential, discovery flag, or model pin wins | run `router clients repair claude --dry-run --json`, then explicitly repair; Router backs up the public settings but never edits Claude credentials, account data, shell startup files, or model caches |
 | Claude.ai connector, Remote Control, cloud-session, schedule, notification, or organization-policy feature is unavailable | current Claude Code has no supported split-auth mechanism; run that operation directly with Claude.ai authentication |
