@@ -853,7 +853,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 |---|---|---|---|
 | `--token-secret` / `TOKEN_SECRET` | — | To serve, sign or encrypt | Secret key for signing/validating JWT tokens and encrypting stored provider keys. A command that only reads local files or acts on another deployment does not need one |
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
-| `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
+| `--host` / `ROUTER_HOST` | `0.0.0.0` | No | IP or network alias to resolve once and bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |

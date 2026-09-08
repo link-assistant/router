@@ -216,7 +216,14 @@ pub async fn serve_https(
         // very failure this exists to prevent.
         shutdown_handle.graceful_shutdown(None);
     });
-    axum_server::bind_rustls(address, tls)
+    // Bind before logging so port 0 and any OS normalization are reflected in
+    // the operator-visible address. Reusing this exact socket also prevents a
+    // second resolution or a bind to a broader address (issue #545).
+    let listener = tokio::net::TcpListener::bind(address).await?;
+    let bound = listener.local_addr()?;
+    let listener = listener.into_std()?;
+    tracing::info!("Listening on https://{bound}");
+    axum_server::from_tcp_rustls(listener, tls)?
         .handle(handle)
         .serve(app.into_make_service())
         .await?;

@@ -10,7 +10,7 @@
 #![allow(clippy::struct_excessive_bools)]
 
 use std::env;
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr, ToSocketAddrs as _};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
@@ -569,9 +569,7 @@ impl Config {
     pub fn build(args: BuildArgs<'_>) -> Result<Self, ConfigError> {
         let port: u16 = args.port.parse().map_err(|_| ConfigError::InvalidPort)?;
 
-        let listen_addr: SocketAddr = format!("{}:{}", args.host, port)
-            .parse()
-            .map_err(|_| ConfigError::InvalidAddress)?;
+        let listen_addr = resolve_listen_addr(args.host, port)?;
 
         let token_secret = args
             .token_secret
@@ -675,6 +673,26 @@ impl Config {
             chat_admin: args.chat_admin,
         })
     }
+}
+
+/// Resolve a server host once, before any other network can be attached to the
+/// process, and retain only the concrete address selected for `bind`.
+fn resolve_listen_addr(host: &str, port: u16) -> Result<SocketAddr, ConfigError> {
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        // The documented default remains a deliberate wildcard. A hostname,
+        // however, must never widen into one: aliases are used specifically to
+        // select one address on a multi-network container (issue #545).
+        return Ok(SocketAddr::new(ip, port));
+    }
+    let address = (host, port)
+        .to_socket_addrs()
+        .map_err(|_| ConfigError::InvalidListenHost(host.to_string()))?
+        .next()
+        .ok_or_else(|| ConfigError::InvalidListenHost(host.to_string()))?;
+    if address.ip().is_unspecified() {
+        return Err(ConfigError::InvalidListenHost(host.to_string()));
+    }
+    Ok(address)
 }
 
 /// Helper struct to keep [`Config::build`] argument-list manageable.
@@ -803,6 +821,8 @@ pub enum ConfigError {
     InvalidPort,
     /// The listen address could not be parsed.
     InvalidAddress,
+    /// `ROUTER_HOST` was neither an IP literal nor a resolvable safe alias.
+    InvalidListenHost(String),
     /// `TOKEN_SECRET` environment variable is missing or empty.
     MissingTokenSecret,
     /// Routing mode was not recognised.
@@ -840,6 +860,10 @@ impl std::fmt::Display for ConfigError {
         match self {
             Self::InvalidPort => write!(f, "ROUTER_PORT must be a valid port number (0-65535)"),
             Self::InvalidAddress => write!(f, "Could not parse listen address"),
+            Self::InvalidListenHost(host) => write!(
+                f,
+                "ROUTER_HOST {host:?} did not resolve to a concrete listen address"
+            ),
             Self::MissingTokenSecret => {
                 write!(f, "TOKEN_SECRET environment variable is required")
             }

@@ -188,7 +188,7 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Command>,
 
-    /// Address to bind the HTTP server to (legacy --host).
+    /// IP address or network alias to resolve once and bind (legacy --host).
     #[arg(long, env = "ROUTER_HOST", default_value = "0.0.0.0", global = true)]
     pub host: String,
 

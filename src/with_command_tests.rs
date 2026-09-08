@@ -320,7 +320,7 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
         ..RouterModel::default()
     }];
-    let error = TemporaryClient::prepare(&Preparation {
+    let result = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
         token: "task-token",
@@ -332,8 +332,11 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
-    })
-    .expect_err("an unknown capability profile must not reach Claude Code");
+    });
+    let error = match result {
+        Ok(_) => panic!("an unknown capability profile must not reach Claude Code"),
+        Err(error) => error,
+    };
     assert!(
         error.to_string().contains("glm-looking-but-unverified"),
         "{error}"
