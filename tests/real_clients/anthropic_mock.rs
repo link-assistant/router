@@ -21,7 +21,11 @@ pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
         }
     }
     if request.get("thinking").is_some() {
-        return thinking_answer(model);
+        return if request["thinking"]["type"] == "enabled" {
+            thinking_answer(model)
+        } else {
+            unsupported_thinking_answer(&request["thinking"])
+        };
     }
     let message = json!({
         "id": "msg_offline", "type": "message", "role": "assistant", "model": model,
@@ -52,6 +56,23 @@ pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
         ("message_stop", json!({"type":"message_stop"})),
     ];
     event_stream(&events, "write answer event")
+}
+
+fn unsupported_thinking_answer(thinking: &Value) -> Vec<u8> {
+    http_response(
+        "400 Bad Request",
+        "application/json",
+        &json!({
+            "type": "error",
+            "error": {
+                "type": "invalid_request_error",
+                "message": format!(
+                    "z.ai Anthropic compatibility fixture requires thinking.type=enabled; received {thinking}"
+                )
+            }
+        })
+        .to_string(),
+    )
 }
 
 fn thinking_answer(model: &str) -> Vec<u8> {
@@ -146,4 +167,26 @@ fn event_stream(events: &[(&str, Value)], context: &str) -> Vec<u8> {
         write!(&mut body, "event: {event}\ndata: {value}\n\n").expect(context);
     }
     http_response("200 OK", "text/event-stream", &body)
+}
+
+#[test]
+fn only_provider_accepted_thinking_can_receive_a_synthetic_trace() {
+    let adaptive = anthropic_answer("dynamic-zai-model", br#"{"thinking":{"type":"adaptive"}}"#);
+    assert!(adaptive.starts_with(b"HTTP/1.1 400 Bad Request\r\n"));
+    assert!(
+        !adaptive
+            .windows(THINKING_TRACE.len())
+            .any(|window| { window == THINKING_TRACE.as_bytes() })
+    );
+
+    let enabled = anthropic_answer(
+        "dynamic-zai-model",
+        br#"{"thinking":{"type":"enabled","budget_tokens":1024}}"#,
+    );
+    assert!(enabled.starts_with(b"HTTP/1.1 200 OK\r\n"));
+    assert!(
+        enabled
+            .windows(THINKING_TRACE.len())
+            .any(|window| { window == THINKING_TRACE.as_bytes() })
+    );
 }

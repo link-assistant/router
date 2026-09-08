@@ -174,8 +174,8 @@ fn default_claude_launch_uses_an_empty_persistent_router_profile() {
 fn zai_only_claude_launch_pins_only_main_and_subagent() {
     let profiles = tempfile::tempdir().expect("profile root");
     let models: Vec<RouterModel> = serde_json::from_value(json!([
-        {"id": "future-first-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "future-explicit-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+        {"id": "future-first-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-explicit-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
     ]))
     .expect("deserialize profiled z.ai models");
     let resumed = TemporaryClient::prepare(&Preparation {
@@ -261,11 +261,11 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     let profiles = tempfile::tempdir().expect("profile root");
     let models: Vec<RouterModel> = serde_json::from_value(json!([
         {"id": "future-native-id", "owned_by": "anthropic"},
-        {"id": "future-claude-shaped-zai", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "future-glm-beta", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+        {"id": "future-claude-shaped-zai", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-beta", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
     ]))
     .expect("deserialize client capability fixture");
     let prepared = TemporaryClient::prepare(&Preparation {
@@ -297,9 +297,9 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
         json!({
             "modelPicker": {
                 "options": [
-                    {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-5"},
-                    {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
-                    {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
+                    {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-4-5"},
+                    {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-4-5"},
+                    {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-4-5"}
                 ],
                 "replaceBuiltInOptions": false
             }
@@ -338,7 +338,7 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
     assert!(error.to_string().contains("capability metadata"), "{error}");
 
     let models: Vec<RouterModel> = serde_json::from_value(json!([
-        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
         {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-haiku-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
     ]))
     .expect("deserialize conflicting capability fixture");

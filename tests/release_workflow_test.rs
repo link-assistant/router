@@ -365,11 +365,11 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         "each matrix leg must build its own target explicitly"
     );
     assert!(
-        release.contains("shasum -a 256 *.tar.gz *.cdx.json"),
+        release.contains("shasum -a 256 -- *.tar.gz *.cdx.json"),
         "macOS runners have no sha256sum, so checksums need a shasum fallback"
     );
     assert!(
-        release.contains("sha256sum *.tar.gz *.cdx.json"),
+        release.contains("sha256sum -- *.tar.gz *.cdx.json"),
         "checksums must be digested from inside dist/ so consumers see flat names"
     );
     assert!(
@@ -485,11 +485,11 @@ fn coverage_tool_install_is_idempotent_after_cache_restore() {
 
     assert!(
         coverage
-            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.0'"),
+            .contains("cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'"),
         "a restored coverage binary at the pinned version should not be reinstalled"
     );
     assert!(
-        coverage.contains("cargo install cargo-llvm-cov --version 0.9.0 --locked --force"),
+        coverage.contains("cargo install cargo-llvm-cov --version 0.9.1 --locked --force"),
         "a stale cached coverage binary should be replaced"
     );
 }

@@ -27,7 +27,7 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 ),
                 "/api/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"future-claude-native","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
+                    r#"{"object":"list","data":[{"id":"future-claude-native","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-4-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-4-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
                 ),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -170,8 +170,8 @@ fn claude_default_profile_persists_without_touching_the_normal_profile() {
         serde_json::json!({
             "modelPicker": {
                 "options": [
-                    {"label": "future-glm-alpha", "model": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
-                    {"label": "future-glm-beta", "model": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
+                    {"label": "future-glm-alpha", "model": "future-glm-alpha", "behavesAs": "claude-sonnet-4-5"},
+                    {"label": "future-glm-beta", "model": "future-glm-beta", "behavesAs": "claude-sonnet-4-5"}
                 ],
                 "replaceBuiltInOptions": false
             }

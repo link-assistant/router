@@ -1,28 +1,36 @@
 //! Opt-in acceptance tests for protected subscription credentials.
 //!
-//! Usage probes do not call inference. The Codex model-identity regression uses
-//! the smallest streaming request for each currently advertised model. Every
-//! test is a no-op unless its protected environment variable is present;
-//! secret values are never printed or included in assertion output.
+//! Usage probes do not call inference. The Codex identity and z.ai Claude
+//! compatibility regressions use small streaming requests. Every test is a
+//! no-op unless its protected environment variable is present; secret values
+//! are never printed or included in assertion output.
 
 use axum::body::to_bytes;
 use axum::extract::{Json, OriginalUri, Path as AxumPath, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use link_assistant_router::app_state::{AppState, VendorClis};
+use link_assistant_router::cli::Cli;
 use link_assistant_router::clients::ClientKind;
+use link_assistant_router::config::Config;
 use link_assistant_router::providers::ProviderUpsert;
+use link_assistant_router::route_contract::ListenerKind;
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 use link_assistant_router::subscription_usage::usage_provider;
 use link_assistant_router::token::IssueRequest;
+use lino_arguments::Parser as _;
 use serde_json::Value;
+use std::path::Path;
+use std::process::{Command, Output, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
+use wait_timeout::ChildExt as _;
+
+const LIVE_TEST_SECRET: &str = "real-usage-smoke-router-secret";
 
 fn test_state(data_dir: &std::path::Path) -> AppState {
-    let secret = "real-usage-smoke-router-secret";
     AppState {
         client: reqwest::Client::new(),
-        token_manager: link_assistant_router::token::TokenManager::new(secret),
+        token_manager: link_assistant_router::token::TokenManager::new(LIVE_TEST_SECRET),
         oauth_provider: link_assistant_router::oauth::OAuthProvider::new(
             &data_dir.to_string_lossy(),
         ),
@@ -39,8 +47,11 @@ fn test_state(data_dir: &std::path::Path) -> AppState {
         bridge_model_policy: link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
         crater: None,
         openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
-        provider_store: link_assistant_router::providers::ProviderStore::open(data_dir, secret)
-            .expect("open live-smoke provider store"),
+        provider_store: link_assistant_router::providers::ProviderStore::open(
+            data_dir,
+            LIVE_TEST_SECRET,
+        )
+        .expect("open live-smoke provider store"),
         logger: log_lazy::LogLazy::new(),
         admin: Arc::new(link_assistant_router::admin::AdminClaim::load(
             None,
@@ -64,6 +75,106 @@ fn test_state(data_dir: &std::path::Path) -> AppState {
         ),
         github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
         max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
+    }
+}
+
+fn live_config(data_dir: &Path) -> Config {
+    Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        LIVE_TEST_SECRET,
+        "--data-dir",
+        data_dir.to_str().expect("UTF-8 live-smoke data dir"),
+        "--upstream-provider",
+        "auto",
+    ])
+    .expect("live-smoke CLI parses")
+    .into_config()
+    .expect("live-smoke config is valid")
+}
+
+fn install_zai(state: &AppState, api_key: String) {
+    state
+        .provider_store
+        .upsert(ProviderUpsert {
+            name: "z-ai".into(),
+            kind: Some("zai-coding-plan".into()),
+            base_url: "https://api.z.ai".into(),
+            default_model: None,
+            models: None,
+            supported_clients: None,
+            api_key: Some(api_key),
+            api_key_env: None,
+            encrypted_api_key: None,
+            enabled: Some(true),
+            subscriber_id: Some("primary".into()),
+            acknowledge_intermediary_risk: Some(true),
+            acknowledge_unsupported_clients: None,
+            if_absent: false,
+        })
+        .expect("configure isolated z.ai credential");
+}
+
+fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Output {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
+        .args([
+            "--server",
+            origin,
+            "--token",
+            token,
+            "--model",
+            model,
+            "--non-interactive",
+            "claude",
+            "--verbose",
+            "--output-format",
+            "stream-json",
+            "--max-turns",
+            "1",
+            "Think briefly, then reply with exactly ROUTER_ZAI_LIVE_OK.",
+        ])
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .env("HOME", home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
+        .env("CI", "1")
+        .env("NO_COLOR", "1")
+        .env("MAX_THINKING_TOKENS", "1024")
+        .env("NO_PROXY", "127.0.0.1,localhost")
+        .env("no_proxy", "127.0.0.1,localhost")
+        .env("HTTP_PROXY", "http://127.0.0.1:9")
+        .env("HTTPS_PROXY", "http://127.0.0.1:9")
+        .env("ALL_PROXY", "http://127.0.0.1:9")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("launch Claude through live Router");
+    if child
+        .wait_timeout(Duration::from_secs(120))
+        .expect("wait for live Claude")
+        .is_none()
+    {
+        child.kill().expect("stop timed-out live Claude");
+    }
+    child
+        .wait_with_output()
+        .expect("collect live Claude output")
+}
+
+fn contains_thinking(value: &Value) -> bool {
+    match value {
+        Value::Object(object) => {
+            let typed_thinking = matches!(
+                object.get("type").and_then(Value::as_str),
+                Some("thinking" | "thinking_delta")
+            ) && object
+                .get("thinking")
+                .and_then(Value::as_str)
+                .is_some_and(|thinking| !thinking.trim().is_empty());
+            typed_thinking || object.values().any(contains_thinking)
+        }
+        Value::Array(values) => values.iter().any(contains_thinking),
+        _ => false,
     }
 }
 
@@ -318,26 +429,106 @@ async fn real_zai_usage_sources_are_normalized_without_inference() {
     };
     let root = tempfile::tempdir().expect("live usage data dir");
     let state = test_state(root.path());
-    state
-        .provider_store
-        .upsert(ProviderUpsert {
-            name: "z-ai".into(),
-            kind: Some("zai-coding-plan".into()),
-            base_url: "https://api.z.ai".into(),
-            default_model: None,
-            models: None,
-            supported_clients: None,
-            api_key: Some(api_key.clone()),
-            api_key_env: None,
-            encrypted_api_key: None,
-            enabled: Some(true),
-            subscriber_id: Some("primary".into()),
-            acknowledge_intermediary_risk: Some(true),
-            acknowledge_unsupported_clients: None,
-            if_absent: false,
-        })
-        .expect("configure isolated z.ai credential");
+    install_zai(&state, api_key.clone());
 
     let (status, body) = probe(state, "z-ai", ClientKind::ClaudeCode).await;
     assert_available(status, &body, "z-ai", &api_key);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn real_zai_thinking_reaches_claude_verbose_output() {
+    let Some(api_key) = protected("ROUTER_LIVE_ZAI_API_KEY") else {
+        eprintln!(
+            "SKIP: ROUTER_LIVE_ZAI_API_KEY is not configured; live Claude reasoning did not run"
+        );
+        return;
+    };
+    eprintln!("RUN: validating live z.ai reasoning through Claude Code");
+
+    let root = tempfile::tempdir().expect("live z.ai data dir");
+    let state = test_state(root.path());
+    install_zai(&state, api_key);
+    let config = live_config(root.path());
+    let token = state
+        .token_manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "live z.ai Claude acceptance",
+            account: Some("primary"),
+            client_kind: Some(ClientKind::ClaudeCode.canonical_name()),
+            principal_id: Some("primary"),
+            ..IssueRequest::default()
+        })
+        .expect("issue live z.ai Claude token");
+    let app = link_assistant_router::server_router::router_for_listener(
+        state,
+        &config,
+        ListenerKind::Combined,
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind live z.ai Router");
+    let origin = format!(
+        "http://{}",
+        listener.local_addr().expect("live Router address")
+    );
+    let server = tokio::spawn(async move {
+        axum::serve(listener, app)
+            .await
+            .expect("serve live z.ai Router");
+    });
+
+    let catalog: Value = reqwest::Client::new()
+        .get(format!("{origin}/api/models"))
+        .bearer_auth(&token)
+        .header("x-link-assistant-client", "claude")
+        .send()
+        .await
+        .expect("fetch live z.ai Router catalog")
+        .error_for_status()
+        .expect("live z.ai Router catalog status")
+        .json()
+        .await
+        .expect("live z.ai Router catalog JSON");
+    let model = catalog["data"]
+        .as_array()
+        .and_then(|models| {
+            models.iter().find(|model| {
+                model["owned_by"] == "z.ai"
+                    && model["client_capabilities"]["claude"]["behaves_as"] == "claude-sonnet-4-5"
+            })
+        })
+        .and_then(|model| model["id"].as_str())
+        .expect("live z.ai catalog model with Claude capability profile")
+        .to_string();
+
+    let home = root.path().join("client-home");
+    std::fs::create_dir_all(&home).expect("create isolated live Claude home");
+    let output = tokio::task::spawn_blocking({
+        let origin = origin.clone();
+        let token = token.clone();
+        move || run_live_claude(&home, &origin, &token, &model)
+    })
+    .await
+    .expect("join live Claude process");
+    server.abort();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        output.status.success(),
+        "live Claude run failed; stdout: {stdout}; stderr: {stderr}"
+    );
+    assert!(
+        stdout.contains("ROUTER_ZAI_LIVE_OK"),
+        "live Claude answer missing"
+    );
+    assert!(
+        stdout
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .any(|event| contains_thinking(&event)),
+        "live z.ai stream did not expose a non-empty thinking block in Claude verbose output"
+    );
+    assert!(!stdout.contains("ROUTER_CAPTURE_THINKING_TRACE"));
 }

@@ -206,7 +206,7 @@ fn catalog_model(id: &str, owner: &str) -> Value {
     if owner == "z.ai" {
         model["client_capabilities"] = json!({
             "claude": {
-                "behaves_as": "claude-sonnet-5",
+                "behaves_as": "claude-sonnet-4-5",
                 "source": "provider-protocol:z.ai-anthropic"
             }
         });
@@ -341,12 +341,6 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         &router.origin,
         selected,
     );
-    assert!(
-        output.status.success(),
-        "Claude did not serve the selected exact model: {}{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    );
     let diagnostics = format!(
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
@@ -369,10 +363,33 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .iter()
         .any(|(model, owner)| *model == selected && *owner == "z.ai")
     {
-        assert!(
-            body.get("thinking").is_some(),
-            "the verified Claude profile did not request thinking: {body}"
+        assert_eq!(
+            body["thinking"]["type"], "enabled",
+            "the verified Claude profile did not request z.ai's accepted thinking mode: {body}"
         );
+        let budget = body["thinking"]["budget_tokens"]
+            .as_u64()
+            .expect("enabled Claude thinking must include a numeric budget");
+        let maximum = body["max_tokens"]
+            .as_u64()
+            .expect("Claude inference must include a numeric output limit");
+        assert!(
+            budget > 0 && budget < maximum,
+            "Claude thinking budget must fit below max_tokens: {body}"
+        );
+        assert!(
+            body.get("output_config").is_none(),
+            "the z.ai-compatible request must not use Sonnet 5 effort controls: {body}"
+        );
+    }
+    assert!(
+        output.status.success(),
+        "Claude did not serve the selected exact model: {diagnostics}"
+    );
+    if models
+        .iter()
+        .any(|(model, owner)| *model == selected && *owner == "z.ai")
+    {
         let traced = run_wrapper_with_options(
             CLAUDE,
             Path::new(env!("CARGO_MANIFEST_DIR")),

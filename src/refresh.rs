@@ -70,7 +70,7 @@ pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.112.1 user
 pub const ANTHROPIC_SDK_VERSION: &str = "0.112.1";
 pub const GEMINI_CLI_VERSION: &str = "0.58.0";
 pub const GOOGLE_AUTH_LIBRARY_VERSION: &str = "10.9.0";
-pub const QWEN_CODE_VERSION: &str = "0.23.0";
+pub const QWEN_CODE_VERSION: &str = "0.23.1";
 
 /// Atomic custom Gemini installed-app client override.
 pub const GEMINI_CLIENT_ID_ENV: &str = "GEMINI_OAUTH_CLIENT_ID";
