@@ -213,6 +213,12 @@ fn split_listener(
 }
 
 fn read_split_request(stream: &mut std::net::TcpStream) -> String {
+    // Accepted sockets inherit nonblocking mode on macOS. The mock listener is
+    // nonblocking so it can enforce a deadline, but each accepted request must
+    // wait for the client to finish writing its headers.
+    stream
+        .set_nonblocking(false)
+        .expect("set blocking request stream");
     stream
         .set_read_timeout(Some(Duration::from_secs(5)))
         .expect("set timeout");
