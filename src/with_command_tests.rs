@@ -266,33 +266,14 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
 #[test]
 fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     let profiles = tempfile::tempdir().expect("profile root");
-    let models = [
-        RouterModel {
-            id: "future-claude-native".to_string(),
-            owned_by: crate::clients::ANTHROPIC_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-beta".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-alpha".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-alpha".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "sonnet".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-    ];
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "future-claude-native", "owned_by": "anthropic"},
+        {"id": "future-glm-beta", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize client capability fixture");
     let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
@@ -322,13 +303,42 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
         json!({
             "modelPicker": {
                 "options": [
-                    {"model": "future-glm-alpha", "label": "future-glm-alpha"},
-                    {"model": "future-glm-beta", "label": "future-glm-beta"}
+                    {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
+                    {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
                 ],
                 "replaceBuiltInOptions": false
             }
         })
     );
+}
+
+#[test]
+fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
+    let profiles = tempfile::tempdir().expect("profile root");
+    let models = [RouterModel {
+        id: "glm-looking-but-unverified".to_string(),
+        owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+        ..RouterModel::default()
+    }];
+    let error = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+    })
+    .expect_err("an unknown capability profile must not reach Claude Code");
+    assert!(
+        error.to_string().contains("glm-looking-but-unverified"),
+        "{error}"
+    );
+    assert!(error.to_string().contains("capability metadata"), "{error}");
 }
 
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does

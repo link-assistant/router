@@ -127,20 +127,12 @@ pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
         String::from_utf8_lossy(&output.stderr)
     );
     let stderr = String::from_utf8_lossy(&output.stderr);
-    for unavailable in [
-        "Claude.ai connectors",
-        "Remote Control",
-        "/schedule",
-        "notification preferences",
-        "cloud sessions",
-        "remote managed settings",
-        "organization policy",
-    ] {
-        assert!(
-            stderr.contains(unavailable),
-            "the real-client diagnostic omitted {unavailable}: {stderr}"
-        );
-    }
+    assert!(
+        !stderr.contains("Claude.ai connectors")
+            && !stderr.contains("Remote Control")
+            && !stderr.contains("organization policy"),
+        "a supported real-client launch repeated the setup limitation: {stderr}"
+    );
     assert_eq!(
         std::fs::read(claude_home.join(".credentials.json"))
             .expect("read synthetic Claude login after capture"),
@@ -207,10 +199,19 @@ pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
 }
 
 fn catalog_model(id: &str, owner: &str) -> Value {
-    json!({
+    let mut model = json!({
         "id": id, "type": "model", "display_name": id,
         "created_at": "2026-09-05T00:00:00Z", "owned_by": owner
-    })
+    });
+    if owner == "z.ai" {
+        model["client_capabilities"] = json!({
+            "claude": {
+                "behaves_as": "claude-sonnet-5",
+                "source": "provider-protocol:z.ai-anthropic"
+            }
+        });
+    }
+    model
 }
 
 fn seed_home(home: &Path, working_directory: &Path) {
@@ -342,7 +343,20 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
     );
     assert!(
         output.status.success(),
-        "Claude did not serve the selected exact model"
+        "Claude did not serve the selected exact model: {}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let diagnostics = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !diagnostics.contains("unrecognized_model")
+            && !diagnostics.contains("isn't described by this version's model catalog")
+            && !diagnostics.contains("within 200k tokens"),
+        "the verified dynamic model was treated as unknown: {diagnostics}"
     );
     let request = router
         .inference_requests(CLAUDE.inference_path)

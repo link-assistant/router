@@ -438,6 +438,34 @@ mod tests {
     }
 
     #[test]
+    fn claude_projection_profiles_every_live_zai_id_without_name_guessing() {
+        let catalog = json!({"data": [
+            {"id": "glm-5.3-flash", "owned_by": "z.ai"},
+            {"id": "future-saffron-2099", "owned_by": "z.ai"},
+            {"id": "unprofiled", "owned_by": "another-provider"}
+        ]});
+
+        let projected = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
+        let entries = projected["data"].as_array().unwrap();
+        for id in ["glm-5.3-flash", "future-saffron-2099"] {
+            let model = entries.iter().find(|model| model["id"] == id).unwrap();
+            assert_eq!(
+                model["client_capabilities"]["claude"]["behaves_as"],
+                "claude-sonnet-5"
+            );
+            assert_eq!(
+                model["client_capabilities"]["claude"]["source"],
+                "provider-protocol:z.ai-anthropic"
+            );
+        }
+        let unprofiled = entries
+            .iter()
+            .find(|model| model["id"] == "unprofiled")
+            .unwrap();
+        assert!(unprofiled.get("client_capabilities").is_none());
+    }
+
+    #[test]
     fn duplicate_exact_ids_fail_instead_of_choosing_an_owner() {
         let catalog = json!({"data": [
             {"id": "same", "provider": "claude"},

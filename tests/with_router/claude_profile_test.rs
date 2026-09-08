@@ -27,7 +27,7 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 ),
                 "/api/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"future-claude-native","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai"},{"id":"future-glm-beta","owned_by":"z.ai"}]}"#,
+                    r#"{"object":"list","data":[{"id":"future-claude-native","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
                 ),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -170,8 +170,8 @@ fn claude_default_profile_persists_without_touching_the_normal_profile() {
         serde_json::json!({
             "modelPicker": {
                 "options": [
-                    {"label": "future-glm-alpha", "model": "future-glm-alpha"},
-                    {"label": "future-glm-beta", "model": "future-glm-beta"}
+                    {"label": "future-glm-alpha", "model": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
+                    {"label": "future-glm-beta", "model": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
                 ],
                 "replaceBuiltInOptions": false
             }
@@ -229,19 +229,12 @@ fn claude_real_profile_extension_is_explicit() {
     );
     assert!(output.status.success(), "{output:?}");
     let stderr = String::from_utf8_lossy(&output.stderr);
-    for unavailable in [
-        "Claude.ai connectors",
-        "Remote Control",
-        "/schedule",
-        "notification preferences",
-        "cloud sessions",
-        "organization policy",
-    ] {
-        assert!(
-            stderr.contains(unavailable),
-            "the pre-launch limitation must name {unavailable}: {stderr}"
-        );
-    }
+    assert!(
+        !stderr.contains("Claude.ai connectors")
+            && !stderr.contains("Remote Control")
+            && !stderr.contains("organization policy"),
+        "an ordinary successful launch must not repeat the setup limitation: {stderr}"
+    );
     assert_eq!(requests.join().expect("mock Router requests").len(), 3);
     assert_eq!(
         fs::read_to_string(capture.join("claude-config-dir")).expect("captured config variable"),
