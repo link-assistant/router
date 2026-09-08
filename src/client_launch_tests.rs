@@ -302,7 +302,7 @@ fn codex_cloud_is_rejected_before_launch_planning() {
     assert!(unsupported_native_command(&args(ClientKind::ClaudeCode, &["cloud"])).is_none());
 }
 
-/// Claude Code 2.1.263 resolves authentication once for the whole process.
+/// Claude Code 2.1.265 resolves authentication once for the whole process.
 /// A Router bearer therefore makes every Claude.ai-only operation fail even
 /// when the untouched stored login has the required scopes (issue #520).
 /// Reject explicit requests before server discovery or token minting instead

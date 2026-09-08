@@ -58,6 +58,18 @@ credentials, shell files, sessions, permissions, theme, account data and model
 cache remain byte-identical. `--extend-global-config` explicitly uses the
 normal Claude profile; `--isolated-config` uses a disposable empty profile.
 
+The Claude process also receives privacy-conscious defaults for
+`DISABLE_ERROR_REPORTING`, `DISABLE_AUTOUPDATER`, and
+`DISABLE_FEEDBACK_COMMAND`. Router sets each to `1` only when the invoking
+environment did not already define it, and never persists those defaults.
+Router does not install `DISABLE_TELEMETRY`,
+`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, or `DO_NOT_TRACK`: in Claude Code
+2.1.265 these controls can disable feature-flag evaluation and hide gated
+built-in tools such as `Monitor`. When an active blocker is inherited, Router
+preserves it and warns before launch with the exact variable name. Upstream
+currently exposes no supported environment combination that both disables
+usage telemetry and guarantees fresh remote feature flags.
+
 The process overlay sets Router's URL/token, clears the higher-priority API key,
 enables gateway discovery, and adds a dynamic `modelPicker` through Claude's
 supported `--settings` option. Gateway discovery supplies exact Claude IDs;
@@ -68,7 +80,7 @@ the correct context, thinking, effort, and tool-use behavior without changing
 the provider model id sent on the wire. Missing or conflicting capability
 metadata stops the launch with the affected id instead of guessing from its
 name. Router does not write a model cache or invent prefixes. Claude Code
-2.1.263 or newer is required.
+2.1.255 through 2.1.265 is the reviewed range.
 
 Reset only this Router-owned Claude profile before launch with
 `router with claude --reset-to-default-configuration`. The command asks for

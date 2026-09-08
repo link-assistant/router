@@ -47,14 +47,14 @@ jobs:
       - name: Install pinned real clients
         run: |
           npm install --global \
-            @anthropic-ai/claude-code@2.1.263 \
+            @anthropic-ai/claude-code@2.1.265 \
             @openai/codex@0.153.4 \
-            @google/gemini-cli@0.58.0 \
+            @google/gemini-cli@0.59.0 \
             @qwen-code/qwen-code@0.23.1 \
             opencode-ai@1.18.29
-          claude --version | grep -F '2.1.263'
+          claude --version | grep -F '2.1.265'
           codex --version | grep -F '0.153.4'
-          gemini --version | grep -F '0.58.0'
+          gemini --version | grep -F '0.59.0'
           qwen --version | grep -F '0.23.1'
           opencode --version | grep -Fx '1.18.29'
 

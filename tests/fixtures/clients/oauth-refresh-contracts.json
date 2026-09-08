@@ -1,7 +1,7 @@
 {
   "captured_on": "2026-09-05",
   "claude": {
-    "client_version": "2.1.263",
+    "client_version": "2.1.265",
     "sdk_version": "0.112.1",
     "method": "POST",
     "body_style": "json",
@@ -32,7 +32,7 @@
     }
   },
   "gemini": {
-    "client_version": "0.58.0",
+    "client_version": "0.59.0",
     "auth_library_version": "10.9.0",
     "method": "POST",
     "body_style": "form",

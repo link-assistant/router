@@ -34,9 +34,10 @@ const CLAUDE_PRIVACY_DEFAULT_ENV: [&str; 3] = [
     "DISABLE_AUTOUPDATER",
     "DISABLE_FEEDBACK_COMMAND",
 ];
-const CLAUDE_FEATURE_FLAG_BLOCKING_ENV: [&str; 2] = [
+const CLAUDE_FEATURE_FLAG_BLOCKING_ENV: [&str; 3] = [
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
     "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
 ];
 
 /// Execute one wrapper invocation and preserve the client's exit status.
@@ -648,10 +649,11 @@ impl TemporaryClient {
 /// Apply privacy defaults that do not disable Claude Code's remote feature
 /// evaluation, while preserving every value the invoking user already owns.
 ///
-/// Both the umbrella switch and `DISABLE_TELEMETRY` disable the feature flags
-/// that gate tools such as `Monitor` in Claude Code 2.1.265. Router therefore
-/// never installs or clears them. The remaining controls are process-local
-/// defaults rather than persistent settings (issue #551).
+/// The umbrella switch, `DISABLE_TELEMETRY`, and a truthy `DO_NOT_TRACK`
+/// disable the feature flags that gate tools such as `Monitor` in Claude Code
+/// 2.1.265. Router therefore never installs or clears them. The remaining
+/// controls are process-local defaults rather than persistent settings (issue
+/// #551).
 fn apply_claude_privacy_overlay(command: &mut Command) {
     for key in CLAUDE_PRIVACY_DEFAULT_ENV {
         if std::env::var_os(key).is_none() {
@@ -661,7 +663,15 @@ fn apply_claude_privacy_overlay(command: &mut Command) {
 
     let blockers = CLAUDE_FEATURE_FLAG_BLOCKING_ENV
         .into_iter()
-        .filter(|key| std::env::var_os(key).is_some_and(|value| !value.is_empty()))
+        .filter(|key| {
+            std::env::var_os(key).is_some_and(|value| {
+                if *key == "DO_NOT_TRACK" {
+                    value == "1" || value.eq_ignore_ascii_case("true")
+                } else {
+                    !value.is_empty()
+                }
+            })
+        })
         .collect::<Vec<_>>();
     if !blockers.is_empty() {
         eprintln!(

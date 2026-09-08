@@ -260,7 +260,7 @@ fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
 /// Keep this concrete. "Some native features" made a launch look healthier
 /// than it was and left the user to discover each loss inside Claude (issue
 /// #520).
-pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &str = "Claude Code releases through 2.1.263 have no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
+pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &str = "Claude Code releases through 2.1.265 have no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
 
 /// Report the boundary anywhere Router creates, repairs, or checks a Claude
 /// gateway configuration. Ordinary supported launches stay quiet; setup and
@@ -271,7 +271,7 @@ pub fn report_claude_native_services_limitation(client: ClientKind) {
     }
 }
 
-const CLAUDE_NATIVE_SERVICE_REQUEST_ERROR: &str = "this Claude.ai operation cannot be routed by Claude Code 2.1.263 because the released client has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
+const CLAUDE_NATIVE_SERVICE_REQUEST_ERROR: &str = "this Claude.ai operation cannot be routed by Claude Code 2.1.265 because the released client has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
 
 fn claude_native_service_request(arguments: &[OsString]) -> bool {
     let arguments = arguments

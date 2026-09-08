@@ -91,15 +91,28 @@ fn monitor_is_advertised(environment: &[(&str, &str)]) -> (bool, String) {
         "Claude privacy capture failed: {diagnostics}"
     );
     let request = router
-        .inference_request(CLAUDE.inference_path)
-        .expect("Claude privacy scenario reaches Messages inference");
+        .inference_requests(CLAUDE.inference_path)
+        .into_iter()
+        .find(|request| {
+            let body = request.json_body();
+            String::from_utf8_lossy(&request.decoded_body()).contains(PROMPT)
+                && body["tools"]
+                    .as_array()
+                    .is_some_and(|tools| !tools.is_empty())
+        })
+        .expect("Claude privacy scenario reaches the prompted Messages inference");
     let body = request.json_body();
-    let advertised = body["tools"].as_array().is_some_and(|tools| {
-        tools
-            .iter()
-            .any(|tool| tool["name"].as_str().is_some_and(|name| name == "Monitor"))
-    });
-    (advertised, diagnostics)
+    let tool_names = body["tools"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|tool| tool["name"].as_str())
+        .collect::<Vec<_>>();
+    let advertised = tool_names.contains(&"Monitor");
+    (
+        advertised,
+        format!("{diagnostics}\nadvertised tools: {tool_names:?}"),
+    )
 }
 
 #[test]
@@ -174,7 +187,10 @@ fn claude_2_1_265_privacy_matrix_keeps_monitor_when_feature_evaluation_is_enable
 
     let (do_not_track_monitor, do_not_track_diagnostics) =
         monitor_is_advertised(&[("DO_NOT_TRACK", "1")]);
-    assert!(!do_not_track_monitor, "DO_NOT_TRACK unexpectedly exposed Monitor");
+    assert!(
+        !do_not_track_monitor,
+        "DO_NOT_TRACK unexpectedly exposed Monitor"
+    );
     assert!(
         do_not_track_diagnostics.contains("DO_NOT_TRACK"),
         "Router did not explain the inherited blocker: {do_not_track_diagnostics}"

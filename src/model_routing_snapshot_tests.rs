@@ -910,7 +910,7 @@ async fn mismatched_bound_client_is_denied_before_unknown_model_routing() {
         "authorization",
         HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
     );
-    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.263"));
+    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.265"));
     headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
 
     let response = crate::proxy::openai_responses(

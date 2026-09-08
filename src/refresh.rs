@@ -68,7 +68,7 @@ struct RefreshConfig {
 /// value participates in client attestation at the token endpoint.
 pub const CLAUDE_OAUTH_USER_AGENT: &str = "anthropic-sdk-typescript/0.112.1 userOAuthProvider";
 pub const ANTHROPIC_SDK_VERSION: &str = "0.112.1";
-pub const GEMINI_CLI_VERSION: &str = "0.58.0";
+pub const GEMINI_CLI_VERSION: &str = "0.59.0";
 pub const GOOGLE_AUTH_LIBRARY_VERSION: &str = "10.9.0";
 pub const QWEN_CODE_VERSION: &str = "0.23.1";
 

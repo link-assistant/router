@@ -527,7 +527,7 @@ async fn claude_to_codex_translation_preserves_the_client_request_id() {
         "authorization",
         HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
     );
-    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.263"));
+    headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.265"));
     headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
     headers.insert(
         "x-request-id",
