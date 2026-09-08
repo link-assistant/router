@@ -806,7 +806,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
 
     let catalog: Value = codex
-        .get("/api/services/openai/v1/models")
+        .get("/api/services/codex/v1/models")
         .send()
         .await
         .expect("model catalog response")
@@ -819,7 +819,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         .iter()
         .filter_map(|model| model["id"].as_str().map(str::to_string))
         .collect::<Vec<_>>();
-    assert!(ids.iter().any(|id| id == "gpt-5"));
+    assert_eq!(ids, ["codex-auto-review", "gpt-5"]);
 
     for id in &ids {
         // Buffered Chat Completions.
@@ -895,6 +895,8 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             };
             assert_eq!(model, id.as_str(), "streamed responses identity: {event}");
         }
+
+        codex_identity::assert_native_responses_identity(&codex, id).await;
     }
 }
 
@@ -962,3 +964,6 @@ async fn an_admin_credential_manages_tokens_without_inheriting_subscription_acce
 
 #[path = "cases_regressions_server_tools.rs"]
 mod server_tools;
+
+#[path = "cases_regressions_codex_identity.rs"]
+mod codex_identity;

@@ -616,9 +616,11 @@ async fn forward_subscription_openai_inner(
             requested_model,
             emulated_output_limit,
         );
-        let rewrite_passthrough = !native_protocol
-            && response_shape == SubscriptionResponseShape::Passthrough
-            && rewriter.active();
+        // Native request transparency does not make the provider's resolved
+        // model authoritative in the response. The client-selected catalog id
+        // remains the public identity on every Responses route (#548).
+        let rewrite_passthrough =
+            response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = status
             .is_success()
@@ -675,7 +677,23 @@ async fn forward_subscription_openai_inner(
     }
 
     if native_protocol {
-        let mut response = Response::new(Body::from(upstream_body));
+        let mut response_body = upstream_body;
+        if status.is_success()
+            && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
+        {
+            let original = payload.clone();
+            let requested_model = routing_body
+                .get("model")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default();
+            crate::output_limit::preserve_model_identity(&mut payload, requested_model);
+            if payload != original {
+                response_body = bytes::Bytes::from(
+                    serde_json::to_vec(&payload).expect("JSON values always serialize"),
+                );
+            }
+        }
+        let mut response = Response::new(Body::from(response_body));
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
         return response;
