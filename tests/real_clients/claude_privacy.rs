@@ -61,7 +61,7 @@ fn seed_monitor_feature(home: &Path) {
             "cachedGrowthBookFeatures": {
                 "tengu_amber_sentinel": true
             },
-            "cachedGrowthBookFeaturesAt": 4102444800000_u64
+            "cachedGrowthBookFeaturesAt": 4_102_444_800_000_u64
         })
         .to_string(),
     )
