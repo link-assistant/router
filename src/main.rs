@@ -501,8 +501,6 @@ async fn run_server(
         },
     ));
 
-    tracing::info!("Listening on {}", config.listen_addr);
-
     // Installed before any listener starts, so a signal arriving during
     // startup is not missed (issue #334).
     let shutdown = shutdown::Shutdown::listening();
@@ -586,6 +584,7 @@ async fn run_server(
         }
         Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
             let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
+            tracing::info!("Listening on http://{}", listener.local_addr()?);
             axum::serve(listener, app)
                 .with_graceful_shutdown(shutdown.notified())
                 .await?;

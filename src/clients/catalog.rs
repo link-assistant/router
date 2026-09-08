@@ -20,6 +20,56 @@ pub struct RouterModel {
     /// reasoning effort.
     #[serde(default)]
     pub supported_reasoning_levels: Option<Vec<RouterReasoningLevel>>,
+    /// Client-specific identities backed by reviewed provider protocol
+    /// contracts. An empty object means no safe identity was advertised.
+    #[serde(default)]
+    pub client_capabilities: RouterClientCapabilities,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
+pub struct RouterClientCapabilities {
+    #[serde(default)]
+    pub claude: Option<ClaudeModelCapabilities>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ClaudeModelCapabilities {
+    pub behaves_as: String,
+    pub source: String,
+}
+
+/// Claude's known model identity that matches one provider adapter's reviewed
+/// context, thinking, effort, tool-use, and output contract.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ClaudeCapabilityProfile {
+    behaves_as: &'static str,
+    source: &'static str,
+}
+
+impl ClaudeCapabilityProfile {
+    #[must_use]
+    pub(crate) const fn behaves_as(self) -> &'static str {
+        self.behaves_as
+    }
+
+    #[must_use]
+    pub(crate) const fn source(self) -> &'static str {
+        self.source
+    }
+}
+
+/// Provider-level Claude capability metadata for models reached through the
+/// native Anthropic Messages adapter. The model id deliberately is not read:
+/// the live provider catalog owns that changing inventory (issue #546).
+#[must_use]
+pub fn claude_capability_profile(owner: &str) -> Option<ClaudeCapabilityProfile> {
+    (owner == super::ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
+        // Claude Code 2.1.263 describes Sonnet 5 as native 1M, 128K-output,
+        // effort/adaptive-thinking and tool capable. Those match the reviewed
+        // z.ai Coding Plan Anthropic adapter boundaries.
+        behaves_as: "claude-sonnet-5",
+        source: "provider-protocol:z.ai-anthropic",
+    })
 }
 
 /// One reasoning option retained verbatim from a live Codex catalog.

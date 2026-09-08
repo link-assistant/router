@@ -100,6 +100,9 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     if client == ClientKind::Codex {
         apply_provider_reasoning_profile(&mut projected, owner);
     }
+    if client == ClientKind::ClaudeCode {
+        apply_provider_claude_profile(&mut projected, owner);
+    }
     if projected.len() > 3 {
         projected.insert(
             "metadata_source".into(),
@@ -116,6 +119,21 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
         }
     }
     projected
+}
+
+fn apply_provider_claude_profile(projected: &mut Map<String, Value>, owner: &str) {
+    let Some(profile) = crate::clients::claude_capability_profile(owner) else {
+        return;
+    };
+    projected.insert(
+        "client_capabilities".into(),
+        json!({
+            "claude": {
+                "behaves_as": profile.behaves_as(),
+                "source": profile.source(),
+            }
+        }),
+    );
 }
 
 fn apply_provider_reasoning_profile(projected: &mut Map<String, Value>, owner: &str) {
@@ -435,6 +453,34 @@ mod tests {
             .unwrap();
         assert_eq!(claude_described["default_reasoning_level"], "high");
         assert!(claude_described.get("reasoning_metadata_source").is_none());
+    }
+
+    #[test]
+    fn claude_projection_profiles_every_live_zai_id_without_name_guessing() {
+        let catalog = json!({"data": [
+            {"id": "glm-5.3-flash", "owned_by": "z.ai"},
+            {"id": "future-saffron-2099", "owned_by": "z.ai"},
+            {"id": "unprofiled", "owned_by": "another-provider"}
+        ]});
+
+        let projected = project_catalog(&catalog, ClientKind::ClaudeCode).unwrap();
+        let entries = projected["data"].as_array().unwrap();
+        for id in ["glm-5.3-flash", "future-saffron-2099"] {
+            let model = entries.iter().find(|model| model["id"] == id).unwrap();
+            assert_eq!(
+                model["client_capabilities"]["claude"]["behaves_as"],
+                "claude-sonnet-5"
+            );
+            assert_eq!(
+                model["client_capabilities"]["claude"]["source"],
+                "provider-protocol:z.ai-anthropic"
+            );
+        }
+        let unprofiled = entries
+            .iter()
+            .find(|model| model["id"] == "unprofiled")
+            .unwrap();
+        assert!(unprofiled.get("client_capabilities").is_none());
     }
 
     #[test]

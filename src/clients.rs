@@ -28,11 +28,13 @@ pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipSt
 pub use repair::{RepairPlan, RepairResult};
 pub use types::{ClientError, ClientStatus, SetupResult};
 
-pub(crate) use catalog::RouterModel;
+#[cfg(test)]
+pub(crate) use catalog::RouterClientCapabilities;
 #[cfg(test)]
 pub(crate) use catalog::RouterReasoningLevel;
 pub(crate) use catalog::claude_gateway_model;
 use catalog::doctor_model;
+pub(crate) use catalog::{RouterModel, claude_capability_profile};
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
 pub(crate) use doctor::require_claude_gateway_version;

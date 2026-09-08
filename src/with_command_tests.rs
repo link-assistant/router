@@ -173,18 +173,11 @@ fn default_claude_launch_uses_an_empty_persistent_router_profile() {
 #[test]
 fn zai_only_claude_launch_pins_only_main_and_subagent() {
     let profiles = tempfile::tempdir().expect("profile root");
-    let models = [
-        RouterModel {
-            id: "future-first-2099".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-explicit-2099".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-    ];
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "future-first-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-explicit-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize profiled z.ai models");
     let resumed = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
@@ -266,33 +259,15 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
 #[test]
 fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     let profiles = tempfile::tempdir().expect("profile root");
-    let models = [
-        RouterModel {
-            id: "future-claude-native".to_string(),
-            owned_by: crate::clients::ANTHROPIC_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-beta".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-alpha".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "future-glm-alpha".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-        RouterModel {
-            id: "sonnet".to_string(),
-            owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-            ..RouterModel::default()
-        },
-    ];
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "future-native-id", "owned_by": "anthropic"},
+        {"id": "future-claude-shaped-zai", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-beta", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize client capability fixture");
     let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
@@ -322,13 +297,69 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
         json!({
             "modelPicker": {
                 "options": [
-                    {"model": "future-glm-alpha", "label": "future-glm-alpha"},
-                    {"model": "future-glm-beta", "label": "future-glm-beta"}
+                    {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-5"},
+                    {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
+                    {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
                 ],
                 "replaceBuiltInOptions": false
             }
         })
     );
+}
+
+#[test]
+fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
+    let profiles = tempfile::tempdir().expect("profile root");
+    let models = [RouterModel {
+        id: "glm-looking-but-unverified".to_string(),
+        owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
+        ..RouterModel::default()
+    }];
+    let result = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+    });
+    let Err(error) = result else {
+        panic!("an unknown capability profile must not reach Claude Code");
+    };
+    assert!(
+        error.to_string().contains("glm-looking-but-unverified"),
+        "{error}"
+    );
+    assert!(error.to_string().contains("capability metadata"), "{error}");
+
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-haiku-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize conflicting capability fixture");
+    let result = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+    });
+    let Err(error) = result else {
+        panic!("conflicting capability profiles must not reach Claude Code");
+    };
+    assert!(error.to_string().contains("future-conflict"), "{error}");
+    assert!(error.to_string().contains("ambiguous"), "{error}");
 }
 
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does
@@ -344,6 +375,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             effort: "high".to_string(),
             description: "Deep reasoning".to_string(),
         }]),
+        client_capabilities: crate::clients::RouterClientCapabilities::default(),
     }];
     assert!(
         extends_user_configuration(ClientKind::Codex, false, false),
@@ -517,6 +549,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
                     description: "Deepest reasoning".to_string(),
                 },
             ]),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-reasoning-b".to_string(),
@@ -526,6 +559,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
                 effort: "xhigh".to_string(),
                 description: "Only supported level".to_string(),
             }]),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -563,6 +597,7 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
             owned_by: "unknown-provider".to_string(),
             default_reasoning_level: None,
             supported_reasoning_levels: None,
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-reasoning-known".to_string(),
@@ -572,6 +607,7 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
                 effort: "high".to_string(),
                 description: "Deep reasoning".to_string(),
             }]),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -614,6 +650,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
                     description: "Deepest reasoning".to_string(),
                 },
             ]),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-medium-only".to_string(),
@@ -623,6 +660,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
                 effort: "medium".to_string(),
                 description: "Only supported level".to_string(),
             }]),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -819,6 +857,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             effort: "medium".to_string(),
             description: "Test reasoning".to_string(),
         }]),
+        client_capabilities: crate::clients::RouterClientCapabilities::default(),
     }];
     let profiles = tempfile::tempdir().expect("profile root");
     for client in ClientKind::ALL {

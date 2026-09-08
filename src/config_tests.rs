@@ -259,6 +259,27 @@ fn test_config_default_port() {
 }
 
 #[test]
+fn listen_host_accepts_an_alias_and_rejects_an_unresolvable_name() {
+    let mut args = default_args(Some("secret"));
+    args.host = "localhost";
+    let config = Config::build(args).expect("localhost must resolve at startup");
+    assert!(
+        config.listen_addr.ip().is_loopback(),
+        "{}",
+        config.listen_addr
+    );
+    assert_eq!(config.listen_addr.port(), 8080);
+
+    let mut args = default_args(Some("secret"));
+    args.host = "not a valid hostname";
+    let error = Config::build(args).expect_err("an invalid alias must fail closed");
+    assert!(
+        error.to_string().contains("not a valid hostname"),
+        "{error}"
+    );
+}
+
+#[test]
 fn test_api_format_parsing() {
     assert_eq!(
         ApiFormat::from_str_opt("anthropic"),
@@ -437,7 +458,7 @@ fn build_rejects_configurations_that_cannot_serve_requests() {
     args.host = "not a host";
     assert!(matches!(
         Config::build(args),
-        Err(ConfigError::InvalidAddress)
+        Err(ConfigError::InvalidListenHost(host)) if host == "not a host"
     ));
 }
 

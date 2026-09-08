@@ -19,34 +19,6 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-fn free_port() -> u16 {
-    // `bind(":0")` then drop releases the port before the child binds it, so
-    // another test binary running concurrently can take it in that window.
-    // The loser then sends its requests to the winner's router, which answers
-    // with its own tokens -- seen on CI as a scoped token appearing
-    // unrestricted, because the reply came from a router that had never heard
-    // of the scope (issue #368).
-    //
-    // The OS still picks the port, since only it knows what is already in use.
-    // What is added is that no port is handed out twice within this process,
-    // which removes the collisions between the suites of one binary; a caller
-    // that still loses to another binary retries (see `Router::start`).
-    use std::sync::{Mutex, OnceLock};
-    static HANDED_OUT: OnceLock<Mutex<std::collections::HashSet<u16>>> = OnceLock::new();
-    let seen = HANDED_OUT.get_or_init(|| Mutex::new(std::collections::HashSet::new()));
-    for _ in 0..4_000 {
-        let port = TcpListener::bind("127.0.0.1:0")
-            .expect("bind ephemeral")
-            .local_addr()
-            .expect("address")
-            .port();
-        if seen.lock().expect("port registry").insert(port) {
-            return port;
-        }
-    }
-    panic!("no unused ephemeral port")
-}
-
 struct Router {
     child: Child,
     socket: std::path::PathBuf,
@@ -137,7 +109,9 @@ impl Router {
             .arg("serve")
             .env("TOKEN_SECRET", "unix-socket-test-secret")
             .env("ROUTER_HOST", "127.0.0.1")
-            .env("ROUTER_PORT", free_port().to_string())
+            // This suite talks only through the Unix socket. Let the router
+            // retain its TCP listener without a cross-process port race.
+            .env("ROUTER_PORT", "0")
             .env("STORAGE_POLICY", "text")
             .env("DATA_DIR", data.path())
             .env("DISABLE_LOGIN_API", "true")

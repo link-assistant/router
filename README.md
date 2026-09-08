@@ -395,9 +395,10 @@ profile, or `--isolated-config` for a disposable clean-room profile.
 Claude Code 2.1.263 still resolves authentication once for the whole process:
 the Router bearer and non-Anthropic base URL correctly route inference and
 model discovery, but take precedence over a stored Claude.ai login. Router
-therefore prints the exact limitation before launch and rejects explicit
-Claude.ai-only operations (`--cloud`, `--environment`, `--remote-control`,
-`--teleport`, and `ultrareview`) before server discovery or token minting.
+therefore prints the exact limitation during setup, repair, and status checks,
+and rejects explicit Claude.ai-only operations (`--cloud`, `--environment`,
+`--remote-control`, `--teleport`, and `ultrareview`) before server discovery or
+token minting.
 Connectors, Remote Control, `/schedule`, notification preferences, cloud
 sessions, remote managed settings, and organization policy are unavailable in
 that Router-directed process. Run those operations directly with Claude.ai
@@ -853,7 +854,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 |---|---|---|---|
 | `--token-secret` / `TOKEN_SECRET` | — | To serve, sign or encrypt | Secret key for signing/validating JWT tokens and encrypting stored provider keys. A command that only reads local files or acts on another deployment does not need one |
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
-| `--host` / `ROUTER_HOST` | `0.0.0.0` | No | Host/IP to bind to |
+| `--host` / `ROUTER_HOST` | `0.0.0.0` | No | IP or network alias to resolve once and bind to |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
