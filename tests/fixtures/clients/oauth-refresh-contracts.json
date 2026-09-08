@@ -40,7 +40,7 @@
     "client_secret_parts": ["GOCSPX-4uHgMPm", "-1o7Sk-geV6Cu5clXFsxl"]
   },
   "qwen": {
-    "client_version": "0.23.0",
+    "client_version": "0.23.1",
     "method": "POST",
     "body_style": "form",
     "accept": "application/json"

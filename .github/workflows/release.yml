@@ -478,8 +478,8 @@ jobs:
 
       - name: Install coverage tools
         run: |
-          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.0'; then
-            cargo install cargo-llvm-cov --version 0.9.0 --locked --force
+          if ! cargo llvm-cov --version 2>/dev/null | grep -Fqx 'cargo-llvm-cov 0.9.1'; then
+            cargo install cargo-llvm-cov --version 0.9.1 --locked --force
           fi
           command -v rust-script >/dev/null || cargo install rust-script --version 0.36.0 --locked
 
