@@ -28,7 +28,7 @@ use wait_timeout::ChildExt as _;
 
 #[path = "real_clients/anthropic_mock.rs"]
 mod anthropic_mock;
-use anthropic_mock::anthropic_answer;
+use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
 const CLAUDE_VERSION: &str = "2.1.263";
 const CODEX_VERSION: &str = "0.153.4";

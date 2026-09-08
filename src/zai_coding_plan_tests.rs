@@ -425,6 +425,57 @@ async fn recording_upstream() -> (
 }
 
 #[tokio::test]
+async fn native_anthropic_sse_is_relayed_byte_for_byte() {
+    const SSE: &[u8] = b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_zai\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"future-saffron-91\",\"content\":[],\"stop_reason\":null,\"usage\":{\"input_tokens\":7,\"output_tokens\":0}}}\n\nevent: ping\ndata: {\"type\":\"ping\"}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"check the route\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"signed-thinking\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_zai\",\"name\":\"Read\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"file_path\\\":\\\"README.md\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}\n\nevent: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"fixture event\"}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"text_delta\",\"text\":\"done\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":2}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":13}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+
+    let app = axum::Router::new().fallback(|request: Request<Body>| async move {
+        if request.uri().path() == crate::zai_coding_plan::CATALOG_PATH {
+            return axum::response::Response::builder()
+                .status(StatusCode::OK)
+                .header("content-type", "application/json")
+                .body(Body::from(r#"{"data":[{"id":"future-saffron-91"}]}"#))
+                .unwrap();
+        }
+        axum::response::Response::builder()
+            .status(StatusCode::OK)
+            .header("content-type", "text/event-stream")
+            .body(Body::from(SSE))
+            .unwrap()
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
+    install_provider(&mut state, &base_url, &[]);
+
+    let response = crate::zai_coding_plan::forward(
+        &state,
+        &client_headers(&state, ClientKind::ClaudeCode, "owner-a"),
+        serde_json::json!({
+            "model": "future-saffron-91",
+            "stream": true,
+            "thinking": {"type": "enabled", "budget_tokens": 4096},
+            "messages": [{"role": "user", "content": "use the tool"}],
+            "tools": [{"name": "Read", "description": "read", "input_schema": {"type": "object"}}]
+        }),
+        "/api/services/anthropic/v1/messages",
+        ClientProtocol::AnthropicMessages,
+        crate::metrics::Surface::Anthropic,
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers().get("content-type").unwrap(),
+        "text/event-stream"
+    );
+    let relayed = response.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(relayed.as_ref(), SSE);
+    handle.abort();
+}
+
+#[tokio::test]
 async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model() {
     let cases = [
         (

@@ -395,9 +395,10 @@ profile, or `--isolated-config` for a disposable clean-room profile.
 Claude Code 2.1.263 still resolves authentication once for the whole process:
 the Router bearer and non-Anthropic base URL correctly route inference and
 model discovery, but take precedence over a stored Claude.ai login. Router
-therefore prints the exact limitation before launch and rejects explicit
-Claude.ai-only operations (`--cloud`, `--environment`, `--remote-control`,
-`--teleport`, and `ultrareview`) before server discovery or token minting.
+therefore prints the exact limitation during setup, repair, and status checks,
+and rejects explicit Claude.ai-only operations (`--cloud`, `--environment`,
+`--remote-control`, `--teleport`, and `ultrareview`) before server discovery or
+token minting.
 Connectors, Remote Control, `/schedule`, notification preferences, cloud
 sessions, remote managed settings, and organization policy are unavailable in
 that Router-directed process. Run those operations directly with Claude.ai

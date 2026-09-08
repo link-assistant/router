@@ -100,6 +100,9 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     if client == ClientKind::Codex {
         apply_provider_reasoning_profile(&mut projected, owner);
     }
+    if client == ClientKind::ClaudeCode {
+        apply_provider_claude_profile(&mut projected, owner);
+    }
     if projected.len() > 3 {
         projected.insert(
             "metadata_source".into(),
@@ -116,6 +119,21 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
         }
     }
     projected
+}
+
+fn apply_provider_claude_profile(projected: &mut Map<String, Value>, owner: &str) {
+    let Some(profile) = crate::clients::claude_capability_profile(owner) else {
+        return;
+    };
+    projected.insert(
+        "client_capabilities".into(),
+        json!({
+            "claude": {
+                "behaves_as": profile.behaves_as(),
+                "source": profile.source(),
+            }
+        }),
+    );
 }
 
 fn apply_provider_reasoning_profile(projected: &mut Map<String, Value>, owner: &str) {

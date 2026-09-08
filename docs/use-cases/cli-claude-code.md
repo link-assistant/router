@@ -49,7 +49,7 @@ Router handles this explicitly:
 - it leaves the stored Claude login byte-for-byte untouched and never sends it
   to Router or another provider;
 - it sends the per-run Router token only to Router sampling and catalog routes;
-- it names the unavailable services before an ordinary launch: Claude.ai MCP
+- it names the unavailable services during setup, repair, and status checks: Claude.ai MCP
   connectors, Remote Control and `/remote-control`, `/schedule`, notification
   preferences, cloud sessions, remote managed settings, and organization
   policy; and

@@ -62,9 +62,13 @@ The process overlay sets Router's URL/token, clears the higher-priority API key,
 enables gateway discovery, and adds a dynamic `modelPicker` through Claude's
 supported `--settings` option. Gateway discovery supplies exact Claude IDs;
 the picker adds each compatible authorized ID that Claude's discovery filter
-would hide, including every exact GLM ID, once. It does not write a model cache,
-invent prefixes, or map GLM models onto Opus, Sonnet, or Haiku. Claude Code
-2.1.255 or newer is required.
+would hide, including every exact GLM ID, once. Each dynamic row carries the
+provider adapter's reviewed `behavesAs` capability identity, so Claude applies
+the correct context, thinking, effort, and tool-use behavior without changing
+the provider model id sent on the wire. Missing or conflicting capability
+metadata stops the launch with the affected id instead of guessing from its
+name. Router does not write a model cache or invent prefixes. Claude Code
+2.1.263 or newer is required.
 
 Reset only this Router-owned Claude profile before launch with
 `router with claude --reset-to-default-configuration`. The command asks for

@@ -141,6 +141,42 @@ pub(crate) fn codex_reasoning_profile(owner: &str) -> Option<CodexReasoningProfi
     })
 }
 
+/// Claude's known model identity that matches one provider adapter's reviewed
+/// context, thinking, effort, tool-use, and output contract.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct ClaudeCapabilityProfile {
+    behaves_as: &'static str,
+    source: &'static str,
+}
+
+impl ClaudeCapabilityProfile {
+    #[must_use]
+    pub(crate) const fn behaves_as(self) -> &'static str {
+        self.behaves_as
+    }
+
+    #[must_use]
+    pub(crate) const fn source(self) -> &'static str {
+        self.source
+    }
+}
+
+/// Provider-level Claude capability metadata for models reached through the
+/// native Anthropic Messages adapter. The model id deliberately is not read:
+/// the live provider catalog owns that changing inventory (issue #546).
+#[must_use]
+pub(crate) fn claude_capability_profile(owner: &str) -> Option<ClaudeCapabilityProfile> {
+    (owner == ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
+        // Claude Code 2.1.263's baked catalog describes Sonnet 5 as native 1M,
+        // 128K-output, effort/adaptive-thinking and tool capable. Those are the
+        // current z.ai Coding Plan Anthropic adapter boundaries; `behavesAs`
+        // changes client handling while the original live z.ai id stays on the
+        // wire.
+        behaves_as: "claude-sonnet-5",
+        source: "provider-protocol:z.ai-anthropic",
+    })
+}
+
 pub(crate) fn apply_codex_reasoning_profiles(client: ClientKind, models: &mut [RouterModel]) {
     catalog::apply_codex_reasoning_profiles(client, models);
 }

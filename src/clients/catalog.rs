@@ -20,6 +20,22 @@ pub struct RouterModel {
     /// reasoning effort.
     #[serde(default)]
     pub supported_reasoning_levels: Option<Vec<RouterReasoningLevel>>,
+    /// Client-specific identities backed by reviewed provider protocol
+    /// contracts. An empty object means no safe identity was advertised.
+    #[serde(default)]
+    pub client_capabilities: RouterClientCapabilities,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
+pub struct RouterClientCapabilities {
+    #[serde(default)]
+    pub claude: Option<ClaudeModelCapabilities>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ClaudeModelCapabilities {
+    pub behaves_as: String,
+    pub source: String,
 }
 
 /// One reasoning option retained verbatim from a live Codex catalog.

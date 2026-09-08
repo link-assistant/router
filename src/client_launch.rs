@@ -262,12 +262,12 @@ fn codex_subcommand(arguments: &[OsString]) -> Option<&str> {
 /// #520).
 pub const CLAUDE_NATIVE_SERVICES_LIMITATION: &str = "Claude Code releases through 2.1.263 have no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
 
-/// Report the boundary anywhere Router creates, repairs, checks, or launches a
-/// Claude gateway configuration. A permanent setup that stayed silent merely
-/// deferred the surprise until the next direct `claude` launch.
+/// Report the boundary anywhere Router creates, repairs, or checks a Claude
+/// gateway configuration. Ordinary supported launches stay quiet; setup and
+/// diagnostic commands are the actionable place to show this notice.
 pub fn report_claude_native_services_limitation(client: ClientKind) {
     if client == ClientKind::ClaudeCode {
-        eprintln!("warning: {CLAUDE_NATIVE_SERVICES_LIMITATION}");
+        eprintln!("notice: {CLAUDE_NATIVE_SERVICES_LIMITATION}");
     }
 }
 

@@ -365,6 +365,34 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .expect("selected exact model reaches inference");
     let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
     assert_eq!(body["model"], selected);
+    if models
+        .iter()
+        .any(|(model, owner)| *model == selected && *owner == "z.ai")
+    {
+        assert!(
+            body.get("thinking").is_some(),
+            "the verified Claude profile did not request thinking: {body}"
+        );
+        let traced = run_wrapper_with_options(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            home.path(),
+            &router.origin,
+            Some(selected),
+            &["--verbose", "--output-format", "stream-json", PROMPT],
+        );
+        assert!(
+            traced.status.success(),
+            "Claude verbose thinking capture failed: {}{}",
+            String::from_utf8_lossy(&traced.stdout),
+            String::from_utf8_lossy(&traced.stderr)
+        );
+        let trace = String::from_utf8_lossy(&traced.stdout);
+        assert!(
+            trace.contains(THINKING_TRACE),
+            "Claude verbose output did not expose the received reasoning trace: {trace}"
+        );
+    }
 
     if verify_reset {
         let output = run_wrapper_with_options(

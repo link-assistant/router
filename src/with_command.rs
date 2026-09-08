@@ -68,9 +68,6 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if let Some(error) = crate::client_launch::unsupported_native_command(args) {
         return Err(error.into());
     }
-    if args.client == ClientKind::ClaudeCode {
-        crate::client_launch::report_claude_native_services_limitation(args.client);
-    }
     let explicit_token = if args.token_stdin {
         Some(crate::server_command::read_token()?)
     } else {
@@ -646,25 +643,55 @@ fn append_claude_model_picker(
 ) -> Result<(), AnyError> {
     const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
 
-    let mut ids = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+    let mut candidates = crate::clients::usable_models(ClientKind::ClaudeCode, models)
         .into_iter()
-        .map(|model| model.id)
-        .filter(|id| {
-            let folded = id.to_ascii_lowercase();
+        .filter(|model| {
+            let folded = model.id.to_ascii_lowercase();
             !folded.contains("claude")
                 && !folded.contains("anthropic")
                 && !BUILT_INS.contains(&folded.as_str())
         })
         .collect::<Vec<_>>();
-    ids.sort();
-    ids.dedup();
-    if ids.is_empty() {
+    candidates.sort_by(|left, right| left.id.cmp(&right.id));
+    if candidates.is_empty() {
         return Ok(());
     }
-    let options = ids
-        .into_iter()
-        .map(|id| json!({"label": id, "model": id}))
-        .collect::<Vec<_>>();
+    let mut options = Vec::with_capacity(candidates.len());
+    let mut previous: Option<(String, String, String)> = None;
+    for model in candidates {
+        let Some(capability) = model.client_capabilities.claude else {
+            return Err(format!(
+                "Claude model `{}` has no verified capability metadata; update Router or the provider adapter before selecting it",
+                model.id
+            )
+            .into());
+        };
+        if capability.behaves_as.trim().is_empty() || capability.source.trim().is_empty() {
+            return Err(format!(
+                "Claude model `{}` has incomplete capability metadata; update Router or the provider adapter before selecting it",
+                model.id
+            )
+            .into());
+        }
+        if let Some((id, behaves_as, source)) = &previous
+            && id == &model.id
+        {
+            if behaves_as != &capability.behaves_as || source != &capability.source {
+                return Err(format!(
+                    "Claude model `{}` has ambiguous capability metadata; update the provider adapter before selecting it",
+                    model.id
+                )
+                .into());
+            }
+            continue;
+        }
+        options.push(json!({
+            "label": model.id,
+            "model": model.id,
+            "behavesAs": capability.behaves_as,
+        }));
+        previous = Some((model.id, capability.behaves_as, capability.source));
+    }
     let settings = json!({
         "modelPicker": {
             "options": options,
