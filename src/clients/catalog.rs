@@ -64,10 +64,9 @@ impl ClaudeCapabilityProfile {
 #[must_use]
 pub fn claude_capability_profile(owner: &str) -> Option<ClaudeCapabilityProfile> {
     (owner == super::ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
-        // Claude Code 2.1.263 describes Sonnet 5 as native 1M, 128K-output,
-        // effort/adaptive-thinking and tool capable. Those match the reviewed
-        // z.ai Coding Plan Anthropic adapter boundaries.
-        behaves_as: "claude-sonnet-5",
+        // Claude Code 2.1.263 emits enabled, budgeted thinking for Sonnet 4.5,
+        // which matches the z.ai Coding Plan Anthropic adapter contract.
+        behaves_as: "claude-sonnet-4-5",
         source: "provider-protocol:z.ai-anthropic",
     })
 }

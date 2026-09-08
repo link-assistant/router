@@ -206,7 +206,7 @@ fn catalog_model(id: &str, owner: &str) -> Value {
     if owner == "z.ai" {
         model["client_capabilities"] = json!({
             "claude": {
-                "behaves_as": "claude-sonnet-5",
+                "behaves_as": "claude-sonnet-4-5",
                 "source": "provider-protocol:z.ai-anthropic"
             }
         });

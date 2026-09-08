@@ -469,7 +469,7 @@ mod tests {
             let model = entries.iter().find(|model| model["id"] == id).unwrap();
             assert_eq!(
                 model["client_capabilities"]["claude"]["behaves_as"],
-                "claude-sonnet-5"
+                "claude-sonnet-4-5"
             );
             assert_eq!(
                 model["client_capabilities"]["claude"]["source"],
