@@ -51,7 +51,7 @@ fn fake_claude(bin_dir: &std::path::Path) {
         &path,
         r#"#!/bin/sh
 if [ "${1:-}" = "--version" ]; then
-  printf '%s\n' '2.1.263 (Claude Code)'
+  printf '%s\n' '2.1.265 (Claude Code)'
   if [ "${DELETE_AFTER_VERSION:-}" = 1 ]; then
     /bin/rm "$0"
   fi

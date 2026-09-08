@@ -30,7 +30,7 @@ use wait_timeout::ChildExt as _;
 mod anthropic_mock;
 use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
-const CLAUDE_VERSION: &str = "2.1.263";
+const CLAUDE_VERSION: &str = "2.1.265";
 const CODEX_VERSION: &str = "0.153.4";
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
@@ -59,7 +59,7 @@ const CLAUDE: ClientCase = ClientCase {
     owner: "anthropic",
     catalog_path: "/api/services/anthropic/v1/models",
     inference_path: "/api/services/anthropic/v1/messages",
-    user_agent_prefix: "claude-cli/2.1.263",
+    user_agent_prefix: "claude-cli/2.1.265",
     credential_header: "authorization",
 };
 
@@ -571,6 +571,18 @@ fn run_wrapper_with_options(
     model: Option<&str>,
     forwarded: &[&str],
 ) -> Output {
+    run_wrapper_with_options_and_env(case, working_directory, home, server, model, forwarded, &[])
+}
+
+fn run_wrapper_with_options_and_env(
+    case: ClientCase,
+    working_directory: &Path,
+    home: &Path,
+    server: &str,
+    model: Option<&str>,
+    forwarded: &[&str],
+    environment: &[(&str, &str)],
+) -> Output {
     let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
     command.args(["--server", server, "--token", "offline-admin"]);
     if let Some(model) = model {
@@ -581,7 +593,7 @@ fn run_wrapper_with_options(
     }
     command.args(["--non-interactive", case.client]);
     command.args(forwarded);
-    let mut child = command
+    command
         .current_dir(working_directory)
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -595,7 +607,20 @@ fn run_wrapper_with_options(
         .env("ALL_PROXY", "http://127.0.0.1:9")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    for key in [
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+        "DISABLE_TELEMETRY",
+        "DISABLE_ERROR_REPORTING",
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_FEEDBACK_COMMAND",
+    ] {
+        command.env_remove(key);
+    }
+    for (key, value) in environment {
+        command.env(key, value);
+    }
+    let mut child = command
         .spawn()
         .expect("launch with-router real-client capture tier");
     let status = child
@@ -825,6 +850,9 @@ fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
 
 #[path = "real_clients/claude_selector.rs"]
 mod claude_selector;
+
+#[path = "real_clients/claude_privacy.rs"]
+mod claude_privacy;
 
 #[test]
 fn current_codex_reaches_the_native_responses_surface_offline() {

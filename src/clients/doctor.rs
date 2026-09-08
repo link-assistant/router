@@ -281,8 +281,9 @@ mod tests {
         assert!(!claude_gateway_version_supported("2.1.252 (Claude Code)"));
         assert!(claude_gateway_version_supported("2.1.255 (Claude Code)"));
         assert!(claude_gateway_version_supported("2.1.263 (Claude Code)"));
+        assert!(claude_gateway_version_supported("2.1.265 (Claude Code)"));
         assert!(
-            !claude_gateway_version_supported("2.1.264 (Claude Code)"),
+            !claude_gateway_version_supported("2.1.266 (Claude Code)"),
             "a newer client must be reviewed before Router trusts its auth boundary"
         );
         assert!(!claude_gateway_version_supported("Claude Code v2.2.0"));
