@@ -365,11 +365,11 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         "each matrix leg must build its own target explicitly"
     );
     assert!(
-        release.contains("shasum -a 256 *.tar.gz *.cdx.json"),
+        release.contains("shasum -a 256 -- *.tar.gz *.cdx.json"),
         "macOS runners have no sha256sum, so checksums need a shasum fallback"
     );
     assert!(
-        release.contains("sha256sum *.tar.gz *.cdx.json"),
+        release.contains("sha256sum -- *.tar.gz *.cdx.json"),
         "checksums must be digested from inside dist/ so consumers see flat names"
     );
     assert!(

@@ -1126,9 +1126,9 @@ jobs:
           (
             cd dist
             if command -v sha256sum >/dev/null 2>&1; then
-              sha256sum *.tar.gz *.cdx.json
+              sha256sum -- *.tar.gz *.cdx.json
             else
-              shasum -a 256 *.tar.gz *.cdx.json
+              shasum -a 256 -- *.tar.gz *.cdx.json
             fi
           ) > "dist/link-assistant-router-${RELEASE_VERSION}-${PLATFORM}.sha256"
           # Smoke test the published checksum file the way a consumer runs it: flat,
