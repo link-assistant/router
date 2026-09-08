@@ -326,9 +326,8 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
     });
-    let error = match result {
-        Ok(_) => panic!("an unknown capability profile must not reach Claude Code"),
-        Err(error) => error,
+    let Err(error) = result else {
+        panic!("an unknown capability profile must not reach Claude Code");
     };
     assert!(
         error.to_string().contains("glm-looking-but-unverified"),
@@ -354,9 +353,8 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
     });
-    let error = match result {
-        Ok(_) => panic!("conflicting capability profiles must not reach Claude Code"),
-        Err(error) => error,
+    let Err(error) = result else {
+        panic!("conflicting capability profiles must not reach Claude Code");
     };
     assert!(error.to_string().contains("future-conflict"), "{error}");
     assert!(error.to_string().contains("ambiguous"), "{error}");
@@ -375,7 +373,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
             effort: "high".to_string(),
             description: "Deep reasoning".to_string(),
         }]),
-        client_capabilities: Default::default(),
+        client_capabilities: crate::clients::RouterClientCapabilities::default(),
     }];
     assert!(
         extends_user_configuration(ClientKind::Codex, false, false),
@@ -549,7 +547,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
                     description: "Deepest reasoning".to_string(),
                 },
             ]),
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-reasoning-b".to_string(),
@@ -559,7 +557,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
                 effort: "xhigh".to_string(),
                 description: "Only supported level".to_string(),
             }]),
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -597,7 +595,7 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
             owned_by: "unknown-provider".to_string(),
             default_reasoning_level: None,
             supported_reasoning_levels: None,
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-reasoning-known".to_string(),
@@ -607,7 +605,7 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
                 effort: "high".to_string(),
                 description: "Deep reasoning".to_string(),
             }]),
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -650,7 +648,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
                     description: "Deepest reasoning".to_string(),
                 },
             ]),
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
             id: "future-medium-only".to_string(),
@@ -660,7 +658,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
                 effort: "medium".to_string(),
                 description: "Only supported level".to_string(),
             }]),
-            client_capabilities: Default::default(),
+            client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
     ];
 
@@ -857,7 +855,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             effort: "medium".to_string(),
             description: "Test reasoning".to_string(),
         }]),
-        client_capabilities: Default::default(),
+        client_capabilities: crate::clients::RouterClientCapabilities::default(),
     }];
     let profiles = tempfile::tempdir().expect("profile root");
     for client in ClientKind::ALL {

@@ -28,6 +28,8 @@ pub use analysis::{ClientConfigAnalysis, ConfigSource, ObservedFile, OwnershipSt
 pub use repair::{RepairPlan, RepairResult};
 pub use types::{ClientError, ClientStatus, SetupResult};
 
+#[cfg(test)]
+pub(crate) use catalog::RouterClientCapabilities;
 pub(crate) use catalog::RouterModel;
 #[cfg(test)]
 pub(crate) use catalog::RouterReasoningLevel;
