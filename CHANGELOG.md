@@ -179,6 +179,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.4.4] - 2026-09-08
+
+### Fixed
+- Preserve each requested Codex catalogue model ID in buffered and streaming native Responses lifecycle payloads.
+
 ## [1.4.3] - 2026-09-08
 
 ### Fixed
