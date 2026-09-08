@@ -900,7 +900,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         let response = codex
             .post(
                 "/api/services/codex/v1/responses",
-                &json!({"model": id, "input": "hi"}),
+                &json!({"model": id, "input": "hi", "stream": false}),
             )
             .send()
             .await

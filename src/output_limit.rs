@@ -227,15 +227,20 @@ impl ResponsesStreamRewriter {
         let Ok(mut event) = serde_json::from_str::<Value>(&payload) else {
             return format!("{block}\n\n");
         };
-        if let Some(served) = preserve_model_identity(&mut event, &self.requested_model) {
+        let original = event.clone();
+        if event.get("model").is_some()
+            && let Some(served) = preserve_model_identity(&mut event, &self.requested_model)
+        {
             self.upstream_model = Some(served);
         }
         if let Some(response) = event.get_mut("response")
+            && response.get("model").is_some()
             && let Some(served) = preserve_model_identity(response, &self.requested_model)
         {
             self.upstream_model = Some(served);
         }
         if let Some(message) = event.get_mut("message")
+            && message.get("model").is_some()
             && let Some(served) = preserve_model_identity(message, &self.requested_model)
         {
             self.upstream_model = Some(served);
@@ -248,6 +253,9 @@ impl ResponsesStreamRewriter {
         if event.get("type").and_then(Value::as_str) != Some("response.output_text.delta")
             || !self.limiter.enabled()
         {
+            if event == original {
+                return format!("{block}\n\n");
+            }
             return render_block(block, &event);
         }
         let delta = event

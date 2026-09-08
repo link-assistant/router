@@ -464,18 +464,32 @@ async fn stub_vendor(State(state): State<StubState>, request: Request) -> Respon
     }
 
     let stream = body.get("stream").and_then(Value::as_bool) == Some(true);
+    let explicitly_buffered = body.get("stream").and_then(Value::as_bool) == Some(false);
     let mut response = match state.dialect {
         StubDialect::Anthropic if stream => Response::new(Body::from(anthropic_stream())),
         StubDialect::Anthropic => Response::new(Body::from(
             serde_json::to_vec(&anthropic_message_with_server_tools(&body))
                 .expect("serialize Anthropic response"),
         )),
+        StubDialect::Codex if explicitly_buffered => Response::new(Body::from(
+            json!({
+                "id": "resp_buffered_stub",
+                "object": "response",
+                "status": "completed",
+                "model": codex_response_model(&body),
+                "output": [],
+                "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
+            })
+            .to_string(),
+        )),
         StubDialect::Codex => Response::new(Body::from(codex_stream_for_request(&body))),
     };
     response.headers_mut().insert(
         "content-type",
-        HeaderValue::from_static(match (state.dialect, stream) {
-            (StubDialect::Anthropic, true) | (StubDialect::Codex, _) => "text/event-stream",
+        HeaderValue::from_static(match (state.dialect, stream, explicitly_buffered) {
+            (StubDialect::Anthropic, true, _) | (StubDialect::Codex, _, false) => {
+                "text/event-stream"
+            }
             _ => "application/json",
         }),
     );
@@ -753,11 +767,7 @@ fn codex_stream_for_request(request: &Value) -> String {
     // The live catalog may advertise a stable alias while the provider reports
     // the concrete model it selected. This is the exact boundary in issue
     // #548: Router must keep the advertised id in client-visible responses.
-    let response_model = match request["model"].as_str() {
-        Some("codex-auto-review") => "gpt-5.6-luna",
-        Some(model) => model,
-        None => "gpt-5",
-    };
+    let response_model = codex_response_model(request);
     let response = json!({
         "id": "resp_stub",
         "object": "response",
@@ -794,6 +804,14 @@ fn codex_stream_for_request(request: &Value) -> String {
     }
     events.push(json!({"type":"response.completed","response":response}));
     codex_fixture_stream(&events)
+}
+
+fn codex_response_model(request: &Value) -> &str {
+    match request["model"].as_str() {
+        Some("codex-auto-review") => "gpt-5.6-luna",
+        Some(model) => model,
+        None => "gpt-5",
+    }
 }
 
 fn codex_fixture_stream(events: &[Value]) -> String {
