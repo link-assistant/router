@@ -59,6 +59,14 @@ if [ "${1:-}" = "--version" ]; then
 fi
 printf '%s\n' "${CLAUDE_CONFIG_DIR:-}" > "$CAPTURE_CLAUDE_CONFIG_DIR"
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
+{
+  printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC-<unset>}"
+  printf '%s\n' "DISABLE_TELEMETRY=${DISABLE_TELEMETRY-<unset>}"
+  printf '%s\n' "DISABLE_ERROR_REPORTING=${DISABLE_ERROR_REPORTING-<unset>}"
+  printf '%s\n' "DISABLE_AUTOUPDATER=${DISABLE_AUTOUPDATER-<unset>}"
+  printf '%s\n' "DISABLE_FEEDBACK_COMMAND=${DISABLE_FEEDBACK_COMMAND-<unset>}"
+} > "$CAPTURE_PRIVACY_ENV"
+printf '%s\n' 'FAKE_CLAUDE_LAUNCHED' >&2
 if [ "${REQUIRE_SESSION:-}" = 1 ] && [ ! -f "$CLAUDE_CONFIG_DIR/session.jsonl" ]; then
   exit 41
 fi
@@ -107,8 +115,18 @@ fn run_claude_with(
             capture.join("claude-config-dir"),
         )
         .env("CAPTURE_ARGS", capture.join("args"))
+        .env("CAPTURE_PRIVACY_ENV", capture.join("privacy-env"))
         .env_remove("CLAUDE_CONFIG_DIR")
         .env_remove("ANTHROPIC_API_KEY");
+    for name in [
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+        "DISABLE_TELEMETRY",
+        "DISABLE_ERROR_REPORTING",
+        "DISABLE_AUTOUPDATER",
+        "DISABLE_FEEDBACK_COMMAND",
+    ] {
+        command.env_remove(name);
+    }
     for (name, value) in environment {
         command.env(name, value);
     }
@@ -158,6 +176,15 @@ fn claude_default_profile_persists_without_touching_the_normal_profile() {
         normal
     );
     assert!(profile.join("session.jsonl").is_file());
+    assert_eq!(
+        fs::read_to_string(capture.join("privacy-env")).expect("captured privacy overlay"),
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=<unset>\n\
+DISABLE_TELEMETRY=<unset>\n\
+DISABLE_ERROR_REPORTING=1\n\
+DISABLE_AUTOUPDATER=1\n\
+DISABLE_FEEDBACK_COMMAND=1\n",
+        "Router must apply only the Monitor-compatible privacy defaults in the child process"
+    );
 
     let arguments = fs::read_to_string(capture.join("args")).expect("captured Claude arguments");
     let arguments = arguments.lines().collect::<Vec<_>>();
@@ -193,6 +220,66 @@ fn claude_default_profile_persists_without_touching_the_normal_profile() {
     assert_eq!(
         fs::read(home.join(".claude/settings.json")).expect("normal settings after second launch"),
         normal
+    );
+}
+
+#[test]
+fn claude_launch_preserves_user_privacy_values_and_warns_before_spawn() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+    let token = bound_client_token("claude");
+    let (server, requests) = mock_claude_router();
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &["--server", &server, "--token", &token, "claude"],
+        &[
+            (
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+                "operator-choice",
+            ),
+            ("DISABLE_TELEMETRY", "0"),
+            ("DISABLE_ERROR_REPORTING", "keep-error-choice"),
+            ("DISABLE_AUTOUPDATER", "keep-update-choice"),
+            ("DISABLE_FEEDBACK_COMMAND", "keep-feedback-choice"),
+        ],
+    );
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(requests.join().expect("mock Router requests").len(), 3);
+    assert_eq!(
+        fs::read_to_string(capture.join("privacy-env")).expect("captured privacy overlay"),
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=operator-choice\n\
+DISABLE_TELEMETRY=0\n\
+DISABLE_ERROR_REPORTING=keep-error-choice\n\
+DISABLE_AUTOUPDATER=keep-update-choice\n\
+DISABLE_FEEDBACK_COMMAND=keep-feedback-choice\n",
+        "the child must inherit every explicit user-owned value byte-for-byte"
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let warning = stderr
+        .find("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY")
+        .unwrap_or_else(|| panic!("warning omitted the exact blockers: {stderr}"));
+    assert!(
+        stderr.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),
+        "warning omitted the user-facing consequence: {stderr}"
+    );
+    let launched = stderr
+        .find("FAKE_CLAUDE_LAUNCHED")
+        .expect("fake Claude launch marker");
+    assert!(
+        warning < launched,
+        "warning must be emitted before launch: {stderr}"
     );
 }
 
