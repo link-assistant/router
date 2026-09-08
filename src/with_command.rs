@@ -647,8 +647,7 @@ fn append_claude_model_picker(
         .into_iter()
         .filter(|model| {
             let folded = model.id.to_ascii_lowercase();
-            !folded.contains("claude")
-                && !folded.contains("anthropic")
+            model.owned_by == crate::clients::ZAI_MODEL_OWNER
                 && !BUILT_INS.contains(&folded.as_str())
         })
         .collect::<Vec<_>>();

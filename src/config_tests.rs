@@ -458,7 +458,7 @@ fn build_rejects_configurations_that_cannot_serve_requests() {
     args.host = "not a host";
     assert!(matches!(
         Config::build(args),
-        Err(ConfigError::InvalidAddress)
+        Err(ConfigError::InvalidListenHost(host)) if host == "not a host"
     ));
 }
 

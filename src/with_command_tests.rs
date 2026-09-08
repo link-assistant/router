@@ -260,7 +260,8 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
 fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     let profiles = tempfile::tempdir().expect("profile root");
     let models: Vec<RouterModel> = serde_json::from_value(json!([
-        {"id": "future-claude-native", "owned_by": "anthropic"},
+        {"id": "future-native-id", "owned_by": "anthropic"},
+        {"id": "future-claude-shaped-zai", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
         {"id": "future-glm-beta", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
         {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
         {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
@@ -296,6 +297,7 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
         json!({
             "modelPicker": {
                 "options": [
+                    {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-5"},
                     {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
                     {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
                 ],
