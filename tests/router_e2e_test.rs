@@ -158,7 +158,7 @@ impl TestRouter {
             model_catalogs.record_success_for(
                 SubscriptionProvider::Codex,
                 Some("acct_stub".to_string()),
-                vec!["gpt-5".to_string()],
+                vec!["gpt-5".to_string(), "codex-auto-review".to_string()],
             );
         }
         let provider_store =
@@ -750,16 +750,24 @@ fn codex_stream_for_request(request: &Value) -> String {
             "content": [{"type": "output_text", "text": "stub answer", "annotations": []}]
         }])
     };
+    // The live catalog may advertise a stable alias while the provider reports
+    // the concrete model it selected. This is the exact boundary in issue
+    // #548: Router must keep the advertised id in client-visible responses.
+    let response_model = match request["model"].as_str() {
+        Some("codex-auto-review") => "gpt-5.6-luna",
+        Some(model) => model,
+        None => "gpt-5",
+    };
     let response = json!({
         "id": "resp_stub",
         "object": "response",
         "status": "completed",
-        "model": "gpt-5",
+        "model": response_model,
         "output": output,
         "usage": {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
     });
     let mut events = vec![
-        json!({"type":"response.created","response":{"id":"resp_stub","status":"in_progress","model":"gpt-5","output":[]}}),
+        json!({"type":"response.created","response":{"id":"resp_stub","status":"in_progress","model":response_model,"output":[]}}),
         json!({"type":"response.in_progress","response":{"id":"resp_stub","status":"in_progress"}}),
     ];
     if has_server_search {

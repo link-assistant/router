@@ -806,7 +806,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
     let codex = TestRouter::start(UpstreamProvider::Codex).await;
 
     let catalog: Value = codex
-        .get("/api/services/openai/v1/models")
+        .get("/api/services/codex/v1/models")
         .send()
         .await
         .expect("model catalog response")
@@ -819,7 +819,7 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         .iter()
         .filter_map(|model| model["id"].as_str().map(str::to_string))
         .collect::<Vec<_>>();
-    assert!(ids.iter().any(|id| id == "gpt-5"));
+    assert_eq!(ids, ["codex-auto-review", "gpt-5"]);
 
     for id in &ids {
         // Buffered Chat Completions.
@@ -895,6 +895,50 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
             };
             assert_eq!(model, id.as_str(), "streamed responses identity: {event}");
         }
+
+        // Client-scoped native Responses, buffered at the caller boundary.
+        let response = codex
+            .post(
+                "/api/services/codex/v1/responses",
+                &json!({"model": id, "input": "hi"}),
+            )
+            .send()
+            .await
+            .expect("native buffered responses response");
+        assert!(response.headers().get("x-router-upstream-model").is_none());
+        let payload = response_payload(response).await;
+        assert_eq!(
+            payload["model"],
+            id.as_str(),
+            "native buffered responses identity"
+        );
+        assert!(payload.get("x_router_upstream_model").is_none());
+
+        // Client-scoped native streaming Responses. Every lifecycle event that
+        // carries response.model must retain the exact advertised selection.
+        let stream = codex
+            .post(
+                "/api/services/codex/v1/responses",
+                &json!({"model": id, "input": "hi", "stream": true}),
+            )
+            .send()
+            .await
+            .expect("native streamed responses response");
+        assert!(stream.headers().get("x-router-upstream-model").is_none());
+        let stream = stream.text().await.expect("native Responses SSE body");
+        let lifecycle_models = stream
+            .lines()
+            .filter_map(|line| line.strip_prefix("data: "))
+            .filter(|payload| *payload != "[DONE]")
+            .filter_map(|payload| serde_json::from_str::<Value>(payload).ok())
+            .filter_map(|event| event["response"]["model"].as_str().map(str::to_string))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            lifecycle_models,
+            [id.as_str(), id.as_str()],
+            "native lifecycle model identity"
+        );
+        assert!(!stream.contains("x_router_"));
     }
 }
 
