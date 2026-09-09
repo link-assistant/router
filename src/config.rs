@@ -252,6 +252,9 @@ pub struct Config {
     /// Serve only neutral health and AI inference/catalog routes on the main
     /// listener. Management and private integration services remain absent.
     pub inference_only: bool,
+    /// Explicit primary listeners, each with its own route set and transport.
+    /// Empty preserves the historical single-listener behavior.
+    pub listeners: Vec<crate::primary_listener::PrimaryListenerConfig>,
     /// Optional comma-separated list of additional credential directories for
     /// the active vendor-subscription provider.
     pub additional_account_dirs: Vec<PathBuf>,
@@ -457,6 +460,16 @@ impl Config {
         });
         let inference_only = env::var("INFERENCE_ONLY")
             .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON"));
+        let listeners = env::var("LISTENERS")
+            .ok()
+            .map(|raw| {
+                raw.split(';')
+                    .map(str::trim)
+                    .filter(|value| !value.is_empty())
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default();
         let additional_account_dirs = env::var("ADDITIONAL_ACCOUNT_DIRS")
             .ok()
             .map(|raw| {
@@ -548,6 +561,7 @@ impl Config {
             enable_anthropic_api,
             enable_metrics,
             inference_only,
+            listeners,
             additional_account_dirs,
             account_routing_strategy,
             account_cooldown_secs,
@@ -602,6 +616,12 @@ impl Config {
         {
             return Err(ConfigError::MismatchedAccountRequestLimits);
         }
+        let listeners = args
+            .listeners
+            .iter()
+            .map(|raw| raw.parse())
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(ConfigError::InvalidPrimaryListener)?;
 
         Ok(Self {
             listen_addr,
@@ -649,6 +669,7 @@ impl Config {
             enable_anthropic_api: args.enable_anthropic_api,
             enable_metrics: args.enable_metrics,
             inference_only: args.inference_only,
+            listeners,
             additional_account_dirs: args.additional_account_dirs,
             account_routing_strategy: args.account_routing_strategy,
             account_cooldown_secs: args.account_cooldown_secs,
@@ -729,6 +750,7 @@ pub struct BuildArgs<'a> {
     pub enable_anthropic_api: bool,
     pub enable_metrics: bool,
     pub inference_only: bool,
+    pub listeners: Vec<String>,
     pub additional_account_dirs: Vec<PathBuf>,
     pub account_routing_strategy: SelectionStrategy,
     pub account_cooldown_secs: u64,
@@ -839,6 +861,8 @@ pub enum ConfigError {
     InvalidSubscriptionBridgePolicy(String),
     /// A proxied-client override did not name a reviewed proxy contract.
     InvalidProxiedClientPolicy(String),
+    /// An additional primary listener did not use the documented grammar.
+    InvalidPrimaryListener(String),
     /// The multi-account strategy was not recognised.
     InvalidAccountRoutingStrategy,
     /// An account request cap was not a non-negative integer.
@@ -884,7 +908,8 @@ impl std::fmt::Display for ConfigError {
             ),
             Self::InvalidBridgeModelPolicy(message)
             | Self::InvalidSubscriptionBridgePolicy(message)
-            | Self::InvalidProxiedClientPolicy(message) => write!(f, "{message}"),
+            | Self::InvalidProxiedClientPolicy(message)
+            | Self::InvalidPrimaryListener(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

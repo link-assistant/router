@@ -474,59 +474,43 @@ async fn run_server(
         ),
     );
 
-    let listener_kind = if config.inference_only {
+    // Installed before listener preparation starts, so a signal arriving
+    // during startup is not missed (issue #334).
+    let shutdown = shutdown::Shutdown::listening();
+    let legacy_kind = if config.inference_only {
         link_assistant_router::route_contract::ListenerKind::InferenceOnly
     } else {
         link_assistant_router::route_contract::ListenerKind::Combined
     };
-    let app = link_assistant_router::server_router::router_for_listener(
-        state.clone(),
-        &config,
-        listener_kind,
-    )
-    .layer(from_fn_with_state(
-        state.clone(),
-        link_assistant_router::request_log::log_http_exchange,
-    ))
-    .layer(TraceLayer::new_for_http().make_span_with(
-        |request: &axum::http::Request<axum::body::Body>| {
-            let uri =
-                link_assistant_router::request_log::safe_http_uri(request.method(), request.uri());
-            tracing::debug_span!(
-                "http request",
-                method = %request.method(),
-                uri = %uri,
-                version = ?request.version()
-            )
-        },
-    ));
+    let tls_setup = link_assistant_router::tls::from_env(&config.data_dir)
+        .map_err(|error| -> AnyError { error.into() })?;
+    let primary_configs = if config.listeners.is_empty() {
+        vec![
+            link_assistant_router::primary_listener::PrimaryListenerConfig {
+                address: config.listen_addr,
+                kind: legacy_kind,
+                transport: if tls_setup.is_enabled() {
+                    link_assistant_router::primary_listener::ListenerTransport::Tls
+                } else {
+                    link_assistant_router::primary_listener::ListenerTransport::Http
+                },
+            },
+        ]
+    } else {
+        tracing::info!(
+            "Explicit --listener/LISTENERS configuration replaces the legacy primary listener"
+        );
+        config.listeners.clone()
+    };
+    // Binding is deliberately complete before the first serve future starts:
+    // one unavailable or colliding address cannot leave a partial deployment.
+    let primary_listeners =
+        link_assistant_router::primary_listener::bind_all(&primary_configs, &tls_setup)
+            .await
+            .map_err(|error| -> AnyError { error.into() })?;
 
-    // Installed before any listener starts, so a signal arriving during
-    // startup is not missed (issue #334).
-    let shutdown = shutdown::Shutdown::listening();
-    let admin_server = if config.admin_ui.enabled {
+    let admin_listener = if config.admin_ui.enabled {
         let admin_addr = config.admin_ui.listen_addr;
-        let admin_app =
-            link_assistant_router::admin_api::router_with_config(state.clone(), &config)
-                .layer(from_fn_with_state(
-                    state.clone(),
-                    link_assistant_router::request_log::log_http_exchange,
-                ))
-                .layer(TraceLayer::new_for_http().make_span_with(
-                    |request: &axum::http::Request<axum::body::Body>| {
-                        let uri = link_assistant_router::request_log::safe_http_uri(
-                            request.method(),
-                            request.uri(),
-                        );
-                        tracing::debug_span!(
-                            "http request",
-                            method = %request.method(),
-                            uri = %uri,
-                            version = ?request.version()
-                        )
-                    },
-                ));
-        let admin_shutdown = shutdown.notified();
         let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
         tracing::info!("Admin UI listening on {admin_addr}");
         if admin_claim.is_claimed() {
@@ -536,20 +520,11 @@ async fn run_server(
                 "Admin is unclaimed: the first visitor to {admin_addr} that confirms a claim becomes admin"
             );
         }
-        Some(tokio::spawn(async move {
-            if let Err(e) = axum::serve(admin_listener, admin_app)
-                .with_graceful_shutdown(admin_shutdown)
-                .await
-            {
-                tracing::error!("admin UI server error: {e}");
-            }
-        }))
+        Some(admin_listener)
     } else {
         tracing::info!("Admin UI disabled (set --admin-port / ADMIN_PORT to enable)");
         None
     };
-
-    let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
 
     // A unix socket is the one plaintext route `gh` accepts, so it reaches the
     // proxy without a certificate it has no way to trust (issue #265).
@@ -564,33 +539,35 @@ async fn run_server(
     #[cfg(not(unix))]
     let socket_server: Option<tokio::task::JoinHandle<()>> = None;
 
-    // `gh` will not talk plaintext to a custom host, so a router that cannot
-    // serve HTTPS cannot mediate GitHub traffic at all without a separate
-    // terminator in front of it (issue #263).
-    match link_assistant_router::tls::from_env(std::path::Path::new(&config.data_dir)) {
-        Ok(link_assistant_router::tls::TlsSetup::Enabled { cert, key }) => {
-            // Boxed so the HTTPS serve future is heap-allocated: it is large,
-            // and embedding it here would put it in every subcommand's frame.
-            let serve = link_assistant_router::tls::serve_https(
-                config.listen_addr,
-                app,
-                cert,
-                key,
-                shutdown.notified(),
-            );
-            Box::pin(serve)
+    let admin_server = admin_listener.map(|listener| {
+        let app = observed_http_app(
+            state.clone(),
+            link_assistant_router::admin_api::router_with_config(state.clone(), &config),
+        );
+        let admin_shutdown = shutdown.notified();
+        tokio::spawn(async move {
+            if let Err(error) = axum::serve(listener, app)
+                .with_graceful_shutdown(admin_shutdown)
                 .await
-                .map_err(|error| -> AnyError { error.to_string().into() })?;
-        }
-        Ok(link_assistant_router::tls::TlsSetup::Disabled) => {
-            let listener = tokio::net::TcpListener::bind(config.listen_addr).await?;
-            tracing::info!("Listening on http://{}", listener.local_addr()?);
-            axum::serve(listener, app)
-                .with_graceful_shutdown(shutdown.notified())
-                .await?;
-        }
-        Err(error) => return Err(error.into()),
-    }
+            {
+                tracing::error!("admin UI server error: {error}");
+            }
+        })
+    });
+    let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
+    let servers = primary_listeners.into_iter().map(|listener| {
+        let app = observed_http_app(
+            state.clone(),
+            link_assistant_router::server_router::router_for_listener(
+                state.clone(),
+                &config,
+                listener.config().kind,
+            ),
+        );
+        let listener_shutdown = shutdown.notified();
+        async move { listener.serve(app, listener_shutdown).await }
+    });
+    let primary_result = futures_util::future::try_join_all(servers).await;
     if let Some(handle) = socket_server {
         handle.abort();
     }
@@ -601,7 +578,29 @@ async fn run_server(
         handle.abort();
     }
     catalog_refresh.abort();
-    Ok(())
+    primary_result
+        .map(|_| ())
+        .map_err(|error| -> AnyError { error.to_string().into() })
+}
+
+/// Apply the same redacted exchange log and tracing span to every TCP surface.
+fn observed_http_app(state: AppState, app: axum::Router) -> axum::Router {
+    app.layer(from_fn_with_state(
+        state,
+        link_assistant_router::request_log::log_http_exchange,
+    ))
+    .layer(TraceLayer::new_for_http().make_span_with(
+        |request: &axum::http::Request<axum::body::Body>| {
+            let uri =
+                link_assistant_router::request_log::safe_http_uri(request.method(), request.uri());
+            tracing::debug_span!(
+                "http request",
+                method = %request.method(),
+                uri = %uri,
+                version = ?request.version()
+            )
+        },
+    ))
 }
 
 /// Start the optional Telegram and VK admin channels.

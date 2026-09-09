@@ -29,7 +29,7 @@ fn proxied_client_override_is_repeatable_and_comma_delimited() {
 
 #[test]
 fn primary_listener_configuration_is_repeatable() {
-    Cli::try_parse_from([
+    let config = Cli::try_parse_from([
         "router",
         "--token-secret",
         "test-secret",
@@ -38,7 +38,44 @@ fn primary_listener_configuration_is_repeatable() {
         "--listener",
         "127.0.0.1:8443=inference-only,tls",
     ])
-    .expect("explicit primary listeners should parse");
+    .expect("explicit primary listeners should parse")
+    .into_config()
+    .expect("explicit primary listeners should validate");
+    assert_eq!(
+        config.listeners,
+        [
+            crate::primary_listener::PrimaryListenerConfig {
+                address: ([127, 0, 0, 1], 8081).into(),
+                kind: crate::route_contract::ListenerKind::Combined,
+                transport: crate::primary_listener::ListenerTransport::Http,
+            },
+            crate::primary_listener::PrimaryListenerConfig {
+                address: ([127, 0, 0, 1], 8443).into(),
+                kind: crate::route_contract::ListenerKind::InferenceOnly,
+                transport: crate::primary_listener::ListenerTransport::Tls,
+            },
+        ]
+    );
+}
+
+#[test]
+fn malformed_primary_listener_is_rejected_during_configuration() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--listener",
+        "127.0.0.1:8443=admin,plaintext",
+    ])
+    .expect("listener syntax is validated with the rest of configuration");
+
+    let error = cli
+        .into_config()
+        .expect_err("only canonical primary route sets and transports are accepted");
+    assert!(
+        error.to_string().contains("127.0.0.1:8443=admin,plaintext"),
+        "{error}"
+    );
 }
 
 #[test]
@@ -129,6 +166,7 @@ fn cli_defaults_round_trip_to_config() {
         home: None,
         host: "127.0.0.1".into(),
         port: 9090,
+        listeners: vec![],
         verbose: false,
         token_secret: Some("k".into()),
         claude_code_home: Some("/tmp/c".into()),
@@ -254,6 +292,7 @@ fn cli_invalid_routing_mode_rejected() {
         home: None,
         host: "0.0.0.0".into(),
         port: 8080,
+        listeners: vec![],
         verbose: false,
         token_secret: Some("k".into()),
         claude_code_home: Some("/tmp/c".into()),

@@ -196,14 +196,42 @@ pub async fn serve_https(
     shutdown: impl std::future::Future<Output = ()> + Send + 'static,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing::info!("Serving HTTPS with certificate {}", cert.display());
-    let tls = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert, &key)
+    let tls = load_config(&cert, &key).await?;
+    let listener = tokio::net::TcpListener::bind(address).await?;
+    tracing::info!("Listening on https://{}", listener.local_addr()?);
+    serve_prebound_https(listener, app, tls, shutdown).await
+}
+
+/// Load a TLS certificate pair before any network listener begins serving.
+///
+/// # Errors
+///
+/// Returns a message naming the certificate when it cannot be loaded.
+pub async fn load_config(
+    cert: &Path,
+    key: &Path,
+) -> Result<axum_server::tls_rustls::RustlsConfig, String> {
+    axum_server::tls_rustls::RustlsConfig::from_pem_file(cert, key)
         .await
         .map_err(|error| {
             format!(
                 "could not load the TLS certificate {}: {error}",
                 cert.display()
             )
-        })?;
+        })
+}
+
+/// Serve HTTPS from an already-reserved socket and loaded certificate.
+///
+/// # Errors
+///
+/// Returns an error when the socket cannot be converted or served.
+pub async fn serve_prebound_https(
+    listener: tokio::net::TcpListener,
+    app: axum::Router,
+    tls: axum_server::tls_rustls::RustlsConfig,
+    shutdown: impl std::future::Future<Output = ()> + Send + 'static,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // `axum_server` stops through a handle rather than a future, so the
     // notice is translated into one. Without this the HTTPS path had no
     // shutdown hook at all and could only ever be killed (issue #334).
@@ -216,13 +244,9 @@ pub async fn serve_https(
         // very failure this exists to prevent.
         shutdown_handle.graceful_shutdown(None);
     });
-    // Bind before logging so port 0 and any OS normalization are reflected in
-    // the operator-visible address. Reusing this exact socket also prevents a
-    // second resolution or a bind to a broader address (issue #545).
-    let listener = tokio::net::TcpListener::bind(address).await?;
-    let bound = listener.local_addr()?;
+    // Reusing this exact socket prevents a second resolution or a bind to a
+    // broader address (issue #545).
     let listener = listener.into_std()?;
-    tracing::info!("Listening on https://{bound}");
     axum_server::from_tcp_rustls(listener, tls)?
         .handle(handle)
         .serve(app.into_make_service())
