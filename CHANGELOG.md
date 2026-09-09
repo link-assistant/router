@@ -183,6 +183,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.6.0] - 2026-09-09
+
+### Added
+
+- Added `router server use --ca-cert` and `--management-ca-cert` for origin-scoped trust of selected HTTPS Router deployments, including Claude Code launch trust.
+
+### Fixed
+
+- Made doublets token-store growth panic-safe and atomic at capacity, and compacted expired or revoked wrapper credentials during issuance.
+- Preserved certificate validation diagnostics for missing, unrelated, or wrong-host Router CAs.
+
 ## [1.5.0] - 2026-09-09
 
 ### Fixed
