@@ -28,6 +28,20 @@ fn proxied_client_override_is_repeatable_and_comma_delimited() {
 }
 
 #[test]
+fn primary_listener_configuration_is_repeatable() {
+    Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "test-secret",
+        "--listener",
+        "127.0.0.1:8081=combined,http",
+        "--listener",
+        "127.0.0.1:8443=inference-only,tls",
+    ])
+    .expect("explicit primary listeners should parse");
+}
+
+#[test]
 fn usage_cli_accepts_public_provider_names_and_json() {
     for (name, expected) in [
         (
