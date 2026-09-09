@@ -141,6 +141,8 @@ pub mod vk;
 pub mod with_command;
 pub mod zai_coding_plan;
 
+mod anthropic_nonstream;
+
 #[cfg(test)]
 mod anthropic_bridge_tests;
 #[cfg(test)]

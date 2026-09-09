@@ -517,16 +517,16 @@ async fn claude_2_1_265_nonstream_thinking_is_streamed_upstream_and_assembled() 
     let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
     install_provider(&mut state, &base_url, &[]);
 
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../tests/fixtures/clients/claude-code-2.1.265-nonstream-thinking.messages.json"
+    ))
+    .unwrap();
+    let mut request_body = fixture["body"].clone();
+    request_body["model"] = serde_json::Value::String("future-saffron-91".into());
     let response = crate::zai_coding_plan::forward(
         &state,
         &client_headers(&state, ClientKind::ClaudeCode, "owner-a"),
-        serde_json::json!({
-            "model": "future-saffron-91", "stream": false,
-            "thinking": {"type": "enabled", "budget_tokens": 4096},
-            "max_tokens": 8192,
-            "messages": [{"role": "user", "content": "use the tool"}],
-            "tools": [{"name": "Read", "description": "read", "input_schema": {"type": "object"}}]
-        }),
+        request_body,
         "/api/services/anthropic/v1/messages",
         ClientProtocol::AnthropicMessages,
         crate::metrics::Surface::Anthropic,
@@ -637,7 +637,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         let forwarded = &requests[1].3;
         match client {
             ClientKind::ClaudeCode => {
-                assert_eq!(forwarded["user-agent"], "claude-cli/2.1.259");
+                assert_eq!(forwarded["user-agent"], "claude-cli/2.1.265");
                 assert_eq!(forwarded["anthropic-version"], "2023-06-01");
             }
             ClientKind::Codex => {
