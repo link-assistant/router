@@ -37,6 +37,13 @@ pub fn selected_server() -> Result<Option<String>, AnyError> {
 }
 
 pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
+    let config = normalized_config(config)?;
+    let path = state_directory()?.join(SERVER_CONFIG);
+    write_private_json(&path, &config)?;
+    Ok(path)
+}
+
+fn normalized_config(config: &PersistedServer) -> Result<PersistedServer, AnyError> {
     if config.server.is_empty() {
         return Err("server URL must not be empty".into());
     }
@@ -50,9 +57,7 @@ pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
     if config.management_server.as_deref() == Some(config.server.as_str()) {
         config.management_server = None;
     }
-    let path = state_directory()?.join(SERVER_CONFIG);
-    write_private_json(&path, &config)?;
-    Ok(path)
+    Ok(config)
 }
 
 /// Save a selection after importing its optional CA bundles into Router state.
@@ -62,9 +67,16 @@ pub fn save_persisted_with_trust(
     management_ca_cert: Option<&Path>,
 ) -> Result<PathBuf, AnyError> {
     let previous = load_persisted().ok().flatten();
-    let mut selected = config.clone();
+    // Validate before copying trust material so a bad URL cannot leave an
+    // unreferenced Router-owned certificate behind.
+    let mut selected = normalized_config(config)?;
+    let mut imported = Vec::new();
     selected.ca_cert = match ca_cert {
-        Some(path) => Some(import_certificate(path)?),
+        Some(path) => {
+            let name = import_certificate(path)?;
+            imported.push(name.clone());
+            Some(name)
+        }
         None => previous
             .as_ref()
             .filter(|held| super::same_origin(&held.server, &selected.server))
@@ -75,7 +87,16 @@ pub fn save_persisted_with_trust(
         .as_deref()
         .unwrap_or(&selected.server);
     selected.management_ca_cert = match management_ca_cert {
-        Some(path) => Some(import_certificate(path)?),
+        Some(path) => match import_certificate(path) {
+            Ok(name) => {
+                imported.push(name.clone());
+                Some(name)
+            }
+            Err(error) => {
+                remove_imported_certificates(&imported, previous.as_ref());
+                return Err(error);
+            }
+        },
         None => previous.as_ref().and_then(|held| {
             let held_management = held.management_server.as_deref().unwrap_or(&held.server);
             super::same_origin(held_management, selected_management)
@@ -86,11 +107,31 @@ pub fn save_persisted_with_trust(
     if selected.management_server.is_none() && selected.management_ca_cert.is_none() {
         selected.management_ca_cert = selected.ca_cert.clone();
     }
-    let path = save_persisted(&selected)?;
+    let path = match save_persisted(&selected) {
+        Ok(path) => path,
+        Err(error) => {
+            remove_imported_certificates(&imported, previous.as_ref());
+            return Err(error);
+        }
+    };
     if let Some(previous) = previous {
         remove_unreferenced_certificates(&previous, &selected);
     }
     Ok(path)
+}
+
+fn remove_imported_certificates(imported: &[String], retained: Option<&PersistedServer>) {
+    for name in imported {
+        if retained.is_some_and(|config| {
+            config.ca_cert.as_deref() == Some(name)
+                || config.management_ca_cert.as_deref() == Some(name)
+        }) {
+            continue;
+        }
+        if let Ok(Some(path)) = certificate_path(Some(name)) {
+            let _ = fs::remove_file(path);
+        }
+    }
 }
 
 fn import_certificate(source: &Path) -> Result<String, AnyError> {
@@ -387,6 +428,26 @@ mod tests {
             fs::read(&management_owned).unwrap(),
             fs::read(&management_ca).unwrap()
         );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            assert_eq!(
+                fs::metadata(&inference_owned).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+            assert_eq!(
+                fs::metadata(inference_owned.parent().unwrap())
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o700
+            );
+        }
+
+        drop(source);
+        assert!(!inference_ca.exists() && !management_ca.exists());
+        assert!(inference_owned.is_file() && management_owned.is_file());
 
         let unrelated = super::super::state::state_directory()
             .unwrap()
@@ -395,7 +456,56 @@ mod tests {
         clear_persisted().expect("clear selection");
         assert!(!inference_owned.exists());
         assert!(!management_owned.exists());
-        assert!(inference_ca.exists() && management_ca.exists());
         assert!(unrelated.exists());
+    }
+
+    /// A partially valid selection is transactional: importing one CA before
+    /// rejecting the other must not mutate the saved selection or leak a copy.
+    #[test]
+    fn rejected_trust_selection_removes_newly_imported_certificates() {
+        let directory = tempfile::tempdir().expect("temporary state root");
+        let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
+        let source = tempfile::tempdir().expect("certificate source");
+        let (valid_ca, _) = crate::tls::ensure_generated(
+            &source.path().join("valid"),
+            &["inference.example".to_string()],
+        )
+        .expect("generate inference CA");
+        let invalid_ca = source.path().join("invalid.pem");
+        fs::write(&invalid_ca, "not a certificate").expect("write invalid CA");
+        let original = PersistedServer {
+            server: "https://original.example".into(),
+            token: Some("la_sk_original".into()),
+            ..PersistedServer::default()
+        };
+        save_persisted(&original).expect("save original selection");
+
+        let error = save_persisted_with_trust(
+            &PersistedServer {
+                server: "https://inference.example".into(),
+                management_server: Some("https://management.example".into()),
+                ..PersistedServer::default()
+            },
+            Some(&valid_ca),
+            Some(&invalid_ca),
+        )
+        .expect_err("invalid management CA must reject the whole selection")
+        .to_string();
+
+        assert!(
+            error.contains("CA certificate"),
+            "unexpected error: {error}"
+        );
+        let retained = load_persisted()
+            .unwrap()
+            .expect("original selection retained");
+        assert_eq!(retained.server, original.server);
+        assert_eq!(retained.token, original.token);
+        assert_eq!(retained.ca_cert, None);
+        assert_eq!(retained.management_ca_cert, None);
+        let trust = super::super::state::state_directory()
+            .unwrap()
+            .join(TRUST_DIRECTORY);
+        assert_eq!(fs::read_dir(trust).unwrap().count(), 0);
     }
 }

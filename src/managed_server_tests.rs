@@ -33,6 +33,33 @@ async fn tls_probe(name: &str, app: axum::Router) -> TlsProbe {
     let directory = tempfile::tempdir().expect("TLS probe directory");
     let (certificate, key) = crate::tls::ensure_generated(directory.path(), &[name.to_string()])
         .expect("generate TLS probe certificate");
+    serve_tls_probe(name, app, directory, certificate, key).await
+}
+
+async fn expired_tls_probe(name: &str, app: axum::Router) -> TlsProbe {
+    let directory = tempfile::tempdir().expect("expired TLS probe directory");
+    let certificate = directory.path().join("expired-cert.pem");
+    let key = directory.path().join("expired-key.pem");
+    let signing_key = rcgen::KeyPair::generate().expect("generate expired TLS key");
+    let mut parameters =
+        rcgen::CertificateParams::new(vec![name.to_string()]).expect("expired TLS parameters");
+    parameters.not_before = rcgen::date_time_ymd(2010, 1, 1);
+    parameters.not_after = rcgen::date_time_ymd(2010, 1, 2);
+    let expired = parameters
+        .self_signed(&signing_key)
+        .expect("generate expired TLS certificate");
+    std::fs::write(&certificate, expired.pem()).expect("write expired TLS certificate");
+    std::fs::write(&key, signing_key.serialize_pem()).expect("write expired TLS key");
+    serve_tls_probe(name, app, directory, certificate, key).await
+}
+
+async fn serve_tls_probe(
+    name: &str,
+    app: axum::Router,
+    directory: tempfile::TempDir,
+    certificate: PathBuf,
+    key: PathBuf,
+) -> TlsProbe {
     let tls = crate::tls::load_config(&certificate, &key)
         .await
         .expect("load TLS probe certificate");
@@ -519,10 +546,11 @@ async fn split_https_origins_use_only_their_associated_ca() {
     );
 }
 
-/// Missing trust, an unrelated root and a hostname mismatch all fail closed
-/// with a certificate-oriented diagnostic (issue #558).
+/// Missing trust, an unrelated root, a hostname mismatch and an expired
+/// certificate all fail closed with a certificate-oriented diagnostic
+/// (issue #558).
 #[tokio::test]
-async fn selected_tls_trust_rejects_missing_wrong_and_wrong_san_certificates() {
+async fn selected_tls_trust_rejects_invalid_certificates() {
     let state = tempfile::tempdir().expect("temporary state root");
     let _guard = super::state::claim_state_root(state.path().to_path_buf());
     let app = axum::Router::new().route(
@@ -534,6 +562,14 @@ async fn selected_tls_trust_rejects_missing_wrong_and_wrong_san_certificates() {
     let (unrelated, _) =
         crate::tls::ensure_generated(unrelated_directory.path(), &["127.0.0.1".to_string()])
             .expect("generate unrelated CA");
+    let expired = expired_tls_probe(
+        "127.0.0.1",
+        axum::Router::new().route(
+            "/api/health",
+            axum::routing::get(|| async { axum::Json(serde_json::json!({"status": "ok"})) }),
+        ),
+    )
+    .await;
 
     for (origin, ca) in [
         (probe.origin.clone(), None),
@@ -542,6 +578,7 @@ async fn selected_tls_trust_rejects_missing_wrong_and_wrong_san_certificates() {
             probe.origin.replace("127.0.0.1", "localhost"),
             Some(probe.certificate.as_path()),
         ),
+        (expired.origin.clone(), Some(expired.certificate.as_path())),
     ] {
         save_persisted_with_trust(
             &PersistedServer {
