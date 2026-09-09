@@ -294,6 +294,7 @@ async fn cli_rejects_declared_and_streamed_usage_bodies_while_reading() {
         let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
 
         let exit = run_with_limit(
+            &reqwest::Client::new(),
             &format!("http://{address}"),
             Some("router-client-token"),
             Some(UsageProvider::OpenAi),

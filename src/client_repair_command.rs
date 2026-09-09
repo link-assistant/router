@@ -297,8 +297,14 @@ async fn repair_one(
             };
         }
     };
+    let inference_client = server.inference_client()?;
     if let Err(error) = manager
-        .catalog(client, &server.base_url, &candidate.token)
+        .catalog_with_client(
+            &inference_client,
+            client,
+            &server.base_url,
+            &candidate.token,
+        )
         .await
     {
         let rollback = result

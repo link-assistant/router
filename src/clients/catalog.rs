@@ -126,9 +126,21 @@ impl ClientManager {
         base_url: &str,
         token: &str,
     ) -> Result<Vec<RouterModel>, ClientError> {
+        self.catalog_with_client(&reqwest::Client::new(), client, base_url, token)
+            .await
+    }
+
+    /// Read the catalog with the trust configured for this Router origin.
+    pub(crate) async fn catalog_with_client(
+        &self,
+        http: &reqwest::Client,
+        client: ClientKind,
+        base_url: &str,
+        token: &str,
+    ) -> Result<Vec<RouterModel>, ClientError> {
         let base_url = normalize_base_url(base_url)?;
         let url = models_url(client, &base_url);
-        let request = reqwest::Client::new()
+        let request = http
             .get(&url)
             .header("x-link-assistant-client", client.canonical_name());
         let request = match client {

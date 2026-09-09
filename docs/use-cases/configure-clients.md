@@ -71,7 +71,9 @@ both canonical origins once and then use the ordinary commands:
 ```bash
 printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
   https://router.example \
+  --ca-cert /secure/router-inference-ca.pem \
   --management-server https://router-admin.example \
+  --management-ca-cert /secure/router-management-ca.pem \
   --token-stdin
 router configure codex
 router clients repair codex
@@ -88,9 +90,11 @@ printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router clients setup opencode \
 
 Only the public inference origin is written into client configuration. Token
 inspection, minting, and revocation use only the management origin; health and
-model catalogs use only inference. Setup/configure writes are transactional,
-and any newly minted candidate is revoked if validation or a local write
-fails.
+model catalogs use only inference. Optional PEM bundles are copied into
+owner-only Router state and used only for the matching origin, with normal
+certificate validity and hostname verification retained. Setup/configure
+writes are transactional, and any newly minted candidate is revoked if
+validation or a local write fails.
 
 `remove` revokes the token before it deletes the local credential file, so a
 copy of that file stops working immediately. When setup minted the token, the

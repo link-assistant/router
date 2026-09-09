@@ -11,7 +11,10 @@ use std::sync::{Arc, RwLock};
 use super::budget::{
     add_token_usage, admit_request_reserving, consume_request, settle_token_usage,
 };
-use super::{RequestAdmission, StorageError, TokenRecord, TokenStore, associative, legacy};
+use super::{
+    RequestAdmission, StorageError, TokenRecord, TokenStore, associative,
+    compact_ephemeral_records, legacy,
+};
 
 /// Decode a current binary projection without mapping the source file writable.
 ///
@@ -286,6 +289,13 @@ impl TokenStore for BinaryTokenStore {
 
     fn delete(&self, id: &str) -> Result<bool, StorageError> {
         self.mutate(|records| records.remove(id).is_some())
+    }
+
+    fn put_compacting_ephemeral(&self, record: TokenRecord, now: i64) -> Result<(), StorageError> {
+        self.mutate(|records| {
+            compact_ephemeral_records(records, now);
+            records.insert(record.id.clone(), record);
+        })
     }
 
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {

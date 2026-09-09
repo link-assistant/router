@@ -146,7 +146,11 @@ pub async fn issue_client_token(
     if let Err(message) = request.validate() {
         return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
     }
-    match state.token_manager.issue(&request) {
+    match if req.ephemeral {
+        state.token_manager.issue_ephemeral(&request)
+    } else {
+        state.token_manager.issue(&request)
+    } {
         Ok(token) => {
             state.metrics.record_token_issued();
             (
@@ -408,12 +412,17 @@ pub struct IssueTokenRequest {
 
 /// Request body for the managed client-token issuance endpoint.
 #[derive(serde::Deserialize)]
+#[cfg_attr(test, derive(serde::Serialize))]
 pub struct IssueClientTokenRequest {
     pub client_kind: String,
     pub ttl_hours: Option<i64>,
     pub sliding_expiry: Option<bool>,
     pub label: Option<String>,
     pub max_requests: Option<u64>,
+    /// Mark a credential as owned by one wrapper run so dead records can be
+    /// compacted during later issuance.
+    #[serde(default)]
+    pub ephemeral: bool,
 }
 
 /// Request body for the admin rotation endpoint. All fields are optional.

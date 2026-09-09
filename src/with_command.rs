@@ -199,6 +199,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         profile_root: None,
         codex_reasoning_effort: codex_reasoning_effort.as_deref(),
         codex_backend_base_url,
+        ca_cert: server.ca_cert.as_deref(),
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -425,6 +426,7 @@ struct Preparation<'a> {
     profile_root: Option<&'a Path>,
     codex_reasoning_effort: Option<&'a str>,
     codex_backend_base_url: Option<&'a str>,
+    ca_cert: Option<&'a Path>,
 }
 
 impl TemporaryClient {
@@ -441,6 +443,7 @@ impl TemporaryClient {
             profile_root,
             codex_reasoning_effort,
             codex_backend_base_url,
+            ca_cert,
         } = request;
         // A client that can be extended never reads this directory — the
         // router's whole contribution is two environment variables — so it is
@@ -521,6 +524,11 @@ impl TemporaryClient {
         }
         if let Some(base_env) = integration.base_url_env {
             command.env(base_env, endpoint(base_url, integration.endpoint_suffix));
+        }
+        // Node augments its normal trust roots with this bundle and still
+        // performs the full certificate chain, validity, and SAN checks.
+        if let Some(ca_cert) = ca_cert {
+            command.env("NODE_EXTRA_CA_CERTS", ca_cert);
         }
         // How hard the client thinks is the user's setting, not the router's.
         // A compile-time `xhigh` / `16384` applied to a user who never asked
@@ -965,6 +973,14 @@ fn exit_code(status: std::process::ExitStatus) -> ExitCode {
 #[cfg(test)]
 #[path = "with_command_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "with_command_ca_tests.rs"]
+mod ca_tests;
+
+#[cfg(test)]
+#[path = "with_command_profile_tests.rs"]
+mod profile_tests;
 
 #[cfg(test)]
 #[path = "with_command_sweep_tests.rs"]

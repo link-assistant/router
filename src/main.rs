@@ -677,13 +677,8 @@ async fn run_remote_command(
             link_assistant_router::providers_cli::run_remote(server, op).await
         }
         Command::Usage { provider, json, .. } => {
-            link_assistant_router::subscription_usage_cli::run(
-                &server.base_url,
-                server.token.as_deref(),
-                *provider,
-                *json,
-            )
-            .await
+            link_assistant_router::subscription_usage_cli::run_selected(server, *provider, *json)
+                .await
         }
         // The request log is written to the deployment's own disk and no
         // endpoint serves it back, so there is nothing to ask for. Saying that

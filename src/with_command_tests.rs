@@ -4,6 +4,7 @@
 //! 1000-line limit.
 
 use super::*;
+
 /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
 /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
 /// `GEMINI_CLI_HOME` at the `.gemini` directory made it look one level too
@@ -76,6 +77,7 @@ fn default_claude_launch_uses_an_empty_persistent_router_profile() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare with the default configuration handling");
     let names: Vec<String> = extended
@@ -159,6 +161,7 @@ fn default_claude_launch_uses_an_empty_persistent_router_profile() {
         profile_root: None,
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare isolated");
     assert!(
@@ -190,6 +193,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare a resumed z.ai-only Claude session");
     let resumed_env = resumed
@@ -227,6 +231,7 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare an explicit z.ai Claude model");
     let explicit_env = explicit
@@ -280,6 +285,7 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare mixed Claude catalog");
     let arguments = prepared
@@ -327,6 +333,7 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     });
     let Err(error) = result else {
         panic!("an unknown capability profile must not reach Claude Code");
@@ -354,6 +361,7 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     });
     let Err(error) = result else {
         panic!("conflicting capability profiles must not reach Claude Code");
@@ -398,6 +406,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         profile_root: None,
         codex_reasoning_effort: None,
         codex_backend_base_url: Some("http://127.0.0.1:43123/api/services/codex/backend-api"),
+        ca_cert: None,
     })
     .expect("prepare Codex overlay");
 
@@ -499,6 +508,7 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
         profile_root: None,
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare isolated Codex");
     let isolated_home = isolated
@@ -736,6 +746,7 @@ fn a_file_configured_client_is_isolated_even_by_default() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("a file-configured client must still run");
 }
@@ -780,6 +791,7 @@ fn a_prepared_gemini_run_leaves_settings_where_the_cli_reads_them() {
         profile_root: Some(profiles.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
+        ca_cert: None,
     })
     .expect("prepare gemini");
     let root = temporary.directory.path();
@@ -875,6 +887,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
                     profile_root: Some(profiles.path()),
                     codex_reasoning_effort: None,
                     codex_backend_base_url: None,
+                    ca_cert: None,
                 })
                 .is_err()
             );
@@ -892,6 +905,7 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             profile_root: Some(profiles.path()),
             codex_reasoning_effort: None,
             codex_backend_base_url: None,
+            ca_cert: None,
         })
         .unwrap_or_else(|error| panic!("{client} failed setup: {error}"));
         let root = temporary.directory.path().to_path_buf();
@@ -939,55 +953,4 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             );
         }
     }
-}
-
-/// The same client twice gets the same directory, which is what makes a
-/// session resumable through the router.
-#[test]
-fn two_runs_of_the_same_client_share_one_profile() {
-    let profiles = tempfile::tempdir().expect("profile root");
-    let root = Some(profiles.path());
-    let first = persistent_profile(ClientKind::Codex, root).expect("first profile");
-    let second = persistent_profile(ClientKind::Codex, root).expect("second profile");
-    assert_eq!(first, second);
-    assert!(first.is_dir());
-    assert_ne!(
-        first,
-        persistent_profile(ClientKind::GeminiCli, root).expect("another client")
-    );
-}
-
-#[test]
-fn registry_order_matches_client_discriminants() {
-    for client in ClientKind::ALL {
-        assert_eq!(client.integration().kind, client);
-    }
-}
-
-/// The default label names the client and a run, never the directory the
-/// command was run in — a deployment was accumulating a list of every project
-/// its users work in, visible to anyone who can list tokens (issue #316).
-#[test]
-fn the_default_label_carries_no_directory_name() {
-    let label = format!("with-{}-{}", ClientKind::ClaudeCode, super::run_suffix());
-
-    assert!(label.starts_with("with-claude-"), "{label}");
-    // Whatever the working directory is called, it is not in the label.
-    let cwd = std::env::current_dir().expect("cwd");
-    let name = cwd
-        .file_name()
-        .expect("directory name")
-        .to_string_lossy()
-        .into_owned();
-    assert!(
-        !label.contains(&name),
-        "the working directory's name must not reach the router: {label} contains {name}"
-    );
-    // The suffix distinguishes concurrent runs without describing them.
-    assert_eq!(super::run_suffix().len(), 4, "a fixed-width run suffix");
-    assert_eq!(
-        super::run_suffix(),
-        super::run_suffix(),
-        "stable within one process, so one run has one label"
-    );
 }

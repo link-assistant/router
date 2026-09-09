@@ -531,12 +531,11 @@ async fn setup_remote(
         Ok(server) => server,
         Err(error) => return failed(error),
     };
-    let candidate = match crate::managed_server::prepare_run_credential(
+    let candidate = match crate::managed_server::prepare_persistent_credential(
         &server,
         client,
         &format!("client-{client}"),
         ttl_hours,
-        false,
     )
     .await
     {

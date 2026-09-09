@@ -12,6 +12,7 @@ use link_cli::storage::PersistentFileMapped;
 use super::StorageError;
 
 /// Number of items `unit::Store` bootstraps with before it sizes itself.
+#[cfg(test)]
 const DOUBLETS_BOOTSTRAP_ITEMS: usize = 8 * 1024;
 
 /// A mapping that keeps the capacity an existing file already represents.
@@ -35,7 +36,7 @@ const DOUBLETS_BOOTSTRAP_ITEMS: usize = 8 * 1024;
 ///   discards the capacity that was just adopted.
 pub(super) struct LoadedFileMapped {
     inner: PersistentFileMapped<LinkPart<usize>>,
-    preserve_bootstrap: bool,
+    minimum_capacity: usize,
 }
 
 impl LoadedFileMapped {
@@ -62,7 +63,7 @@ impl LoadedFileMapped {
         }
         Ok(Self {
             inner,
-            preserve_bootstrap: items > DOUBLETS_BOOTSTRAP_ITEMS,
+            minimum_capacity: items,
         })
     }
 }
@@ -95,12 +96,56 @@ impl RawMem for LoadedFileMapped {
     }
 
     fn shrink(&mut self, count: usize) -> doublets::mem::Result<()> {
-        if self.preserve_bootstrap
-            && self.inner.allocated().len().saturating_sub(count) == DOUBLETS_BOOTSTRAP_ITEMS
-        {
-            self.preserve_bootstrap = false;
+        // `LinksHeader::allocated` is the highest live address, not a count.
+        // During initialization doublets first asks to shrink a loaded mapping
+        // to its bootstrap page and then to `allocated`; satisfying the second
+        // request discards the live slot at that inclusive address. Preserve
+        // every element represented by the existing file. Rebuilds compact by
+        // constructing a fresh mapping, so an opened store never needs to
+        // shrink below this floor (issue #557).
+        if self.inner.allocated().len().saturating_sub(count) < self.minimum_capacity {
             return Ok(());
         }
         self.inner.shrink(count)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Reopening a doublets file performs two initialization shrinks: first to
+    /// the bootstrap page, then to the highest allocated address. The latter
+    /// address is inclusive, so allowing either shrink discards live storage
+    /// and leaves a tree pointer exactly one past the mapping (issue #557).
+    #[test]
+    fn an_existing_mapping_never_shrinks_below_its_file_capacity() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let path = directory.path().join("tokens.bin");
+        let existing_items = DOUBLETS_BOOTSTRAP_ITEMS + 37;
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .open(&path)
+            .expect("create mapping");
+        file.set_len((existing_items * size_of::<LinkPart<usize>>()) as u64)
+            .expect("size mapping");
+
+        let mut mapping = LoadedFileMapped::new(file).expect("load mapping");
+        mapping
+            .shrink(existing_items - DOUBLETS_BOOTSTRAP_ITEMS)
+            .expect("ignore bootstrap shrink");
+        mapping.shrink(1).expect("ignore inclusive-address shrink");
+
+        assert_eq!(
+            mapping.allocated().len(),
+            existing_items,
+            "initialization must retain the slot at the highest allocated address"
+        );
+        assert_eq!(
+            std::fs::metadata(path).expect("mapping metadata").len(),
+            (existing_items * size_of::<LinkPart<usize>>()) as u64
+        );
     }
 }

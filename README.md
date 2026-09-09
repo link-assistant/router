@@ -508,9 +508,21 @@ and generated client configuration contains only the inference origin:
 
 ```bash
 router server use https://router.example \
-  --management-server https://router-admin.example --token-stdin
+  --ca-cert ./router-inference-ca.pem \
+  --management-server https://router-admin.example \
+  --management-ca-cert ./router-management-ca.pem \
+  --token-stdin
 router configure claude
 ```
+
+`--ca-cert` and `--management-ca-cert` validate a PEM bundle, copy it into
+owner-only Router state, and associate it only with the matching origin. Router
+uses that additional trust for its own health, catalog, usage, token, and
+management calls while retaining certificate-chain, validity, hostname, and IP
+SAN verification. `router with` also supplies the inference CA to launched
+Claude Code processes through `NODE_EXTRA_CA_CERTS`; no insecure TLS switch is
+stored or enabled. `router server use --clear` removes only the Router-owned
+copies associated with that selection.
 
 The equivalent one-shot forms accept the same `--management-server` option,
 including `router with`, `router configure`, authentication/provider commands,
@@ -1138,15 +1150,21 @@ tunnel):
 # On the server, then copy /tmp/router-ca.pem to the client:
 router tls ca > /tmp/router-ca.pem
 
-# On the client:
-export NODE_EXTRA_CA_CERTS=/tmp/router-ca.pem
-
 printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
   https://192.0.2.10:8443 \
+  --ca-cert /tmp/router-ca.pem \
   --management-server http://127.0.0.1:8080 \
   --token-stdin
-router configure claude
+router with claude
 ```
+
+The Router CLI copies the PEM into its owner-only state, trusts it only for the
+selected inference origin, and passes that same trust to the launched Claude
+Code process. The source PEM may then be moved or removed. If the management
+origin also uses a private CA, add
+`--management-ca-cert /path/to/management-ca.pem`. A missing, unrelated,
+expired, or wrong-SAN certificate fails closed; Router never disables TLS
+verification.
 
 Only `https://192.0.2.10:8443` is written to the client configuration. Even an
 admin credential receives `404 Not Found` for management, GitHub/Git,

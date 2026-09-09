@@ -54,6 +54,12 @@ pub struct TokenRecord {
     pub issued_at: i64,
     pub expires_at: i64,
     pub revoked: bool,
+    /// Whether this credential belongs only to a wrapper run.
+    ///
+    /// Dead ephemeral records are compacted as part of the next issuance so
+    /// repeated `router with` runs cannot grow durable storage forever.
+    #[serde(default)]
+    pub ephemeral: bool,
     /// How long, in seconds, an active token's expiry slides ahead of now.
     ///
     /// `None` is a fixed clock: the expiry set at issue time is final, which
@@ -130,6 +136,7 @@ pub struct TokenRecord {
 pub enum StorageError {
     Io(io::Error),
     Codec(String),
+    Capacity(String),
     LockPoisoned,
 }
 
@@ -138,6 +145,7 @@ impl std::fmt::Display for StorageError {
         match self {
             Self::Io(e) => write!(f, "storage I/O error: {e}"),
             Self::Codec(msg) => write!(f, "storage codec error: {msg}"),
+            Self::Capacity(msg) => write!(f, "storage capacity error: {msg}"),
             Self::LockPoisoned => write!(f, "storage lock poisoned"),
         }
     }
@@ -160,6 +168,20 @@ pub trait TokenStore: Send + Sync {
     fn get(&self, id: &str) -> Result<Option<TokenRecord>, StorageError>;
     fn put(&self, record: TokenRecord) -> Result<(), StorageError>;
     fn delete(&self, id: &str) -> Result<bool, StorageError>;
+    /// Insert `record` while removing expired or revoked wrapper credentials.
+    ///
+    /// Persistent implementations override this so pruning and insertion are
+    /// one durable mutation. The default keeps third-party stores compatible.
+    fn put_compacting_ephemeral(&self, record: TokenRecord, now: i64) -> Result<(), StorageError> {
+        for stale in self
+            .list()?
+            .into_iter()
+            .filter(|held| held.ephemeral && (held.revoked || held.expires_at <= now))
+        {
+            self.delete(&stale.id)?;
+        }
+        self.put(record)
+    }
     fn revoke(&self, id: &str) -> Result<bool, StorageError> {
         if let Some(mut rec) = self.get(id)? {
             if rec.revoked {
@@ -310,6 +332,13 @@ impl TokenStore for MemoryTokenStore {
     fn delete(&self, id: &str) -> Result<bool, StorageError> {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
         Ok(guard.remove(id).is_some())
+    }
+
+    fn put_compacting_ephemeral(&self, record: TokenRecord, now: i64) -> Result<(), StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        compact_ephemeral_records(&mut guard, now);
+        guard.insert(record.id.clone(), record);
+        Ok(())
     }
 
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
@@ -480,6 +509,13 @@ impl TokenStore for TextTokenStore {
         self.mutate(|records| records.remove(id).is_some())
     }
 
+    fn put_compacting_ephemeral(&self, record: TokenRecord, now: i64) -> Result<(), StorageError> {
+        self.mutate(|records| {
+            compact_ephemeral_records(records, now);
+            records.insert(record.id.clone(), record);
+        })
+    }
+
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {
         self.mutate(|records| consume_request(records.get_mut(id)))
     }
@@ -508,6 +544,10 @@ use budget::{
     add_token_usage, admit_request_reserving, consume_request, merge_safer_record,
     settle_token_usage,
 };
+
+fn compact_ephemeral_records(records: &mut HashMap<String, TokenRecord>, now: i64) {
+    records.retain(|_, record| !record.ephemeral || (!record.revoked && record.expires_at > now));
+}
 
 #[path = "storage_binary.rs"]
 mod binary;
@@ -767,6 +807,13 @@ impl TokenStore for DurableDualTokenStore {
 
     fn delete(&self, id: &str) -> Result<bool, StorageError> {
         self.with_records(|records| records.remove(id).is_some())
+    }
+
+    fn put_compacting_ephemeral(&self, record: TokenRecord, now: i64) -> Result<(), StorageError> {
+        self.with_records(|records| {
+            compact_ephemeral_records(records, now);
+            records.insert(record.id.clone(), record);
+        })
     }
 
     fn try_consume_request(&self, id: &str) -> Result<bool, StorageError> {

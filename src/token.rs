@@ -361,7 +361,17 @@ impl TokenManager {
 
     /// Issue a token described by [`IssueRequest`].
     pub fn issue(&self, request: &IssueRequest<'_>) -> Result<String, jsonwebtoken::errors::Error> {
-        self.issue_with_id(request).map(|(token, _)| token)
+        self.issue_with_id_policy(request, false)
+            .map(|(token, _)| token)
+    }
+
+    /// Issue a credential owned by one wrapper run.
+    pub fn issue_ephemeral(
+        &self,
+        request: &IssueRequest<'_>,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_with_id_policy(request, true)
+            .map(|(token, _)| token)
     }
 
     /// Issue a token and return it together with its record id (`sub`).
@@ -372,6 +382,14 @@ impl TokenManager {
     pub fn issue_with_id(
         &self,
         request: &IssueRequest<'_>,
+    ) -> Result<(String, String), jsonwebtoken::errors::Error> {
+        self.issue_with_id_policy(request, false)
+    }
+
+    fn issue_with_id_policy(
+        &self,
+        request: &IssueRequest<'_>,
+        ephemeral: bool,
     ) -> Result<(String, String), jsonwebtoken::errors::Error> {
         // A command that will never sign installs a stand-in secret so it need
         // not carry this machine's. Signing with one produced a normal-looking
@@ -413,6 +431,7 @@ impl TokenManager {
             issued_at: claims.iat,
             expires_at: claims.exp,
             revoked: false,
+            ephemeral,
             sliding_window_seconds: request.sliding_window_seconds,
             account: account.map(String::from),
             max_requests,
@@ -433,10 +452,20 @@ impl TokenManager {
         // refusal: the router cannot recognise it, and the holder only finds
         // out when they try to use it. The failure has to reach the caller
         // rather than a log line nothing reads (issue #374).
-        self.store.put(record).map_err(|error| {
-            tracing::error!("token store put failed, no token issued: {error}");
-            jsonwebtoken::errors::Error::from(jsonwebtoken::errors::ErrorKind::InvalidToken)
-        })?;
+        let persisted = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.store.put_compacting_ephemeral(record, now.timestamp())
+        }));
+        match persisted {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => {
+                tracing::error!("token store put failed, no token issued: {error}");
+                return Err(jsonwebtoken::errors::ErrorKind::InvalidToken.into());
+            }
+            Err(_) => {
+                tracing::error!("token store panicked during put, no token issued");
+                return Err(jsonwebtoken::errors::ErrorKind::InvalidToken.into());
+            }
+        }
         Ok((format!("{TOKEN_PREFIX}{jwt}"), id))
     }
 
