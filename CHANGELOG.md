@@ -182,6 +182,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.5.0] - 2026-09-09
+
+### Fixed
+
+- Adapt Claude Code's non-streaming thinking requests to z.ai's streaming-only Anthropic endpoint, then return one native Anthropic message without changing streaming relays ([#554](https://github.com/link-assistant/router/issues/554)).
+
+### Added
+
+- Add repeatable, transport-explicit primary listeners so one Router process can retain a private combined HTTP surface while exposing a TLS inference-only surface with shared state and atomic startup ([#556](https://github.com/link-assistant/router/issues/556)).
+
 ## [1.4.6] - 2026-09-08
 
 ### Fixed
