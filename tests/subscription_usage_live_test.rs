@@ -1,7 +1,7 @@
 //! Opt-in acceptance tests for protected subscription credentials.
 //!
 //! Usage probes do not call inference. The Codex identity and z.ai Claude
-//! compatibility regressions use small streaming requests. Every test is a
+//! compatibility regressions use small inference requests. Every test is a
 //! no-op unless its protected environment variable is present; secret values
 //! are never printed or included in assertion output.
 
@@ -116,23 +116,24 @@ fn install_zai(state: &AppState, api_key: String) {
 }
 
 fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Output {
+    let arguments = [
+        "--server",
+        origin,
+        "--token",
+        token,
+        "--model",
+        model,
+        "--non-interactive",
+        "claude",
+        "--verbose",
+        "--output-format",
+        "stream-json",
+        "--max-turns",
+        "1",
+        "Think briefly, then reply with exactly ROUTER_ZAI_LIVE_OK.",
+    ];
     let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args([
-            "--server",
-            origin,
-            "--token",
-            token,
-            "--model",
-            model,
-            "--non-interactive",
-            "claude",
-            "--verbose",
-            "--output-format",
-            "stream-json",
-            "--max-turns",
-            "1",
-            "Think briefly, then reply with exactly ROUTER_ZAI_LIVE_OK.",
-        ])
+        .args(arguments)
         .current_dir(env!("CARGO_MANIFEST_DIR"))
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -159,6 +160,45 @@ fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Outpu
     child
         .wait_with_output()
         .expect("collect live Claude output")
+}
+
+fn live_request_records(root: &Path, token: &str) -> Vec<Value> {
+    let path = root
+        .join("requests")
+        .join(link_assistant_router::request_log::token_log_key(token))
+        .join("requests.lino");
+    std::fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("read live z.ai request log {}: {error}", path.display()))
+        .lines()
+        .map(|line| {
+            link_assistant_router::lino_json::decode_line(line)
+                .expect("decode live z.ai request record")
+        })
+        .collect()
+}
+
+fn assert_live_nonstream_was_adapted(root: &Path, token: &str) {
+    let records = live_request_records(root, token);
+    let client = records
+        .iter()
+        .find(|record| {
+            record["phase"] == "client_request"
+                && record["body"]["stream"] == false
+                && record["body"]["thinking"]["type"] == "enabled"
+                && record["body"]["tools"].is_array()
+        })
+        .expect("the replay must record the affected non-streaming thinking request");
+    let correlation = &client["correlation_id"];
+    let upstream = records
+        .iter()
+        .find(|record| {
+            record["phase"] == "upstream_request" && record["correlation_id"] == *correlation
+        })
+        .expect("Router must forward the affected live Claude request");
+    assert_eq!(
+        upstream["body"]["stream"], true,
+        "Router must request SSE only on the z.ai-facing copy"
+    );
 }
 
 fn contains_thinking(value: &Value) -> bool {
@@ -507,11 +547,11 @@ async fn real_zai_thinking_reaches_claude_verbose_output() {
     let output = tokio::task::spawn_blocking({
         let origin = origin.clone();
         let token = token.clone();
+        let model = model.clone();
         move || run_live_claude(&home, &origin, &token, &model)
     })
     .await
     .expect("join live Claude process");
-    server.abort();
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -531,4 +571,41 @@ async fn real_zai_thinking_reaches_claude_verbose_output() {
         "live z.ai stream did not expose a non-empty thinking block in Claude verbose output"
     );
     assert!(!stdout.contains("ROUTER_CAPTURE_THINKING_TRACE"));
+
+    let records = live_request_records(root.path(), &token);
+    let mut replay_body = records
+        .iter()
+        .find(|record| {
+            record["phase"] == "client_request"
+                && record["body"]["stream"] == true
+                && record["body"]["thinking"]["type"] == "enabled"
+                && record["body"]["tools"].is_array()
+        })
+        .map(|record| record["body"].clone())
+        .expect("capture the live Claude 2.1.265 thinking request");
+    replay_body["stream"] = Value::Bool(false);
+    let replay = reqwest::Client::new()
+        .post(format!("{origin}/api/services/anthropic/v1/messages"))
+        .bearer_auth(&token)
+        .header("anthropic-version", "2023-06-01")
+        .header("user-agent", "claude-cli/2.1.265")
+        .json(&replay_body)
+        .send()
+        .await
+        .expect("replay the live Claude request as non-streaming");
+    let replay_status = replay.status();
+    let replay_body = replay.bytes().await.expect("read live non-streaming reply");
+    assert!(
+        replay_status.is_success(),
+        "live non-streaming Claude replay failed with {replay_status}: {}",
+        String::from_utf8_lossy(&replay_body)
+    );
+    let replay: Value =
+        serde_json::from_slice(&replay_body).expect("live non-streaming Anthropic response");
+    assert!(
+        replay["content"].is_array() && contains_thinking(&replay),
+        "live non-streaming reply omitted genuine z.ai thinking: {replay}"
+    );
+    assert_live_nonstream_was_adapted(root.path(), &token);
+    server.abort();
 }

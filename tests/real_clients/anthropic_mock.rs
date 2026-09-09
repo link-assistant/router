@@ -22,7 +22,11 @@ pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
     }
     if request.get("thinking").is_some() {
         return if request["thinking"]["type"] == "enabled" {
-            thinking_answer(model)
+            if request["stream"].as_bool().unwrap_or(false) {
+                thinking_answer(model)
+            } else {
+                nonstream_thinking_answer(model)
+            }
         } else {
             unsupported_thinking_answer(&request["thinking"])
         };
@@ -124,6 +128,31 @@ fn thinking_answer(model: &str) -> Vec<u8> {
     event_stream(&events, "write thinking answer event")
 }
 
+fn nonstream_thinking_answer(model: &str) -> Vec<u8> {
+    http_response(
+        "200 OK",
+        "application/json",
+        &json!({
+            "id": "msg_offline_thinking",
+            "type": "message",
+            "role": "assistant",
+            "model": model,
+            "content": [
+                {
+                    "type": "thinking",
+                    "thinking": THINKING_TRACE,
+                    "signature": "c2lnbmVkLW9mZmxpbmUtdHJhY2U="
+                },
+                {"type": "text", "text": ANSWER}
+            ],
+            "stop_reason": "end_turn",
+            "stop_sequence": null,
+            "usage": {"input_tokens": 1, "output_tokens": 2}
+        })
+        .to_string(),
+    )
+}
+
 fn subagent_call(model: &str, tool_name: &str) -> Vec<u8> {
     let message = json!({
         "id": "msg_subagent_request", "type": "message", "role": "assistant", "model": model,
@@ -188,5 +217,11 @@ fn only_provider_accepted_thinking_can_receive_a_synthetic_trace() {
         enabled
             .windows(THINKING_TRACE.len())
             .any(|window| { window == THINKING_TRACE.as_bytes() })
+    );
+    assert!(enabled.starts_with(b"HTTP/1.1 200 OK\r\n"));
+    assert!(
+        enabled
+            .windows(b"application/json".len())
+            .any(|window| window == b"application/json")
     );
 }

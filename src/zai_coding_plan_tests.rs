@@ -344,7 +344,7 @@ fn client_headers(
                 HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
             );
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
-            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.259"));
+            headers.insert("user-agent", HeaderValue::from_static("claude-cli/2.1.265"));
         }
         ClientKind::Codex => {
             headers.insert(
@@ -476,6 +476,96 @@ async fn native_anthropic_sse_is_relayed_byte_for_byte() {
 }
 
 #[tokio::test]
+async fn claude_2_1_265_nonstream_thinking_is_streamed_upstream_and_assembled() {
+    const SSE: &str = "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_zai\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"future-saffron-91\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":7,\"cache_read_input_tokens\":3,\"output_tokens\":0}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"inspect route\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"signed-trace\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"done\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_zai\",\"name\":\"Read\",\"input\":{}}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"file_path\\\":\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"README.md\\\"}\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":2}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":13}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+
+    let bodies = Arc::new(Mutex::new(Vec::<serde_json::Value>::new()));
+    let captured = Arc::clone(&bodies);
+    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+        let captured = Arc::clone(&captured);
+        async move {
+            if request.uri().path() == crate::zai_coding_plan::CATALOG_PATH {
+                return axum::response::Response::builder()
+                    .status(StatusCode::OK)
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"data":[{"id":"future-saffron-91"}]}"#))
+                    .unwrap();
+            }
+            let body = request.into_body().collect().await.unwrap().to_bytes();
+            let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+            captured.lock().unwrap().push(body.clone());
+            if body["stream"] != true {
+                return axum::response::Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        r#"{"error":{"code":"1210","message":"thinking requires stream=true"}}"#,
+                    ))
+                    .unwrap();
+            }
+            axum::response::Response::builder()
+                .status(StatusCode::OK)
+                .header("content-type", "text/event-stream")
+                .body(Body::from(SSE))
+                .unwrap()
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
+    install_provider(&mut state, &base_url, &[]);
+
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../tests/fixtures/clients/claude-code-2.1.265-nonstream-thinking.messages.json"
+    ))
+    .unwrap();
+    let mut request_body = fixture["body"].clone();
+    request_body["model"] = serde_json::Value::String("future-saffron-91".into());
+    let response = crate::zai_coding_plan::forward(
+        &state,
+        &client_headers(&state, ClientKind::ClaudeCode, "owner-a"),
+        request_body,
+        "/api/services/anthropic/v1/messages",
+        ClientProtocol::AnthropicMessages,
+        crate::metrics::Surface::Anthropic,
+    )
+    .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers()["content-type"], "application/json");
+    assert!(
+        response
+            .headers()
+            .keys()
+            .all(|name| !name.as_str().contains("router"))
+    );
+    let payload: serde_json::Value =
+        serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    assert_eq!(payload["id"], "msg_zai");
+    assert_eq!(
+        payload["content"][0],
+        serde_json::json!({"type":"thinking","thinking":"inspect route","signature":"signed-trace"})
+    );
+    assert_eq!(
+        payload["content"][1],
+        serde_json::json!({"type":"text","text":"done"})
+    );
+    assert_eq!(
+        payload["content"][2],
+        serde_json::json!({"type":"tool_use","id":"toolu_zai","name":"Read","input":{"file_path":"README.md"}})
+    );
+    assert_eq!(payload["stop_reason"], "tool_use");
+    assert_eq!(
+        payload["usage"],
+        serde_json::json!({"input_tokens":7,"cache_read_input_tokens":3,"output_tokens":13})
+    );
+    assert_eq!(bodies.lock().unwrap()[0]["stream"], true);
+    handle.abort();
+}
+
+#[tokio::test]
 async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model() {
     let cases = [
         (
@@ -547,7 +637,7 @@ async fn each_native_protocol_uses_only_its_fixed_endpoint_and_canonical_model()
         let forwarded = &requests[1].3;
         match client {
             ClientKind::ClaudeCode => {
-                assert_eq!(forwarded["user-agent"], "claude-cli/2.1.259");
+                assert_eq!(forwarded["user-agent"], "claude-cli/2.1.265");
                 assert_eq!(forwarded["anthropic-version"], "2023-06-01");
             }
             ClientKind::Codex => {

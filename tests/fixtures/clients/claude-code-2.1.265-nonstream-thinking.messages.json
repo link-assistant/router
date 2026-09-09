@@ -1,0 +1,46 @@
+{
+  "client": "claude-code",
+  "version": "2.1.265",
+  "source": "sanitized canonical request captured from Claude Code while using a dynamically advertised z.ai model",
+  "method": "POST",
+  "path": "/api/services/anthropic/v1/messages",
+  "credential_carrier": "authorization",
+  "expected_surface": "anthropic",
+  "headers": {
+    "content-type": "application/json",
+    "anthropic-version": "2023-06-01",
+    "user-agent": "claude-cli/2.1.265"
+  },
+  "body": {
+    "model": "{model}",
+    "stream": false,
+    "thinking": {
+      "type": "enabled",
+      "budget_tokens": 4096
+    },
+    "max_tokens": 8192,
+    "messages": [
+      {
+        "role": "user",
+        "content": "use the tool"
+      }
+    ],
+    "tools": [
+      {
+        "name": "Read",
+        "description": "read a file",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "file_path"
+          ]
+        }
+      }
+    ]
+  }
+}

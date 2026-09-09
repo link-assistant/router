@@ -866,6 +866,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--token-secret` / `TOKEN_SECRET` | — | To serve, sign or encrypt | Secret key for signing/validating JWT tokens and encrypting stored provider keys. A command that only reads local files or acts on another deployment does not need one |
 | `--port` / `ROUTER_PORT` | `8080` | No | Port to listen on |
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | IP or network alias to resolve once and bind to |
+| `--listener` / `LISTENERS` | — | No | Repeatable `ADDR=combined\|inference-only,http\|tls` primary listener. `LISTENERS` separates entries with `;`. When present, these replace the legacy `--host`/`--port` primary listener; otherwise existing single-listener behavior is unchanged |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
 | `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
@@ -1103,6 +1104,53 @@ TLS_SELF_SIGNED_DNS=hive-mind-router
 `router tls generate --dns <names>` creates the pair without starting the
 server. The generated pair is reused across restarts, so clients that trust it
 keep working.
+
+#### Private management and public inference from one process
+
+Repeat `--listener` to retain the complete route set on a private HTTP socket
+while publishing only health, catalogs, and inference over TLS. All sockets
+share the same tokens, providers, sessions, usage accounting, and redacted
+request log:
+
+```bash
+export DATA_DIR=/var/lib/router
+export TLS_SELF_SIGNED=1
+export TLS_SELF_SIGNED_DNS=192.0.2.10
+
+router \
+  --listener '127.0.0.1:8080=combined,http' \
+  --listener '0.0.0.0:8443=inference-only,tls' \
+  serve
+```
+
+Use the address clients actually reach in `TLS_SELF_SIGNED_DNS`; an IP value is
+placed in the certificate's IP SAN. A `tls` listener fails startup unless the
+certificate can be generated or loaded, and every configured socket is bound
+before any starts serving. Thus a bad certificate or address collision cannot
+leave only part of the requested deployment online.
+
+Export the generated CA on the server and copy that PEM to the client. Install
+it as described below, then save the public inference origin separately from
+the private management origin (which may be reached through an existing SSH
+tunnel):
+
+```bash
+# On the server, then copy /tmp/router-ca.pem to the client:
+router tls ca > /tmp/router-ca.pem
+
+# On the client:
+export NODE_EXTRA_CA_CERTS=/tmp/router-ca.pem
+
+printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
+  https://192.0.2.10:8443 \
+  --management-server http://127.0.0.1:8080 \
+  --token-stdin
+router configure claude
+```
+
+Only `https://192.0.2.10:8443` is written to the client configuration. Even an
+admin credential receives `404 Not Found` for management, GitHub/Git,
+ActivityPub, and admin UI paths on that inference-only socket.
 
 ### Trusting the certificate
 

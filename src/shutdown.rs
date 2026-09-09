@@ -12,23 +12,20 @@
 
 /// A shutdown notice that every listener can await.
 ///
-/// The signal has to reach four listeners -- HTTP, HTTPS, the admin UI and the
-/// unix socket -- and a future can only be awaited once, so it fans out over a
-/// broadcast channel rather than being consumed by whichever listener got it
-/// first (issue #334).
+/// The signal has to reach every primary listener, HTTPS, the admin UI, and the
+/// unix socket. A watch value fans it out and also stays set when a signal lands
+/// during startup, before every server has constructed its wait future.
 #[derive(Clone)]
-pub struct Shutdown(tokio::sync::broadcast::Sender<()>);
+pub struct Shutdown(tokio::sync::watch::Sender<bool>);
 
 impl Shutdown {
     /// Start listening for the signals that ask this process to stop.
     pub fn listening() -> Self {
-        let (sender, _) = tokio::sync::broadcast::channel(1);
+        let (sender, _) = tokio::sync::watch::channel(false);
         let notifier = sender.clone();
         tokio::spawn(async move {
             shutdown_signal().await;
-            // A send fails only when nothing is listening, which means every
-            // listener has already stopped.
-            let _ = notifier.send(());
+            notifier.send_replace(true);
         });
         Self(sender)
     }
@@ -37,11 +34,24 @@ impl Shutdown {
     pub fn notified(&self) -> impl std::future::Future<Output = ()> + Send + 'static {
         let mut receiver = self.0.subscribe();
         async move {
-            // `Err` means the sender is gone, which cannot happen while the
-            // process is running -- treat it as a shutdown either way rather
-            // than leaving a listener awaiting a notice that will never come.
-            let _ = receiver.recv().await;
+            let already_notified = *receiver.borrow();
+            if !already_notified {
+                // A closed sender means the process is already stopping, so
+                // that outcome must release a listener too.
+                let _ = receiver.changed().await;
+            }
         }
+    }
+
+    #[cfg(test)]
+    fn idle() -> Self {
+        let (sender, _) = tokio::sync::watch::channel(false);
+        Self(sender)
+    }
+
+    #[cfg(test)]
+    fn trigger(&self) {
+        self.0.send_replace(true);
     }
 }
 
@@ -75,4 +85,19 @@ async fn shutdown_signal() {
         () = terminate => "SIGTERM",
     };
     tracing::info!("{name} received; draining in-flight requests before exit");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn a_startup_signal_remains_visible_to_late_listener_futures() {
+        let shutdown = Shutdown::idle();
+        shutdown.trigger();
+
+        tokio::time::timeout(std::time::Duration::from_millis(50), shutdown.notified())
+            .await
+            .expect("a signal received during startup must not be lost");
+    }
 }

@@ -31,12 +31,14 @@ mod client_ops;
 mod configure;
 mod store_ops;
 mod targets;
+mod value_parsers;
 mod with;
 
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
 pub use self::client_ops::ClientOp;
 pub use self::configure::ConfigureArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
+use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
 
 /// Parse the CLI, hiding options that cannot affect the subcommand shown.
@@ -158,20 +160,6 @@ fn names_a_client_launcher(arguments: &[std::ffi::OsString]) -> bool {
         .is_some_and(|argument| argument == "with" || argument == "configure" || argument == "tls")
 }
 
-/// Parse a boolean switch that may also arrive from the environment.
-///
-/// Clap's plain `bool` accepts only `true`/`false` from an env var, which makes
-/// the `=1` spelling used throughout the deployment docs a hard startup error.
-fn parse_truthy(value: &str) -> Result<bool, String> {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "1" | "true" | "yes" | "on" => Ok(true),
-        "0" | "false" | "no" | "off" | "" => Ok(false),
-        other => Err(format!(
-            "expected a boolean (1/0, true/false), got '{other}'"
-        )),
-    }
-}
-
 /// Top-level CLI parser.
 #[derive(LinoParser)]
 // `router` is the canonical name — what the project, its repository and its
@@ -195,6 +183,17 @@ pub struct Cli {
     /// Port to bind the HTTP server to.
     #[arg(long, env = "ROUTER_PORT", default_value = "8080", global = true)]
     pub port: u16,
+
+    /// Primary listener (`ADDR=combined|inference-only,http|tls`). When set,
+    /// these replace the legacy single listener and may be repeated.
+    #[arg(
+        long = "listener",
+        env = "LISTENERS",
+        value_delimiter = ';',
+        global = true,
+        value_name = "ADDR=KIND,TRANSPORT"
+    )]
+    pub listeners: Vec<String>,
 
     /// Verbose logging.
     #[arg(long, env = "VERBOSE", global = true, value_parser = parse_truthy)]
@@ -949,6 +948,7 @@ impl Cli {
             enable_anthropic_api: !self.disable_anthropic_api,
             enable_metrics: !self.disable_metrics,
             inference_only: self.inference_only,
+            listeners: self.listeners.clone(),
             additional_account_dirs: self.additional_account_dirs.clone(),
             account_routing_strategy,
             account_cooldown_secs: self.account_cooldown_secs,

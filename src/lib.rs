@@ -90,6 +90,7 @@ pub mod on_demand_cli;
 pub mod openai;
 pub mod output_limit;
 pub mod platform_keychain;
+pub mod primary_listener;
 pub mod provider_acceptance;
 mod provider_config;
 pub mod provider_proxy;
@@ -140,6 +141,8 @@ pub mod vendor_cli_refresh;
 pub mod vk;
 pub mod with_command;
 pub mod zai_coding_plan;
+
+mod anthropic_nonstream;
 
 #[cfg(test)]
 mod anthropic_bridge_tests;

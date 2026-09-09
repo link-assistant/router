@@ -713,6 +713,18 @@ pub async fn forward(
         Err(error) => return policy_error(surface, &error),
     };
     let routing_body = body.clone();
+    let collect_anthropic = protocol == ClientProtocol::AnthropicMessages
+        && !body
+            .get("stream")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false)
+        && body
+            .pointer("/thinking/type")
+            .and_then(serde_json::Value::as_str)
+            == Some("enabled");
+    if collect_anthropic {
+        body["stream"] = serde_json::Value::Bool(true);
+    }
     body["model"] = serde_json::Value::String(mapping.canonical_id);
     let upstream_path = match protocol {
         ClientProtocol::AnthropicMessages => {
@@ -726,7 +738,7 @@ pub async fn forward(
             return policy_error(surface, "z.ai Coding Plan protocol adapter is unavailable");
         }
     };
-    crate::provider_proxy::forward_provider_at_routed(
+    let response = crate::provider_proxy::forward_provider_at_routed(
         state,
         headers,
         body,
@@ -743,7 +755,12 @@ pub async fn forward(
             ),
         },
     )
-    .await
+    .await;
+    if collect_anthropic {
+        crate::anthropic_nonstream::collect_response(response, surface).await
+    } else {
+        response
+    }
 }
 
 /// Enforce the Messages policy boundary, then fail closed because no exact,
