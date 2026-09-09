@@ -262,6 +262,35 @@ fn merge_named_object(target: &mut Value, name: &str, source: Option<&Value>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn initial_content_and_citations_survive_assembly() {
+        let sse = b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_zai\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"answer\"}],\"usage\":{\"input_tokens\":3}}}\n\nevent: ping\ndata: {\"type\":\"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"citations_delta\",\"citation\":{\"type\":\"char_location\",\"cited_text\":\"source\",\"document_index\":0,\"document_title\":\"doc\",\"start_char_index\":0,\"end_char_index\":6}}}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"},\"usage\":{\"output_tokens\":2}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+
+        assert_eq!(
+            assemble(sse).unwrap(),
+            json!({
+                "id": "msg_zai",
+                "type": "message",
+                "role": "assistant",
+                "content": [{
+                    "type": "text",
+                    "text": "answer",
+                    "citations": [{
+                        "type": "char_location",
+                        "cited_text": "source",
+                        "document_index": 0,
+                        "document_title": "doc",
+                        "start_char_index": 0,
+                        "end_char_index": 6
+                    }]
+                }],
+                "stop_reason": "end_turn",
+                "usage": {"input_tokens": 3, "output_tokens": 2}
+            })
+        );
+    }
 
     #[test]
     fn malformed_upstream_content_is_rejected_without_indexing_panics() {
