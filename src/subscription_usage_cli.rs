@@ -11,7 +11,9 @@ pub async fn run(
     provider: Option<UsageProvider>,
     json: bool,
 ) -> ExitCode {
+    let client = reqwest::Client::new();
     run_with_limit(
+        &client,
         base_url,
         token,
         provider,
@@ -21,7 +23,32 @@ pub async fn run(
     .await
 }
 
+/// Run usage against a selected Router with its origin-specific trust.
+pub async fn run_selected(
+    server: &crate::managed_server::ResolvedServer,
+    provider: Option<UsageProvider>,
+    json: bool,
+) -> ExitCode {
+    let client = match server.inference_client() {
+        Ok(client) => client,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    };
+    run_with_limit(
+        &client,
+        &server.base_url,
+        server.token.as_deref(),
+        provider,
+        json,
+        crate::subscription_usage::MAX_USAGE_BODY,
+    )
+    .await
+}
+
 async fn run_with_limit(
+    client: &reqwest::Client,
     base_url: &str,
     token: Option<&str>,
     provider: Option<UsageProvider>,
@@ -39,7 +66,7 @@ async fn run_with_limit(
         |provider| format!("/api/usage/{}", provider.as_str()),
     );
     let url = format!("{}{path}", base_url.trim_end_matches('/'));
-    let response = match reqwest::Client::new()
+    let response = match client
         .get(&url)
         // The endpoint is Router-native rather than a vendor protocol. Send
         // the same token in all supported Router carriers so the signed client

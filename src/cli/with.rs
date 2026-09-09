@@ -302,6 +302,12 @@ pub enum ServerOp {
         /// Private management origin when it differs from the inference origin.
         #[arg(long, value_name = "URL")]
         management_server: Option<String>,
+        /// PEM CA bundle to trust for the selected inference origin.
+        #[arg(long, value_name = "PATH")]
+        ca_cert: Option<std::path::PathBuf>,
+        /// PEM CA bundle to trust for a separate management origin.
+        #[arg(long, value_name = "PATH", requires = "management_server")]
+        management_ca_cert: Option<std::path::PathBuf>,
         /// Token to persist with owner-only permissions.
         #[arg(long, hide_env_values = true, conflicts_with = "token_stdin")]
         token: Option<String>,

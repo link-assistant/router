@@ -91,6 +91,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         issued_at: 0,
         expires_at: 0,
         revoked: false,
+        ephemeral: false,
         account: None,
         max_requests: None,
         used_requests: 0,

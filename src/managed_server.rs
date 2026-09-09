@@ -3,6 +3,7 @@
 use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
+use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -18,6 +19,7 @@ mod catalog;
 mod diagnostics;
 mod discovery;
 mod docker;
+mod http;
 mod origin;
 mod process;
 mod selection;
@@ -29,11 +31,14 @@ use docker::{
     check_docker_output, docker_checked, docker_container_state, docker_subscription_status,
     ensure_docker,
 };
+pub use http::revoke;
+use http::{client as http_client, revoke_with_client, verify_health, verify_health_with_client};
 pub use origin::canonical_server_origin;
 use origin::{normalize_server, same_origin};
 use process::process_alive;
 pub use selection::{
-    clear_persisted, configured_source, load_persisted, save_persisted, selected_server,
+    clear_persisted, configured_source, load_persisted, save_persisted, save_persisted_with_trust,
+    selected_server,
 };
 
 /// The default port a router binds when nothing else is specified.
@@ -61,6 +66,12 @@ pub struct PersistedServer {
     pub token: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub run_max_requests: Option<u64>,
+    /// Router-owned certificate bundle associated with the inference origin.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_cert: Option<String>,
+    /// Router-owned certificate bundle associated with the management origin.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub management_ca_cert: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -85,6 +96,10 @@ pub struct ResolvedServer {
     pub token: Option<String>,
     pub source: &'static str,
     pub run_max_requests: Option<u64>,
+    /// Router-owned CA bundle for requests and clients using `base_url`.
+    pub ca_cert: Option<PathBuf>,
+    /// Router-owned CA bundle for requests using `management_url`.
+    pub management_ca_cert: Option<PathBuf>,
     _lease: Option<ManagedLease>,
 }
 
@@ -102,6 +117,8 @@ impl ResolvedServer {
             token,
             source,
             run_max_requests: None,
+            ca_cert: None,
+            management_ca_cert: None,
             _lease: None,
         }
     }
@@ -121,8 +138,34 @@ impl ResolvedServer {
             token,
             source,
             run_max_requests: None,
+            ca_cert: None,
+            management_ca_cert: None,
             _lease: None,
         }
+    }
+
+    /// HTTP client carrying the trust associated with the inference origin.
+    pub fn inference_client(&self) -> Result<reqwest::Client, AnyError> {
+        self.inference_client_with_timeout(Duration::from_secs(10))
+    }
+
+    pub(crate) fn inference_client_with_timeout(
+        &self,
+        timeout: Duration,
+    ) -> Result<reqwest::Client, AnyError> {
+        http_client(self.ca_cert.as_deref(), timeout)
+    }
+
+    /// HTTP client carrying the trust associated with the management origin.
+    pub fn management_client(&self) -> Result<reqwest::Client, AnyError> {
+        self.management_client_with_timeout(Duration::from_secs(10))
+    }
+
+    pub(crate) fn management_client_with_timeout(
+        &self,
+        timeout: Duration,
+    ) -> Result<reqwest::Client, AnyError> {
+        http_client(self.management_ca_cert.as_deref(), timeout)
     }
 }
 
@@ -143,20 +186,15 @@ impl RunCredential {
         &self.principal_id
     }
 
-    /// The record id this credential was issued under, when it has one.
-    ///
-    /// A credential that outlives the command that minted it has to stay
-    /// nameable, or it cannot be revoked later (issue #190).
+    /// The record id this credential was issued under, retained so a
+    /// persistent credential remains revocable later (issue #190).
     #[must_use]
     pub fn id(&self) -> Option<String> {
         token_subject(&self.token).ok()
     }
 
-    /// Whether this command minted the credential, rather than being handed one.
-    ///
-    /// The only sound basis for revoking it later: a token the operator
-    /// supplied is often shared with other machines, and `id()` answers for
-    /// whichever token is in hand — minted or not (issue #296).
+    /// Whether this command minted the credential. Supplied tokens may be
+    /// shared with other machines and must not be revoked implicitly (#296).
     #[must_use]
     pub const fn was_minted(&self) -> bool {
         self.revocation.is_some()
@@ -167,6 +205,7 @@ struct Revocation {
     base_url: String,
     admin_token: String,
     id: String,
+    client: reqwest::Client,
 }
 
 struct ManagedLease {
@@ -274,6 +313,8 @@ pub async fn resolve(
             token,
             source: "managed local container",
             run_max_requests,
+            ca_cert: None,
+            management_ca_cert: None,
             _lease: Some(lease),
         });
     };
@@ -295,12 +336,38 @@ pub async fn resolve(
             .as_ref()
             .and_then(|config| config.run_max_requests)
     });
+    let ca_cert = persisted
+        .as_ref()
+        .filter(|config| same_origin(&config.server, &base_url))
+        .map(|config| selection::certificate_path(config.ca_cert.as_deref()))
+        .transpose()?
+        .flatten();
+    let management_ca_cert = persisted
+        .as_ref()
+        .filter(|config| {
+            let selected_management = config
+                .management_server
+                .as_deref()
+                .unwrap_or(&config.server);
+            same_origin(selected_management, &management_url)
+        })
+        .map(|config| {
+            let name = config.management_ca_cert.as_deref().or_else(|| {
+                same_origin(&config.server, &management_url)
+                    .then_some(config.ca_cert.as_deref())
+                    .flatten()
+            });
+            selection::certificate_path(name)
+        })
+        .transpose()?
+        .flatten();
     // A selected server that is not answering is an error rather than a
     // silent fallback -- using a different router than the one the operator
     // chose is its own surprise. But the message has to say which server,
     // and what to do about it: the report that prompted this got docker's
     // words about an internal container it had never heard of (issue #333).
-    verify_health(&base_url)
+    let inference_client = http_client(ca_cert.as_deref(), Duration::from_secs(10))?;
+    verify_health_with_client(&inference_client, &base_url)
         .await
         .map_err(|error| -> AnyError {
             match source {
@@ -321,6 +388,8 @@ pub async fn resolve(
         token,
         source,
         run_max_requests: budget,
+        ca_cert,
+        management_ca_cert,
         _lease: None,
     })
 }
@@ -333,7 +402,7 @@ pub async fn prepare_run_credential(
     ttl_hours: i64,
     sliding: bool,
 ) -> Result<RunCredential, AnyError> {
-    prepare_credential(server, client_kind, label, ttl_hours, sliding, true).await
+    prepare_credential(server, client_kind, label, ttl_hours, sliding, true, true).await
 }
 
 /// Mint the client-bound credential used by a permanent repair.
@@ -347,7 +416,17 @@ pub async fn prepare_repair_credential(
     label: &str,
     ttl_hours: i64,
 ) -> Result<RunCredential, AnyError> {
-    prepare_credential(server, client_kind, label, ttl_hours, false, false).await
+    prepare_credential(server, client_kind, label, ttl_hours, false, false, false).await
+}
+
+/// Mint or reuse a credential that remains after this command exits.
+pub async fn prepare_persistent_credential(
+    server: &ResolvedServer,
+    client_kind: ClientKind,
+    label: &str,
+    ttl_hours: i64,
+) -> Result<RunCredential, AnyError> {
+    prepare_credential(server, client_kind, label, ttl_hours, false, true, false).await
 }
 
 async fn prepare_credential(
@@ -357,6 +436,7 @@ async fn prepare_credential(
     ttl_hours: i64,
     sliding: bool,
     allow_supplied: bool,
+    ephemeral: bool,
 ) -> Result<RunCredential, AnyError> {
     let token = server.token.as_deref().ok_or_else(|| {
         if server.source == "managed local container" {
@@ -382,19 +462,24 @@ async fn prepare_credential(
             )
         }
     })?;
-    let client = http_client()?;
+    let management_client = server.management_client()?;
+    let inference_client = server.inference_client()?;
     let list_url = crate::route_contract::management_endpoint(
         &server.management_url,
         crate::route_contract::RouteId::Tokens,
     );
-    let list = client.get(&list_url).bearer_auth(token).send().await;
+    let list = management_client
+        .get(&list_url)
+        .bearer_auth(token)
+        .send()
+        .await;
     match list {
         Ok(response) if response.status().is_success() => {
             let issue_url = crate::route_contract::management_endpoint(
                 &server.management_url,
                 crate::route_contract::RouteId::ClientTokens,
             );
-            let response = client
+            let response = management_client
                 .post(&issue_url)
                 .bearer_auth(token)
                 .json(&serde_json::json!({
@@ -407,6 +492,7 @@ async fn prepare_credential(
                     // not a limit on how long a live session may run
                     // (issue #354).
                     "sliding_expiry": sliding,
+                    "ephemeral": ephemeral,
                 }))
                 .send()
                 .await
@@ -438,10 +524,18 @@ async fn prepare_credential(
                     base_url: server.management_url.clone(),
                     admin_token: token.to_string(),
                     id,
+                    client: management_client.clone(),
                 }),
                 principal_id,
             };
-            match fetch_models(&client, client_kind, &server.base_url, &credential.token).await {
+            match fetch_models(
+                &inference_client,
+                client_kind,
+                &server.base_url,
+                &credential.token,
+            )
+            .await
+            {
                 Ok(models) => {
                     credential.available_models = models;
                     Ok(credential)
@@ -465,7 +559,7 @@ async fn prepare_credential(
             }
             let principal_id = exact_token_binding(token, client_kind)?;
             let available_models =
-                fetch_models(&client, client_kind, &server.base_url, token).await?;
+                fetch_models(&inference_client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
                 token: token.to_string(),
                 available_models,
@@ -488,7 +582,7 @@ async fn prepare_credential(
                 )
             })?;
             let available_models =
-                fetch_models(&client, client_kind, &server.base_url, token).await?;
+                fetch_models(&inference_client, client_kind, &server.base_url, token).await?;
             Ok(RunCredential {
                 token: token.to_string(),
                 available_models,
@@ -537,76 +631,13 @@ pub async fn cleanup_run_credential(credential: RunCredential) -> Result<(), Any
     let Some(revocation) = credential.revocation else {
         return Ok(());
     };
-    revoke(
+    revoke_with_client(
+        &revocation.client,
         &revocation.base_url,
         &revocation.admin_token,
         &revocation.id,
     )
     .await
-}
-
-/// Revoke one token record on a router, by the id it was issued under.
-///
-/// Named separately from the per-run cleanup because a credential that outlives
-/// its command still has to be revocable: `configure` deliberately keeps its
-/// token, so `configure --undo` is the thing that must be able to take it back
-/// — deleting the file that holds a live credential and leaving nobody able to
-/// name it is the regression issue #190 exists to prevent.
-pub async fn revoke(base_url: &str, admin_token: &str, id: &str) -> Result<(), AnyError> {
-    let base_url = normalize_server(base_url)?;
-    let url = crate::route_contract::management_endpoint(
-        &base_url,
-        crate::route_contract::RouteId::RevokeToken,
-    );
-    let response = http_client()?
-        .post(&url)
-        .bearer_auth(admin_token)
-        .json(&serde_json::json!({"id": id}))
-        .send()
-        .await
-        .map_err(|error| format!("could not revoke the token at {url}: {error}"))?;
-    if response.status().is_success() {
-        Ok(())
-    } else {
-        Err(format!("token revocation failed at {url} ({})", response.status()).into())
-    }
-}
-
-async fn verify_health(base_url: &str) -> Result<(), AnyError> {
-    let url = format!(
-        "{}{}",
-        base_url.trim_end_matches('/'),
-        crate::route_contract::route_template(crate::route_contract::RouteId::Health)
-    );
-    let response = http_client()?.get(&url).send().await.map_err(|error| {
-        let rendered = error.to_string();
-        if rendered.to_ascii_lowercase().contains("certificate") {
-            format!("TLS certificate validation failed for {url}: {rendered}")
-        } else {
-            format!("router is unreachable at {url}: {rendered}")
-        }
-    })?;
-    let status = response.status();
-    let body = response.text().await.unwrap_or_default();
-    let router_json = serde_json::from_str::<Value>(&body).is_ok_and(|value| {
-        value.get("status").and_then(Value::as_str) == Some("ok")
-            || value.get("version").and_then(Value::as_str).is_some()
-    });
-    if status.is_success() && (body.trim() == "ok" || router_json) {
-        Ok(())
-    } else {
-        Err(format!(
-            "{url} did not identify a Link.Assistant.Router ({status}): {}",
-            compact(&body)
-        )
-        .into())
-    }
-}
-
-fn http_client() -> Result<reqwest::Client, reqwest::Error> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
 }
 
 #[path = "managed_server_token.rs"]

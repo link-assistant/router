@@ -9,6 +9,7 @@ fn sample_record() -> TokenRecord {
         issued_at: i64::MIN,
         expires_at: i64::MAX,
         revoked: true,
+        ephemeral: false,
         sliding_window_seconds: None,
         account: Some(String::new()),
         max_requests: Some(u64::MAX),
@@ -88,6 +89,58 @@ fn native_doublets_links_network_reopens_across_growth_boundary() {
 
     // Reopened from scratch: what one process wrote in place is what the
     // next one reads, across the growth boundary.
-    let reopened = PersistentStore::open(&path).unwrap();
-    assert_eq!(reopened.records().unwrap(), vec![record]);
+    let mut reopened = PersistentStore::open(&path).unwrap();
+    assert_eq!(reopened.records().unwrap(), vec![record.clone()]);
+
+    let mut added = sample_record();
+    added.id = "record-added-after-reopen".into();
+    added.label = "second large associative value".repeat(500);
+    reopened.replace([&record, &added]).unwrap();
+    drop(reopened);
+
+    let final_store = PersistentStore::open(&path).unwrap();
+    let mut records = final_store.records().unwrap();
+    records.sort_by(|left, right| left.id.cmp(&right.id));
+    let mut expected = vec![record, added];
+    expected.sort_by(|left, right| left.id.cmp(&right.id));
+    assert_eq!(records, expected);
+}
+
+/// A panic while the replacement is being built is contained before the
+/// rename commit point. The authoritative bytes and readable record set stay
+/// unchanged, and the failed candidate is removed (issue #557).
+#[test]
+fn failed_rebuild_preserves_the_previous_store_without_a_temporary() {
+    let directory = tempdir().expect("temporary directory");
+    let path = directory.path().join("tokens.bin");
+    let original = sample_record();
+    let mut store = PersistentStore::open(&path).expect("open store");
+    store
+        .replace(std::iter::once(&original))
+        .expect("seed store");
+    let authoritative = fs::read(&path).expect("read authoritative bytes");
+
+    let error = store
+        .rebuild(|_| panic!("forced capacity failure"))
+        .expect_err("the failed candidate must not publish");
+
+    assert!(matches!(error, StorageError::Capacity(_)));
+    assert_eq!(
+        fs::read(&path).expect("read preserved bytes"),
+        authoritative
+    );
+    assert_eq!(
+        store.records().expect("read preserved store"),
+        vec![original]
+    );
+    let leftovers = fs::read_dir(directory.path())
+        .expect("list store directory")
+        .filter_map(Result::ok)
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .filter(|name| name.ends_with(".rebuild"))
+        .collect::<Vec<_>>();
+    assert!(
+        leftovers.is_empty(),
+        "temporary rebuilds remain: {leftovers:?}"
+    );
 }

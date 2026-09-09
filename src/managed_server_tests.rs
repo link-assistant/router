@@ -16,6 +16,43 @@ fn model(id: &str, owner: &str) -> RouterModel {
 /// through that one rule.
 use crate::clients::{ClientKind, select_model, usable_models};
 
+struct TlsProbe {
+    origin: String,
+    certificate: PathBuf,
+    _directory: tempfile::TempDir,
+    task: tokio::task::JoinHandle<()>,
+}
+
+impl Drop for TlsProbe {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
+async fn tls_probe(name: &str, app: axum::Router) -> TlsProbe {
+    let directory = tempfile::tempdir().expect("TLS probe directory");
+    let (certificate, key) = crate::tls::ensure_generated(directory.path(), &[name.to_string()])
+        .expect("generate TLS probe certificate");
+    let tls = crate::tls::load_config(&certificate, &key)
+        .await
+        .expect("load TLS probe certificate");
+    let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+        .await
+        .expect("bind TLS probe");
+    let port = listener.local_addr().expect("TLS probe address").port();
+    let task = tokio::spawn(async move {
+        crate::tls::serve_prebound_https(listener, app, tls, std::future::pending())
+            .await
+            .expect("serve TLS probe");
+    });
+    TlsProbe {
+        origin: format!("https://{name}:{port}"),
+        certificate,
+        _directory: directory,
+        task,
+    }
+}
+
 #[test]
 fn server_urls_are_canonical_origins_and_rejections_never_echo_secrets() {
     assert_eq!(
@@ -305,4 +342,225 @@ async fn permanent_repair_refuses_a_supplied_ordinary_token() {
             .contains("requires an administrator credential")
     );
     server.join().expect("probe server");
+}
+
+/// A Router-owned CA is applied before health and remains attached to every
+/// inference-side client used for catalog, usage and inference calls. A bound
+/// token therefore works against an inference-only listener without reaching
+/// a management route (issue #558).
+#[tokio::test]
+async fn selected_ca_trusts_every_inference_cli_request() {
+    let state = tempfile::tempdir().expect("temporary state root");
+    let _guard = super::state::claim_state_root(state.path().to_path_buf());
+    let app = axum::Router::new()
+        .route(
+            "/api/health",
+            axum::routing::get(|| async { axum::Json(serde_json::json!({"status": "ok"})) }),
+        )
+        .route(
+            "/api/models",
+            axum::routing::get(|| async {
+                axum::Json(serde_json::json!({
+                    "object": "list",
+                    "data": [{"id": "claude-live", "owned_by": "anthropic"}]
+                }))
+            }),
+        )
+        .route(
+            "/api/usage",
+            axum::routing::get(|| async {
+                axum::Json(serde_json::json!({
+                    "schema_version": 1,
+                    "subscriptions": []
+                }))
+            }),
+        )
+        .route(
+            "/api/services/anthropic/v1/messages",
+            axum::routing::post(|| async {
+                axum::Json(serde_json::json!({"id": "message-through-tls"}))
+            }),
+        );
+    let probe = tls_probe("127.0.0.1", app).await;
+    let token = bound_token(Some("claude"));
+    save_persisted_with_trust(
+        &PersistedServer {
+            server: probe.origin.clone(),
+            token: Some(token.clone()),
+            ..PersistedServer::default()
+        },
+        Some(&probe.certificate),
+        None,
+    )
+    .expect("select TLS inference server");
+
+    let selected = resolve(None, None, None, None, false)
+        .await
+        .expect("health uses the selected CA");
+    let credential = prepare_run_credential(
+        &selected,
+        ClientKind::ClaudeCode,
+        "tls-inference-only",
+        1,
+        false,
+    )
+    .await
+    .expect("catalog uses the selected CA and the bound token");
+    assert_eq!(credential.models()[0].id, "claude-live");
+    assert!(!credential.was_minted());
+    assert_eq!(credential.token, token);
+
+    assert_eq!(
+        crate::subscription_usage_cli::run_selected(&selected, None, true).await,
+        std::process::ExitCode::SUCCESS,
+        "usage uses the selected CA"
+    );
+    let response = selected
+        .inference_client()
+        .expect("trusted inference client")
+        .post(format!(
+            "{}/api/services/anthropic/v1/messages",
+            selected.base_url
+        ))
+        .send()
+        .await
+        .expect("inference uses the selected CA");
+    assert!(response.status().is_success());
+}
+
+/// Inference and management origins retain separate trust roots. Each client
+/// accepts its own origin, rejects the other origin's certificate, and the
+/// inference listener does not gain a management route (issue #558).
+#[tokio::test]
+async fn split_https_origins_use_only_their_associated_ca() {
+    let state = tempfile::tempdir().expect("temporary state root");
+    let _guard = super::state::claim_state_root(state.path().to_path_buf());
+    let inference = tls_probe(
+        "127.0.0.1",
+        axum::Router::new()
+            .route(
+                "/api/health",
+                axum::routing::get(|| async { axum::Json(serde_json::json!({"status": "ok"})) }),
+            )
+            .route(
+                "/api/models",
+                axum::routing::get(|| async { axum::Json(serde_json::json!({"data": []})) }),
+            ),
+    )
+    .await;
+    let management = tls_probe(
+        "127.0.0.1",
+        axum::Router::new().route(
+            "/api/management/tokens",
+            axum::routing::get(|| async { axum::Json(serde_json::json!({"data": []})) }),
+        ),
+    )
+    .await;
+    save_persisted_with_trust(
+        &PersistedServer {
+            server: inference.origin.clone(),
+            management_server: Some(management.origin.clone()),
+            token: Some("admin-token".into()),
+            ..PersistedServer::default()
+        },
+        Some(&inference.certificate),
+        Some(&management.certificate),
+    )
+    .expect("select split TLS origins");
+
+    let selected = resolve(None, None, None, None, false)
+        .await
+        .expect("resolve split TLS origins");
+    let inference_client = selected.inference_client().expect("inference client");
+    let management_client = selected.management_client().expect("management client");
+    assert!(
+        inference_client
+            .get(format!("{}/api/models", inference.origin))
+            .send()
+            .await
+            .expect("trusted inference request")
+            .status()
+            .is_success()
+    );
+    assert!(
+        management_client
+            .get(format!("{}/api/management/tokens", management.origin))
+            .send()
+            .await
+            .expect("trusted management request")
+            .status()
+            .is_success()
+    );
+    assert!(
+        inference_client
+            .get(format!("{}/api/management/tokens", inference.origin))
+            .send()
+            .await
+            .expect("inference listener response")
+            .status()
+            .is_client_error(),
+        "trust must not expose management routes on inference"
+    );
+    assert!(
+        inference_client
+            .get(format!("{}/api/management/tokens", management.origin))
+            .send()
+            .await
+            .is_err(),
+        "inference trust must not accept the management certificate"
+    );
+    assert!(
+        management_client
+            .get(format!("{}/api/models", inference.origin))
+            .send()
+            .await
+            .is_err(),
+        "management trust must not accept the inference certificate"
+    );
+}
+
+/// Missing trust, an unrelated root and a hostname mismatch all fail closed
+/// with a certificate-oriented diagnostic (issue #558).
+#[tokio::test]
+async fn selected_tls_trust_rejects_missing_wrong_and_wrong_san_certificates() {
+    let state = tempfile::tempdir().expect("temporary state root");
+    let _guard = super::state::claim_state_root(state.path().to_path_buf());
+    let app = axum::Router::new().route(
+        "/api/health",
+        axum::routing::get(|| async { axum::Json(serde_json::json!({"status": "ok"})) }),
+    );
+    let probe = tls_probe("127.0.0.1", app).await;
+    let unrelated_directory = tempfile::tempdir().expect("unrelated CA directory");
+    let (unrelated, _) =
+        crate::tls::ensure_generated(unrelated_directory.path(), &["127.0.0.1".to_string()])
+            .expect("generate unrelated CA");
+
+    for (origin, ca) in [
+        (probe.origin.clone(), None),
+        (probe.origin.clone(), Some(unrelated.as_path())),
+        (
+            probe.origin.replace("127.0.0.1", "localhost"),
+            Some(probe.certificate.as_path()),
+        ),
+    ] {
+        save_persisted_with_trust(
+            &PersistedServer {
+                server: origin,
+                token: Some(bound_token(Some("claude"))),
+                ..PersistedServer::default()
+            },
+            ca,
+            None,
+        )
+        .expect("save failing TLS selection");
+        let error = resolve(None, None, None, None, false)
+            .await
+            .err()
+            .expect("invalid TLS trust must fail")
+            .to_string();
+        assert!(
+            error.contains("TLS certificate validation failed"),
+            "diagnostic must name certificate validation: {error}"
+        );
+    }
 }

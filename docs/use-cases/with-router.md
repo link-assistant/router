@@ -160,22 +160,31 @@ positional URL remains the client-facing inference origin:
 ```bash
 printf '%s\n' "$ROUTER_ADMIN_TOKEN" | router server use \
   https://router.example \
+  --ca-cert /secure/router-inference-ca.pem \
   --management-server https://router-admin.example \
+  --management-ca-cert /secure/router-management-ca.pem \
   --token-stdin
 router with claude
 ```
 
 The wrapper checks health and catalogs only on the inference listener, mints
 and revokes only on the management listener, and exposes only the inference
-origin to the launched client.
+origin to the launched client. Each optional PEM bundle is validated, copied
+to owner-only Router state, and trusted only for its associated origin. Normal
+chain, validity, hostname, and IP SAN checks stay enabled. Claude receives the
+inference bundle through `NODE_EXTRA_CA_CERTS`; Router never sets
+`NODE_TLS_REJECT_UNAUTHORIZED` or persists an insecure-verification flag. The
+source PEM need not remain in the project, and `router server use --clear`
+removes only the Router-owned copies for that selection.
 
 Passing `--token` is convenient but records the value in shell history. Prefer
 stdin or the environment for a credential. An ordinary token is validated and
 used unchanged. An admin credential is never given to the client: the wrapper
-mints a short-lived ordinary token labelled with the client and working
-directory, optionally applies `--run-max-requests`, and revokes it when the
-client exits. Mint failure stops before client launch; a one-hour default TTL
-is the crash backstop.
+mints a short-lived ordinary token labelled with a non-identifying run suffix,
+optionally applies `--run-max-requests`, and revokes it when the client exits.
+Expired or revoked run credentials are compacted during later issuance, so
+repeated wrapper runs do not grow durable token storage forever. Mint failure
+stops before client launch; a one-hour default TTL is the crash backstop.
 
 ## Managed local Docker server
 

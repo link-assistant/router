@@ -13,7 +13,7 @@ use std::process::ExitCode;
 
 use crate::cli::ConfigureArgs;
 use crate::clients::{ClientKind, ClientManager, ManagedCredential, TokenSource};
-use crate::managed_server::{ResolvedServer, prepare_run_credential, resolve};
+use crate::managed_server::{ResolvedServer, prepare_persistent_credential, resolve};
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -154,6 +154,7 @@ async fn configure_one(
     client: ClientKind,
 ) -> Result<(), AnyError> {
     crate::client_launch::report_claude_native_services_limitation(client);
+    let inference_client = server.inference_client()?;
     let bridge = if client == ClientKind::Codex
         && crate::codex_loopback_bridge::required(&server.base_url)?
     {
@@ -181,7 +182,7 @@ async fn configure_one(
             || crate::client_global::undo_state_path(&manager.config_path(client)).exists())
         && let Some(token) = manager.managed_token(client)?
         && manager
-            .catalog(client, &server.base_url, &token)
+            .catalog_with_client(&inference_client, client, &server.base_url, &token)
             .await
             .is_ok()
     {
@@ -213,7 +214,9 @@ async fn configure_one(
             manager.managed_token(client)?,
             manager.credential_metadata(client)?,
         )
-        && let Ok(models) = manager.catalog(client, &server.base_url, &token).await
+        && let Ok(models) = manager
+            .catalog_with_client(&inference_client, client, &server.base_url, &token)
+            .await
     {
         let usable = crate::clients::usable_models(client, &models);
         let repaired = manager.apply_repair_with_codex_backend(
@@ -224,7 +227,10 @@ async fn configure_one(
             &usable,
             codex_backend_base_url.as_deref(),
         )?;
-        if let Err(error) = manager.catalog(client, &server.base_url, &token).await {
+        if let Err(error) = manager
+            .catalog_with_client(&inference_client, client, &server.base_url, &token)
+            .await
+        {
             if let Some(id) = repaired.backup_id.as_deref() {
                 manager.rollback_repair(client, id)?;
             }
@@ -249,12 +255,11 @@ async fn configure_one(
     // stored outside the client's configuration at 0600. `with --global`
     // stopped short of this and told the user to set a variable themselves,
     // which means the command did half its job (issue #296).
-    let credential = prepare_run_credential(
+    let credential = prepare_persistent_credential(
         server,
         client,
         &format!("configure-{client}"),
         args.ttl_hours,
-        false,
     )
     .await;
     let credential = match credential {

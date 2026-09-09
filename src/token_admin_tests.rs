@@ -1,10 +1,12 @@
 //! In-process coverage for the administrative token handlers.
 
 use axum::Json;
+use axum::body::Body;
 use axum::extract::State;
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::{HeaderMap, Request, StatusCode};
 use axum::response::IntoResponse;
 use http_body_util::BodyExt;
+use tower::ServiceExt as _;
 
 use crate::app_state::AppState;
 use crate::token::{ADMIN_SCOPE, IssueRequest};
@@ -27,6 +29,7 @@ fn client_request(client_kind: &str) -> IssueClientTokenRequest {
         sliding_expiry: None,
         label: None,
         max_requests: None,
+        ephemeral: false,
     }
 }
 
@@ -38,6 +41,107 @@ async fn json(response: axum::response::Response) -> serde_json::Value {
         .expect("read response")
         .to_bytes();
     serde_json::from_slice(&bytes).expect("JSON response")
+}
+
+async fn issue_client_over_route(
+    state: AppState,
+    request: IssueClientTokenRequest,
+) -> axum::response::Response {
+    let path = crate::route_contract::route_template(crate::route_contract::RouteId::ClientTokens);
+    axum::Router::new()
+        .route(path, axum::routing::post(issue_client_token))
+        .with_state(state)
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(path)
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    serde_json::to_vec(&request).expect("serialize issuance request"),
+                ))
+                .expect("build issuance request"),
+        )
+        .await
+        .expect("issue route response")
+}
+
+#[derive(Default)]
+struct PanickingStore;
+
+impl crate::storage::TokenStore for PanickingStore {
+    fn list(&self) -> Result<Vec<crate::storage::TokenRecord>, crate::storage::StorageError> {
+        Ok(Vec::new())
+    }
+
+    fn get(
+        &self,
+        _id: &str,
+    ) -> Result<Option<crate::storage::TokenRecord>, crate::storage::StorageError> {
+        Ok(None)
+    }
+
+    fn put(
+        &self,
+        _record: crate::storage::TokenRecord,
+    ) -> Result<(), crate::storage::StorageError> {
+        panic!("simulated doublets capacity panic")
+    }
+
+    fn delete(&self, _id: &str) -> Result<bool, crate::storage::StorageError> {
+        Ok(false)
+    }
+}
+
+/// A backend panic is a structured failed issuance, never a dropped HTTP
+/// connection and never a token-shaped response (issue #557).
+#[tokio::test]
+async fn storage_capacity_panic_becomes_a_structured_non_success_response() {
+    let (mut state, _data) = state();
+    state.token_manager = crate::token::TokenManager::with_store(
+        "capacity-test-secret",
+        std::sync::Arc::new(PanickingStore),
+    );
+
+    let response = issue_client_over_route(state, client_request("claude")).await;
+    assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    let body = json(response).await;
+    assert_eq!(body["error"]["type"], "api_error");
+    assert!(
+        body.pointer("/token").is_none(),
+        "a failed write emits no token"
+    );
+}
+
+/// A successful response from the real route names a credential whose record
+/// is present when a second binary-store instance reopens the published file.
+#[tokio::test]
+async fn successful_client_route_response_is_present_after_binary_reopen() {
+    let (mut state, data) = state();
+    let path = data.path().join("tokens.bin");
+    state.token_manager = crate::token::TokenManager::with_store(
+        "capacity-test-secret",
+        std::sync::Arc::new(
+            crate::storage::BinaryTokenStore::open(&path).expect("open binary token store"),
+        ),
+    );
+    let observer = state.clone();
+    let mut request = client_request("claude");
+    request.ephemeral = true;
+
+    let response = issue_client_over_route(state, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = json(response).await;
+    let token = body["token"].as_str().expect("issued token");
+    let claims = observer
+        .token_manager
+        .validate_token(token)
+        .expect("valid issued token");
+    let reopened = crate::storage::BinaryTokenStore::open(&path).expect("reopen token store");
+    let record = crate::storage::TokenStore::get(&reopened, &claims.sub)
+        .expect("read reopened token store")
+        .expect("issued record is durable");
+    assert!(record.ephemeral);
+    assert_eq!(record.client_kind.as_deref(), Some("claude"));
 }
 
 #[tokio::test]
@@ -77,6 +181,7 @@ async fn bound_client_issuance_checks_authority_kind_and_constraints() {
     request.sliding_expiry = Some(true);
     request.label = Some("bound claude".into());
     request.max_requests = Some(7);
+    request.ephemeral = true;
     let response = issue_client_token(State(state.clone()), HeaderMap::new(), Json(request))
         .await
         .into_response();
@@ -102,6 +207,7 @@ async fn bound_client_issuance_checks_authority_kind_and_constraints() {
     assert_eq!(record.account.as_deref(), Some("primary"));
     assert_eq!(record.max_requests, Some(7));
     assert_eq!(record.sliding_window_seconds, Some(7_200));
+    assert!(record.ephemeral);
 }
 
 fn request<'a>(label: &'a str, scope: &'a str) -> IssueRequest<'a> {

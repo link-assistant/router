@@ -129,9 +129,8 @@ async fn authorize_inner(
     mode: Option<&str>,
     code: Option<String>,
 ) -> Result<(), String> {
-    let client = reqwest::Client::builder()
-        .timeout(REQUEST_TIMEOUT)
-        .build()
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| format!("could not build an HTTP client: {error}"))?;
 
     let mut body = serde_json::json!({ "provider": provider });
@@ -253,7 +252,7 @@ fn status_of(view: &serde_json::Value) -> &str {
 
 /// Report each provider credential as the *selected router* sees it.
 pub async fn status(server: &ResolvedServer) -> ExitCode {
-    let client = match reqwest::Client::builder().timeout(REQUEST_TIMEOUT).build() {
+    let client = match server.management_client_with_timeout(REQUEST_TIMEOUT) {
         Ok(client) => client,
         Err(error) => {
             eprintln!("error: could not build an HTTP client: {error}");
@@ -327,9 +326,8 @@ fn report_status_credentials(body: &serde_json::Value) -> bool {
 /// refusal is still correct without it, so this never turns into a hard
 /// failure of its own.
 pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<String> {
-    let client = reqwest::Client::builder()
-        .timeout(REQUEST_TIMEOUT)
-        .build()
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
         .ok()?;
     let body: serde_json::Value = send(
         &client,
@@ -378,7 +376,9 @@ pub async fn accounts(server: &ResolvedServer) -> ExitCode {
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
 pub async fn get(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
-    let client = http_client()?;
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
+        .map_err(|error| error.to_string())?;
     send(&client, server, reqwest::Method::GET, path, None).await
 }
 
@@ -393,7 +393,9 @@ pub async fn post(
     path: &str,
     body: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    let client = http_client()?;
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
+        .map_err(|error| error.to_string())?;
     send(&client, server, reqwest::Method::POST, path, Some(body)).await
 }
 
@@ -408,7 +410,9 @@ pub async fn post_response(
     path: &str,
     body: serde_json::Value,
 ) -> Result<(reqwest::StatusCode, serde_json::Value), String> {
-    let client = http_client()?;
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
+        .map_err(|error| error.to_string())?;
     let url = format!("{}{path}", server.management_url.trim_end_matches('/'));
     let mut request = client.post(&url);
     if let Some(token) = server.token.as_deref() {
@@ -436,15 +440,10 @@ pub async fn post_response(
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
 pub async fn delete(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
-    let client = http_client()?;
+    let client = server
+        .management_client_with_timeout(REQUEST_TIMEOUT)
+        .map_err(|error| error.to_string())?;
     send(&client, server, reqwest::Method::DELETE, path, None).await
-}
-
-fn http_client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-        .timeout(REQUEST_TIMEOUT)
-        .build()
-        .map_err(|error| format!("could not build an HTTP client: {error}"))
 }
 
 /// Why an import cannot act on a router other than the machine running it.

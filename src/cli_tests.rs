@@ -101,6 +101,54 @@ fn usage_cli_accepts_public_provider_names_and_json() {
 }
 
 #[test]
+fn server_selection_accepts_separate_inference_and_management_ca_bundles() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "server",
+        "use",
+        "https://router.example",
+        "--ca-cert",
+        "/secure/inference.pem",
+        "--management-server",
+        "https://router-admin.example",
+        "--management-ca-cert",
+        "/secure/management.pem",
+    ])
+    .expect("selected Router CA options should parse");
+    let Some(Command::Server {
+        op:
+            ServerOp::Use {
+                ca_cert,
+                management_ca_cert,
+                ..
+            },
+    }) = cli.command
+    else {
+        panic!("expected server use command");
+    };
+    assert_eq!(
+        ca_cert.as_deref(),
+        Some(std::path::Path::new("/secure/inference.pem"))
+    );
+    assert_eq!(
+        management_ca_cert.as_deref(),
+        Some(std::path::Path::new("/secure/management.pem"))
+    );
+
+    let Err(error) = Cli::try_parse_from([
+        "router",
+        "server",
+        "use",
+        "https://router.example",
+        "--management-ca-cert",
+        "/secure/management.pem",
+    ]) else {
+        panic!("management CA without a management origin must be rejected");
+    };
+    assert!(error.to_string().contains("--management-server"));
+}
+
+#[test]
 fn every_declared_default_is_visible_in_its_long_help() {
     fn check(command: &clap::Command, path: &str) {
         let help = command.clone().render_long_help().to_string();

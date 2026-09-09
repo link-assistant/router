@@ -6,10 +6,13 @@
 //! it, and the rules for reading, writing and clearing them.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use super::state::{state_directory, state_file_for_read, write_private_json};
 use super::{AnyError, PersistedServer, SERVER_CONFIG, normalize_server};
+use sha2::{Digest as _, Sha256};
+
+const TRUST_DIRECTORY: &str = "server-trust";
 
 /// The router this machine has explicitly been pointed at, if any.
 ///
@@ -52,12 +55,119 @@ pub fn save_persisted(config: &PersistedServer) -> Result<PathBuf, AnyError> {
     Ok(path)
 }
 
+/// Save a selection after importing its optional CA bundles into Router state.
+pub fn save_persisted_with_trust(
+    config: &PersistedServer,
+    ca_cert: Option<&Path>,
+    management_ca_cert: Option<&Path>,
+) -> Result<PathBuf, AnyError> {
+    let previous = load_persisted().ok().flatten();
+    let mut selected = config.clone();
+    selected.ca_cert = match ca_cert {
+        Some(path) => Some(import_certificate(path)?),
+        None => previous
+            .as_ref()
+            .filter(|held| super::same_origin(&held.server, &selected.server))
+            .and_then(|held| held.ca_cert.clone()),
+    };
+    let selected_management = selected
+        .management_server
+        .as_deref()
+        .unwrap_or(&selected.server);
+    selected.management_ca_cert = match management_ca_cert {
+        Some(path) => Some(import_certificate(path)?),
+        None => previous.as_ref().and_then(|held| {
+            let held_management = held.management_server.as_deref().unwrap_or(&held.server);
+            super::same_origin(held_management, selected_management)
+                .then(|| held.management_ca_cert.clone())
+                .flatten()
+        }),
+    };
+    if selected.management_server.is_none() && selected.management_ca_cert.is_none() {
+        selected.management_ca_cert = selected.ca_cert.clone();
+    }
+    let path = save_persisted(&selected)?;
+    if let Some(previous) = previous {
+        remove_unreferenced_certificates(&previous, &selected);
+    }
+    Ok(path)
+}
+
+fn import_certificate(source: &Path) -> Result<String, AnyError> {
+    let bytes = fs::read(source).map_err(|error| {
+        format!(
+            "could not read CA certificate {}: {error}",
+            source.display()
+        )
+    })?;
+    let certificates = reqwest::Certificate::from_pem_bundle(&bytes)
+        .map_err(|error| format!("invalid PEM CA certificate {}: {error}", source.display()))?;
+    if certificates.is_empty() {
+        return Err(format!(
+            "CA certificate {} contains no certificates",
+            source.display()
+        )
+        .into());
+    }
+    let name = format!("ca-{}.pem", hex::encode(Sha256::digest(&bytes)));
+    let directory = state_directory()?.join(TRUST_DIRECTORY);
+    fs::create_dir_all(&directory)?;
+    super::state::set_owner_only(&directory)?;
+    crate::durable_file::atomic_write_owner_only(&directory.join(&name), &bytes)?;
+    Ok(name)
+}
+
+pub(super) fn certificate_path(name: Option<&str>) -> Result<Option<PathBuf>, AnyError> {
+    let Some(name) = name else {
+        return Ok(None);
+    };
+    let candidate = Path::new(name);
+    if candidate.file_name().and_then(|part| part.to_str()) != Some(name)
+        || !name.starts_with("ca-")
+        || candidate.extension().and_then(|part| part.to_str()) != Some("pem")
+    {
+        return Err("persisted Router CA name is invalid".into());
+    }
+    let path = state_directory()?.join(TRUST_DIRECTORY).join(name);
+    if !path.is_file() {
+        return Err(format!(
+            "selected Router CA certificate {} is missing; select the server again with --ca-cert",
+            path.display()
+        )
+        .into());
+    }
+    Ok(Some(path))
+}
+
+fn remove_unreferenced_certificates(previous: &PersistedServer, selected: &PersistedServer) {
+    for name in [
+        previous.ca_cert.as_deref(),
+        previous.management_ca_cert.as_deref(),
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if selected.ca_cert.as_deref() == Some(name)
+            || selected.management_ca_cert.as_deref() == Some(name)
+        {
+            continue;
+        }
+        if let Ok(Some(path)) = certificate_path(Some(name)) {
+            let _ = fs::remove_file(path);
+        }
+    }
+}
+
 pub fn clear_persisted() -> Result<PathBuf, AnyError> {
+    let previous = load_persisted().ok().flatten();
     let path = state_directory()?.join(SERVER_CONFIG);
     match fs::remove_file(&path) {
         Ok(()) => {}
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
         Err(error) => return Err(error.into()),
+    }
+    if let Some(previous) = previous {
+        remove_unreferenced_certificates(&previous, &PersistedServer::default());
     }
     Ok(path)
 }
@@ -121,6 +231,8 @@ mod tests {
             management_server: None,
             token: None,
             run_max_requests: None,
+            ca_cert: None,
+            management_ca_cert: None,
         };
         assert!(
             save_persisted(&empty).is_err(),
@@ -132,6 +244,8 @@ mod tests {
             management_server: None,
             token: None,
             run_max_requests: None,
+            ca_cert: None,
+            management_ca_cert: None,
         };
         let error = save_persisted(&schemeless)
             .expect_err("a schemeless URL must be refused")
@@ -178,6 +292,8 @@ mod tests {
             management_server: None,
             token: Some("la_sk_example".to_string()),
             run_max_requests: None,
+            ca_cert: None,
+            management_ca_cert: None,
         })
         .expect("save a selection");
         assert!(load_persisted().expect("load").is_some(), "it was saved");
@@ -200,6 +316,8 @@ mod tests {
             management_server: Some("https://Admin.Example:8443/".to_string()),
             token: Some("la_sk_example".to_string()),
             run_max_requests: Some(4),
+            ca_cert: None,
+            management_ca_cert: None,
         })
         .expect("save split selection");
         let loaded = load_persisted().expect("load").expect("selection");
@@ -217,5 +335,67 @@ mod tests {
         let legacy = load_persisted().expect("load legacy").expect("selection");
         assert_eq!(legacy.server, "https://legacy.example");
         assert_eq!(legacy.management_server, None);
+        assert_eq!(legacy.ca_cert, None);
+        assert_eq!(legacy.management_ca_cert, None);
+    }
+
+    /// Selection takes ownership of trust material. The source can disappear,
+    /// and clearing the selection removes only the copies Router owns.
+    #[test]
+    fn selected_ca_certificates_are_owned_and_cleaned_with_the_selection() {
+        let directory = tempfile::tempdir().expect("temporary state root");
+        let _guard = super::super::state::claim_state_root(directory.path().to_path_buf());
+        let source = tempfile::tempdir().expect("certificate source");
+        let (inference_ca, _) = crate::tls::ensure_generated(
+            &source.path().join("inference"),
+            &["inference.example".to_string()],
+        )
+        .expect("generate inference CA");
+        let (management_ca, _) = crate::tls::ensure_generated(
+            &source.path().join("management"),
+            &["management.example".to_string()],
+        )
+        .expect("generate management CA");
+
+        save_persisted_with_trust(
+            &PersistedServer {
+                server: "https://inference.example".into(),
+                management_server: Some("https://management.example".into()),
+                token: Some("la_sk_example".into()),
+                run_max_requests: None,
+                ca_cert: None,
+                management_ca_cert: None,
+            },
+            Some(&inference_ca),
+            Some(&management_ca),
+        )
+        .expect("save trusted selection");
+        let loaded = load_persisted().expect("load").expect("selection");
+        let inference_owned = certificate_path(loaded.ca_cert.as_deref())
+            .expect("resolve inference CA")
+            .expect("inference CA");
+        let management_owned = certificate_path(loaded.management_ca_cert.as_deref())
+            .expect("resolve management CA")
+            .expect("management CA");
+        assert_ne!(inference_owned, inference_ca);
+        assert_ne!(management_owned, management_ca);
+        assert_eq!(
+            fs::read(&inference_owned).unwrap(),
+            fs::read(&inference_ca).unwrap()
+        );
+        assert_eq!(
+            fs::read(&management_owned).unwrap(),
+            fs::read(&management_ca).unwrap()
+        );
+
+        let unrelated = super::super::state::state_directory()
+            .unwrap()
+            .join("unrelated-state");
+        fs::write(&unrelated, "keep").expect("write unrelated state");
+        clear_persisted().expect("clear selection");
+        assert!(!inference_owned.exists());
+        assert!(!management_owned.exists());
+        assert!(inference_ca.exists() && management_ca.exists());
+        assert!(unrelated.exists());
     }
 }

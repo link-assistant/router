@@ -6,7 +6,7 @@ use std::process::ExitCode;
 use crate::cli::ServerOp;
 use crate::managed_server::{
     PersistedServer, claim_managed, clear_persisted, managed_status, remove_managed,
-    save_persisted, start_managed, stop_managed,
+    save_persisted_with_trust, start_managed, stop_managed,
 };
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
@@ -17,18 +17,22 @@ pub async fn run(op: &ServerOp) -> ExitCode {
         ServerOp::Use {
             server,
             management_server,
+            ca_cert,
+            management_ca_cert,
             token,
             token_stdin,
             clear,
             run_max_requests,
-        } => configure(
-            server.as_deref(),
-            management_server.as_deref(),
-            token.clone(),
-            *token_stdin,
-            *clear,
-            *run_max_requests,
-        ),
+        } => configure(Selection {
+            server: server.as_deref(),
+            management_server: management_server.as_deref(),
+            ca_cert: ca_cert.as_deref(),
+            management_ca_cert: management_ca_cert.as_deref(),
+            token: token.clone(),
+            token_stdin: *token_stdin,
+            clear: *clear,
+            run_max_requests: *run_max_requests,
+        }),
         ServerOp::Status => status().await,
         ServerOp::Start => start_managed().map(|url| {
             println!("managed router started at {url}");
@@ -56,22 +60,41 @@ pub async fn run(op: &ServerOp) -> ExitCode {
     }
 }
 
-fn configure(
-    server: Option<&str>,
-    management_server: Option<&str>,
+struct Selection<'a> {
+    server: Option<&'a str>,
+    management_server: Option<&'a str>,
+    ca_cert: Option<&'a std::path::Path>,
+    management_ca_cert: Option<&'a std::path::Path>,
     token: Option<String>,
     token_stdin: bool,
     clear: bool,
     run_max_requests: Option<u64>,
-) -> Result<(), AnyError> {
+}
+
+fn configure(selection: Selection<'_>) -> Result<(), AnyError> {
+    let Selection {
+        server,
+        management_server,
+        ca_cert,
+        management_ca_cert,
+        token,
+        token_stdin,
+        clear,
+        run_max_requests,
+    } = selection;
     if clear {
         if server.is_some()
             || management_server.is_some()
+            || ca_cert.is_some()
+            || management_ca_cert.is_some()
             || token.is_some()
             || token_stdin
             || run_max_requests.is_some()
         {
-            return Err("--clear cannot be combined with a server, token, or run budget".into());
+            return Err(
+                "--clear cannot be combined with a server, token, CA certificate, or run budget"
+                    .into(),
+            );
         }
         let path = clear_persisted()?;
         println!("cleared persisted server selection at {}", path.display());
@@ -83,12 +106,18 @@ fn configure(
     } else {
         token
     };
-    let path = save_persisted(&PersistedServer {
-        server: server.to_string(),
-        management_server: management_server.map(str::to_string),
-        token,
-        run_max_requests,
-    })?;
+    let path = save_persisted_with_trust(
+        &PersistedServer {
+            server: server.to_string(),
+            management_server: management_server.map(str::to_string),
+            token,
+            run_max_requests,
+            ca_cert: None,
+            management_ca_cert: None,
+        },
+        ca_cert,
+        management_ca_cert,
+    )?;
     println!(
         "saved server selection in {} (token {})",
         path.display(),

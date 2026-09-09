@@ -11,6 +11,7 @@ fn sample_record(id: &str) -> TokenRecord {
         issued_at: 1_700_000_000,
         expires_at: 1_700_001_000,
         revoked: false,
+        ephemeral: false,
         sliding_window_seconds: None,
         account: Some("primary".into()),
         max_requests: None,
@@ -25,6 +26,48 @@ fn sample_record(id: &str) -> TokenRecord {
         client_kind: None,
         principal_id: None,
     }
+}
+
+/// A new ephemeral issuance removes only dead ephemeral credentials in the
+/// same mutation. Permanent and active records remain available for audit and
+/// use, while repeated `router with` runs cannot grow the store forever.
+#[test]
+fn ephemeral_issuance_compacts_only_dead_ephemeral_records() {
+    let store = MemoryTokenStore::new();
+    let mut expired = sample_record("expired-run");
+    expired.ephemeral = true;
+    expired.expires_at = 99;
+    let mut revoked = sample_record("revoked-run");
+    revoked.ephemeral = true;
+    revoked.revoked = true;
+    let mut active = sample_record("active-run");
+    active.ephemeral = true;
+    active.expires_at = 101;
+    let mut permanent = sample_record("permanent");
+    permanent.revoked = true;
+    for record in [expired, revoked, active, permanent] {
+        store.put(record).expect("seed record");
+    }
+
+    let mut next = sample_record("next-run");
+    next.ephemeral = true;
+    store
+        .put_compacting_ephemeral(next, 100)
+        .expect("compact and insert");
+
+    let ids = store
+        .list()
+        .expect("list compacted records")
+        .into_iter()
+        .map(|record| record.id)
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(
+        ids,
+        ["active-run", "next-run", "permanent"]
+            .into_iter()
+            .map(str::to_string)
+            .collect()
+    );
 }
 
 #[test]
@@ -282,6 +325,7 @@ fn lino_codec_handles_special_chars() {
         scope: crate::token::ADMIN_SCOPE.to_string(),
         client_kind: Some("claude".into()),
         principal_id: Some("primary".into()),
+        ephemeral: false,
     };
     let s = associative::encode_text(std::iter::once(&rec));
     let parsed = associative::decode_text(&s).unwrap();

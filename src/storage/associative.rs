@@ -91,6 +91,7 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                 ("issued_at", LinoValue::Int(record.issued_at)),
                 ("expires_at", LinoValue::Int(record.expires_at)),
                 ("revoked", LinoValue::Bool(record.revoked)),
+                ("ephemeral", LinoValue::Bool(record.ephemeral)),
                 (
                     "account",
                     record
@@ -188,6 +189,7 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         issued_at: expect_i64_field(fields, "issued_at", "record value")?,
         expires_at: expect_i64_field(fields, "expires_at", "record value")?,
         revoked: expect_bool_field(fields, "revoked", "record value")?,
+        ephemeral: optional_bool_field(fields, "ephemeral", "record value")?.unwrap_or(false),
         account: optional_string_field(fields, "account", "record value")?,
         sliding_window_seconds: optional_u64_field(
             fields,
@@ -269,6 +271,18 @@ fn expect_bool_field(value: &LinoValue, key: &str, context: &str) -> Result<bool
     }
 }
 
+fn optional_bool_field(
+    value: &LinoValue,
+    key: &str,
+    context: &str,
+) -> Result<Option<bool>, String> {
+    match optional_object_field(value, key, context)? {
+        None => Ok(None),
+        Some(LinoValue::Bool(value)) => Ok(Some(*value)),
+        _ => Err(format!("{context}.{key} must be a boolean")),
+    }
+}
+
 fn expect_u64_field(value: &LinoValue, key: &str, context: &str) -> Result<u64, String> {
     expect_string_field(value, key, context)?
         .parse()
@@ -345,22 +359,18 @@ fn optional_i64_string_field(
 
 /// A doublets store held open for the lifetime of the process.
 ///
-/// The store this crate is built on is a memory-mapped file, and it is meant to
-/// be opened once and kept. Reopening it per access cost a full open-map-build
-/// -teardown cycle every time, and on the write path a complete reconstruction
-/// of the semantic links network -- which is what made a read-only `list()` take
-/// seconds while the underlying disk write was a fraction of that (issue #357).
+/// This memory-mapped store is opened once and kept. Reopening it per access
+/// rebuilt the semantic links network and made read-only listing take seconds
+/// while the underlying disk write took a fraction of that (issue #357).
 ///
 /// A rebuild replaces the inode so other processes can detect the changed file
 /// fingerprint and remap; this process keeps the replacement mapping as its
 /// current store. Because that mapping remains open after publication,
-/// [`Self::publish`] explicitly syncs its dirty pages before the transaction
+/// [`Self::rebuild`] explicitly syncs its dirty pages before the transaction
 /// may be considered complete.
 pub(super) struct PersistentStore {
     store: FileStore,
     path: PathBuf,
-    /// The rebuild in progress, not yet in place of [`Self::path`].
-    pending: Option<PathBuf>,
 }
 
 impl PersistentStore {
@@ -383,7 +393,6 @@ impl PersistentStore {
         Ok(Self {
             store,
             path: path.to_path_buf(),
-            pending: None,
         })
     }
 
@@ -413,17 +422,17 @@ impl PersistentStore {
 
     /// Replace the store's contents with `records`.
     ///
-    /// The links network is rebuilt from empty, so the old one has to go first;
-    /// see [`Self::reset`] for why it goes by being replaced rather than
-    /// emptied in place.
+    /// The links network is rebuilt from empty and published only after the
+    /// replacement is complete and readable.
     pub(super) fn replace<'a>(
         &mut self,
         records: impl IntoIterator<Item = &'a TokenRecord>,
     ) -> Result<(), StorageError> {
-        self.reset()?;
-        let mut strings = HashMap::new();
-        write_semantic_links(&mut self.store, &mut strings, records)?;
-        self.publish()
+        let records = records.into_iter().collect::<Vec<_>>();
+        self.rebuild(|store| {
+            let mut strings = HashMap::new();
+            write_semantic_links(store, &mut strings, records)
+        })
     }
 
     /// Empty the store by replacing the file, then remap the new one.
@@ -450,34 +459,46 @@ impl PersistentStore {
     /// them too, and is not an option either: it unmaps the pages another
     /// process is still reading, and that process can die with **SIGBUS** the
     /// moment it touches one. So the rebuild goes to a temporary and
-    /// [`Self::publish`] renames it into place.
-    fn reset(&mut self) -> Result<(), StorageError> {
+    /// [`Self::rebuild`] renames it into place.
+    fn rebuild(
+        &mut self,
+        write: impl FnOnce(&mut FileStore) -> Result<(), StorageError>,
+    ) -> Result<(), StorageError> {
         let parent = self
             .path
             .parent()
             .ok_or_else(|| std::io::Error::other("storage path has no parent directory"))?;
         fs::create_dir_all(parent)?;
-        let temporary = self.path.with_extension("rebuild");
-        let _ = fs::remove_file(&temporary);
-        let mut options = OpenOptions::new();
-        options.read(true).write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.mode(0o600);
-        }
-        let file = options.open(&temporary)?;
-        let mapped = LoadedFileMapped::new(file)?;
-        self.store = unit::Store::<usize, _>::new(mapped)
-            .map_err(|error| codec_error("reopen doublets store", error))?;
-        self.pending = Some(temporary);
-        Ok(())
-    }
-
-    /// Put the rebuilt file in place of the old one.
-    fn publish(&mut self) -> Result<(), StorageError> {
-        let Some(temporary) = self.pending.take() else {
-            return Ok(());
+        let name = self
+            .path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| std::io::Error::other("storage file name is not valid UTF-8"))?;
+        let temporary = parent.join(format!(
+            ".{name}.{}.{}.rebuild",
+            std::process::id(),
+            uuid::Uuid::new_v4()
+        ));
+        let built = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let mut candidate = Self::open(&temporary)?;
+            write(&mut candidate.store)?;
+            // Walk the finished schema before it can become authoritative.
+            candidate.records()?;
+            Ok::<Self, StorageError>(candidate)
+        }));
+        let mut candidate = match built {
+            Ok(Ok(candidate)) => candidate,
+            Ok(Err(error)) => {
+                let _ = fs::remove_file(&temporary);
+                return Err(error);
+            }
+            Err(_) => {
+                let _ = fs::remove_file(&temporary);
+                return Err(StorageError::Capacity(
+                    "the doublets projection could not grow; the previous token store was preserved"
+                        .into(),
+                ));
+            }
         };
         // `write_semantic_links` mutates a MAP_SHARED mapping which stays open
         // after this method returns. Without an explicit sync, the kernel can
@@ -486,17 +507,39 @@ impl PersistentStore {
         // mtime can move during a subsequent read-only operation. A writable
         // handle is required for FlushFileBuffers on Windows; on Unix fsync
         // also flushes dirty pages belonging to this file-backed mapping.
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&temporary)?
-            .sync_all()?;
-        if let Ok(metadata) = fs::metadata(&self.path) {
-            fs::set_permissions(&temporary, metadata.permissions())?;
+        let prepare = (|| -> Result<(), StorageError> {
+            OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(&temporary)?
+                .sync_all()?;
+            if let Ok(metadata) = fs::metadata(&self.path) {
+                fs::set_permissions(&temporary, metadata.permissions())?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = prepare {
+            drop(candidate);
+            let _ = fs::remove_file(&temporary);
+            return Err(error);
         }
-        fs::rename(&temporary, &self.path)?;
-        if let Some(parent) = self.path.parent() {
-            crate::durable_file::sync_directory(parent)?;
+        if let Err(error) = fs::rename(&temporary, &self.path) {
+            drop(candidate);
+            let _ = fs::remove_file(&temporary);
+            return Err(error.into());
+        }
+        candidate.path.clone_from(&self.path);
+        self.store = candidate.store;
+        // Rename is the commit point: after it succeeds, the new mapping is
+        // authoritative and returning an error would make a successfully
+        // persisted token look absent to its caller. A directory-sync failure
+        // can weaken crash durability but cannot roll the rename back, so
+        // report it without turning a committed issuance into an uncertain
+        // failure (issue #557).
+        if let Err(error) = crate::durable_file::sync_directory(parent) {
+            tracing::warn!(
+                "token store was replaced but its directory could not be synced: {error}"
+            );
         }
         Ok(())
     }
@@ -687,6 +730,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         &record.expires_at.to_string(),
     );
     add_field(&mut links, &value, "revoked", &record.revoked.to_string());
+    add_field(
+        &mut links,
+        &value,
+        "ephemeral",
+        &record.ephemeral.to_string(),
+    );
     if let Some(account) = &record.account {
         add_field(&mut links, &value, "account", account);
     }
@@ -843,6 +892,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         issued_at: parse_field(&fields, "issued_at")?,
         expires_at: parse_field(&fields, "expires_at")?,
         revoked: parse_field(&fields, "revoked")?,
+        ephemeral: optional_parsed_field(&fields, "ephemeral")?.unwrap_or(false),
         account: fields.get("account").cloned(),
         max_requests: optional_parsed_field(&fields, "max_requests")?,
         used_requests: parse_field(&fields, "used_requests")?,
