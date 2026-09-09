@@ -170,9 +170,9 @@ fn apply_delta(
         .get_mut(&index)
         .ok_or_else(|| format!("content delta preceded block {index}"))?;
     match kind {
-        "thinking_delta" => append_string(content, "thinking", delta.get("thinking")),
-        "signature_delta" => append_string(content, "signature", delta.get("signature")),
-        "text_delta" => append_string(content, "text", delta.get("text")),
+        "thinking_delta" => append_string(content, "thinking", delta.get("thinking"))?,
+        "signature_delta" => append_string(content, "signature", delta.get("signature"))?,
+        "text_delta" => append_string(content, "text", delta.get("text"))?,
         "input_json_delta" => {
             let fragment = delta
                 .get("partial_json")
@@ -199,13 +199,20 @@ fn apply_delta(
     Ok(())
 }
 
-fn append_string(content: &mut Value, field: &str, addition: Option<&Value>) {
+fn append_string(content: &mut Value, field: &str, addition: Option<&Value>) -> Result<(), String> {
     let addition = addition.and_then(Value::as_str).unwrap_or_default();
-    let current = content
+    let object = content
+        .as_object_mut()
+        .ok_or("content block is not an object")?;
+    let current = object
         .get(field)
         .and_then(Value::as_str)
         .unwrap_or_default();
-    content[field] = Value::String(format!("{current}{addition}"));
+    object.insert(
+        field.to_string(),
+        Value::String(format!("{current}{addition}")),
+    );
+    Ok(())
 }
 
 fn finish_input(
@@ -218,9 +225,13 @@ fn finish_input(
     };
     let parsed = serde_json::from_str(&input)
         .map_err(|error| format!("tool input for block {index} is invalid: {error}"))?;
-    blocks
+    let block = blocks
         .get_mut(&index)
-        .ok_or_else(|| format!("tool input preceded block {index}"))?["input"] = parsed;
+        .ok_or_else(|| format!("tool input preceded block {index}"))?;
+    block
+        .as_object_mut()
+        .ok_or("content block is not an object")?
+        .insert("input".to_string(), parsed);
     Ok(())
 }
 
@@ -246,4 +257,15 @@ fn merge_named_object(target: &mut Value, name: &str, source: Option<&Value>) {
         .entry(name)
         .or_insert_with(|| Value::Object(Map::new()));
     merge_object(target, Some(&Value::Object(source.clone())));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn malformed_upstream_content_is_rejected_without_indexing_panics() {
+        let sse = b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"content\":[null]}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bad\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
+        assert_eq!(assemble(sse).unwrap_err(), "content block is not an object");
+    }
 }
