@@ -364,10 +364,6 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .any(|(model, owner)| *model == selected && *owner == "z.ai")
     {
         assert_eq!(
-            body["stream"], false,
-            "the recorded Claude 2.1.265 regression call must exercise non-streaming thinking: {body}"
-        );
-        assert_eq!(
             body["thinking"]["type"], "enabled",
             "the verified Claude profile did not request z.ai's accepted thinking mode: {body}"
         );

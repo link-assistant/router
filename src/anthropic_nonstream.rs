@@ -11,10 +11,7 @@ use serde_json::{Map, Value};
 const MAX_BUFFERED_RESPONSE: usize = 64 * 1024 * 1024;
 
 /// Collapse a successful native Anthropic event stream into one Messages response.
-pub(crate) async fn collect_response(
-    response: Response,
-    surface: crate::metrics::Surface,
-) -> Response {
+pub async fn collect_response(response: Response, surface: crate::metrics::Surface) -> Response {
     if !response.status().is_success() || !is_event_stream(response.headers().get(CONTENT_TYPE)) {
         return response;
     }
@@ -116,7 +113,7 @@ fn assemble(body: &[u8]) -> Result<Value, String> {
                 )?;
             }
             Some("content_block_stop") => {
-                finish_input(event_index(&event)?, &mut blocks, &mut partial_inputs)?
+                finish_input(event_index(&event)?, &mut blocks, &mut partial_inputs)?;
             }
             Some("message_delta") => {
                 let current = message
@@ -145,7 +142,7 @@ fn assemble(body: &[u8]) -> Result<Value, String> {
         return Err("event stream omitted message_stop".to_string());
     }
     let mut message = message.ok_or("event stream omitted message_start")?;
-    for index in partial_inputs.keys().copied().collect::<Vec<_>>() {
+    while let Some(index) = partial_inputs.keys().next().copied() {
         finish_input(index, &mut blocks, &mut partial_inputs)?;
     }
     message["content"] = Value::Array(blocks.into_values().collect());
