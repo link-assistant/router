@@ -82,6 +82,15 @@ metadata stops the launch with the affected id instead of guessing from its
 name. Router does not write a model cache or invent prefixes. Claude Code
 2.1.255 through 2.1.265 is the reviewed range.
 
+The same `--settings` also sets `verbose: true`, which keeps a completed
+thinking trace visible instead of collapsing it to `Thought for Ns` once the
+response finishes. The Router-owned profile deliberately copies nothing from
+your normal Claude profile, so this restores the presentation you already have
+there without `--extend-global-config`, `Ctrl+O`, or a per-launch flag. It
+changes presentation only: nothing is fabricated for a response that returns no
+thinking, and Router's `--settings` precedes your own arguments so an explicit
+override still wins.
+
 Reset only this Router-owned Claude profile before launch with
 `router with claude --reset-to-default-configuration`. The command asks for
 interactive confirmation; put `--yes` before `claude` to skip it. Reset is

@@ -198,6 +198,11 @@ DISABLE_FEEDBACK_COMMAND=1\n",
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(settings).expect("settings JSON"),
         serde_json::json!({
+            // A bare launch keeps a completed thinking trace visible without
+            // `--extend-global-config`, `Ctrl+O`, or a manual flag, while the
+            // Router-owned profile stays minimal and the normal profile — the
+            // assertion below — stays byte-identical (issue #560).
+            "verbose": true,
             "modelPicker": {
                 "options": [
                     {"label": "future-glm-alpha", "model": "future-glm-alpha", "behavesAs": "claude-sonnet-4-5"},

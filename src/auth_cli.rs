@@ -155,34 +155,52 @@ fn run_gh(
 fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Option<ExitCode> {
     use link_assistant_router::cli::ImportProvider;
 
-    let (providers, clears_github): (&[SubscriptionProvider], bool) = match op {
-        AuthOp::Claude { clear: true, .. }
-        | AuthOp::Clear {
-            provider: Some(ImportProvider::Claude),
-            ..
-        } => (&[SubscriptionProvider::Claude], false),
-        AuthOp::Codex { clear: true, .. }
-        | AuthOp::Clear {
-            provider: Some(ImportProvider::Codex),
-            ..
-        } => (&[SubscriptionProvider::Codex], false),
+    // A name `auth` does not know as a built-in may still be a provider added
+    // through `providers add`. Resolved before the match below, because those
+    // names are free-form and must not be read as a malformed built-in
+    // (issue #561).
+    let requested = match op {
         AuthOp::Clear {
-            provider: Some(ImportProvider::Gemini),
+            provider: Some(name),
             ..
-        } => (&[SubscriptionProvider::Gemini], false),
-        AuthOp::Clear {
-            provider: Some(ImportProvider::Qwen),
-            ..
-        } => (&[SubscriptionProvider::Qwen], false),
-        AuthOp::Gh { clear: true, .. }
-        | AuthOp::Clear {
-            provider: Some(ImportProvider::Gh),
-            ..
-        } => (&[], true),
-        AuthOp::Status {
-            clear_all: true, ..
+        } => Some(name.as_str()),
+        _ => None,
+    };
+    let named = requested.and_then(ImportProvider::from_name);
+    // Not a built-in: withdraw it from the provider store instead, but only
+    // after the target refusal below has had its say. A withdrawal aimed at
+    // another deployment must refuse here exactly as it does for a
+    // subscription (issue #305).
+    let named_api_key = requested.filter(|_| named.is_none());
+
+    let (providers, clears_github): (&[SubscriptionProvider], bool) = match (op, named) {
+        (AuthOp::Claude { clear: true, .. }, _)
+        | (AuthOp::Clear { .. }, Some(ImportProvider::Claude)) => {
+            (&[SubscriptionProvider::Claude], false)
         }
-        | AuthOp::Clear { all: true, .. } => (&SubscriptionProvider::ALL, true),
+        (AuthOp::Codex { clear: true, .. }, _)
+        | (AuthOp::Clear { .. }, Some(ImportProvider::Codex)) => {
+            (&[SubscriptionProvider::Codex], false)
+        }
+        (AuthOp::Clear { .. }, Some(ImportProvider::Gemini)) => {
+            (&[SubscriptionProvider::Gemini], false)
+        }
+        (AuthOp::Clear { .. }, Some(ImportProvider::Qwen)) => {
+            (&[SubscriptionProvider::Qwen], false)
+        }
+        (AuthOp::Gh { clear: true, .. }, _) | (AuthOp::Clear { .. }, Some(ImportProvider::Gh)) => {
+            (&[], true)
+        }
+        (
+            AuthOp::Status {
+                clear_all: true, ..
+            }
+            | AuthOp::Clear { all: true, .. },
+            _,
+        ) => (&SubscriptionProvider::ALL, true),
+        // A named API-key provider withdraws nothing from the built-in set; the
+        // work happens after the target refusal below.
+        (AuthOp::Clear { .. }, None) if named_api_key.is_some() => (&[], false),
         _ => return None,
     };
 
@@ -230,10 +248,33 @@ fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Opt
         return Some(ExitCode::from(1));
     }
 
+    // The target is settled, so a named API-key provider can now be withdrawn.
+    if let Some(name) = named_api_key {
+        return Some(clear_named_api_key_provider(config, name));
+    }
+
+    // `--all` promises "every login this deployment holds", so it must reach
+    // the API-key providers too: a stored key authorizes this deployment
+    // against an upstream vendor exactly as an OAuth login does, and leaving
+    // them behind reported a clean deployment that could still serve live
+    // inference (issue #561).
+    let clears_api_keys = matches!(
+        op,
+        AuthOp::Status {
+            clear_all: true,
+            ..
+        } | AuthOp::Clear { all: true, .. }
+    );
+    let api_key_providers = if clears_api_keys {
+        stored_api_key_providers(config)
+    } else {
+        Vec::new()
+    };
+
     // More than one credential in one call, and an OAuth login cannot be put
     // back without a browser. `--clear-all` made that the widest blast radius
     // in the tool and asked nothing.
-    let affected = providers.len() + usize::from(clears_github);
+    let affected = providers.len() + usize::from(clears_github) + api_key_providers.len();
     if affected > 1 && !clear_confirmed(op) {
         eprintln!(
             "error: this removes {affected} credentials from this machine and an OAuth login \
@@ -253,6 +294,12 @@ fn run_clear(config: &link_assistant_router::config::Config, op: &AuthOp) -> Opt
     if clears_github && let Err(error) = clear_github(config) {
         eprintln!("error: {error}");
         failed = true;
+    }
+    for provider in &api_key_providers {
+        if let Err(error) = clear_api_key_provider(config, provider) {
+            eprintln!("error: {error}");
+            failed = true;
+        }
     }
     // Deleting a local file does not revoke anything upstream, and an operator
     // who believes it did has a false sense of cleanup.
@@ -299,6 +346,104 @@ fn clear_provider(
         );
     }
     Ok(())
+}
+
+/// Open the provider store for a withdrawal or a report.
+///
+/// `auth` must run without a `TOKEN_SECRET` — recovering a subscription cannot
+/// be made to depend on an unrelated secret — and neither listing nor deleting
+/// a record decrypts its key. Only `resolve`, which this path never calls,
+/// needs a real secret, so whatever the config carries is enough here.
+fn open_provider_store(
+    config: &link_assistant_router::config::Config,
+) -> Option<link_assistant_router::providers::ProviderStore> {
+    link_assistant_router::providers::ProviderStore::open(&config.data_dir, &config.token_secret)
+        .ok()
+}
+
+/// The API-key providers this deployment holds a credential for.
+///
+/// A provider with neither a stored key nor an environment key names no
+/// credential to withdraw, so it is left out rather than reported as removed.
+fn stored_api_key_providers(
+    config: &link_assistant_router::config::Config,
+) -> Vec<link_assistant_router::providers::RedactedProviderRecord> {
+    let Some(store) = open_provider_store(config) else {
+        return Vec::new();
+    };
+    store
+        .list_redacted()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|record| record.has_encrypted_api_key || record.api_key_env.is_some())
+        .collect()
+}
+
+/// Withdraw one API-key provider's stored credential.
+///
+/// The record is removed rather than merely disabled: `auth clear` withdraws a
+/// credential, and a disabled row still holds the key the operator believes
+/// they took away.
+fn clear_api_key_provider(
+    config: &link_assistant_router::config::Config,
+    record: &link_assistant_router::providers::RedactedProviderRecord,
+) -> Result<(), String> {
+    let store = open_provider_store(config)
+        .ok_or_else(|| format!("cannot open the provider store to clear {}", record.name))?;
+    let name = &record.name;
+    if store.delete(name).map_err(|error| error.to_string())? {
+        println!("{name:<8} removed the stored API key and provider entry");
+    } else {
+        println!("{name:<8} absent");
+    }
+    // An environment-supplied key outlives the record: the router reads it from
+    // the process environment, so removing the row does not withdraw it.
+    if let Some(variable) = record.api_key_env.as_deref()
+        && std::env::var(variable).is_ok_and(|value| !value.is_empty())
+    {
+        println!(
+            "{name:<8} note: {variable} still holds a key in this environment; unset it there \
+             if this deployment should hold none"
+        );
+    }
+    Ok(())
+}
+
+/// Withdraw a credential named by a provider the operator configured.
+///
+/// Reached only when the name is not one of the built-in credentials, so an
+/// unknown name must say so rather than report a clean withdrawal of nothing.
+fn clear_named_api_key_provider(
+    config: &link_assistant_router::config::Config,
+    name: &str,
+) -> ExitCode {
+    let Some(store) = open_provider_store(config) else {
+        eprintln!("error: cannot open the provider store to clear {name}");
+        return ExitCode::from(1);
+    };
+    let record = match store.get(name) {
+        Ok(Some(record)) => record.redacted(),
+        Ok(None) => {
+            eprintln!(
+                "error: no credential named {name}; `router auth status` lists what this \
+                 deployment holds"
+            );
+            return ExitCode::from(1);
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    };
+    if let Err(error) = clear_api_key_provider(config, &record) {
+        eprintln!("error: {error}");
+        return ExitCode::from(1);
+    }
+    println!(
+        "note: this removes local credentials only; a key minted for this \
+         deployment is still valid upstream and should be revoked there."
+    );
+    ExitCode::SUCCESS
 }
 
 /// Whether a GitHub credential is configured for *this* deployment.
@@ -717,6 +862,19 @@ async fn status(config: &Config) -> ExitCode {
             report.state.as_str(),
             report.home
         );
+    }
+    // The API-key providers authorize this deployment against an upstream
+    // vendor exactly as the subscriptions above do. Reporting only the
+    // OAuth-style set printed an all-absent table on a deployment that could
+    // still reach two vendors, which is the surprise issue #561 is about.
+    for record in stored_api_key_providers(config) {
+        let held = if record.has_encrypted_api_key {
+            "stored"
+        } else {
+            "from-env"
+        };
+        let state = if record.enabled { held } else { "disabled" };
+        println!("{:<8} {state:<10} {}", record.name, record.base_url);
     }
     if refresh_failed {
         ExitCode::from(1)
