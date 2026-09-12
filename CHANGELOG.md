@@ -184,6 +184,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.7.0] - 2026-09-12
+
+### Fixed
+- `router with claude` keeps a completed thinking trace visible by default. The Router-owned minimal profile copies nothing from the normal Claude profile, so genuine thinking was visible while a response streamed and collapsed to `Thought for Ns` as soon as it finished. The process-local `--settings` now carries `verbose: true` beside `modelPicker`, including when the catalog needs no extra picker rows. Presentation only: no thinking is fabricated, no provider-side thinking mode is enabled, and blocks, deltas, signatures and model IDs are unchanged. Router's `--settings` is applied before forwarded arguments, so an explicit override still wins (issue #560).
+
+### Security
+- `auth clear --all` now withdraws every stored upstream credential, including the API-key providers added through `providers add`. It previously removed only the credentials `auth` enumerated and reported a clean deployment while enabled providers kept live keys that could still reach upstream vendors (issue #561).
+
+### Added
+- `auth status` reports API-key providers alongside the OAuth-style ones, so the full authorization surface is visible in one place — including on a deployment that holds only API keys, which previously showed an all-absent table.
+- `auth clear <provider>` accepts the name of a provider added through `providers add`, not only the fixed built-in set. An unknown name refuses and names it rather than reporting a withdrawal of nothing, and a key supplied through `--api-key-env` is named as still present rather than reported removed.
+
 ## [1.6.0] - 2026-09-09
 
 ### Added
