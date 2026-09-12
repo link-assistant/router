@@ -27,6 +27,26 @@ pub enum ImportProvider {
     Gh,
 }
 
+impl ImportProvider {
+    /// The built-in credential this name refers to, if any.
+    ///
+    /// `auth clear` takes a free-form name so it can also withdraw an API-key
+    /// provider added through `providers add` (issue #561). The built-in names
+    /// keep their exact spellings and aliases, so this resolves them before a
+    /// name is looked up in the provider store.
+    #[must_use]
+    pub fn from_name(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "claude" | "anthropic" => Some(Self::Claude),
+            "codex" | "chatgpt" => Some(Self::Codex),
+            "gemini" | "google" => Some(Self::Gemini),
+            "qwen" | "qwen-code" => Some(Self::Qwen),
+            "gh" | "github" => Some(Self::Gh),
+            _ => None,
+        }
+    }
+}
+
 /// Provider authorization operations.
 #[derive(Debug, Subcommand)]
 pub enum AuthOp {
@@ -119,9 +139,16 @@ pub enum AuthOp {
     /// OAuth credential, which then needs a fresh browser login on a machine
     /// that may not have a browser.
     Clear {
-        /// Which login to remove. Omit with `--all`.
-        #[arg(value_enum, required_unless_present = "all")]
-        provider: Option<ImportProvider>,
+        /// Which login to remove: `claude`, `codex`, `gemini`, `qwen`, `gh`, or
+        /// the name of a provider added through `providers add`. Omit with
+        /// `--all`.
+        ///
+        /// A free-form name rather than a fixed enum: an API key stored by
+        /// `providers add` authorizes this deployment against an upstream
+        /// vendor exactly as an OAuth login does, and refusing to name one here
+        /// left `auth` unable to withdraw a credential it reports (issue #561).
+        #[arg(required_unless_present = "all")]
+        provider: Option<String>,
         /// Remove every login this deployment holds.
         #[arg(long, conflicts_with = "provider")]
         all: bool,

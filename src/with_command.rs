@@ -27,6 +27,10 @@ use sweep::{owner_of, process_alive, sweep_stale_directories};
 mod codex_catalog;
 use codex_catalog::write_codex_model_catalog;
 
+#[path = "with_command_claude_settings.rs"]
+mod claude_settings;
+use claude_settings::append_claude_model_picker;
+
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
 const CLAUDE_PRIVACY_DEFAULT_ENV: [&str; 3] = [
@@ -691,75 +695,6 @@ fn apply_claude_privacy_overlay(command: &mut Command) {
     }
 }
 
-/// Extend Claude's native picker with exact compatible IDs that its gateway
-/// discovery filter removes. This is a command-line setting for this process
-/// only: neither the Router-owned profile nor the user's profile is rewritten.
-fn append_claude_model_picker(
-    command: &mut Command,
-    models: &[RouterModel],
-) -> Result<(), AnyError> {
-    const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
-
-    let mut candidates = crate::clients::usable_models(ClientKind::ClaudeCode, models)
-        .into_iter()
-        .filter(|model| {
-            let folded = model.id.to_ascii_lowercase();
-            model.owned_by == crate::clients::ZAI_MODEL_OWNER
-                && !BUILT_INS.contains(&folded.as_str())
-        })
-        .collect::<Vec<_>>();
-    candidates.sort_by(|left, right| left.id.cmp(&right.id));
-    if candidates.is_empty() {
-        return Ok(());
-    }
-    let mut options = Vec::with_capacity(candidates.len());
-    let mut previous: Option<(String, String, String)> = None;
-    for model in candidates {
-        let Some(capability) = model.client_capabilities.claude else {
-            return Err(format!(
-                "Claude model `{}` has no verified capability metadata; update Router or the provider adapter before selecting it",
-                model.id
-            )
-            .into());
-        };
-        if capability.behaves_as.trim().is_empty() || capability.source.trim().is_empty() {
-            return Err(format!(
-                "Claude model `{}` has incomplete capability metadata; update Router or the provider adapter before selecting it",
-                model.id
-            )
-            .into());
-        }
-        if let Some((id, behaves_as, source)) = &previous
-            && id == &model.id
-        {
-            if behaves_as != &capability.behaves_as || source != &capability.source {
-                return Err(format!(
-                    "Claude model `{}` has ambiguous capability metadata; update the provider adapter before selecting it",
-                    model.id
-                )
-                .into());
-            }
-            continue;
-        }
-        options.push(json!({
-            "label": model.id,
-            "model": model.id,
-            "behavesAs": capability.behaves_as,
-        }));
-        previous = Some((model.id, capability.behaves_as, capability.source));
-    }
-    let settings = json!({
-        "modelPicker": {
-            "options": options,
-            "replaceBuiltInOptions": false,
-        }
-    });
-    command
-        .arg("--settings")
-        .arg(serde_json::to_string(&settings)?);
-    Ok(())
-}
-
 /// Overlay routing for an ordinary Codex run. Values after `-c` are TOML;
 /// JSON strings quote them safely while the token stays in the environment.
 fn append_codex_router_overrides(
@@ -973,6 +908,10 @@ fn exit_code(status: std::process::ExitStatus) -> ExitCode {
 #[cfg(test)]
 #[path = "with_command_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "with_command_presentation_tests.rs"]
+mod presentation_tests;
 
 #[cfg(test)]
 #[path = "with_command_ca_tests.rs"]

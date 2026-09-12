@@ -1090,8 +1090,18 @@ or construct an internal path. To withdraw an installed credential:
 
 ```bash
 router auth claude --clear     # or codex / gh
+router auth clear z.ai         # any provider added through `providers add`
 router auth status --clear-all # every identity, for decommissioning
 ```
+
+Whatever authorizes upstream traffic is a credential `auth` reports and
+withdraws, however it was obtained. `auth status` lists the API-key providers
+alongside the OAuth-style ones, and `auth clear --all` removes their stored keys
+too — it does not report a clean deployment while an enabled key remains. An
+API key supplied through `--api-key-env` lives in the router process's own
+environment rather than the store, so withdrawal names it instead of claiming to
+have removed it. Withdrawal still acts only on the machine it runs on and is
+never performed over HTTP.
 
 ### TLS
 

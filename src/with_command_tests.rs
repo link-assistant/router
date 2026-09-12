@@ -301,6 +301,10 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     assert_eq!(
         settings,
         json!({
+            // The presentation default that keeps a completed thinking trace on
+            // screen travels beside the picker rows, in the same process-local
+            // settings, so neither profile is rewritten (issue #560).
+            "verbose": true,
             "modelPicker": {
                 "options": [
                     {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-4-5"},

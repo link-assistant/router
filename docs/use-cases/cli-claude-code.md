@@ -28,6 +28,16 @@ router with --yes claude --reset-to-default-configuration
 Reset retains a recoverable owner-only backup, rolls back setup/spawn failures,
 and refuses while another Router-launched Claude uses the profile.
 
+The same process-local `--settings` carries `verbose: true`, so a completed
+thinking trace stays on screen instead of collapsing to `Thought for Ns`. The
+Router-owned profile starts empty and copies nothing from your normal Claude
+profile, so without this a bare launch lost a presentation you would otherwise
+have. It is a presentation default only: a response that returns no thinking
+still shows none, no provider-side thinking mode is enabled, and blocks,
+deltas, signatures and model IDs are unchanged. Router's `--settings` is
+applied before your own arguments, so a forwarded `--settings` or Claude flag
+still wins.
+
 Gateway discovery supplies native Claude IDs. A process-local `--settings`
 extension adds every other compatible, authorized exact ID to Claude's
 `modelPicker` once, including GLM IDs, without aliases or cache writes. Claude

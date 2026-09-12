@@ -85,10 +85,18 @@ fn a_client_flag_starts_a_session_rather_than_a_one_shot_run() {
         !args.contains(&"--model"),
         "a model nobody asked for was forced: {args:?}"
     );
+    // The user's own arguments must arrive unchanged, in order, and last:
+    // Router's process-local settings go on first precisely so a forwarded
+    // argument overrides them (issue #560).
     assert_eq!(
-        args,
+        &args[args.len() - 2..],
         ["--resume", "2a42a73e-19de-459a-8c24-c5e75abf9a65"],
-        "the client's own arguments must reach it unchanged"
+        "the client's own arguments must reach it unchanged: {args:?}"
+    );
+    assert_eq!(
+        &args[..args.len() - 2],
+        ["--settings", "{\"verbose\":true}"],
+        "Router adds only the presentation default this catalog needs: {args:?}"
     );
     assert_eq!(
         fs::read_to_string(capture.join("env")).expect("captured env"),
