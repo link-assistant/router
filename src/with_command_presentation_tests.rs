@@ -20,7 +20,7 @@ fn a_default_claude_launch_keeps_completed_thinking_visible() {
         // a built-in family name.
         json!([
             {"id": "future-native-id", "owned_by": "anthropic"},
-            {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
+            {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
         ]),
         // An empty catalog, which reaches the same early return.
         json!([]),
@@ -82,7 +82,7 @@ fn a_default_claude_launch_keeps_completed_thinking_visible() {
 fn router_settings_precede_forwarded_claude_arguments() {
     let profiles = tempfile::tempdir().expect("profile root");
     let models: Vec<RouterModel> = serde_json::from_value(json!([
-        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
+        {"id": "future-glm-alpha", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
     ]))
     .expect("deserialize catalog fixture");
     let mut prepared = TemporaryClient::prepare(&Preparation {
@@ -135,8 +135,8 @@ fn router_settings_precede_forwarded_claude_arguments() {
 #[test]
 fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let zai = json!([
-        {"id": "glm-4.5", "owned_by": "z.ai", "provider_created_at": 1, "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "glm-5.3-flash", "owned_by": "z.ai", "provider_created_at": 9, "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
+        {"id": "glm-4.5", "owned_by": "z.ai", "provider_created_at": 1, "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "glm-5.3-flash", "owned_by": "z.ai", "provider_created_at": 9, "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
     ]);
     let models: Vec<RouterModel> =
         serde_json::from_value(zai).expect("deserialize profiled z.ai models");

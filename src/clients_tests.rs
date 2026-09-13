@@ -628,13 +628,51 @@ fn the_written_catalog_agrees_with_the_launcher() {
 fn claude_capability_is_resolved_per_model_not_per_catalog_owner() {
     use crate::clients::claude_capability_profile;
 
+    /// Identities Claude Code's auto-mode gate refuses outright.
+    const GATE_DENIES: [&str; 7] = [
+        "claude-sonnet-4-5",
+        "claude-sonnet-4-6",
+        "claude-sonnet-4-0",
+        "claude-opus-4-0",
+        "claude-opus-4-1",
+        "claude-opus-4-5",
+        "claude-opus-4-6",
+    ];
+
     // Two models of the same provider each resolve on their own id.
     for id in ["glm-4.5", "glm-5.3-flash"] {
         let profile = claude_capability_profile(ZAI_MODEL_OWNER, id)
             .unwrap_or_else(|| panic!("{id} must carry a reviewed capability identity"));
-        assert_eq!(profile.behaves_as(), "claude-sonnet-4-5");
+        assert_eq!(profile.behaves_as(), "claude-sonnet-5");
         assert_eq!(profile.source(), "provider-protocol:z.ai-anthropic");
     }
+
+    // The identity is what Claude Code's auto-mode gate reads, and the gate
+    // denies a fixed set outright. Advertising one of those took auto mode away
+    // from every z.ai model while the provider's own id would have passed
+    // (issue #565). This pins the rule rather than the one value, so a future
+    // change to a denied identity fails here instead of in a live session.
+    let advertised = claude_capability_profile(ZAI_MODEL_OWNER, "glm-5.3-flash")
+        .expect("a z.ai model carries an identity")
+        .behaves_as();
+    assert!(
+        !GATE_DENIES.contains(&advertised),
+        "{advertised} is refused by Claude Code's auto-mode gate"
+    );
+    // A gateway launch also refuses any identity naming the haiku family.
+    assert!(
+        !advertised.contains("haiku"),
+        "{advertised} is refused for a gateway auth source"
+    );
+    // And a superseded identity must not come back: the advertised one has to
+    // describe the generation the adapter actually serves. z.ai documents the
+    // GLM-5 line at a 1M-token context, which the pre-#565 identity put at
+    // 200K — understating the window by five times and making Claude Code
+    // compact sessions that had room left.
+    assert!(
+        !advertised.ends_with("-4-5"),
+        "{advertised} describes a superseded context window"
+    );
 
     // A provider with no reviewed contract is still described by nothing: the
     // advertisement must not be invented from a model name.

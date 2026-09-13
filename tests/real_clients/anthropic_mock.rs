@@ -21,7 +21,18 @@ pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
         }
     }
     if request.get("thinking").is_some() {
-        return if request["thinking"]["type"] == "enabled" {
+        // `adaptive` is accepted alongside `enabled`. Measured against the live
+        // z.ai Anthropic adapter: both shapes answer 200 with a signed thinking
+        // block — `adaptive` with `output_config.effort`, `enabled` with
+        // `budget_tokens`. The mock previously refused `adaptive`, which encoded
+        // a belief about the provider that the live endpoint disproves, and
+        // which would have made the accepted capability identity look broken
+        // offline while working in production (issue #565).
+        let accepted = matches!(
+            request["thinking"]["type"].as_str(),
+            Some("enabled" | "adaptive")
+        );
+        return if accepted {
             if request["stream"].as_bool().unwrap_or(false) {
                 thinking_answer(model)
             } else {
@@ -200,10 +211,19 @@ fn event_stream(events: &[(&str, Value)], context: &str) -> Vec<u8> {
 
 #[test]
 fn only_provider_accepted_thinking_can_receive_a_synthetic_trace() {
+    // Both shapes the client sends are accepted, because the live provider
+    // accepts both (issue #565). A mode the provider does not implement still
+    // fails, which is what this test is really guarding.
     let adaptive = anthropic_answer("dynamic-zai-model", br#"{"thinking":{"type":"adaptive"}}"#);
-    assert!(adaptive.starts_with(b"HTTP/1.1 400 Bad Request\r\n"));
+    assert!(adaptive.starts_with(b"HTTP/1.1 200 OK\r\n"));
+
+    let unsupported = anthropic_answer(
+        "dynamic-zai-model",
+        br#"{"thinking":{"type":"invented-mode"}}"#,
+    );
+    assert!(unsupported.starts_with(b"HTTP/1.1 400 Bad Request\r\n"));
     assert!(
-        !adaptive
+        !unsupported
             .windows(THINKING_TRACE.len())
             .any(|window| { window == THINKING_TRACE.as_bytes() })
     );

@@ -82,6 +82,16 @@ metadata stops the launch with the affected id instead of guessing from its
 name. Router does not write a model cache or invent prefixes. Claude Code
 2.1.255 through 2.1.265 is the reviewed range.
 
+That identity is chosen to match the generation the adapter actually serves, and
+it is load-bearing twice over. It sets the context window Claude Code assumes:
+an identity describing a smaller window than the provider offers makes the
+client auto-compact sessions that still had room. It is also the only thing
+Claude Code's auto-mode gate reads — the gate refuses a fixed set of identities
+outright, so advertising one of those reported `auto mode unavailable for this
+model` for every model of the provider, however capable (issue #565). Router
+advertises neither a superseded window nor a refused identity. The provider model
+id sent on the wire is unchanged either way.
+
 The same `--settings` also sets `verbose: true`, which keeps a completed
 thinking trace visible instead of collapsing it to `Thought for Ns` once the
 response finishes. The Router-owned profile deliberately copies nothing from

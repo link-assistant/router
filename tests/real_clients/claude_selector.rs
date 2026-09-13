@@ -206,7 +206,7 @@ fn catalog_model(id: &str, owner: &str) -> Value {
     if owner == "z.ai" {
         model["client_capabilities"] = json!({
             "claude": {
-                "behaves_as": "claude-sonnet-4-5",
+                "behaves_as": "claude-sonnet-5",
                 "source": "provider-protocol:z.ai-anthropic"
             }
         });
@@ -363,24 +363,42 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .iter()
         .any(|(model, owner)| *model == selected && *owner == "z.ai")
     {
-        assert_eq!(
-            body["thinking"]["type"], "enabled",
-            "the verified Claude profile did not request z.ai's accepted thinking mode: {body}"
+        // Which shape the client sends follows the capability identity Router
+        // advertises: a fixed `budget_tokens` for some identities, an
+        // `adaptive` mode with `output_config.effort` for others. Both are
+        // accepted by the live provider — measured directly, HTTP 200 with a
+        // signed thinking block either way — so this asserts thinking was
+        // requested in *a* supported shape rather than pinning one spelling
+        // (issue #565).
+        let mode = body["thinking"]["type"]
+            .as_str()
+            .expect("the verified Claude profile must request a thinking mode");
+        assert!(
+            matches!(mode, "enabled" | "adaptive"),
+            "the verified Claude profile requested an unsupported thinking mode: {body}"
         );
-        let budget = body["thinking"]["budget_tokens"]
-            .as_u64()
-            .expect("enabled Claude thinking must include a numeric budget");
         let maximum = body["max_tokens"]
             .as_u64()
             .expect("Claude inference must include a numeric output limit");
-        assert!(
-            budget > 0 && budget < maximum,
-            "Claude thinking budget must fit below max_tokens: {body}"
-        );
-        assert!(
-            body.get("output_config").is_none(),
-            "the z.ai-compatible request must not use Sonnet 5 effort controls: {body}"
-        );
+        if mode == "enabled" {
+            let budget = body["thinking"]["budget_tokens"]
+                .as_u64()
+                .expect("enabled Claude thinking must include a numeric budget");
+            assert!(
+                budget > 0 && budget < maximum,
+                "Claude thinking budget must fit below max_tokens: {body}"
+            );
+        } else {
+            // The adaptive mode carries an effort instead of a budget, and the
+            // provider reads it from `output_config`.
+            let effort = body["output_config"]["effort"]
+                .as_str()
+                .expect("adaptive Claude thinking must name an effort");
+            assert!(
+                !effort.is_empty(),
+                "adaptive Claude thinking must name a non-empty effort: {body}"
+            );
+        }
     }
     assert!(
         output.status.success(),

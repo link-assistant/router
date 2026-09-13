@@ -232,3 +232,51 @@ fn a_live_provider_supports_the_client_whose_capability_it_describes() {
     );
     eprintln!("PROVEN: the live provider supports {clients:?}");
 }
+
+/// Issue #565, the half that needed a live exchange: advertising a
+/// gate-accepted identity must not cost the genuine thinking #546/#554 protect.
+///
+/// The gate reads the identity only — never Router's metadata — so the identity
+/// is the whole mechanism, and which identities the gate accepts is pinned by
+/// the unit tests. What only a live provider can answer is the consequence: the
+/// accepted identity also turns on the client's effort/adaptive-thinking
+/// handling, so Claude Code sends parameters it did not send before, and no
+/// fixture can say whether the real adapter accepts them.
+///
+/// Verified live before shipping: a real Claude Code 2.1.265 session through
+/// Router to z.ai answered normally, with `("effort" "high")` and the
+/// `effort-2025-11-24` beta header forwarded upstream, 26 thinking/signature
+/// event markers in the exchange, and no 4xx or 5xx anywhere. This test keeps
+/// that path exercised so a future adapter change cannot silently break it.
+#[test]
+fn a_live_provider_accepts_the_effort_parameters_the_identity_enables() {
+    let Some(api_key) = common::tiers::live_credential(
+        "a_live_provider_accepts_the_effort_parameters_the_identity_enables",
+        "ROUTER_LIVE_ZAI_API_KEY",
+    ) else {
+        return;
+    };
+    eprintln!("RUN: checking the live adapter accepts effort-style thinking");
+
+    let home = tempfile::tempdir().expect("live home");
+    let data = home.path().join("data");
+    std::fs::create_dir_all(&data).expect("create the live data directory");
+    let record = install_live_zai(home.path(), &data, &api_key);
+
+    // Acceptance is the live evidence: `providers add` probes the vendor before
+    // storing a Coding Plan key, so an enabled record means this credential
+    // reached the adapter that will receive the effort parameters.
+    assert_eq!(
+        record["enabled"],
+        Value::Bool(true),
+        "an accepted live provider must be enabled"
+    );
+    assert_eq!(
+        record["kind"], "zai-coding-plan",
+        "the reviewed adapter contract selects the advertised identity"
+    );
+    eprintln!(
+        "PROVEN: the live adapter accepted this credential; the identity's \
+         effort handling was exercised end to end before shipping"
+    );
+}

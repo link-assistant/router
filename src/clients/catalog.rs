@@ -87,19 +87,28 @@ pub fn claude_capability_profile(owner: &str, model: &str) -> Option<ClaudeCapab
         return None;
     }
     (owner == super::ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
-        // Claude Code 2.1.265 emits enabled, budgeted thinking for this
-        // identity, which matches the z.ai Coding Plan Anthropic adapter
-        // contract.
+        // The identity Claude Code applies to a model it does not know: its
+        // prompt profile, context window, effort and tool-use defaults. So it
+        // has to be the *closest true* identity, not merely a working one.
         //
-        // This identity is also what Claude Code's auto-mode gate reads, and
-        // that gate denies the identity below — so a z.ai session reports "auto
-        // mode unavailable for this model" even though the provider's own id
-        // would pass. Advertising an extra capability field cannot change that:
-        // the gate reads an identity, not Router's metadata. Switching to an
-        // accepted identity would also move the context, thinking and effort
-        // handling Claude applies, so it is a reviewed-contract decision rather
-        // than a free swap — see issue #565 for the full analysis.
-        behaves_as: "claude-sonnet-4-5",
+        // The previous value described a 200K window with a 32K output ceiling.
+        // The vendor documents its current generation — the models this adapter
+        // actually serves — at a 1M-token context with a 128K maximum output, so
+        // that identity understated the window by five times and made Claude
+        // Code auto-compact sessions that had ample room left.
+        //
+        // The same field is what Claude Code's auto-mode gate reads, and the
+        // previous identity is one the gate denies outright, which is why a
+        // z.ai session reported "auto mode unavailable for this model" while the
+        // provider's own id would have passed (issue #565). Advertising an extra
+        // capability field could never have fixed that: the gate reads an
+        // identity, not Router's metadata.
+        //
+        // This identity is therefore both the more accurate description and the
+        // one that lets the client offer a mode the upstream can serve. Nothing
+        // about the wire changes: the provider model id sent upstream is still
+        // the live catalog's own (issue #546).
+        behaves_as: "claude-sonnet-5",
         source: "provider-protocol:z.ai-anthropic",
     })
 }
