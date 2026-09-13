@@ -569,7 +569,7 @@ async fn real_zai_thinking_reaches_claude_verbose_output() {
         .and_then(|models| {
             models.iter().find(|model| {
                 model["owned_by"] == "z.ai"
-                    && model["client_capabilities"]["claude"]["behaves_as"] == "claude-sonnet-4-5"
+                    && model["client_capabilities"]["claude"]["behaves_as"] == "claude-sonnet-5"
             })
         })
         .and_then(|model| model["id"].as_str())
