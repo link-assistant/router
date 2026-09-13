@@ -101,7 +101,7 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
         apply_provider_reasoning_profile(&mut projected, owner);
     }
     if client == ClientKind::ClaudeCode {
-        apply_provider_claude_profile(&mut projected, owner);
+        apply_provider_claude_profile(&mut projected, owner, id);
     }
     if projected.len() > 3 {
         projected.insert(
@@ -121,8 +121,8 @@ fn project_model(raw: &Map<String, Value>, id: &str, client: ClientKind) -> Map<
     projected
 }
 
-fn apply_provider_claude_profile(projected: &mut Map<String, Value>, owner: &str) {
-    let Some(profile) = crate::clients::claude_capability_profile(owner) else {
+fn apply_provider_claude_profile(projected: &mut Map<String, Value>, owner: &str, model: &str) {
+    let Some(profile) = crate::clients::claude_capability_profile(owner, model) else {
         return;
     };
     projected.insert(

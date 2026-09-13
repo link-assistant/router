@@ -387,9 +387,18 @@ fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
             ..RouterModel::default()
         },
     ];
+    // Without a recency signal the choice must still be deterministic rather
+    // than positional, so the id decides and the answer does not move when the
+    // provider reorders its listing (issue #563).
     assert_eq!(
         claude_gateway_model(&zai, None).as_deref(),
         Some("future-first-2099")
+    );
+    let reversed: Vec<RouterModel> = zai.iter().rev().cloned().collect();
+    assert_eq!(
+        claude_gateway_model(&reversed, None),
+        claude_gateway_model(&zai, None),
+        "catalog order must not decide the gateway model"
     );
     assert_eq!(
         claude_gateway_model(&zai, Some("future-explicit-2099")).as_deref(),
@@ -402,6 +411,115 @@ fn claude_gateway_model_is_live_and_an_explicit_zai_choice_wins() {
         ..RouterModel::default()
     }];
     assert_eq!(claude_gateway_model(&native, None), None);
+}
+
+/// Issue #563: the fallback took the first z.ai entry in catalog order, so a
+/// deployment advertising ten models pinned the *oldest* one the provider
+/// happened to list first — for both the main and the subagent slot — while
+/// offering a picker whose last row was the newest.
+///
+/// Catalog order is the provider's listing, not a ranking. The vendor's own
+/// `created` timestamp is the signal that answers which model is current.
+#[test]
+fn the_gateway_model_is_the_providers_current_model_not_its_first_listed() {
+    // The exact reproduction from the issue: newest last, oldest first.
+    let ids = [
+        "glm-4.5",
+        "glm-4.5-air",
+        "glm-4.6",
+        "glm-4.7",
+        "glm-5",
+        "glm-5-turbo",
+        "glm-5.1",
+        "glm-5.2",
+        "glm-5.3",
+        "glm-5.3-flash",
+    ];
+    let catalog: Vec<RouterModel> = ids
+        .iter()
+        .enumerate()
+        .map(|(index, id)| RouterModel {
+            id: (*id).into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            // Monotonic, as a provider that dates its models would report.
+            provider_created_at: Some(1_700_000_000 + i64::try_from(index).expect("small index")),
+            ..RouterModel::default()
+        })
+        .collect();
+    assert_eq!(
+        claude_gateway_model(&catalog, None).as_deref(),
+        Some("glm-5.3-flash"),
+        "the newest advertised model must be the pin, not the first listed"
+    );
+
+    // Position must not decide it: the same catalog shuffled resolves the same.
+    let mut shuffled = catalog.clone();
+    shuffled.reverse();
+    assert_eq!(
+        claude_gateway_model(&shuffled, None).as_deref(),
+        Some("glm-5.3-flash"),
+        "reversing the catalog must not change the resolved model"
+    );
+    shuffled.rotate_left(4);
+    assert_eq!(
+        claude_gateway_model(&shuffled, None).as_deref(),
+        Some("glm-5.3-flash"),
+        "rotating the catalog must not change the resolved model"
+    );
+
+    // A model the catalog no longer advertises is never pinned: the explicit
+    // path requires the id to be present and owned by the provider.
+    let current: Vec<RouterModel> = catalog
+        .iter()
+        .filter(|model| model.id != "glm-4.5")
+        .cloned()
+        .collect();
+    assert_ne!(
+        claude_gateway_model(&current, Some("glm-4.5")).as_deref(),
+        Some("glm-4.5"),
+        "a withdrawn model must not be pinned just because it was asked for"
+    );
+
+    // A provider that dates none of its models still answers deterministically
+    // rather than by position.
+    let undated: Vec<RouterModel> = ids
+        .iter()
+        .map(|id| RouterModel {
+            id: (*id).into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
+        })
+        .collect();
+    let resolved = claude_gateway_model(&undated, None);
+    assert!(resolved.is_some());
+    let mut rotated = undated;
+    rotated.rotate_right(3);
+    assert_eq!(
+        claude_gateway_model(&rotated, None),
+        resolved,
+        "an undated catalog must still not resolve by position"
+    );
+
+    // A dated model outranks an undated one: a provider that dates its newer
+    // models must not lose to a legacy entry carrying no timestamp.
+    let mixed = vec![
+        RouterModel {
+            id: "glm-legacy-undated".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "glm-5.3-flash".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            provider_created_at: Some(1_700_000_009),
+            ..RouterModel::default()
+        },
+    ];
+    assert_eq!(
+        claude_gateway_model(&mixed, None).as_deref(),
+        Some("glm-5.3-flash"),
+        "a dated model must outrank one the provider did not date"
+    );
 }
 
 #[test]
@@ -496,4 +614,41 @@ fn the_written_catalog_agrees_with_the_launcher() {
             ),
         }
     }
+}
+
+/// Issue #565: capability was advertised per catalog owner, so every model of a
+/// provider — current, older, large, flash — was described identically. Any
+/// property that distinguishes two models of one provider was unrepresentable
+/// rather than merely unset.
+///
+/// Resolution is now per model. The owner still selects which reviewed adapter
+/// contract applies, so the claim stays reviewable rather than guessed from a
+/// model name, and the live catalog still owns the inventory (#546).
+#[test]
+fn claude_capability_is_resolved_per_model_not_per_catalog_owner() {
+    use crate::clients::claude_capability_profile;
+
+    // Two models of the same provider each resolve on their own id.
+    for id in ["glm-4.5", "glm-5.3-flash"] {
+        let profile = claude_capability_profile(ZAI_MODEL_OWNER, id)
+            .unwrap_or_else(|| panic!("{id} must carry a reviewed capability identity"));
+        assert_eq!(profile.behaves_as(), "claude-sonnet-4-5");
+        assert_eq!(profile.source(), "provider-protocol:z.ai-anthropic");
+    }
+
+    // A provider with no reviewed contract is still described by nothing: the
+    // advertisement must not be invented from a model name.
+    assert!(claude_capability_profile("another-provider", "glm-5.3-flash").is_none());
+
+    // An id that names nothing describes nothing.
+    assert!(claude_capability_profile(ZAI_MODEL_OWNER, "").is_none());
+    assert!(claude_capability_profile(ZAI_MODEL_OWNER, "   ").is_none());
+
+    // The answer depends on the model asked about, never on which other models
+    // the provider advertises alongside it, so no catalog-order or neighbour
+    // effect can reach it.
+    assert_eq!(
+        claude_capability_profile(ZAI_MODEL_OWNER, "glm-5.3-flash"),
+        claude_capability_profile(ZAI_MODEL_OWNER, "glm-5.3-flash"),
+    );
 }

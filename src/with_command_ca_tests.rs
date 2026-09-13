@@ -18,6 +18,7 @@ fn claude_receives_the_selected_router_ca_as_additional_trust() {
         isolated_config: false,
         extend_user_configuration: true,
         one_shot: true,
+        user_model_selection: None,
         profile_root: Some(directory.path()),
         codex_reasoning_effort: None,
         codex_backend_base_url: None,

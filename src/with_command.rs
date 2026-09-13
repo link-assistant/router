@@ -29,7 +29,7 @@ use codex_catalog::write_codex_model_catalog;
 
 #[path = "with_command_claude_settings.rs"]
 mod claude_settings;
-use claude_settings::append_claude_model_picker;
+use claude_settings::{append_claude_model_picker, claude_saved_model_selection};
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -191,6 +191,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         None
     };
+    let user_claude_model = std::env::var("ANTHROPIC_MODEL")
+        .ok()
+        .filter(|value| !value.trim().is_empty());
     let mut temporary = match TemporaryClient::prepare(&Preparation {
         client: args.client,
         base_url: &server.base_url,
@@ -200,6 +203,8 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         isolated_config: args.isolated_config,
         extend_user_configuration: args.extend_global_config,
         one_shot: plan.one_shot,
+        // An empty value is not a selection: it is how a caller says "unset".
+        user_model_selection: user_claude_model.as_deref(),
         profile_root: None,
         codex_reasoning_effort: codex_reasoning_effort.as_deref(),
         codex_backend_base_url,
@@ -427,6 +432,12 @@ struct Preparation<'a> {
     isolated_config: bool,
     extend_user_configuration: bool,
     one_shot: bool,
+    /// A Claude model the user chose in this environment, if they did.
+    ///
+    /// Resolved by the caller rather than read from the process environment
+    /// here, so a shell that exports `ANTHROPIC_MODEL` cannot change what a
+    /// test proves (issue #563).
+    user_model_selection: Option<&'a str>,
     profile_root: Option<&'a Path>,
     codex_reasoning_effort: Option<&'a str>,
     codex_backend_base_url: Option<&'a str>,
@@ -444,6 +455,7 @@ impl TemporaryClient {
             isolated_config,
             extend_user_configuration,
             one_shot,
+            user_model_selection,
             profile_root,
             codex_reasoning_effort,
             codex_backend_base_url,
@@ -554,8 +566,36 @@ impl TemporaryClient {
                 // models. A z.ai-only catalog needs only the same exact pair
                 // of main/subagent pins as persistent setup. Assigning one GLM
                 // id to every family creates fake Opus/Sonnet/Haiku rows.
+                //
+                // A pin Router supplies is a *fallback* for a client that
+                // cannot resolve its own default, never an override of a choice
+                // the user made. `/model` is the documented way to choose a
+                // model, and a wrapper variable that outranked a saved
+                // selection was surprising in exactly the moment the user was
+                // being deliberate (issue #563). Both ways of having already
+                // chosen therefore suppress the pin: a value in this
+                // environment, and a default saved in the profile Claude reads.
+                let chosen_by_user = user_model_selection
+                    .map(|model| format!("ANTHROPIC_MODEL={model}"))
+                    .or_else(|| {
+                        claude_saved_model_selection(
+                            &manager,
+                            directory.path(),
+                            extends_user_configuration(
+                                client,
+                                isolated_config,
+                                extend_user_configuration,
+                            ),
+                        )
+                    });
                 let gateway_model = crate::clients::claude_gateway_model(models, model_override);
-                if let Some(gateway_model) = gateway_model {
+                if let Some(reason) = chosen_by_user {
+                    eprintln!(
+                        "note: keeping your own Claude model selection ({reason}); Router is not \
+                         setting {}",
+                        crate::clients::CLAUDE_GATEWAY_TARGET_ENV.join(" or ")
+                    );
+                } else if let Some(gateway_model) = gateway_model {
                     for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
                         command.env(key, &gateway_model);
                     }

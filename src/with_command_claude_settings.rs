@@ -3,12 +3,14 @@
 //! Split from `with_command.rs` to stay inside the repository's per-file line
 //! limit.
 
+use std::fs;
+use std::path::Path;
 use std::process::Command;
 
 use serde_json::{Value, json};
 
 use super::AnyError;
-use crate::clients::{ClientKind, RouterModel};
+use crate::clients::{ClientKind, ClientManager, RouterModel};
 
 /// Build the process-local Claude settings a Router-directed launch needs.
 ///
@@ -98,4 +100,44 @@ pub(super) fn append_claude_model_picker(
         .arg("--settings")
         .arg(serde_json::to_string(&Value::Object(settings))?);
     Ok(())
+}
+
+/// The Claude model the client itself has saved as its default, if any.
+///
+/// `Some(reason)` names the choice for the note Router prints, and means Router
+/// must not supply a pin of its own: a wrapper-set `ANTHROPIC_MODEL` outranks
+/// the client's own selection for every new session, so pinning over a saved
+/// `/model` choice silently overrode the documented way to pick a model
+/// (issue #563). The environment half of that rule is resolved by the caller.
+///
+/// The profile consulted is the one this launch actually hands the client — the
+/// Router-owned one by default, the user's own under `--extend-global-config`.
+pub(super) fn claude_saved_model_selection(
+    manager: &ClientManager,
+    root: &Path,
+    extends_user_configuration: bool,
+) -> Option<String> {
+    // Under `--extend-global-config` the client reads the user's real profile,
+    // which this manager is not rooted at; ask the environment's own manager so
+    // the saved default is read from the file Claude will actually open.
+    let settings = if extends_user_configuration {
+        ClientManager::from_env()
+            .ok()
+            .map(|manager| manager.config_path(ClientKind::ClaudeCode))
+    } else {
+        debug_assert!(
+            manager
+                .config_path(ClientKind::ClaudeCode)
+                .starts_with(root),
+            "the isolated manager must be rooted at this run's profile"
+        );
+        Some(manager.config_path(ClientKind::ClaudeCode))
+    }?;
+    let saved = fs::read_to_string(settings).ok()?;
+    // A profile Claude has not written yet, or one hand-edited into invalid
+    // JSON, is not a selection. Failing open here would pin over a choice; the
+    // safe reading of "cannot tell" is to leave the pin to the catalog.
+    let document: serde_json::Value = serde_json::from_str(&saved).ok()?;
+    let model = document.get("model")?.as_str()?.trim();
+    (!model.is_empty()).then(|| format!("the model saved in your Claude profile ({model})"))
 }
