@@ -15,6 +15,15 @@ pub struct RouterModel {
     /// The model's live default, if the provider supplied one.
     #[serde(default)]
     pub default_reasoning_level: Option<String>,
+    /// When the provider says this model was created, if it said at all.
+    ///
+    /// The vendor's own recency signal, projected from the `created` field of
+    /// its catalog entry. Read so Router can pick the *current* model when it
+    /// must supply one itself, rather than treating catalog position as a
+    /// ranking — which pinned the oldest model a deployment could serve
+    /// (issue #563).
+    #[serde(default)]
+    pub provider_created_at: Option<i64>,
     /// `None` means the provider did not supply capability metadata. An empty
     /// list is different: it authoritatively says this model has no selectable
     /// reasoning effort.
@@ -58,14 +67,38 @@ impl ClaudeCapabilityProfile {
     }
 }
 
-/// Provider-level Claude capability metadata for models reached through the
-/// native Anthropic Messages adapter. The model id deliberately is not read:
-/// the live provider catalog owns that changing inventory (issue #546).
+/// Claude capability metadata for one model reached through the native
+/// Anthropic Messages adapter.
+///
+/// Resolved per model rather than per catalog owner (issue #565). The owner
+/// still selects which reviewed adapter contract applies — that is what makes
+/// the claim reviewable rather than guessed from a model name — but the
+/// signature takes the model so a provider whose catalog genuinely differs can
+/// be described differently without changing every caller. A single value for a
+/// whole provider made any per-model difference unrepresentable rather than
+/// merely unset.
+///
+/// The live catalog still owns the inventory: no model id is enumerated here, so
+/// a vendor release needs no Router release (issue #546).
 #[must_use]
-pub fn claude_capability_profile(owner: &str) -> Option<ClaudeCapabilityProfile> {
+pub fn claude_capability_profile(owner: &str, model: &str) -> Option<ClaudeCapabilityProfile> {
+    // An id is required to describe a model; an empty one names nothing.
+    if model.trim().is_empty() {
+        return None;
+    }
     (owner == super::ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
-        // Claude Code 2.1.265 emits enabled, budgeted thinking for Sonnet 4.5,
-        // which matches the z.ai Coding Plan Anthropic adapter contract.
+        // Claude Code 2.1.265 emits enabled, budgeted thinking for this
+        // identity, which matches the z.ai Coding Plan Anthropic adapter
+        // contract.
+        //
+        // This identity is also what Claude Code's auto-mode gate reads, and
+        // that gate denies the identity below — so a z.ai session reports "auto
+        // mode unavailable for this model" even though the provider's own id
+        // would pass. Advertising an extra capability field cannot change that:
+        // the gate reads an identity, not Router's metadata. Switching to an
+        // accepted identity would also move the context, thinking and effort
+        // handling Claude applies, so it is a reviewed-contract decision rather
+        // than a free swap — see issue #565 for the full analysis.
         behaves_as: "claude-sonnet-4-5",
         source: "provider-protocol:z.ai-anthropic",
     })
@@ -271,9 +304,20 @@ pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> 
     {
         return None;
     }
+    // Catalog order is the provider's listing, not a ranking. Taking the first
+    // entry pinned whichever model the vendor happened to list first — in
+    // practice the *oldest* of ten, while the picker's last row was the newest
+    // (issue #563). The vendor's own `created` timestamp is the signal that
+    // actually answers "which of these is current"; the id is the tie-break, so
+    // the result never depends on array position.
     catalog
         .iter()
-        .find(|model| model.owned_by == super::ZAI_MODEL_OWNER)
+        .filter(|model| model.owned_by == super::ZAI_MODEL_OWNER)
+        .max_by(|left, right| {
+            left.provider_created_at
+                .cmp(&right.provider_created_at)
+                .then_with(|| left.id.cmp(&right.id))
+        })
         .map(|model| model.id.clone())
 }
 

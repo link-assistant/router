@@ -893,6 +893,8 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--request-log-max-bytes` / `REQUEST_LOG_MAX_BYTES` | `104857600` (100 MiB) | No | Per-token request-log size bound; each token independently discards its oldest complete records first. The store's total is this bound times the number of tokens with recorded traffic — cap that with the row below |
 | `--request-log-max-total-bytes` / `REQUEST_LOG_MAX_TOTAL_BYTES` | `4294967296` (4 GiB) | No | Bound across the whole request store; the least recently written token directories are removed first. `0` disables the total cap |
 | `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded. Native Anthropic Files and Skills multipart uploads are bounded and spooled to temporary disk before relay; set this to `524288000` to permit Claude's full 500 MiB upload maximum, with matching free disk space |
+| `CONVERSATION_RECORD` | (disabled) | No | Record complete client exchanges to this file as links notation — ordered streamed events, thinking blocks, signatures, tool calls and results — with credentials redacted at record time, so a recording is safe to commit next to the tests that use it |
+| `CONVERSATION_REPLAY` | (disabled) | No | Answer from a recording instead of a provider. Turns are served in order and a request that does not match the recorded one for that turn fails the replay, naming the turn and the difference. Needs no credential and makes no upstream call; an unreadable recording aborts startup rather than reaching a provider |
 | `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
 
 ### GitHub API credential proxy

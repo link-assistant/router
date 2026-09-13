@@ -2,6 +2,8 @@
 
 #![allow(dead_code)]
 
+pub mod tiers;
+
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::process::{Command, Output};

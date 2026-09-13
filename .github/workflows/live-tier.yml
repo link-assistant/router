@@ -1,0 +1,86 @@
+# Tier 4: real client, real Router, real provider.
+#
+# Manual dispatch only, and deliberately not on pull requests (issue #567). A
+# fork has no secrets, so a credentialed tier attached to `pull_request` either
+# fails for want of a credential — red on somebody else's unrelated change — or
+# silently proves nothing while looking green. Neither is a useful signal, so the
+# tier is something an operator asks for.
+#
+# This tier spends real subscription quota. That is the cost of proving what only
+# a real exchange can: that a model answers, that a launch profile produces the
+# intended presentation, that a catalog pins what the user selected.
+#
+# See docs/testing-tiers.md for the full tier layout.
+name: Live Credentialed Tier
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never two live runs at once: they share one upstream subscription, and a
+  # rate limit hit by a parallel run reads as a product failure.
+  group: live-tier
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  live-tier:
+    name: Real providers through real clients
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      # The same pinned client the reviewed capture range covers, so a live
+      # result is attributable to a known client version.
+      - name: Install the pinned real client
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.265
+          claude --version | grep -F '2.1.265'
+
+      # `--nocapture` is what surfaces the per-test RUN/SKIP lines: without it
+      # cargo hides passing output and a skipped tier becomes invisible again,
+      # which is the failure mode this whole layout exists to prevent.
+      # `--test-threads=1` keeps one upstream subscription from being used by
+      # two tests at once.
+      - name: Run the live tier
+        env:
+          ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON }}
+          ROUTER_LIVE_CODEX_CREDENTIAL_JSON: ${{ secrets.ROUTER_LIVE_CODEX_CREDENTIAL_JSON }}
+          ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
+          LEFINE_API_KEY: ${{ secrets.LEFINE_API_KEY }}
+          LEFINE_INFERENCE_ACCEPTANCE: ${{ vars.LEFINE_INFERENCE_ACCEPTANCE }}
+        run: |
+          cargo test --locked --test subscription_usage_live_test -- --nocapture --test-threads=1
+          cargo test --locked --test live_model_selection_test -- --nocapture --test-threads=1
+          cargo test --locked --test lefine_live_test -- --nocapture --test-threads=1
+
+      # A dispatch that proved nothing must say so in the summary rather than
+      # reporting a green check: "ran with no credentials" and "passed" are
+      # different outcomes and must not look the same.
+      - name: Report which properties were proven
+        if: always()
+        run: |
+          {
+            echo '### Live tier'
+            echo
+            echo 'Skips are printed inline as `SKIP [tier4-live-credentialed] …`.'
+            echo 'A run whose log is all SKIP lines proved nothing; see docs/testing-tiers.md.'
+          } >> "$GITHUB_STEP_SUMMARY"
