@@ -47,6 +47,7 @@ mod codex_remote_control;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;
+pub mod conversation_record;
 pub mod conversations;
 pub mod crater;
 pub mod credential_acceptance;

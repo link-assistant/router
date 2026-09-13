@@ -85,6 +85,12 @@ Thank you for your interest in contributing! This document provides guidelines a
    cargo test test_name
    ```
 
+   `cargo test` runs tiers 1-3 and passes without any credential. The live,
+   credentialed tier (tier 4) is a no-op without a subscription and says so
+   rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md)
+   for what each tier proves and how to run the live one against your own
+   subscription.
+
 5. **Add a changelog fragment**
 
    For any user-facing changes, create a changelog fragment:

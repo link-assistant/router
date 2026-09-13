@@ -5,6 +5,8 @@
 //! no-op unless its protected environment variable is present; secret values
 //! are never printed or included in assertion output.
 
+mod common;
+
 use axum::body::to_bytes;
 use axum::extract::{Json, OriginalUri, Path as AxumPath, State};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
@@ -163,10 +165,31 @@ fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Outpu
 }
 
 fn live_request_records(root: &Path, token: &str) -> Vec<Value> {
-    let path = root
-        .join("requests")
-        .join(link_assistant_router::request_log::token_log_key(token))
-        .join("requests.lino");
+    // `with` mints its own client-bound run credential rather than forwarding
+    // the token this test issued, so the log lands under that credential's key
+    // and not under ours. Asserting on our own key read an empty path and failed
+    // for a reason unrelated to the property under test — invisible until a
+    // machine with credentials actually ran this tier (issue #567).
+    let directory = root.join("requests");
+    let ours = directory.join(link_assistant_router::request_log::token_log_key(token));
+    let path = if ours.join("requests.lino").is_file() {
+        ours.join("requests.lino")
+    } else {
+        std::fs::read_dir(&directory)
+            .unwrap_or_else(|error| {
+                panic!(
+                    "read live request log directory {}: {error}",
+                    directory.display()
+                )
+            })
+            .filter_map(Result::ok)
+            .map(|entry| entry.path().join("requests.lino"))
+            .filter(|candidate| candidate.is_file())
+            // `unauthenticated` collects pre-credential traffic; a real exchange
+            // is the one carrying records, so take the largest log written.
+            .max_by_key(|candidate| std::fs::metadata(candidate).map_or(0, |data| data.len()))
+            .unwrap_or_else(|| panic!("no live request log under {}", directory.display()))
+    };
     std::fs::read_to_string(&path)
         .unwrap_or_else(|error| panic!("read live z.ai request log {}: {error}", path.display()))
         .lines()
@@ -218,10 +241,12 @@ fn contains_thinking(value: &Value) -> bool {
     }
 }
 
-fn protected(name: &str) -> Option<String> {
-    std::env::var(name)
-        .ok()
-        .filter(|value| !value.trim().is_empty())
+/// A live credential, announcing and counting the skip when it is absent.
+///
+/// Every live-tier skip goes through one place, so a run that passes can still
+/// say which properties it did not prove (issue #567).
+fn live_credential(test: &str, variable: &str) -> Option<String> {
+    common::tiers::live_credential(test, variable)
 }
 
 fn client_headers(state: &AppState, client: ClientKind) -> HeaderMap {
@@ -292,12 +317,13 @@ fn assert_available(status: StatusCode, body: &Value, provider: &str, secret: &s
 }
 
 async fn oauth_probe(
+    test: &str,
     variable: &str,
     provider: SubscriptionProvider,
     public_name: &str,
     client: ClientKind,
 ) {
-    let Some(document) = protected(variable) else {
+    let Some(document) = live_credential(test, variable) else {
         return;
     };
     assert!(
@@ -325,6 +351,7 @@ async fn oauth_probe(
 #[tokio::test]
 async fn real_anthropic_usage_source_is_normalized_without_inference() {
     oauth_probe(
+        "real_anthropic_usage_source_is_normalized_without_inference",
         "ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON",
         SubscriptionProvider::Claude,
         "anthropic",
@@ -336,6 +363,7 @@ async fn real_anthropic_usage_source_is_normalized_without_inference() {
 #[tokio::test]
 async fn real_openai_usage_source_is_normalized_without_inference() {
     oauth_probe(
+        "real_openai_usage_source_is_normalized_without_inference",
         "ROUTER_LIVE_CODEX_CREDENTIAL_JSON",
         SubscriptionProvider::Codex,
         "openai",
@@ -350,7 +378,10 @@ async fn real_openai_usage_source_is_normalized_without_inference() {
 /// events that carry a complete Responses object.
 #[tokio::test]
 async fn every_real_codex_model_keeps_its_native_stream_identity() {
-    let Some(document) = protected("ROUTER_LIVE_CODEX_CREDENTIAL_JSON") else {
+    let Some(document) = live_credential(
+        "every_real_codex_model_keeps_its_native_stream_identity",
+        "ROUTER_LIVE_CODEX_CREDENTIAL_JSON",
+    ) else {
         return;
     };
     assert!(
@@ -464,7 +495,10 @@ async fn every_real_codex_model_keeps_its_native_stream_identity() {
 
 #[tokio::test]
 async fn real_zai_usage_sources_are_normalized_without_inference() {
-    let Some(api_key) = protected("ROUTER_LIVE_ZAI_API_KEY") else {
+    let Some(api_key) = live_credential(
+        "real_zai_usage_sources_are_normalized_without_inference",
+        "ROUTER_LIVE_ZAI_API_KEY",
+    ) else {
         return;
     };
     let root = tempfile::tempdir().expect("live usage data dir");
@@ -477,10 +511,10 @@ async fn real_zai_usage_sources_are_normalized_without_inference() {
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn real_zai_thinking_reaches_claude_verbose_output() {
-    let Some(api_key) = protected("ROUTER_LIVE_ZAI_API_KEY") else {
-        eprintln!(
-            "SKIP: ROUTER_LIVE_ZAI_API_KEY is not configured; live Claude reasoning did not run"
-        );
+    let Some(api_key) = live_credential(
+        "real_zai_thinking_reaches_claude_verbose_output",
+        "ROUTER_LIVE_ZAI_API_KEY",
+    ) else {
         return;
     };
     eprintln!("RUN: validating live z.ai reasoning through Claude Code");

@@ -474,6 +474,31 @@ async fn run_server(
         ),
     );
 
+    // Opt-in, and announced: a deployment that is recording every client
+    // exchange to a file, or answering from one instead of a provider, must say
+    // so in its own output rather than leave it to be deduced from a file
+    // appearing on disk (issue #566). A replay that cannot load its recording
+    // aborts startup instead of falling through to the live path, because
+    // silently reaching a provider is the one outcome a replay must not have.
+    let record_mode = link_assistant_router::conversation_record::Mode::from_env();
+    if let Some(announcement) = record_mode.announcement() {
+        tracing::info!("{announcement}");
+    }
+    let record_session = link_assistant_router::conversation_record::Session::from_mode(
+        &record_mode,
+        config.upstream_provider.as_str(),
+    )
+    .map_err(|error| -> AnyError { error.to_string().into() })?
+    .map(Arc::new);
+    if let Some(session) = record_session.as_ref().filter(|_| record_mode.is_replay()) {
+        tracing::info!(
+            "Replaying {} recorded turn(s) made by Router {} against provider {}",
+            session.turn_count(),
+            session.provenance().router_version,
+            session.provenance().provider
+        );
+    }
+
     // Installed before listener preparation starts, so a signal arriving
     // during startup is not missed (issue #334).
     let shutdown = shutdown::Shutdown::listening();
@@ -556,13 +581,20 @@ async fn run_server(
     });
     let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
     let servers = primary_listeners.into_iter().map(|listener| {
-        let app = observed_http_app(
-            state.clone(),
-            link_assistant_router::server_router::router_for_listener(
+        // Record-or-replay wraps the observed app rather than sitting inside it:
+        // a replayed turn must not reach routing, credential loading or the
+        // upstream client at all (issue #566). The admin UI surface above is
+        // deliberately left out — a recording is of a client conversation.
+        let app = link_assistant_router::conversation_record::layer(
+            observed_http_app(
                 state.clone(),
-                &config,
-                listener.config().kind,
+                link_assistant_router::server_router::router_for_listener(
+                    state.clone(),
+                    &config,
+                    listener.config().kind,
+                ),
             ),
+            record_session.clone(),
         );
         let listener_shutdown = shutdown.notified();
         async move { listener.serve(app, listener_shutdown).await }
