@@ -62,6 +62,20 @@ docker build -t router:local .            # once
 ROUTER_DEPLOY_TEST_IMAGE=router:local cargo test --test deploy_docker_test -- --test-threads=1
 ```
 
+A published image works too, and is much faster than building one:
+
+```bash
+docker pull ghcr.io/link-assistant/router:1.10.0
+ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.10.0 \
+  cargo test --test deploy_docker_test -- --test-threads=1
+```
+
+The image is named rather than pulled by the tests themselves: a test that
+reaches a registry fails when the network does, which says nothing about the code
+under test. `router deploy` *does* pull an absent image — that is how it works on
+a machine that has never built one — and the pull decision is pinned against a
+fake runtime in `src/deploy_tests.rs`.
+
 `--test-threads=1` because every test in that file drives the one deployment
 container, so they cannot run concurrently.
 
