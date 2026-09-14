@@ -32,6 +32,12 @@ struct FakeState {
     exec_result: Option<Result<String, String>>,
     /// Labels of tokens the deployment has issued so far.
     issued_labels: Vec<String>,
+    /// Runtime calls that should fail, by name, with the error to report.
+    ///
+    /// A daemon that answers *badly* is a different case from one that is
+    /// absent, and a deployment must fail at the step that asked rather than
+    /// carrying on to produce a second, confusing failure.
+    faults: Vec<(&'static str, String)>,
     calls: Vec<String>,
 }
 
@@ -92,6 +98,22 @@ impl FakeRuntime {
             .calls
             .push(call.into());
     }
+
+    /// Make `call` fail with `error`, to exercise a step's failure path.
+    fn fail(&self, call: &'static str, error: &str) {
+        self.set(|state| state.faults.push((call, error.to_string())));
+    }
+
+    /// The injected error for `call`, if one was configured.
+    fn fault(&self, call: &str) -> Option<String> {
+        self.state
+            .lock()
+            .expect("fake state")
+            .faults
+            .iter()
+            .find(|(name, _)| *name == call)
+            .map(|(_, error)| error.clone())
+    }
 }
 
 impl ContainerRuntime for FakeRuntime {
@@ -107,6 +129,9 @@ impl ContainerRuntime for FakeRuntime {
 
     fn state(&self, name: &str) -> Result<ContainerState, String> {
         self.record(format!("state:{name}"));
+        if let Some(error) = self.fault("state") {
+            return Err(error);
+        }
         Ok(self
             .state
             .lock()
@@ -117,12 +142,18 @@ impl ContainerRuntime for FakeRuntime {
 
     fn run(&self, spec: &RunSpec) -> Result<(), String> {
         self.record(format!("run:{}", spec.name));
+        if let Some(error) = self.fault("run") {
+            return Err(error);
+        }
         self.set(|state| state.container = Some(ContainerState::Running));
         Ok(())
     }
 
     fn start(&self, name: &str) -> Result<(), String> {
         self.record(format!("start:{name}"));
+        if let Some(error) = self.fault("start") {
+            return Err(error);
+        }
         self.set(|state| state.container = Some(ContainerState::Running));
         Ok(())
     }
@@ -135,11 +166,17 @@ impl ContainerRuntime for FakeRuntime {
 
     fn image_present(&self, image: &str) -> Result<bool, String> {
         self.record(format!("image_present:{image}"));
+        if let Some(error) = self.fault("image_present") {
+            return Err(error);
+        }
         Ok(self.state.lock().expect("fake state").image_present)
     }
 
     fn build(&self, image: &str, _context: &str) -> Result<(), String> {
         self.record(format!("build:{image}"));
+        if let Some(error) = self.fault("build") {
+            return Err(error);
+        }
         self.set(|state| state.image_present = true);
         Ok(())
     }
@@ -156,6 +193,9 @@ impl ContainerRuntime for FakeRuntime {
 
     fn listeners_on(&self, port: u16) -> Result<Vec<String>, String> {
         self.record(format!("listeners_on:{port}"));
+        if let Some(error) = self.fault("listeners_on") {
+            return Err(error);
+        }
         Ok(self
             .state
             .lock()
@@ -610,6 +650,159 @@ fn down_is_idempotent_on_an_absent_deployment() {
 
     assert!(message.contains("already absent"), "{message}");
     assert!(runtime.mutations().is_empty(), "{:?}", runtime.mutations());
+}
+
+/// A daemon that answers badly is not a daemon that is absent. Each such
+/// failure must stop the run at the step that asked, naming it, rather than
+/// letting a later step fail for a reason that is really the first one.
+#[test]
+fn a_runtime_that_answers_badly_fails_the_step_that_asked() {
+    for (call, step, message) in [
+        ("listeners_on", "stray-instance", "ps: connection reset"),
+        ("image_present", "image", "inspect: broken pipe"),
+        ("state", "container", "inspect: daemon went away"),
+    ] {
+        let root = tempfile::tempdir().expect("root");
+        let runtime = FakeRuntime::healthy_deployment();
+        runtime.fail(call, message);
+
+        let report = converge(&runtime, &plan(root.path()));
+
+        let failure = report
+            .failure()
+            .unwrap_or_else(|| panic!("{call} failing should fail the run"));
+        assert_eq!(failure.step, step, "for {call}");
+        assert!(
+            failure.found.contains(message),
+            "the daemon's own words are carried through for {call}: {failure}"
+        );
+        assert!(
+            !runtime
+                .mutations()
+                .iter()
+                .any(|mutation| mutation.starts_with("run:")),
+            "nothing is created after a failed check for {call}: {:?}",
+            runtime.mutations()
+        );
+    }
+}
+
+#[test]
+fn a_failed_build_stops_the_run_and_names_the_image() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::empty();
+    runtime.set(|state| state.image_present = false);
+    runtime.fail("build", "no space left on device");
+    let mut plan = plan(root.path());
+    plan.build_context = Some(root.path().to_path_buf());
+
+    let report = converge(&runtime, &plan);
+
+    let failure = report.failure().expect("a failed build fails the run");
+    assert_eq!(failure.step, "image");
+    assert!(failure.found.contains("no space left"), "{failure}");
+    assert!(
+        failure.expected.contains(&plan.image),
+        "the failure names the image it could not build: {failure}"
+    );
+}
+
+#[test]
+fn a_container_that_cannot_be_created_or_started_fails_the_container_step() {
+    for (call, container, message) in [
+        ("run", None, "port is already allocated"),
+        (
+            "start",
+            Some(ContainerState::Stopped),
+            "container is unhealthy",
+        ),
+    ] {
+        let root = tempfile::tempdir().expect("root");
+        let runtime = FakeRuntime::empty();
+        runtime.set(|state| state.container = container);
+        runtime.fail(call, message);
+
+        let report = converge(&runtime, &plan(root.path()));
+
+        let failure = report
+            .failure()
+            .unwrap_or_else(|| panic!("{call} failing should fail the run"));
+        assert_eq!(failure.step, "container", "for {call}");
+        assert!(failure.found.contains(message), "for {call}: {failure}");
+        // Readiness is never reached, so the run cannot claim a healthy
+        // deployment on top of a container that was never started.
+        assert!(
+            !report.steps.iter().any(|step| step.step == "readiness"),
+            "the run stops at the container step for {call}"
+        );
+    }
+}
+
+#[test]
+fn the_printed_report_names_every_step_its_skips_and_a_total() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::empty();
+    runtime.set(|state| {
+        state.exec_result = Some(Err("no subscription credential is configured".to_string()));
+    });
+
+    let report = converge(&runtime, &plan(root.path()));
+    // Exercised rather than captured: `print` writes to stdout, and what matters
+    // is that it renders every part without panicking on any outcome shape.
+    report.print();
+
+    let rendered: Vec<String> = report
+        .steps
+        .iter()
+        .map(super::deploy::step::StepReport::line)
+        .collect();
+    assert!(
+        rendered.iter().any(|line| line.contains("skipped")),
+        "a skip appears in the report: {rendered:?}"
+    );
+    assert!(
+        rendered.iter().all(|line| line.contains("ms)")),
+        "every step carries its duration: {rendered:?}"
+    );
+    assert_eq!(report.skips().len(), 1, "{:?}", report.skips());
+}
+
+#[test]
+fn a_failed_report_renders_its_failure_without_panicking() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::default();
+
+    let report = converge(&runtime, &plan(root.path()));
+    report.print();
+
+    assert!(!report.converged());
+    let failing = report
+        .steps
+        .iter()
+        .find(|step| step.failed())
+        .expect("a failed step");
+    assert!(
+        failing.line().contains("failed"),
+        "a failed step says so in its line: {}",
+        failing.line()
+    );
+}
+
+#[test]
+fn outcome_tags_are_stable_and_only_acting_counts_as_a_change() {
+    use super::deploy::step::Outcome;
+
+    // Read by operators and asserted on by tests, so the spellings are contract.
+    assert_eq!(Outcome::AlreadyConverged(String::new()).tag(), "already");
+    assert_eq!(Outcome::Acted(String::new()).tag(), "acted");
+    assert_eq!(Outcome::Skipped(String::new()).tag(), "skipped");
+
+    assert!(Outcome::Acted(String::new()).changed_anything());
+    // A skip is not a change, and neither is finding the state already correct —
+    // which is what lets `--status` prove it touched nothing.
+    assert!(!Outcome::Skipped(String::new()).changed_anything());
+    assert!(!Outcome::AlreadyConverged(String::new()).changed_anything());
+    assert_eq!(Outcome::Acted("detail".to_string()).detail(), "detail");
 }
 
 #[test]

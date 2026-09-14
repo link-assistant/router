@@ -15,7 +15,8 @@
 //! [`crate::subscription::SubscriptionReader`] reads *through* it under a lock
 //! and writes a rotated token back to the vendor's file rather than to a private
 //! copy. That is one chain with one refresher, reported as
-//! [`Origin::AdoptedFile`], and `auth import` builds such a reference by default.
+//! [`crate::platform_keychain::Origin::AdoptedFile`], and `auth import` builds
+//! such a reference by default.
 //!
 //! What was missing was the operator's view of it. Two stores, one possibly
 //! stale, and no command that said which one was real: an operator could not

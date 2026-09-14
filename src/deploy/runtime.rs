@@ -120,6 +120,42 @@ fn compact(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// The `docker run` argument list for `spec`.
+///
+/// Separated from spawning the process because this is where the properties that
+/// matter live, and they are the ones worth asserting directly: the credential
+/// mount carries `:ro`, the data mount does not, and a secret's *value* never
+/// becomes an argument — only its name, with the value handed to the child
+/// through its environment, so it cannot appear in `ps` or a shell history
+/// (issue #572).
+fn run_arguments(spec: &RunSpec) -> Vec<String> {
+    let mut arguments: Vec<String> = vec![
+        "run".into(),
+        "-d".into(),
+        "--name".into(),
+        spec.name.clone(),
+        "--label".into(),
+        spec.label.clone(),
+        "-p".into(),
+        format!("127.0.0.1:{}:8080", spec.port),
+    ];
+    for (host, container, read_only) in &spec.mounts {
+        arguments.push("-v".into());
+        arguments.push(if *read_only {
+            format!("{host}:{container}:ro")
+        } else {
+            format!("{host}:{container}")
+        });
+    }
+    for (key, _) in &spec.env {
+        arguments.push("-e".into());
+        arguments.push(key.clone());
+    }
+    arguments.push(spec.image.clone());
+    arguments.push("serve".into());
+    arguments
+}
+
 impl ContainerRuntime for Docker {
     fn available(&self) -> Result<String, String> {
         Self::docker(&["info", "--format", "{{.ServerVersion}}"]).map_err(|error| {
@@ -150,37 +186,8 @@ impl ContainerRuntime for Docker {
     }
 
     fn run(&self, spec: &RunSpec) -> Result<(), String> {
-        let port = format!("127.0.0.1:{}:8080", spec.port);
-        let mut arguments: Vec<String> = vec![
-            "run".into(),
-            "-d".into(),
-            "--name".into(),
-            spec.name.clone(),
-            "--label".into(),
-            spec.label.clone(),
-            "-p".into(),
-            port,
-        ];
-        for (host, container, read_only) in &spec.mounts {
-            arguments.push("-v".into());
-            arguments.push(if *read_only {
-                format!("{host}:{container}:ro")
-            } else {
-                format!("{host}:{container}")
-            });
-        }
-        // Names are passed on the command line; values are handed over through
-        // the child's environment so a secret never reaches `ps` or a shell
-        // history (issue #572).
-        for (key, _) in &spec.env {
-            arguments.push("-e".into());
-            arguments.push(key.clone());
-        }
-        arguments.push(spec.image.clone());
-        arguments.push("serve".into());
-
         let mut command = Command::new("docker");
-        command.args(&arguments);
+        command.args(run_arguments(spec));
         for (key, value) in &spec.env {
             command.env(key, value);
         }
@@ -294,5 +301,107 @@ mod tests {
             compact("failed:\n  because\n  reasons"),
             "failed: because reasons"
         );
+    }
+
+    fn spec() -> RunSpec {
+        RunSpec {
+            name: "router-deploy".into(),
+            image: "ghcr.io/link-assistant/router:1.9.0".into(),
+            port: 18080,
+            mounts: vec![
+                ("/host/creds".into(), "/data/claude".into(), true),
+                ("/host/data".into(), "/data/router".into(), false),
+            ],
+            env: vec![
+                ("TOKEN_SECRET".into(), "a-real-signing-secret".into()),
+                ("STORAGE_POLICY".into(), "text".into()),
+            ],
+            label: "com.link-assistant.router.deploy=1".into(),
+        }
+    }
+
+    #[test]
+    fn the_credential_mount_is_read_only_and_the_data_mount_is_not() {
+        let arguments = run_arguments(&spec());
+
+        // The request log cannot live on a read-only mount, so the two are
+        // separate and only one carries `:ro`.
+        assert!(
+            arguments.contains(&"/host/creds:/data/claude:ro".to_string()),
+            "{arguments:?}"
+        );
+        assert!(
+            arguments.contains(&"/host/data:/data/router".to_string()),
+            "{arguments:?}"
+        );
+        assert!(
+            !arguments.contains(&"/host/data:/data/router:ro".to_string()),
+            "the data mount stays writable: {arguments:?}"
+        );
+    }
+
+    #[test]
+    fn a_secret_value_never_becomes_a_command_line_argument() {
+        let spec = spec();
+        let arguments = run_arguments(&spec);
+
+        // Argv is visible in `ps` and in shell history. Only the variable's name
+        // is passed; the value reaches the child through its environment.
+        assert!(
+            arguments.contains(&"TOKEN_SECRET".to_string()),
+            "the name is passed: {arguments:?}"
+        );
+        assert!(
+            !arguments
+                .iter()
+                .any(|argument| argument.contains("a-real-signing-secret")),
+            "the value is not: {arguments:?}"
+        );
+        // And it is still handed over, so the container can actually sign.
+        assert!(
+            spec.env
+                .iter()
+                .any(|(key, value)| key == "TOKEN_SECRET" && value == "a-real-signing-secret")
+        );
+    }
+
+    #[test]
+    fn the_port_is_published_on_loopback_only() {
+        let arguments = run_arguments(&spec());
+
+        // A local deployment must not be reachable from the network merely
+        // because it was started: it holds a subscription credential.
+        assert!(
+            arguments.contains(&"127.0.0.1:18080:8080".to_string()),
+            "{arguments:?}"
+        );
+    }
+
+    #[test]
+    fn the_container_is_labelled_and_named_and_serves() {
+        let arguments = run_arguments(&spec());
+
+        // The label is what proves a container is this command's to manage, so
+        // `--down` cannot remove somebody else's.
+        assert!(arguments.contains(&"com.link-assistant.router.deploy=1".to_string()));
+        assert!(arguments.contains(&"router-deploy".to_string()));
+        assert_eq!(
+            arguments.last().map(String::as_str),
+            Some("serve"),
+            "the image's command comes last: {arguments:?}"
+        );
+        assert_eq!(
+            arguments.first().map(String::as_str),
+            Some("run"),
+            "{arguments:?}"
+        );
+    }
+
+    #[test]
+    fn container_states_have_stable_spellings() {
+        // Reported to operators and asserted on by tests, so they are contract.
+        assert_eq!(ContainerState::Absent.as_str(), "absent");
+        assert_eq!(ContainerState::Running.as_str(), "running");
+        assert_eq!(ContainerState::Stopped.as_str(), "stopped");
     }
 }

@@ -155,6 +155,56 @@ fn a_follow_reference_holds_no_credential_of_its_own() {
 }
 
 #[test]
+fn the_status_report_covers_every_provider_it_is_given() {
+    let (_vendor, router, _source) = following();
+    let empty = tempfile::tempdir().expect("an empty home");
+    let readers = vec![
+        SubscriptionReader::new(SubscriptionProvider::Codex, router.path()),
+        SubscriptionReader::new(SubscriptionProvider::Claude, empty.path()),
+    ];
+
+    let reported = crate::credential_source::report(&readers);
+
+    // One row per provider, in the order given: `auth status` joins these to the
+    // acceptance rows by provider, so a missing entry would silently print the
+    // default "copy" for a followed credential.
+    assert_eq!(reported.len(), 2);
+    assert_eq!(reported[0].provider, SubscriptionProvider::Codex);
+    assert_eq!(reported[0].source.as_str(), "following");
+    assert_eq!(reported[1].provider, SubscriptionProvider::Claude);
+    assert_eq!(reported[1].source.as_str(), "absent");
+}
+
+#[test]
+fn every_holding_explains_itself_without_naming_a_secret() {
+    let (_vendor, router, source) = following();
+    let reader = SubscriptionReader::new(SubscriptionProvider::Codex, router.path());
+
+    // The vendor document holds `r` as its refresh token; no explanation may
+    // carry a credential, only paths and states.
+    for holding in [
+        describe(&reader),
+        CredentialSource::Absent,
+        CredentialSource::Owned,
+        CredentialSource::ExternallyOwned,
+        CredentialSource::Followed {
+            source,
+            present: false,
+        },
+    ] {
+        let explanation = holding.explain();
+        assert!(
+            !explanation.is_empty(),
+            "{holding:?} explains itself to an operator"
+        );
+        assert!(
+            !explanation.contains("refresh_token") && !explanation.contains("access_token"),
+            "{holding:?}: {explanation}"
+        );
+    }
+}
+
+#[test]
 fn a_rotation_by_the_vendor_client_is_visible_without_reimporting() {
     let (_vendor, router, source) = following();
     let reader = SubscriptionReader::new(SubscriptionProvider::Codex, router.path());

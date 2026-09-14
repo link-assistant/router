@@ -232,6 +232,25 @@ fn a_token_recovered_from_one_store_is_rejected_by_a_deployment_with_another_sec
 }
 
 #[test]
+fn the_debug_rendering_of_a_recovery_redacts_the_credential() {
+    let (manager, store, _data) = store();
+    let recovery = recover(&manager, &store, 24, RECOVERED_ADMIN_LABEL, false).expect("recovery");
+
+    let rendered = format!("{recovery:?}");
+
+    // `Debug` is hand-written for exactly this reason: a derived one would print
+    // a live admin credential into any log, panic or test failure that formats
+    // the struct.
+    assert!(
+        !rendered.contains(&recovery.token),
+        "the token is not in the debug output: {rendered}"
+    );
+    assert!(rendered.contains("<redacted>"), "{rendered}");
+    // The id is safe and useful — it is what correlates with the store.
+    assert!(rendered.contains(&recovery.token_id), "{rendered}");
+}
+
+#[test]
 fn the_refusal_to_recover_over_http_names_the_selected_deployment() {
     let server = crate::managed_server::ResolvedServer::at(
         "https://router.example:8443",
