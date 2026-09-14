@@ -88,8 +88,35 @@ fn ready_line(plan: &Plan, skipped: bool) -> String {
     }
 }
 
+/// Why a run cannot proceed with the secret it was given, if it cannot.
+///
+/// A deployment signs its own tokens, so it needs a real secret. Without this
+/// check the stand-in installed for non-serving commands reaches the container's
+/// environment, where its NUL prefix surfaces as an opaque `nul byte found in
+/// provided data` from the process API — and if it ever stopped doing so, the
+/// deployment would sign tokens nothing can validate. Removal is exempt: it
+/// names a container and deletes it, signing nothing.
+fn secret_refusal(token_secret: &str, down: bool) -> Option<String> {
+    if down {
+        return None;
+    }
+    link_assistant_router::token_secret::ensure_real(token_secret)
+        .err()
+        .map(|error| {
+            format!(
+                "error: {error}\nnote: the deployment signs its own tokens, so pass \
+                 TOKEN_SECRET in the environment."
+            )
+        })
+}
+
 pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
     let runtime = Docker;
+
+    if let Some(refusal) = secret_refusal(&config.token_secret, args.down) {
+        eprintln!("{refusal}");
+        return ExitCode::from(2);
+    }
 
     if args.down {
         return match deploy::down(&runtime, args.yes) {
@@ -200,6 +227,43 @@ mod tests {
         // The deployment must sign with the same secret the CLI would, or tokens
         // minted here are rejected there.
         assert_eq!(plan.token_secret, "the-deployments-secret");
+    }
+
+    #[test]
+    fn a_stand_in_secret_is_refused_before_a_container_is_created() {
+        let stand_in = link_assistant_router::token_secret::placeholder("cli-command");
+
+        let refusal = secret_refusal(&stand_in, false).expect("a stand-in is refused");
+
+        // The stand-in carries a NUL so it can never be supplied deliberately,
+        // which means it reaches the process API and fails there with `nul byte
+        // found in provided data` — a message that describes the mechanism and
+        // not the mistake. It is caught here instead, and a deployment is never
+        // created that would sign tokens nothing can validate.
+        assert!(refusal.contains("TOKEN_SECRET"), "{refusal}");
+        assert!(
+            !refusal.contains("nul byte"),
+            "the operator is told what to do, not what the process API said: {refusal}"
+        );
+        assert!(
+            !refusal.contains(&stand_in),
+            "the refusal does not echo the secret it rejected"
+        );
+    }
+
+    #[test]
+    fn a_real_secret_passes_and_removal_needs_none() {
+        assert!(secret_refusal("a-real-operator-secret", false).is_none());
+        // `--down` names a container and deletes it. Demanding a signing secret
+        // to tear down a deployment would make a broken one unremovable by the
+        // operator who most needs to remove it.
+        assert!(
+            secret_refusal(
+                &link_assistant_router::token_secret::placeholder("cli-command"),
+                true
+            )
+            .is_none()
+        );
     }
 
     #[test]

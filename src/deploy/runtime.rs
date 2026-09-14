@@ -78,6 +78,13 @@ pub trait ContainerRuntime: Send + Sync {
     /// Build `image` from `context`, at an immutable ref.
     fn build(&self, image: &str, context: &str) -> Result<(), String>;
 
+    /// Fetch `image` from its registry.
+    ///
+    /// The default image is a *remote* reference, so a machine that has never
+    /// built one locally can only get it this way. Without a pull, the default
+    /// path of the default command fails on a clean machine.
+    fn pull(&self, image: &str) -> Result<(), String>;
+
     /// The image a container was created from, for proving `--status` changed
     /// nothing.
     fn container_image(&self, name: &str) -> Result<Option<String>, String>;
@@ -244,6 +251,10 @@ impl ContainerRuntime for Docker {
 
     fn build(&self, image: &str, context: &str) -> Result<(), String> {
         Self::docker(&["build", "-t", image, context]).map(|_| ())
+    }
+
+    fn pull(&self, image: &str) -> Result<(), String> {
+        Self::docker(&["pull", image]).map(|_| ())
     }
 
     fn container_image(&self, name: &str) -> Result<Option<String>, String> {

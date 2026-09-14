@@ -234,29 +234,38 @@ fn image_step(
     if present {
         return Ok(Outcome::AlreadyConverged(format!("{} present", plan.image)));
     }
-    let Some(context) = plan.build_context.as_ref() else {
-        return Err(Failure {
-            step: "image",
-            purpose: "a deployment cannot run an image that is neither present nor buildable",
-            expected: format!("{} present locally", plan.image),
-            found: "absent, and no build context was given".to_string(),
-        });
-    };
     if !acting {
         return Ok(Outcome::Skipped(format!(
             "{} is absent and --status changes nothing",
             plan.image
         )));
     }
-    runtime
-        .build(&plan.image, &context.display().to_string())
-        .map_err(|found| Failure {
-            step: "image",
-            purpose: "the deployment runs this image, so a failed build stops the run here",
-            expected: format!("a built {}", plan.image),
-            found,
-        })?;
-    Ok(Outcome::Acted(format!("built {}", plan.image)))
+    // An explicit build context wins over the registry: it is how a developer
+    // deploys a tree that no registry has, and silently pulling a same-tagged
+    // image instead would run something other than what was asked for.
+    if let Some(context) = plan.build_context.as_ref() {
+        runtime
+            .build(&plan.image, &context.display().to_string())
+            .map_err(|found| Failure {
+                step: "image",
+                purpose: "the deployment runs this image, so a failed build stops the run here",
+                expected: format!("a built {}", plan.image),
+                found,
+            })?;
+        return Ok(Outcome::Acted(format!("built {}", plan.image)));
+    }
+    // The default image is a published reference, so an absent one is fetched
+    // rather than treated as a dead end. The pull failing is still a hard stop:
+    // a private, misspelled or unpublished reference must say so here, not as a
+    // container that cannot start.
+    runtime.pull(&plan.image).map_err(|found| Failure {
+        step: "image",
+        purpose: "the deployment runs this image, so it is fetched when absent and \
+                  a failed fetch stops the run here rather than at container start",
+        expected: format!("{} available locally or from its registry", plan.image),
+        found,
+    })?;
+    Ok(Outcome::Acted(format!("pulled {}", plan.image)))
 }
 
 /// Ensure the mounted credential directory exists, with owner-only access.

@@ -84,7 +84,10 @@ impl FakeRuntime {
         self.calls()
             .into_iter()
             .filter(|call| {
-                ["run:", "start:", "remove:", "build:"]
+                // `pull:` belongs here: it reaches the network and changes the
+                // local image store, so a converged run that pulls again is a
+                // no-action violation the idempotence test has to catch.
+                ["run:", "start:", "remove:", "build:", "pull:"]
                     .iter()
                     .any(|verb| call.starts_with(verb))
             })
@@ -175,6 +178,15 @@ impl ContainerRuntime for FakeRuntime {
     fn build(&self, image: &str, _context: &str) -> Result<(), String> {
         self.record(format!("build:{image}"));
         if let Some(error) = self.fault("build") {
+            return Err(error);
+        }
+        self.set(|state| state.image_present = true);
+        Ok(())
+    }
+
+    fn pull(&self, image: &str) -> Result<(), String> {
+        self.record(format!("pull:{image}"));
+        if let Some(error) = self.fault("pull") {
             return Err(error);
         }
         self.set(|state| state.image_present = true);
@@ -538,16 +550,72 @@ fn an_absent_image_is_built_from_the_given_context() {
 }
 
 #[test]
-fn an_absent_image_with_no_build_context_fails_rather_than_guessing() {
+fn an_absent_image_with_no_build_context_is_pulled_from_its_registry() {
     let root = tempfile::tempdir().expect("root");
     let runtime = FakeRuntime::empty();
     runtime.set(|state| state.image_present = false);
 
     let report = converge(&runtime, &plan(root.path()));
 
-    let failure = report.failure().expect("nothing to run");
+    // The default image is a published reference, so "absent locally" is an
+    // instruction to fetch it, not a dead end. Refusing here made the default
+    // path of the default command fail on any machine that had not built the
+    // image itself — which is every machine but a developer's own.
+    assert!(report.converged(), "{:?}", report.failure());
+    assert!(
+        runtime
+            .mutations()
+            .iter()
+            .any(|call| call == &format!("pull:{}", plan(root.path()).image)),
+        "{:?}",
+        runtime.mutations()
+    );
+}
+
+#[test]
+fn a_build_context_is_preferred_over_pulling_a_same_tagged_image() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::empty();
+    runtime.set(|state| state.image_present = false);
+    let mut plan = plan(root.path());
+    plan.build_context = Some(root.path().to_path_buf());
+
+    let report = converge(&runtime, &plan);
+
+    assert!(report.converged(), "{:?}", report.failure());
+    // Deploying a local tree is the reason `--build` exists. Pulling instead
+    // would run a registry image that merely shares the tag, so the command
+    // would silently deploy something other than what was asked for.
+    let mutations = runtime.mutations();
+    assert!(
+        mutations.iter().any(|call| call.starts_with("build:")),
+        "{mutations:?}"
+    );
+    assert!(
+        !mutations.iter().any(|call| call.starts_with("pull:")),
+        "{mutations:?}"
+    );
+}
+
+#[test]
+fn an_unpullable_image_fails_the_image_step_rather_than_container_start() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::empty();
+    runtime.set(|state| state.image_present = false);
+    runtime.fail("pull", "manifest unknown");
+
+    let report = converge(&runtime, &plan(root.path()));
+
+    // A misspelled, private or unpublished reference has to be named here. The
+    // same mistake surfacing as a container that will not start sends the
+    // operator to the wrong place entirely.
+    let failure = report.failure().expect("an unpullable image fails the run");
     assert_eq!(failure.step, "image");
-    assert!(failure.found.contains("no build context"), "{failure}");
+    assert!(failure.found.contains("manifest unknown"), "{failure}");
+    assert!(
+        failure.expected.contains(&plan(root.path()).image),
+        "the failure names the image it could not fetch: {failure}"
+    );
 }
 
 #[test]
