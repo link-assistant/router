@@ -231,6 +231,60 @@ fn a_token_recovered_from_one_store_is_rejected_by_a_deployment_with_another_sec
     );
 }
 
+/// The failure an unreachable data directory produces.
+fn unreadable() -> crate::storage::StorageError {
+    crate::storage::StorageError::Io(std::io::Error::other("the data directory is gone"))
+}
+
+/// A token store that fails every read, to prove a storage failure is reported
+/// rather than swallowed or panicked on.
+#[derive(Debug)]
+struct UnreadableStore;
+
+impl TokenStore for UnreadableStore {
+    fn list(&self) -> Result<Vec<crate::storage::TokenRecord>, crate::storage::StorageError> {
+        Err(unreadable())
+    }
+
+    fn get(
+        &self,
+        _id: &str,
+    ) -> Result<Option<crate::storage::TokenRecord>, crate::storage::StorageError> {
+        Err(unreadable())
+    }
+
+    fn put(
+        &self,
+        _record: crate::storage::TokenRecord,
+    ) -> Result<(), crate::storage::StorageError> {
+        Err(unreadable())
+    }
+
+    fn delete(&self, _id: &str) -> Result<bool, crate::storage::StorageError> {
+        Err(unreadable())
+    }
+}
+
+#[test]
+fn an_unreadable_store_is_reported_rather_than_mistaken_for_having_no_administrator() {
+    let store: Arc<dyn TokenStore> = Arc::new(UnreadableStore);
+    let manager = TokenManager::with_store(SECRET, Arc::clone(&store));
+
+    let error = recover(&manager, &store, 24, RECOVERED_ADMIN_LABEL, false)
+        .expect_err("an unreadable store fails recovery");
+
+    // Silently treating an unreadable store as "no administrators" would mint a
+    // token into a store that cannot hold it and report success.
+    assert!(
+        error.contains("could not read the token store"),
+        "the failure names what could not be done: {error}"
+    );
+    assert!(
+        error.contains("data directory is gone"),
+        "the storage layer's own words survive: {error}"
+    );
+}
+
 #[test]
 fn the_debug_rendering_of_a_recovery_redacts_the_credential() {
     let (manager, store, _data) = store();

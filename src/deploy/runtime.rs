@@ -419,6 +419,57 @@ mod tests {
         );
     }
 
+    /// Serve one canned HTTP response on an ephemeral port, then stop.
+    ///
+    /// The health probe is real HTTP against a real socket, so it is testable
+    /// without Docker — and worth testing, because "is this deployment ready"
+    /// must mean a `200` from `/api/health` rather than anything that answers.
+    fn serve_once(status_line: &'static str) -> u16 {
+        use std::io::{Read as _, Write as _};
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind");
+        let port = listener.local_addr().expect("address").port();
+        std::thread::spawn(move || {
+            if let Ok((mut stream, _)) = listener.accept() {
+                let mut scratch = [0_u8; 1024];
+                let _ = stream.read(&mut scratch);
+                let _ = stream.write_all(status_line.as_bytes());
+            }
+        });
+        port
+    }
+
+    #[test]
+    fn health_is_a_200_from_the_health_route_and_nothing_else() {
+        let runtime = Docker;
+
+        assert!(
+            runtime.health(serve_once("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")),
+            "a 200 is healthy"
+        );
+        // A listener that answers but not with success is not readiness: a
+        // container can be Up, bound, and still failing every request.
+        assert!(
+            !runtime.health(serve_once(
+                "HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n"
+            )),
+            "a 503 is not healthy"
+        );
+    }
+
+    #[test]
+    fn a_port_nobody_listens_on_is_not_healthy() {
+        // Bind and drop, so the port is almost certainly free and nothing is
+        // accepting: the probe must answer false rather than block or panic.
+        let port = std::net::TcpListener::bind("127.0.0.1:0")
+            .expect("bind")
+            .local_addr()
+            .expect("address")
+            .port();
+
+        assert!(!Docker.health(port));
+    }
+
     #[test]
     fn an_unusable_runtime_is_explained_by_its_actual_cause() {
         // Three problems, three remedies. Reporting them all as "Docker is
