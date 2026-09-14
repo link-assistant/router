@@ -187,6 +187,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.10.0] - 2026-09-14
+
+### Added
+- `router tokens recover-admin` mints a replacement administrative token from a token store this machine owns, so a deployment is never administratively unreachable to its own owner. Losing the once-printed admin token used to be unrecoverable — every verb in the `tokens` family authenticates with the admin credential, so the recovery path for that credential required it — and the standing advice was to destroy the deployment, discarding every issued client token and the whole request log to recover from having misplaced one string (issue #573).
+
+  The lost value itself is genuinely unrecoverable: the token is a JWT and the store keeps only its metadata. What recovery does instead is sign a new one, the same operation the server performs at first boot, against the same store and secret — so a deployment that is *already running* accepts the result with no restart. Verified end to end against a live server: the management surface answers `401` before recovery and `200` after, with nothing restarted in between.
+
+  Issued client tokens, provider configuration and the request log are untouched; a client token minted before recovery still authenticates afterwards. The recovery is visible in `tokens list` as `recovered-admin` for as long as the token exists, so it can be noticed after the fact without enabling any optional log. `--revoke-others` additionally retires every administrator that existed beforehand, for a credential believed to be in someone else's hands — and reports, when it is not passed, that the lost token is still live.
+
+  Gated on local ownership rather than on a credential: reading the store already implies the signing secret and therefore full control, so this grants no authority its caller lacks and only makes existing authority usable. For that reason it has no remote form at all — with another router selected it refuses and names the deployment it would have acted on, the same boundary `auth import` and `auth clear` draw. A token recovered against a different secret stays refused, so recovery is not a way into somebody else's router. A fresh deployment still prints its admin token exactly once on first start.
+
+### Added
+- `auth status` now reports *which store is real* for every subscription: `following` a vendor credential home, a `copy` taken at import time, `external` for a credential Router may read but not rotate, or `source-gone` when a followed home has been removed. A deployment and the vendor CLI beside it hold links in one rotating refresh chain, and whoever redeems a link invalidates it for every other holder — so an operator who cannot tell a followed credential from a copy has to infer which store the deployment is actually using, and the inference is wrong exactly when it matters (issue #574).
+- `auth import --follow` requires that the credential be followed rather than copied. Following is already what an import does whenever it can: it installs a reference to the vendor client's own credential file, so both processes advance one chain and a rotation by either is visible to the other with no re-import and no restart. The flag turns that preference into a requirement — where a reference is impossible (the credential lives only in the platform keychain, names no writable source, or its directory cannot be replaced atomically) the import refuses at preflight and names the obstacle, instead of silently installing a copy that will drift into `invalid_grant`. `auth import --snapshot` asks for that one-time copy deliberately, and an import that falls back to one now says so and explains that it will need re-importing.
+
+### Fixed
+- A followed credential home that has been removed is reported as `source-gone`, with a warning naming the missing path, rather than surfacing as a path-bearing internal read error. The deployment holds no usable credential for that provider in this state — it does not fall back to a stale copy — and saying so is the difference between a deployment that looks healthy and one an operator can fix.
+
+### Added
+- `router deploy` brings a working containerised Router up locally, so end-to-end testing needs no server and no hand-written harness. Router could serve but could not stand itself up: the repository held a `Dockerfile` and no command that used it, so every deployment — even a purely local one on a developer's own machine — had to be written outside Router, by each user, again. The immediate cost was testability: exercising `with`, token scoping or the catalog end to end needed either a paid subscription and a real server, or scaffolding built before any of the actual work could start (issue #570).
+
+  It converges rather than runs. Each step first *checks* whether the desired state already holds, reports what it found, and only then acts — so re-running is cheap and safe, and a converged deployment prints `already` for every step and performs no action at all. That property is what makes it usable as a test fixture: a test can call it unconditionally. Verified against a real Docker daemon: a first run produces a container answering `/api/health`, and a second reports every step converged with the container id, image digest and token count unchanged.
+
+  The steps are Router's own lifecycle, each present because its absence produced a real failure: a stray instance already publishing the port (two proxies send traffic to the old version invisibly), an immutable image reference (a moving tag lets the CLI and the container disagree about the API contract while both look correct), the mounted credential and data directories (separate, because the credential mount is read-only and the request log cannot live on it), the container, readiness polled over HTTP (a container can be `Up` and not answer), and a client token so clients never see the subscription credential.
+
+  `router deploy --status` reports the current state without changing anything, proven by comparing the container identity across the call. `router deploy --down` removes what it created and nothing else, and refuses without `--yes` because the data directory holds issued tokens and the request log. A container stopped out of band is *restored* rather than recreated, so the store it holds survives.
+
+  A deployment with no subscription credentials still converges: the steps needing one skip with a named reason rather than failing. That is not a convenience — a withdrawn subscription once made a deployment impossible to update at all — and a skip is never silent, because a step that quietly does nothing is indistinguishable from one that passed.
+
+- Deployment diagnostics an operator can act on (issue #572). A failed step reports the step name, what it expected, what it found, and the *purpose* of the check — one sentence on what the check protects, for whoever did not write it — instead of a stack trace. Tests assert on that shape rather than on a message. Timing is reported per step and in total, because "deployment is slow" is otherwise unactionable. No secret reaches the output: the signing secret travels in the container's environment and only its *name* is ever a command-line argument, so it cannot appear in `ps` or a shell history, and the minted client token is held by the deployment rather than echoed — asserted on the captured bytes.
+
+### Changed
+- The live test tier gained a visible skip for a non-credential prerequisite, so `router deploy`'s Docker-backed tests announce themselves as skipped when no container runtime or image is available rather than passing quietly (`ROUTER_DEPLOY_TEST_IMAGE` names an already-built image; the Dockerfile's release build is far too slow to run inside a test).
+
 ## [1.9.0] - 2026-09-13
 
 ### Fixed
