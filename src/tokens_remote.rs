@@ -20,6 +20,14 @@ use crate::managed_server::ResolvedServer;
 
 /// Run one token operation against `server`.
 pub async fn run(server: &ResolvedServer, op: &TokenOp) -> ExitCode {
+    // Recovery is proof of local ownership of a token store, so it has no
+    // remote form at all — not even a refusing route. Answered before a call is
+    // built, because every other verb here maps to an admin endpoint and this
+    // one deliberately maps to none (issue #573).
+    if matches!(op, TokenOp::RecoverAdmin { .. }) {
+        eprintln!("error: {}", crate::admin_recovery::refusal(server));
+        return ExitCode::from(2);
+    }
     match execute(server, op).await {
         Ok(code) => code,
         Err(error) => {
@@ -118,6 +126,14 @@ pub fn call_for(op: &TokenOp) -> Call {
             ),
             body: Some(serde_json::json!({ "id": id })),
         },
+        // Recovery has no remote form: it proves local ownership of a store,
+        // which is not a thing an HTTP request can demonstrate. `run` refuses
+        // before reaching this, and no route exists to name here (issue #573).
+        TokenOp::RecoverAdmin { .. } => Call {
+            method: "POST",
+            path: "",
+            body: None,
+        },
     }
 }
 
@@ -148,6 +164,8 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
             Ok(ExitCode::SUCCESS)
         }
         TokenOp::Show { id, .. } => Ok(show_one(&records_in(&answer), id)),
+        // Unreachable: `run` returns for `RecoverAdmin` before `execute`.
+        TokenOp::RecoverAdmin { .. } => Err("recovery has no remote form".to_string()),
     }
 }
 

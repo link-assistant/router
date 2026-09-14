@@ -115,6 +115,46 @@ pub enum TokenOp {
         #[command(flatten)]
         target: AuthTarget,
     },
+    /// Mint a replacement administrative token from the local token store.
+    ///
+    /// The recovery path for a lost admin token. Every other verb in this
+    /// family authenticates with the admin credential, so losing it left an
+    /// operator who still owned the store, the volume and the machine with no
+    /// way back in — and the standing advice was to destroy the deployment and
+    /// discard every issued client token and the whole request log to recover
+    /// from having misplaced one string (issue #573).
+    ///
+    /// The admin token is a signed JWT and the store keeps only its metadata,
+    /// so the lost value cannot be re-read. What *can* be done is to sign a new
+    /// one: this reads `TOKEN_SECRET` and the store directly, exactly as the
+    /// server does at boot, and mints an admin token the running deployment
+    /// already accepts — no restart, and issued client tokens, provider
+    /// configuration and the request log are untouched.
+    ///
+    /// Gated on local ownership rather than on a credential. Reading the store
+    /// is already equivalent to full control of the deployment, so this grants
+    /// no authority its caller lacks; it only makes existing authority usable.
+    /// For that reason it is never available over HTTP: with another router
+    /// selected it refuses and names the machine it would have acted on, the
+    /// same boundary `auth import` and `auth clear` draw.
+    #[command(name = "recover-admin")]
+    RecoverAdmin {
+        /// Revoke every other admin token once the replacement is minted.
+        ///
+        /// For a credential believed to be in someone else's hands: recovery
+        /// alone adds an administrator without removing the lost one.
+        #[arg(long)]
+        revoke_others: bool,
+        #[arg(long, default_value_t = 24 * 365)]
+        ttl_hours: i64,
+        #[arg(long, default_value = "recovered-admin")]
+        label: String,
+        /// Emit the stable JSON envelope instead of human-readable output.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]

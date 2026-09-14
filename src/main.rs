@@ -760,8 +760,10 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
     // taught operators to keep a deployment's signing secret exported in their
     // shell (issue #308). Issuing and rotating still sign, so they still need
     // it — and `TokenManager` refuses the stand-in at the point of use anyway.
-    if matches!(op, TokenOp::Issue { .. } | TokenOp::Rotate { .. })
-        && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
+    if matches!(
+        op,
+        TokenOp::Issue { .. } | TokenOp::Rotate { .. } | TokenOp::RecoverAdmin { .. }
+    ) && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
     {
         eprintln!("error: {error}");
         return ExitCode::from(2);
@@ -872,6 +874,13 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        TokenOp::RecoverAdmin {
+            revoke_others,
+            ttl_hours,
+            label,
+            json,
+            ..
+        } => run_recover_admin(&mgr, *revoke_others, *ttl_hours, label, *json),
         TokenOp::Show { id, .. } => match mgr.list_tokens() {
             Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
                 || {
@@ -889,6 +898,70 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             }
         },
     }
+}
+
+/// Mint a replacement administrator for a store this machine owns (issue #573).
+fn run_recover_admin(
+    manager: &TokenManager,
+    revoke_others: bool,
+    ttl_hours: i64,
+    label: &str,
+    json: bool,
+) -> ExitCode {
+    let store = manager.store();
+    let recovery = match link_assistant_router::admin_recovery::recover(
+        manager,
+        &store,
+        ttl_hours,
+        label,
+        revoke_others,
+    ) {
+        Ok(recovery) => recovery,
+        Err(error) => {
+            if json {
+                println!(
+                    "{}",
+                    serde_json::json!({ "recovered": false, "error": error })
+                );
+            } else {
+                eprintln!("error: {error}");
+            }
+            return ExitCode::from(1);
+        }
+    };
+    if json {
+        println!(
+            "{}",
+            serde_json::json!({
+                "recovered": true,
+                "token": recovery.token,
+                "token_id": recovery.token_id,
+                "revoked": recovery.revoked,
+                "retained_admins": recovery.retained_admins,
+            })
+        );
+        return ExitCode::SUCCESS;
+    }
+    // Shown once, exactly like the bootstrap administrator: the store keeps
+    // metadata, so this value is not printable a second time either.
+    println!("─────────────────────────────────────────────────────────────");
+    println!("Admin token (shown once, store it now): {}", recovery.token);
+    println!("Use it as: Authorization: Bearer <token>");
+    println!("Recorded in the token store as id {}", recovery.token_id);
+    println!("─────────────────────────────────────────────────────────────");
+    for id in &recovery.revoked {
+        println!("revoked previous admin token {id}");
+    }
+    if recovery.retained_admins > 0 {
+        // The lost credential is still live. Said plainly, because recovery on
+        // its own only *adds* an administrator.
+        println!(
+            "note: {} other admin token(s) remain valid, including the one you lost; \
+             rerun with --revoke-others to retire them",
+            recovery.retained_admins
+        );
+    }
+    ExitCode::SUCCESS
 }
 
 fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {

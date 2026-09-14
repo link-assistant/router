@@ -11,6 +11,7 @@ pub mod admin;
 pub mod admin_api;
 pub mod admin_auth;
 pub mod admin_config;
+pub mod admin_recovery;
 pub mod admin_ui;
 pub mod anthropic_bridge;
 pub mod anthropic_stream;
@@ -145,6 +146,8 @@ pub mod zai_coding_plan;
 
 mod anthropic_nonstream;
 
+#[cfg(test)]
+mod admin_recovery_tests;
 #[cfg(test)]
 mod anthropic_bridge_tests;
 #[cfg(test)]
