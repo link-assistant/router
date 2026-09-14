@@ -92,11 +92,11 @@ fn usage_cli_accepts_public_provider_names_and_json() {
         ("qwen", crate::subscription_usage::UsageProvider::Qwen),
     ] {
         let cli = Cli::try_parse_from(["router", "usage", name, "--json"]).unwrap();
-        let Some(Command::Usage { provider, json, .. }) = cli.command else {
+        let Some(Command::Usage(args)) = cli.command else {
             panic!("expected usage command for {name}");
         };
-        assert_eq!(provider, Some(expected));
-        assert!(json);
+        assert_eq!(args.provider, Some(expected));
+        assert!(args.json);
     }
 }
 
