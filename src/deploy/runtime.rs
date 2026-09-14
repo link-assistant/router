@@ -120,6 +120,48 @@ fn compact(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Turn a failed `docker info` into an instruction an operator can act on.
+///
+/// Three different problems arrive as one failure — no binary, no permission, no
+/// daemon — and each has a different remedy, so they are distinguished rather
+/// than all reported as "Docker is broken".
+fn explain_unavailable(error: String) -> String {
+    let lowered = error.to_ascii_lowercase();
+    if lowered.contains("permission denied") {
+        "permission denied while connecting to Docker; add this user to the Docker group"
+            .to_string()
+    } else if lowered.contains("not installed") {
+        error
+    } else {
+        format!("the Docker daemon is not running or unreachable: {error}")
+    }
+}
+
+/// Read a container's state out of `docker inspect`'s answer.
+///
+/// A missing container is [`ContainerState::Absent`] rather than an error: it is
+/// the ordinary starting state of a first deployment, and treating it as a
+/// failure meant the container that should then have been created never was
+/// (issue #333).
+fn interpret_state(answer: Result<String, String>) -> Result<ContainerState, String> {
+    match answer {
+        Ok(rendered) if rendered.trim() == "running" => Ok(ContainerState::Running),
+        Ok(_) => Ok(ContainerState::Stopped),
+        Err(error) if is_absent(&error) => Ok(ContainerState::Absent),
+        Err(error) => Err(error),
+    }
+}
+
+/// Container names from a `docker ps --format {{.Names}}` listing.
+fn parse_names(rendered: &str) -> Vec<String> {
+    rendered
+        .lines()
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
 /// The `docker run` argument list for `spec`.
 ///
 /// Separated from spawning the process because this is where the properties that
@@ -158,31 +200,16 @@ fn run_arguments(spec: &RunSpec) -> Vec<String> {
 
 impl ContainerRuntime for Docker {
     fn available(&self) -> Result<String, String> {
-        Self::docker(&["info", "--format", "{{.ServerVersion}}"]).map_err(|error| {
-            let lowered = error.to_ascii_lowercase();
-            if lowered.contains("permission denied") {
-                "permission denied while connecting to Docker; add this user to the Docker group"
-                    .to_string()
-            } else if lowered.contains("not installed") {
-                error
-            } else {
-                format!("the Docker daemon is not running or unreachable: {error}")
-            }
-        })
+        Self::docker(&["info", "--format", "{{.ServerVersion}}"]).map_err(explain_unavailable)
     }
 
     fn state(&self, name: &str) -> Result<ContainerState, String> {
-        match Self::docker(&[
+        interpret_state(Self::docker(&[
             "inspect",
             "--format",
             "{{if .State.Running}}running{{else}}stopped{{end}}",
             name,
-        ]) {
-            Ok(rendered) if rendered == "running" => Ok(ContainerState::Running),
-            Ok(_) => Ok(ContainerState::Stopped),
-            Err(error) if is_absent(&error) => Ok(ContainerState::Absent),
-            Err(error) => Err(error),
-        }
+        ]))
     }
 
     fn run(&self, spec: &RunSpec) -> Result<(), String> {
@@ -253,12 +280,7 @@ impl ContainerRuntime for Docker {
             "--format",
             "{{.Names}}",
         ])?;
-        Ok(rendered
-            .lines()
-            .map(str::trim)
-            .filter(|name| !name.is_empty())
-            .map(str::to_string)
-            .collect())
+        Ok(parse_names(&rendered))
     }
 
     fn exec(&self, name: &str, arguments: &[&str]) -> Result<String, String> {
@@ -395,6 +417,66 @@ mod tests {
             Some("run"),
             "{arguments:?}"
         );
+    }
+
+    #[test]
+    fn an_unusable_runtime_is_explained_by_its_actual_cause() {
+        // Three problems, three remedies. Reporting them all as "Docker is
+        // broken" would leave an operator guessing which one they have.
+        assert!(
+            explain_unavailable("Got permission denied while trying to connect".into())
+                .contains("Docker group")
+        );
+        assert_eq!(
+            explain_unavailable("Docker is not installed".into()),
+            "Docker is not installed",
+            "the precise message is kept rather than wrapped"
+        );
+        let down = explain_unavailable("Cannot connect to the Docker daemon".into());
+        assert!(down.contains("not running or unreachable"), "{down}");
+        assert!(
+            down.contains("Cannot connect"),
+            "the daemon's own words survive: {down}"
+        );
+    }
+
+    #[test]
+    fn a_missing_container_reads_as_absent_rather_than_as_an_error() {
+        // The ordinary starting state of a first deployment. Reading it as a
+        // failure meant the container that should then have been created never
+        // was (issue #333).
+        assert_eq!(
+            interpret_state(Err("Error: No such object: router-deploy".into())),
+            Ok(ContainerState::Absent)
+        );
+        assert_eq!(
+            interpret_state(Ok("running".into())),
+            Ok(ContainerState::Running)
+        );
+        assert_eq!(
+            interpret_state(Ok("stopped".into())),
+            Ok(ContainerState::Stopped)
+        );
+        // Trailing whitespace from the format string must not read as stopped.
+        assert_eq!(
+            interpret_state(Ok("running\n".into())),
+            Ok(ContainerState::Running)
+        );
+        // A genuinely broken daemon stays an error: it is not an absent
+        // container, and creating one would not fix it.
+        assert!(interpret_state(Err("daemon went away".into())).is_err());
+    }
+
+    #[test]
+    fn a_listing_yields_one_name_per_line_and_ignores_blanks() {
+        assert_eq!(
+            parse_names("router-deploy\nsomething-else\n"),
+            vec!["router-deploy".to_string(), "something-else".to_string()]
+        );
+        // An empty listing means nothing else holds the port, which must not
+        // read as one container with an empty name.
+        assert!(parse_names("").is_empty());
+        assert!(parse_names("\n  \n").is_empty());
     }
 
     #[test]
