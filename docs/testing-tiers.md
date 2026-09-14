@@ -50,6 +50,28 @@ ROUTER_LIVE_ZAI_API_KEY=… cargo test --test subscription_usage_live_test -- --
 visible in `ps` and in shell history. `providers add --api-key-stdin` exists for
 the same reason (issue #314).
 
+### Tier 2 tests that need a container runtime
+
+`router deploy` is tier 2 — it speaks to a container runtime rather than to a
+vendor, and it spends nothing — but it cannot run where Docker is absent. Those
+tests name an already-built image rather than building one, because the
+Dockerfile's `cargo build --release` takes far too long to run inside a test:
+
+```bash
+docker build -t router:local .            # once
+ROUTER_DEPLOY_TEST_IMAGE=router:local cargo test --test deploy_docker_test -- --test-threads=1
+```
+
+`--test-threads=1` because every test in that file drives the one deployment
+container, so they cannot run concurrently.
+
+Without a runtime or an image the tests skip, and say so through the same
+`tiers::unavailable` path as tier 4 — a container-less checkout must not see red,
+but a test that silently no-ops reports success for work it never did. The
+converge properties themselves (a second run performs no action, a stopped
+container is restored, `--status` changes nothing) are pinned in
+`src/deploy_tests.rs` against a fake runtime, so they run everywhere, always.
+
 ## Skips are visible, and counted
 
 A missing credential is a skip rather than an error: a contributor without a

@@ -467,75 +467,6 @@ async fn fresh_import_catalog_failure_spends_no_refresh_token_or_transaction() {
     }
 }
 
-#[test]
-fn keychain_only_source_is_refused_before_validation() {
-    let root = tempfile::tempdir().expect("root");
-    let destination = SubscriptionReader::new(SubscriptionProvider::Claude, root.path());
-    let error = prepare_external_source(
-        SubscriptionProvider::Claude,
-        link_assistant_router::platform_keychain::Origin::Keychain,
-        None,
-        &destination,
-    )
-    .expect_err("Keychain-only import");
-    assert!(error.contains("platform keychain"), "{error}");
-    assert!(error.contains("writable credential file"), "{error}");
-}
-
-#[cfg(unix)]
-#[test]
-fn aliased_source_and_destination_file_is_refused() {
-    let root = tempfile::tempdir().expect("root");
-    let source_home = root.path().join("source");
-    let destination_home = root.path().join("destination");
-    std::fs::create_dir_all(&source_home).expect("source home");
-    std::fs::create_dir_all(&destination_home).expect("destination home");
-    let source = source_home.join("auth.json");
-    std::fs::write(&source, candidate_document(SubscriptionProvider::Codex))
-        .expect("source credential");
-    std::os::unix::fs::symlink(&source, destination_home.join("auth.json"))
-        .expect("destination alias");
-    let destination = SubscriptionReader::new(SubscriptionProvider::Codex, destination_home);
-
-    let error = prepare_external_source(
-        SubscriptionProvider::Codex,
-        link_assistant_router::platform_keychain::Origin::File,
-        Some(&source),
-        &destination,
-    )
-    .expect_err("source/destination alias");
-    assert!(error.contains("also a Router destination"), "{error}");
-}
-
-#[cfg(unix)]
-#[test]
-fn source_in_a_nonwritable_directory_is_refused_before_validation() {
-    use std::os::unix::fs::PermissionsExt as _;
-
-    let root = tempfile::tempdir().expect("root");
-    let source_home = root.path().join("source");
-    let destination_home = root.path().join("destination");
-    std::fs::create_dir_all(&source_home).expect("source home");
-    std::fs::create_dir_all(&destination_home).expect("destination home");
-    let source = source_home.join("auth.json");
-    std::fs::write(&source, candidate_document(SubscriptionProvider::Codex))
-        .expect("source credential");
-    std::fs::set_permissions(&source_home, std::fs::Permissions::from_mode(0o500))
-        .expect("make source directory nonwritable");
-    let destination = SubscriptionReader::new(SubscriptionProvider::Codex, destination_home);
-
-    let result = prepare_external_source(
-        SubscriptionProvider::Codex,
-        link_assistant_router::platform_keychain::Origin::File,
-        Some(&source),
-        &destination,
-    );
-    std::fs::set_permissions(&source_home, std::fs::Permissions::from_mode(0o700))
-        .expect("restore source permissions");
-    let error = result.expect_err("nonwritable external source");
-    assert!(error.contains("cannot be replaced atomically"), "{error}");
-}
-
 /// A live access token paired with an already-spent refresh link is unsafe:
 /// catalog acceptance of that access token cannot authorize replacement.
 #[tokio::test]
@@ -956,3 +887,6 @@ include!("auth_import_adoption_tests.rs");
 
 #[path = "auth_import_rejection_tests.rs"]
 mod rejection_tests;
+
+#[path = "auth_import_source_tests.rs"]
+mod source_tests;

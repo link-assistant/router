@@ -83,6 +83,21 @@ pub fn protected(name: &str) -> Option<String> {
 ///
 /// `cargo test` captures stderr for passing tests, so the notice is surfaced by
 /// `--nocapture`; the counter above is what a harness reads without it.
+/// Announce a skip for a prerequisite that is not a credential.
+///
+/// A container runtime is the case this exists for: `router deploy` cannot be
+/// exercised without one, and a contributor without Docker must not see red —
+/// but a test that silently no-ops reports success for work it never did, which
+/// is the failure the visible-skip rule prevents (issue #567).
+pub fn unavailable(tier: Tier, test: &str, reason: &str) {
+    SKIPPED.fetch_add(1, Ordering::Relaxed);
+    eprintln!(
+        "SKIP [{tier}] {test}: {reason}; this property is not proven by this run. \
+         See docs/testing-tiers.md.",
+        tier = tier.name(),
+    );
+}
+
 #[must_use]
 pub fn live_credential(test: &str, variable: &str) -> Option<String> {
     if let Some(value) = protected(variable) {

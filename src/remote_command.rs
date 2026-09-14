@@ -72,7 +72,8 @@ pub const fn target_of(command: &Command) -> Option<&AuthTarget> {
         Command::Accounts { op } => Some(op.target()),
         Command::Providers { op } => Some(op.target()),
         Command::Logs { op } => Some(op.target()),
-        Command::Doctor { target } | Command::Usage { target, .. } => Some(target),
+        Command::Doctor { target } => Some(target),
+        Command::Usage(args) => Some(&args.target),
         Command::Tls { op } => Some(op.target()),
         _ => None,
     }

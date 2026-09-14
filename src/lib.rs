@@ -11,6 +11,7 @@ pub mod admin;
 pub mod admin_api;
 pub mod admin_auth;
 pub mod admin_config;
+pub mod admin_recovery;
 pub mod admin_ui;
 pub mod anthropic_bridge;
 pub mod anthropic_stream;
@@ -52,8 +53,10 @@ pub mod conversations;
 pub mod crater;
 pub mod credential_acceptance;
 pub mod credential_recovery_store;
+pub mod credential_source;
 pub mod credential_status;
 pub mod credential_store;
+pub mod deploy;
 pub mod doctor;
 pub mod durable_file;
 mod encoded_request_body;
@@ -146,6 +149,8 @@ pub mod zai_coding_plan;
 mod anthropic_nonstream;
 
 #[cfg(test)]
+mod admin_recovery_tests;
+#[cfg(test)]
 mod anthropic_bridge_tests;
 #[cfg(test)]
 mod bridge_request_tests;
@@ -155,6 +160,10 @@ mod client_policy_tests;
 mod codex_loopback_bridge_tests;
 #[cfg(test)]
 mod codex_remote_control_tests;
+#[cfg(test)]
+mod credential_source_tests;
+#[cfg(test)]
+mod deploy_tests;
 #[cfg(test)]
 mod proxy_tests;
 #[cfg(test)]

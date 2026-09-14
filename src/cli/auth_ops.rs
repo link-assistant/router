@@ -108,6 +108,32 @@ pub enum AuthOp {
         /// compatibility; this flag never bypasses positive validation.
         #[arg(long = "safe-refresh-chain-import-v1")]
         force: bool,
+        /// Require that the credential be *followed* rather than copied.
+        ///
+        /// A refresh token is a rotating series, not a value: whoever redeems a
+        /// link invalidates it for every other holder. So a deployment holding
+        /// its own copy and the vendor CLI beside it are two refreshers of one
+        /// chain, and whichever loses the race is left with `invalid_grant` —
+        /// which looks exactly like a revocation from the losing side (issue
+        /// #574). Following installs a reference to the vendor client's own
+        /// credential file instead, so both advance one chain: a rotation by
+        /// either is seen by the other, with no re-import and no restart.
+        ///
+        /// This is already what an import does when it can. The flag makes it a
+        /// requirement: if a reference cannot be established — the credential
+        /// lives only in the platform keychain, names no writable source, or its
+        /// directory cannot be written atomically — the import refuses and says
+        /// which, rather than silently falling back to a copy that will drift.
+        #[arg(long, conflicts_with = "snapshot")]
+        follow: bool,
+        /// Take a one-time copy instead of following the source.
+        ///
+        /// The historical behaviour for callers that want a credential frozen at
+        /// import time, and a deployment that must not write to the source's
+        /// directory at all. A copy drifts: the vendor client will rotate past
+        /// it, so this is the shape that eventually needs a re-import.
+        #[arg(long)]
+        snapshot: bool,
         /// Emit one stable JSON result envelope instead of human-readable
         /// progress. Operational failures are represented in the envelope and
         /// still produce a non-zero exit status.

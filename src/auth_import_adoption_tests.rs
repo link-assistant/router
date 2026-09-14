@@ -128,6 +128,7 @@ async fn rejected_conditional_candidate_has_no_bypass() {
             if_absent: true,
             capability_asserted: false,
             router_owned_candidate: false,
+            sharing: CredentialSharing::PreferFollow,
         },
     )
     .await
@@ -160,6 +161,7 @@ async fn rejected_candidate_without_force_reports_existing_destination_as_presen
             if_absent: true,
             capability_asserted: false,
             router_owned_candidate: false,
+            sharing: CredentialSharing::PreferFollow,
         },
     )
     .await

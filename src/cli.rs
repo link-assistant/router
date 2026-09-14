@@ -29,6 +29,7 @@ use crate::subscription::SubscriptionProvider;
 mod auth_ops;
 mod client_ops;
 mod configure;
+mod deploy_args;
 mod store_ops;
 mod targets;
 mod value_parsers;
@@ -37,6 +38,7 @@ mod with;
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
 pub use self::client_ops::ClientOp;
 pub use self::configure::ConfigureArgs;
+pub use self::deploy_args::{DeployArgs, UsageArgs};
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
@@ -724,16 +726,14 @@ pub enum Command {
         op: AuthOp,
     },
     /// Show remaining limits for subscriptions available to a client token.
-    Usage {
-        /// Public subscription provider name.
-        #[arg(value_enum)]
-        provider: Option<crate::subscription_usage::UsageProvider>,
-        /// Emit the stable machine-readable Router response.
-        #[arg(long)]
-        json: bool,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
+    Usage(UsageArgs),
+    /// Bring a containerised Router up locally, ready for `router with`.
+    ///
+    /// Converges rather than runs: each step first checks whether the desired
+    /// state already holds, reports what it found, and only then acts, so
+    /// re-running is cheap and safe and a converged deployment changes nothing
+    /// (issue #570). Acts on the machine it runs on.
+    Deploy(DeployArgs),
     /// Print environment + config diagnostics.
     ///
     /// Reports on the machine it runs on, so it stays local: the files, config

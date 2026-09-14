@@ -46,6 +46,27 @@ struct ImportPolicy {
     /// whose refresh chain may be advanced during recovery. Fresh imports keep
     /// this false because the source remains owned by the vendor client.
     router_owned_candidate: bool,
+    /// Whether the credential is followed, copied, or followed-or-refused.
+    sharing: CredentialSharing,
+}
+
+/// How the imported credential relates to the vendor client's own store.
+///
+/// One three-state choice rather than two flags, so "follow *and* snapshot" —
+/// which clap already rejects at the command line — cannot be constructed here
+/// either (issue #574).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+enum CredentialSharing {
+    /// Follow the vendor's file where possible; copy where it is not, saying so.
+    ///
+    /// The historical default: following keeps one refresh chain with one
+    /// refresher, and a copy still beats refusing to provision at all.
+    #[default]
+    PreferFollow,
+    /// Follow or refuse. A copy that will drift is not an acceptable outcome.
+    RequireFollow,
+    /// Copy deliberately, for a caller that wants the credential frozen.
+    Snapshot,
 }
 
 /// Adopt an existing vendor login, when this invocation asked to.
@@ -65,11 +86,20 @@ pub async fn run_import(
     }
     let policy = match op {
         AuthOp::Import {
-            if_absent, force, ..
+            if_absent,
+            force,
+            follow,
+            snapshot,
+            ..
         } => ImportPolicy {
             if_absent: *if_absent,
             capability_asserted: *force,
             router_owned_candidate: false,
+            sharing: match (*follow, *snapshot) {
+                (true, _) => CredentialSharing::RequireFollow,
+                (_, true) => CredentialSharing::Snapshot,
+                _ => CredentialSharing::PreferFollow,
+            },
         },
         _ => ImportPolicy::default(),
     };
@@ -492,16 +522,31 @@ async fn import_provider_with_paths(
             )
         }
     };
-    let external_source = if policy.router_owned_candidate {
-        None
-    } else {
-        Some(prepare_external_source(
-            provider,
-            origin,
-            path.as_deref(),
-            &destination,
-        )?)
-    };
+    // Following is the default and always was: a reference keeps one refresh
+    // chain with one refresher, so the deployment and the vendor client cannot
+    // spend each other's tokens. What `--follow` adds is a *requirement* — the
+    // fallback to a drifting copy becomes a refusal that names the obstacle —
+    // and `--snapshot` asks for that copy on purpose (issue #574).
+    let external_source =
+        if policy.router_owned_candidate || policy.sharing == CredentialSharing::Snapshot {
+            None
+        } else {
+            match prepare_external_source(provider, origin, path.as_deref(), &destination) {
+                Ok(source) => Some(source),
+                // Without `--follow` an unreferenceable source still imports as a
+                // copy, exactly as before; the operator is told it will drift.
+                Err(failure) if policy.sharing != CredentialSharing::RequireFollow => {
+                    eprintln!(
+                        "warning: {provider} is imported as a copy rather than followed: {}. \
+                     The vendor client will rotate past this copy, and it will then need \
+                     re-importing; `--follow` refuses instead of copying.",
+                        failure.error
+                    );
+                    None
+                }
+                Err(failure) => return Err(failure),
+            }
+        };
 
     // A fresh import validates only the current access token. Redeeming its
     // refresh token would invalidate the vendor client's copy before Router

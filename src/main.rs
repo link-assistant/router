@@ -19,8 +19,12 @@ use std::time::Duration;
 mod auth_cli;
 mod auth_import;
 mod bin_doctor;
+#[path = "deploy_cli.rs"]
+mod deploy_cli;
 #[path = "logs_cli.rs"]
 mod logs_cli;
+#[path = "recover_admin_cli.rs"]
+mod recover_admin_cli;
 mod shutdown;
 
 use axum::middleware::from_fn_with_state;
@@ -177,7 +181,7 @@ async fn run() -> ExitCode {
             )
             .await
         }
-        Some(Command::Usage { provider, json, .. }) => {
+        Some(Command::Usage(args)) => {
             let token = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
                 .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
                 .ok();
@@ -185,11 +189,12 @@ async fn run() -> ExitCode {
             link_assistant_router::subscription_usage_cli::run(
                 &base_url,
                 token.as_deref(),
-                *provider,
-                *json,
+                args.provider,
+                args.json,
             )
             .await
         }
+        Some(Command::Deploy(args)) => deploy_cli::run(&config, args),
         Some(Command::Doctor { .. }) => bin_doctor::run_doctor(&config).await,
         Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
         Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
@@ -708,9 +713,13 @@ async fn run_remote_command(
         Command::Providers { op } => {
             link_assistant_router::providers_cli::run_remote(server, op).await
         }
-        Command::Usage { provider, json, .. } => {
-            link_assistant_router::subscription_usage_cli::run_selected(server, *provider, *json)
-                .await
+        Command::Usage(args) => {
+            link_assistant_router::subscription_usage_cli::run_selected(
+                server,
+                args.provider,
+                args.json,
+            )
+            .await
         }
         // The request log is written to the deployment's own disk and no
         // endpoint serves it back, so there is nothing to ask for. Saying that
@@ -760,8 +769,10 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
     // taught operators to keep a deployment's signing secret exported in their
     // shell (issue #308). Issuing and rotating still sign, so they still need
     // it — and `TokenManager` refuses the stand-in at the point of use anyway.
-    if matches!(op, TokenOp::Issue { .. } | TokenOp::Rotate { .. })
-        && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
+    if matches!(
+        op,
+        TokenOp::Issue { .. } | TokenOp::Rotate { .. } | TokenOp::RecoverAdmin { .. }
+    ) && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
     {
         eprintln!("error: {error}");
         return ExitCode::from(2);
@@ -872,6 +883,13 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 ExitCode::from(1)
             }
         },
+        TokenOp::RecoverAdmin {
+            revoke_others,
+            ttl_hours,
+            label,
+            json,
+            ..
+        } => recover_admin_cli::run(&mgr, *revoke_others, *ttl_hours, label, *json),
         TokenOp::Show { id, .. } => match mgr.list_tokens() {
             Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
                 || {
