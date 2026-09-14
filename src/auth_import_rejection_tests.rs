@@ -17,6 +17,7 @@ async fn conditional_import_refuses_an_unverified_candidate() {
             if_absent: true,
             capability_asserted: false,
             router_owned_candidate: false,
+            sharing: CredentialSharing::PreferFollow,
         },
     )
     .await
@@ -43,6 +44,7 @@ async fn capability_assertion_cannot_install_a_rejected_candidate() {
             if_absent: true,
             capability_asserted: true,
             router_owned_candidate: false,
+            sharing: CredentialSharing::PreferFollow,
         },
     )
     .await
@@ -71,6 +73,7 @@ async fn ordinary_import_preserves_the_destination_when_candidate_is_rejected() 
             if_absent: false,
             capability_asserted: false,
             router_owned_candidate: false,
+            sharing: CredentialSharing::PreferFollow,
         },
     )
     .await
@@ -110,6 +113,7 @@ async fn rejected_and_unverified_candidates_never_change_any_provider_destinatio
                         if_absent,
                         capability_asserted: false,
                         router_owned_candidate: false,
+                        sharing: CredentialSharing::PreferFollow,
                     },
                 )
                 .await;

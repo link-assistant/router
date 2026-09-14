@@ -53,6 +53,7 @@ pub mod conversations;
 pub mod crater;
 pub mod credential_acceptance;
 pub mod credential_recovery_store;
+pub mod credential_source;
 pub mod credential_status;
 pub mod credential_store;
 pub mod doctor;
@@ -158,6 +159,8 @@ mod client_policy_tests;
 mod codex_loopback_bridge_tests;
 #[cfg(test)]
 mod codex_remote_control_tests;
+#[cfg(test)]
+mod credential_source_tests;
 #[cfg(test)]
 mod proxy_tests;
 #[cfg(test)]

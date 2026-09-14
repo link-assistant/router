@@ -7,6 +7,10 @@ use link_assistant_router::config::Config;
 use link_assistant_router::login::{LoginManager, LoginStatus};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 
+#[path = "auth_cli_status.rs"]
+mod status_report;
+use status_report::status;
+
 pub async fn run(config: &Config, op: &AuthOp, names_local_state: bool) -> ExitCode {
     // Withdrawal is local by construction: it removes files this machine holds,
     // and there is no remote verb for it. Handled before the server dispatch so
@@ -818,68 +822,6 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
             eprintln!("error: {error}");
             ExitCode::from(1)
         }
-    }
-}
-
-/// Report each provider credential's state, verified against the vendor.
-///
-/// The verdict used to come entirely from the stored `exp` claim, so a
-/// credential the vendor had already invalidated printed `usable` while every
-/// request through it returned `401` (issue #205). A local timestamp cannot
-/// answer this question: only the vendor can. Each credential is therefore
-/// probed, and the answer says plainly whether it was checked or merely read.
-async fn status(config: &Config) -> ExitCode {
-    let user_home = config.client_home.to_string_lossy().into_owned();
-    let client = reqwest::Client::new();
-    let readers: Vec<_> = SubscriptionProvider::ALL
-        .into_iter()
-        .map(|provider| {
-            SubscriptionReader::new(
-                provider,
-                crate::auth_import::provider_home(config, provider, &user_home),
-            )
-        })
-        .collect();
-    let token_cache =
-        link_assistant_router::refresh::TokenCache::registered_for(&readers, &config.data_dir);
-    let reports =
-        link_assistant_router::credential_status::evaluate(&client, &token_cache, &readers, None)
-            .await;
-    let refresh_failed = reports.iter().any(|report| {
-        report.state
-            == link_assistant_router::credential_status::CredentialAcceptanceState::RefreshFailed
-    });
-    for report in reports {
-        if let Some(detail) = report.detail.as_deref() {
-            eprintln!(
-                "error: {} refresh failed: {detail}; credential state was not reported usable",
-                report.provider
-            );
-        }
-        println!(
-            "{:<8} {:<10} {}",
-            report.provider,
-            report.state.as_str(),
-            report.home
-        );
-    }
-    // The API-key providers authorize this deployment against an upstream
-    // vendor exactly as the subscriptions above do. Reporting only the
-    // OAuth-style set printed an all-absent table on a deployment that could
-    // still reach two vendors, which is the surprise issue #561 is about.
-    for record in stored_api_key_providers(config) {
-        let held = if record.has_encrypted_api_key {
-            "stored"
-        } else {
-            "from-env"
-        };
-        let state = if record.enabled { held } else { "disabled" };
-        println!("{:<8} {state:<10} {}", record.name, record.base_url);
-    }
-    if refresh_failed {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
     }
 }
 
