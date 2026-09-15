@@ -190,6 +190,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.11.1] - 2026-09-15
+
+### Fixed
+
+- Rejected Anthropic Messages requests missing `model`, `max_tokens`, or
+  `messages` before model routing, catalog discovery, or provider calls.
+
 ## [1.11.0] - 2026-09-15
 
 ### Added
