@@ -68,8 +68,10 @@ pub(super) fn validate_claude_model_selection(
         .any(|family| catalog_model.eq_ignore_ascii_case(family));
     let exact = crate::clients::usable_models(ClientKind::ClaudeCode, models)
         .iter()
-        .any(|candidate| candidate.id == catalog_model);
-    if (native_family && has_anthropic) || exact {
+        .any(|candidate| candidate.id == catalog_model)
+        && !model.ends_with("[1m]");
+    let context_variant = crate::clients::claude_context_variant_is_authorized(models, model);
+    if (native_family && has_anthropic) || exact || context_variant {
         return Ok(Some(selection.reason));
     }
     Err(format!(

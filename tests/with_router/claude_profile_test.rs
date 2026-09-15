@@ -27,7 +27,7 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
                 ),
                 "/api/models" => (
                     "200 OK",
-                    r#"{"object":"list","data":[{"id":"future-claude-native","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
+                    r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
                 ),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -228,6 +228,59 @@ DISABLE_FEEDBACK_COMMAND=1\n",
     assert_eq!(
         fs::read(home.join(".claude/settings.json")).expect("normal settings after second launch"),
         normal
+    );
+}
+
+/// Issue #583: Claude Code's context-window suffix is presentation syntax,
+/// while Router's live catalog advertises the exact Anthropic base model. The
+/// launcher must authorize that base without removing the suffix from argv.
+#[test]
+fn authorized_claude_context_variant_reaches_the_client_unchanged() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+    let token = bound_client_token("claude");
+    let (server, requests) = mock_claude_router();
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server",
+            &server,
+            "--token",
+            &token,
+            "--model",
+            "claude-opus-5[1m]",
+            "--isolated-config",
+            "claude",
+            "--",
+            "-p",
+            "Reply with 42",
+        ],
+        &[],
+    );
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        requests.join().expect("mock Router requests"),
+        ["/api/health", "/api/management/tokens", "/api/models"]
+    );
+    let arguments = fs::read_to_string(capture.join("args")).expect("captured Claude arguments");
+    let arguments = arguments.lines().collect::<Vec<_>>();
+    assert!(
+        arguments
+            .windows(2)
+            .any(|pair| pair == ["--model", "claude-opus-5[1m]"]),
+        "the exact context variant must reach Claude: {arguments:?}"
     );
 }
 
