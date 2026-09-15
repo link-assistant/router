@@ -61,3 +61,50 @@ async fn missing_required_messages_fields_are_rejected_before_every_upstream() {
         );
     }
 }
+
+#[tokio::test]
+async fn invalid_required_messages_values_are_rejected_before_upstream() {
+    let router = TestRouter::start(UpstreamProvider::Anthropic).await;
+
+    for (field, value) in [
+        ("model", json!("  ")),
+        ("max_tokens", json!(0)),
+        ("messages", json!([])),
+    ] {
+        let mut body = json!({
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 8,
+            "messages": [{"role": "user", "content": "ping"}]
+        });
+        body[field] = value;
+
+        let response = router
+            .post("/api/services/anthropic/v1/messages", &body)
+            .send()
+            .await
+            .expect("invalid Anthropic Messages response");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{field}");
+        let payload: Value = response.json().await.expect("Anthropic error envelope");
+        assert_eq!(payload["type"], "error", "{field}: {payload}");
+        assert_eq!(
+            payload["error"]["type"], "invalid_request_error",
+            "{field}: {payload}"
+        );
+        assert!(
+            payload["error"]["message"]
+                .as_str()
+                .is_some_and(|message| message.contains(field)),
+            "{field}: {payload}"
+        );
+    }
+
+    assert!(
+        router
+            .upstream_headers
+            .lock()
+            .expect("stub headers")
+            .is_empty(),
+        "invalid requests contacted the upstream"
+    );
+}

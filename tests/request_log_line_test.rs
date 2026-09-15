@@ -138,9 +138,11 @@ impl Router {
     ///
     /// Token minting can finish writing its HTTP response just before its log
     /// line reaches this process. Matching the route keeps that earlier line
-    /// from being mistaken for the inference request under test.
+    /// from being mistaken for the inference request under test. Requiring a
+    /// correlation ID also distinguishes this record from the trace layer's
+    /// earlier `started processing request` line.
     fn await_request_line(&self, uri: &str) -> String {
-        self.await_line("request", &format!("uri={uri}"))
+        self.await_line("request_id=", &format!("uri={uri}"))
     }
 
     /// The `response` log line paired with one request ID.
@@ -223,7 +225,7 @@ fn the_response_line_names_the_model_the_request_asked_for() {
     let response = router.post(
         "/api/services/anthropic/v1/messages",
         &format!("authorization: Bearer {token}\r\n"),
-        r#"{"model":"no-such-model-xyz","max_tokens":10,"messages":[]}"#,
+        r#"{"model":"no-such-model-xyz","max_tokens":10,"messages":[{"role":"user","content":"ping"}]}"#,
     );
     assert!(
         response.starts_with("HTTP/1.1 4"),
@@ -250,22 +252,31 @@ fn the_response_line_names_the_model_the_request_asked_for() {
     );
 }
 
-/// `-` stays reserved for a request that genuinely has no model.
+/// `-` stays reserved for a rejected request that genuinely has no model.
 ///
 /// A placeholder that means "unfilled" is what made the field useless; one
-/// that means "there was none" is honest, so `/api/health` must still print it.
+/// that means "there was none" is honest even at the validation boundary.
 #[test]
-fn a_request_with_no_model_still_reports_none() {
+fn a_rejected_request_with_no_model_still_reports_none() {
     let router = Router::start();
     let token = router.client_token();
     router.discard_pending();
 
-    // A body that parses but names no model, sent authenticated so it reaches
-    // routing: the model is genuinely absent rather than merely unread.
-    router.post(
+    // The Messages surface now rejects this body before routing. Its log pair
+    // still needs to distinguish an absent model from a lost populated field.
+    let response = router.post(
         "/api/services/anthropic/v1/messages",
         &format!("authorization: Bearer {token}\r\n"),
-        r#"{"max_tokens":10,"messages":[]}"#,
+        r#"{"max_tokens":10,"messages":[{"role":"user","content":"ping"}]}"#,
+    );
+    assert!(
+        response.starts_with("HTTP/1.1 400"),
+        "a missing model is rejected at ingress: {}",
+        response.lines().next().unwrap_or_default()
+    );
+    assert!(
+        response.contains("model"),
+        "the validation error names the missing field: {response}"
     );
 
     let request_line = router.await_request_line("/api/services/anthropic/v1/messages");

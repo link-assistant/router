@@ -424,7 +424,7 @@ async fn recording_upstream() -> (
     (base_url, requests, handle)
 }
 
-#[path = "zai_coding_plan_tests/anthropic_validation.rs"]
+#[path = "zai_coding_plan_tests/anthropic_validation_tests.rs"]
 mod anthropic_validation;
 
 #[tokio::test]
