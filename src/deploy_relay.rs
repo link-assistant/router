@@ -9,6 +9,7 @@
 //! is the shutdown barrier.
 
 use std::collections::BTreeMap;
+use std::future::Future;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -147,19 +148,24 @@ impl Connections {
     }
 }
 
-async fn relay_connection(
+async fn relay_connection_with_connector<Connect, Connecting>(
     mut client: TcpStream,
     state: &Path,
     backend_port: u16,
     connections: Arc<Mutex<Connections>>,
-) -> Result<(), String> {
+    connect: Connect,
+) -> Result<(), String>
+where
+    Connect: FnOnce(String, u16) -> Connecting,
+    Connecting: Future<Output = std::io::Result<TcpStream>>,
+{
     let backend = read_backend(state)?;
     // Publish the connection before attempting the upstream connect.  Otherwise
     // cutover could observe zero old connections and remove the backend while a
     // just-accepted stream was still connecting to it.
     connections.lock().await.change(&backend, 1)?;
     let result = async {
-        let mut upstream = TcpStream::connect((backend.as_str(), backend_port))
+        let mut upstream = connect(backend.clone(), backend_port)
             .await
             .map_err(|error| format!("could not connect to {backend}:{backend_port}: {error}"))?;
         copy_bidirectional(&mut client, &mut upstream)
@@ -173,6 +179,22 @@ async fn relay_connection(
         tracing::error!("{error}");
     }
     result
+}
+
+async fn relay_connection(
+    client: TcpStream,
+    state: &Path,
+    backend_port: u16,
+    connections: Arc<Mutex<Connections>>,
+) -> Result<(), String> {
+    relay_connection_with_connector(
+        client,
+        state,
+        backend_port,
+        connections,
+        |backend, port| async move { TcpStream::connect((backend, port)).await },
+    )
+    .await
 }
 
 async fn serve_binding(
@@ -372,16 +394,15 @@ mod tests {
     async fn cutover_keeps_existing_connections_and_sends_new_ones_to_the_candidate() {
         tokio::time::timeout(std::time::Duration::from_secs(3), async {
             let old = TcpListener::bind("127.0.0.1:0").await.unwrap();
-            let backend_port = old.local_addr().unwrap().port();
-            let new = TcpListener::bind(("127.0.0.2", backend_port))
-                .await
-                .unwrap();
+            let old_address = old.local_addr().unwrap();
+            let new = TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let new_address = new.local_addr().unwrap();
             let old_task = tokio::spawn(tagged_backend(old, b'o'));
             let new_task = tokio::spawn(tagged_backend(new, b'n'));
 
             let directory = tempfile::tempdir().unwrap();
             let state = directory.path().join("current");
-            std::fs::write(&state, "127.0.0.1\n").unwrap();
+            std::fs::write(&state, "old\n").unwrap();
             let connections = Arc::new(Mutex::new(Connections::new(&state).unwrap()));
             let front = TcpListener::bind("127.0.0.1:0").await.unwrap();
             let front_address = front.local_addr().unwrap();
@@ -393,16 +414,29 @@ mod tests {
                     let state = state_for_relay.clone();
                     let connections = Arc::clone(&relay_connections);
                     tokio::spawn(async move {
-                        relay_connection(client, &state, backend_port, connections)
-                            .await
-                            .unwrap();
+                        relay_connection_with_connector(
+                            client,
+                            &state,
+                            1,
+                            connections,
+                            move |backend, _| async move {
+                                let address = if backend == "old" {
+                                    old_address
+                                } else {
+                                    new_address
+                                };
+                                TcpStream::connect(address).await
+                            },
+                        )
+                        .await
+                        .unwrap();
                     });
                 }
             });
 
             let mut established = TcpStream::connect(front_address).await.unwrap();
             assert_eq!(exchange(&mut established, b'a').await, [b'o', b'a']);
-            crate::durable_file::atomic_write_owner_only(&state, b"127.0.0.2\n").unwrap();
+            crate::durable_file::atomic_write_owner_only(&state, b"new\n").unwrap();
 
             // The stream accepted before the atomic state replacement remains
             // attached to the old backend; a new stream observes the candidate.
@@ -410,11 +444,11 @@ mod tests {
             let mut arrived_after = TcpStream::connect(front_address).await.unwrap();
             assert_eq!(exchange(&mut arrived_after, b'c').await, [b'n', b'c']);
             assert_eq!(
-                std::fs::read_to_string(directory.path().join("connections/127.0.0.1")).unwrap(),
+                std::fs::read_to_string(directory.path().join("connections/old")).unwrap(),
                 "1"
             );
             assert_eq!(
-                std::fs::read_to_string(directory.path().join("connections/127.0.0.2")).unwrap(),
+                std::fs::read_to_string(directory.path().join("connections/new")).unwrap(),
                 "1"
             );
 

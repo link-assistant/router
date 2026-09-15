@@ -5,6 +5,7 @@
 //! random cookie inherited through the agent's environment identifies every
 //! child which may still be changing deployment state.
 
+use std::ffi::OsStr;
 use std::io::Write as _;
 use std::process::{Command, ExitCode, Stdio};
 
@@ -171,7 +172,7 @@ fn validate(args: &DeployArgs, mode: RemoteMode) -> Result<(), String> {
 }
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
-pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
+fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr) -> ExitCode {
     let mode = match mode(args).and_then(|mode| {
         validate(args, mode)?;
         Ok(mode)
@@ -194,7 +195,7 @@ pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
     let target = args.server.as_deref().expect("validated target");
     let cookie = uuid::Uuid::new_v4().simple().to_string();
     let remote = remote_command(&agent_arguments(args, mode, &cookie));
-    let mut child = match Command::new("ssh")
+    let mut child = match Command::new(ssh)
         .args([
             "-o",
             "BatchMode=yes",
@@ -245,6 +246,11 @@ pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
         eprintln!("lease error: target ownership could not be proved safely");
     }
     code
+}
+
+/// Run the target-side deployment agent and preserve transport/lease identity.
+pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
+    run_with_ssh(args, token_secret, OsStr::new("ssh"))
 }
 
 #[cfg(test)]
@@ -298,12 +304,14 @@ mod tests {
 
     #[test]
     fn lease_and_transport_failures_have_distinct_public_codes() {
+        assert_eq!(mapped_exit_code(Some(0)), ExitCode::SUCCESS);
         assert_eq!(mapped_exit_code(Some(255)), ExitCode::from(TRANSPORT_EXIT));
         assert_eq!(
             mapped_exit_code(Some(AGENT_LEASE_EXIT)),
             ExitCode::from(LEASE_EXIT)
         );
         assert_eq!(mapped_exit_code(Some(1)), ExitCode::from(1));
+        assert_eq!(mapped_exit_code(None), ExitCode::from(TRANSPORT_EXIT));
     }
 
     #[test]
@@ -326,5 +334,180 @@ mod tests {
         assert!(AGENT.contains("trap on_failure EXIT\ntrap 'exit 130' HUP INT TERM"));
         assert!(AGENT.contains("trap release_lease EXIT\ntrap 'exit 130' HUP INT TERM"));
         assert!(!AGENT.contains("trap on_failure EXIT HUP INT TERM"));
+    }
+
+    #[test]
+    fn validation_rejects_ambiguous_targets_paths_and_moving_deploy_images() {
+        let mut candidate = args();
+        assert!(validate(&candidate, RemoteMode::Deploy).is_ok());
+
+        candidate.server = None;
+        assert_eq!(
+            validate(&candidate, RemoteMode::Deploy).unwrap_err(),
+            "an SSH target is required"
+        );
+        candidate.server = Some(" \t".into());
+        assert_eq!(
+            validate(&candidate, RemoteMode::Deploy).unwrap_err(),
+            "an SSH target is required"
+        );
+        candidate.server = Some("host\ncommand".into());
+        assert!(
+            validate(&candidate, RemoteMode::Deploy)
+                .unwrap_err()
+                .contains("invalid character")
+        );
+
+        candidate.server = Some("host".into());
+        candidate.root = Some("/srv/router\rwrong".into());
+        assert!(
+            validate(&candidate, RemoteMode::Deploy)
+                .unwrap_err()
+                .contains("remote path")
+        );
+        candidate.root = None;
+        candidate.build = Some("/src\0wrong".into());
+        assert!(
+            validate(&candidate, RemoteMode::Deploy)
+                .unwrap_err()
+                .contains("remote path")
+        );
+
+        candidate.build = None;
+        candidate.image = Some("example/router:latest".into());
+        assert!(
+            validate(&candidate, RemoteMode::Deploy)
+                .unwrap_err()
+                .contains("moving reference")
+        );
+        // Observation never resolves or changes an image, so a stale image
+        // option cannot turn status into a mutating validation path.
+        assert!(validate(&candidate, RemoteMode::Status).is_ok());
+    }
+
+    #[test]
+    fn agent_arguments_cover_release_pull_and_target_path_builds() {
+        let mut candidate = args();
+        let release = agent_arguments(&candidate, RemoteMode::Deploy, "cookie");
+        assert_eq!(&release[4..6], ["release", ""]);
+        assert!(release[3].ends_with(link_assistant_router::VERSION));
+
+        candidate.image = Some("example/router:1.2.3".into());
+        candidate.public_port = Some(8443);
+        candidate.root = Some("/srv/router".into());
+        let pull = agent_arguments(&candidate, RemoteMode::Deploy, "cookie");
+        assert_eq!(&pull[4..6], ["pull", ""]);
+        assert_eq!(&pull[6..9], ["/srv/router", "8080", "8443"]);
+
+        candidate.build = Some("/src/router".into());
+        let path = agent_arguments(&candidate, RemoteMode::Deploy, "cookie");
+        assert_eq!(&path[4..6], ["path", "/src/router"]);
+    }
+
+    #[cfg(unix)]
+    fn fake_ssh(exit: i32) -> (tempfile::TempDir, std::path::PathBuf) {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let directory = tempfile::tempdir().unwrap();
+        let executable = directory.path().join("ssh");
+        std::fs::write(
+            &executable,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\ncat > \"$0.input\"\nexit {exit}\n"
+            ),
+        )
+        .unwrap();
+        let mut permissions = std::fs::metadata(&executable).unwrap().permissions();
+        permissions.set_mode(0o700);
+        std::fs::set_permissions(&executable, permissions).unwrap();
+        (directory, executable)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ssh_session_carries_only_the_secret_and_agent_on_stdin() {
+        let (_directory, ssh) = fake_ssh(0);
+        let secret = "operator-only-signing-secret";
+
+        assert_eq!(
+            run_with_ssh(&args(), secret, ssh.as_os_str()),
+            ExitCode::SUCCESS
+        );
+
+        let arguments = std::fs::read_to_string(ssh.with_extension("arguments")).unwrap();
+        assert!(arguments.contains("BatchMode=yes"));
+        assert!(arguments.contains("StrictHostKeyChecking=yes"));
+        assert!(arguments.contains("deploy@example.test"));
+        assert!(!arguments.contains(secret));
+        let input = std::fs::read(ssh.with_extension("input")).unwrap();
+        let newline = input.iter().position(|byte| *byte == b'\n').unwrap();
+        assert_eq!(
+            &input[..newline],
+            base64::engine::general_purpose::STANDARD
+                .encode(secret)
+                .as_bytes()
+        );
+        assert_eq!(&input[newline + 1..], AGENT.as_bytes());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ssh_process_status_preserves_transport_and_lease_identity() {
+        for (remote, public) in [
+            (255, TRANSPORT_EXIT),
+            (AGENT_LEASE_EXIT, LEASE_EXIT),
+            (9, 1),
+        ] {
+            let (_directory, ssh) = fake_ssh(remote);
+            assert_eq!(
+                run_with_ssh(&args(), "operator-secret", ssh.as_os_str()),
+                ExitCode::from(public)
+            );
+        }
+        let missing = std::path::Path::new("/definitely/missing/router-ssh");
+        assert_eq!(
+            run_with_ssh(&args(), "operator-secret", missing.as_os_str()),
+            ExitCode::from(TRANSPORT_EXIT)
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn status_and_down_open_ssh_without_transporting_a_signing_secret() {
+        for remote_mode in [RemoteMode::Status, RemoteMode::Down] {
+            let (_directory, ssh) = fake_ssh(0);
+            let mut candidate = args();
+            candidate.status = remote_mode == RemoteMode::Status;
+            candidate.down = remote_mode == RemoteMode::Down;
+            candidate.yes = candidate.down;
+            let placeholder = link_assistant_router::token_secret::placeholder("read-only-test");
+
+            assert_eq!(
+                run_with_ssh(&candidate, &placeholder, ssh.as_os_str()),
+                ExitCode::SUCCESS
+            );
+            let input = std::fs::read(ssh.with_extension("input")).unwrap();
+            assert_eq!(input.first(), Some(&b'\n'));
+            let arguments = std::fs::read_to_string(ssh.with_extension("arguments")).unwrap();
+            assert!(arguments.contains(remote_mode.as_str()));
+        }
+    }
+
+    #[test]
+    fn run_refuses_invalid_modes_and_placeholder_secrets_before_ssh() {
+        let missing = std::path::Path::new("/definitely/missing/router-ssh");
+        let mut candidate = args();
+        candidate.down = true;
+        assert_eq!(
+            run_with_ssh(&candidate, "operator-secret", missing.as_os_str()),
+            ExitCode::from(2)
+        );
+
+        candidate.down = false;
+        let placeholder = link_assistant_router::token_secret::placeholder("remote-test");
+        assert_eq!(
+            run_with_ssh(&candidate, &placeholder, missing.as_os_str()),
+            ExitCode::from(2)
+        );
     }
 }

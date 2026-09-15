@@ -1,2 +1,3 @@
 docs/case-studies/**/raw/*.log -whitespace
 tests/fixtures/token_stores/*.lino text eol=lf
+src/deploy/remote_agent.sh text eol=lf
