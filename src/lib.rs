@@ -58,6 +58,7 @@ pub mod credential_source;
 pub mod credential_status;
 pub mod credential_store;
 pub mod deploy;
+pub mod deploy_relay;
 pub mod doctor;
 pub mod durable_file;
 mod encoded_request_body;
