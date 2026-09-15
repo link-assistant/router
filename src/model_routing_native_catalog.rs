@@ -112,7 +112,7 @@ fn codex_model(raw: &Map<String, Value>, id: &str, priority: usize) -> Map<Strin
         .and_then(Value::as_str)
         .unwrap_or(id);
     crate::codex_catalog::model_info(
-        crate::codex_catalog::ModelDescription {
+        &crate::codex_catalog::ModelDescription {
             id,
             display_name,
             owner,

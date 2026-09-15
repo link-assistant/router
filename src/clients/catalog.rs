@@ -362,10 +362,7 @@ pub fn usable_models(client: ClientKind, catalog: &[RouterModel]) -> Vec<RouterM
 /// no selection, a mixed picker must remain on the transport every visible
 /// model can serve (issue #578).
 #[must_use]
-pub(crate) fn codex_supports_websockets(
-    models: &[RouterModel],
-    selected_model: Option<&str>,
-) -> bool {
+pub fn codex_supports_websockets(models: &[RouterModel], selected_model: Option<&str>) -> bool {
     if let Some(selected) = selected_model {
         return models
             .iter()

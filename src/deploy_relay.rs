@@ -168,7 +168,8 @@ async fn relay_connection(
             .map_err(|error| format!("relay stream failed: {error}"))
     }
     .await;
-    if let Err(error) = connections.lock().await.change(&backend, -1) {
+    let decrement = connections.lock().await.change(&backend, -1);
+    if let Err(error) = decrement {
         tracing::error!("{error}");
     }
     result

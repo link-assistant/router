@@ -27,7 +27,7 @@ pub(super) fn unavailable_native_claude_model<'a>(
     let family = model
         .trim()
         .split_once('[')
-        .map_or(model.trim(), |(family, _)| family)
+        .map_or_else(|| model.trim(), |(family, _)| family)
         .to_ascii_lowercase();
     let native =
         matches!(family.as_str(), "opus" | "sonnet" | "haiku") || family.starts_with("claude-");

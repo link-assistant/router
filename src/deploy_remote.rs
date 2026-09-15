@@ -96,13 +96,16 @@ fn remote_command(arguments: &[String]) -> String {
 }
 
 fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &str) -> Vec<String> {
-    let (build_mode, build_value) = if let Some(context) = args.build.as_ref() {
-        ("path", context.as_str())
-    } else if args.image.is_some() {
-        ("pull", "")
-    } else {
-        ("release", "")
-    };
+    let (build_mode, build_value) = args.build.as_ref().map_or_else(
+        || {
+            if args.image.is_some() {
+                ("pull", "")
+            } else {
+                ("release", "")
+            }
+        },
+        |context| ("path", context.as_str()),
+    );
     vec![
         mode.as_str().to_string(),
         cookie.to_string(),
@@ -131,7 +134,7 @@ fn mapped_exit(status: std::process::ExitStatus) -> ExitCode {
     mapped_exit_code(status.code())
 }
 
-const fn transported_secret<'a>(mode: RemoteMode, token_secret: &'a str) -> &'a str {
+const fn transported_secret(mode: RemoteMode, token_secret: &str) -> &str {
     if matches!(mode, RemoteMode::Deploy) {
         token_secret
     } else {
@@ -179,14 +182,14 @@ pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    if mode == RemoteMode::Deploy {
-        if let Err(error) = link_assistant_router::token_secret::ensure_real(token_secret) {
-            eprintln!("error: {error}");
-            eprintln!(
-                "note: the secret is sent through SSH stdin and is never copied into command arguments."
-            );
-            return ExitCode::from(2);
-        }
+    if mode == RemoteMode::Deploy
+        && let Err(error) = link_assistant_router::token_secret::ensure_real(token_secret)
+    {
+        eprintln!("error: {error}");
+        eprintln!(
+            "note: the secret is sent through SSH stdin and is never copied into command arguments."
+        );
+        return ExitCode::from(2);
     }
     let target = args.server.as_deref().expect("validated target");
     let cookie = uuid::Uuid::new_v4().simple().to_string();

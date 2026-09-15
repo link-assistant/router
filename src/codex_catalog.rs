@@ -3,7 +3,7 @@
 use serde_json::{Value, json};
 
 /// Inputs retained from one authorized live catalog row.
-pub(crate) struct ModelDescription<'a> {
+pub struct ModelDescription<'a> {
     pub id: &'a str,
     pub display_name: &'a str,
     pub owner: &'a str,
@@ -16,7 +16,7 @@ pub(crate) struct ModelDescription<'a> {
 /// The deprecated `base_instructions` field remains because Codex's own
 /// serializer includes it for older clients. Empty instructions ask the client
 /// to use its built-in fallback without inventing model-specific behavior.
-pub(crate) fn model_info(model: ModelDescription<'_>, priority: usize) -> Value {
+pub fn model_info(model: &ModelDescription<'_>, priority: usize) -> Value {
     json!({
         "slug": model.id,
         "display_name": model.display_name,

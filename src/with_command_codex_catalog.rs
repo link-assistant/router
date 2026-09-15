@@ -86,7 +86,7 @@ pub(super) fn write_codex_model_catalog(
                 .as_ref()
                 .expect("metadata was validated before projection");
             crate::codex_catalog::model_info(
-                crate::codex_catalog::ModelDescription {
+                &crate::codex_catalog::ModelDescription {
                     id: &model.id,
                     display_name: &model.id,
                     owner: &model.owned_by,
