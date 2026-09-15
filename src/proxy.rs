@@ -317,6 +317,74 @@ pub(crate) fn authenticate_client(
         .map_err(|error| Box::new(error.render(crate::api_error::ApiDialect::Anthropic)))
 }
 
+/// Provider-independent fields owned by the Anthropic Messages surface.
+///
+/// Validate these before automatic model routing or a concrete provider can
+/// inspect the request. Provider extensions remain untouched and token-count,
+/// Bedrock, and Vertex requests keep their existing contracts.
+#[derive(serde::Deserialize)]
+struct RequiredAnthropicMessagesFields {
+    model: String,
+    max_tokens: u64,
+    messages: Vec<serde_json::Value>,
+}
+
+async fn validate_anthropic_messages_request(
+    state: &AppState,
+    request: Request,
+) -> Result<Request, Response> {
+    if !request.uri().path().ends_with("/v1/messages") {
+        return Ok(request);
+    }
+
+    let (parts, body) = request.into_parts();
+    let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
+        .await
+        .map_err(|error| {
+            error_response(
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "invalid_request_error",
+                &format!(
+                    "request body exceeds the {} byte proxy limit: {error}",
+                    state.max_proxy_request_bytes
+                ),
+            )
+        })?;
+    let body = serde_json::from_slice(&body_bytes)
+        .map_err(|error| malformed_json_response(&error.to_string()))?;
+    let required: RequiredAnthropicMessagesFields =
+        serde_json::from_value(body).map_err(|error| {
+            error_response(
+                StatusCode::BAD_REQUEST,
+                "invalid_request_error",
+                &format!("invalid Anthropic Messages request: {error}"),
+            )
+        })?;
+    if required.model.trim().is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: model must not be empty",
+        ));
+    }
+    if required.max_tokens == 0 {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: max_tokens must be greater than zero",
+        ));
+    }
+    if required.messages.is_empty() {
+        return Err(error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid Anthropic Messages request: messages must contain at least one message",
+        ));
+    }
+
+    Ok(Request::from_parts(parts, Body::from(body_bytes)))
+}
+
 /// Proxy handler for upstream API forwarding.
 ///
 /// Catches all requests, validates the custom token, swaps it for OAuth
@@ -352,6 +420,10 @@ async fn proxy_handler_with_subscription(
             &path,
         ) {
             Ok(entitled) => entitled,
+            Err(response) => return response,
+        };
+        let req = match validate_anthropic_messages_request(&state, req).await {
+            Ok(request) => request,
             Err(response) => return response,
         };
         let (routed, request) =
@@ -409,6 +481,10 @@ async fn proxy_handler_with_subscription(
     {
         return response;
     }
+    let req = match validate_anthropic_messages_request(&state, req).await {
+        Ok(request) => request,
+        Err(response) => return response,
+    };
 
     // Log session tracking header if present
     if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
