@@ -10,6 +10,42 @@ fn model(id: &str, owner: &str) -> RouterModel {
     }
 }
 
+#[test]
+fn claude_context_variants_require_the_exact_anthropic_base() {
+    let credential = RunCredential {
+        token: "test-token".into(),
+        available_models: vec![
+            model("claude-opus-5", crate::clients::ANTHROPIC_MODEL_OWNER),
+            model("glm-5.3-flash", crate::clients::ZAI_MODEL_OWNER),
+            model("vendor-context[1m]", crate::clients::ZAI_MODEL_OWNER),
+            model("gpt-5.6-sol", crate::clients::OPENAI_MODEL_OWNER),
+        ],
+        revocation: None,
+        principal_id: "test-principal".into(),
+    };
+
+    for allowed in ["claude-opus-5", "claude-opus-5[1m]", "glm-5.3-flash"] {
+        ensure_model_available(&credential, ClientKind::ClaudeCode, allowed)
+            .unwrap_or_else(|error| panic!("{allowed} should be authorized: {error}"));
+    }
+    for rejected in [
+        "claude-sonnet-5[1m]",
+        "glm-5.3-flash[1m]",
+        "vendor-context[1m]",
+        "gpt-5.6-sol[1m]",
+        "claude-opus-5[2m]",
+    ] {
+        let error = ensure_model_available(&credential, ClientKind::ClaudeCode, rejected)
+            .expect_err("the context variant must be rejected")
+            .to_string();
+        assert!(error.contains(rejected), "{error}");
+    }
+    assert!(
+        ensure_model_available(&credential, ClientKind::Codex, "claude-opus-5[1m]").is_err(),
+        "the Claude-only suffix must not weaken another client's exact check"
+    );
+}
+
 /// Model selection moved to `clients::select_model` so `with`, `clients setup`
 /// and `clients doctor` answer "which models suit this client" the same way
 /// (issue #301). These cases keep asserting the behaviour they always did,

@@ -34,7 +34,10 @@ pub(crate) use catalog::RouterClientCapabilities;
 pub(crate) use catalog::RouterReasoningLevel;
 use catalog::doctor_model;
 pub(crate) use catalog::{RouterModel, claude_capability_profile};
-pub(crate) use catalog::{claude_gateway_model, codex_supports_websockets};
+pub(crate) use catalog::{
+    claude_context_variant_is_authorized, claude_gateway_model, codex_supports_websockets,
+    model_is_authorized,
+};
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
 pub(crate) use doctor::require_claude_gateway_version;

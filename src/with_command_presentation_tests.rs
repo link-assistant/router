@@ -367,3 +367,21 @@ fn available_native_claude_selections_keep_their_context_suffix() {
         );
     }
 }
+
+#[test]
+fn a_non_anthropic_saved_context_variant_remains_unavailable_to_claude() {
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "glm-5.3-flash", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize z.ai catalog");
+    let error = claude_settings::validate_claude_model_selection(
+        claude_settings::ClaudeModelSelection {
+            model: "glm-5.3-flash[1m]".into(),
+            reason: "saved selection".into(),
+        },
+        &models,
+    )
+    .expect_err("a non-Anthropic base must not authorize Claude's context variant")
+    .to_string();
+    assert!(error.contains("glm-5.3-flash[1m]"), "{error}");
+}
