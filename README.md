@@ -1592,6 +1592,15 @@ budgeted for the partition.
 
 ## Docker Deployment
 
+For a server already running Docker, `router deploy --server user@host`
+performs a candidate-first, connection-draining remote deployment over strict
+OpenSSH. It copies credentials only from that target, verifies client catalogs,
+token scope and configured-provider inference before and after the atomic
+cutover, and records signed rollback/provenance state. See the
+[remote deployment guide](docs/use-cases/remote-deploy.md) for prerequisites,
+public inference-only TLS, status/down behavior, and distinct transport/lease
+exit codes.
+
 ### Build the image
 
 ```bash

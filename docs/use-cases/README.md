@@ -13,6 +13,7 @@ come first; the per-CLI documents follow.
 | --- | --- |
 | [self-hosting.md](self-hosting.md) | Running the router as an internal component of personal or corporate infrastructure — and who can reach the endpoint that mints tokens |
 | [remote-login.md](remote-login.md) | Authorizing a fresh Docker deployment over HTTP, with no credential file to mount |
+| [remote-deploy.md](remote-deploy.md) | Zero-downtime deployment over SSH with a target lease, credential provenance, verified cutover, and rollback |
 | [admin-ui.md](admin-ui.md) | The opt-in browser console on its own port: enabling it, the two-phase first-visitor claim, and the `localStorage` trade-off |
 | [chat-admin-bots.md](chat-admin-bots.md) | The optional Telegram and VK admin bots: private chats only, sharing one system-wide admin claim with the web UI |
 | [per-task-tokens.md](per-task-tokens.md) | One `la_sk_…` token per task, for audit, monitoring, security and isolation |

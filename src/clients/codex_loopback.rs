@@ -28,6 +28,7 @@ impl ClientManager {
         &self,
         base_url: &str,
         backend_base_url: Option<&str>,
+        supports_websockets: bool,
     ) -> Result<SetupResult, ClientError> {
         let path = self.config_path(ClientKind::Codex);
         let source = read_or_empty(&path)?;
@@ -80,7 +81,7 @@ impl ClientManager {
         provider.remove("env_key");
         provider.insert("wire_api", value("responses"));
         provider.insert("requires_openai_auth", value(true));
-        provider.insert("supports_websockets", value(true));
+        provider.insert("supports_websockets", value(supports_websockets));
         provider.insert("supports_standalone_web_search", value(true));
         let backend_base = backend_base_url.map_or_else(
             || base_url.strip_suffix("/v1").unwrap_or(base_url).to_string() + "/backend-api",

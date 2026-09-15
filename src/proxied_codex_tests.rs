@@ -144,5 +144,5 @@ async fn canonical_codex_catalog_keeps_its_existing_signed_marker_evidence() {
         .unwrap()
         .to_bytes();
     let body: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(body["data"][0]["id"], MODEL);
+    assert_eq!(body["models"][0]["slug"], MODEL);
 }

@@ -41,6 +41,12 @@ still wins.
 Gateway discovery supplies native Claude IDs. A process-local `--settings`
 extension adds every other compatible, authorized exact ID to Claude's
 `modelPicker` once, including GLM IDs, without aliases or cache writes. Claude
+native family rows are retained only when that authorized catalog actually
+contains an Anthropic model. A z.ai-only catalog replaces the built-ins, so
+cached Opus/Sonnet/Haiku selections are rejected locally with a provider-
+specific diagnostic while Default/main and subagent fallback remain exact GLM
+models. A model saved through `/model` remains the next launch's authoritative
+selection when it is still authorized.
 Code 2.1.255 through 2.1.265 is the reviewed range. Newer releases fail closed
 until the pinned hermetic real-client capture reviews their gateway and
 authentication behavior. See [with-router.md](with-router.md) for server and

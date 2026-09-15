@@ -272,7 +272,7 @@ fn client_headers(state: &AppState, client: ClientKind) -> HeaderMap {
             headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
         }
         ClientKind::Codex => {
-            headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.4"));
+            headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.154.0"));
             headers.insert("originator", HeaderValue::from_static("codex_exec"));
         }
         _ => unreachable!("the live usage smoke uses native supported clients"),
@@ -423,11 +423,11 @@ async fn every_real_codex_model_keeps_its_native_stream_identity() {
         .await
         .expect("bounded live catalog response");
     let catalog: Value = serde_json::from_slice(&catalog_bytes).expect("live Codex catalog JSON");
-    let models = catalog["data"]
+    let models = catalog["models"]
         .as_array()
-        .expect("live Codex catalog data")
+        .expect("live Codex ModelInfo catalog")
         .iter()
-        .filter_map(|model| model["id"].as_str().map(str::to_string))
+        .filter_map(|model| model["slug"].as_str().map(str::to_string))
         .collect::<Vec<_>>();
     assert!(
         !models.is_empty(),

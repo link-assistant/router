@@ -886,11 +886,32 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
                 "{client}: leaked {router_only}: {body}"
             );
         }
-        let models = catalog["data"].as_array().unwrap();
+        let models = catalog[if client == ClientKind::Codex {
+            "models"
+        } else {
+            "data"
+        }]
+        .as_array()
+        .unwrap();
         if client == ClientKind::ClaudeCode {
             assert!(
                 models.iter().all(|model| model.get("owned_by").is_none()),
                 "{client}: Anthropic model rows leaked OpenAI metadata: {body}"
+            );
+        } else if client == ClientKind::Codex {
+            assert!(
+                models.iter().all(|model| {
+                    model["slug"].is_string()
+                        && model.get("id").is_none()
+                        && model.get("owned_by").is_none()
+                }),
+                "{client}: Codex ModelInfo rows used the wrong schema: {body}"
+            );
+            assert!(
+                models
+                    .iter()
+                    .any(|model| model["slug"] == "future-saffron-91"),
+                "{client}: exact live Codex id is absent: {body}"
             );
         } else {
             assert!(

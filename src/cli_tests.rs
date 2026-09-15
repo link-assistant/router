@@ -3,6 +3,24 @@ use crate::config::{default_gonka_model, default_openai_compatible_base_url};
 use clap::CommandFactory as _;
 
 #[test]
+fn deploy_accepts_an_ssh_server_and_public_inference_port() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "deploy",
+        "--server",
+        "deploy@example.test",
+        "--public-port",
+        "8443",
+    ])
+    .expect("remote deployment arguments parse");
+    let Some(Command::Deploy(args)) = cli.command else {
+        panic!("deploy command expected");
+    };
+    assert_eq!(args.server.as_deref(), Some("deploy@example.test"));
+    assert_eq!(args.public_port, Some(8443));
+}
+
+#[test]
 fn login_cli_defaults_to_bare_tui() {
     let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
     assert!(cli.login_cli_args.is_empty());

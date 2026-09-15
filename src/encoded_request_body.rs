@@ -443,7 +443,7 @@ mod tests {
             .header("authorization", format!("Bearer {token}"))
             .header("content-type", "application/json")
             .header("content-encoding", "zstd")
-            .header("user-agent", "codex_exec/0.153.4")
+            .header("user-agent", "codex_exec/0.154.0")
             .header("originator", "codex_exec")
             .header("x-codex-turn-metadata", "fixture-turn")
             .body(Body::from(encoded.clone()))

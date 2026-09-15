@@ -111,6 +111,9 @@ fn secret_refusal(token_secret: &str, down: bool) -> Option<String> {
 }
 
 pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
+    if args.server.is_some() {
+        return crate::deploy_remote::run(args, &config.token_secret);
+    }
     let runtime = Docker;
 
     if let Some(refusal) = secret_refusal(&config.token_secret, args.down) {
@@ -149,10 +152,12 @@ mod tests {
 
     fn args() -> DeployArgs {
         DeployArgs {
+            server: None,
             status: false,
             down: false,
             yes: false,
             port: link_assistant_router::deploy::DEFAULT_PORT,
+            public_port: None,
             image: None,
             build: None,
             root: None,

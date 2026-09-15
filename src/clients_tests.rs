@@ -115,6 +115,28 @@ fn compact_diagnostics_do_not_echo_unbounded_upstream_bodies() {
     assert!(compact.chars().count() <= 241);
 }
 
+#[test]
+fn codex_websocket_transport_follows_the_selected_exact_model_owner() {
+    let catalog = [
+        RouterModel {
+            id: "gpt-live".into(),
+            owned_by: OPENAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "glm-live".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            ..RouterModel::default()
+        },
+    ];
+    assert!(codex_supports_websockets(&catalog, Some("gpt-live")));
+    assert!(!codex_supports_websockets(&catalog, Some("glm-live")));
+    assert!(
+        !codex_supports_websockets(&catalog, None),
+        "a mixed picker without an exact selection must use the common HTTP transport"
+    );
+}
+
 /// The defect in issue #301: two of the eight integrations named the wrong
 /// vendor, so the Gemini CLI could never be selected a Google model and Qwen
 /// Code never a Qwen one. On a deployment serving only a Gemini subscription

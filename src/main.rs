@@ -21,6 +21,7 @@ mod auth_import;
 mod bin_doctor;
 #[path = "deploy_cli.rs"]
 mod deploy_cli;
+mod deploy_remote;
 #[path = "logs_cli.rs"]
 mod logs_cli;
 #[path = "recover_admin_cli.rs"]
@@ -50,6 +51,14 @@ fn main() -> ExitCode {
 }
 
 async fn run() -> ExitCode {
+    match link_assistant_router::deploy_relay::run_from_env().await {
+        Ok(Some(())) => return ExitCode::SUCCESS,
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
     match link_assistant_router::codex_loopback_bridge::daemon_request_from_env() {
         Ok(Some(request)) => {
             return match link_assistant_router::codex_loopback_bridge::run_persistent_daemon(

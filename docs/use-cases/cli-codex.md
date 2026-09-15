@@ -32,6 +32,14 @@ Wrapper flags may appear before or after `codex`; an explicit `--` forwards
 every later token verbatim. See
 [with-router.md](with-router.md#arguments-interaction-and-models).
 
+Current Codex clients discover this provider through a top-level `models`
+array containing Codex model metadata. That shape is specific to
+`/api/services/codex/v1/models`; documented OpenAI-compatible model routes keep
+their ordinary `object`/`data` response. In a mixed Codex + z.ai catalog the
+exact selected model owner also selects transport capability: native Codex
+models keep Responses WebSockets, while a z.ai model sets
+`supports_websockets = false` so Codex uses its supported HTTP/SSE path.
+
 ## Manual or permanent configuration
 
 Automatic setup (merges this provider and backs up an existing config):

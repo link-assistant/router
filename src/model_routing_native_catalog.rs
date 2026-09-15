@@ -18,11 +18,12 @@ pub(super) fn project(
     if path == "/api/services/anthropic/v1/models" {
         return anthropic(data, query).map(Some);
     }
+    if path == "/api/services/codex/v1/models" {
+        return codex(data).map(Some);
+    }
     if matches!(
         path,
-        "/api/services/openai/v1/models"
-            | "/api/services/codex/v1/models"
-            | "/api/services/qwen/v1/models"
+        "/api/services/openai/v1/models" | "/api/services/qwen/v1/models"
     ) {
         return Ok(Some(openai(data)?));
     }
@@ -48,6 +49,81 @@ fn openai(data: &[Value]) -> Result<Value, NativeCatalogError> {
         "object": "list",
         "data": deduplicated(data, openai_model)?,
     }))
+}
+
+fn codex(data: &[Value]) -> Result<Value, NativeCatalogError> {
+    let mut seen = HashSet::new();
+    let mut models = Vec::with_capacity(data.len());
+    for value in data {
+        let Some(raw) = value.as_object() else {
+            continue;
+        };
+        let Some(id) = raw.get("id").and_then(Value::as_str) else {
+            continue;
+        };
+        if id.is_empty() {
+            continue;
+        }
+        if !seen.insert(id.to_string()) {
+            return Err(NativeCatalogError::conflict(format!(
+                "exact model id '{id}' is advertised more than once"
+            )));
+        }
+        models.push(Value::Object(codex_model(raw, id, models.len())));
+    }
+    Ok(json!({"models": models}))
+}
+
+fn codex_model(raw: &Map<String, Value>, id: &str, priority: usize) -> Map<String, Value> {
+    let owner = raw
+        .get("owned_by")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let mut default = raw
+        .get("default_reasoning_level")
+        .filter(|value| value.is_string())
+        .cloned();
+    let mut levels = raw
+        .get("supported_reasoning_levels")
+        .filter(|value| value.is_array())
+        .cloned()
+        .unwrap_or_else(|| json!([]));
+    if let Some(profile) = crate::clients::codex_reasoning_profile(owner) {
+        if levels.as_array().is_some_and(Vec::is_empty)
+            && default
+                .as_ref()
+                .and_then(Value::as_str)
+                .is_none_or(|effort| profile.supports(effort))
+        {
+            levels = serde_json::to_value(profile.levels()).expect("reasoning levels serialize");
+        }
+        if default.is_none()
+            && levels.as_array().is_some_and(|levels| {
+                levels.iter().any(|level| {
+                    level.get("effort").and_then(Value::as_str) == Some(profile.default())
+                })
+            })
+        {
+            default = Some(Value::String(profile.default().to_string()));
+        }
+    }
+    let display_name = raw
+        .get("display_name")
+        .and_then(Value::as_str)
+        .unwrap_or(id);
+    crate::codex_catalog::model_info(
+        &crate::codex_catalog::ModelDescription {
+            id,
+            display_name,
+            owner,
+            default_reasoning_level: default,
+            supported_reasoning_levels: levels,
+        },
+        priority,
+    )
+    .as_object()
+    .expect("model-info projection is an object")
+    .clone()
 }
 
 fn deduplicated(

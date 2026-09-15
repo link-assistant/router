@@ -415,7 +415,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
         "authorization",
         HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
     );
-    headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.153.4"));
+    headers.insert("user-agent", HeaderValue::from_static("codex_exec/0.154.0"));
     headers.insert("originator", HeaderValue::from_static("codex_exec"));
     headers.insert(
         "x-codex-turn-metadata",

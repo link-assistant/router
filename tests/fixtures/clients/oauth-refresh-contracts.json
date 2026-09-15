@@ -9,7 +9,7 @@
     "anthropic_beta": "oauth-2025-04-20"
   },
   "codex": {
-    "client_version": "0.153.4",
+    "client_version": "0.154.0",
     "method": "POST",
     "body_style": "json",
     "originator": "codex_cli_rs",

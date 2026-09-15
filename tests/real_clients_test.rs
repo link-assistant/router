@@ -31,7 +31,7 @@ mod anthropic_mock;
 use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
 const CLAUDE_VERSION: &str = "2.1.265";
-const CODEX_VERSION: &str = "0.153.4";
+const CODEX_VERSION: &str = "0.154.0";
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";
@@ -71,7 +71,7 @@ const CODEX: ClientCase = ClientCase {
     owner: "openai",
     catalog_path: "/api/services/codex/v1/models",
     inference_path: "/api/services/codex/v1/responses",
-    user_agent_prefix: "codex_exec/0.153.4",
+    user_agent_prefix: "codex_exec/0.154.0",
     credential_header: "authorization",
 };
 
@@ -404,30 +404,49 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
             &json!({"data": models}).to_string(),
         ),
         ("GET", path) if path == case.catalog_path => {
-            let data = models
-                .iter()
-                .map(|model| match case.client {
-                    "claude" => json!({
-                        "id": model["id"],
-                        "type": "model",
+            let body = match case.client {
+                "claude" => {
+                    let data = models
+                        .iter()
+                        .map(|model| {
+                            json!({
+                            "id": model["id"],
+                            "type": "model",
+                            "display_name": model["display_name"],
+                            "created_at": model["created_at"],
+                            })
+                        })
+                        .collect::<Vec<_>>();
+                    json!({
+                        "data": data,
+                        "has_more": false,
+                        "first_id": data.first().and_then(|model| model["id"].as_str()),
+                        "last_id": data.last().and_then(|model| model["id"].as_str())
+                    })
+                }
+                "codex" => json!({
+                    "models": models.iter().enumerate().map(|(priority, model)| json!({
+                        "slug": model["id"],
                         "display_name": model["display_name"],
-                        "created_at": model["created_at"],
-                    }),
-                    _ => json!({
+                        "description": "OpenAI via Link.Assistant.Router",
+                        "default_reasoning_level": model["default_reasoning_level"],
+                        "supported_reasoning_levels": model["supported_reasoning_levels"],
+                        "shell_type": "unified_exec",
+                        "visibility": "list",
+                        "supported_in_api": true,
+                        "priority": priority,
+                        "apply_patch_tool_type": "freeform",
+                        "truncation_policy": {"mode": "tokens", "limit": 10_000},
+                        "base_instructions": ""
+                    })).collect::<Vec<_>>()
+                }),
+                _ => json!({
+                    "object": "list",
+                    "data": models.iter().map(|model| json!({
                         "id": model["id"],
                         "object": "model",
-                    }),
-                })
-                .collect::<Vec<_>>();
-            let body = if case.client == "claude" {
-                json!({
-                    "data": data,
-                    "has_more": false,
-                    "first_id": data.first().and_then(|model| model["id"].as_str()),
-                    "last_id": data.last().and_then(|model| model["id"].as_str())
-                })
-            } else {
-                json!({"object": "list", "data": data})
+                    })).collect::<Vec<_>>()
+                }),
             };
             http_response("200 OK", "application/json", &body.to_string())
         }
