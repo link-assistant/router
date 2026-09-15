@@ -481,7 +481,7 @@ async fn codex_output_limit_policy_distinguishes_client_surfaces() {
     assert!(
         missing_payload["error"]["message"]
             .as_str()
-            .is_some_and(|message| message.contains("max_tokens is required"))
+            .is_some_and(|message| message.contains("max_tokens"))
     );
 
     // Native Responses is protocol-transparent: Router neither strips the

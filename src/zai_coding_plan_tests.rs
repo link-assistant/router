@@ -411,7 +411,7 @@ async fn recording_upstream() -> (
             } else if path == crate::zai_coding_plan::CATALOG_PATH {
                 (
                     StatusCode::OK,
-                    r#"{"object":"list","data":[{"id":"glm-5","display_name":"GLM 5"},{"id":"future-saffron-91","display_name":"Future Saffron"}]}"#,
+                    r#"{"object":"list","data":[{"id":"glm-5","display_name":"GLM 5"},{"id":"glm-5.3-flash","display_name":"GLM 5.3 Flash"},{"id":"future-saffron-91","display_name":"Future Saffron"}]}"#,
                 )
             } else {
                 (StatusCode::OK, r#"{"id":"ok","model":"glm-5"}"#)
@@ -423,6 +423,9 @@ async fn recording_upstream() -> (
     let handle = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
     (base_url, requests, handle)
 }
+
+#[path = "zai_coding_plan_tests/anthropic_validation_tests.rs"]
+mod anthropic_validation;
 
 #[tokio::test]
 async fn native_anthropic_sse_is_relayed_byte_for_byte() {

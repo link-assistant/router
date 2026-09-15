@@ -840,6 +840,9 @@ mod cases_server_tools;
 #[path = "router_e2e/chat_validation.rs"]
 mod chat_validation;
 
+#[path = "router_e2e/anthropic_validation.rs"]
+mod anthropic_validation;
+
 #[path = "router_e2e/bridge_history.rs"]
 mod bridge_history;
 
