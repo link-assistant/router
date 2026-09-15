@@ -336,6 +336,39 @@ mod tests {
         assert!(!AGENT.contains("trap on_failure EXIT HUP INT TERM"));
     }
 
+    /// Once live verification succeeds, recovery must know the candidate is
+    /// accepted before the old backend can disappear. Otherwise a hard kill in
+    /// that interval can neither roll back nor safely retain the candidate.
+    #[test]
+    fn accepted_cutover_is_durable_before_the_old_backend_is_retired() {
+        let verified = AGENT
+            .find("cutover_done=1")
+            .expect("live-verification boundary");
+        let after_verified = &AGENT[verified..];
+        let accepted = after_verified
+            .find("phase=accepted")
+            .expect("durable accepted transaction phase");
+        let retired = after_verified
+            .find("remove_owned_candidate \"$old_container\"")
+            .expect("old backend retirement");
+        assert!(accepted < retired);
+        assert!(AGENT.contains("        accepted)"));
+    }
+
+    #[test]
+    fn pre_acceptance_cutover_recovery_restores_the_recorded_pointer() {
+        let recovery = AGENT
+            .split_once("        candidate|swapped|post-verify|rollback)")
+            .expect("pre-acceptance recovery case")
+            .1
+            .split_once("        accepted)")
+            .expect("accepted recovery boundary")
+            .0;
+        assert!(recovery.contains("if [ \"$current\" = \"$interrupted\" ]; then"));
+        assert!(recovery.contains("printf '%s\\n' \"$previous\""));
+        assert!(recovery.contains("mv \"$STATE/current.rollback.$$\" \"$STATE/current\""));
+    }
+
     #[test]
     fn validation_rejects_ambiguous_targets_paths_and_moving_deploy_images() {
         let mut candidate = args();

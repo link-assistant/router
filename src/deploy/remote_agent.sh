@@ -319,27 +319,84 @@ recover_transaction() {
     fi
     phase=$(field "$TRANSACTION" phase)
     previous=$(field "$TRANSACTION" previous_container)
+    previous_root=$(field "$TRANSACTION" previous_root)
     interrupted=$(field "$TRANSACTION" candidate_container)
     interrupted_root=$(field "$TRANSACTION" candidate_root)
     current=$(sed -n '1p' "$STATE/current" 2>/dev/null || true)
     case "$phase" in
-        candidate)
-            if [ "$current" != "$interrupted" ]; then
-                remove_owned_candidate "$interrupted"
-                remove_release_root "$interrupted_root"
-            fi
-            ;;
-        swapped|post-verify|rollback)
-            if [ -n "$previous" ] && owned_container "$previous"; then
-                printf '%s\n' "$previous" > "$STATE/current.rollback.$$"
-                mv "$STATE/current.rollback.$$" "$STATE/current"
-                echo "rolled an interrupted cutover back to $previous"
+        candidate|swapped|post-verify|rollback)
+            # Until live verification has been durably accepted, a pointer
+            # already moved to the candidate must return to the exact recorded
+            # predecessor. This includes the SIGKILL window between the atomic
+            # rename and the following transaction write.
+            if [ "$current" = "$interrupted" ]; then
+                if [ -n "$previous" ]; then
+                    owned_container "$previous" || {
+                        echo "error: cannot restore the recorded previous container $previous" >&2
+                        exit 1
+                    }
+                    printf '%s\n' "$previous" > "$STATE/current.rollback.$$"
+                    mv "$STATE/current.rollback.$$" "$STATE/current"
+                    echo "rolled an interrupted cutover back to $previous"
+                else
+                    if docker inspect "$RELAY" >/dev/null 2>&1; then
+                        owned_container "$RELAY" || {
+                            echo "error: refusing an unowned relay during first-deploy recovery" >&2
+                            exit 1
+                        }
+                        docker rm -f "$RELAY" >/dev/null 2>&1 || true
+                    fi
+                    rm -f "$STATE/current"
+                fi
+            elif [ "$current" != "$previous" ]; then
+                echo "error: interrupted transaction disagrees with relay state" >&2
+                exit 1
             fi
             while [ "$(cat "$STATE/connections/$interrupted" 2>/dev/null || echo 0)" != 0 ]; do
                 sleep 1
             done
             remove_owned_candidate "$interrupted"
             remove_release_root "$interrupted_root"
+            ;;
+        accepted)
+            # Live verification completed before this phase was signed. Finish
+            # the old-backend drain/removal idempotently and retain the accepted
+            # candidate even if the previous process died midway through it.
+            [ "$current" = "$interrupted" ] && owned_container "$interrupted" || {
+                echo "error: accepted transaction has no matching live candidate" >&2
+                exit 1
+            }
+            if [ -n "$previous" ]; then
+                while [ "$(cat "$STATE/connections/$previous" 2>/dev/null || echo 0)" != 0 ]; do
+                    sleep 1
+                done
+                remove_owned_candidate "$previous"
+                if [ -n "$previous_root" ]; then remove_release_root "$previous_root"; fi
+            fi
+            accepted_image=$(field "$TRANSACTION" candidate_image)
+            accepted_revision=$(field "$TRANSACTION" source_revision)
+            accepted_management_port=$(field "$TRANSACTION" management_port)
+            accepted_public_port=$(field "$TRANSACTION" public_port)
+            write_signed "$STATE/active" <<EOF
+container=$interrupted
+release_root=$interrupted_root
+image=$accepted_image
+source_revision=$accepted_revision
+management_port=$accepted_management_port
+public_port=$accepted_public_port
+EOF
+            write_signed "$TRANSACTION" <<EOF
+phase=complete
+previous_container=$previous
+previous_root=$previous_root
+candidate_container=$interrupted
+candidate_root=$interrupted_root
+candidate_image=$accepted_image
+source_revision=$accepted_revision
+management_port=$accepted_management_port
+public_port=$accepted_public_port
+EOF
+            echo "finished interrupted accepted deployment $interrupted"
             ;;
         complete|aborted) ;;
         *) echo "error: interrupted deployment record has unknown phase $phase" >&2; exit 1 ;;
@@ -816,6 +873,22 @@ if ! verify_router "http://$RELAY:8080" "$live_public" >/dev/null; then
 fi
 cutover_done=1
 
+# From this point the candidate has passed verification through the live relay.
+# Record that fact before retiring the only possible rollback backend, so a
+# subsequent process can finish this drain/removal rather than destroying the
+# accepted candidate when no predecessor remains.
+write_signed "$TRANSACTION" <<EOF
+phase=accepted
+previous_container=$old_container
+previous_root=$old_root
+candidate_container=$CANDIDATE
+candidate_root=$RELEASE
+candidate_image=$image_id
+source_revision=$source_revision
+management_port=$MANAGEMENT_PORT
+public_port=$PUBLIC_PORT
+EOF
+
 if [ -n "$old_container" ] && [ "$old_container" != "$CANDIDATE" ]; then
     while [ "$(cat "$STATE/connections/$old_container" 2>/dev/null || echo 0)" != 0 ]; do
         sleep 1
@@ -840,6 +913,8 @@ candidate_container=$CANDIDATE
 candidate_root=$RELEASE
 candidate_image=$image_id
 source_revision=$source_revision
+management_port=$MANAGEMENT_PORT
+public_port=$PUBLIC_PORT
 EOF
 trap release_lease EXIT
 trap 'exit 130' HUP INT TERM
