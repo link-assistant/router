@@ -600,12 +600,12 @@ async fn prepare_credential(
 }
 
 /// Refuse to launch a client with a model the selected router cannot serve.
-pub fn ensure_model_available(credential: &RunCredential, model: &str) -> Result<(), AnyError> {
-    if credential
-        .available_models
-        .iter()
-        .any(|item| item.id == model)
-    {
+pub fn ensure_model_available(
+    credential: &RunCredential,
+    client: ClientKind,
+    model: &str,
+) -> Result<(), AnyError> {
+    if crate::clients::model_is_authorized(client, &credential.available_models, model) {
         return Ok(());
     }
     if credential.available_models.is_empty() {

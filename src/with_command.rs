@@ -152,7 +152,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .into());
     }
     if let Some(model) = selected.as_deref()
-        && let Err(error) = ensure_model_available(&credential, model)
+        && let Err(error) = ensure_model_available(&credential, args.client, model)
     {
         cleanup_after_setup_failure(credential).await;
         return Err(error);

@@ -35,6 +35,40 @@ pub struct RouterModel {
     pub client_capabilities: RouterClientCapabilities,
 }
 
+/// Whether one exact client-facing model spelling is authorized by the live
+/// catalog.
+///
+/// Claude Code appends `[1m]` to an Anthropic model id when the user selects
+/// its supported one-million-token context variant. Router catalogs advertise
+/// the base id, but the suffixed value must still reach Claude unchanged so the
+/// client can preserve that selection. This exception is deliberately limited
+/// to an exact Anthropic-owned base; compatible models owned by another
+/// provider do not acquire a context variant merely because Claude can use
+/// their wire protocol.
+pub fn model_is_authorized(client: ClientKind, models: &[RouterModel], requested: &str) -> bool {
+    if client == ClientKind::ClaudeCode && requested.ends_with("[1m]") {
+        return claude_context_variant_is_authorized(models, requested);
+    }
+    if models.iter().any(|model| model.id == requested) {
+        return true;
+    }
+    false
+}
+
+/// Whether Claude's context-variant spelling has an exact Anthropic base in
+/// the live catalog.
+pub fn claude_context_variant_is_authorized(models: &[RouterModel], requested: &str) -> bool {
+    let Some(base) = requested
+        .strip_suffix("[1m]")
+        .filter(|base| !base.is_empty())
+    else {
+        return false;
+    };
+    models
+        .iter()
+        .any(|model| model.id == base && model.owned_by == super::ANTHROPIC_MODEL_OWNER)
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq)]
 pub struct RouterClientCapabilities {
     #[serde(default)]
