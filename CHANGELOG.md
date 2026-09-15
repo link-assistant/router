@@ -191,6 +191,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.11.2] - 2026-09-15
+
+### Fixed
+- Allow `router with --model` to pass Claude Code's `[1m]` context variant through unchanged when the exact base model is authorized by an Anthropic catalog entry, while continuing to reject unavailable and non-Anthropic variants locally.
+
 ## [1.11.1] - 2026-09-15
 
 ### Fixed
