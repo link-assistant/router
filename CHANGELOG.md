@@ -189,6 +189,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.11.0] - 2026-09-15
+
+### Added
+
+- Added candidate-first `router deploy --server` with a target deployment
+  lease, signed credential provenance and rollback state, pre/post-cutover
+  verification, connection draining, read-only status, and ownership-scoped
+  removal.
+
+### Fixed
+
+- Filtered Claude Code's model picker by the authorized provider set, preserving
+  exact GLM IDs and saved selections without exposing unusable native families.
+- Returned current Codex model metadata on the Codex catalog route and selected
+  Responses WebSocket support from the exact model owner, allowing z.ai models
+  to use HTTP/SSE without changing OpenAI-compatible catalogs.
+
+### Security
+
+- Updated `rustls` to the release that fixes RUSTSEC-2026-0285.
+
 ## [1.10.1] - 2026-09-14
 
 ### Fixed
