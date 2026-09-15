@@ -289,6 +289,26 @@ fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> St
                 session.transcript_tail(2_000)
             )
         });
+    // Let the wrapper drop its active-profile marker normally. Killing the
+    // PTY leader can orphan Claude briefly under a container PID 1, making an
+    // immediately following reset look active even though the TUI is gone.
+    session.send_key(Key::Escape).expect("close model selector");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle closed model selector");
+    session.send_text("/exit").expect("type /exit");
+    session
+        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .expect("settle /exit input");
+    session.send_key(Key::Enter).expect("exit Claude TUI");
+    session
+        .wait_for_exit(Duration::from_secs(10))
+        .unwrap_or_else(|error| {
+            panic!(
+                "Claude TUI did not exit cleanly: {error}; transcript: {}",
+                session.transcript_tail(2_000)
+            )
+        });
     session.kill();
     transcript
 }
@@ -311,6 +331,17 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect::<String>();
+    if models.iter().all(|(_, owner)| *owner == "z.ai") {
+        for unavailable in ["Opus", "Sonnet", "Haiku"] {
+            for number in 1..=8 {
+                let choice = format!("{number}.{unavailable}");
+                assert!(
+                    !compact.contains(&choice),
+                    "z.ai-only /model exposed the unavailable {unavailable} family: {transcript}"
+                );
+            }
+        }
+    }
     for (model, owner) in models {
         if *owner != "z.ai" {
             continue;
@@ -404,6 +435,38 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         output.status.success(),
         "Claude did not serve the selected exact model: {diagnostics}"
     );
+    // Exercise every custom row, not just the first one used by the TUI
+    // scenario. Each selection must reach the offline Router mock verbatim.
+    for (model, owner) in models {
+        if *owner != "z.ai" || *model == selected {
+            continue;
+        }
+        // Keep each real-client run on an isolated profile so Claude's
+        // short-lived background profile holder cannot interfere with the
+        // scenario's later reset check.
+        let row_home = tempfile::tempdir().expect("temporary exact-row Claude home");
+        let output = run_wrapper_with_model(
+            CLAUDE,
+            Path::new(env!("CARGO_MANIFEST_DIR")),
+            row_home.path(),
+            &router.origin,
+            model,
+        );
+        assert!(
+            output.status.success(),
+            "Claude did not serve exact picker row {model}: {}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let request = router
+            .inference_requests(CLAUDE.inference_path)
+            .into_iter()
+            .last()
+            .expect("selected exact model reaches the offline Router mock");
+        let body: Value =
+            serde_json::from_slice(&request.body).expect("Claude inference JSON for picker row");
+        assert_eq!(body["model"], *model);
+    }
     if models
         .iter()
         .any(|(model, owner)| *model == selected && *owner == "z.ai")

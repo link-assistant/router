@@ -12,6 +12,73 @@ use serde_json::{Value, json};
 use super::AnyError;
 use crate::clients::{ClientKind, ClientManager, RouterModel};
 
+pub(super) struct ClaudeModelSelection {
+    pub model: String,
+    pub reason: String,
+}
+
+/// A native Claude family is unavailable when this token has no Anthropic
+/// model in its live catalog. Exact z.ai IDs deliberately do not match this
+/// classification, even when their compatibility identity is Claude-shaped.
+pub(super) fn unavailable_native_claude_model<'a>(
+    model: &'a str,
+    models: &[RouterModel],
+) -> Option<&'a str> {
+    let family = model
+        .trim()
+        .split_once('[')
+        .map_or(model.trim(), |(family, _)| family)
+        .to_ascii_lowercase();
+    let native =
+        matches!(family.as_str(), "opus" | "sonnet" | "haiku") || family.starts_with("claude-");
+    let has_anthropic = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+        .iter()
+        .any(|candidate| candidate.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+    (native && !has_anthropic).then_some(model)
+}
+
+pub(super) fn validate_claude_model_selection(
+    selection: ClaudeModelSelection,
+    models: &[RouterModel],
+) -> Result<Option<String>, AnyError> {
+    let model = selection.model.trim();
+    let catalog_model = model
+        .split_once('[')
+        .map_or(model, |(model, _)| model)
+        .trim();
+    let has_anthropic = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+        .iter()
+        .any(|candidate| candidate.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+    // Claude's saved `default` is semantic rather than an upstream ID. On a
+    // z.ai-only catalog, Router's main/subagent fallback is how that semantic
+    // choice remains usable.
+    if model.eq_ignore_ascii_case("default") && !has_anthropic {
+        return Ok(None);
+    }
+    if let Some(unavailable) = unavailable_native_claude_model(model, models) {
+        return Err(format!(
+            "Claude model `{unavailable}` requires an Anthropic provider, but this client's \
+             authorized live catalog contains none; choose one of the visible exact models with \
+             /model, configure Anthropic, or clear the stale model selection"
+        )
+        .into());
+    }
+    let native_family = ["default", "opus", "sonnet", "haiku"]
+        .iter()
+        .any(|family| catalog_model.eq_ignore_ascii_case(family));
+    let exact = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+        .iter()
+        .any(|candidate| candidate.id == catalog_model);
+    if (native_family && has_anthropic) || exact {
+        return Ok(Some(selection.reason));
+    }
+    Err(format!(
+        "Claude model `{model}` is not in this client's authorized live catalog; choose one of \
+         the visible exact models with /model or clear the stale model selection"
+    )
+    .into())
+}
+
 /// Build the process-local Claude settings a Router-directed launch needs.
 ///
 /// Two things live here: the presentation default that keeps a completed
@@ -26,7 +93,11 @@ pub(super) fn append_claude_model_picker(
 ) -> Result<(), AnyError> {
     const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
 
-    let mut candidates = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+    let usable = crate::clients::usable_models(ClientKind::ClaudeCode, models);
+    let has_anthropic = usable
+        .iter()
+        .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+    let mut candidates = usable
         .into_iter()
         .filter(|model| {
             let folded = model.id.to_ascii_lowercase();
@@ -89,7 +160,11 @@ pub(super) fn append_claude_model_picker(
             "modelPicker".into(),
             json!({
                 "options": options,
-                "replaceBuiltInOptions": false,
+                // Native family rows are usable only when this exact client's
+                // authorized live catalog contains Anthropic. In a z.ai-only
+                // catalog, retaining them sends the next prompt to a provider
+                // the token cannot reach (issue #577).
+                "replaceBuiltInOptions": !has_anthropic,
             }),
         );
     }
@@ -104,11 +179,12 @@ pub(super) fn append_claude_model_picker(
 
 /// The Claude model the client itself has saved as its default, if any.
 ///
-/// `Some(reason)` names the choice for the note Router prints, and means Router
-/// must not supply a pin of its own: a wrapper-set `ANTHROPIC_MODEL` outranks
-/// the client's own selection for every new session, so pinning over a saved
-/// `/model` choice silently overrode the documented way to pick a model
-/// (issue #563). The environment half of that rule is resolved by the caller.
+/// The returned exact model is validated against the authorized live catalog
+/// before its human-readable reason is used in Router's note. A wrapper-set
+/// `ANTHROPIC_MODEL` outranks the client's own selection for every new session,
+/// so pinning over a valid saved `/model` choice silently overrode the
+/// documented way to pick a model (issue #563). The environment half of that
+/// rule is resolved by the caller.
 ///
 /// The profile consulted is the one this launch actually hands the client — the
 /// Router-owned one by default, the user's own under `--extend-global-config`.
@@ -116,7 +192,7 @@ pub(super) fn claude_saved_model_selection(
     manager: &ClientManager,
     root: &Path,
     extends_user_configuration: bool,
-) -> Option<String> {
+) -> Option<ClaudeModelSelection> {
     // Under `--extend-global-config` the client reads the user's real profile,
     // which this manager is not rooted at; ask the environment's own manager so
     // the saved default is read from the file Claude will actually open.
@@ -139,5 +215,8 @@ pub(super) fn claude_saved_model_selection(
     // safe reading of "cannot tell" is to leave the pin to the catalog.
     let document: serde_json::Value = serde_json::from_str(&saved).ok()?;
     let model = document.get("model")?.as_str()?.trim();
-    (!model.is_empty()).then(|| format!("the model saved in your Claude profile ({model})"))
+    (!model.is_empty()).then(|| ClaudeModelSelection {
+        model: model.to_string(),
+        reason: format!("the model saved in your Claude profile ({model})"),
+    })
 }

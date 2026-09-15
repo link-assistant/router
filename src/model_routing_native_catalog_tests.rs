@@ -170,11 +170,10 @@ fn anthropic_invalid_limits_and_cursors_fail_closed() {
 }
 
 #[test]
-fn openai_codex_and_qwen_shapes_keep_standard_ownership_without_router_diagnostics() {
+fn openai_and_qwen_shapes_keep_standard_ownership_without_router_diagnostics() {
     let catalog = diagnostic_catalog(&["synthetic-live"]);
     for path in [
         "/api/services/openai/v1/models",
-        "/api/services/codex/v1/models",
         "/api/services/qwen/v1/models",
     ] {
         let projected = project(path, None, &catalog).unwrap().unwrap();
@@ -193,6 +192,47 @@ fn openai_codex_and_qwen_shapes_keep_standard_ownership_without_router_diagnosti
         );
         assert_no_router_fields(&projected);
     }
+}
+
+/// Codex 0.154 deserializes its provider `/models` response as
+/// `{ "models": ModelInfo[] }`, not the OpenAI-compatible list envelope used
+/// by `/api/services/openai/v1/models` (issue #578).
+#[test]
+fn codex_shape_uses_the_current_client_models_envelope() {
+    let projected = project(
+        "/api/services/codex/v1/models",
+        Some("client_version=0.154.0"),
+        &diagnostic_catalog(&["synthetic-live"]),
+    )
+    .unwrap()
+    .unwrap();
+    assert!(projected.get("data").is_none(), "{projected}");
+    let models = projected["models"].as_array().expect("Codex models array");
+    assert_eq!(models.len(), 1);
+    assert_eq!(models[0]["slug"], "synthetic-live");
+    assert_eq!(models[0]["display_name"], "Model 0");
+    assert_eq!(models[0]["supported_reasoning_levels"], json!([]));
+    assert_eq!(models[0]["shell_type"], "unified_exec");
+    assert_eq!(models[0]["supported_in_api"], true);
+    assert_eq!(models[0]["base_instructions"], "");
+    assert_no_router_fields(&projected);
+
+    let zai = project(
+        "/api/services/codex/v1/models",
+        None,
+        &json!({"data": [{"id": "glm-future", "owned_by": "z.ai"}]}),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(zai["models"][0]["default_reasoning_level"], "max");
+    assert_eq!(
+        zai["models"][0]["supported_reasoning_levels"],
+        json!([
+            {"effort": "low", "description": "Light reasoning"},
+            {"effort": "high", "description": "Enhanced reasoning"},
+            {"effort": "max", "description": "Deep reasoning"}
+        ])
+    );
 }
 
 #[test]

@@ -813,11 +813,11 @@ async fn advertised_model_ids_keep_their_identity_on_every_openai_surface() {
         .json()
         .await
         .expect("model catalog JSON");
-    let ids = catalog["data"]
+    let ids = catalog["models"]
         .as_array()
-        .expect("catalog data array")
+        .expect("Codex ModelInfo array")
         .iter()
-        .filter_map(|model| model["id"].as_str().map(str::to_string))
+        .filter_map(|model| model["slug"].as_str().map(str::to_string))
         .collect::<Vec<_>>();
     assert_eq!(ids, ["codex-auto-review", "gpt-5"]);
 

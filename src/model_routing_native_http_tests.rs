@@ -97,7 +97,7 @@ async fn anthropic_handler_paginates_the_final_visible_catalog() {
 }
 
 #[tokio::test]
-async fn pinned_and_automatic_codex_catalogs_use_the_same_openai_dialect() {
+async fn pinned_and_automatic_codex_catalogs_use_the_same_codex_dialect() {
     let data = tempfile::tempdir().unwrap();
     let codex = tempfile::tempdir().unwrap();
     fs::write(
@@ -125,13 +125,9 @@ async fn pinned_and_automatic_codex_catalogs_use_the_same_openai_dialect() {
     let (pinned_status, pinned) = response_json(pinned_state, path, headers).await;
     assert_eq!(pinned_status, StatusCode::OK);
     assert_eq!(automatic, pinned);
-    assert_eq!(
-        automatic,
-        json!({
-            "object": "list",
-            "data": [{"id": "synthetic-live", "object": "model", "owned_by": "openai"}]
-        })
-    );
+    assert!(automatic.get("data").is_none(), "{automatic}");
+    assert_eq!(automatic["models"][0]["slug"], "synthetic-live");
+    assert_eq!(automatic["models"][0]["supported_in_api"], true);
     assert_native_only(&automatic);
 }
 

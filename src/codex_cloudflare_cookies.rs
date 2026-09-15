@@ -1,6 +1,6 @@
 //! Narrow process-wide Cloudflare cookie continuity for official Codex traffic.
 //!
-//! Policy is tied to Codex 0.153.4. The store must never be broadened to hold
+//! Policy is tied to Codex 0.154.0. The store must never be broadened to hold
 //! account, session, authentication, CSRF, preference, or caller cookies.
 
 use std::sync::{Arc, LazyLock, Mutex};
@@ -10,7 +10,7 @@ use reqwest::header::HeaderValue;
 use reqwest::{ClientBuilder, Url};
 
 #[cfg(test)]
-const SUPPORTED_CODEX_VERSION: &str = "0.153.4";
+const SUPPORTED_CODEX_VERSION: &str = "0.154.0";
 const MAX_COOKIE_BYTES: usize = 4_096;
 const MAX_COOKIE_COUNT: usize = 64;
 const MAX_COOKIE_HEADER_BYTES: usize = 16_384;

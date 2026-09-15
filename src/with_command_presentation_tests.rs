@@ -5,6 +5,53 @@
 
 use super::*;
 
+/// Issue #577: when no Anthropic subscription is visible to this token, the
+/// native Opus/Sonnet/Haiku rows are not usable choices. The exact z.ai rows
+/// must replace them rather than merely being appended beside them.
+#[test]
+fn claude_zai_only_picker_replaces_unavailable_native_families() {
+    let profiles = tempfile::tempdir().expect("profile root");
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "glm-5.3-flash", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "glm-4.5", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize z.ai-only catalog");
+    let prepared = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        user_model_selection: None,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+        ca_cert: None,
+    })
+    .expect("prepare z.ai-only Claude catalog");
+    let arguments = prepared
+        .command
+        .get_args()
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    let settings = arguments
+        .windows(2)
+        .find_map(|pair| (pair[0] == "--settings").then_some(&pair[1]))
+        .expect("Router must provide a process-local model picker");
+    let settings: serde_json::Value = serde_json::from_str(settings).expect("valid settings JSON");
+    assert_eq!(settings["modelPicker"]["replaceBuiltInOptions"], true);
+    assert_eq!(
+        settings["modelPicker"]["options"],
+        json!([
+            {"model": "glm-4.5", "label": "glm-4.5", "behavesAs": "claude-sonnet-5"},
+            {"model": "glm-5.3-flash", "label": "glm-5.3-flash", "behavesAs": "claude-sonnet-5"}
+        ])
+    );
+}
+
 /// Issue #560: genuine thinking was visible while a response streamed and
 /// collapsed to `Thought for Ns` the moment it completed, under a bare
 /// `router with claude` only. The Router-owned profile starts empty by design,
@@ -185,7 +232,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     // A model the user chose in this environment is left alone: Router sets
     // neither pin, so the client's own resolution stays in charge.
     let with_env = tempfile::tempdir().expect("profile root");
-    let respected = pins(with_env.path(), Some("glm-5.3"));
+    let respected = pins(with_env.path(), Some("glm-4.5"));
     for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
         assert!(
             !respected.contains_key(key),
@@ -214,6 +261,27 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
         );
     }
 
+    // Claude's semantic Default row is still usable without Anthropic: it
+    // delegates main and subagent selection to Router's exact live fallback.
+    let saved_default = tempfile::tempdir().expect("profile root");
+    let default_profile = saved_default
+        .path()
+        .join("link-assistant-router/clients/claude/home/.claude");
+    std::fs::create_dir_all(&default_profile).expect("create the Router-owned Claude profile");
+    std::fs::write(
+        default_profile.join("settings.json"),
+        br#"{"model":"default"}"#,
+    )
+    .expect("seed Claude's semantic default");
+    let defaulted = pins(saved_default.path(), None);
+    for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
+        assert_eq!(
+            defaulted.get(key).map(String::as_str),
+            Some("glm-5.3-flash"),
+            "{key} must map Default to the current exact z.ai model"
+        );
+    }
+
     // A profile that saves no model is not a selection, so the fallback still
     // applies — "cannot tell" must not mean "leave the client without a pin it
     // needs to start".
@@ -230,6 +298,72 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
             still_supplied.get(key).map(String::as_str),
             Some("glm-5.3-flash"),
             "{key} must still fall back when nothing was chosen"
+        );
+    }
+}
+
+/// Issue #577: a model remembered by Claude is still subject to the live,
+/// client-authorized catalog. A stale native choice on a z.ai-only deployment
+/// must fail before the child can send inference to a missing provider.
+#[test]
+fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
+    let profiles = tempfile::tempdir().expect("profile root");
+    let profile = profiles
+        .path()
+        .join("link-assistant-router/clients/claude/home/.claude");
+    std::fs::create_dir_all(&profile).expect("create Router-owned Claude profile");
+    std::fs::write(
+        profile.join("settings.json"),
+        br#"{"model":"claude-opus-4-6"}"#,
+    )
+    .expect("seed stale native model");
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "glm-5.3-flash", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize z.ai-only catalog");
+    let result = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: None,
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: false,
+        user_model_selection: None,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+        ca_cert: None,
+    });
+    let Err(error) = result else {
+        panic!("a stale native model must not reach Claude");
+    };
+    let error = error.to_string();
+    assert!(error.contains("claude-opus-4-6"), "{error}");
+    assert!(error.contains("Anthropic provider"), "{error}");
+    assert!(error.contains("/model"), "{error}");
+}
+
+#[test]
+fn available_native_claude_selections_keep_their_context_suffix() {
+    let models = [RouterModel {
+        id: "claude-opus-5".into(),
+        owned_by: crate::clients::ANTHROPIC_MODEL_OWNER.into(),
+        ..RouterModel::default()
+    }];
+    for saved in ["opus[1m]", "claude-opus-5[1m]"] {
+        let reason = format!("saved {saved}");
+        assert_eq!(
+            claude_settings::validate_claude_model_selection(
+                claude_settings::ClaudeModelSelection {
+                    model: saved.into(),
+                    reason: reason.clone(),
+                },
+                &models,
+            )
+            .expect("available native selection"),
+            Some(reason)
         );
     }
 }

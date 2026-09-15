@@ -230,7 +230,7 @@ async fn enroll_hides_upstream_bearer_and_continuation_resumes_after_restart() {
     ));
 
     let enroll_body = Bytes::from_static(
-        br#"{"name":"name-private","os":"macos","arch":"aarch64","app_server_version":"0.153.4","installation_id":"installation-private"}"#,
+        br#"{"name":"name-private","os":"macos","arch":"aarch64","app_server_version":"0.154.0","installation_id":"installation-private"}"#,
     );
     let enroll = Request::builder()
         .method(Method::POST)

@@ -147,7 +147,11 @@ fn mock_external_codex_router(requests: usize) -> (String, thread::JoinHandle<Ve
             let (status, body) = match path.as_str() {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"test"}"#),
                 "/api/management/tokens" => ("401 Unauthorized", r#"{"error":"ordinary token"}"#),
-                "/api/services/codex/v1/models" | "/api/models" => (
+                "/api/services/codex/v1/models" => (
+                    "200 OK",
+                    r#"{"models":[{"slug":"gpt-future","display_name":"gpt-future","description":"OpenAI via Link.Assistant.Router","supported_reasoning_levels":[],"shell_type":"unified_exec","visibility":"list","supported_in_api":true,"priority":0,"apply_patch_tool_type":"freeform","truncation_policy":{"mode":"tokens","limit":10000},"base_instructions":""}]}"#,
+                ),
+                "/api/models" => (
                     "200 OK",
                     r#"{"object":"list","data":[{"id":"gpt-future","owned_by":"openai"}]}"#,
                 ),

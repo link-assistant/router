@@ -2,7 +2,7 @@
 
 use axum::http::{HeaderMap, HeaderValue};
 
-pub const DEFAULT_CLIENT_VERSION: &str = "0.153.4";
+pub const DEFAULT_CLIENT_VERSION: &str = "0.154.0";
 pub const ORIGINATOR: &str = "codex_cli_rs";
 
 /// The supported Codex version, with the same operator override used by model

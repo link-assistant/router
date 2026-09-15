@@ -32,9 +32,9 @@ pub use types::{ClientError, ClientStatus, SetupResult};
 pub(crate) use catalog::RouterClientCapabilities;
 #[cfg(test)]
 pub(crate) use catalog::RouterReasoningLevel;
-pub(crate) use catalog::claude_gateway_model;
 use catalog::doctor_model;
 pub(crate) use catalog::{RouterModel, claude_capability_profile};
+pub(crate) use catalog::{claude_gateway_model, codex_supports_websockets};
 pub use catalog::{select_model, unavailable as model_unavailable, usable_models};
 pub use credentials::{ManagedCredential, TokenSource};
 pub(crate) use doctor::require_claude_gateway_version;
@@ -761,6 +761,23 @@ impl ClientManager {
         models: &[RouterModel],
         codex_backend_base_url: Option<&str>,
     ) -> Result<SetupResult, ClientError> {
+        self.setup_with_codex_backend_and_model(
+            client,
+            base_url,
+            models,
+            codex_backend_base_url,
+            None,
+        )
+    }
+
+    pub(crate) fn setup_with_codex_backend_and_model(
+        &self,
+        client: ClientKind,
+        base_url: &str,
+        models: &[RouterModel],
+        codex_backend_base_url: Option<&str>,
+        selected_model: Option<&str>,
+    ) -> Result<SetupResult, ClientError> {
         if let Some(limitation) = client.setup_limitation() {
             return Err(ClientError::message(limitation));
         }
@@ -771,7 +788,11 @@ impl ClientManager {
             client.integration().endpoint_suffix
         );
         match client {
-            ClientKind::Codex => self.setup_codex(&endpoint, codex_backend_base_url),
+            ClientKind::Codex => self.setup_codex(
+                &endpoint,
+                codex_backend_base_url,
+                codex_supports_websockets(models, selected_model),
+            ),
             ClientKind::ClaudeCode => self.setup_claude(&endpoint, models),
             ClientKind::Opencode | ClientKind::Agent => {
                 self.setup_json_provider(client, &endpoint, models)

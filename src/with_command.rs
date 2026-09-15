@@ -29,7 +29,10 @@ use codex_catalog::write_codex_model_catalog;
 
 #[path = "with_command_claude_settings.rs"]
 mod claude_settings;
-use claude_settings::{append_claude_model_picker, claude_saved_model_selection};
+use claude_settings::{
+    ClaudeModelSelection, append_claude_model_picker, claude_saved_model_selection,
+    unavailable_native_claude_model, validate_claude_model_selection,
+};
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -136,6 +139,18 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             return Err(error);
         }
     };
+    if let Some(model) = selected.as_deref()
+        && args.client == ClientKind::ClaudeCode
+        && let Some(unavailable) = unavailable_native_claude_model(model, credential.models())
+    {
+        cleanup_after_setup_failure(credential).await;
+        return Err(format!(
+            "Claude model `{unavailable}` requires an Anthropic provider, but this client's \
+             authorized live catalog contains none; choose a visible exact model with --model \
+             or configure Anthropic"
+        )
+        .into());
+    }
     if let Some(model) = selected.as_deref()
         && let Err(error) = ensure_model_available(&credential, model)
     {
@@ -504,11 +519,12 @@ impl TemporaryClient {
                     .into());
             }
             _ => {
-                manager.setup_with_codex_backend(
+                manager.setup_with_codex_backend_and_model(
                     client,
                     base_url,
                     models,
                     codex_backend_base_url,
+                    model_override,
                 )?;
             }
         }
@@ -576,7 +592,10 @@ impl TemporaryClient {
                 // chosen therefore suppress the pin: a value in this
                 // environment, and a default saved in the profile Claude reads.
                 let chosen_by_user = user_model_selection
-                    .map(|model| format!("ANTHROPIC_MODEL={model}"))
+                    .map(|model| ClaudeModelSelection {
+                        model: model.to_string(),
+                        reason: format!("ANTHROPIC_MODEL={model}"),
+                    })
                     .or_else(|| {
                         claude_saved_model_selection(
                             &manager,
@@ -587,7 +606,10 @@ impl TemporaryClient {
                                 extend_user_configuration,
                             ),
                         )
-                    });
+                    })
+                    .map(|selection| validate_claude_model_selection(selection, models))
+                    .transpose()?
+                    .flatten();
                 let gateway_model = crate::clients::claude_gateway_model(models, model_override);
                 if let Some(reason) = chosen_by_user {
                     eprintln!(
@@ -639,6 +661,7 @@ impl TemporaryClient {
                         base_url,
                         codex_backend_base_url,
                         &catalog,
+                        crate::clients::codex_supports_websockets(models, model_override),
                     )?;
                 }
             }
@@ -742,6 +765,7 @@ fn append_codex_router_overrides(
     base_url: &str,
     codex_backend_base_url: Option<&str>,
     catalog: &Path,
+    supports_websockets: bool,
 ) -> Result<(), AnyError> {
     let provider_id = format!("link-assistant-run-{}", uuid::Uuid::new_v4().simple());
     let provider_key = format!("model_providers.{provider_id}");
@@ -751,7 +775,7 @@ fn append_codex_router_overrides(
     );
     let provider = format!(
         "{{ name = {}, base_url = {}, wire_api = \"responses\", requires_openai_auth = true, \
-         supports_websockets = true, supports_standalone_web_search = true }}",
+         supports_websockets = {supports_websockets}, supports_standalone_web_search = true }}",
         serde_json::to_string("OpenAI")?,
         serde_json::to_string(&provider_base_url)?,
     );
@@ -952,6 +976,10 @@ mod tests;
 #[cfg(test)]
 #[path = "with_command_presentation_tests.rs"]
 mod presentation_tests;
+
+#[cfg(test)]
+#[path = "with_command_codex_transport_tests.rs"]
+mod codex_transport_tests;
 
 #[cfg(test)]
 #[path = "with_command_ca_tests.rs"]

@@ -41,6 +41,7 @@ mod client_launch;
 pub mod client_policy;
 mod client_repair_command;
 pub mod clients;
+mod codex_catalog;
 mod codex_cloudflare_cookies;
 pub mod codex_identity;
 pub mod codex_loopback_bridge;

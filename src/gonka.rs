@@ -773,11 +773,11 @@ mod tests {
             .await
             .unwrap();
         let catalog: Value = serde_json::from_slice(&body).unwrap();
-        let ids = catalog["data"]
+        let ids = catalog["models"]
             .as_array()
             .unwrap()
             .iter()
-            .filter_map(|entry| entry["id"].as_str())
+            .filter_map(|entry| entry["slug"].as_str())
             .collect::<Vec<_>>();
         assert_eq!(ids, ["Exact-B", "Exact-C"]);
         assert!(catalog.get("healthy_providers").is_none());

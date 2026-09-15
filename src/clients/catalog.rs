@@ -355,6 +355,28 @@ pub fn usable_models(client: ClientKind, catalog: &[RouterModel]) -> Vec<RouterM
     preferred
 }
 
+/// Whether Codex may use the Responses WebSocket transport for this launch.
+///
+/// z.ai's Codex adapter serves HTTP/SSE Responses but cannot preserve Codex's
+/// WebSocket session semantics. An exact selection decides when present; with
+/// no selection, a mixed picker must remain on the transport every visible
+/// model can serve (issue #578).
+#[must_use]
+pub(crate) fn codex_supports_websockets(
+    models: &[RouterModel],
+    selected_model: Option<&str>,
+) -> bool {
+    if let Some(selected) = selected_model {
+        return models
+            .iter()
+            .find(|model| model.id == selected)
+            .is_some_and(|model| model.owned_by != super::ZAI_MODEL_OWNER);
+    }
+    !usable_models(ClientKind::Codex, models)
+        .iter()
+        .any(|model| model.owned_by == super::ZAI_MODEL_OWNER)
+}
+
 /// Why nothing in the catalog suits this client, and what to do about it.
 ///
 /// Names the owners that *are* advertised and points at `--model`, because the

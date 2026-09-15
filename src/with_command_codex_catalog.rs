@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use serde_json::json;
+use serde_json::{Value, json};
 
 use super::AnyError;
 use crate::clients::RouterModel;
@@ -80,32 +80,27 @@ pub(super) fn write_codex_model_catalog(
     let entries = compatible
         .iter()
         .enumerate()
-        .map(|(index, model)| -> Result<serde_json::Value, AnyError> {
+        .map(|(index, model)| {
             let supported = model
                 .supported_reasoning_levels
                 .as_ref()
                 .expect("metadata was validated before projection");
-            Ok(json!({
-                "slug": model.id,
-                "display_name": model.id,
-                "description": format!("{} via Link.Assistant.Router", model.owned_by),
-                "default_reasoning_level": model.default_reasoning_level,
-                "supported_reasoning_levels": supported,
-                "shell_type": "unified_exec",
-                "visibility": "list",
-                "supported_in_api": true,
-                "priority": i32::try_from(index).unwrap_or(i32::MAX),
-                "availability_nux": null,
-                "upgrade": null,
-                "support_verbosity": false,
-                "default_verbosity": null,
-                "apply_patch_tool_type": "freeform",
-                "truncation_policy": {"mode": "tokens", "limit": 10_000},
-                "experimental_supported_tools": [],
-                "base_instructions": ""
-            }))
+            crate::codex_catalog::model_info(
+                crate::codex_catalog::ModelDescription {
+                    id: &model.id,
+                    display_name: &model.id,
+                    owner: &model.owned_by,
+                    default_reasoning_level: model
+                        .default_reasoning_level
+                        .clone()
+                        .map(Value::String),
+                    supported_reasoning_levels: serde_json::to_value(supported)
+                        .expect("reasoning metadata serializes"),
+                },
+                index,
+            )
         })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect::<Vec<_>>();
     let path = root.join("router-codex-models.json");
     let rendered = format!(
         "{}\n",
