@@ -192,6 +192,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.11.3] - 2026-09-16
+
+### Fixed
+
+- An explicit `router with --model` selection now outranks a different model saved in the Claude profile when `--extend-global-config` is used.
+
 ## [1.11.2] - 2026-09-15
 
 ### Fixed
