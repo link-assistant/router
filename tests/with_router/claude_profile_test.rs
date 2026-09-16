@@ -4,9 +4,10 @@ use std::process::Stdio;
 
 use super::*;
 
-fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
+fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock Claude router");
     let port = listener.local_addr().expect("mock address").port();
+    let catalog = catalog.to_string();
     let handle = thread::spawn(move || {
         let mut paths = Vec::new();
         for _ in 0..3 {
@@ -25,10 +26,7 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
-                "/api/models" => (
-                    "200 OK",
-                    r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
-                ),
+                "/api/models" => ("200 OK", catalog.as_str()),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
             write!(
@@ -41,6 +39,12 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
         paths
     });
     (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
+    mock_claude_router_with_catalog(
+        r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
+    )
 }
 
 #[allow(clippy::literal_string_with_formatting_args)] // POSIX shell parameter expansion.
@@ -59,6 +63,10 @@ if [ "${1:-}" = "--version" ]; then
 fi
 printf '%s\n' "${CLAUDE_CONFIG_DIR:-}" > "$CAPTURE_CLAUDE_CONFIG_DIR"
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
+{
+  printf '%s\n' "ANTHROPIC_MODEL=${ANTHROPIC_MODEL-<unset>}"
+  printf '%s\n' "CLAUDE_CODE_SUBAGENT_MODEL=${CLAUDE_CODE_SUBAGENT_MODEL-<unset>}"
+} > "$CAPTURE_MODEL_ENV"
 {
   printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC-<unset>}"
   printf '%s\n' "DISABLE_TELEMETRY=${DISABLE_TELEMETRY-<unset>}"
@@ -116,9 +124,12 @@ fn run_claude_with(
             capture.join("claude-config-dir"),
         )
         .env("CAPTURE_ARGS", capture.join("args"))
+        .env("CAPTURE_MODEL_ENV", capture.join("model-env"))
         .env("CAPTURE_PRIVACY_ENV", capture.join("privacy-env"))
         .env_remove("CLAUDE_CONFIG_DIR")
-        .env_remove("ANTHROPIC_API_KEY");
+        .env_remove("ANTHROPIC_API_KEY")
+        .env_remove("ANTHROPIC_MODEL")
+        .env_remove("CLAUDE_CODE_SUBAGENT_MODEL");
     for name in [
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
         "DISABLE_TELEMETRY",
@@ -399,6 +410,65 @@ fn claude_real_profile_extension_is_explicit() {
             .expect("Claude credentials after extension"),
         credentials,
         "Router must leave the stored Claude login byte-identical"
+    );
+}
+
+/// Issue #585: an invocation-level model selection outranks a different model
+/// remembered by the real Claude profile extended for this launch.
+#[test]
+fn explicit_model_overrides_saved_model_when_extending_real_profile() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(home.join(".claude")).expect("create normal Claude profile");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    let normal = b"{\"model\":\"fable\",\"permissions\":{\"allow\":[\"Read\"]}}\n";
+    fs::write(home.join(".claude/settings.json"), normal).expect("seed saved Claude model");
+    fake_claude(&bin);
+    let token = bound_client_token("claude");
+    let (server, requests) = mock_claude_router_with_catalog(
+        r#"{"object":"list","data":[{"id":"glm-5.3-flash","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
+    );
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server",
+            &server,
+            "--token",
+            &token,
+            "--model",
+            "glm-5.3-flash",
+            "--extend-global-config",
+            "claude",
+            "--",
+            "-p",
+            "reply exactly ok",
+        ],
+        &[],
+    );
+
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        requests.join().expect("mock Router requests"),
+        ["/api/health", "/api/management/tokens", "/api/models"]
+    );
+    assert_eq!(
+        fs::read_to_string(capture.join("model-env")).expect("captured model environment"),
+        "ANTHROPIC_MODEL=glm-5.3-flash\nCLAUDE_CODE_SUBAGENT_MODEL=glm-5.3-flash\n"
+    );
+    assert_eq!(
+        fs::read(home.join(".claude/settings.json")).expect("normal settings after launch"),
+        normal,
+        "the invocation must not rewrite the saved profile choice"
     );
 }
 
