@@ -597,6 +597,12 @@ impl TemporaryClient {
                         reason: format!("ANTHROPIC_MODEL={model}"),
                     })
                     .or_else(|| {
+                        // An invocation-level choice has already won before
+                        // preparation. The saved profile is authoritative only
+                        // when this invocation did not select a model (#585).
+                        if model_override.is_some() {
+                            return None;
+                        }
                         claude_saved_model_selection(
                             &manager,
                             directory.path(),

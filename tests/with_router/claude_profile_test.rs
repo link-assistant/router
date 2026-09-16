@@ -65,7 +65,7 @@ printf '%s\n' "${CLAUDE_CONFIG_DIR:-}" > "$CAPTURE_CLAUDE_CONFIG_DIR"
 printf '%s\n' "$@" > "$CAPTURE_ARGS"
 {
   printf '%s\n' "ANTHROPIC_MODEL=${ANTHROPIC_MODEL-<unset>}"
-  printf '%s\n' "ANTHROPIC_SMALL_FAST_MODEL=${ANTHROPIC_SMALL_FAST_MODEL-<unset>}"
+  printf '%s\n' "CLAUDE_CODE_SUBAGENT_MODEL=${CLAUDE_CODE_SUBAGENT_MODEL-<unset>}"
 } > "$CAPTURE_MODEL_ENV"
 {
   printf '%s\n' "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC-<unset>}"
@@ -127,7 +127,9 @@ fn run_claude_with(
         .env("CAPTURE_MODEL_ENV", capture.join("model-env"))
         .env("CAPTURE_PRIVACY_ENV", capture.join("privacy-env"))
         .env_remove("CLAUDE_CONFIG_DIR")
-        .env_remove("ANTHROPIC_API_KEY");
+        .env_remove("ANTHROPIC_API_KEY")
+        .env_remove("ANTHROPIC_MODEL")
+        .env_remove("CLAUDE_CODE_SUBAGENT_MODEL");
     for name in [
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
         "DISABLE_TELEMETRY",
@@ -461,7 +463,7 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
     );
     assert_eq!(
         fs::read_to_string(capture.join("model-env")).expect("captured model environment"),
-        "ANTHROPIC_MODEL=glm-5.3-flash\nANTHROPIC_SMALL_FAST_MODEL=glm-5.3-flash\n"
+        "ANTHROPIC_MODEL=glm-5.3-flash\nCLAUDE_CODE_SUBAGENT_MODEL=glm-5.3-flash\n"
     );
     assert_eq!(
         fs::read(home.join(".claude/settings.json")).expect("normal settings after launch"),
