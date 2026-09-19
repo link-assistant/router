@@ -88,19 +88,14 @@ after five minutes, and a failed refresh retries after fifteen seconds. Legacy
 stored `models` values are not used as a healthy-provider catalog. No inference
 probe or hardcoded GLM name/version list is used.
 
-For Codex-bound catalogue requests, Router supplements a live z.ai model that
-omits local-picker capability fields with z.ai's documented Codex protocol
-profile: `low`, `high`, and `max`, with `max` as the default. The live response
-still owns the exact model IDs and any capability fields it does provide, so a
-new GLM model appears without a Router source change. The projected catalogue
-marks this fallback as `reasoning_metadata_source:
-"provider-protocol:z.ai-codex"`; Claude's catalogue is not modified.
-
-When another Codex-compatible provider supplies neither live reasoning
-metadata nor a reviewed provider profile, `router with codex` warns and leaves
-only that entry out of the process-local picker. Healthy, fully described
-models still launch, while explicitly selecting the incomplete entry remains a
-hard error rather than silently changing `model_reasoning_effort`.
+For Codex-bound catalogue requests, Router retains reasoning fields only when
+the exact live model row supplies them. It does not supplement all z.ai-owned
+models with one `low`/`high`/`max` profile or a shared default. A model with no
+reasoning metadata remains visible as inventory, while the corresponding
+capability is absent; Router never changes `model_reasoning_effort` based on an
+owner-wide guess. Claude capability identities follow the same exact-row rule,
+and a Claude launch that requires missing metadata fails with the affected
+model ID.
 
 A failed refresh degrades only z.ai and does not clear healthy subscription or
 ordinary-provider catalogs. Exact same-ID collisions across providers return an
