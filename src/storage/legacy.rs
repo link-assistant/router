@@ -104,6 +104,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         scope: String::new(),
         client_kind: None,
         principal_id: None,
+        model_policy: crate::model_contract::ModelAccessPolicy::default(),
     };
     while let Some(field) = tokens.next_paren_group() {
         parse_field(&mut record, field)?;
@@ -142,6 +143,10 @@ fn parse_field(record: &mut TokenRecord, field: &str) -> Result<(), String> {
         "scope" => record.scope = tokens.next_string().unwrap_or_default(),
         "client_kind" => record.client_kind = tokens.next_string(),
         "principal_id" => record.principal_id = tokens.next_string(),
+        "model_policy" => {
+            let raw = required_string(&mut tokens, key)?;
+            record.model_policy = serde_json::from_str(&raw).map_err(|error| error.to_string())?;
+        }
         other => return Err(format!("unknown field: {other}")),
     }
     Ok(())

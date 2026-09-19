@@ -605,21 +605,27 @@ async fn anthropic_bridge_selects_account_before_its_live_model() {
         .unwrap();
     let token = state
         .token_manager
-        .issue_with_id(&crate::token::IssueRequest {
-            ttl_hours: 1,
-            label: "account-bound bridge",
-            account: Some("account-1"),
-            max_requests: None,
-            max_tokens: None,
-            rate_limit_per_minute: None,
-            scope: "",
-            github_repos: Vec::new(),
-            sliding_window_seconds: None,
-            client_kind: Some(crate::clients::ClientKind::ClaudeCode.canonical_name()),
-            principal_id: Some("account-1"),
-        })
-        .unwrap()
-        .0;
+        .issue_with_model_policy(
+            &crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "account-bound bridge",
+                account: Some("account-1"),
+                max_requests: None,
+                max_tokens: None,
+                rate_limit_per_minute: None,
+                scope: "",
+                github_repos: Vec::new(),
+                sliding_window_seconds: None,
+                client_kind: Some(crate::clients::ClientKind::ClaudeCode.canonical_name()),
+                principal_id: Some("account-1"),
+            },
+            &crate::model_contract::ModelAccessPolicy {
+                allowed_models: vec!["claude/catalog-choice".to_string()],
+                allow_substitution: true,
+                substitution_source: Some("test explicit opt-in".into()),
+            },
+        )
+        .unwrap();
     let mut headers = HeaderMap::new();
     headers.insert("x-api-key", HeaderValue::from_str(&token).unwrap());
     headers.insert("anthropic-version", HeaderValue::from_static("2023-06-01"));
@@ -641,7 +647,7 @@ async fn anthropic_bridge_selects_account_before_its_live_model() {
 
     assert_eq!(response.status(), StatusCode::OK);
     let response = json_body(response).await;
-    assert_eq!(response["model"], "claude/catalog-choice");
+    assert_eq!(response["model"], "secondary-bridge-model");
     assert!(response.get("x_router_upstream_model").is_none());
     let captured = captured.lock().unwrap();
     assert_eq!(captured.len(), 1);

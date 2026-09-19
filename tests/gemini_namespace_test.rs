@@ -539,7 +539,7 @@ async fn pinned_native_inference_rejects_a_catalog_owned_by_another_account() {
 }
 
 #[tokio::test]
-async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_conflict() {
+async fn pinned_native_cold_start_rejects_an_unapproved_served_model_substitution() {
     let router =
         TestRouter::start_configured(true, UpstreamProvider::Codex, CodexCatalog::Undiscovered)
             .await;
@@ -553,13 +553,19 @@ async fn pinned_native_inference_keeps_cold_start_passthrough_without_an_owner_c
 
     assert_eq!(
         status,
-        StatusCode::OK,
-        "a pinned cold start has no conflicting owner evidence: {body}"
+        StatusCode::BAD_GATEWAY,
+        "a translated cold start must reject an unapproved served-model substitution: {body}"
+    );
+    assert!(
+        body.contains(
+            "model_substitution_not_allowed: requested `gpt-cold-start` but upstream served `gpt-5.4-mini`"
+        ),
+        "the rejection names both model identities: {body}"
     );
     assert_eq!(
         router.forwarded.lock().expect("forwarded requests").len(),
         1,
-        "pinned cold-start inference must retain its established passthrough"
+        "cold-start routing still reaches the selected upstream before its response is validated"
     );
 }
 

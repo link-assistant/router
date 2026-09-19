@@ -4,13 +4,16 @@ use std::process::Stdio;
 
 use super::*;
 
-fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
+fn mock_claude_router_impl(
+    catalog: &str,
+    administrator: bool,
+) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock Claude router");
     let port = listener.local_addr().expect("mock address").port();
     let catalog = catalog.to_string();
     let handle = thread::spawn(move || {
         let mut paths = Vec::new();
-        for _ in 0..3 {
+        for _ in 0..if administrator { 5 } else { 3 } {
             let (mut stream, _) = listener.accept().expect("accept wrapper request");
             let request = read_request(&mut stream);
             let path = request
@@ -22,11 +25,17 @@ fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle
             paths.push(path.clone());
             let (status, body) = match path.as_str() {
                 "/api/health" => ("200 OK", r#"{"status":"ok","version":"1.2.1"}"#),
+                "/api/management/tokens" if administrator => ("200 OK", r#"{"data":[]}"#),
                 "/api/management/tokens" => (
                     "401 Unauthorized",
                     r#"{"error":{"message":"ordinary token"}}"#,
                 ),
+                "/api/management/tokens/client" => (
+                    "200 OK",
+                    r#"{"token":"la_sk_e30.eyJjbGllbnRfa2luZCI6ImNsYXVkZSIsInByaW5jaXBhbF9pZCI6InJ1bi1wcmluY2lwYWwiLCJzdWIiOiJydW4taWQifQ.signature"}"#,
+                ),
                 "/api/models" => ("200 OK", catalog.as_str()),
+                "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
             write!(
@@ -39,6 +48,16 @@ fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle
         paths
     });
     (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
+    mock_claude_router_impl(catalog, false)
+}
+
+fn mock_admin_claude_router_with_catalog(
+    catalog: &str,
+) -> (String, thread::JoinHandle<Vec<String>>) {
+    mock_claude_router_impl(catalog, true)
 }
 
 fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
@@ -253,8 +272,9 @@ fn authorized_claude_context_variant_reaches_the_client_unchanged() {
     let capture = directory.path().join("capture");
     fs::create_dir_all(&capture).expect("create capture directory");
     fake_claude(&bin);
-    let token = bound_client_token("claude");
-    let (server, requests) = mock_claude_router();
+    let (server, requests) = mock_admin_claude_router_with_catalog(
+        r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"}]}"#,
+    );
 
     let output = run_claude_with(
         &home,
@@ -264,7 +284,7 @@ fn authorized_claude_context_variant_reaches_the_client_unchanged() {
             "--server",
             &server,
             "--token",
-            &token,
+            "admin-secret",
             "--model",
             "claude-opus-5[1m]",
             "--isolated-config",
@@ -283,7 +303,13 @@ fn authorized_claude_context_variant_reaches_the_client_unchanged() {
     );
     assert_eq!(
         requests.join().expect("mock Router requests"),
-        ["/api/health", "/api/management/tokens", "/api/models"]
+        [
+            "/api/health",
+            "/api/management/tokens",
+            "/api/management/tokens/client",
+            "/api/models",
+            "/api/management/tokens/revoke"
+        ]
     );
     let arguments = fs::read_to_string(capture.join("args")).expect("captured Claude arguments");
     let arguments = arguments.lines().collect::<Vec<_>>();
@@ -426,8 +452,7 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
     let normal = b"{\"model\":\"fable\",\"permissions\":{\"allow\":[\"Read\"]}}\n";
     fs::write(home.join(".claude/settings.json"), normal).expect("seed saved Claude model");
     fake_claude(&bin);
-    let token = bound_client_token("claude");
-    let (server, requests) = mock_claude_router_with_catalog(
+    let (server, requests) = mock_admin_claude_router_with_catalog(
         r#"{"object":"list","data":[{"id":"glm-5.3-flash","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
     );
 
@@ -439,7 +464,7 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
             "--server",
             &server,
             "--token",
-            &token,
+            "admin-secret",
             "--model",
             "glm-5.3-flash",
             "--extend-global-config",
@@ -459,7 +484,13 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
     );
     assert_eq!(
         requests.join().expect("mock Router requests"),
-        ["/api/health", "/api/management/tokens", "/api/models"]
+        [
+            "/api/health",
+            "/api/management/tokens",
+            "/api/management/tokens/client",
+            "/api/models",
+            "/api/management/tokens/revoke"
+        ]
     );
     assert_eq!(
         fs::read_to_string(capture.join("model-env")).expect("captured model environment"),

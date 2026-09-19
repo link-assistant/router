@@ -80,6 +80,28 @@ pub(crate) fn bound_client_token(
         .0
 }
 
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn bound_client_token_with_model_policy(
+    state: &AppState,
+    client: crate::clients::ClientKind,
+    policy: &crate::model_contract::ModelAccessPolicy,
+) -> String {
+    state
+        .token_manager
+        .issue_with_model_policy(
+            &crate::token::IssueRequest {
+                ttl_hours: 1,
+                label: "pinned fixture client",
+                account: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+                client_kind: Some(client.canonical_name()),
+                principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+                ..crate::token::IssueRequest::default()
+            },
+            policy,
+        )
+        .unwrap()
+}
+
 pub(super) fn opencode_headers(state: &AppState, account: Option<&str>) -> HeaderMap {
     let token = bound_client_token(state, crate::clients::ClientKind::Opencode, account);
     let mut headers = HeaderMap::new();

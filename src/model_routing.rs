@@ -38,6 +38,10 @@ pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
 #[path = "model_routing_native_catalog.rs"]
 mod native_catalog;
 
+#[path = "model_routing_catalog_contract.rs"]
+mod catalog_contract;
+pub(crate) use catalog_contract::insert_candidate as insert_catalog_candidate;
+
 impl std::fmt::Display for ModelRouteError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -624,30 +628,22 @@ fn model_catalog_with(
         .map(|(id, _)| id.clone())
         .collect::<Vec<_>>();
     conflicts.sort();
+    let conflict_candidates = records
+        .iter()
+        .filter(|record| {
+            counts
+                .get(&record.canonical_id)
+                .copied()
+                .unwrap_or_default()
+                > 1
+        })
+        .cloned()
+        .map(catalog_contract::project_record)
+        .collect::<Vec<_>>();
     let data = records
         .into_iter()
         .filter(|record| counts.get(&record.canonical_id).copied() == Some(1))
-        .map(|record| {
-            let exposed_id = record.canonical_id.clone();
-            let mut projected = record.raw;
-            projected.insert("id".into(), Value::String(exposed_id));
-            projected.insert(
-                "canonical_id".into(),
-                Value::String(record.canonical_id.clone()),
-            );
-            projected.insert(
-                "provider".into(),
-                Value::String(record.provider.as_str().to_string()),
-            );
-            projected
-                .entry("object")
-                .or_insert_with(|| Value::String("model".into()));
-            projected.insert("router_fetched_at".into(), Value::from(record.fetched_at));
-            projected
-                .entry("owned_by")
-                .or_insert_with(|| Value::String(provider_owner(record.provider).to_string()));
-            Value::Object(projected)
-        })
+        .map(catalog_contract::project_record)
         .collect::<Vec<_>>();
     json!({
         "object": "list",
@@ -658,21 +654,12 @@ fn model_catalog_with(
         "degraded_providers": degraded,
         "healthy_providers": healthy_providers,
         "catalog_conflicts": conflicts,
+        "catalog_conflict_candidates": conflict_candidates,
     })
 }
 
 fn catalog_conflict(catalog: &Value) -> Option<ModelRouteError> {
-    let ids = catalog
-        .get("catalog_conflicts")
-        .and_then(Value::as_array)
-        .filter(|ids| !ids.is_empty())?;
-    Some(ModelRouteError::Conflict(format!(
-        "exact model id collision across healthy providers: {}",
-        ids.iter()
-            .filter_map(Value::as_str)
-            .collect::<Vec<_>>()
-            .join(", ")
-    )))
+    catalog_contract::conflict(catalog)
 }
 
 /// Model catalog for one pinned subscription, empty when its credential is not healthy.

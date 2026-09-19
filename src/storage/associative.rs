@@ -8,6 +8,7 @@ use doublets::{Doublets, DoubletsExt, Links, unit};
 use lino_objects_codec::LinoValue;
 
 use super::file_mapped::LoadedFileMapped;
+use super::model_policy;
 use super::{StorageError, TokenRecord};
 
 const TYPE: &str = "Type";
@@ -24,15 +25,8 @@ const EMPTY_SEQUENCE: usize = 3;
 const BYTE_NODE_START: usize = 4;
 const SCHEMA_NODE_COUNT: usize = 259;
 
-/// The mapping the store is built on.
-///
-/// `link-cli`'s `PersistentFileMapped` is the maintained answer to the one
-/// thing the router used to keep an `unsafe` adapter of its own for: `doublets`
-/// grows its memory through `RawMem::grow_filled`, whose default fills the
-/// *whole* new region -- including the part already backed by bytes on disk --
-/// so reopening a file-mapped store zeroed it. `PersistentFileMapped` forwards
-/// to `grow_filled_exact`, which fills only the genuinely uninitialised tail
-/// (issue #372).
+/// Maintained mapping whose exact-tail growth preserves existing disk bytes;
+/// unlike `RawMem::grow_filled`, it does not zero a reopened store (issue #372).
 type FileStore = unit::Store<usize, LoadedFileMapped>;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -168,6 +162,10 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                         .as_ref()
                         .map_or(LinoValue::Null, |value| LinoValue::String(value.clone())),
                 ),
+                (
+                    "model_policy",
+                    LinoValue::String(model_policy::encode(record)),
+                ),
             ]),
         ),
     ])
@@ -222,6 +220,9 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         ),
         client_kind: optional_string_field(fields, "client_kind", "record value")?,
         principal_id: optional_string_field(fields, "principal_id", "record value")?,
+        model_policy: model_policy::decode(
+            optional_string_field(fields, "model_policy", "record value")?.as_deref(),
+        )?,
     })
 }
 
@@ -289,10 +290,8 @@ fn expect_u64_field(value: &LinoValue, key: &str, context: &str) -> Result<u64, 
         .map_err(|error| format!("{context}.{key} is invalid: {error}"))
 }
 
-/// Split a stored repository allow-list back into its entries.
-///
-/// Empty means unrestricted, which is what every record written before this
-/// field carried, so an older store keeps working unchanged (issue #262).
+/// Split a repository allow-list; empty remains unrestricted for old stores
+/// (issue #262).
 fn split_repository_list(joined: &str) -> Vec<String> {
     joined
         .split(',')
@@ -357,17 +356,9 @@ fn optional_i64_string_field(
     }
 }
 
-/// A doublets store held open for the lifetime of the process.
-///
-/// This memory-mapped store is opened once and kept. Reopening it per access
-/// rebuilt the semantic links network and made read-only listing take seconds
-/// while the underlying disk write took a fraction of that (issue #357).
-///
-/// A rebuild replaces the inode so other processes can detect the changed file
-/// fingerprint and remap; this process keeps the replacement mapping as its
-/// current store. Because that mapping remains open after publication,
-/// [`Self::rebuild`] explicitly syncs its dirty pages before the transaction
-/// may be considered complete.
+/// A process-lifetime doublets mapping. Keeping it avoids rebuilding the links
+/// network on reads (issue #357). Rebuilds replace the inode for peer-process
+/// detection, remap this process, and sync before the transaction completes.
 pub(super) struct PersistentStore {
     store: FileStore,
     path: PathBuf,
@@ -809,6 +800,12 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
     if let Some(principal) = &record.principal_id {
         add_field(&mut links, &value, "principal_id", principal);
     }
+    add_field(
+        &mut links,
+        &value,
+        "model_policy",
+        &model_policy::encode(record),
+    );
     links
 }
 
@@ -907,6 +904,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         github_repos: split_repository_list(fields.get("github_repos").map_or("", String::as_str)),
         client_kind: fields.get("client_kind").cloned(),
         principal_id: fields.get("principal_id").cloned(),
+        model_policy: model_policy::decode(fields.get("model_policy").map(String::as_str))?,
     })
 }
 
@@ -980,10 +978,7 @@ fn codec_error(context: &str, error: impl std::fmt::Debug) -> StorageError {
     StorageError::Codec(format!("{context}: {error:?}"))
 }
 
-/// Every `(source, target)` pair physically present in the store.
-///
-/// For the duplicate-pair invariant test; see
-/// `the_encoded_links_network_contains_no_duplicate_pairs`.
+/// Every physical pair, used to test the duplicate-pair invariant.
 #[cfg(test)]
 pub(super) fn encoded_pairs_for_test(path: &Path) -> Result<Vec<(usize, usize)>, StorageError> {
     let store = PersistentStore::open(path)?;

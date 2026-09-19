@@ -95,12 +95,12 @@ pub(super) struct OpenAiStreamTranslator {
 }
 
 impl OpenAiStreamTranslator {
-    pub(super) fn new(model: impl Into<String>) -> Self {
+    pub(super) fn new(_model: impl Into<String>) -> Self {
         Self {
             decoder: SseJsonDecoder::default(),
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
-            model: model.into(),
+            model: String::new(),
             role_emitted: false,
             done: false,
             saw_tool_call: false,
@@ -126,6 +126,9 @@ impl OpenAiStreamTranslator {
             return;
         }
         let response = event.get("response").unwrap_or(event);
+        if let Some(model) = response.get("modelVersion").and_then(Value::as_str) {
+            self.model = model.to_string();
+        }
         if let Some(error) = response.get("error") {
             push_sse(output, &openai_stream_error(error));
             self.done = true;
@@ -307,12 +310,12 @@ pub(super) struct ResponsesStreamTranslator {
 }
 
 impl ResponsesStreamTranslator {
-    pub(super) fn new(model: impl Into<String>) -> Self {
+    pub(super) fn new(_model: impl Into<String>) -> Self {
         Self {
             decoder: SseJsonDecoder::default(),
             id: format!("resp_{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
-            model: model.into(),
+            model: String::new(),
             started: false,
             done: false,
             text: String::new(),
@@ -336,6 +339,9 @@ impl ResponsesStreamTranslator {
             return;
         }
         let response = event.get("response").unwrap_or(event);
+        if let Some(model) = response.get("modelVersion").and_then(Value::as_str) {
+            self.model = model.to_string();
+        }
         if let Some(error) = event.get("error").or_else(|| response.get("error")) {
             push_sse(output, &responses_error(error));
             self.done = true;
@@ -578,14 +584,15 @@ mod tests {
     fn split_events_preserve_text_tools_finish_usage_and_model() {
         let mut translator = OpenAiStreamTranslator::new("requested-model");
         let first = translator
-            .push(b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hel")
+            .push(b"data: {\"response\":{\"modelVersion\":\"served-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hel")
             .unwrap();
         assert!(first.is_empty());
         let rest = translator
             .push(b"lo\"}]}}]}}\n\ndata: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"functionCall\":{\"id\":\"call-live\",\"name\":\"lookup\",\"args\":{\"q\":\"x\"}}}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":2,\"candidatesTokenCount\":3,\"totalTokenCount\":5}}}\n\n")
             .unwrap();
         let output = String::from_utf8(rest.to_vec()).unwrap();
-        assert!(output.contains("requested-model"), "{output}");
+        assert!(output.contains("served-model"), "{output}");
+        assert!(!output.contains("requested-model"), "{output}");
         assert!(output.contains("hello"), "{output}");
         assert!(output.contains("call-live"), "{output}");
         assert!(output.contains("lookup"), "{output}");
@@ -632,7 +639,7 @@ mod tests {
         let mut translator = ResponsesStreamTranslator::new("requested-model");
         assert!(
             translator
-                .push(b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hel")
+                .push(b"data: {\"response\":{\"modelVersion\":\"served-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hel")
                 .unwrap()
                 .is_empty()
         );
@@ -653,7 +660,7 @@ mod tests {
             .find(|event| event["type"] == "response.completed")
             .unwrap();
         assert_eq!(completed["response"]["status"], "completed");
-        assert_eq!(completed["response"]["model"], "requested-model");
+        assert_eq!(completed["response"]["model"], "served-model");
         assert_eq!(completed["response"]["output"][1]["call_id"], "call_7");
         assert_eq!(completed["response"]["output"][1]["name"], "lookup");
         assert_eq!(completed["response"]["usage"]["total_tokens"], 5);

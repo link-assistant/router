@@ -101,6 +101,9 @@ async fn run() -> ExitCode {
             return link_assistant_router::configure::run_with_home(args, cli.home.as_deref())
                 .await;
         }
+        Some(Command::Models { op }) => {
+            return link_assistant_router::model_command::run(op).await;
+        }
         _ => {}
     }
 
@@ -179,7 +182,12 @@ async fn run() -> ExitCode {
         Some(Command::Clients { op }) => {
             link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
         }
-        Some(Command::With(_) | Command::Server { .. } | Command::Configure(_)) => {
+        Some(
+            Command::With(_)
+            | Command::Server { .. }
+            | Command::Configure(_)
+            | Command::Models { .. },
+        ) => {
             unreachable!("handled before config")
         }
         Some(Command::Auth { op }) => {

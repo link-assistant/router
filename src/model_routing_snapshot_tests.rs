@@ -266,6 +266,7 @@ async fn pinned_serving_uses_a_recovery_only_authoritative_token() {
             axum::Json(json!({
                 "id": "resp_1",
                 "object": "response",
+                "model": "recovered-model",
                 "status": "completed",
                 "output": []
             }))

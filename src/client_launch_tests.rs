@@ -20,6 +20,8 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         token: None,
         token_stdin: false,
         model: None,
+        allowed_models: Vec::new(),
+        allow_model_substitution: false,
         label: None,
         run_ttl_hours: 1,
         fixed_run_ttl: false,
@@ -27,6 +29,23 @@ fn args(client: ClientKind, client_args: &[&str]) -> WithArgs {
         client,
         client_args: client_args.iter().map(OsString::from).collect(),
     }
+}
+
+#[test]
+fn forwarded_model_conflicts_are_detected_before_launch() {
+    let values = [OsString::from("--model"), OsString::from("one")];
+    assert_eq!(forwarded_model(&values).unwrap().as_deref(), Some("one"));
+    assert_eq!(forwarded_model(&[OsString::from("-memory")]).unwrap(), None);
+    let conflicting = [
+        OsString::from("--model=one"),
+        OsString::from("-m"),
+        OsString::from("two"),
+    ];
+    assert!(
+        forwarded_model(&conflicting)
+            .unwrap_err()
+            .contains("conflicting")
+    );
 }
 
 fn argv(client: ClientKind, client_args: &[&str]) -> Vec<String> {

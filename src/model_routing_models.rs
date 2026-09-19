@@ -17,6 +17,10 @@ pub async fn models(
         Err(response) => return *response,
     };
     let path = uri.path();
+    let diagnostics = headers
+        .get("x-link-assistant-model-diagnostics")
+        .and_then(|value| value.to_str().ok())
+        == Some("1");
     let principal_accounts = claims.principal_id.clone().into_iter().collect::<Vec<_>>();
 
     let entitled = |provider| {
@@ -30,7 +34,7 @@ pub async fn models(
         )
     };
 
-    let models = match state.upstream_provider {
+    let mut models = match state.upstream_provider {
         UpstreamProvider::Auto => {
             let snapshot = configured_catalog_snapshot(&state).await;
             let healthy = snapshot
@@ -53,9 +57,6 @@ pub async fn models(
                 .cloned()
                 .collect::<Vec<_>>();
             merge_configured_degradation(&visible_health, &mut catalog);
-            if let Some(error) = catalog_conflict(&catalog) {
-                return model_route_error_response(&error);
-            }
             if let Err(error) =
                 append_stored_provider_models(&state, &claims, &headers, path, &mut catalog).await
             {
@@ -148,6 +149,20 @@ pub async fn models(
             catalog
         }
     };
+    let policy = match crate::proxy::model_policy_for_claims(&state, &claims) {
+        Ok(policy) => policy,
+        Err(error) => {
+            return crate::proxy::error_response(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "model_policy_unavailable",
+                &format!("could not read the credential model policy: {error}"),
+            );
+        }
+    };
+    apply_model_policy(&mut models, &policy);
+    if !diagnostics && let Some(error) = catalog_conflict(&models) {
+        return model_route_error_response(&error);
+    }
     match super::native_catalog::project(path, uri.query(), &models) {
         Ok(Some(native)) => (StatusCode::OK, axum::Json(native)).into_response(),
         Ok(None) => (StatusCode::OK, axum::Json(models)).into_response(),
@@ -158,6 +173,83 @@ pub async fn models(
         }
         .render(crate::api_error::dialect_for_path(path)),
     }
+}
+
+/// Make discovery obey the same durable authority as inference. A pinned
+/// credential must never learn about (and then let a client auto-select) a
+/// model it cannot request. The Claude `[1m]` spelling is retained only when
+/// its exact Anthropic base was live; the exposed id is changed to the exact
+/// selector authorized by the token.
+fn apply_model_policy(
+    catalog: &mut serde_json::Value,
+    policy: &crate::model_contract::ModelAccessPolicy,
+) {
+    let Some(object) = catalog.as_object_mut() else {
+        return;
+    };
+    object.insert(
+        "model_policy".into(),
+        serde_json::to_value(policy).unwrap_or_else(|_| json!({})),
+    );
+    if policy.allowed_models.is_empty() {
+        return;
+    }
+    let available = object
+        .get("data")
+        .and_then(serde_json::Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    if let Some(candidates) = object
+        .get_mut("catalog_conflict_candidates")
+        .and_then(serde_json::Value::as_array_mut)
+    {
+        candidates.retain(|entry| {
+            entry
+                .get("id")
+                .and_then(serde_json::Value::as_str)
+                .is_some_and(|id| policy.allowed_models.iter().any(|allowed| allowed == id))
+        });
+    }
+    if let Some(conflicts) = object
+        .get_mut("catalog_conflicts")
+        .and_then(serde_json::Value::as_array_mut)
+    {
+        conflicts.retain(|entry| {
+            entry
+                .as_str()
+                .is_some_and(|id| policy.allowed_models.iter().any(|allowed| allowed == id))
+        });
+    }
+    let mut visible = Vec::new();
+    for allowed in &policy.allowed_models {
+        if let Some(exact) = available.iter().find(|entry| entry["id"] == *allowed) {
+            visible.push(exact.clone());
+            continue;
+        }
+        let Some(base) = allowed.strip_suffix("[1m]") else {
+            continue;
+        };
+        let Some(mut variant) = available
+            .iter()
+            .find(|entry| entry["id"] == base && entry["owned_by"].as_str() == Some("anthropic"))
+            .cloned()
+        else {
+            continue;
+        };
+        if let Some(entry) = variant.as_object_mut() {
+            entry.insert("id".into(), serde_json::Value::String(allowed.clone()));
+            entry.insert(
+                "selector_kind".into(),
+                serde_json::Value::String("operator_alias".into()),
+            );
+            entry.insert(
+                "variant_of".into(),
+                serde_json::Value::String(base.to_string()),
+            );
+        }
+        visible.push(variant);
+    }
+    object.insert("data".into(), serde_json::Value::Array(visible));
 }
 
 async fn append_gonka_models(
@@ -283,5 +375,47 @@ pub async fn aggregate_models(
     match super::aggregate::project_catalog(&catalog, client) {
         Ok(catalog) => (parts.status, axum::Json(catalog)).into_response(),
         Err(error) => model_route_error_response(&error),
+    }
+}
+
+#[cfg(test)]
+mod model_policy_tests {
+    use super::*;
+
+    #[test]
+    fn pinned_catalog_contains_only_exact_authorized_selectors() {
+        let mut catalog = json!({"object":"list","data":[
+            {"id":"model-a","owned_by":"openai"},
+            {"id":"model-b","owned_by":"openai"}
+        ]});
+        let policy = crate::model_contract::ModelAccessPolicy::exact("model-b");
+        apply_model_policy(&mut catalog, &policy);
+        assert_eq!(
+            catalog["data"],
+            json!([{"id":"model-b","owned_by":"openai"}])
+        );
+        assert_eq!(
+            catalog["model_policy"]["allowed_models"],
+            json!(["model-b"])
+        );
+    }
+
+    #[test]
+    fn anthropic_context_variant_is_exposed_as_the_authorized_selector() {
+        let mut catalog = json!({"object":"list","data":[
+            {"id":"claude-live","owned_by":"anthropic"},
+            {"id":"compatible","owned_by":"other"}
+        ]});
+        let policy = crate::model_contract::ModelAccessPolicy::exact("claude-live[1m]");
+        apply_model_policy(&mut catalog, &policy);
+        assert_eq!(catalog["data"][0]["id"], "claude-live[1m]");
+        assert_eq!(catalog["data"][0]["variant_of"], "claude-live");
+        assert_eq!(catalog["data"][0]["selector_kind"], "operator_alias");
+        let projected: crate::clients::RouterModel =
+            serde_json::from_value(catalog["data"][0].clone()).unwrap();
+        assert_eq!(
+            projected.selector_kind,
+            crate::model_contract::ModelSelectorKind::OperatorAlias
+        );
     }
 }

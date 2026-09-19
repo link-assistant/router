@@ -150,7 +150,7 @@ async fn chat_generation_controls_are_native_or_rejected_before_anthropic() {
             json!({"seed": 1234}),
         ] {
             let mut body = json!({
-                "model": "claude-test",
+                "model": "claude-sonnet-4-5",
                 "messages": [{"role": "user", "content": "answer"}],
                 "stream": stream
             });
@@ -177,7 +177,7 @@ async fn chat_generation_controls_are_native_or_rejected_before_anthropic() {
             .post(
                 "/api/services/openai/v1/chat/completions",
                 &json!({
-                    "model": "claude-test",
+                    "model": "claude-sonnet-4-5",
                     "messages": [{"role": "user", "content": "answer"}],
                     "stream": stream,
                     "frequency_penalty": 0,
@@ -201,7 +201,7 @@ async fn safety_identifiers_and_responses_top_p_cross_bridges_without_leaking_or
             .post(
                 "/api/services/openai/v1/chat/completions",
                 &json!({
-                    "model": "claude-test", "stream": stream,
+                    "model": "claude-sonnet-4-5", "stream": stream,
                     "messages": [{"role": "user", "content": "answer"}],
                     "safety_identifier": "synthetic-user-42"
                 }),
@@ -215,7 +215,7 @@ async fn safety_identifiers_and_responses_top_p_cross_bridges_without_leaking_or
             .post(
                 "/api/services/openai/v1/responses",
                 &json!({
-                    "model": "claude-test", "stream": stream, "input": "answer",
+                    "model": "claude-sonnet-4-5", "stream": stream, "input": "answer",
                     "safety_identifier": "synthetic-user-42", "top_p": 0.25
                 }),
             )
@@ -239,19 +239,19 @@ async fn safety_identifiers_and_responses_top_p_cross_bridges_without_leaking_or
     for (path, body) in [
         (
             "/api/services/openai/v1/chat/completions",
-            json!({"model": "claude-test", "messages": [{"role": "user", "content": "answer"}], "safety_identifier": 42}),
+            json!({"model": "claude-sonnet-4-5", "messages": [{"role": "user", "content": "answer"}], "safety_identifier": 42}),
         ),
         (
             "/api/services/openai/v1/responses",
-            json!({"model": "claude-test", "input": "answer", "safety_identifier": "x".repeat(65)}),
+            json!({"model": "claude-sonnet-4-5", "input": "answer", "safety_identifier": "x".repeat(65)}),
         ),
         (
             "/api/services/openai/v1/responses",
-            json!({"model": "claude-test", "input": "answer", "top_p": 1.1}),
+            json!({"model": "claude-sonnet-4-5", "input": "answer", "top_p": 1.1}),
         ),
         (
             "/api/services/openai/v1/responses",
-            json!({"model": "claude-test", "input": "answer", "temperature": 0.5, "top_p": 0.5}),
+            json!({"model": "claude-sonnet-4-5", "input": "answer", "temperature": 0.5, "top_p": 0.5}),
         ),
     ] {
         let response = anthropic
@@ -275,7 +275,7 @@ async fn safety_identifiers_and_responses_top_p_cross_bridges_without_leaking_or
             .post(
                 "/api/services/anthropic/v1/messages",
                 &json!({
-                    "model": "claude-test", "max_tokens": 64, "stream": stream,
+                    "model": "gpt-5", "max_tokens": 64, "stream": stream,
                     "messages": [{"role": "user", "content": "answer"}],
                     "metadata": {"user_id": "synthetic-user-42"}
                 }),
@@ -283,7 +283,9 @@ async fn safety_identifiers_and_responses_top_p_cross_bridges_without_leaking_or
             .send()
             .await
             .expect("Anthropic safety identifier bridge");
-        assert_eq!(response.status(), StatusCode::OK);
+        let status = response.status();
+        let body = response.text().await.expect("Anthropic bridge response");
+        assert_eq!(status, StatusCode::OK, "unexpected response: {body}");
     }
     let requests = codex.requests.lock().expect("stub requests");
     assert_eq!(requests.len(), 2);
@@ -366,7 +368,7 @@ async fn anthropic_tool_results_and_documents_reach_codex_in_original_order() {
         .post(
             "/api/services/anthropic/v1/messages",
             &json!({
-                "model": "claude-opus-test",
+                "model": "gpt-5",
                 "max_tokens": 256,
                 "messages": [
                     {"role": "assistant", "content": [
@@ -427,7 +429,7 @@ async fn anthropic_server_tool_continuations_keep_calls_results_and_order() {
         .post(
             "/api/services/anthropic/v1/messages",
             &json!({
-                "model": "claude-test", "max_tokens": 128,
+                "model": "gpt-5", "max_tokens": 128,
                 "messages": [
                     {"role": "assistant", "content": [
                         {"type": "server_tool_use", "id": "search_1", "name": "web_search", "input": {"type": "search", "query": "Rust"}},
@@ -476,7 +478,7 @@ async fn lossy_anthropic_histories_are_rejected_before_codex() {
             .post(
                 "/api/services/anthropic/v1/messages",
                 &json!({
-                    "model": "claude-test", "max_tokens": 64,
+                    "model": "gpt-5", "max_tokens": 64,
                     "messages": [{"role": "assistant", "content": content}]
                 }),
             )
@@ -673,7 +675,7 @@ async fn anthropic_effort_reaches_codex_without_xhigh_overwrite() {
             .post(
                 "/api/services/anthropic/v1/messages",
                 &json!({
-                    "model": "claude-test", "max_tokens": 128,
+                    "model": "gpt-5", "max_tokens": 128,
                     "messages": [{"role": "user", "content": "answer"}],
                     "output_config": {"effort": effort}
                 }),

@@ -16,6 +16,8 @@ use parse::parse_catalog;
 use parse::{next_catalog_cursor, parse_catalog_records, provider_protocols};
 #[path = "model_catalog_errors.rs"]
 mod errors;
+#[path = "model_catalog_selector.rs"]
+mod selector;
 #[cfg(test)]
 use errors::resource_error_code;
 pub use errors::{is_credential_rejection, is_permission_refusal};
@@ -917,7 +919,7 @@ pub async fn fetch_provider_catalog_records(
             .json()
             .await
             .map_err(|error| format!("invalid JSON response: {error}"))?;
-        let page_records = parse_catalog_records(
+        let mut page_records = parse_catalog_records(
             provider,
             &body,
             &account,
@@ -925,6 +927,28 @@ pub async fn fetch_provider_catalog_records(
             &generation,
             records.len(),
         )?;
+        for record in &mut page_records {
+            record.raw.insert(
+                "router_source_url".into(),
+                Value::String(base_url.as_str().to_string()),
+            );
+            record.raw.insert(
+                "router_endpoint".into(),
+                Value::String(base_url.as_str().to_string()),
+            );
+            record.raw.insert(
+                "router_account".into(),
+                Value::String(record.account.clone()),
+            );
+            record.raw.insert(
+                "router_protocols".into(),
+                serde_json::to_value(&record.protocols).unwrap_or(Value::Null),
+            );
+            record.raw.insert(
+                "router_health_generation".into(),
+                Value::String(record.health_generation.clone()),
+            );
+        }
         cursor = next_catalog_cursor(provider, &body, &page_records)?;
         records.extend(page_records);
         if cursor.is_none() {

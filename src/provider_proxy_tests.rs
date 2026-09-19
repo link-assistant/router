@@ -618,7 +618,7 @@ async fn relaying_a_stream_records_frames_and_settles_the_turn() {
         "relayed".to_string(),
         log_lazy::LogLazy::default(),
         None,
-        None,
+        SettledRelayIdentity::default(),
     ));
     let mut relayed = Vec::new();
     while let Some(chunk) = stream.next().await {

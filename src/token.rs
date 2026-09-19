@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::model_contract::{ModelAccessError, ModelAccessPolicy};
 use crate::storage::{MemoryTokenStore, RequestAdmission, StorageError, TokenRecord, TokenStore};
 
 /// Prefix for all router-issued custom tokens.
@@ -365,12 +366,32 @@ impl TokenManager {
             .map(|(token, _)| token)
     }
 
+    /// Issue a durable credential carrying server-enforced model authority.
+    pub fn issue_with_model_policy(
+        &self,
+        request: &IssueRequest<'_>,
+        model_policy: &ModelAccessPolicy,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_with_id_and_model_policy(request, false, model_policy)
+            .map(|(token, _)| token)
+    }
+
     /// Issue a credential owned by one wrapper run.
     pub fn issue_ephemeral(
         &self,
         request: &IssueRequest<'_>,
     ) -> Result<String, jsonwebtoken::errors::Error> {
         self.issue_with_id_policy(request, true)
+            .map(|(token, _)| token)
+    }
+
+    /// Issue a wrapper credential carrying server-enforced model authority.
+    pub fn issue_ephemeral_with_model_policy(
+        &self,
+        request: &IssueRequest<'_>,
+        model_policy: &ModelAccessPolicy,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        self.issue_with_id_and_model_policy(request, true, model_policy)
             .map(|(token, _)| token)
     }
 
@@ -391,12 +412,24 @@ impl TokenManager {
         request: &IssueRequest<'_>,
         ephemeral: bool,
     ) -> Result<(String, String), jsonwebtoken::errors::Error> {
+        self.issue_with_id_and_model_policy(request, ephemeral, &ModelAccessPolicy::default())
+    }
+
+    fn issue_with_id_and_model_policy(
+        &self,
+        request: &IssueRequest<'_>,
+        ephemeral: bool,
+        model_policy: &ModelAccessPolicy,
+    ) -> Result<(String, String), jsonwebtoken::errors::Error> {
         // A command that will never sign installs a stand-in secret so it need
         // not carry this machine's. Signing with one produced a normal-looking
         // `la_sk_` token anybody holding the source could forge (issue #300),
         // so it is refused here — at the moment something would be signed.
         if crate::token_secret::is_placeholder(&self.secret) {
             return Err(jsonwebtoken::errors::ErrorKind::InvalidKeyFormat.into());
+        }
+        if model_policy.validate().is_err() {
+            return Err(jsonwebtoken::errors::ErrorKind::InvalidToken.into());
         }
         let ttl_hours = request.ttl_hours;
         let label = request.label;
@@ -446,6 +479,7 @@ impl TokenManager {
             github_repos: claims.github_repos,
             client_kind: claims.client_kind,
             principal_id: claims.principal_id,
+            model_policy: model_policy.clone(),
         };
         let id = record.id.clone();
         // A token that was handed out but never stored is worse than a
@@ -554,6 +588,29 @@ impl TokenManager {
             .get(token_id)
             .map(|record| record.and_then(|record| record.account))
             .map_err(|error| TokenError::Storage(error.to_string()))
+    }
+
+    pub fn model_policy_for(&self, token_id: &str) -> Result<ModelAccessPolicy, TokenError> {
+        self.store
+            .get(token_id)
+            .map_err(|error| TokenError::Storage(error.to_string()))?
+            .map(|held| held.model_policy)
+            .ok_or_else(|| TokenError::NotFound(token_id.to_string()))
+    }
+
+    pub fn authorize_model(
+        &self,
+        token_id: &str,
+        requested: &str,
+    ) -> Result<ModelAccessPolicy, ModelAccessError> {
+        let policy = self
+            .model_policy_for(token_id)
+            .map_err(|_| ModelAccessError::policy_unavailable(requested))?;
+        if policy.permits(requested) {
+            Ok(policy)
+        } else {
+            Err(ModelAccessError::new(requested, &policy))
+        }
     }
 
     /// Validate a custom token string.
@@ -824,7 +881,7 @@ impl TokenManager {
         };
         request.validate().map_err(TokenError::Invalid)?;
         let replacement = self
-            .issue(&request)
+            .issue_with_model_policy(&request, &record.model_policy)
             .map_err(|error| TokenError::Invalid(error.to_string()))?;
         self.revoke_token(current_sub)?;
         Ok(replacement)

@@ -42,13 +42,7 @@ fn mock_chatgpt_and_zai_catalog_router() -> (String, thread::JoinHandle<Vec<Stri
 
 #[test]
 fn router_with_codex_launches_with_live_chatgpt_and_zai_catalogs() {
-    for (effort, expected_ids) in [
-        (
-            "high",
-            &["glm-live", "glm-newly-discovered", "gpt-live"][..],
-        ),
-        ("xhigh", &["gpt-live"][..]),
-    ] {
+    for (effort, expected_ids) in [("high", &["gpt-live"][..]), ("xhigh", &["gpt-live"][..])] {
         let directory = tempfile::tempdir().expect("temporary test directory");
         let home = directory.path().join("home");
         let bin = directory.path().join("bin");

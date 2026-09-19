@@ -79,34 +79,15 @@ fn codex_model(raw: &Map<String, Value>, id: &str, priority: usize) -> Map<Strin
         .get("owned_by")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    let mut default = raw
+    let default = raw
         .get("default_reasoning_level")
         .filter(|value| value.is_string())
         .cloned();
-    let mut levels = raw
+    let levels = raw
         .get("supported_reasoning_levels")
         .filter(|value| value.is_array())
         .cloned()
         .unwrap_or_else(|| json!([]));
-    if let Some(profile) = crate::clients::codex_reasoning_profile(owner) {
-        if levels.as_array().is_some_and(Vec::is_empty)
-            && default
-                .as_ref()
-                .and_then(Value::as_str)
-                .is_none_or(|effort| profile.supports(effort))
-        {
-            levels = serde_json::to_value(profile.levels()).expect("reasoning levels serialize");
-        }
-        if default.is_none()
-            && levels.as_array().is_some_and(|levels| {
-                levels.iter().any(|level| {
-                    level.get("effort").and_then(Value::as_str) == Some(profile.default())
-                })
-            })
-        {
-            default = Some(Value::String(profile.default().to_string()));
-        }
-    }
     let display_name = raw
         .get("display_name")
         .and_then(Value::as_str)

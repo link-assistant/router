@@ -30,6 +30,8 @@ mod auth_ops;
 mod client_ops;
 mod configure;
 mod deploy_args;
+mod log_ops;
+mod model_ops;
 mod store_ops;
 mod targets;
 mod value_parsers;
@@ -39,6 +41,8 @@ pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, Remot
 pub use self::client_ops::ClientOp;
 pub use self::configure::ConfigureArgs;
 pub use self::deploy_args::{DeployArgs, UsageArgs};
+pub use self::log_ops::LogsOp;
+pub use self::model_ops::ModelOp;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
@@ -715,6 +719,11 @@ pub enum Command {
     /// mechanism and the client list (issue #296). `clients setup` and
     /// `with --global` still work.
     Configure(ConfigureArgs),
+    /// Inspect the evidence and routing state for an exact model selector.
+    Models {
+        #[command(subcommand)]
+        op: ModelOp,
+    },
     /// Select and manage the server used by `with`.
     Server {
         #[command(subcommand)]
@@ -757,49 +766,6 @@ pub enum Command {
     Logs {
         #[command(subcommand)]
         op: LogsOp,
-    },
-}
-
-/// What to ask of the request log.
-#[derive(Debug, Subcommand)]
-pub enum LogsOp {
-    /// Shape of the log: exchanges, records, statuses, time span, size.
-    Summary {
-        /// Restrict to one token's log directory, by its hashed name.
-        ///
-        /// Named `--token-id` because `--token` means a credential in `with`,
-        /// `server use` and `clients setup`, and one flag name meaning two
-        /// things is what makes a CLI unusable from memory (issue #314). The
-        /// old spelling is still accepted.
-        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
-        token: Option<String>,
-        /// Emit JSON, for a monitoring check rather than a human.
-        #[arg(long)]
-        json: bool,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// Anomalies worth a name, with the correlation ids to inspect.
-    ///
-    /// Exits non-zero when any are found, so it works as a health gate.
-    Anomalies {
-        /// Restrict to one token's log directory, by its hashed name.
-        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
-        token: Option<String>,
-        /// Emit JSON, for a monitoring check rather than a human.
-        #[arg(long)]
-        json: bool,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
-    /// One exchange, decoded and in order.
-    Show {
-        correlation_id: String,
-        /// Restrict to one token's log directory, by its hashed name.
-        #[arg(long = "token-id", alias = "token", value_name = "HASHED_NAME")]
-        token: Option<String>,
-        #[command(flatten)]
-        target: AuthTarget,
     },
 }
 

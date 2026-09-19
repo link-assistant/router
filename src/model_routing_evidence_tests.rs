@@ -254,10 +254,10 @@ async fn gated_gemini_streaming_upstream() -> (
                 use futures_util::StreamExt as _;
 
                 let first = bytes::Bytes::from_static(
-                    b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hello\"}]}}]}}\n\n",
+                    b"data: {\"response\":{\"modelVersion\":\"generation-evidence-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"hello\"}]}}]}}\n\n",
                 );
                 let final_event = bytes::Bytes::from_static(
-                    b"data: {\"response\":{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" world\"},{\"functionCall\":{\"id\":\"call-live\",\"name\":\"lookup\",\"args\":{\"q\":\"router\"}}}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":2,\"candidatesTokenCount\":3,\"totalTokenCount\":5}}}\n\n",
+                    b"data: {\"response\":{\"modelVersion\":\"generation-evidence-model\",\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" world\"},{\"functionCall\":{\"id\":\"call-live\",\"name\":\"lookup\",\"args\":{\"q\":\"router\"}}}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":2,\"candidatesTokenCount\":3,\"totalTokenCount\":5}}}\n\n",
                 );
                 let stream = futures_util::stream::once(async move {
                     Ok::<_, std::io::Error>(first)
@@ -515,7 +515,7 @@ async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
                 may_answer.wait().await;
                 (StatusCode::UNAUTHORIZED, "rejected account A")
             } else {
-                (StatusCode::OK, "{}")
+                (StatusCode::OK, r#"{"object":"response","model":"account-b-model","status":"completed","output":[]}"#)
             }
         }
     });
@@ -776,7 +776,7 @@ async fn subscription_retry_records_the_final_actual_credential_without_leaking_
                 release.wait().await;
                 (StatusCode::UNAUTHORIZED, "{}")
             } else {
-                (StatusCode::OK, "{}")
+                (StatusCode::OK, r#"{"object":"response","model":"generation-evidence-model","status":"completed","output":[]}"#)
             }
         }
     });

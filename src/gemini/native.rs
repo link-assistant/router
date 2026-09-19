@@ -98,6 +98,15 @@ pub async fn native_models(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let model_policy = match crate::proxy::model_policy_for_claims(&state, &claims) {
+        Ok(policy) => policy,
+        Err(error) => {
+            return native_error(
+                StatusCode::SERVICE_UNAVAILABLE,
+                &format!("model policy is unavailable: {error}"),
+            );
+        }
+    };
     let mut advertised = advertised_models(&state, claims.principal_id.as_deref()).await;
     advertised.retain(|(provider, _)| {
         crate::client_policy::enforce_subscription_for_claims(
@@ -110,6 +119,7 @@ pub async fn native_models(
         )
         .is_ok()
     });
+    advertised.retain(|(_, record)| model_policy.permits(&record.canonical_id));
     if state.upstream_provider != crate::config::UpstreamProvider::Auto
         && advertised.is_empty()
         && let Some(provider) = state.upstream_provider.subscription_provider()
@@ -152,6 +162,9 @@ pub async fn native_models(
         && let Ok(registry) = crate::zai_coding_plan::live_registry_for_client(client, &live)
     {
         for entry in registry {
+            if !model_policy.permits(&entry.exposed_id) {
+                continue;
+            }
             if models.iter().any(|model| {
                 model.get("name").and_then(Value::as_str) == Some(entry.exposed_id.as_str())
             }) {
@@ -180,12 +193,22 @@ pub async fn native_model(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let model_policy = match crate::proxy::model_policy_for_claims(&state, &claims) {
+        Ok(policy) => policy,
+        Err(error) => {
+            return native_error(
+                StatusCode::SERVICE_UNAVAILABLE,
+                &format!("model policy is unavailable: {error}"),
+            );
+        }
+    };
     let requested_id = model.trim_start_matches("models/");
     let mut owners = advertised_models(&state, claims.principal_id.as_deref())
         .await
         .into_iter()
         .filter_map(|(owner, candidate)| {
             (candidate.canonical_id.trim_start_matches("models/") == requested_id
+                && model_policy.permits(&candidate.canonical_id)
                 && crate::client_policy::enforce_subscription_for_claims(
                     &state,
                     &claims,
@@ -210,6 +233,8 @@ pub async fn native_model(
         );
     }
     if owners.is_empty()
+        && (model_policy.permits(requested_id)
+            || model_policy.permits(&format!("models/{requested_id}")))
         && let Ok(Some(provider)) = crate::zai_coding_plan::resolve(&state)
         && let Ok((client, _)) =
             crate::zai_coding_plan::authorize_catalog(&provider, &claims, &headers, uri.path())
@@ -444,6 +469,38 @@ async fn forward_native(
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
+    let claims = match crate::proxy::authenticate_client(state, headers) {
+        Ok(claims) => claims,
+        Err(response) => return *response,
+    };
+    let policy = match crate::proxy::model_policy_for_claims(state, &claims) {
+        Ok(policy) => policy,
+        Err(error) => {
+            return native_error(
+                StatusCode::SERVICE_UNAVAILABLE,
+                &format!("model policy is unavailable: {error}"),
+            );
+        }
+    };
+    // Gemini's ListModels identity includes `models/`, while the native URL
+    // parser and z.ai compatibility registry use the terminal id. Pick only
+    // an exact representation already present in the durable grant.
+    let catalog_selector = format!("models/{model}");
+    let authorized_selector = if policy.permits(&model) {
+        model.clone()
+    } else if policy.permits(&catalog_selector) {
+        catalog_selector
+    } else {
+        model.clone()
+    };
+    if let Err(response) = crate::proxy::authorize_model_for_claims(
+        state,
+        &claims,
+        &authorized_selector,
+        crate::api_error::ApiDialect::Gemini,
+    ) {
+        return response;
+    }
     let full_path = format!("/api/services/gemini/{path}");
     let routed = match native_owner(state, headers, &full_path, &model).await {
         Ok(routed) => routed,
@@ -472,10 +529,13 @@ async fn forward_native(
         routed,
         headers,
         path,
-        model,
-        streaming,
-        body,
-        entitlement,
+        NativeRequest {
+            model,
+            authorized_selector,
+            streaming,
+            body,
+            entitlement,
+        },
     ))
     .await
 }
@@ -498,20 +558,41 @@ async fn forward_native_authorized(
         Err(response) => return response,
     };
     Box::pin(forward_native_authorized_after_route(
-        routed, headers, path, model, streaming, body, None,
+        routed,
+        headers,
+        path,
+        NativeRequest {
+            model: model.clone(),
+            authorized_selector: model,
+            streaming,
+            body,
+            entitlement: None,
+        },
     ))
     .await
+}
+
+struct NativeRequest {
+    model: String,
+    authorized_selector: String,
+    streaming: bool,
+    body: Value,
+    entitlement: Option<crate::client_policy::EntitlementDecision>,
 }
 
 async fn forward_native_authorized_after_route(
     routed: crate::model_routing::RoutedState,
     headers: &HeaderMap,
     path: &str,
-    model: String,
-    streaming: bool,
-    body: Value,
-    entitlement: Option<crate::client_policy::EntitlementDecision>,
+    request: NativeRequest,
 ) -> Response {
+    let NativeRequest {
+        model,
+        authorized_selector,
+        streaming,
+        body,
+        entitlement,
+    } = request;
     if routed.state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
         return forward_native_via_zai(routed.state, headers, path, &model, streaming, &body).await;
     }
@@ -535,11 +616,12 @@ async fn forward_native_authorized_after_route(
         .await;
     }
     let state = &routed.state;
+    let routing_body = json!({"model": authorized_selector});
     let mut routed = match route_gemini_token(
         state,
         headers,
         &body,
-        &body,
+        &routing_body,
         Surface::OpenAIChat,
         path,
         routed.subscription.as_ref(),

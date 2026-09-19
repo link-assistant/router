@@ -12,6 +12,13 @@ pub struct RouterModel {
     pub id: String,
     #[serde(default)]
     pub owned_by: String,
+    /// Selector semantics supplied for this exact live row. Unknown is the
+    /// fail-closed default; the spelling itself never classifies an alias.
+    #[serde(default)]
+    pub selector_kind: crate::model_contract::ModelSelectorKind,
+    /// Field-level evidence and exact route scope projected by Router.
+    #[serde(default)]
+    pub capability_provenance: serde_json::Value,
     /// The model's live default, if the provider supplied one.
     #[serde(default)]
     pub default_reasoning_level: Option<String>,
@@ -81,72 +88,6 @@ pub struct ClaudeModelCapabilities {
     pub source: String,
 }
 
-/// Claude's known model identity that matches one provider adapter's reviewed
-/// context, thinking, effort, tool-use, and output contract.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ClaudeCapabilityProfile {
-    behaves_as: &'static str,
-    source: &'static str,
-}
-
-impl ClaudeCapabilityProfile {
-    #[must_use]
-    pub(crate) const fn behaves_as(self) -> &'static str {
-        self.behaves_as
-    }
-
-    #[must_use]
-    pub(crate) const fn source(self) -> &'static str {
-        self.source
-    }
-}
-
-/// Claude capability metadata for one model reached through the native
-/// Anthropic Messages adapter.
-///
-/// Resolved per model rather than per catalog owner (issue #565). The owner
-/// still selects which reviewed adapter contract applies — that is what makes
-/// the claim reviewable rather than guessed from a model name — but the
-/// signature takes the model so a provider whose catalog genuinely differs can
-/// be described differently without changing every caller. A single value for a
-/// whole provider made any per-model difference unrepresentable rather than
-/// merely unset.
-///
-/// The live catalog still owns the inventory: no model id is enumerated here, so
-/// a vendor release needs no Router release (issue #546).
-#[must_use]
-pub fn claude_capability_profile(owner: &str, model: &str) -> Option<ClaudeCapabilityProfile> {
-    // An id is required to describe a model; an empty one names nothing.
-    if model.trim().is_empty() {
-        return None;
-    }
-    (owner == super::ZAI_MODEL_OWNER).then_some(ClaudeCapabilityProfile {
-        // The identity Claude Code applies to a model it does not know: its
-        // prompt profile, context window, effort and tool-use defaults. So it
-        // has to be the *closest true* identity, not merely a working one.
-        //
-        // The previous value described a 200K window with a 32K output ceiling.
-        // The vendor documents its current generation — the models this adapter
-        // actually serves — at a 1M-token context with a 128K maximum output, so
-        // that identity understated the window by five times and made Claude
-        // Code auto-compact sessions that had ample room left.
-        //
-        // The same field is what Claude Code's auto-mode gate reads, and the
-        // previous identity is one the gate denies outright, which is why a
-        // z.ai session reported "auto mode unavailable for this model" while the
-        // provider's own id would have passed (issue #565). Advertising an extra
-        // capability field could never have fixed that: the gate reads an
-        // identity, not Router's metadata.
-        //
-        // This identity is therefore both the more accurate description and the
-        // one that lets the client offer a mode the upstream can serve. Nothing
-        // about the wire changes: the provider model id sent upstream is still
-        // the live catalog's own (issue #546).
-        behaves_as: "claude-sonnet-5",
-        source: "provider-protocol:z.ai-anthropic",
-    })
-}
-
 /// One reasoning option retained verbatim from a live Codex catalog.
 ///
 /// Strings are intentionally not an enum: Codex accepts provider-defined
@@ -156,37 +97,6 @@ pub struct RouterReasoningLevel {
     pub effort: String,
     #[serde(default)]
     pub description: String,
-}
-
-fn apply_codex_reasoning_profile(model: &mut RouterModel) {
-    let Some(profile) = super::codex_reasoning_profile(&model.owned_by) else {
-        return;
-    };
-    if model.supported_reasoning_levels.is_none()
-        && model
-            .default_reasoning_level
-            .as_deref()
-            .is_none_or(|default| profile.supports(default))
-    {
-        model.supported_reasoning_levels = Some(profile.levels());
-    }
-    if model.default_reasoning_level.is_none()
-        && model
-            .supported_reasoning_levels
-            .as_ref()
-            .is_some_and(|levels| levels.iter().any(|level| level.effort == profile.default()))
-    {
-        model.default_reasoning_level = Some(profile.default().to_string());
-    }
-}
-
-/// Apply only reviewed provider-level fallbacks for the requesting client.
-pub(super) fn apply_codex_reasoning_profiles(client: ClientKind, models: &mut [RouterModel]) {
-    if client == ClientKind::Codex {
-        for model in models {
-            apply_codex_reasoning_profile(model);
-        }
-    }
 }
 
 #[derive(Deserialize)]
@@ -246,7 +156,6 @@ impl ClientManager {
             .into_iter()
             .filter(|model| !model.id.trim().is_empty())
             .collect::<Vec<_>>();
-        apply_codex_reasoning_profiles(client, &mut models);
         models.sort_by(|left, right| {
             left.id
                 .cmp(&right.id)

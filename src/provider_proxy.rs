@@ -240,6 +240,40 @@ pub(crate) async fn forward_provider_at_routed(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let requested_model = routing_body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let model_policy = if requested_model.is_empty() {
+        match crate::proxy::model_policy_for_claims(state, &claims) {
+            Ok(policy) if policy.allowed_models.is_empty() => policy,
+            Ok(_) => {
+                return error_response(
+                    StatusCode::BAD_REQUEST,
+                    "model_required",
+                    "a pinned credential requires a non-empty exact model",
+                );
+            }
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "model_policy_unavailable",
+                    &error.to_string(),
+                );
+            }
+        }
+    } else {
+        match crate::proxy::authorize_model_for_claims(
+            state,
+            &claims,
+            &requested_model,
+            crate::api_error::ApiDialect::OpenAi,
+        ) {
+            Ok(policy) => policy,
+            Err(response) => return response,
+        }
+    };
     let provider = match resolve_openai_compatible_provider(state) {
         Ok(provider) => provider,
         Err(e) => {
@@ -253,6 +287,7 @@ pub(crate) async fn forward_provider_at_routed(
     let native_protocol = native_protocol
         || (provider.kind == ProviderKind::Lefine
             && protocol == crate::client_policy::ClientProtocol::OpenAIChat);
+    let mut selector_kind = crate::model_contract::ModelSelectorKind::Unknown;
     let client = match crate::client_policy::bound_client(&claims) {
         Ok((client, _)) => client,
         Err(error) => {
@@ -287,13 +322,17 @@ pub(crate) async fn forward_provider_at_routed(
                 return error_response(StatusCode::SERVICE_UNAVAILABLE, "api_error", &error);
             }
         };
-        if model.is_empty() || !live.iter().any(|candidate| candidate.id == model) {
+        let selected = live.iter().find(|candidate| candidate.id == model);
+        if model.is_empty() || selected.is_none() {
             return error_response(
                 StatusCode::NOT_FOUND,
                 "not_found_error",
                 &format!("model '{model}' is not available from the selected provider"),
             );
         }
+        selector_kind = crate::model_contract::ModelSelectorKind::from_catalog_value(
+            selected.and_then(|candidate| candidate.raw.get("selector_kind")),
+        );
     }
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
@@ -315,11 +354,6 @@ pub(crate) async fn forward_provider_at_routed(
     {
         body["model"] = serde_json::Value::String(model.to_string());
     }
-    let requested_model = routing_body
-        .get("model")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or_default()
-        .to_string();
     let resolved_model = body
         .get("model")
         .and_then(serde_json::Value::as_str)
@@ -420,7 +454,21 @@ pub(crate) async fn forward_provider_at_routed(
             correlation_id,
             state.logger.clone(),
             usage.take(),
-            (!native_protocol).then_some(requested_model.as_str()),
+            SettledRelayIdentity {
+                requested_model: (!native_protocol).then_some(requested_model.clone()),
+                model_policy: (!native_protocol).then_some(model_policy.clone()),
+                selector_kind,
+                completion_audit: (!native_protocol && status.is_success()).then(|| {
+                    crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                        .with_models(Some(&requested_model), Some(&resolved_model))
+                        .with_provider(Some(&provider.name))
+                        .with_provider_account(
+                            provider.subscriber_id.as_deref().or(Some(&provider.name)),
+                        )
+                        .with_provider_endpoint(Some(&provider.base_url))
+                        .with_selector_kind(selector_kind)
+                }),
+            },
         );
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
@@ -454,9 +502,28 @@ pub(crate) async fn forward_provider_at_routed(
     let mut response_body = upstream_body;
     if !native_protocol
         && status.is_success()
-        && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
+        && let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
     {
-        crate::output_limit::preserve_model_identity(&mut payload, &requested_model);
+        let served_model = match crate::model_contract::validate_translated_response_for_selector(
+            &requested_model,
+            &payload,
+            &model_policy,
+            selector_kind,
+        ) {
+            Ok(served_model) => served_model,
+            Err(error) => {
+                return error_response(StatusCode::BAD_GATEWAY, &error.code, &error.to_string());
+            }
+        };
+        if let Some(served_model) = served_model.as_deref() {
+            crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                .with_models(Some(&requested_model), Some(&resolved_model))
+                .with_provider(Some(&provider.name))
+                .with_provider_account(provider.subscriber_id.as_deref().or(Some(&provider.name)))
+                .with_provider_endpoint(Some(&provider.base_url))
+                .with_selector_kind(selector_kind)
+                .record_completed(served_model);
+        }
         response_body =
             bytes::Bytes::from(serde_json::to_vec(&payload).expect("JSON values always serialize"));
     }
@@ -592,7 +659,7 @@ pub(crate) async fn live_openai_compatible_catalog(
     }
 
     let url = join_openai_compatible_url(&provider.base_url, "/v1/models");
-    let mut request = state.client.get(url);
+    let mut request = state.client.get(&url);
     if let Some(key) = provider.api_key.as_deref().filter(|key| !key.is_empty()) {
         request = request.bearer_auth(key);
     }
@@ -628,7 +695,7 @@ pub(crate) async fn live_openai_compatible_catalog(
     let mut seen = HashSet::new();
     let mut models = Vec::new();
     for entry in entries {
-        let Some(raw) = entry.as_object().cloned() else {
+        let Some(mut raw) = entry.as_object().cloned() else {
             return cache_openai_provider_failure(
                 state,
                 provider,
@@ -649,7 +716,8 @@ pub(crate) async fn live_openai_compatible_catalog(
                 "model record has no exact id",
             );
         };
-        if !seen.insert(id.to_string()) {
+        let id = id.to_string();
+        if !seen.insert(id.clone()) {
             return cache_openai_provider_failure(
                 state,
                 provider,
@@ -657,11 +725,38 @@ pub(crate) async fn live_openai_compatible_catalog(
                 &format!("duplicate exact model id '{id}'"),
             );
         }
-        if restrictions.is_empty() || restrictions.iter().any(|allowed| allowed == id) {
-            models.push(LiveProviderModel {
-                id: id.to_string(),
-                raw,
-            });
+        if restrictions.is_empty() || restrictions.iter().any(|allowed| allowed == &id) {
+            let fetched_at = chrono::Utc::now().to_rfc3339();
+            raw.insert(
+                "router_source_url".into(),
+                serde_json::Value::String(url.clone()),
+            );
+            raw.insert(
+                "router_endpoint".into(),
+                serde_json::Value::String(provider.base_url.clone()),
+            );
+            raw.insert(
+                "router_account".into(),
+                serde_json::Value::String(
+                    provider
+                        .subscriber_id
+                        .clone()
+                        .unwrap_or_else(|| provider.name.clone()),
+                ),
+            );
+            raw.insert(
+                "router_protocols".into(),
+                serde_json::json!(["openai-compatible:/v1/models"]),
+            );
+            raw.insert(
+                "router_fetched_at".into(),
+                serde_json::Value::String(fetched_at.clone()),
+            );
+            raw.insert(
+                "router_health_generation".into(),
+                serde_json::Value::String(fetched_at),
+            );
+            models.push(LiveProviderModel { id, raw });
         }
     }
     let now = Instant::now();
@@ -737,6 +832,15 @@ pub(crate) fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
     }
 }
 
+/// Response-identity contract applied while a provider stream is relayed.
+#[derive(Default)]
+struct SettledRelayIdentity {
+    requested_model: Option<String>,
+    model_policy: Option<crate::model_contract::ModelAccessPolicy>,
+    selector_kind: crate::model_contract::ModelSelectorKind,
+    completion_audit: Option<crate::audit::ResponseModelAudit>,
+}
+
 /// Relay an upstream stream, recording each frame and settling it at the end.
 ///
 /// Split out so the settlement can be exercised directly: this is the code path
@@ -748,7 +852,7 @@ fn settled_relay_stream(
     correlation_id: String,
     logger: log_lazy::LogLazy,
     mut usage: Option<crate::usage::UsageTracker>,
-    requested_model: Option<&str>,
+    model_identity: SettledRelayIdentity,
 ) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> + use<> {
     let started = std::time::Instant::now();
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(new_stream_outcome(
@@ -758,34 +862,78 @@ fn settled_relay_stream(
     let end_log = std::sync::Arc::clone(&response_log);
     let end_id = correlation_id.clone();
     let mut identity = crate::output_limit::ResponsesStreamRewriter::new(
-        requested_model.unwrap_or_default(),
+        model_identity
+            .requested_model
+            .as_deref()
+            .unwrap_or_default(),
         None,
     );
-    upstream
-        .bytes_stream()
-        .map(move |chunk| {
-            let mut settled = outcome.lock().expect("stream outcome lock");
-            match &chunk {
-                Ok(bytes) => {
-                    response_log.record_upstream_body(&correlation_id, bytes);
-                    account_for_frame(&mut settled, bytes);
-                    if let Some(tracker) = &mut usage {
-                        tracker.feed(bytes);
-                    }
+    if let Some(policy) = model_identity.model_policy.as_ref() {
+        identity = identity
+            .with_model_policy(policy)
+            .with_selector_kind(model_identity.selector_kind);
+    }
+    let completion_audit = model_identity.completion_audit;
+    let identity_state = std::sync::Arc::new(std::sync::Mutex::new((identity, false)));
+    let chunk_identity_state = std::sync::Arc::clone(&identity_state);
+    let chunk_completion_audit = completion_audit.clone();
+    let stream = upstream.bytes_stream().map(move |chunk| {
+        let mut settled = outcome.lock().expect("stream outcome lock");
+        match &chunk {
+            Ok(bytes) => {
+                response_log.record_upstream_body(&correlation_id, bytes);
+                account_for_frame(&mut settled, bytes);
+                if let Some(tracker) = &mut usage {
+                    tracker.feed(bytes);
                 }
-                Err(error) => settled.detail = Some(error.to_string()),
             }
-            drop(settled);
-            chunk
-                .map(|bytes| {
-                    if identity.active() {
-                        bytes::Bytes::from(identity.push(&bytes))
-                    } else {
-                        bytes
+            Err(error) => settled.detail = Some(error.to_string()),
+        }
+        drop(settled);
+        chunk
+            .map(|bytes| {
+                let mut state = chunk_identity_state
+                    .lock()
+                    .expect("stream identity state lock");
+                let (identity, model_audited) = &mut *state;
+                let output = if identity.active() {
+                    let output = bytes::Bytes::from(identity.push(&bytes));
+                    let served_model = identity.upstream_model().map(str::to_string);
+                    if !*model_audited
+                        && let (Some(audit), Some(served_model)) =
+                            (chunk_completion_audit.as_ref(), served_model.as_deref())
+                    {
+                        audit.record_verified(served_model);
+                        *model_audited = true;
                     }
-                })
-                .map_err(std::io::Error::other)
-        })
+                    output
+                } else {
+                    bytes
+                };
+                drop(state);
+                output
+            })
+            .map_err(std::io::Error::other)
+    });
+    let stream = stream.chain(futures_util::stream::once(async move {
+        let output = {
+            let mut state = identity_state.lock().expect("stream identity state lock");
+            let (identity, model_audited) = &mut *state;
+            let output = identity.finish();
+            let served_model = identity.upstream_model().map(str::to_string);
+            if !*model_audited
+                && let (Some(audit), Some(served_model)) =
+                    (completion_audit.as_ref(), served_model.as_deref())
+            {
+                audit.record_verified(served_model);
+                *model_audited = true;
+            }
+            drop(state);
+            output
+        };
+        Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
+    }));
+    stream
         .chain(futures_util::stream::once(async move {
             crate::request_log::settle_stream(
                 &end_log,

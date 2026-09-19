@@ -666,3 +666,19 @@ fn codex_whoami_metadata_and_account_handle_follow_the_selected_workspace() {
         codex_account_handle("principal", "primary", Some("workspace-b"))
     );
 }
+
+#[test]
+fn realtime_model_denials_name_the_rejected_and_allowed_exact_ids() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("allowed-model");
+    let denied = realtime_model_denial(&policy, Some("other-model")).expect("denied model");
+    assert_eq!(denied["code"], "model_not_allowed");
+    assert_eq!(denied["requested_model"], "other-model");
+    assert_eq!(denied["allowed_models"], serde_json::json!(["allowed-model"]));
+
+    let missing = realtime_model_denial(&policy, None).expect("pinned request needs a model");
+    assert_eq!(missing["code"], "model_required");
+    assert_eq!(missing["allowed_models"], serde_json::json!(["allowed-model"]));
+    assert!(
+        realtime_model_denial(&crate::model_contract::ModelAccessPolicy::default(), None).is_none()
+    );
+}

@@ -234,6 +234,7 @@ fn chat_completion_becomes_anthropic_message() {
     let payload = json!({
         "id": "chatcmpl-1",
         "object": "chat.completion",
+        "model": "provider/served-model",
         "choices": [{
             "index": 0,
             "message": {"role": "assistant", "content": "hello"},
@@ -244,7 +245,7 @@ fn chat_completion_becomes_anthropic_message() {
     let msg = openai_json_to_anthropic_message(&payload, "claude-sonnet-4-5");
     assert_eq!(msg["type"], "message");
     assert_eq!(msg["role"], "assistant");
-    assert_eq!(msg["model"], "claude-sonnet-4-5");
+    assert_eq!(msg["model"], "provider/served-model");
     assert_eq!(msg["content"][0]["type"], "text");
     assert_eq!(msg["content"][0]["text"], "hello");
     assert_eq!(msg["stop_reason"], "end_turn");
@@ -391,7 +392,7 @@ async fn buffered_responses_reject_provider_specific_output_instead_of_dropping_
 }
 
 #[tokio::test]
-async fn buffered_bridge_preserves_requested_without_private_metadata() {
+async fn buffered_bridge_preserves_served_identity_without_private_metadata() {
     use axum::response::IntoResponse as _;
     use http_body_util::BodyExt as _;
 
@@ -420,13 +421,13 @@ async fn buffered_bridge_preserves_requested_without_private_metadata() {
     assert!(response.headers().get("x-router-upstream-model").is_none());
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let payload: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(payload["model"], "claude/catalog-alias");
+    assert_eq!(payload["model"], "future-upstream-model");
     assert!(payload.get("x_router_upstream_model").is_none());
 }
 
-/// Streaming translation carries only the requested vendor-standard model.
+/// Streaming translation carries the concrete upstream model.
 #[tokio::test]
-async fn streaming_bridge_preserves_requested_without_private_metadata() {
+async fn streaming_bridge_preserves_served_identity_without_private_metadata() {
     use http_body_util::BodyExt as _;
 
     let mut upstream = Response::new(Body::from(concat!(
@@ -466,8 +467,8 @@ async fn streaming_bridge_preserves_requested_without_private_metadata() {
     assert!(payload.contains("message_start"));
     assert!(payload.contains("content_block_delta"));
     assert!(payload.contains("message_stop"));
-    assert!(payload.contains("claude/catalog-alias"));
-    assert!(!payload.contains("future-upstream-model"));
+    assert!(!payload.contains("claude/catalog-alias"));
+    assert!(payload.contains("future-upstream-model"));
     assert!(!payload.contains("x_router_"));
 }
 

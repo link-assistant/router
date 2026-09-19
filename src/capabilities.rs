@@ -3,6 +3,7 @@
 use crate::config::UpstreamProvider;
 use crate::subscription::SubscriptionProvider;
 use serde_json::Value;
+use std::sync::OnceLock;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Capability {
@@ -81,17 +82,56 @@ pub fn upstream(provider: UpstreamProvider) -> ProviderCapabilities {
 
 /// Whether the selected Claude model uses the current adaptive-thinking wire
 /// format instead of a caller-provided fixed token budget.
+///
+/// This is exact reviewed protocol evidence, not a version parser. Anthropic's
+/// model documentation says which concrete IDs accept adaptive thinking; an
+/// unfamiliar snapshot or compatible-provider ID remains unknown and cannot
+/// inherit the capability from digits or a family prefix.
+/// The versioned evidence manifest records its direct-provider source, product,
+/// protocol, and review date.
 #[must_use]
 pub fn claude_uses_adaptive_thinking(model: Option<&str>) -> bool {
-    let Some(model) = model.map(|model| model.strip_prefix("claude-").unwrap_or(model)) else {
+    let Some(model) = model else {
         return false;
     };
-    let mut version = model.split('-').filter_map(|part| part.parse::<u32>().ok());
-    let Some(major) = version.next() else {
-        return false;
-    };
-    let minor = version.next().unwrap_or(0);
-    major > 4 || major == 4 && minor >= 7
+    adaptive_thinking_evidence()
+        .models
+        .iter()
+        .any(|advertised| advertised == model)
+}
+
+#[derive(serde::Deserialize)]
+struct AdaptiveThinkingEvidence {
+    source_kind: String,
+    source_url: String,
+    verified_at: String,
+    product: String,
+    wire_protocol: String,
+    models: Vec<String>,
+}
+
+fn adaptive_thinking_evidence() -> &'static AdaptiveThinkingEvidence {
+    static EVIDENCE: OnceLock<AdaptiveThinkingEvidence> = OnceLock::new();
+    EVIDENCE.get_or_init(|| {
+        let evidence: AdaptiveThinkingEvidence = serde_json::from_str(include_str!(
+            "../docs/provider-evidence/anthropic-adaptive-thinking.json"
+        ))
+        .expect("checked Anthropic adaptive-thinking evidence must be valid JSON");
+        assert_eq!(
+            evidence.source_kind, "provider_owned_versioned_document",
+            "adaptive-thinking evidence must retain a direct-provider source kind"
+        );
+        assert!(
+            evidence
+                .source_url
+                .starts_with("https://platform.claude.com/"),
+            "adaptive-thinking evidence must retain its provider-owned source"
+        );
+        assert!(!evidence.verified_at.is_empty());
+        assert_eq!(evidence.product, "Anthropic Messages API");
+        assert_eq!(evidence.wire_protocol, "anthropic-messages");
+        evidence
+    })
 }
 
 /// Return a requested server-side tool the target subscription cannot
@@ -192,8 +232,12 @@ mod tests {
         assert_eq!(claude.temperature, Capability::Unknown);
         assert_eq!(claude.output_token_limit, Capability::Native);
         assert!(claude_uses_adaptive_thinking(Some("claude-opus-5")));
-        assert!(claude_uses_adaptive_thinking(Some("opus-4-7")));
+        assert!(claude_uses_adaptive_thinking(Some("claude-opus-4-7")));
         assert!(!claude_uses_adaptive_thinking(Some("claude-sonnet-4-5")));
+        assert!(!claude_uses_adaptive_thinking(Some("opus-4-7")));
+        assert!(!claude_uses_adaptive_thinking(Some(
+            "compatible-claude-opus-5"
+        )));
         assert_eq!(claude.web_fetch, Capability::Native);
     }
 

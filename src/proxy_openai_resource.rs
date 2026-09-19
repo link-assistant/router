@@ -23,12 +23,31 @@ pub(crate) async fn route_openai_request(
     protocol: crate::client_policy::ClientProtocol,
     path: &str,
 ) -> Result<crate::model_routing::RoutedState, Response> {
+    let claims = crate::proxy::authenticate_client_error(state, headers)
+        .map_err(|error| error.render(crate::api_error::ApiDialect::OpenAi))?;
+    let requested = body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .filter(|model| !model.is_empty())
+        .ok_or_else(|| {
+            crate::api_error::PresentedError {
+                status: StatusCode::BAD_REQUEST,
+                error_type: "model_required",
+                message: "request model must be a non-empty exact catalog id",
+            }
+            .render(crate::api_error::ApiDialect::OpenAi)
+        })?;
+    crate::proxy::authorize_model_for_claims(
+        state,
+        &claims,
+        requested,
+        crate::api_error::ApiDialect::OpenAi,
+    )?;
     if state.upstream_provider != UpstreamProvider::Auto {
         return crate::model_routing::route_state_with_subscription(state, body)
             .await
             .map_err(|error| crate::model_routing::model_route_error_response(&error));
     }
-    let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
     let client = crate::client_policy::bound_client(&claims)
         .map(|(client, _)| client)
         .map_err(|error| {

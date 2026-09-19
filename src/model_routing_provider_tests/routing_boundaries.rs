@@ -220,9 +220,10 @@ async fn an_unknown_provider_prefix_is_not_a_provider_reference() {
     );
 }
 
-/// A stored model whose exact id collides with a subscription fails explicitly.
+/// A stored model whose exact id collides with a subscription preserves both
+/// candidates for the outer catalog boundary to diagnose and reject.
 #[tokio::test]
-async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
+async fn a_colliding_declared_model_is_recorded_without_a_qualified_alias() {
     let data_dir = tempfile::tempdir().expect("data dir");
     let state = auto_state(Vec::new(), data_dir.path());
     let (base_url, task) = live_catalog_upstream(&["shared-id"]).await;
@@ -233,18 +234,15 @@ async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
         "data": [{"id": "shared-id", "object": "model", "owned_by": "anthropic"}]
     });
     let (claims, headers) = opencode_catalog_identity();
-    let result = crate::model_routing::append_stored_provider_models(
+    crate::model_routing::append_stored_provider_models(
         &state,
         &claims,
         &headers,
         "/api/services/openai/v1/models",
         &mut catalog,
     )
-    .await;
-    assert!(matches!(
-        result,
-        Err(crate::model_routing::ModelRouteError::Conflict(_))
-    ));
+    .await
+    .expect("catalog collection records collisions for the response boundary");
 
     let ids: Vec<&str> = catalog["data"]
         .as_array()
@@ -253,10 +251,23 @@ async fn a_colliding_declared_model_is_rejected_without_a_qualified_alias() {
         .filter_map(|entry| entry["id"].as_str())
         .collect();
     assert!(
-        ids.contains(&"shared-id"),
-        "the subscription keeps its id: {ids:?}"
+        !ids.contains(&"shared-id"),
+        "conflicts are not routable: {ids:?}"
     );
     assert!(!ids.contains(&"formal-ai/shared-id"), "no aliases: {ids:?}");
+    assert_eq!(
+        catalog["catalog_conflicts"],
+        serde_json::json!(["shared-id"])
+    );
+    let candidates = catalog["catalog_conflict_candidates"]
+        .as_array()
+        .expect("collision candidates");
+    assert_eq!(candidates.len(), 2, "both exact-scope candidates remain");
+    assert!(
+        candidates
+            .iter()
+            .all(|candidate| candidate["id"] == "shared-id")
+    );
     task.abort();
 }
 

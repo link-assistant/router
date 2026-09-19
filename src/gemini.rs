@@ -56,7 +56,7 @@ pub fn code_assist_envelope(model: &str, request: &Value) -> Value {
 
 /// Translate a Gemini `GenerateContentResponse` to an `OpenAI` Chat Completion.
 #[must_use]
-pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
+pub fn gemini_response_to_chat(resp: &Value, _model: &str) -> Value {
     // Code Assist nests the real response under `response`; standard Gemini
     // returns it at the top level. Accept both.
     let inner = resp.get("response").unwrap_or(resp);
@@ -113,11 +113,15 @@ pub fn gemini_response_to_chat(resp: &Value, model: &str) -> Value {
         }
     }
 
+    let served_model = inner
+        .get("modelVersion")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
     json!({
         "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         "object": "chat.completion",
         "created": chrono::Utc::now().timestamp(),
-        "model": model,
+        "model": served_model,
         "choices": [{
             "index": 0,
             "message": message,
@@ -231,15 +235,15 @@ pub(crate) async fn forward_chat_completions_as_routed(
     state: &AppState,
     headers: &HeaderMap,
     body: Value,
+    routing_body: &Value,
     surface: Surface,
     subscription: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Response {
-    let routing_body = body.clone();
     forward(
         state,
         headers,
         body,
-        &routing_body,
+        routing_body,
         surface,
         ShapeIn::Chat,
         subscription,
@@ -288,11 +292,14 @@ enum ShapeIn {
 }
 
 struct RoutedGeminiToken {
+    claims: crate::token::TokenClaims,
     token: crate::subscription::SubscriptionToken,
     account: String,
     /// Spend reserved at admission, carrying the token id it was taken
     /// against; released when the response settles.
     reservation: crate::usage::ReservationGuard,
+    model_policy: crate::model_contract::ModelAccessPolicy,
+    selector_kind: crate::model_contract::ModelSelectorKind,
 }
 
 async fn route_gemini_token(
@@ -305,6 +312,36 @@ async fn route_gemini_token(
     validated: Option<&crate::model_routing::ValidatedSubscription>,
 ) -> Result<RoutedGeminiToken, Response> {
     let claims = crate::proxy::authenticate_client(state, headers).map_err(|response| *response)?;
+    let requested_model = routing_body
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let model_policy = if requested_model.is_empty() {
+        match crate::proxy::model_policy_for_claims(state, &claims) {
+            Ok(policy) if policy.allowed_models.is_empty() => policy,
+            Ok(_) => {
+                return Err(error_response(
+                    StatusCode::BAD_REQUEST,
+                    "model_required",
+                    "a pinned credential requires a non-empty exact model",
+                ));
+            }
+            Err(error) => {
+                return Err(error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "model_policy_unavailable",
+                    &error.to_string(),
+                ));
+            }
+        }
+    } else {
+        crate::proxy::authorize_model_for_claims(
+            state,
+            &claims,
+            requested_model,
+            crate::api_error::ApiDialect::Gemini,
+        )?
+    };
     let reserved = crate::token_reservation::estimate(body).total();
     state
         .token_manager
@@ -404,6 +441,11 @@ async fn route_gemini_token(
             token,
         }
     };
+    let selector_kind = state.model_catalogs.selector_kind_for(
+        crate::subscription::SubscriptionProvider::Gemini,
+        &selected.name,
+        requested_model,
+    );
     let token = if validated.is_some() {
         selected.token
     } else {
@@ -427,9 +469,12 @@ async fn route_gemini_token(
             })?
     };
     Ok(RoutedGeminiToken {
+        claims,
         token,
         account: selected.name,
         reservation,
+        model_policy,
+        selector_kind,
     })
 }
 
@@ -461,10 +506,13 @@ async fn forward(
         Ok(routed) => routed,
         Err(response) => return response,
     };
+    let claims = routed.claims;
     let sub_token = routed.token;
     let selected_account = Some(routed.account);
     // The reservation carries the token id; usage settles through it.
     let mut reservation = routed.reservation;
+    let model_policy = routed.model_policy;
+    let selector_kind = routed.selector_kind;
     let requested_model = routing_body
         .get("model")
         .and_then(Value::as_str)
@@ -599,22 +647,78 @@ async fn forward(
         } else {
             requested_model.clone()
         };
-        let mut translator = stream::OpenAiStreamTranslator::new(response_model);
-        let mut responses_translator =
-            stream::ResponsesStreamTranslator::new(requested_model.clone());
+        let translator = stream::OpenAiStreamTranslator::new(response_model);
+        let responses_translator = stream::ResponsesStreamTranslator::new(requested_model.clone());
+        let identity = crate::output_limit::ResponsesStreamRewriter::new(&requested_model, None)
+            .with_model_policy(&model_policy)
+            .with_selector_kind(selector_kind);
+        let completion_audit = crate::audit::ResponseModelAudit::new(
+            state,
+            &claims,
+            surface,
+            "/api/services/openai/v1/chat/completions",
+        )
+        .with_models(Some(&requested_model), Some(&model))
+        .with_provider(Some("gemini"))
+        .with_provider_account(selected_account.as_deref())
+        .with_provider_endpoint(Some(&base))
+        .with_selector_kind(selector_kind);
+        let translation_state = std::sync::Arc::new(std::sync::Mutex::new((
+            translator,
+            responses_translator,
+            identity,
+            false,
+        )));
+        let chunk_translation_state = std::sync::Arc::clone(&translation_state);
+        let chunk_completion_audit = completion_audit.clone();
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Err(error) => Err(std::io::Error::other(error)),
             Ok(bytes) => {
                 response_log.record_upstream_body(&correlation_id, &bytes);
                 metrics.record_bytes(0, bytes.len() as u64);
                 usage.feed(&bytes);
-                if shape == ShapeIn::Responses {
-                    responses_translator.push(&bytes)
-                } else {
-                    translator.push(&bytes)
+                {
+                    let mut state = chunk_translation_state
+                        .lock()
+                        .expect("stream translation state lock");
+                    let (translator, responses_translator, identity, model_audited) = &mut *state;
+                    let verified = identity.push(&bytes);
+                    let served_model = identity.upstream_model().map(str::to_string);
+                    if !*model_audited && let Some(served_model) = served_model.as_deref() {
+                        chunk_completion_audit.record_verified(served_model);
+                        *model_audited = true;
+                    }
+                    let output = if shape == ShapeIn::Responses {
+                        responses_translator.push(verified.as_bytes())
+                    } else {
+                        translator.push(verified.as_bytes())
+                    };
+                    drop(state);
+                    output
                 }
             }
         });
+        let stream = stream.chain(futures_util::stream::once(async move {
+            {
+                let mut state = translation_state
+                    .lock()
+                    .expect("stream translation state lock");
+                let (translator, responses_translator, identity, model_audited) = &mut *state;
+                let verified = identity.finish();
+                let served_model = identity.upstream_model().map(str::to_string);
+                if !*model_audited && let Some(served_model) = served_model.as_deref() {
+                    completion_audit.record_verified(served_model);
+                    *model_audited = true;
+                }
+                let output = if shape == ShapeIn::Responses {
+                    responses_translator.push(verified.as_bytes())
+                } else {
+                    translator.push(verified.as_bytes())
+                };
+                drop(state);
+                output
+            }
+        }));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
@@ -674,12 +778,37 @@ async fn forward(
             );
         }
     };
-    let mut chat = gemini_response_to_chat(&gemini_json, &model);
-    crate::output_limit::preserve_model_identity(&mut chat, &requested_model);
+    let served_model = match crate::model_contract::validate_translated_response_for_selector(
+        &requested_model,
+        &gemini_json,
+        &model_policy,
+        selector_kind,
+    ) {
+        Ok(served_model) => served_model,
+        Err(error) => {
+            return error_response(StatusCode::BAD_GATEWAY, &error.code, &error.to_string());
+        }
+    };
+    if let Some(served_model) = served_model.as_deref() {
+        crate::audit::ResponseModelAudit::new(
+            state,
+            &claims,
+            surface,
+            "/api/services/openai/v1/chat/completions",
+        )
+        .with_models(Some(&requested_model), Some(&model))
+        .with_provider(Some("gemini"))
+        .with_provider_account(selected_account.as_deref())
+        .with_provider_endpoint(Some(&base))
+        .with_selector_kind(selector_kind)
+        .record_completed(served_model);
+    }
+    let concrete_served_model = served_model.as_deref().unwrap_or_default();
+    let chat = gemini_response_to_chat(&gemini_json, concrete_served_model);
     let output = if shape == ShapeIn::Responses {
         let finish = gemini_finish_reason(&gemini_json)
             .map_or(responses::Finish::Completed, responses::Finish::from_gemini);
-        responses::from_chat(&chat, &requested_model, finish)
+        responses::from_chat(&chat, concrete_served_model, finish)
     } else {
         chat
     };
@@ -857,40 +986,6 @@ mod tests {
             Some(("gemini-2.5-flash".into(), true))
         );
         assert!(native::parse_native_target("models/gemini-2.5-pro:countTokens").is_none());
-    }
-
-    /// Translation of an `OpenAI` chat body into Gemini's request shape,
-    /// including the system-instruction split and generation config.
-    #[test]
-    fn chat_requests_translate_into_the_gemini_shape() {
-        let body = json!({
-            "messages": [
-                {"role": "system", "content": "be brief"},
-                {"role": "user", "content": "hello"},
-                {"role": "assistant", "content": "hi", "tool_calls": [{
-                    "id": "call_1", "type": "function",
-                    "function": {"name": "lookup", "arguments": "{}"}
-                }]},
-                {"role": "tool", "tool_call_id": "call_1", "content": "result"}
-            ],
-            "max_tokens": 128,
-            "temperature": 0.4,
-            "top_p": 0.9
-        });
-        let request = chat_to_gemini_request(&body);
-
-        assert_eq!(request["systemInstruction"]["parts"][0]["text"], "be brief");
-        let contents = request["contents"].as_array().expect("contents");
-        assert_eq!(contents.len(), 3, "system is lifted out of the turn list");
-        assert_eq!(contents[0]["role"], "user");
-        assert_eq!(contents[1]["role"], "model", "assistant maps to model");
-        assert_eq!(
-            contents[2]["role"], "user",
-            "tool results map to a user turn"
-        );
-        assert_eq!(request["generationConfig"]["maxOutputTokens"], 128);
-        assert_eq!(request["generationConfig"]["temperature"], 0.4);
-        assert_eq!(request["generationConfig"]["topP"], 0.9);
     }
 }
 

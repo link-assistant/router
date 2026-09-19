@@ -29,19 +29,6 @@ fn limiter_never_splits_a_multibyte_character() {
 }
 
 #[test]
-fn model_identity_keeps_the_requested_id_without_private_wire_metadata() {
-    let mut payload = json!({"model": "gpt-5.6-luna", "object": "response"});
-    let served = preserve_model_identity(&mut payload, "codex-auto-review");
-    assert_eq!(served.as_deref(), Some("gpt-5.6-luna"));
-    assert_eq!(payload["model"], "codex-auto-review");
-    assert!(payload.get("x_router_upstream_model").is_none());
-
-    let mut same = json!({"model": "gpt-5.6-luna"});
-    assert_eq!(preserve_model_identity(&mut same, "gpt-5.6-luna"), None);
-    assert!(same.get("x_router_upstream_model").is_none());
-}
-
-#[test]
 fn buffered_chat_limit_truncates_and_reports_length() {
     let mut response = json!({
         "choices": [{"index": 0, "message": {"role": "assistant", "content": "0123456789"}, "finish_reason": "stop"}]
@@ -96,7 +83,7 @@ fn sse(events: &[Value]) -> Vec<u8> {
 }
 
 #[test]
-fn stream_rewriter_restores_the_requested_model_identity() {
+fn stream_rewriter_preserves_the_served_model_identity() {
     let mut rewriter = ResponsesStreamRewriter::new("codex-auto-review", None);
     assert!(rewriter.active());
     let stream = sse(&[
@@ -105,8 +92,8 @@ fn stream_rewriter_restores_the_requested_model_identity() {
         json!({"type": "response.completed", "response": {"id": "resp_1", "model": "gpt-5.6-luna", "status": "completed"}}),
     ]);
     let out = rewriter.push(&stream) + &rewriter.push(b"data: [DONE]\n\n");
-    assert!(!out.contains("\"model\":\"gpt-5.6-luna\""));
-    assert!(out.contains("\"model\":\"codex-auto-review\""));
+    assert!(out.contains("\"model\":\"gpt-5.6-luna\""));
+    assert!(!out.contains("\"model\":\"codex-auto-review\""));
     assert!(!out.contains("x_router_"));
     assert!(out.contains("event: response.created"));
     assert!(out.contains("data: [DONE]"));
@@ -114,19 +101,19 @@ fn stream_rewriter_restores_the_requested_model_identity() {
 }
 
 #[test]
-fn stream_rewriter_preserves_chat_and_anthropic_aliases() {
+fn stream_rewriter_does_not_relabel_chat_or_anthropic_models() {
     let mut chat = ResponsesStreamRewriter::new("stored/shared-future", None);
     let chat_out = chat.push(
         b"data: {\"id\":\"chat_1\",\"object\":\"chat.completion.chunk\",\"model\":\"shared-future\",\"choices\":[]}\n\n",
     );
-    assert!(chat_out.contains("\"model\":\"stored/shared-future\""));
+    assert!(chat_out.contains("\"model\":\"shared-future\""));
     assert!(!chat_out.contains("x_router_"));
 
     let mut anthropic = ResponsesStreamRewriter::new("future-saffron-2099", None);
     let anthropic_out = anthropic.push(
         b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"future\",\"content\":[]}}\n\n",
     );
-    assert!(anthropic_out.contains("\"model\":\"future-saffron-2099\""));
+    assert!(anthropic_out.contains("\"model\":\"future\""));
     assert!(!anthropic_out.contains("x_router_"));
 }
 
@@ -155,4 +142,141 @@ fn stream_rewriter_handles_events_split_across_chunks() {
     let mut out = rewriter.push(b"event: response.output_text.delta\ndata: {\"type\":\"resp");
     out.push_str(&rewriter.push(b"onse.output_text.delta\",\"delta\":\"hi\"}\n\n"));
     assert!(out.contains("\"delta\":\"hi\""));
+}
+
+#[test]
+fn pinned_stream_refuses_substitution_before_any_content() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let out = rewriter.push(
+        b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-b\"}}\n\n",
+    );
+    assert!(out.contains("model_substitution_not_allowed"), "{out}");
+    assert!(!out.contains("response.created"), "{out}");
+    assert!(out.ends_with("data: [DONE]\n\n"));
+}
+
+#[test]
+fn pinned_stream_requires_identity_before_content() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let out = rewriter.push(
+        b"event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"delta\":\"secret answer\"}\n\n",
+    );
+    assert!(out.contains("served_model_unknown"), "{out}");
+    assert!(!out.contains("secret answer"), "{out}");
+}
+
+#[test]
+fn translated_stream_withholds_identity_free_preamble() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let preamble = rewriter.push(
+        b"event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"r\"}}\n\n",
+    );
+    assert!(preamble.is_empty(), "{preamble}");
+    let identified = rewriter.push(
+        b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-a\"}}\n\n",
+    );
+    assert!(identified.contains("response.created"), "{identified}");
+    assert!(!identified.contains("response.in_progress"), "{identified}");
+}
+
+#[test]
+fn translated_stream_eof_without_identity_is_a_typed_error() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    assert!(
+        rewriter
+            .push(
+                b"event: response.in_progress\ndata: {\"type\":\"response.in_progress\",\"response\":{\"id\":\"r\"}}\n\n",
+            )
+            .is_empty()
+    );
+
+    let out = rewriter.finish();
+    assert!(out.contains("served_model_unknown"), "{out}");
+    assert!(out.ends_with("data: [DONE]\n\n"), "{out}");
+    assert!(rewriter.finish().is_empty());
+}
+
+#[test]
+fn translated_stream_processes_a_final_identity_event_without_blank_line() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    assert!(
+        rewriter
+            .push(
+                b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-a\"}}",
+            )
+            .is_empty()
+    );
+
+    let out = rewriter.finish();
+    assert!(out.contains("response.created"), "{out}");
+    assert!(!out.contains("served_model_unknown"), "{out}");
+    assert_eq!(rewriter.upstream_model(), Some("model-a"));
+}
+
+#[test]
+fn translated_stream_preserves_upstream_failure_without_identity_error() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let out = rewriter.push(
+        b"event: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"provider_error\",\"message\":\"failed\"}}\n\n",
+    );
+    assert!(out.contains("provider_error"), "{out}");
+    assert!(!out.contains("served_model_unknown"), "{out}");
+    assert!(rewriter.finish().is_empty());
+}
+
+#[test]
+fn translated_stream_preserves_provider_error_objects_without_identity() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let out =
+        rewriter.push(b"data: {\"error\":{\"code\":429,\"message\":\"provider overloaded\"}}\n\n");
+    assert!(out.contains("provider overloaded"), "{out}");
+    assert!(!out.contains("served_model_unknown"), "{out}");
+    assert!(rewriter.finish().is_empty());
+}
+
+#[test]
+fn pinned_stream_refuses_identity_drift_after_start() {
+    let mut policy = crate::model_contract::ModelAccessPolicy::exact("model-a");
+    policy.allow_substitution = true;
+    policy.substitution_source = Some("test explicit opt-in".into());
+    let mut rewriter = ResponsesStreamRewriter::new("model-a", None).with_model_policy(&policy);
+    let out = rewriter.push(
+        b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-b\"}}\n\nevent: response.completed\ndata: {\"type\":\"response.completed\",\"response\":{\"id\":\"r\",\"model\":\"model-c\"}}\n\n",
+    );
+    assert!(out.contains("\"model\":\"model-b\""), "{out}");
+    assert!(out.contains("served_model_changed"), "{out}");
+    assert!(!out.contains("\"model\":\"model-c\""), "{out}");
+}
+
+#[test]
+fn explicit_substitution_preserves_the_concrete_stream_identity() {
+    let mut policy = crate::model_contract::ModelAccessPolicy::exact("alias");
+    policy.allow_substitution = true;
+    policy.substitution_source = Some("test explicit opt-in".into());
+    let mut rewriter = ResponsesStreamRewriter::new("alias", None).with_model_policy(&policy);
+    let out = rewriter.push(
+        b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"concrete\"}}\n\n",
+    );
+    assert!(out.contains("\"model\":\"concrete\""), "{out}");
+    assert!(!out.contains("\"type\":\"error\""), "{out}");
+}
+
+#[test]
+fn provider_dynamic_alias_preserves_concrete_stream_identity_without_fallback_opt_in() {
+    let policy = crate::model_contract::ModelAccessPolicy::exact("auto-review");
+    let mut rewriter = ResponsesStreamRewriter::new("auto-review", None)
+        .with_model_policy(&policy)
+        .with_selector_kind(crate::model_contract::ModelSelectorKind::ProviderDynamicAlias);
+    let out = rewriter.push(
+        b"event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"r\",\"model\":\"model-b\"}}\n\n",
+    );
+    assert!(out.contains("\"model\":\"model-b\""), "{out}");
+    assert!(!out.contains("\"type\":\"error\""), "{out}");
 }

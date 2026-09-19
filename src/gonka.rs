@@ -173,8 +173,9 @@ impl GonkaConfig {
         &self,
         client: &reqwest::Client,
     ) -> Result<Vec<LiveProviderModel>, String> {
+        let source_url = self.endpoint("/v1/models");
         let response = client
-            .get(self.endpoint("/v1/models"))
+            .get(&source_url)
             .bearer_auth(&self.api_key)
             .send()
             .await
@@ -217,6 +218,13 @@ impl GonkaConfig {
             if self.model.is_empty() || self.model == id {
                 let id = id.to_string();
                 raw.insert("id".into(), Value::String(id.clone()));
+                crate::model_evidence::annotate_live_catalog(
+                    &mut raw,
+                    &source_url,
+                    &self.source_url,
+                    "configured-gonka-broker",
+                    &["openai-compatible:/v1/models"],
+                );
                 models.push(LiveProviderModel { id, raw });
             }
         }
@@ -242,27 +250,16 @@ pub(crate) fn catalog_json(models: Vec<LiveProviderModel>) -> Value {
     json!({"object": "list", "data": data})
 }
 
-/// Add Gonka's exact IDs after existing catalogs, omitting canonical collisions.
-/// Existing providers intentionally win so listing and automatic dispatch use
-/// one deterministic precedence rule.
+/// Add exact IDs; the shared catalog records collisions and fails closed.
 pub(crate) fn merge_catalog(catalog: &mut Value, models: Vec<LiveProviderModel>) {
-    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-        return;
-    };
     for model in models {
-        if data
-            .iter()
-            .any(|entry| entry.get("id").and_then(Value::as_str) == Some(model.id.as_str()))
-        {
-            continue;
-        }
         let mut raw = model.raw;
         raw.insert("id".into(), Value::String(model.id));
         raw.entry("object")
             .or_insert_with(|| Value::String("model".into()));
         raw.entry("owned_by")
             .or_insert_with(|| Value::String("gonka".into()));
-        data.push(Value::Object(raw));
+        crate::model_routing::insert_catalog_candidate(catalog, Value::Object(raw));
     }
 }
 
@@ -564,7 +561,6 @@ pub(crate) async fn forward_openai(
     response.headers_mut().insert("content-type", content_type);
     response
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -634,7 +630,7 @@ mod tests {
     }
 
     #[test]
-    fn automatic_catalog_keeps_existing_owner_and_deduplicates_gonka() {
+    fn automatic_catalog_records_cross_provider_collisions_without_picking_a_winner() {
         let mut catalog = json!({"data":[{
             "id":"shared-id",
             "owned_by":"subscription",
@@ -659,12 +655,17 @@ mod tests {
                 },
             ],
         );
-        assert_eq!(catalog["data"].as_array().unwrap().len(), 2);
-        assert_eq!(catalog["data"][0]["source"], "existing");
-        assert_eq!(catalog["data"][0]["owned_by"], "subscription");
-        assert_eq!(catalog["data"][1]["id"], "gonka-only");
-        assert_eq!(catalog["data"][1]["owned_by"], "gonka");
-        assert_eq!(catalog["data"][1]["tier"], "live");
+        assert_eq!(catalog["data"].as_array().unwrap().len(), 1);
+        assert_eq!(catalog["data"][0]["id"], "gonka-only");
+        assert_eq!(catalog["data"][0]["owned_by"], "gonka");
+        assert_eq!(catalog["data"][0]["tier"], "live");
+        assert_eq!(catalog["catalog_conflicts"], json!(["shared-id"]));
+        let candidates = catalog["catalog_conflict_candidates"].as_array().unwrap();
+        assert_eq!(candidates.len(), 2);
+        assert_eq!(candidates[0]["source"], "existing");
+        assert_eq!(candidates[0]["owned_by"], "subscription");
+        assert_eq!(candidates[1]["source"], "gonka");
+        assert_eq!(candidates[1]["owned_by"], "gonka");
     }
 
     #[tokio::test]

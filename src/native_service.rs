@@ -193,7 +193,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             Ok((target, _)) => target,
             Err(response) => return response,
         };
-        return upgrade_websocket(state, request, target, Some(claims.sub)).await;
+        let Ok(policy) = crate::proxy::model_policy_for_claims(&state, &claims) else {
+            return unavailable("model policy is unavailable");
+        };
+        return upgrade_websocket(state, request, target, Some((claims.sub, policy))).await;
     }
     let spool = headers
         .get("content-type")
@@ -229,6 +232,16 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             "invalid_request_error",
             "the native service request body must be a JSON object",
         );
+    }
+    if let Err(response) = enforce_native_model_policy(
+        &state,
+        &claims,
+        service,
+        &method,
+        path,
+        routing_body.map_or(&[][..], Bytes::as_ref),
+    ) {
+        return response;
     }
     let resource = match mcp_session_resource_request(&method, path, &headers) {
         Ok(resource) => resource.or_else(|| native_resource_request(&method, path)),
@@ -329,6 +342,63 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
             .await;
     }
     response
+}
+
+fn enforce_native_model_policy(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    service: Service,
+    method: &Method,
+    path: &str,
+    body: &[u8],
+) -> Result<(), Response> {
+    if method != Method::POST {
+        return Ok(());
+    }
+    let policy = crate::proxy::model_policy_for_claims(state, claims)
+        .map_err(|_| unavailable("model policy is unavailable"))?;
+    if policy.allowed_models.is_empty() {
+        return Ok(());
+    }
+    let document = serde_json::from_slice::<serde_json::Value>(body).ok();
+    let mut requested = document
+        .as_ref()
+        .and_then(|value| value.get("model"))
+        .and_then(serde_json::Value::as_str)
+        .into_iter()
+        .collect::<Vec<_>>();
+    if service == Service::Anthropic && path == "/api/services/anthropic/v1/messages/batches" {
+        requested.extend(
+            document
+                .as_ref()
+                .and_then(|value| value.get("requests"))
+                .and_then(serde_json::Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|request| request.pointer("/params/model"))
+                .filter_map(serde_json::Value::as_str),
+        );
+    }
+    if requested.is_empty() && tracks_native_usage(service, path) {
+        return Err(error(
+            StatusCode::BAD_REQUEST,
+            "model_required",
+            "a pinned credential requires an explicit exact model on every inference request",
+        ));
+    }
+    for model in requested {
+        crate::proxy::authorize_model_for_claims(
+            state,
+            claims,
+            model,
+            if service == Service::Anthropic {
+                crate::api_error::ApiDialect::Anthropic
+            } else {
+                crate::api_error::ApiDialect::OpenAi
+            },
+        )?;
+    }
+    Ok(())
 }
 
 fn realtime_sideband(

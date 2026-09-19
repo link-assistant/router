@@ -23,6 +23,7 @@ fn sample_record() -> TokenRecord {
         scope: "admin".into(),
         client_kind: Some("codex".into()),
         principal_id: Some("primary".into()),
+        model_policy: crate::model_contract::ModelAccessPolicy::default(),
     }
 }
 

@@ -51,7 +51,7 @@ impl Finish {
     }
 }
 
-pub(super) fn from_chat(chat: &Value, requested_model: &str, finish: Finish) -> Value {
+pub(super) fn from_chat(chat: &Value, _requested_model: &str, finish: Finish) -> Value {
     let choice = chat
         .get("choices")
         .and_then(Value::as_array)
@@ -107,11 +107,7 @@ pub(super) fn from_chat(chat: &Value, requested_model: &str, finish: Finish) -> 
         "created_at": chat.get("created").and_then(Value::as_i64)
             .unwrap_or_else(|| chrono::Utc::now().timestamp()),
         "status": finish.status(),
-        "model": if requested_model.is_empty() {
-            chat.get("model").and_then(Value::as_str).unwrap_or_default()
-        } else {
-            requested_model
-        },
+        "model": chat.get("model").and_then(Value::as_str).unwrap_or_default(),
         "output": output,
         "error": null,
         "incomplete_details": null,
@@ -163,7 +159,7 @@ mod tests {
             assert_eq!(response["status"], status, "{gemini}");
             assert_eq!(response["incomplete_details"], incomplete, "{gemini}");
             assert_eq!(response["output"][0]["status"], status, "{gemini}");
-            assert_eq!(response["model"], "requested");
+            assert_eq!(response["model"], "upstream");
             assert_eq!(response["usage"]["total_tokens"], 5);
         }
     }
