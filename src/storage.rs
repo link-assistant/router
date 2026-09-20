@@ -40,6 +40,7 @@ use serde::{Deserialize, Serialize};
 use crate::config::StoragePolicy;
 
 mod associative;
+mod associative_text;
 mod file_mapped;
 mod legacy;
 mod model_policy;

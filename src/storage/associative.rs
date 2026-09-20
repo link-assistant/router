@@ -44,36 +44,9 @@ impl SemanticLink {
     }
 }
 
-pub(super) fn encode_text<'a>(records: impl IntoIterator<Item = &'a TokenRecord>) -> String {
-    let records = records
-        .into_iter()
-        .map(record_to_lino_value)
-        .collect::<Vec<_>>();
-    lino_objects_codec::encode(&LinoValue::object([
-        ("type", LinoValue::String("RouterState".into())),
-        ("subtype", LinoValue::String("TokenStore".into())),
-        ("value", LinoValue::Array(records)),
-    ]))
-}
+pub(super) use super::associative_text::{decode_text, encode_text};
 
-pub(super) fn decode_text(input: &str) -> Result<Vec<TokenRecord>, String> {
-    let root = lino_objects_codec::decode(input).map_err(|error| error.to_string())?;
-    expect_string_field(&root, "type", "token store")?
-        .eq("RouterState")
-        .then_some(())
-        .ok_or_else(|| "token store type must be RouterState".to_string())?;
-    expect_string_field(&root, "subtype", "token store")?
-        .eq("TokenStore")
-        .then_some(())
-        .ok_or_else(|| "token store subtype must be TokenStore".to_string())?;
-    let records = object_field(&root, "value", "token store")?;
-    let LinoValue::Array(records) = records else {
-        return Err("token store value must be an array".into());
-    };
-    records.iter().map(record_from_lino_value).collect()
-}
-
-fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
+pub(super) fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
     LinoValue::object([
         ("type", LinoValue::String(TOKEN_RECORD.into())),
         ("subtype", LinoValue::String(record.id.clone())),
@@ -179,7 +152,7 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
     ])
 }
 
-fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
+pub(super) fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
     if expect_string_field(value, "type", "record")? != TOKEN_RECORD {
         return Err("record type must be TokenRecord".into());
     }
@@ -239,7 +212,7 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
     })
 }
 
-fn object_field<'a>(
+pub(super) fn object_field<'a>(
     value: &'a LinoValue,
     key: &str,
     context: &str,
@@ -260,7 +233,7 @@ fn optional_object_field<'a>(
         .find_map(|(field, value)| (field == key).then_some(value)))
 }
 
-fn expect_string_field<'a>(
+pub(super) fn expect_string_field<'a>(
     value: &'a LinoValue,
     key: &str,
     context: &str,
