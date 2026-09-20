@@ -193,6 +193,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.12.0] - 2026-09-20
+
+### Added
+
+- Added exact per-run model authorization, truthful served-model validation,
+  field-level capability provenance, and `router models explain` diagnostics.
+
+### Fixed
+
+- Prevented explicit model selections from being widened or silently
+  substituted across HTTP, streaming, WebSocket, resumed, and subagent traffic.
+- Removed owner-wide synthesized z.ai Claude and Codex capability profiles;
+  unknown per-model capabilities now remain unknown.
+
 ## [1.11.3] - 2026-09-16
 
 ### Fixed
