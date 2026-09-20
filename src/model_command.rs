@@ -12,7 +12,11 @@ type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
 /// Run one model diagnostic without constructing server-only configuration.
 pub async fn run(operation: &ModelOp) -> ExitCode {
-    match run_inner(operation).await {
+    exit_code(run_inner(operation).await)
+}
+
+fn exit_code(result: Result<bool, AnyError>) -> ExitCode {
+    match result {
         Ok(found) => {
             if found {
                 ExitCode::SUCCESS
@@ -38,6 +42,14 @@ async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bo
         return Err("model selector must not be empty".into());
     }
     let server = resolve_target(target).await?;
+    explain_at(id, client, &server).await
+}
+
+async fn explain_at(
+    id: &str,
+    client: ClientKind,
+    server: &crate::managed_server::ResolvedServer,
+) -> Result<bool, AnyError> {
     let token = server.token.as_deref().ok_or(
         "the selected router has no client token; select one with `router server use --token ...`",
     )?;
@@ -59,6 +71,12 @@ async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bo
         return Err(format!("router model catalog failed at {url} ({status}): {text}").into());
     }
     let catalog: Value = serde_json::from_str(&text)?;
+    let (diagnostic, found) = diagnostic(id, client, &catalog);
+    println!("{}", serde_json::to_string_pretty(&diagnostic)?);
+    Ok(found)
+}
+
+fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
     let mut matches = catalog
         .get("data")
         .and_then(Value::as_array)
@@ -167,8 +185,7 @@ async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bo
             "catalog_conflicts": catalog_conflicts,
         },
     });
-    println!("{}", serde_json::to_string_pretty(&diagnostic)?);
-    Ok(found)
+    (diagnostic, found)
 }
 
 fn selector_kind(entry: Option<&Value>) -> (&str, ModelSelectorKind) {
@@ -228,7 +245,53 @@ async fn resolve_target(
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+
+    use axum::{Router, http::HeaderMap, routing::get};
+
     use super::*;
+
+    fn target() -> AuthTarget {
+        AuthTarget {
+            local: false,
+            server: None,
+            management_server: None,
+            managed: false,
+        }
+    }
+
+    async fn server(
+        status: axum::http::StatusCode,
+        body: String,
+    ) -> (
+        String,
+        Arc<Mutex<Vec<HeaderMap>>>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let requests = Arc::new(Mutex::new(Vec::new()));
+        let recorded = Arc::clone(&requests);
+        let app = Router::new().route(
+            "/api/models",
+            get(move |headers: HeaderMap| {
+                let recorded = Arc::clone(&recorded);
+                let body = body.clone();
+                async move {
+                    recorded.lock().expect("request record").push(headers);
+                    (status, body)
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind model catalog fixture");
+        let address = listener.local_addr().expect("catalog fixture address");
+        let task = tokio::spawn(async move {
+            axum::serve(listener, app)
+                .await
+                .expect("serve model catalog fixture");
+        });
+        (format!("http://{address}"), requests, task)
+    }
 
     #[test]
     fn missing_or_unrecognized_selector_metadata_stays_unknown() {
@@ -238,5 +301,197 @@ mod tests {
             selector_kind(Some(&entry)),
             ("invented-from-name", ModelSelectorKind::Unknown)
         );
+    }
+
+    #[test]
+    fn selector_metadata_maps_only_explicit_contract_kinds() {
+        for (label, expected) in [
+            (
+                "provider_dynamic_alias",
+                ModelSelectorKind::ProviderDynamicAlias,
+            ),
+            (
+                "provider_advertised_alias",
+                ModelSelectorKind::ProviderDynamicAlias,
+            ),
+            ("operator_alias", ModelSelectorKind::OperatorAlias),
+            ("concrete", ModelSelectorKind::Concrete),
+            ("provider_advertised_exact_id", ModelSelectorKind::Concrete),
+        ] {
+            let entry = json!({"selector_kind": label});
+            assert_eq!(selector_kind(Some(&entry)), (label, expected));
+        }
+    }
+
+    #[test]
+    fn unique_catalog_entry_produces_the_complete_truth_descriptor() {
+        let catalog = json!({
+            "data": [{
+                "id": "provider/model-v1",
+                "selector_kind": "provider_advertised_exact_id",
+                "context_window": 200_000,
+                "max_output_tokens": 16_384,
+                "modalities": ["text"],
+                "pricing": {"input": 1},
+                "deprecation_date": null,
+                "default_reasoning_level": "high",
+                "supported_reasoning_levels": ["low", "high"],
+                "client_capabilities": {"codex": {"supported": true}},
+                "ignored": "not-a-capability",
+                "capability_provenance": {
+                    "scope": {
+                        "provider": "provider",
+                        "account": "account-1",
+                        "endpoint": "https://provider.example/v1",
+                        "protocols": ["openai-responses"]
+                    },
+                    "source": "provider-api"
+                }
+            }],
+            "model_policy": {
+                "allow_substitution": true,
+                "substitution_source": "operator opt-in"
+            },
+            "healthy_providers": ["provider"],
+            "degraded_providers": [],
+            "degraded_reasons": {}
+        });
+        let (value, found) = diagnostic("provider/model-v1", ClientKind::Codex, &catalog);
+        assert!(found);
+        assert_eq!(value["routing"]["state"], "unique");
+        assert_eq!(value["routing"]["candidate_count"], 1);
+        assert_eq!(value["selector_kind"], "provider_advertised_exact_id");
+        assert_eq!(value["model_descriptor"]["selector_kind"], "concrete");
+        assert_eq!(
+            value["model_descriptor"]["route"]["protocols"][0],
+            "openai-responses"
+        );
+        assert_eq!(
+            value["model_descriptor"]["capabilities"]["context_window"],
+            200_000
+        );
+        assert!(
+            value["model_descriptor"]["capabilities"]
+                .get("ignored")
+                .is_none()
+        );
+        assert_eq!(value["model_descriptor"]["allow_substitution"], true);
+        assert_eq!(value["health"]["healthy_providers"][0], "provider");
+    }
+
+    #[test]
+    fn ambiguous_conflicting_and_unknown_selectors_fail_closed() {
+        let duplicate = json!({
+            "data": [
+                {"id": "same", "selector_kind": "concrete"},
+                {"id": "same", "selector_kind": "operator_alias"}
+            ]
+        });
+        let (value, found) = diagnostic("same", ClientKind::Agent, &duplicate);
+        assert!(!found);
+        assert_eq!(value["routing"]["state"], "conflict");
+        assert_eq!(value["routing"]["candidate_count"], 2);
+        assert!(value["model_descriptor"]["capabilities"].is_null());
+
+        let conflicted = json!({
+            "data": [],
+            "catalog_conflict_candidates": [{"id": "same", "selector_kind": "concrete"}],
+            "catalog_conflicts": ["same"]
+        });
+        let (value, found) = diagnostic("same", ClientKind::ClaudeCode, &conflicted);
+        assert!(!found);
+        assert_eq!(value["routing"]["state"], "conflict");
+        assert_eq!(value["routing"]["catalog_conflicts"][0], "same");
+
+        let (value, found) = diagnostic("missing", ClientKind::GeminiCli, &json!({}));
+        assert!(!found);
+        assert_eq!(value["routing"]["state"], "unknown");
+        assert_eq!(value["route_scope"], Value::Null);
+        assert_eq!(value["model_policy"], json!({}));
+        assert_eq!(value["health"]["degraded_providers"], json!([]));
+    }
+
+    #[tokio::test]
+    async fn catalog_fetch_uses_each_clients_native_authentication_header() {
+        let body = json!({
+            "data": [{"id": "model-v1", "selector_kind": "concrete"}]
+        });
+        let (url, requests, task) = server(axum::http::StatusCode::OK, body.to_string()).await;
+        let router = crate::managed_server::ResolvedServer::at(
+            url,
+            Some("ordinary-token".to_string()),
+            "test",
+        );
+        for client in [
+            ClientKind::ClaudeCode,
+            ClientKind::GeminiCli,
+            ClientKind::Codex,
+        ] {
+            assert!(explain_at("model-v1", client, &router).await.unwrap());
+        }
+        let requests = requests.lock().expect("request record");
+        assert_eq!(requests[0]["x-api-key"], "ordinary-token");
+        assert_eq!(requests[1]["x-goog-api-key"], "ordinary-token");
+        assert_eq!(requests[2]["authorization"], "Bearer ordinary-token");
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn catalog_fetch_reports_missing_tokens_http_errors_and_invalid_json() {
+        let router = crate::managed_server::ResolvedServer::at("http://127.0.0.1:1", None, "test");
+        assert!(
+            explain_at("model-v1", ClientKind::Codex, &router)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("no client token")
+        );
+
+        let (url, _, task) = server(
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            json!({"error": "catalog offline"}).to_string(),
+        )
+        .await;
+        let router = crate::managed_server::ResolvedServer::at(
+            url,
+            Some("ordinary-token".to_string()),
+            "test",
+        );
+        let error = explain_at("model-v1", ClientKind::Agent, &router)
+            .await
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("503 Service Unavailable"), "{error}");
+        assert!(error.contains("catalog offline"), "{error}");
+        task.abort();
+
+        let (url, _, task) = server(axum::http::StatusCode::OK, "not-json".to_string()).await;
+        let router = crate::managed_server::ResolvedServer::at(
+            url,
+            Some("ordinary-token".to_string()),
+            "test",
+        );
+        assert!(
+            explain_at("model-v1", ClientKind::Agent, &router)
+                .await
+                .is_err()
+        );
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn empty_selector_fails_before_target_resolution() {
+        let operation = ModelOp::Explain {
+            id: String::new(),
+            client: ClientKind::Agent,
+            target: target(),
+        };
+        assert_ne!(run(&operation).await, ExitCode::SUCCESS);
+    }
+
+    #[test]
+    fn command_status_distinguishes_unique_and_unresolved_models() {
+        assert_eq!(exit_code(Ok(true)), ExitCode::SUCCESS);
+        assert_eq!(exit_code(Ok(false)), ExitCode::from(1));
     }
 }

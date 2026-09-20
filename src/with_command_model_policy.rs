@@ -219,6 +219,20 @@ fn print_diagnostic(
     forwarded: Option<&str>,
     policy: &ModelAccessPolicy,
 ) {
+    eprintln!(
+        "{}",
+        launch_diagnostic(args, server, credential, selected, forwarded, policy)
+    );
+}
+
+fn launch_diagnostic(
+    args: &WithArgs,
+    server: &ResolvedServer,
+    credential: &RunCredential,
+    selected: Option<&str>,
+    forwarded: Option<&str>,
+    policy: &ModelAccessPolicy,
+) -> serde_json::Value {
     let advertised = selected.and_then(|selected| {
         credential.models().iter().find(|model| {
             model.id == selected
@@ -298,32 +312,29 @@ fn print_diagnostic(
         allow_substitution: policy.allow_substitution,
         substitution_source: policy.substitution_source.clone(),
     };
-    eprintln!(
-        "{}",
-        json!({
-            "router_model_launch": {
-                "contract_version": 1,
-                "model_descriptor": descriptor,
-                "client": args.client.canonical_name(),
-                "requested_model": selected,
-                "request_source": request_source,
-                "token_constraint": if policy.allowed_models.is_empty() {
-                    json!({"state": "unpinned"})
-                } else {
-                    json!({"state": "exact", "allowed_models": policy.allowed_models})
-                },
-                "selector_kind": advertised.map(|model| model.selector_kind),
-                "provider": scoped_provider.or_else(|| advertised.map(|model| model.owned_by.as_str())),
-                "account": scoped_account.or_else(|| Some(credential.principal_id())),
-                "provider_endpoint": scoped_endpoint,
-                "protocols": scoped_protocols,
-                "router_endpoint": server.base_url,
-                "substitution_allowed": policy.allow_substitution,
-                "switching_setting": (!args.allowed_models.is_empty()).then_some("with --allow-model"),
-                "substitution_setting": policy.substitution_source,
-            }
-        })
-    );
+    json!({
+        "router_model_launch": {
+            "contract_version": 1,
+            "model_descriptor": descriptor,
+            "client": args.client.canonical_name(),
+            "requested_model": selected,
+            "request_source": request_source,
+            "token_constraint": if policy.allowed_models.is_empty() {
+                json!({"state": "unpinned"})
+            } else {
+                json!({"state": "exact", "allowed_models": policy.allowed_models})
+            },
+            "selector_kind": advertised.map(|model| model.selector_kind),
+            "provider": scoped_provider.or_else(|| advertised.map(|model| model.owned_by.as_str())),
+            "account": scoped_account.or_else(|| Some(credential.principal_id())),
+            "provider_endpoint": scoped_endpoint,
+            "protocols": scoped_protocols,
+            "router_endpoint": server.base_url,
+            "substitution_allowed": policy.allow_substitution,
+            "switching_setting": (!args.allowed_models.is_empty()).then_some("with --allow-model"),
+            "substitution_setting": policy.substitution_source,
+        }
+    })
 }
 
 pub(super) async fn cleanup_after_setup_failure(credential: RunCredential) {
@@ -331,3 +342,7 @@ pub(super) async fn cleanup_after_setup_failure(credential: RunCredential) {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
 }
+
+#[cfg(test)]
+#[path = "with_command_model_policy_tests.rs"]
+mod tests;

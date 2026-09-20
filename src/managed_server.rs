@@ -191,6 +191,16 @@ impl RunCredential {
         &self.principal_id
     }
 
+    #[cfg(test)]
+    pub(crate) fn for_model_policy_test(available_models: Vec<RouterModel>) -> Self {
+        Self {
+            token: "test-token".to_string(),
+            available_models,
+            revocation: None,
+            principal_id: "test-principal".to_string(),
+        }
+    }
+
     /// The record id this credential was issued under, retained so a
     /// persistent credential remains revocable later (issue #190).
     #[must_use]
