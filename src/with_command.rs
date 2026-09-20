@@ -13,9 +13,7 @@ use serde_json::json;
 
 use crate::cli::WithArgs;
 use crate::clients::{ClientIsolation, ClientKind, ClientManager, RouterModel};
-use crate::managed_server::{
-    cleanup_run_credential, ensure_model_available, prepare_run_credential, resolve,
-};
+use crate::managed_server::{cleanup_run_credential, resolve};
 
 #[path = "with_command_sweep.rs"]
 mod sweep;
@@ -33,6 +31,9 @@ use claude_settings::{
     ClaudeModelSelection, append_claude_model_picker, claude_saved_model_selection,
     unavailable_native_claude_model, validate_claude_model_selection,
 };
+
+#[path = "with_command_model_policy.rs"]
+mod model_policy;
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -80,6 +81,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
             .unwrap_or("client integration is unsupported")
             .into());
     }
+    let model_request = model_policy::request(args)?;
     if args.client == ClientKind::ClaudeCode {
         crate::clients::require_claude_gateway_version()?;
     }
@@ -119,44 +121,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .label
         .clone()
         .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
-    let credential = prepare_run_credential(
-        &server,
-        args.client,
-        &label,
-        args.run_ttl_hours,
-        !args.fixed_run_ttl,
-    )
-    .await?;
-    // Which model the client uses, and how hard it thinks, are the user's own
-    // settings. `with` chooses a route to a model, so both are left alone
-    // unless the user asked — the rule `--global` already followed (issue
-    // #295). A model is still resolved from the live catalog rather than a
-    // name compiled into the router (issue #192) when one is genuinely needed.
-    let selected = match resolve_model(args, &credential) {
-        Ok(selected) => selected,
-        Err(error) => {
-            cleanup_after_setup_failure(credential).await;
-            return Err(error);
-        }
-    };
-    if let Some(model) = selected.as_deref()
-        && args.client == ClientKind::ClaudeCode
-        && let Some(unavailable) = unavailable_native_claude_model(model, credential.models())
-    {
-        cleanup_after_setup_failure(credential).await;
-        return Err(format!(
-            "Claude model `{unavailable}` requires an Anthropic provider, but this client's \
-             authorized live catalog contains none; choose a visible exact model with --model \
-             or configure Anthropic"
-        )
-        .into());
-    }
-    if let Some(model) = selected.as_deref()
-        && let Err(error) = ensure_model_available(&credential, args.client, model)
-    {
-        cleanup_after_setup_failure(credential).await;
-        return Err(error);
-    }
+    let prepared = model_policy::prepare(args, &server, &label, model_request).await?;
+    let credential = prepared.credential;
+    let selected = prepared.selected;
     // Decided before the client is prepared: whether the run is a session or
     // a task also decides whether the router may answer the client's own
     // prompts on the user's behalf (issue #310).
@@ -199,7 +166,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
                 Some(profile)
             }
             Err(error) => {
-                cleanup_after_setup_failure(credential).await;
+                model_policy::cleanup_after_setup_failure(credential).await;
                 return Err(error);
             }
         }
@@ -227,7 +194,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
-            cleanup_after_setup_failure(credential).await;
+            model_policy::cleanup_after_setup_failure(credential).await;
             return Err(error);
         }
     };
@@ -275,53 +242,6 @@ fn confirm_claude_profile_reset(yes: bool) -> Result<(), AnyError> {
 /// to and which says nothing about what the user is working on.
 fn run_suffix() -> String {
     format!("{:04x}", std::process::id() & 0xffff)
-}
-
-async fn cleanup_after_setup_failure(credential: crate::managed_server::RunCredential) {
-    if let Err(error) = cleanup_run_credential(credential).await {
-        eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
-    }
-}
-
-/// The model this run names, if it names one at all.
-///
-/// `None` is the ordinary answer: the client keeps whatever model its own
-/// configuration selects. A model is resolved only when the user asked for one
-/// with `--model`, asked the router to choose with `--pick-model`, or is
-/// launching a client whose configuration embeds the catalog and so cannot
-/// start without an id (issue #295).
-fn resolve_model(
-    args: &WithArgs,
-    credential: &crate::managed_server::RunCredential,
-) -> Result<Option<String>, AnyError> {
-    if let Some(model) = args.model.clone() {
-        return Ok(Some(model));
-    }
-    if !args.pick_model && !crate::client_launch::requires_a_model(args.client) {
-        return Ok(None);
-    }
-    // One rule for which models suit a client, shared with `clients setup`
-    // and `clients doctor` (issue #301).
-    if let Some(model) = crate::clients::select_model(args.client, credential.models()) {
-        if args.pick_model {
-            // Report the choice and the reason for it. Choosing silently by
-            // catalog order is what made the substitution invisible: the
-            // client's own status line then presents the router's pick as
-            // though the user had made it (issue #295).
-            let owners = args.client.integration().model_owners;
-            eprintln!(
-                "note: --pick-model chose `{model}`, the first {} model the router advertises; \
-                 pass --model to choose another",
-                if owners.is_empty() {
-                    "advertised".to_string()
-                } else {
-                    owners.join(" or ")
-                }
-            );
-        }
-        return Ok(Some(model.to_string()));
-    }
-    Err(crate::clients::model_unavailable(args.client, credential.models()).into())
 }
 
 struct TemporaryClient {

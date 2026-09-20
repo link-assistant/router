@@ -40,28 +40,14 @@ pub(super) async fn append_stored_provider_models(
             mark_provider_degraded(catalog, &provider.name);
             continue;
         };
-        {
-            let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-                return Ok(());
-            };
-            for model in live_models {
-                if data
-                    .iter()
-                    .any(|entry| entry.get("id").and_then(Value::as_str) == Some(model.id.as_str()))
-                {
-                    return Err(ModelRouteError::Conflict(format!(
-                        "exact model id '{}' is advertised by more than one healthy provider",
-                        model.id
-                    )));
-                }
-                let mut projected = model.raw;
-                projected.insert("id".into(), Value::String(model.id));
-                projected
-                    .entry("object")
-                    .or_insert_with(|| Value::String("model".into()));
-                projected.insert("owned_by".into(), Value::String(provider.name.clone()));
-                data.push(Value::Object(projected));
-            }
+        for model in live_models {
+            let mut projected = model.raw;
+            projected.insert("id".into(), Value::String(model.id));
+            projected
+                .entry("object")
+                .or_insert_with(|| Value::String("model".into()));
+            projected.insert("owned_by".into(), Value::String(provider.name.clone()));
+            super::insert_catalog_candidate(catalog, Value::Object(projected));
         }
         mark_provider_healthy(catalog, &provider.name);
     }
@@ -145,28 +131,24 @@ pub(super) async fn append_zai_models(
     };
     let registry = crate::zai_coding_plan::live_registry_for_client(client, &live_models)
         .map_err(ModelRouteError::NotFound)?;
-    let Some(data) = catalog.get_mut("data").and_then(Value::as_array_mut) else {
-        return Ok(());
-    };
     for (entry, live) in registry.into_iter().zip(live_models) {
-        if data
-            .iter()
-            .any(|model| model.get("id").and_then(Value::as_str) == Some(&entry.exposed_id))
-        {
-            return Err(ModelRouteError::Conflict(format!(
-                "exact model id '{}' is advertised by more than one healthy provider",
-                entry.exposed_id
-            )));
-        }
         let mut projected = live.raw;
         projected.insert("id".into(), Value::String(entry.exposed_id));
+        projected.insert(
+            "router_protocols".into(),
+            serde_json::json!([entry.protocol]),
+        );
+        projected.insert(
+            "selector_kind".into(),
+            Value::String("provider_advertised_exact_id".into()),
+        );
         projected
             .entry("object")
             .or_insert_with(|| Value::String("model".into()));
         projected
             .entry("owned_by")
             .or_insert_with(|| Value::String(entry.owner.into()));
-        data.push(Value::Object(projected));
+        super::insert_catalog_candidate(catalog, Value::Object(projected));
     }
     if let Some(healthy) = catalog
         .get_mut("healthy_providers")

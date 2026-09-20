@@ -1,5 +1,39 @@
 use super::*;
 
+/// Translation of an `OpenAI` chat body into Gemini's request shape,
+/// including the system-instruction split and generation config.
+#[test]
+fn chat_requests_translate_into_the_gemini_shape() {
+    let body = json!({
+        "messages": [
+            {"role": "system", "content": "be brief"},
+            {"role": "user", "content": "hello"},
+            {"role": "assistant", "content": "hi", "tool_calls": [{
+                "id": "call_1", "type": "function",
+                "function": {"name": "lookup", "arguments": "{}"}
+            }]},
+            {"role": "tool", "tool_call_id": "call_1", "content": "result"}
+        ],
+        "max_tokens": 128,
+        "temperature": 0.4,
+        "top_p": 0.9
+    });
+    let request = chat_to_gemini_request(&body);
+
+    assert_eq!(request["systemInstruction"]["parts"][0]["text"], "be brief");
+    let contents = request["contents"].as_array().expect("contents");
+    assert_eq!(contents.len(), 3, "system is lifted out of the turn list");
+    assert_eq!(contents[0]["role"], "user");
+    assert_eq!(contents[1]["role"], "model", "assistant maps to model");
+    assert_eq!(
+        contents[2]["role"], "user",
+        "tool results map to a user turn"
+    );
+    assert_eq!(request["generationConfig"]["maxOutputTokens"], 128);
+    assert_eq!(request["generationConfig"]["temperature"], 0.4);
+    assert_eq!(request["generationConfig"]["topP"], 0.9);
+}
+
 #[test]
 fn a_request_without_knobs_omits_the_generation_config() {
     let request = chat_to_gemini_request(&json!({"messages": []}));
@@ -30,6 +64,7 @@ fn the_code_assist_envelope_carries_the_model() {
 #[test]
 fn gemini_responses_translate_back_with_usage() {
     let response = json!({
+        "modelVersion": "nimbus-3-flash-actual",
         "candidates": [{
             "content": {"parts": [{"text": "one "}, {"text": "two"}]},
             "finishReason": "STOP"
@@ -38,7 +73,7 @@ fn gemini_responses_translate_back_with_usage() {
     });
     let chat = gemini_response_to_chat(&response, "nimbus-3-flash");
 
-    assert_eq!(chat["model"], "nimbus-3-flash");
+    assert_eq!(chat["model"], "nimbus-3-flash-actual");
     assert_eq!(chat["choices"][0]["message"]["content"], "one two");
     assert_eq!(chat["choices"][0]["finish_reason"], "stop");
     assert_eq!(chat["usage"]["prompt_tokens"], 11);
@@ -129,10 +164,10 @@ fn message_text_is_extracted_from_both_content_shapes() {
     assert_eq!(extract_message_text(Some(&json!(42))), "");
 }
 
-/// Incremental output retains the alias the caller selected without
+/// Incremental output reports the concrete upstream identity without
 /// Router-private metadata.
 #[test]
-fn incremental_chat_stream_preserves_requested_model_only() {
+fn incremental_chat_stream_preserves_served_model_only() {
     let mut translator = stream::OpenAiStreamTranslator::new("catalog-alias");
     let payload = translator
         .push(
@@ -150,7 +185,7 @@ fn incremental_chat_stream_preserves_requested_model_only() {
         .collect();
     assert_eq!(chunks.len(), 3);
     for chunk in chunks {
-        assert_eq!(chunk["model"], "catalog-alias");
+        assert_eq!(chunk["model"], "future-upstream-model");
         assert!(chunk.get("x_router_upstream_model").is_none());
     }
     assert!(payload.ends_with("data: [DONE]\n\n"));

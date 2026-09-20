@@ -117,6 +117,9 @@ fn account_binding_is_available_during_request_routing() {
     );
 }
 
+#[path = "token_model_policy_tests.rs"]
+mod model_policy_tests;
+
 #[test]
 fn test_unlimited_token_never_hits_budget() {
     let mgr = test_manager();

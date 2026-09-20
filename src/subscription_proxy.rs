@@ -237,6 +237,39 @@ async fn forward_subscription_openai_inner(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let requested_model_for_policy = routing_body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
+    let model_policy = if requested_model_for_policy.is_empty() {
+        match crate::proxy::model_policy_for_claims(state, &claims) {
+            Ok(policy) if policy.allowed_models.is_empty() => policy,
+            Ok(_) => {
+                return error_response(
+                    StatusCode::BAD_REQUEST,
+                    "model_required",
+                    "a pinned credential requires a non-empty exact model",
+                );
+            }
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "model_policy_unavailable",
+                    &error.to_string(),
+                );
+            }
+        }
+    } else {
+        match crate::proxy::authorize_model_for_claims(
+            state,
+            &claims,
+            requested_model_for_policy,
+            crate::api_error::ApiDialect::OpenAi,
+        ) {
+            Ok(policy) => policy,
+            Err(response) => return response,
+        }
+    };
     let Some(provider) = state.upstream_provider.subscription_provider() else {
         return error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -290,14 +323,17 @@ async fn forward_subscription_openai_inner(
         claims.sub.clone(),
         reserved,
     );
-    let resolved_model = body.get("model").and_then(serde_json::Value::as_str);
+    let resolved_model = body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string);
     crate::audit::record_authorised_request_with_resolved_model_and_entitlement(
         state,
         &claims,
         surface,
         path,
         Some(routing_body),
-        resolved_model,
+        resolved_model.as_deref(),
         Some(entitlement),
     );
 
@@ -382,6 +418,11 @@ async fn forward_subscription_openai_inner(
     // Automatic model routing already refreshed and validated this exact
     // token. Refreshing again here could adopt a credential that appeared
     // after catalog validation, recreating the account-crossing race.
+    let selector_kind = state.model_catalogs.selector_kind_for(
+        provider,
+        &selected.name,
+        requested_model_for_policy,
+    );
     let sub_token = if validated.is_some() {
         selected.token
     } else {
@@ -608,20 +649,35 @@ async fn forward_subscription_openai_inner(
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
         let stop_sequences = crate::stop_sequences::from_value(routing_body.get("stop"));
-        let mut translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
+        let translator = crate::responses::ResponsesChatStreamTranslator::new(requested_model)
             .with_include_usage(include_usage)
             .with_stop_sequences(stop_sequences)
             .with_output_token_limit(emulated_output_limit);
-        let mut rewriter = crate::output_limit::ResponsesStreamRewriter::new(
+        let rewriter = crate::output_limit::ResponsesStreamRewriter::new(
             requested_model,
             emulated_output_limit,
-        );
-        // Native request transparency does not make the provider's resolved
-        // model authoritative in the response. The client-selected catalog id
-        // remains the public identity on every Responses route (#548).
-        let rewrite_passthrough =
-            response_shape == SubscriptionResponseShape::Passthrough && rewriter.active();
+        )
+        .with_model_policy(&model_policy)
+        .with_selector_kind(selector_kind);
+        // Native responses remain byte-transparent. Translated streams are
+        // inspected before content so the first concrete identity is truthful
+        // and later identity drift terminates the stream.
+        let rewrite_passthrough = !native_protocol
+            && response_shape == SubscriptionResponseShape::Passthrough
+            && rewriter.active();
         let response_log = std::sync::Arc::clone(&state.request_log);
+        let completion_audit = (!native_protocol && status.is_success()).then(|| {
+            crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                .with_models(Some(requested_model), resolved_model.as_deref())
+                .with_provider(Some(provider.as_str()))
+                .with_provider_account(selected_account.as_deref())
+                .with_provider_endpoint(Some(&base_url))
+                .with_selector_kind(selector_kind)
+        });
+        let rewrite_state =
+            std::sync::Arc::new(std::sync::Mutex::new((rewriter, translator, false)));
+        let chunk_rewrite_state = std::sync::Arc::clone(&rewrite_state);
+        let chunk_completion_audit = completion_audit.clone();
         let mut usage = status
             .is_success()
             .then(|| reservation.take().into_tracker());
@@ -633,16 +689,66 @@ async fn forward_subscription_openai_inner(
                     if let Some(tracker) = &mut usage {
                         tracker.feed(&bytes);
                     }
-                    if codex && response_shape == SubscriptionResponseShape::ChatCompletion {
-                        Ok(bytes::Bytes::from(translator.push(&bytes).join("")))
-                    } else if rewrite_passthrough {
-                        Ok(bytes::Bytes::from(rewriter.push(&bytes)))
-                    } else {
-                        Ok(bytes)
-                    }
+                    let output = {
+                        let mut rewrite = chunk_rewrite_state
+                            .lock()
+                            .expect("stream rewrite state lock");
+                        let (rewriter, translator, model_audited) = &mut *rewrite;
+                        let output = if codex
+                            && response_shape == SubscriptionResponseShape::ChatCompletion
+                        {
+                            let verified = rewriter.push(&bytes);
+                            bytes::Bytes::from(translator.push(verified.as_bytes()).join(""))
+                        } else if rewrite_passthrough {
+                            bytes::Bytes::from(rewriter.push(&bytes))
+                        } else {
+                            bytes
+                        };
+                        let served_model = rewriter.upstream_model().map(str::to_string);
+                        if !*model_audited
+                            && let (Some(audit), Some(served_model)) =
+                                (chunk_completion_audit.as_ref(), served_model.as_deref())
+                        {
+                            audit.record_verified(served_model);
+                            *model_audited = true;
+                        }
+                        drop(rewrite);
+                        output
+                    };
+                    Ok(output)
                 },
             )
         });
+        let finish_rewrite = codex && response_shape == SubscriptionResponseShape::ChatCompletion
+            || rewrite_passthrough;
+        let stream = stream.chain(futures_util::stream::once(async move {
+            let output = {
+                let mut rewrite = rewrite_state.lock().expect("stream rewrite state lock");
+                let (rewriter, translator, model_audited) = &mut *rewrite;
+                let verified = if finish_rewrite {
+                    rewriter.finish()
+                } else {
+                    String::new()
+                };
+                let output = if codex && response_shape == SubscriptionResponseShape::ChatCompletion
+                {
+                    translator.push(verified.as_bytes()).join("")
+                } else {
+                    verified
+                };
+                let served_model = rewriter.upstream_model().map(str::to_string);
+                if !*model_audited
+                    && let (Some(audit), Some(served_model)) =
+                        (completion_audit.as_ref(), served_model.as_deref())
+                {
+                    audit.record_verified(served_model);
+                    *model_audited = true;
+                }
+                drop(rewrite);
+                output
+            };
+            Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
+        }));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
@@ -677,23 +783,7 @@ async fn forward_subscription_openai_inner(
     }
 
     if native_protocol {
-        let mut response_body = upstream_body;
-        if status.is_success()
-            && let Ok(mut payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
-        {
-            let original = payload.clone();
-            let requested_model = routing_body
-                .get("model")
-                .and_then(serde_json::Value::as_str)
-                .unwrap_or_default();
-            crate::output_limit::preserve_model_identity(&mut payload, requested_model);
-            if payload != original {
-                response_body = bytes::Bytes::from(
-                    serde_json::to_vec(&payload).expect("JSON values always serialize"),
-                );
-            }
-        }
-        let mut response = Response::new(Body::from(response_body));
+        let mut response = Response::new(Body::from(upstream_body));
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;
         return response;
@@ -723,6 +813,31 @@ async fn forward_subscription_openai_inner(
                     );
                 }
             };
+            let served_model =
+                match crate::model_contract::validate_translated_response_for_selector(
+                    requested_model,
+                    &parsed,
+                    &model_policy,
+                    selector_kind,
+                ) {
+                    Ok(served_model) => served_model,
+                    Err(error) => {
+                        return error_response(
+                            StatusCode::BAD_GATEWAY,
+                            &error.code,
+                            &error.to_string(),
+                        );
+                    }
+                };
+            if let Some(served_model) = served_model.as_deref() {
+                crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                    .with_models(Some(requested_model), resolved_model.as_deref())
+                    .with_provider(Some(provider.as_str()))
+                    .with_provider_account(selected_account.as_deref())
+                    .with_provider_endpoint(Some(&base_url))
+                    .with_selector_kind(selector_kind)
+                    .record_completed(served_model);
+            }
             let mut translated =
                 crate::responses::response_to_chat_completion(&parsed, requested_model);
             crate::responses::enforce_chat_stop(
@@ -740,7 +855,31 @@ async fn forward_subscription_openai_inner(
                 .get("model")
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or_default();
-            crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+            let served_model =
+                match crate::model_contract::validate_translated_response_for_selector(
+                    requested_model,
+                    &parsed,
+                    &model_policy,
+                    selector_kind,
+                ) {
+                    Ok(served_model) => served_model,
+                    Err(error) => {
+                        return error_response(
+                            StatusCode::BAD_GATEWAY,
+                            &error.code,
+                            &error.to_string(),
+                        );
+                    }
+                };
+            if let Some(served_model) = served_model.as_deref() {
+                crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                    .with_models(Some(requested_model), resolved_model.as_deref())
+                    .with_provider(Some(provider.as_str()))
+                    .with_provider_account(selected_account.as_deref())
+                    .with_provider_endpoint(Some(&base_url))
+                    .with_selector_kind(selector_kind)
+                    .record_completed(served_model);
+            }
             if let Some(limit) = emulated_output_limit {
                 crate::output_limit::enforce_response_limit(&mut parsed, limit);
             }
@@ -760,13 +899,32 @@ async fn forward_subscription_openai_inner(
 
     if status.is_success()
         && response_shape == SubscriptionResponseShape::Passthrough
-        && let Ok(mut parsed) = serde_json::from_slice::<serde_json::Value>(&response_body)
+        && let Ok(parsed) = serde_json::from_slice::<serde_json::Value>(&response_body)
     {
         let requested_model = routing_body
             .get("model")
             .and_then(serde_json::Value::as_str)
             .unwrap_or_default();
-        crate::output_limit::preserve_model_identity(&mut parsed, requested_model);
+        let served_model = match crate::model_contract::validate_translated_response_for_selector(
+            requested_model,
+            &parsed,
+            &model_policy,
+            selector_kind,
+        ) {
+            Ok(served_model) => served_model,
+            Err(error) => {
+                return error_response(StatusCode::BAD_GATEWAY, &error.code, &error.to_string());
+            }
+        };
+        if let Some(served_model) = served_model.as_deref() {
+            crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+                .with_models(Some(requested_model), resolved_model.as_deref())
+                .with_provider(Some(provider.as_str()))
+                .with_provider_account(selected_account.as_deref())
+                .with_provider_endpoint(Some(&base_url))
+                .with_selector_kind(selector_kind)
+                .record_completed(served_model);
+        }
         response_body =
             bytes::Bytes::from(serde_json::to_vec(&parsed).expect("JSON values always serialize"));
     }
@@ -791,35 +949,6 @@ async fn forward_subscription_openai_inner(
     response.headers_mut().insert("content-type", content_type);
     response
 }
-
-/// Provider-specific extra headers required by the upstream.
-fn subscription_headers(
-    provider: SubscriptionProvider,
-    token: &SubscriptionToken,
-    responses_mode: CodexResponsesMode,
-) -> Vec<(&'static str, String)> {
-    let mut out = Vec::new();
-    if provider == SubscriptionProvider::Codex {
-        let identity = crate::codex_identity::headers(token.account_id.as_deref());
-        for name in ["user-agent", "originator", "chatgpt-account-id"] {
-            if let Some(value) = identity.get(name).and_then(|value| value.to_str().ok()) {
-                out.push((name, value.to_string()));
-            }
-        }
-        // The Codex backend gates the Responses API behind a beta opt-in and
-        // identifies the originating client.
-        out.push(("openai-beta", "responses=experimental".to_string()));
-        if responses_mode == CodexResponsesMode::Lite {
-            out.push((CODEX_RESPONSES_LITE_HEADER, "true".to_string()));
-        }
-        // Codex gates some catalog models behind a recent client version
-        // advertised via the `version` header; without it the backend replies "Model not
-        // found". Mirror the Codex CLI. Overridable via CODEX_CLIENT_VERSION.
-        out.push(("version", crate::codex_identity::client_version()));
-    }
-    out
-}
-
 /// Map a route to a flat Codex endpoint or an `OpenAI`-compatible `/v1` base.
 pub(crate) fn join_subscription_url(
     provider: SubscriptionProvider,
@@ -842,7 +971,6 @@ pub(crate) fn join_subscription_url(
         }
     }
 }
-
 /// `OpenAI`-shaped model listing for a subscription provider.
 pub async fn subscription_models(state: &AppState) -> serde_json::Value {
     match state.upstream_provider.subscription_provider() {
@@ -850,12 +978,15 @@ pub async fn subscription_models(state: &AppState) -> serde_json::Value {
         None => serde_json::json!({"object": "list", "data": []}),
     }
 }
-
 fn is_event_stream(content_type: &HeaderValue) -> bool {
     content_type
         .to_str()
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
+
+#[path = "subscription_proxy_headers.rs"]
+mod upstream_headers;
+use upstream_headers::subscription_headers;
 
 #[path = "subscription_proxy_normalize.rs"]
 mod normalize;

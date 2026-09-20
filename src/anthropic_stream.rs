@@ -153,6 +153,9 @@ impl AnthropicStreamTranslator {
         if self.finished {
             return Vec::new();
         }
+        if let Some(model) = event.get("model").and_then(Value::as_str) {
+            self.model = model.to_string();
+        }
         self.absorb_usage(event.get("usage"));
         self.absorb_service_tier(event.get("service_tier"));
         let mut frames = self.ensure_started();
@@ -249,6 +252,13 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         let kind = event.get("type").and_then(Value::as_str).unwrap_or("");
+        if let Some(model) = event
+            .get("model")
+            .or_else(|| event.pointer("/response/model"))
+            .and_then(Value::as_str)
+        {
+            self.model = model.to_string();
+        }
         self.absorb_usage(
             event
                 .get("usage")
@@ -259,7 +269,12 @@ impl AnthropicStreamTranslator {
                 .get("service_tier")
                 .or_else(|| event.pointer("/response/service_tier")),
         );
-        let mut frames = self.ensure_started();
+        let upstream_error = matches!(kind, "error" | "response.failed");
+        let mut frames = if upstream_error {
+            Vec::new()
+        } else {
+            self.ensure_started()
+        };
         match kind {
             "response.output_text.delta" => {
                 if let Some(text) = event.get("delta").and_then(Value::as_str)
@@ -689,14 +704,25 @@ mod tests {
     }
 
     #[test]
-    fn streaming_bridge_preserves_requested_model_without_private_metadata() {
+    fn streaming_bridge_preserves_served_model_without_private_metadata() {
         let mut translator = AnthropicStreamTranslator::new("claude/catalog-alias");
         let output = joined(&translator.push(
             b"data: {\"object\":\"chat.completion.chunk\",\"model\":\"future-upstream-model\",\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
         ));
 
-        assert!(output.contains("\"model\":\"claude/catalog-alias\""));
+        assert!(output.contains("\"model\":\"future-upstream-model\""));
         assert!(!output.contains("x_router_"));
+    }
+
+    #[test]
+    fn upstream_identity_error_does_not_invent_a_message_start_model() {
+        let mut translator = AnthropicStreamTranslator::new("requested-but-unverified");
+        let output = joined(&translator.push(
+            b"event: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"served_model_unknown\",\"message\":\"missing\"}}\n\n",
+        ));
+        assert!(output.contains("event: error"), "{output}");
+        assert!(!output.contains("event: message_start"), "{output}");
+        assert!(!output.contains("requested-but-unverified"), "{output}");
     }
 
     #[test]

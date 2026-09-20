@@ -30,6 +30,9 @@ fn client_request(client_kind: &str) -> IssueClientTokenRequest {
         label: None,
         max_requests: None,
         ephemeral: false,
+        model_substitution_source: None,
+        allowed_models: Vec::new(),
+        allow_model_substitution: false,
     }
 }
 
@@ -142,6 +145,39 @@ async fn successful_client_route_response_is_present_after_binary_reopen() {
         .expect("issued record is durable");
     assert!(record.ephemeral);
     assert_eq!(record.client_kind.as_deref(), Some("claude"));
+}
+
+#[tokio::test]
+async fn client_issuance_preserves_the_explicit_substitution_source() {
+    let (state, _data) = state();
+    let observer = state.clone();
+    let mut request = client_request("claude");
+    request.allowed_models = vec!["claude-opus-4-6".into()];
+    request.allow_model_substitution = true;
+    request.model_substitution_source = Some("router with --allow-model-substitution".into());
+
+    let response = issue_client_over_route(state, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = json(response).await;
+    assert_eq!(
+        body["model_policy"]["substitution_source"],
+        "router with --allow-model-substitution"
+    );
+
+    let claims = observer
+        .token_manager
+        .validate_token(body["token"].as_str().expect("issued token"))
+        .expect("valid issued token");
+    let record = observer
+        .token_manager
+        .store()
+        .get(&claims.sub)
+        .expect("read token store")
+        .expect("persisted record");
+    assert_eq!(
+        record.model_policy.substitution_source.as_deref(),
+        Some("router with --allow-model-substitution")
+    );
 }
 
 #[tokio::test]

@@ -56,7 +56,7 @@ pub async fn upgrade_websocket(
     state: AppState,
     request: Request,
     target: Target,
-    usage_token_id: Option<String>,
+    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
 ) -> Response {
     let (mut parts, _) = request.into_parts();
     let upgrade = match WebSocketUpgrade::from_request_parts(&mut parts, &state).await {
@@ -74,7 +74,7 @@ pub async fn upgrade_websocket(
         .max_message_size(limit)
         .max_frame_size(limit)
         .on_upgrade(move |downstream| {
-            websocket_session(downstream, upstream, token_manager, usage_token_id, metrics)
+            websocket_session(downstream, upstream, token_manager, usage_identity, metrics)
         });
     for (name, value) in upstream_headers {
         if let Some(name) = name {
@@ -147,7 +147,7 @@ async fn websocket_session(
     mut downstream: WebSocket,
     mut upstream: UpstreamWebSocket,
     token_manager: crate::token::TokenManager,
-    usage_token_id: Option<String>,
+    usage_identity: Option<(String, crate::model_contract::ModelAccessPolicy)>,
     metrics: Arc<crate::metrics::Metrics>,
 ) {
     let mut completed_responses = std::collections::HashSet::new();
@@ -159,17 +159,40 @@ async fn websocket_session(
                     break;
                 };
                 let message_bytes = websocket_message_len(&message);
-                if let (Some(token_id), Message::Text(text)) = (&usage_token_id, &message)
-                    && serde_json::from_slice::<serde_json::Value>(text.as_bytes())
-                        .ok()
-                        .and_then(|event| event.get("type").and_then(serde_json::Value::as_str).map(str::to_string))
-                        .as_deref()
-                        == Some("response.create")
-                    && token_manager.enforce_request_budget(token_id).is_err()
-                {
-                    close(&mut downstream, 1008, "Router token budget is exhausted").await;
-                    let _ = upstream.close(None).await;
-                    break;
+                if let (Some((token_id, model_policy)), Message::Text(text)) = (&usage_identity, &message) {
+                    let event = serde_json::from_slice::<serde_json::Value>(text.as_bytes()).ok();
+                    if event.as_ref().and_then(|event| event.get("type"))
+                        .and_then(serde_json::Value::as_str) == Some("response.create")
+                    {
+                        let model = event.as_ref().and_then(|event| {
+                            event.pointer("/response/model")
+                                .or_else(|| event.get("model"))
+                                .and_then(serde_json::Value::as_str)
+                        });
+                        let denial = realtime_model_denial(model_policy, model);
+                        if let Some(denial) = denial {
+                            let reason = match denial
+                                .get("code")
+                                .and_then(serde_json::Value::as_str)
+                            {
+                                Some("model_policy_unavailable") => "model_policy_unavailable",
+                                Some("model_required") => "model_required",
+                                _ => "model_not_allowed",
+                            };
+                            let event = serde_json::json!({"type": "error", "error": denial});
+                            let _ = downstream
+                                .send(Message::Text(event.to_string().into()))
+                                .await;
+                            close(&mut downstream, 1008, reason).await;
+                            let _ = upstream.close(None).await;
+                            break;
+                        }
+                        if token_manager.enforce_request_budget(token_id).is_err() {
+                            close(&mut downstream, 1008, "Router token budget is exhausted").await;
+                            let _ = upstream.close(None).await;
+                            break;
+                        }
+                    }
                 }
                 let closes = matches!(message, Message::Close(_));
                 if upstream.send(downstream_message(message)).await.is_err() || closes {
@@ -183,8 +206,8 @@ async fn websocket_session(
                     break;
                 };
                 let message_bytes = tungstenite_message_len(&message);
-                let budget_exhausted = if let (Some(token_id), tungstenite::Message::Text(text)) =
-                    (&usage_token_id, &message)
+                let budget_exhausted = if let (Some((token_id, _)), tungstenite::Message::Text(text)) =
+                    (&usage_identity, &message)
                 {
                     record_realtime_usage(
                         &token_manager,
@@ -207,6 +230,30 @@ async fn websocket_session(
                 }
             }
         }
+    }
+}
+
+fn realtime_model_denial(
+    policy: &crate::model_contract::ModelAccessPolicy,
+    model: Option<&str>,
+) -> Option<serde_json::Value> {
+    match model {
+        Some(model) if !policy.permits(model) => {
+            let denied = crate::model_contract::ModelAccessError::new(model, policy);
+            Some(serde_json::json!({
+                "code": denied.code,
+                "message": denied.to_string(),
+                "requested_model": denied.requested_model,
+                "allowed_models": denied.allowed_models,
+            }))
+        }
+        None if !policy.allowed_models.is_empty() => Some(serde_json::json!({
+            "code": "model_required",
+            "message": "a pinned credential requires a non-empty exact model",
+            "requested_model": null,
+            "allowed_models": policy.allowed_models,
+        })),
+        _ => None,
     }
 }
 

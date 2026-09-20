@@ -134,7 +134,8 @@ fn install_live_zai(home: &Path, data: &Path, api_key: &str) -> Value {
 /// only a live run can establish is that the credential reaches the vendor and
 /// that the inventory stays the vendor's own (#546). The end-to-end pin was also
 /// confirmed by hand against this provider — a bare `router with claude` now
-/// launches on the newest of the ten advertised models rather than the oldest.
+/// `--pick-model` selects from the current inventory and then receives an exact
+/// token; a bare launch no longer asks Router to choose any model.
 #[test]
 fn a_live_credential_fetches_a_catalog_router_does_not_freeze() {
     let Some(api_key) = common::tiers::live_credential(
@@ -233,30 +234,21 @@ fn a_live_provider_supports_the_client_whose_capability_it_describes() {
     eprintln!("PROVEN: the live provider supports {clients:?}");
 }
 
-/// Issue #565, the half that needed a live exchange: advertising a
-/// gate-accepted identity must not cost the genuine thinking #546/#554 protect.
+/// Provider acceptance proves inventory access, not a model capability.
 ///
-/// The gate reads the identity only — never Router's metadata — so the identity
-/// is the whole mechanism, and which identities the gate accepts is pinned by
-/// the unit tests. What only a live provider can answer is the consequence: the
-/// accepted identity also turns on the client's effort/adaptive-thinking
-/// handling, so Claude Code sends parameters it did not send before, and no
-/// fixture can say whether the real adapter accepts them.
-///
-/// Verified live before shipping: a real Claude Code 2.1.265 session through
-/// Router to z.ai answered normally, with `("effort" "high")` and the
-/// `effort-2025-11-24` beta header forwarded upstream, 26 thinking/signature
-/// event markers in the exchange, and no 4xx or 5xx anywhere. This test keeps
-/// that path exercised so a future adapter change cannot silently break it.
+/// In particular, an accepted z.ai key does not justify a Router-authored
+/// Claude identity or reasoning profile. Exact capability fields are checked
+/// by the live Router catalog test in `subscription_usage_live_test`; absent
+/// fields stay unknown.
 #[test]
-fn a_live_provider_accepts_the_effort_parameters_the_identity_enables() {
+fn a_live_provider_acceptance_does_not_freeze_capability_claims() {
     let Some(api_key) = common::tiers::live_credential(
-        "a_live_provider_accepts_the_effort_parameters_the_identity_enables",
+        "a_live_provider_acceptance_does_not_freeze_capability_claims",
         "ROUTER_LIVE_ZAI_API_KEY",
     ) else {
         return;
     };
-    eprintln!("RUN: checking the live adapter accepts effort-style thinking");
+    eprintln!("RUN: checking provider acceptance remains inventory-only evidence");
 
     let home = tempfile::tempdir().expect("live home");
     let data = home.path().join("data");
@@ -273,10 +265,14 @@ fn a_live_provider_accepts_the_effort_parameters_the_identity_enables() {
     );
     assert_eq!(
         record["kind"], "zai-coding-plan",
-        "the reviewed adapter contract selects the advertised identity"
+        "the reviewed adapter contract selects the wire adapter"
+    );
+    assert!(
+        record["models"].as_array().is_some_and(Vec::is_empty),
+        "the provider record must not freeze model or capability facts"
     );
     eprintln!(
-        "PROVEN: the live adapter accepted this credential; the identity's \
-         effort handling was exercised end to end before shipping"
+        "PROVEN: the live adapter accepted this credential without freezing \
+         a model or owner-wide capability profile"
     );
 }

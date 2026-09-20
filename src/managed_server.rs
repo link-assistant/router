@@ -20,6 +20,7 @@ mod diagnostics;
 mod discovery;
 mod docker;
 mod http;
+mod model_policy;
 mod origin;
 mod process;
 mod selection;
@@ -33,6 +34,10 @@ use docker::{
 };
 pub use http::revoke;
 use http::{client as http_client, revoke_with_client, verify_health, verify_health_with_client};
+pub use model_policy::{
+    prepare_persistent_credential, prepare_repair_credential, prepare_run_credential,
+    prepare_run_credential_with_model_policy,
+};
 pub use origin::canonical_server_origin;
 use origin::{normalize_server, same_origin};
 use process::process_alive;
@@ -184,6 +189,16 @@ impl RunCredential {
 
     pub(crate) fn principal_id(&self) -> &str {
         &self.principal_id
+    }
+
+    #[cfg(test)]
+    pub(crate) fn for_model_policy_test(available_models: Vec<RouterModel>) -> Self {
+        Self {
+            token: "test-token".to_string(),
+            available_models,
+            revocation: None,
+            principal_id: "test-principal".to_string(),
+        }
     }
 
     /// The record id this credential was issued under, retained so a
@@ -394,50 +409,22 @@ pub async fn resolve(
     })
 }
 
-/// Validate an ordinary token or exchange an admin credential for a run token.
-pub async fn prepare_run_credential(
-    server: &ResolvedServer,
-    client_kind: ClientKind,
-    label: &str,
-    ttl_hours: i64,
-    sliding: bool,
-) -> Result<RunCredential, AnyError> {
-    prepare_credential(server, client_kind, label, ttl_hours, sliding, true, true).await
-}
-
-/// Mint the client-bound credential used by a permanent repair.
-///
-/// Repair is a trust takeover, not a one-shot launch. It must never persist a
-/// supplied ordinary token merely because the selected listener cannot mint a
-/// replacement: only a candidate minted for this exact client is eligible.
-pub async fn prepare_repair_credential(
-    server: &ResolvedServer,
-    client_kind: ClientKind,
-    label: &str,
-    ttl_hours: i64,
-) -> Result<RunCredential, AnyError> {
-    prepare_credential(server, client_kind, label, ttl_hours, false, false, false).await
-}
-
-/// Mint or reuse a credential that remains after this command exits.
-pub async fn prepare_persistent_credential(
-    server: &ResolvedServer,
-    client_kind: ClientKind,
-    label: &str,
-    ttl_hours: i64,
-) -> Result<RunCredential, AnyError> {
-    prepare_credential(server, client_kind, label, ttl_hours, false, true, false).await
+pub(super) struct CredentialOptions {
+    pub ttl_hours: i64,
+    pub sliding: bool,
+    pub allow_supplied: bool,
+    pub ephemeral: bool,
 }
 
 async fn prepare_credential(
     server: &ResolvedServer,
     client_kind: ClientKind,
     label: &str,
-    ttl_hours: i64,
-    sliding: bool,
-    allow_supplied: bool,
-    ephemeral: bool,
+    options: CredentialOptions,
+    model_policy: Option<&crate::model_contract::ModelAccessPolicy>,
 ) -> Result<RunCredential, AnyError> {
+    let default_policy = crate::model_contract::ModelAccessPolicy::default();
+    let model_policy = model_policy.unwrap_or(&default_policy);
     let token = server.token.as_deref().ok_or_else(|| {
         if server.source == "managed local container" {
             format!(
@@ -483,7 +470,7 @@ async fn prepare_credential(
                 .post(&issue_url)
                 .bearer_auth(token)
                 .json(&serde_json::json!({
-                    "ttl_hours": ttl_hours,
+                    "ttl_hours": options.ttl_hours,
                     "label": label,
                     "client_kind": client_kind.canonical_name(),
                     "max_requests": server.run_max_requests,
@@ -491,8 +478,11 @@ async fn prepare_credential(
                     // is a backstop for a client that never got to exit --
                     // not a limit on how long a live session may run
                     // (issue #354).
-                    "sliding_expiry": sliding,
-                    "ephemeral": ephemeral,
+                    "sliding_expiry": options.sliding,
+                    "ephemeral": options.ephemeral,
+                    "allowed_models": model_policy.allowed_models,
+                    "allow_model_substitution": model_policy.allow_substitution,
+                    "model_substitution_source": model_policy.substitution_source,
                 }))
                 .send()
                 .await
@@ -550,13 +540,17 @@ async fn prepare_credential(
             }
         }
         Ok(response) if response.status().as_u16() == 401 || response.status().as_u16() == 403 => {
-            if !allow_supplied {
+            if !options.allow_supplied {
                 return Err(format!(
                     "client repair requires an administrator credential that can mint a token bound to `{}`; the selected credential is inference-only",
                     client_kind.canonical_name()
                 )
                 .into());
             }
+            model_policy::require_minting_authority(
+                model_policy,
+                "an administrator credential; the selected credential is inference-only",
+            )?;
             let principal_id = exact_token_binding(token, client_kind)?;
             let available_models =
                 fetch_models(&inference_client, client_kind, &server.base_url, token).await?;
@@ -568,13 +562,17 @@ async fn prepare_credential(
             })
         }
         Ok(response) if response.status().as_u16() == 404 => {
-            if !allow_supplied {
+            if !options.allow_supplied {
                 return Err(format!(
                     "client repair requires the administrator listener so Router can mint a token bound to `{}`; the selected listener exposes inference only",
                     client_kind.canonical_name()
                 )
                 .into());
             }
+            model_policy::require_minting_authority(
+                model_policy,
+                "the administrator listener; the selected listener exposes inference only",
+            )?;
             let principal_id = exact_token_binding(token, client_kind).map_err(|_| {
                 format!(
                     "the selected listener exposes inference only, so its supplied token must carry the exact `{}` client binding and a subscriber principal; use the matching client token or select the administrator listener",

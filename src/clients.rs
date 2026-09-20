@@ -30,10 +30,10 @@ pub use types::{ClientError, ClientStatus, SetupResult};
 
 #[cfg(test)]
 pub(crate) use catalog::RouterClientCapabilities;
+pub(crate) use catalog::RouterModel;
 #[cfg(test)]
 pub(crate) use catalog::RouterReasoningLevel;
 use catalog::doctor_model;
-pub(crate) use catalog::{RouterModel, claude_capability_profile};
 pub(crate) use catalog::{
     claude_context_variant_is_authorized, claude_gateway_model, codex_supports_websockets,
     model_is_authorized,
@@ -87,68 +87,6 @@ pub const DEFAULT_OPENAI_REASONING_EFFORT: &str = "xhigh";
 /// (issue #309).
 const DOCTOR_MAX_TOKENS: u32 = 64;
 pub const DEFAULT_ANTHROPIC_REASONING_EFFORT: &str = "high";
-
-/// Reasoning capabilities documented for one provider's Codex protocol.
-///
-/// This is provider-scoped rather than model-scoped: z.ai's authenticated
-/// catalogue owns current model IDs, while its Codex integration guide
-/// publishes one capability profile for models served by the Responses
-/// adapter.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) struct CodexReasoningProfile {
-    default: &'static str,
-    levels: &'static [(&'static str, &'static str)],
-    source: &'static str,
-}
-
-impl CodexReasoningProfile {
-    #[must_use]
-    pub(crate) const fn default(self) -> &'static str {
-        self.default
-    }
-
-    #[must_use]
-    pub(crate) fn levels(self) -> Vec<catalog::RouterReasoningLevel> {
-        self.levels
-            .iter()
-            .map(|(effort, description)| catalog::RouterReasoningLevel {
-                effort: (*effort).to_string(),
-                description: (*description).to_string(),
-            })
-            .collect()
-    }
-
-    #[must_use]
-    pub(crate) fn supports(self, effort: &str) -> bool {
-        self.levels
-            .iter()
-            .any(|(supported, _)| *supported == effort)
-    }
-
-    #[must_use]
-    pub(crate) const fn source(self) -> &'static str {
-        self.source
-    }
-}
-
-/// Provider-level metadata for Codex-compatible catalogue records that omit
-/// Codex's local-picker fields.
-#[must_use]
-pub(crate) fn codex_reasoning_profile(owner: &str) -> Option<CodexReasoningProfile> {
-    (owner == ZAI_MODEL_OWNER).then_some(CodexReasoningProfile {
-        default: "max",
-        levels: &[
-            ("low", "Light reasoning"),
-            ("high", "Enhanced reasoning"),
-            ("max", "Deep reasoning"),
-        ],
-        source: "provider-protocol:z.ai-codex",
-    })
-}
-
-pub(crate) fn apply_codex_reasoning_profiles(client: ClientKind, models: &mut [RouterModel]) {
-    catalog::apply_codex_reasoning_profiles(client, models);
-}
 
 /// How a client can be isolated from its normal user configuration.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

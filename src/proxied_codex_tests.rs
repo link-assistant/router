@@ -12,9 +12,16 @@ async fn recording_upstream() -> (
         async move {
             let (parts, body) = request.into_parts();
             let bytes = body.collect().await.unwrap().to_bytes();
-            let body = serde_json::from_slice(&bytes).unwrap();
+            let body: Value = serde_json::from_slice(&bytes).unwrap();
+            let model = body["model"].clone();
             *seen.lock().unwrap() = Some((parts.headers, body));
-            (StatusCode::OK, "{}")
+            axum::Json(json!({
+                "id": "resp_test",
+                "object": "response",
+                "model": model,
+                "status": "completed",
+                "output": []
+            }))
         }
     });
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();

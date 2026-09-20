@@ -389,6 +389,8 @@ fn codex_overlays_routing_without_repointing_user_configuration() {
     let models = [RouterModel {
         id: "gpt-5.6-sol".to_string(),
         owned_by: "codex".to_string(),
+        selector_kind: crate::model_contract::ModelSelectorKind::default(),
+        capability_provenance: serde_json::Value::Null,
         default_reasoning_level: Some("high".to_string()),
         supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
             effort: "high".to_string(),
@@ -558,6 +560,8 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
         RouterModel {
             id: "future-reasoning-a".to_string(),
             owned_by: "openai".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: Some("medium".to_string()),
             supported_reasoning_levels: Some(vec![
                 crate::clients::RouterReasoningLevel {
@@ -579,6 +583,8 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
         RouterModel {
             id: "future-reasoning-b".to_string(),
             owned_by: "openai".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: Some("xhigh".to_string()),
             supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
                 effort: "xhigh".to_string(),
@@ -621,6 +627,8 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
         RouterModel {
             id: "future-reasoning-unknown".to_string(),
             owned_by: "unknown-provider".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: None,
             supported_reasoning_levels: None,
             provider_created_at: None,
@@ -629,6 +637,8 @@ fn codex_catalog_omits_unknown_reasoning_metadata_without_blocking_healthy_model
         RouterModel {
             id: "future-reasoning-known".to_string(),
             owned_by: "openai".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: Some("high".to_string()),
             supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
                 effort: "high".to_string(),
@@ -667,6 +677,8 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
         RouterModel {
             id: "future-supports-xhigh".to_string(),
             owned_by: "openai".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: Some("medium".to_string()),
             supported_reasoning_levels: Some(vec![
                 crate::clients::RouterReasoningLevel {
@@ -684,6 +696,8 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
         RouterModel {
             id: "future-medium-only".to_string(),
             owned_by: "openai".to_string(),
+            selector_kind: crate::model_contract::ModelSelectorKind::default(),
+            capability_provenance: serde_json::Value::Null,
             default_reasoning_level: Some("medium".to_string()),
             supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
                 effort: "medium".to_string(),
@@ -733,6 +747,8 @@ fn a_file_configured_client_is_isolated_even_by_default() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        selector_kind: crate::model_contract::ModelSelectorKind::default(),
+        capability_provenance: serde_json::Value::Null,
         ..RouterModel::default()
     }];
     assert!(
@@ -886,6 +902,8 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
     let models = [RouterModel {
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
+        selector_kind: crate::model_contract::ModelSelectorKind::default(),
+        capability_provenance: serde_json::Value::Null,
         default_reasoning_level: Some("medium".to_string()),
         supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
             effort: "medium".to_string(),

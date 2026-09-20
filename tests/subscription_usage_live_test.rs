@@ -117,31 +117,37 @@ fn install_zai(state: &AppState, api_key: String) {
         .expect("configure isolated z.ai credential");
 }
 
-fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Output {
-    let arguments = [
-        "--server",
-        origin,
-        "--token",
-        token,
-        "--model",
-        model,
-        "--non-interactive",
-        "claude",
-        "--verbose",
-        "--output-format",
-        "stream-json",
-        "--max-turns",
-        "1",
-        "Think briefly, then reply with exactly ROUTER_ZAI_LIVE_OK.",
-    ];
+fn run_live_claude_context_attempt(home: &Path, origin: &str, token: &str, model: &str) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
-        .args(arguments)
+        .args([
+            "--server",
+            origin,
+            "--token",
+            token,
+            "--model",
+            model,
+            "--non-interactive",
+            "claude",
+            "--debug",
+            "--verbose",
+            "--output-format",
+            "stream-json",
+            "--max-turns",
+            "1",
+            "Reply with exactly ROUTER_CONTEXT_OK.",
+        ])
         .current_dir(env!("CARGO_MANIFEST_DIR"))
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("CI", "1")
         .env("NO_COLOR", "1")
-        .env("MAX_THINKING_TOKENS", "1024")
+        .env("DISABLE_AUTOUPDATER", "1")
+        // These settings can override the very behavior this acceptance test
+        // measures. The current client and its exact model metadata must own
+        // the observed limit.
+        .env_remove("CLAUDE_CODE_AUTO_COMPACT_WINDOW")
+        .env_remove("CLAUDE_CODE_MAX_CONTEXT_TOKENS")
+        .env_remove("DISABLE_COMPACT")
         .env("NO_PROXY", "127.0.0.1,localhost")
         .env("no_proxy", "127.0.0.1,localhost")
         .env("HTTP_PROXY", "http://127.0.0.1:9")
@@ -151,94 +157,68 @@ fn run_live_claude(home: &Path, origin: &str, token: &str, model: &str) -> Outpu
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("launch Claude through live Router");
+        .expect("attempt to launch the current Claude Code through Router");
     if child
         .wait_timeout(Duration::from_secs(120))
-        .expect("wait for live Claude")
+        .expect("wait for live Claude context probe")
         .is_none()
     {
-        child.kill().expect("stop timed-out live Claude");
+        child
+            .kill()
+            .expect("stop timed-out live Claude context probe");
+        panic!("the live Claude context probe did not finish within 120s");
     }
     child
         .wait_with_output()
-        .expect("collect live Claude output")
+        .expect("collect live Claude context output")
 }
 
-fn live_request_records(root: &Path, token: &str) -> Vec<Value> {
-    // `with` mints its own client-bound run credential rather than forwarding
-    // the token this test issued, so the log lands under that credential's key
-    // and not under ours. Asserting on our own key read an empty path and failed
-    // for a reason unrelated to the property under test — invisible until a
-    // machine with credentials actually ran this tier (issue #567).
-    let directory = root.join("requests");
-    let ours = directory.join(link_assistant_router::request_log::token_log_key(token));
-    let path = if ours.join("requests.lino").is_file() {
-        ours.join("requests.lino")
-    } else {
-        std::fs::read_dir(&directory)
-            .unwrap_or_else(|error| {
-                panic!(
-                    "read live request log directory {}: {error}",
-                    directory.display()
-                )
-            })
-            .filter_map(Result::ok)
-            .map(|entry| entry.path().join("requests.lino"))
-            .filter(|candidate| candidate.is_file())
-            // `unauthenticated` collects pre-credential traffic; a real exchange
-            // is the one carrying records, so take the largest log written.
-            .max_by_key(|candidate| std::fs::metadata(candidate).map_or(0, |data| data.len()))
-            .unwrap_or_else(|| panic!("no live request log under {}", directory.display()))
-    };
-    std::fs::read_to_string(&path)
-        .unwrap_or_else(|error| panic!("read live z.ai request log {}: {error}", path.display()))
-        .lines()
-        .map(|line| {
-            link_assistant_router::lino_json::decode_line(line)
-                .expect("decode live z.ai request record")
-        })
-        .collect()
-}
-
-fn assert_live_nonstream_was_adapted(root: &Path, token: &str) {
-    let records = live_request_records(root, token);
-    let client = records
-        .iter()
-        .find(|record| {
-            record["phase"] == "client_request"
-                && record["body"]["stream"] == false
-                && record["body"]["thinking"]["type"] == "enabled"
-                && record["body"]["tools"].is_array()
-        })
-        .expect("the replay must record the affected non-streaming thinking request");
-    let correlation = &client["correlation_id"];
-    let upstream = records
-        .iter()
-        .find(|record| {
-            record["phase"] == "upstream_request" && record["correlation_id"] == *correlation
-        })
-        .expect("Router must forward the affected live Claude request");
-    assert_eq!(
-        upstream["body"]["stream"], true,
-        "Router must request SSE only on the z.ai-facing copy"
+fn reported_claude_model_limit(output: &Output) -> Option<u64> {
+    let combined = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
+    let amount = combined
+        .split("model limit of ")
+        .nth(1)?
+        .split_whitespace()
+        .next()?
+        .trim_matches(|character: char| !character.is_ascii_alphanumeric() && character != '.')
+        .to_ascii_lowercase();
+    let (number, multiplier) = amount.strip_suffix('k').map_or_else(
+        || {
+            amount
+                .strip_suffix('m')
+                .map_or((amount.as_str(), 1_u64), |number| (number, 1_000_000))
+        },
+        |number| (number, 1_000),
+    );
+    let number = number.replace(',', "");
+    let (whole, fraction) = number.split_once('.').unwrap_or((&number, ""));
+    let scaled_whole = whole.parse::<u64>().ok()?.checked_mul(multiplier)?;
+    if fraction.is_empty() {
+        return Some(scaled_whole);
+    }
+    let digits = u32::try_from(fraction.len()).ok()?;
+    let divisor = 10_u64.checked_pow(digits)?;
+    let scaled_fraction = fraction
+        .parse::<u64>()
+        .ok()?
+        .checked_mul(multiplier)?
+        .checked_add(divisor / 2)?
+        / divisor;
+    scaled_whole.checked_add(scaled_fraction)
 }
 
-fn contains_thinking(value: &Value) -> bool {
-    match value {
-        Value::Object(object) => {
-            let typed_thinking = matches!(
-                object.get("type").and_then(Value::as_str),
-                Some("thinking" | "thinking_delta")
-            ) && object
-                .get("thinking")
-                .and_then(Value::as_str)
-                .is_some_and(|thinking| !thinking.trim().is_empty());
-            typed_thinking || object.values().any(contains_thinking)
-        }
-        Value::Array(values) => values.iter().any(contains_thinking),
-        _ => false,
-    }
+fn exact_live_field<'a>(entry: &'a Value, field: &str) -> Option<&'a Value> {
+    let evidence = entry.pointer(&format!("/capability_provenance/fields/{field}"))?;
+    let model = entry["id"].as_str()?;
+    (evidence["scope"]["model"] == model
+        && evidence["unknown"] == false
+        && evidence["conflict"] == false
+        && evidence["source_url"].is_string())
+    .then(|| &evidence["value"])
 }
 
 /// A live credential, announcing and counting the skip when it is absent.
@@ -372,12 +352,11 @@ async fn real_openai_usage_source_is_normalized_without_inference() {
     .await;
 }
 
-/// Issue #548: the real subscription catalog can advertise a stable alias such
-/// as `codex-auto-review` while inference reports the concrete selected model.
-/// Every advertised id must remain the public identity on both lifecycle
-/// events that carry a complete Responses object.
+/// Native Responses bytes remain provider-owned. A stable request alias such
+/// as `codex-auto-review` may therefore produce a concrete served model; both
+/// lifecycle objects must report one non-empty, consistent upstream identity.
 #[tokio::test]
-async fn every_real_codex_model_keeps_its_native_stream_identity() {
+async fn every_real_codex_model_reports_a_consistent_native_served_identity() {
     let Some(document) = live_credential(
         "every_real_codex_model_keeps_its_native_stream_identity",
         "ROUTER_LIVE_CODEX_CREDENTIAL_JSON",
@@ -468,8 +447,8 @@ async fn every_real_codex_model_keeps_its_native_stream_identity() {
             .expect("bounded native Responses stream");
         let stream = std::str::from_utf8(&bytes).expect("UTF-8 native Responses stream");
         assert!(!stream.contains("x_router_"));
-        let mut created = false;
-        let mut completed = false;
+        let mut created_model = None;
+        let mut completed_model = None;
         for event in stream
             .lines()
             .filter_map(|line| line.strip_prefix("data: "))
@@ -478,18 +457,24 @@ async fn every_real_codex_model_keeps_its_native_stream_identity() {
         {
             match event["type"].as_str() {
                 Some("response.created") => {
-                    assert_eq!(event["response"]["model"], model);
-                    created = true;
+                    created_model = event["response"]["model"].as_str().map(str::to_string);
                 }
                 Some("response.completed") => {
-                    assert_eq!(event["response"]["model"], model);
-                    completed = true;
+                    completed_model = event["response"]["model"].as_str().map(str::to_string);
                 }
                 _ => {}
             }
         }
-        assert!(created, "native Responses omitted response.created");
-        assert!(completed, "native Responses omitted response.completed");
+        let created_model = created_model.expect("native Responses omitted served identity");
+        assert!(
+            !created_model.is_empty(),
+            "served identity must be concrete"
+        );
+        assert_eq!(
+            completed_model.as_deref(),
+            Some(created_model.as_str()),
+            "native lifecycle events must agree on served identity"
+        );
     }
 }
 
@@ -510,30 +495,30 @@ async fn real_zai_usage_sources_are_normalized_without_inference() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn real_zai_thinking_reaches_claude_verbose_output() {
+async fn real_zai_exact_model_is_pinned_and_served_identity_is_truthful() {
     let Some(api_key) = live_credential(
-        "real_zai_thinking_reaches_claude_verbose_output",
+        "real_zai_exact_model_is_pinned_and_served_identity_is_truthful",
         "ROUTER_LIVE_ZAI_API_KEY",
     ) else {
         return;
     };
-    eprintln!("RUN: validating live z.ai reasoning through Claude Code");
+    eprintln!("RUN: validating live z.ai catalog, exact pin, and served identity");
 
     let root = tempfile::tempdir().expect("live z.ai data dir");
     let state = test_state(root.path());
     install_zai(&state, api_key);
     let config = live_config(root.path());
-    let token = state
-        .token_manager
+    let token_manager = state.token_manager.clone();
+    let discovery_token = token_manager
         .issue(&IssueRequest {
             ttl_hours: 1,
-            label: "live z.ai Claude acceptance",
+            label: "live z.ai model discovery",
             account: Some("primary"),
-            client_kind: Some(ClientKind::ClaudeCode.canonical_name()),
+            client_kind: Some(ClientKind::Codex.canonical_name()),
             principal_id: Some("primary"),
             ..IssueRequest::default()
         })
-        .expect("issue live z.ai Claude token");
+        .expect("issue live z.ai discovery token");
     let app = link_assistant_router::server_router::router_for_listener(
         state,
         &config,
@@ -554,8 +539,9 @@ async fn real_zai_thinking_reaches_claude_verbose_output() {
 
     let catalog: Value = reqwest::Client::new()
         .get(format!("{origin}/api/models"))
-        .bearer_auth(&token)
-        .header("x-link-assistant-client", "claude")
+        .bearer_auth(&discovery_token)
+        .header("x-link-assistant-client", "codex")
+        .header("user-agent", "codex_exec/live-model-truth")
         .send()
         .await
         .expect("fetch live z.ai Router catalog")
@@ -566,80 +552,218 @@ async fn real_zai_thinking_reaches_claude_verbose_output() {
         .expect("live z.ai Router catalog JSON");
     let model = catalog["data"]
         .as_array()
-        .and_then(|models| {
-            models.iter().find(|model| {
-                model["owned_by"] == "z.ai"
-                    && model["client_capabilities"]["claude"]["behaves_as"] == "claude-sonnet-5"
-            })
-        })
+        .and_then(|models| models.iter().find(|model| model["owned_by"] == "z.ai"))
         .and_then(|model| model["id"].as_str())
-        .expect("live z.ai catalog model with Claude capability profile")
+        .expect("live z.ai catalog exact model")
         .to_string();
+    let catalog_entry = catalog["data"]
+        .as_array()
+        .and_then(|models| models.iter().find(|entry| entry["id"] == model))
+        .expect("selected live catalog entry");
+    for capability in [
+        "context_window",
+        "max_output_tokens",
+        "modalities",
+        "supported_reasoning_levels",
+        "client_capabilities",
+    ] {
+        if catalog_entry.get(capability).is_some() {
+            let evidence = &catalog_entry["capability_provenance"]["fields"][capability];
+            assert_eq!(evidence["scope"]["model"], model);
+            assert!(evidence["source_url"].is_string());
+            assert!(evidence["retrieved_at"].is_string() || evidence["retrieved_at"].is_number());
+            assert_eq!(evidence["unknown"], false);
+        }
+    }
 
-    let home = root.path().join("client-home");
-    std::fs::create_dir_all(&home).expect("create isolated live Claude home");
-    let output = tokio::task::spawn_blocking({
-        let origin = origin.clone();
-        let token = token.clone();
-        let model = model.clone();
-        move || run_live_claude(&home, &origin, &token, &model)
-    })
-    .await
-    .expect("join live Claude process");
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        output.status.success(),
-        "live Claude run failed; stdout: {stdout}; stderr: {stderr}"
-    );
-    assert!(
-        stdout.contains("ROUTER_ZAI_LIVE_OK"),
-        "live Claude answer missing"
-    );
-    assert!(
-        stdout
-            .lines()
-            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
-            .any(|event| contains_thinking(&event)),
-        "live z.ai stream did not expose a non-empty thinking block in Claude verbose output"
-    );
-    assert!(!stdout.contains("ROUTER_CAPTURE_THINKING_TRACE"));
-
-    let records = live_request_records(root.path(), &token);
-    let mut replay_body = records
-        .iter()
-        .find(|record| {
-            record["phase"] == "client_request"
-                && record["body"]["stream"] == true
-                && record["body"]["thinking"]["type"] == "enabled"
-                && record["body"]["tools"].is_array()
-        })
-        .map(|record| record["body"].clone())
-        .expect("capture the live Claude 2.1.265 thinking request");
-    replay_body["stream"] = Value::Bool(false);
-    let replay = reqwest::Client::new()
-        .post(format!("{origin}/api/services/anthropic/v1/messages"))
+    let token = token_manager
+        .issue_with_model_policy(
+            &IssueRequest {
+                ttl_hours: 1,
+                label: "live z.ai exact model",
+                account: Some("primary"),
+                client_kind: Some(ClientKind::Codex.canonical_name()),
+                principal_id: Some("primary"),
+                ..IssueRequest::default()
+            },
+            &link_assistant_router::model_contract::ModelAccessPolicy::exact(&model),
+        )
+        .expect("issue live z.ai exact-model token");
+    let reply = reqwest::Client::new()
+        .post(format!("{origin}/api/services/codex/v1/responses"))
         .bearer_auth(&token)
-        .header("anthropic-version", "2023-06-01")
-        .header("user-agent", "claude-cli/2.1.265")
-        .json(&replay_body)
+        .header("user-agent", "codex_exec/live-model-truth")
+        .header("originator", "codex_exec")
+        .json(&serde_json::json!({
+            "model": model.clone(),
+            "input": "Reply with exactly OK.",
+            "max_output_tokens": 16,
+            "stream": false
+        }))
         .send()
         .await
-        .expect("replay the live Claude request as non-streaming");
-    let replay_status = replay.status();
-    let replay_body = replay.bytes().await.expect("read live non-streaming reply");
+        .expect("make live exact-model inference");
+    let reply_status = reply.status();
+    let reply_body = reply.bytes().await.expect("read live exact-model reply");
     assert!(
-        replay_status.is_success(),
-        "live non-streaming Claude replay failed with {replay_status}: {}",
-        String::from_utf8_lossy(&replay_body)
+        reply_status.is_success(),
+        "live exact-model inference failed with {reply_status}: {}",
+        String::from_utf8_lossy(&reply_body)
     );
-    let replay: Value =
-        serde_json::from_slice(&replay_body).expect("live non-streaming Anthropic response");
+    let reply: Value = serde_json::from_slice(&reply_body).expect("live Responses JSON");
+    assert_eq!(
+        reply["model"], model,
+        "the response must report the concrete model that served the request"
+    );
+    eprintln!("PROVEN: requested and served exact live z.ai model `{model}`");
+    server.abort();
+}
+
+/// Issue #594's credentialed drift gate. This is deliberately separate from
+/// the ordinary z.ai live probe because it requires a currently supported
+/// `claude` binary and can bill one minimal inference per verified model.
+///
+/// An inventory-only catalog is expected to take the other valid branch: the
+/// launch attempt must stop before Claude starts instead of giving both GLM
+/// models one fabricated Anthropic identity and a 200K effective window.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn current_claude_reports_each_live_glm_context_or_router_blocks_the_launch() {
+    let Some(api_key) = live_credential(
+        "current_claude_reports_each_live_glm_context_or_router_blocks_the_launch",
+        "ROUTER_LIVE_ZAI_API_KEY",
+    ) else {
+        return;
+    };
+    if std::env::var("ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST").as_deref() != Ok("1") {
+        eprintln!(
+            "SKIP [tier4-live-credentialed] \
+             current_claude_reports_each_live_glm_context_or_router_blocks_the_launch: \
+             ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 was not set; the current-Claude, billed \
+             context probe was not authorized."
+        );
+        return;
+    }
+    let version = Command::new("claude")
+        .arg("--version")
+        .stdin(Stdio::null())
+        .output()
+        .expect("ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST requires claude on PATH");
     assert!(
-        replay["content"].is_array() && contains_thinking(&replay),
-        "live non-streaming reply omitted genuine z.ai thinking: {replay}"
+        version.status.success(),
+        "the installed Claude Code could not report its version: {}",
+        String::from_utf8_lossy(&version.stderr)
     );
-    assert_live_nonstream_was_adapted(root.path(), &token);
+    eprintln!(
+        "RUN: probing exact GLM context with {}",
+        String::from_utf8_lossy(&version.stdout).trim()
+    );
+
+    let root = tempfile::tempdir().expect("live z.ai Claude context data dir");
+    let state = test_state(root.path());
+    install_zai(&state, api_key);
+    let config = live_config(root.path());
+    let token_manager = state.token_manager.clone();
+    let discovery_token = token_manager
+        .issue(&IssueRequest {
+            ttl_hours: 1,
+            label: "live z.ai Claude context discovery",
+            account: Some("primary"),
+            client_kind: Some(ClientKind::ClaudeCode.canonical_name()),
+            principal_id: Some("primary"),
+            ..IssueRequest::default()
+        })
+        .expect("issue live z.ai Claude discovery token");
+    let admin_token = token_manager
+        .issue_admin_token(1, "live z.ai Claude context launcher")
+        .expect("issue isolated live-test administrator token");
+    let app = link_assistant_router::server_router::router_for_listener(
+        state,
+        &config,
+        ListenerKind::Combined,
+    );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind live z.ai Claude Router");
+    let origin = format!(
+        "http://{}",
+        listener.local_addr().expect("live Claude Router address")
+    );
+    let server = tokio::spawn(async move {
+        axum::serve(listener, app)
+            .await
+            .expect("serve live z.ai Claude Router");
+    });
+
+    let catalog: Value = reqwest::Client::new()
+        .get(format!("{origin}/api/models"))
+        .bearer_auth(&discovery_token)
+        .header("x-link-assistant-client", "claude")
+        .header("user-agent", "claude-cli/live-model-truth")
+        .send()
+        .await
+        .expect("fetch live z.ai Claude catalog")
+        .error_for_status()
+        .expect("live z.ai Claude catalog status")
+        .json()
+        .await
+        .expect("live z.ai Claude catalog JSON");
+
+    for model in ["glm-5.3", "glm-5.3-flash"] {
+        let entry = catalog["data"]
+            .as_array()
+            .and_then(|models| models.iter().find(|entry| entry["id"] == model))
+            .unwrap_or_else(|| panic!("the live account did not advertise required `{model}`"));
+        let verified_context = exact_live_field(entry, "context_window").and_then(Value::as_u64);
+        let verified_claude =
+            exact_live_field(entry, "client_capabilities").and_then(|value| value.get("claude"));
+
+        let output = tokio::task::spawn_blocking({
+            let home = root.path().join(format!("claude-{model}"));
+            std::fs::create_dir_all(&home).expect("create isolated live Claude home");
+            let origin = origin.clone();
+            let admin_token = admin_token.clone();
+            let model = model.to_string();
+            move || run_live_claude_context_attempt(&home, &origin, &admin_token, &model)
+        })
+        .await
+        .expect("join live Claude context process");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        if let (Some(expected), Some(_)) = (verified_context, verified_claude) {
+            assert!(
+                output.status.success(),
+                "live Claude context run for `{model}` failed: {stderr}"
+            );
+            let reported = reported_claude_model_limit(&output).unwrap_or_else(|| {
+                panic!(
+                    "current Claude did not report its effective model/compaction limit for \
+                     `{model}`; stderr: {stderr}"
+                )
+            });
+            // Claude abbreviates limits (for example, `1m`) in diagnostic
+            // output. Allow that presentation rounding while still
+            // rejecting the observed 200K-versus-1M contradiction.
+            let difference = reported.abs_diff(expected);
+            assert!(
+                difference <= expected / 10,
+                "`{model}` advertised {expected} tokens but current Claude reported {reported}"
+            );
+            eprintln!("PROVEN: current Claude reported {reported} tokens for exact `{model}`");
+        } else {
+            assert!(
+                !output.status.success(),
+                "`{model}` lacks exact consumable Claude/context evidence but launched"
+            );
+            assert!(
+                stderr.contains("no verified capability metadata")
+                    || stderr.contains("incomplete capability metadata"),
+                "`{model}` must fail with an actionable unsupported-capability error: {stderr}"
+            );
+            eprintln!(
+                "PROVEN: `{model}` has no exact consumable Claude/context evidence and Router \
+                 stopped before inference"
+            );
+        }
+    }
     server.abort();
 }

@@ -107,6 +107,20 @@ async fn live_catalog_uses_bearer_auth_preserves_ids_and_deduplicates() {
             .collect::<Vec<_>>(),
         ["vendor/exact:alpha", "vendor/exact:beta"]
     );
+    for model in models {
+        assert_eq!(model.raw["router_account"], "lefine");
+        assert_eq!(model.raw["router_endpoint"], provider.base_url);
+        assert_eq!(
+            model.raw["router_protocols"],
+            serde_json::json!(["openai-compatible:/models"])
+        );
+        assert!(
+            model.raw["router_source_url"]
+                .as_str()
+                .is_some_and(|url| url.ends_with("/v1/models"))
+        );
+        assert!(model.raw["router_fetched_at"].is_string());
+    }
     server.abort();
 }
 

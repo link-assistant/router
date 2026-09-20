@@ -823,6 +823,37 @@ async fn local_input_authentication_and_health_failures_are_stable() {
 }
 
 #[tokio::test]
+async fn exact_token_policy_refuses_zai_before_provider_discovery() {
+    let data = tempfile::tempdir().unwrap();
+    let state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
+    let token = crate::model_routing::tests::bound_client_token_with_model_policy(
+        &state,
+        ClientKind::Codex,
+        &crate::model_contract::ModelAccessPolicy::exact("allowed-model"),
+    );
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_str(&format!("Bearer {token}")).unwrap(),
+    );
+    headers.insert("x-codex-turn-metadata", HeaderValue::from_static("fixture"));
+
+    let response = crate::zai_coding_plan::forward(
+        &state,
+        &headers,
+        serde_json::json!({"model":"denied-model","input":"hi"}),
+        "/v1/responses",
+        ClientProtocol::OpenAIResponses,
+        crate::metrics::Surface::OpenAIResponses,
+    )
+    .await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["error"]["type"], "model_not_allowed");
+}
+
+#[tokio::test]
 async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
     let (base_url, requests, handle) = recording_upstream().await;
     let data = tempfile::tempdir().unwrap();

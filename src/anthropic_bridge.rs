@@ -180,7 +180,7 @@ pub fn try_openai_json_to_anthropic_message(
 
 fn chat_completion_to_anthropic_message(
     payload: &Value,
-    requested_model: &str,
+    _requested_model: &str,
 ) -> Result<Value, String> {
     let choice = payload
         .get("choices")
@@ -231,7 +231,10 @@ fn chat_completion_to_anthropic_message(
     let usage = payload.get("usage");
     let mut translated = message_envelope(
         payload.get("id").and_then(Value::as_str),
-        requested_model,
+        payload
+            .get("model")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
         &content,
         stop_reason,
         usage_field(usage, &["prompt_tokens", "input_tokens"]),
@@ -246,7 +249,10 @@ fn chat_completion_to_anthropic_message(
     Ok(translated)
 }
 
-fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Result<Value, String> {
+fn responses_to_anthropic_message(
+    payload: &Value,
+    _requested_model: &str,
+) -> Result<Value, String> {
     let mut content: Vec<Value> = Vec::new();
     let mut saw_tool_call = false;
     let mut web_search_requests = 0_u64;
@@ -348,7 +354,10 @@ fn responses_to_anthropic_message(payload: &Value, requested_model: &str) -> Res
     let usage = payload.get("usage");
     let mut message = message_envelope(
         payload.get("id").and_then(Value::as_str),
-        requested_model,
+        payload
+            .get("model")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
         &content,
         stop_reason,
         usage_field(usage, &["input_tokens", "prompt_tokens"]),
@@ -727,12 +736,11 @@ async fn forward_anthropic_messages_routed(
                     return anthropic_error(StatusCode::BAD_REQUEST, reason.as_bytes());
                 }
             };
-            let routing_body = responses_body.clone();
             crate::subscription_proxy::forward_subscription_openai_routed(
                 state,
                 headers,
                 responses_body,
-                &routing_body,
+                &anthropic_body,
                 "/v1/responses",
                 Surface::Anthropic,
                 crate::subscription_proxy::RoutedSubscriptionContext {
@@ -749,7 +757,7 @@ async fn forward_anthropic_messages_routed(
                 state,
                 headers,
                 chat_body.clone(),
-                &chat_body,
+                &anthropic_body,
                 "/v1/chat/completions",
                 Surface::Anthropic,
                 crate::subscription_proxy::RoutedSubscriptionContext {
@@ -766,6 +774,7 @@ async fn forward_anthropic_messages_routed(
                 state,
                 headers,
                 chat_body,
+                &anthropic_body,
                 Surface::Anthropic,
                 subscription,
             )
@@ -777,7 +786,7 @@ async fn forward_anthropic_messages_routed(
                 state,
                 headers,
                 chat_body.clone(),
-                &chat_body,
+                &anthropic_body,
                 crate::provider_proxy::ProviderForwardOptions {
                     path,
                     upstream_path: "/v1/chat/completions",

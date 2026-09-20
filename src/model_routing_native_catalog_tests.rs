@@ -224,15 +224,8 @@ fn codex_shape_uses_the_current_client_models_envelope() {
     )
     .unwrap()
     .unwrap();
-    assert_eq!(zai["models"][0]["default_reasoning_level"], "max");
-    assert_eq!(
-        zai["models"][0]["supported_reasoning_levels"],
-        json!([
-            {"effort": "low", "description": "Light reasoning"},
-            {"effort": "high", "description": "Enhanced reasoning"},
-            {"effort": "max", "description": "Deep reasoning"}
-        ])
-    );
+    assert!(zai["models"][0]["default_reasoning_level"].is_null());
+    assert_eq!(zai["models"][0]["supported_reasoning_levels"], json!([]));
 }
 
 #[test]

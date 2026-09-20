@@ -1,5 +1,10 @@
 # Issue #546 z.ai thinking compatibility plan
 
+> Historical plan, superseded by the fail-closed model truth contract in
+> `docs/model-truth-contract.md`. Router no longer attaches an owner-wide
+> Claude identity to z.ai models; only exact, scoped capability evidence may
+> populate a client representation.
+
 ## Goal
 
 Make dynamically discovered z.ai Coding Plan models request the Anthropic thinking mode accepted by z.ai, and prove that real reasoning reaches Claude Code without hardcoding model identifiers or rewriting native payloads.

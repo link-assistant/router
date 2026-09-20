@@ -33,7 +33,8 @@ Tier 4 is opt-in, and each test is enabled by its own protected variable:
 
 | Variable | Enables |
 | --- | --- |
-| `ROUTER_LIVE_ZAI_API_KEY` | z.ai Coding Plan: usage normalization, genuine thinking through Claude Code, gateway model selection |
+| `ROUTER_LIVE_ZAI_API_KEY` | z.ai Coding Plan: usage normalization, live catalog evidence, exact pinning, and served identity |
+| `ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1` | In addition to the z.ai key: explicitly authorize the billed current-Claude context/compaction probe for `glm-5.3` and `glm-5.3-flash` |
 | `ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON` | An Anthropic subscription's usage source |
 | `ROUTER_LIVE_CODEX_CREDENTIAL_JSON` | Codex usage source and native stream identity |
 
@@ -42,6 +43,23 @@ Run the live tier locally against your own subscription:
 ```bash
 ROUTER_LIVE_ZAI_API_KEY=… cargo test --test subscription_usage_live_test -- --nocapture
 ```
+
+Issue #594's current-client drift gate is intentionally a second opt-in because
+it requires `claude` on `PATH` and can bill one minimal inference for each model
+whose exact live metadata is safe for Claude to consume:
+
+```bash
+ROUTER_LIVE_ZAI_API_KEY=… ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 \
+  cargo test --test subscription_usage_live_test \
+  current_claude_reports_each_live_glm_context_or_router_blocks_the_launch \
+  -- --nocapture
+```
+
+For an inventory-only catalog, the successful outcome is an actionable local
+refusal before inference: Router must not manufacture a Claude identity just to
+make the process start. If the endpoint supplies exact, scoped Claude and
+context evidence, the test launches the installed supported Claude Code and
+compares its reported model/compaction limit with that evidence.
 
 `--nocapture` is what surfaces the per-test `RUN:` and `SKIP` lines; without it
 `cargo` hides the output of passing tests, and a skip becomes invisible again.
@@ -94,7 +112,7 @@ live-tier test resolves its credential through `tests/common/tiers.rs`, which on
 absence prints the tier, the test, and the variable that would enable it:
 
 ```
-SKIP [tier4-live-credentialed] real_zai_thinking_reaches_claude_verbose_output: \
+SKIP [tier4-live-credentialed] real_zai_exact_model_is_pinned_and_served_identity_is_truthful: \
   ROUTER_LIVE_ZAI_API_KEY is not set; this property is not proven by this run.
 ```
 
@@ -119,12 +137,19 @@ caught by a human running a real client by hand:
 - **Model selection and pinning** — a gateway model pinned by catalog position
   rather than recency started every session on the oldest model the provider
   served (issue #563).
-- **Catalog advertisement** — capability resolved per provider rather than per
-  model made any per-model difference unrepresentable (issue #565).
+- **Catalog and capability evidence** — the live account proves which exact
+  IDs exist and whether the endpoint supplies per-model capability fields;
+  missing fields remain unknown rather than acquiring an owner-wide profile
+  (issues #565 and #594).
+- **Requested and served identity** — a minimal live inference is the only
+  evidence that a provider accepted an exact selector and reported the same
+  concrete model (issues #592, #593, and #595).
 - **Credential withdrawal** — `auth clear --all` reported a clean deployment
   while API-key providers kept live keys (issue #561).
-- **Streamed thinking and tool loops** — genuine provider thinking must survive
-  translation, and only a real provider emits it.
+- **Current-client context behavior** — the explicitly billed z.ai/Claude probe
+  selects `glm-5.3` and `glm-5.3-flash` separately. It either verifies the
+  effective context/compaction limit reported by the installed Claude Code or
+  proves Router refused an unverified mapping before inference (issue #594).
 
 Recorded replay (issue #566) covers some of the same ground without credentials,
 and is the cheaper regression net once a recording exists; it does not replace

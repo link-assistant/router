@@ -25,6 +25,7 @@ fn sample_record(id: &str) -> TokenRecord {
         scope: String::new(),
         client_kind: None,
         principal_id: None,
+        model_policy: crate::model_contract::ModelAccessPolicy::default(),
     }
 }
 
@@ -326,6 +327,7 @@ fn lino_codec_handles_special_chars() {
         client_kind: Some("claude".into()),
         principal_id: Some("primary".into()),
         ephemeral: false,
+        model_policy: crate::model_contract::ModelAccessPolicy::default(),
     };
     let s = associative::encode_text(std::iter::once(&rec));
     let parsed = associative::decode_text(&s).unwrap();

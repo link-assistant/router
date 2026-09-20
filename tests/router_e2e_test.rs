@@ -17,9 +17,10 @@ use axum::response::Response;
 use axum::routing::{get, post};
 use futures_util::StreamExt;
 use link_assistant_router::app_state::AppState;
+use link_assistant_router::client_policy::ClientProtocol;
 use link_assistant_router::clients::ClientKind;
 use link_assistant_router::config::UpstreamProvider;
-use link_assistant_router::model_catalog::ModelCatalogCache;
+use link_assistant_router::model_catalog::{CatalogRecord, ModelCatalogCache};
 use link_assistant_router::oauth::OAuthProvider;
 use link_assistant_router::proxy;
 use link_assistant_router::refresh::TokenCache;
@@ -61,6 +62,7 @@ struct TestRouter {
     requests: Arc<Mutex<Vec<Value>>>,
     upstream_headers: Arc<Mutex<Vec<HeaderMap>>>,
     log_root: std::path::PathBuf,
+    audit_path: std::path::PathBuf,
     tasks: Vec<tokio::task::JoinHandle<()>>,
     _data: TempDir,
 }
@@ -150,15 +152,43 @@ impl TestRouter {
             .then(|| SubscriptionReader::new(SubscriptionProvider::Codex, &codex_home));
 
         let log_root = data.path().join("requests");
+        let audit_path = data.path().join("audit.jsonl");
         let model_catalogs = Arc::new(ModelCatalogCache::new());
         if provider == UpstreamProvider::Codex {
             // Cross-protocol bridge selection is account-scoped: the model
             // and the credential used by this fixture must come from the same
             // authenticated discovery generation.
-            model_catalogs.record_success_for(
+            let fetched_at = chrono::Utc::now().timestamp();
+            let records = [
+                ("gpt-5", serde_json::json!({"slug": "gpt-5"})),
+                (
+                    "codex-auto-review",
+                    serde_json::json!({
+                        "slug": "codex-auto-review",
+                        "selector_kind": "provider_dynamic_alias"
+                    }),
+                ),
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(index, (id, raw))| CatalogRecord {
+                provider: SubscriptionProvider::Codex,
+                account: "acct_stub".into(),
+                canonical_id: id.into(),
+                raw: raw.as_object().expect("catalog object").clone(),
+                source_order: index as u64,
+                fetched_at,
+                health_generation: "stub-authenticated-generation".into(),
+                protocols: [ClientProtocol::Catalog, ClientProtocol::OpenAIResponses]
+                    .into_iter()
+                    .collect(),
+            })
+            .collect();
+            model_catalogs.record_records_for_account(
                 SubscriptionProvider::Codex,
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT,
                 Some("acct_stub".to_string()),
-                vec!["gpt-5".to_string(), "codex-auto-review".to_string()],
+                records,
             );
         }
         let provider_store =
@@ -203,7 +233,9 @@ impl TestRouter {
             admin_key: Some("admin-only".to_string()),
             allow_anonymous_admin: false,
             metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
-            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
+            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(
+                audit_path.to_str(),
+            )),
             request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
                 log_root.clone(),
                 1024 * 1024,
@@ -239,6 +271,7 @@ impl TestRouter {
             requests,
             upstream_headers,
             log_root,
+            audit_path,
             tasks: vec![stub_task, router_task],
             _data: data,
         }
@@ -685,6 +718,7 @@ fn codex_stream_for_request(request: &Value) -> String {
     let request_text = request.to_string();
     if request_text.contains("terminal-incomplete-e2e") {
         return codex_fixture_stream(&[
+            json!({"type":"response.created","response":{"id":"resp_incomplete","model":"gpt-5","status":"in_progress","output":[]}}),
             json!({"type":"response.output_text.delta","item_id":"msg_partial","output_index":0,"content_index":0,"delta":"partial"}),
             json!({"type":"response.output_item.added","output_index":1,"item":{"id":"fc_partial","type":"function_call","call_id":"call_partial","name":"lookup","arguments":"{}"}}),
             json!({"type":"response.incomplete","response":{"id":"resp_incomplete","model":"gpt-5","status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"usage":{"input_tokens":3,"output_tokens":4,"total_tokens":7},"output":[]}}),
@@ -693,6 +727,7 @@ fn codex_stream_for_request(request: &Value) -> String {
     if request_text.contains("refusal-only-e2e") || request_text.contains("refusal-mixed-e2e") {
         let mixed = request_text.contains("refusal-mixed-e2e");
         let mut events = vec![
+            json!({"type":"response.created","response":{"id":"resp_refusal","model":"gpt-5","status":"in_progress","output":[]}}),
             json!({"type":"response.output_item.added","output_index":0,"item":{"id":"msg_refusal","type":"message","status":"in_progress","role":"assistant","content":[]}}),
         ];
         if mixed {
@@ -715,9 +750,10 @@ fn codex_stream_for_request(request: &Value) -> String {
         let terminal = if request_text.contains("standalone-error-e2e") {
             "data: {\"type\":\"error\",\"message\":\"synthetic stream failure\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}\n\n"
         } else {
-            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"status\":\"failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n"
+            "data: {\"type\":\"response.failed\",\"response\":{\"id\":\"resp_failed\",\"model\":\"gpt-5\",\"status\":\"failed\",\"error\":{\"message\":\"synthetic stream failure\",\"type\":\"server_error\",\"code\":\"upstream_failed\",\"param\":\"input\",\"private_account\":\"secret\"}}}\n\n"
         };
         return [
+            "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_failed\",\"model\":\"gpt-5\",\"status\":\"in_progress\",\"output\":[]}}\n\n",
             "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n\n",
             "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"call_id\":\"call_1\",\"name\":\"lookup\"}}\n\n",
             "data: {\"type\":\"response.function_call_arguments.delta\",\"output_index\":0,\"delta\":\"{}\"}\n\n",

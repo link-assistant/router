@@ -524,7 +524,7 @@ fn claude_doctor_uses_bearer_for_catalog_and_successful_inference() {
     let doctor = router_with_env(
         home.path(),
         &["clients", "doctor", "claude"],
-        &[("ANTHROPIC_AUTH_TOKEN", &token)],
+        &[("ANTHROPIC_AUTH_TOKEN", &token), ("PATH", "")],
     );
     assert!(
         doctor.status.success(),

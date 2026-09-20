@@ -392,10 +392,16 @@ pub(crate) async fn fetch_catalog(
             "z.ai Coding Plan catalog did not prove an active subscription",
         ));
     }
+    let source_url = format!(
+        "{}{}",
+        provider.base_url.trim_end_matches('/'),
+        CATALOG_PATH
+    );
+    let fetched_at = chrono::Utc::now().to_rfc3339();
     let mut seen = HashSet::new();
     let mut models = Vec::with_capacity(entries.len());
     for entry in entries {
-        let raw = entry.as_object().cloned().ok_or_else(|| {
+        let mut raw = entry.as_object().cloned().ok_or_else(|| {
             ZaiProbeFailure::new(
                 ZaiProbeFailureKind::Unverified,
                 "z.ai Coding Plan catalog contained an invalid model record",
@@ -411,17 +417,40 @@ pub(crate) async fn fetch_catalog(
                     ZaiProbeFailureKind::Unverified,
                     "z.ai Coding Plan catalog contained a model without an exact id",
                 )
-            })?;
-        if !seen.insert(id.to_string()) {
+            })?
+            .to_string();
+        if !seen.insert(id.clone()) {
             // A provider can repeat an exact record across catalog pages or
             // compatibility families. Preserve the first record so metadata
             // selection is stable while publishing the exact id only once.
             continue;
         }
-        models.push(LiveProviderModel {
-            id: id.to_string(),
-            raw,
-        });
+        raw.insert(
+            "router_source_url".into(),
+            serde_json::Value::String(source_url.clone()),
+        );
+        raw.insert(
+            "router_endpoint".into(),
+            serde_json::Value::String(provider.base_url.clone()),
+        );
+        raw.insert(
+            "router_account".into(),
+            serde_json::Value::String(
+                provider
+                    .subscriber_id
+                    .clone()
+                    .unwrap_or_else(|| provider.name.clone()),
+            ),
+        );
+        raw.insert(
+            "router_fetched_at".into(),
+            serde_json::Value::String(fetched_at.clone()),
+        );
+        raw.insert(
+            "router_health_generation".into(),
+            serde_json::Value::String(fetched_at.clone()),
+        );
+        models.push(LiveProviderModel { id, raw });
     }
     Ok(models)
 }
@@ -686,6 +715,18 @@ pub async fn forward(
             "model is required for z.ai Coding Plan",
         );
     };
+    if let Err(response) = crate::proxy::authorize_model_for_claims(
+        state,
+        &claims,
+        &exposed_id,
+        if protocol == ClientProtocol::AnthropicMessages {
+            crate::api_error::ApiDialect::Anthropic
+        } else {
+            crate::api_error::ApiDialect::OpenAi
+        },
+    ) {
+        return response;
+    }
     let provider = match resolve(state) {
         Ok(Some(provider)) => provider,
         Ok(None) => return unavailable_error(surface, "z.ai Coding Plan is not enabled"),
@@ -782,6 +823,14 @@ pub fn count_tokens(
             "model is required for z.ai Coding Plan",
         );
     };
+    if let Err(response) = crate::proxy::authorize_model_for_claims(
+        state,
+        &claims,
+        model,
+        crate::api_error::ApiDialect::Anthropic,
+    ) {
+        return response;
+    }
     let provider = match resolve(state) {
         Ok(Some(provider)) => provider,
         Ok(None) => {

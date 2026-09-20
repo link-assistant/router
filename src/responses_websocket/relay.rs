@@ -124,6 +124,47 @@ pub(super) async fn relay<S>(
                             }
                         };
                         let model = value.get("model").and_then(Value::as_str).unwrap_or_default();
+                        let Ok(policy) = crate::proxy::model_policy_for_claims(state, &claims)
+                        else {
+                            let denied =
+                                crate::model_contract::ModelAccessError::policy_unavailable(model);
+                            let error = websocket_error(
+                                StatusCode::SERVICE_UNAVAILABLE,
+                                "api_error",
+                                &denied.code,
+                                &denied.to_string(),
+                                Some("model"),
+                                lane.as_deref(),
+                            );
+                            let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                            continue;
+                        };
+                        if model.is_empty() && !policy.allowed_models.is_empty() {
+                            let error = websocket_error(
+                                StatusCode::BAD_REQUEST,
+                                "invalid_request_error",
+                                "model_required",
+                                "a pinned credential requires an explicit model",
+                                Some("model"),
+                                lane.as_deref(),
+                            );
+                            let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                            continue;
+                        }
+                        if !policy.permits(model) {
+                            let denied =
+                                crate::model_contract::ModelAccessError::new(model, &policy);
+                            let error = websocket_error(
+                                StatusCode::FORBIDDEN,
+                                "permission_error",
+                                &denied.code,
+                                &denied.to_string(),
+                                Some("model"),
+                                lane.as_deref(),
+                            );
+                            let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                            continue;
+                        }
                         if model.is_empty() || !target.allowed_models.iter().any(|candidate| candidate == model) {
                             let error = websocket_error(
                                 StatusCode::BAD_REQUEST,

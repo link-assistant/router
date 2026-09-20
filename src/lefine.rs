@@ -113,7 +113,22 @@ pub(crate) async fn fetch_catalog(
         .and_then(serde_json::Value::as_array)
         .filter(|entries| !entries.is_empty())
         .ok_or_else(|| unavailable("Lefine model catalog contained no models"))?;
-    exact_models(entries)
+    let mut models = exact_models(entries)?;
+    let source_url = catalog_url(&provider.base_url);
+    let account = provider
+        .subscriber_id
+        .as_deref()
+        .unwrap_or(provider.name.as_str());
+    for model in &mut models {
+        crate::model_evidence::annotate_live_catalog(
+            &mut model.raw,
+            &source_url,
+            &provider.base_url,
+            account,
+            &["openai-compatible:/models"],
+        );
+    }
+    Ok(models)
 }
 
 /// Operator-configured exact IDs used only while live discovery is unavailable.

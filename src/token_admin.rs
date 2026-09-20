@@ -16,6 +16,7 @@ use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 
+use crate::model_contract::ModelAccessPolicy;
 use crate::proxy::{AppState, error_response, extract_admin_bearer, is_admin_authorised};
 use crate::token::{ADMIN_SCOPE, IssueRequest, TokenError};
 
@@ -146,10 +147,25 @@ pub async fn issue_client_token(
     if let Err(message) = request.validate() {
         return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
     }
+    let model_policy = ModelAccessPolicy {
+        allowed_models: req.allowed_models.clone(),
+        allow_substitution: req.allow_model_substitution,
+        substitution_source: req.model_substitution_source.clone().or_else(|| {
+            req.allow_model_substitution
+                .then(|| "client token issuance API".to_string())
+        }),
+    };
+    if let Err(message) = model_policy.validate() {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+    }
     match if req.ephemeral {
-        state.token_manager.issue_ephemeral(&request)
+        state
+            .token_manager
+            .issue_ephemeral_with_model_policy(&request, &model_policy)
     } else {
-        state.token_manager.issue(&request)
+        state
+            .token_manager
+            .issue_with_model_policy(&request, &model_policy)
     } {
         Ok(token) => {
             state.metrics.record_token_issued();
@@ -161,6 +177,7 @@ pub async fn issue_client_token(
                     "label": label,
                     "client_kind": client.canonical_name(),
                     "principal_id": principal,
+                    "model_policy": model_policy,
                 })),
             )
                 .into_response()
@@ -423,6 +440,18 @@ pub struct IssueClientTokenRequest {
     /// compacted during later issuance.
     #[serde(default)]
     pub ephemeral: bool,
+    /// Exact provider-advertised ids this credential may request. Empty keeps
+    /// the established unpinned behavior for callers that omitted a model.
+    #[serde(default)]
+    pub allowed_models: Vec<String>,
+    /// Permit a response to identify a different concrete served model.
+    #[serde(default)]
+    pub allow_model_substitution: bool,
+    /// User-controlled setting that explicitly enabled substitution. Wrapper
+    /// callers preserve their exact flag name; direct API callers may omit it
+    /// and receive the generic issuance-API provenance above.
+    #[serde(default)]
+    pub model_substitution_source: Option<String>,
 }
 
 /// Request body for the admin rotation endpoint. All fields are optional.

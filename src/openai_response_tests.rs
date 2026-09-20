@@ -54,6 +54,7 @@ fn translates_tool_call_blocks() {
 fn anthropic_to_chat_basic() {
     let antrhopic_resp = json!({
         "id": "msg_1",
+        "model": "claude-sonnet-4-5-20250929",
         "content": [
             {"type": "text", "text": "hello back"}
         ],

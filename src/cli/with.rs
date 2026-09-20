@@ -233,11 +233,21 @@ pub struct WithArgs {
     /// the user's choice silently, and the client's status line then presented
     /// the substitution as though the user had made it (issue #295).
     ///
-    /// A client whose configuration embeds the router's catalog — `opencode`,
-    /// `qwen`, `agent` — is always given an id, because it cannot start
-    /// without one.
+    /// A client whose Router-written configuration requires an id —
+    /// `opencode`, `qwen`, `agent` — must receive `--model` or the explicit
+    /// `--pick-model` opt-in.
     #[arg(long)]
     pub model: Option<String>,
+    /// Add another exact provider-advertised model to this run token.
+    ///
+    /// The selected `--model` is always included. Repeating this flag is the
+    /// explicit opt-in that lets the client switch models during the run.
+    #[arg(long = "allow-model")]
+    pub allowed_models: Vec<String>,
+    /// Accept a provider response whose concrete served model differs from
+    /// the requested selector. The actual served id is still reported.
+    #[arg(long)]
+    pub allow_model_substitution: bool,
     /// Let the router choose a model from the target's live catalog.
     ///
     /// It reports what it picked and why. Without this no model is named and

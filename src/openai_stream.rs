@@ -80,14 +80,17 @@ impl ResponseToolCall {
 impl OpenAIStreamTranslator {
     /// Create a stream translator for one upstream request.
     #[must_use]
-    pub fn new(shape: OpenAIStreamShape, resolved_model: &str) -> Self {
+    pub fn new(shape: OpenAIStreamShape, _resolved_model: &str) -> Self {
         let prefix = match shape {
             OpenAIStreamShape::ChatCompletion => "chatcmpl",
             OpenAIStreamShape::Response => "resp",
         };
         Self {
             shape,
-            served_model: resolved_model.to_string(),
+            // The response model is supplied by the upstream `message_start`.
+            // Starting empty prevents a requested/routed selector from being
+            // emitted as though it were the model that actually served.
+            served_model: String::new(),
             id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
             buffer: Vec::new(),
@@ -138,6 +141,29 @@ impl OpenAIStreamTranslator {
         let Ok(event) = serde_json::from_str::<Value>(&data) else {
             return Vec::new();
         };
+        if event.get("type").and_then(Value::as_str) == Some("error") {
+            self.failed = Some(());
+            let error = event.get("error").cloned().unwrap_or_else(|| {
+                json!({"type": "served_model_unknown", "message": "upstream model identity is unverifiable"})
+            });
+            return match self.shape {
+                OpenAIStreamShape::ChatCompletion => {
+                    vec![sse_frame(&json!({"error": error})), done_frame()]
+                }
+                OpenAIStreamShape::Response => vec![
+                    response_sse_frame(&json!({
+                        "type": "response.failed",
+                        "response": {
+                            "id": self.id,
+                            "object": "response",
+                            "status": "failed",
+                            "error": error,
+                        }
+                    })),
+                    done_frame(),
+                ],
+            };
+        }
         match self.shape {
             OpenAIStreamShape::ChatCompletion => self.translate_chat_event(&event),
             OpenAIStreamShape::Response => self.translate_response_event(&event),

@@ -317,6 +317,59 @@ pub(crate) fn authenticate_client(
         .map_err(|error| Box::new(error.render(crate::api_error::ApiDialect::Anthropic)))
 }
 
+/// Read model authority for authenticated claims, including the two legacy
+/// administrator credentials that predate durable token records.
+///
+/// A flat `TOKEN_ADMIN_KEY` or claimed `la_admin_…` credential is represented
+/// by synthetic admin claims after constant-time authentication above. It has
+/// always been an unpinned inference credential and has no record to load. No
+/// ordinary or JWT-backed token gets this compatibility path.
+pub(crate) fn model_policy_for_claims(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+) -> Result<crate::model_contract::ModelAccessPolicy, crate::token::TokenError> {
+    match state.token_manager.model_policy_for(&claims.sub) {
+        Ok(policy) => Ok(policy),
+        Err(crate::token::TokenError::NotFound(_))
+            if claims.is_admin()
+                && claims.label == "admin credential"
+                && claims.sub.starts_with("admin-credential-") =>
+        {
+            Ok(crate::model_contract::ModelAccessPolicy::default())
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Enforce the durable model grant before provider selection or upstream I/O.
+pub(crate) fn authorize_model_for_claims(
+    state: &AppState,
+    claims: &crate::token::TokenClaims,
+    requested: &str,
+    dialect: crate::api_error::ApiDialect,
+) -> Result<crate::model_contract::ModelAccessPolicy, Response> {
+    let policy = model_policy_for_claims(state, claims).map_err(|_| {
+        let error = crate::model_contract::ModelAccessError::policy_unavailable(requested);
+        crate::api_error::PresentedError {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error_type: &error.code,
+            message: &error.to_string(),
+        }
+        .render(dialect)
+    })?;
+    if policy.permits(requested) {
+        Ok(policy)
+    } else {
+        let error = crate::model_contract::ModelAccessError::new(requested, &policy);
+        Err(crate::api_error::PresentedError {
+            status: StatusCode::FORBIDDEN,
+            error_type: &error.code,
+            message: &error.to_string(),
+        }
+        .render(dialect))
+    }
+}
+
 /// Provider-independent fields owned by the Anthropic Messages surface.
 ///
 /// Validate these before automatic model routing or a concrete provider can
@@ -331,6 +384,7 @@ struct RequiredAnthropicMessagesFields {
 
 async fn validate_anthropic_messages_request(
     state: &AppState,
+    claims: &crate::token::TokenClaims,
     request: Request,
 ) -> Result<Request, Response> {
     if !request.uri().path().ends_with("/v1/messages") {
@@ -367,6 +421,12 @@ async fn validate_anthropic_messages_request(
             "invalid Anthropic Messages request: model must not be empty",
         ));
     }
+    authorize_model_for_claims(
+        state,
+        claims,
+        &required.model,
+        crate::api_error::ApiDialect::Anthropic,
+    )?;
     if required.max_tokens == 0 {
         return Err(error_response(
             StatusCode::BAD_REQUEST,
@@ -422,7 +482,7 @@ async fn proxy_handler_with_subscription(
             Ok(entitled) => entitled,
             Err(response) => return response,
         };
-        let req = match validate_anthropic_messages_request(&state, req).await {
+        let req = match validate_anthropic_messages_request(&state, &claims, req).await {
             Ok(request) => request,
             Err(response) => return response,
         };
@@ -481,7 +541,7 @@ async fn proxy_handler_with_subscription(
     {
         return response;
     }
-    let req = match validate_anthropic_messages_request(&state, req).await {
+    let req = match validate_anthropic_messages_request(&state, &claims, req).await {
         Ok(request) => request,
         Err(response) => return response,
     };

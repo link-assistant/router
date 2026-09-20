@@ -204,7 +204,7 @@ pub fn response_to_anthropic(req: &OpenAIResponseRequest) -> Value {
 
 /// Translate a completed Responses object into a Chat Completions object.
 #[must_use]
-pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> Value {
+pub fn response_to_chat_completion(response: &Value, _requested_model: &str) -> Value {
     if response.get("status").and_then(Value::as_str) == Some("failed") {
         return response_failed_error(&json!({"response": response}));
     }
@@ -216,14 +216,12 @@ pub fn response_to_chat_completion(response: &Value, requested_model: &str) -> V
         || format!("chatcmpl-{response_id}"),
         |_| response_id.to_string(),
     );
-    // The caller's model id is authoritative: a catalog alias must not be
-    // replaced by the concrete model the provider resolved it to.
-    let served_model = response.get("model").and_then(Value::as_str);
-    let model = if requested_model.is_empty() {
-        served_model.unwrap_or_default()
-    } else {
-        requested_model
-    };
+    // Response identity is a statement about what actually served the call,
+    // never a restatement of the requested selector.
+    let model = response
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
     let created = response
         .get("created_at")
         .and_then(Value::as_i64)
@@ -406,9 +404,9 @@ pub struct ResponsesChatStreamTranslator {
 impl ResponsesChatStreamTranslator {
     /// Create a translator for one Codex-backed Chat Completions request.
     #[must_use]
-    pub fn new(requested_model: &str) -> Self {
+    pub fn new(_requested_model: &str) -> Self {
         Self {
-            model: requested_model.to_string(),
+            model: String::new(),
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
             created: chrono::Utc::now().timestamp(),
             buffer: Vec::new(),
@@ -643,10 +641,7 @@ impl ResponsesChatStreamTranslator {
         if let Some(id) = response.get("id").and_then(Value::as_str) {
             self.id = format!("chatcmpl-{id}");
         }
-        // The requested model id stays the response identity.
-        if let Some(model) = response.get("model").and_then(Value::as_str)
-            && self.model.is_empty()
-        {
+        if let Some(model) = response.get("model").and_then(Value::as_str) {
             self.model = model.to_string();
         }
         if let Some(created) = response.get("created_at").and_then(Value::as_i64) {

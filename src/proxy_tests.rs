@@ -44,6 +44,38 @@ fn an_empty_carrier_is_not_treated_as_a_credential() {
 }
 
 #[test]
+fn legacy_admin_inference_credentials_remain_explicitly_unpinned() {
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.admin_key = Some("flat-admin-key".to_string());
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "authorization",
+        HeaderValue::from_static("Bearer flat-admin-key"),
+    );
+
+    let claims = match crate::proxy::authenticate_client_error(&state, &headers) {
+        Ok(claims) => claims,
+        Err(error) => panic!("legacy admin credential was rejected: {}", error.message),
+    };
+    assert!(claims.is_admin());
+    assert!(claims.sub.starts_with("admin-credential-"));
+    assert_eq!(
+        crate::proxy::model_policy_for_claims(&state, &claims).unwrap(),
+        crate::model_contract::ModelAccessPolicy::default()
+    );
+    assert!(
+        crate::proxy::authorize_model_for_claims(
+            &state,
+            &claims,
+            "provider/arbitrary-model",
+            crate::api_error::ApiDialect::OpenAi,
+        )
+        .is_ok()
+    );
+}
+
+#[test]
 fn build_upstream_headers_strips_client_auth_headers() {
     let mut incoming = HeaderMap::new();
     incoming.insert(
@@ -406,6 +438,61 @@ async fn anthropic_handler_strips_ingress_headers_before_the_captured_upstream()
         assert!(!headers.contains_key(*name), "{name} leaked upstream");
     }
     drop(captured);
+    upstream_task.abort();
+}
+
+#[tokio::test]
+async fn pinned_anthropic_token_rejects_a_different_model_before_upstream_io() {
+    use axum::body::Body;
+    use axum::extract::State;
+    use axum::http::Request;
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    let received = Arc::new(AtomicUsize::new(0));
+    let received_by_server = Arc::clone(&received);
+    let upstream = axum::Router::new().fallback(move || {
+        let received = Arc::clone(&received_by_server);
+        async move {
+            received.fetch_add(1, Ordering::SeqCst);
+            (StatusCode::OK, "{}")
+        }
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let base_url = format!("http://{}", listener.local_addr().unwrap());
+    let upstream_task = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+
+    let data = tempfile::tempdir().unwrap();
+    std::fs::write(
+        data.path().join(".credentials.json"),
+        r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-upstream"}}"#,
+    )
+    .unwrap();
+    let mut state = crate::app_state::AppState::for_tests(data.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    state.upstream_base_url = base_url;
+    let token = crate::model_routing::tests::bound_client_token_with_model_policy(
+        &state,
+        crate::clients::ClientKind::ClaudeCode,
+        &crate::model_contract::ModelAccessPolicy::exact("claude-allowed"),
+    );
+    let request = Request::builder()
+        .method("POST")
+        .uri("/v1/messages")
+        .header("authorization", format!("Bearer {token}"))
+        .header("user-agent", "claude-cli/2.1.265")
+        .header("anthropic-version", "2023-06-01")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"model":"claude-denied","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+        ))
+        .unwrap();
+    let response = crate::proxy::proxy_handler(State(state), request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body["error"]["type"], "model_not_allowed");
+    assert_eq!(received.load(Ordering::SeqCst), 0);
     upstream_task.abort();
 }
 

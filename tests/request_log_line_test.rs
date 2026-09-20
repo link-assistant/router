@@ -213,7 +213,7 @@ fn strip_ansi(line: &str) -> String {
 /// Before issue #320, the field existed in the format but was never populated,
 /// so every response line rendered `model=-` regardless of the request.
 #[test]
-fn the_response_line_names_the_model_the_request_asked_for() {
+fn the_response_line_distinguishes_requested_from_unknown_served_model() {
     let router = Router::start();
     router.discard_pending();
 
@@ -242,7 +242,7 @@ fn the_response_line_names_the_model_the_request_asked_for() {
     );
     let line = router.await_response_line(log_field(&request_line, "request_id"));
     assert!(
-        line.contains("model=no-such-model-xyz"),
+        line.contains("requested_model=no-such-model-xyz") && line.contains("served_model=-"),
         "the refused model must be named on the line: {line}"
     );
     // The credential must never travel with it.
@@ -282,12 +282,12 @@ fn a_rejected_request_with_no_model_still_reports_none() {
     let request_line = router.await_request_line("/api/services/anthropic/v1/messages");
     let line = router.await_response_line(log_field(&request_line, "request_id"));
     assert!(
-        line.contains("model=-"),
+        line.contains("requested_model=-") && line.contains("served_model=-"),
         "a request naming no model reports none rather than guessing: {line}"
     );
     // Reserved for that case, not printed over a model that was named.
     assert!(
-        !line.contains("model=no-such"),
+        !line.contains("requested_model=no-such"),
         "the placeholder must not stand in for a real model: {line}"
     );
 }

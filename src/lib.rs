@@ -84,6 +84,9 @@ pub mod login_url;
 pub mod managed_server;
 pub mod metrics;
 pub mod model_catalog;
+pub mod model_command;
+pub mod model_contract;
+pub(crate) mod model_evidence;
 pub mod model_resource;
 #[cfg(test)]
 mod model_resource_tests;

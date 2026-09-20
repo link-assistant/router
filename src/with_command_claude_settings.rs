@@ -17,9 +17,9 @@ pub(super) struct ClaudeModelSelection {
     pub reason: String,
 }
 
-/// A native Claude family is unavailable when this token has no Anthropic
-/// model in its live catalog. Exact z.ai IDs deliberately do not match this
-/// classification, even when their compatibility identity is Claude-shaped.
+/// A built-in Claude family is unavailable when this token has no Anthropic
+/// model in its live catalog. Concrete IDs are never classified by spelling;
+/// their exact authenticated catalog row decides ownership.
 pub(super) fn unavailable_native_claude_model<'a>(
     model: &'a str,
     models: &[RouterModel],
@@ -29,8 +29,7 @@ pub(super) fn unavailable_native_claude_model<'a>(
         .split_once('[')
         .map_or_else(|| model.trim(), |(family, _)| family)
         .to_ascii_lowercase();
-    let native =
-        matches!(family.as_str(), "opus" | "sonnet" | "haiku") || family.starts_with("claude-");
+    let native = matches!(family.as_str(), "opus" | "sonnet" | "haiku");
     let has_anthropic = crate::clients::usable_models(ClientKind::ClaudeCode, models)
         .iter()
         .any(|candidate| candidate.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);

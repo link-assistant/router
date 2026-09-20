@@ -645,7 +645,10 @@ path segment. Repeated
 entries from one provider are deduplicated; the same exact id claimed by two
 providers returns HTTP 409 rather than choosing or inventing a qualified id.
 Provider-reported context window, output cap, modalities, pricing, and
-deprecation date are normalized when present and omitted when absent. Native
+deprecation date are normalized when present and omitted when absent. Each
+capability field carries its own provider/account/endpoint/protocol source,
+raw field, retrieval time, and Router version; Router does not synthesize a
+capability from the model owner. Native
 service catalogues remain in their original protocol shapes and contain no
 Router ownership, health, degradation, conflict, fetch-time, or fallback
 diagnostics. Anthropic model lists implement `after_id`, `before_id`, and
@@ -706,16 +709,19 @@ same-ID collision between healthy owners fails explicitly with HTTP 409; Router
 does not resolve it by provider order, model-name prefix, or a manufactured
 `<provider>/<model>` alias. A model nothing
 advertises returns `404 not_found_error` instead of silently selecting a
-default. Buffered and streaming responses retain the requested identity
-consistently; the concrete upstream response remains in the local request log.
+default. Exact per-run model policy, response identity, evidence precedence,
+and the audited surface inventory are documented in
+[the model truth contract](docs/model-truth-contract.md).
 
 #### Model identity and output limits
 
-Responses always report the model id the client requested, including catalog
-aliases such as `codex-auto-review`, in `model` — for buffered replies and for
-every streamed chunk on each OpenAI surface. When the provider serves a
-different concrete model, Router keeps that diagnostic in its local request
-log instead of extending a vendor protocol with private fields or headers.
+Native responses preserve the provider's bytes. Translated responses report
+the concrete model identity supplied upstream. Under the default strict policy,
+a missing identity or a different served model fails before successful content
+is returned; explicit substitution allows a mismatch but never relabels it.
+Streaming paths validate identity before assistant content and reject a later
+identity change. Audit records keep requested, routed, and served identities in
+separate fields.
 
 Codex subscriptions accept `max_output_tokens`, `max_tokens`, and
 `max_completion_tokens`. The ChatGPT backend rejects an explicit cap, so the

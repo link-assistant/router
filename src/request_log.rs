@@ -886,7 +886,7 @@ pub async fn log_http_exchange(
     // The model the caller asked for identifies the public request, including
     // requests refused before an upstream is reached. Concrete upstream
     // responses remain available in the local structured request log.
-    let served_model = requested_model.clone().unwrap_or_else(|| "-".to_string());
+    let requested_model = requested_model.unwrap_or_else(|| "-".to_string());
     // A rate limit is one of the few conditions an operator must act on
     // quickly, and it was logged as three digits.
     let retry_after = response
@@ -898,7 +898,8 @@ pub async fn log_http_exchange(
         request_id = %correlation_id,
         status = response.status().as_u16(),
         latency_ms = started.elapsed().as_millis(),
-        model = %served_model,
+        requested_model = %requested_model,
+        served_model = %"-",
         token_label = %token_label,
         retry_after = %retry_after,
         "response"

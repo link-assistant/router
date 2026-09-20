@@ -381,7 +381,7 @@ async fn native_codex_handler_strips_ingress_headers_before_the_captured_upstrea
                     ("x-request-id", "provider-codex-request"),
                     ("anthropic-auth-token", "provider-anthropic-secret"),
                 ],
-                r#"{"id":"resp_1","status":"completed","output":[]}"#,
+                r#"{"id":"resp_1","model":"gpt-live","status":"completed","output":[]}"#,
             )
         }
     });
@@ -493,7 +493,7 @@ async fn claude_to_codex_translation_preserves_the_client_request_id() {
             (
                 StatusCode::OK,
                 [("content-type", "application/json")],
-                r#"{"id":"resp_1","status":"completed","output":[]}"#,
+                r#"{"id":"resp_1","model":"gpt-live","status":"completed","output":[]}"#,
             )
         }
     });

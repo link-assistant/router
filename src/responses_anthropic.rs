@@ -3,7 +3,7 @@
 use serde_json::{Value, json};
 
 #[must_use]
-pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
+pub fn anthropic_to_response(anthropic: &Value, _resolved_model: &str) -> Value {
     let id = anthropic
         .get("id")
         .and_then(Value::as_str)
@@ -72,7 +72,7 @@ pub fn anthropic_to_response(anthropic: &Value, resolved_model: &str) -> Value {
     let served_model = anthropic
         .get("model")
         .and_then(Value::as_str)
-        .unwrap_or(resolved_model);
+        .unwrap_or_default();
     let usage = crate::bridge_response::AnthropicUsage::from_value(anthropic.get("usage"));
     let mut response = json!({
         "id": id,

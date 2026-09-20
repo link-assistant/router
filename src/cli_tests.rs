@@ -1,4 +1,28 @@
 use super::*;
+
+#[test]
+fn models_explain_parses_an_exact_selector_and_client() {
+    let cli = Cli::try_parse_from([
+        "router",
+        "models",
+        "explain",
+        "provider/model-v1",
+        "--client",
+        "codex",
+        "--server",
+        "https://router.example",
+    ])
+    .unwrap();
+    let Some(Command::Models {
+        op: ModelOp::Explain { id, client, target },
+    }) = cli.command
+    else {
+        panic!("expected models explain");
+    };
+    assert_eq!(id, "provider/model-v1");
+    assert_eq!(client, crate::clients::ClientKind::Codex);
+    assert_eq!(target.server.as_deref(), Some("https://router.example"));
+}
 use crate::config::{default_gonka_model, default_openai_compatible_base_url};
 use clap::CommandFactory as _;
 

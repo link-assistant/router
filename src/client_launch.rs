@@ -443,6 +443,45 @@ fn contains_model_argument(arguments: &[OsString]) -> bool {
     })
 }
 
+/// Return the exact model named in forwarded client arguments.
+///
+/// This is inspected before server discovery or token minting so two model
+/// authorities cannot disagree after a credential already exists.
+pub fn forwarded_model(arguments: &[OsString]) -> Result<Option<String>, String> {
+    let mut found: Option<String> = None;
+    let mut index = 0;
+    while index < arguments.len() {
+        let argument = arguments[index].to_string_lossy();
+        let value = if matches!(argument.as_ref(), "-m" | "--model") {
+            index += 1;
+            Some(
+                arguments
+                    .get(index)
+                    .ok_or_else(|| format!("{argument} requires a model id"))?
+                    .to_string_lossy()
+                    .into_owned(),
+            )
+        } else {
+            argument.strip_prefix("--model=").map(str::to_string)
+        };
+        if let Some(value) = value {
+            if value.is_empty() {
+                return Err("forwarded model id must not be empty".to_string());
+            }
+            if let Some(previous) = found.as_deref()
+                && previous != value
+            {
+                return Err(format!(
+                    "conflicting forwarded model arguments `{previous}` and `{value}`"
+                ));
+            }
+            found = Some(value);
+        }
+        index += 1;
+    }
+    Ok(found)
+}
+
 fn model_selector(client: ClientKind, model: &str) -> String {
     if matches!(client, ClientKind::Opencode | ClientKind::Agent) && !model.contains('/') {
         format!("link-assistant/{model}")

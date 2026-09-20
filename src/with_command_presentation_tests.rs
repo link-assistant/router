@@ -303,8 +303,9 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
 }
 
 /// Issue #577: a model remembered by Claude is still subject to the live,
-/// client-authorized catalog. A stale native choice on a z.ai-only deployment
-/// must fail before the child can send inference to a missing provider.
+/// client-authorized catalog. A stale choice on a z.ai-only deployment must
+/// fail before the child can send inference to a missing provider, without
+/// inferring its provider from the model spelling.
 #[test]
 fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
     let profiles = tempfile::tempdir().expect("profile root");
@@ -341,8 +342,34 @@ fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
     };
     let error = error.to_string();
     assert!(error.contains("claude-opus-4-6"), "{error}");
-    assert!(error.contains("Anthropic provider"), "{error}");
+    assert!(error.contains("authorized live catalog"), "{error}");
     assert!(error.contains("/model"), "{error}");
+}
+
+#[test]
+fn a_concrete_claude_shaped_id_uses_exact_catalog_ownership() {
+    let models: Vec<RouterModel> = serde_json::from_value(json!([{
+        "id": "claude-compatible-exact",
+        "owned_by": "z.ai",
+        "client_capabilities": {
+            "claude": {
+                "behaves_as": "provider-verified-client-identity",
+                "source": "authenticated-live-catalog"
+            }
+        }
+    }]))
+    .expect("deserialize exact compatible model");
+    assert_eq!(
+        claude_settings::validate_claude_model_selection(
+            claude_settings::ClaudeModelSelection {
+                model: "claude-compatible-exact".into(),
+                reason: "exact saved selection".into(),
+            },
+            &models,
+        )
+        .expect("exact catalog ownership must outrank name shape"),
+        Some("exact saved selection".into())
+    );
 }
 
 #[test]

@@ -396,6 +396,17 @@ fn assert_codex_overlay_launch(standalone: bool) {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("\"router_model_launch\""), "{stderr}");
+    assert!(stderr.contains("\"state\":\"unpinned\""), "{stderr}");
+    assert!(
+        stderr.contains("\"substitution_allowed\":false"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains(&format!("\"router_endpoint\":\"{server}\"")),
+        "{stderr}"
+    );
     assert_eq!(
         fs::read_to_string(codex_home.join("config.toml")).expect("read real config"),
         original,
@@ -725,14 +736,13 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         router.join().expect("rejected-token router thread");
     }
 
-    let (server, requests) = mock_router();
-    let token = bound_client_token("codex");
+    let (server, requests) = mock_admin_router();
     let unavailable = Command::new(env!("CARGO_BIN_EXE_with-router"))
         .args([
             "--server",
             &server,
             "--token",
-            &token,
+            "admin-secret",
             "--model",
             "not-in-catalog",
             "codex",
@@ -743,7 +753,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         .expect("run launcher with unavailable model");
     assert!(!unavailable.status.success());
     assert!(String::from_utf8_lossy(&unavailable.stderr).contains("not available"));
-    assert_eq!(requests.join().expect("mock router thread").len(), 3);
+    assert_eq!(requests.join().expect("mock router thread").len(), 5);
 }
 
 #[test]
@@ -771,6 +781,8 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
             "2",
             "--run-max-requests",
             "7",
+            "--model",
+            "gpt-5.6-sol",
             "codex",
             "hello",
         ])
@@ -794,6 +806,23 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
     assert_eq!(
         fs::read_to_string(capture.join("token")).expect("captured token"),
         format!("{}\n", bound_client_token("codex"))
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("\"router_model_launch\""), "{stderr}");
+    assert!(stderr.contains("\"state\":\"exact\""), "{stderr}");
+    assert!(
+        stderr.contains("\"allowed_models\":[\"gpt-5.6-sol\"]"),
+        "{stderr}"
+    );
+    assert!(stderr.contains("\"selector_kind\":\"unknown\""), "{stderr}");
+    assert!(stderr.contains("\"model_descriptor\":{"), "{stderr}");
+    assert!(
+        stderr.contains("\"requested_selector\":\"gpt-5.6-sol\""),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("\"upstream_request_model\":\"gpt-5.6-sol\""),
+        "{stderr}"
     );
     let requests = router.join().expect("mock router thread");
     let paths = requests
@@ -819,6 +848,8 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
     assert!(requests[1].contains("authorization: Bearer admin-secret"));
     assert!(requests[2].contains(r#""ttl_hours":2"#));
     assert!(requests[2].contains(r#""max_requests":7"#));
+    assert!(requests[2].contains(r#""allowed_models":["gpt-5.6-sol"]"#));
+    assert!(requests[2].contains(r#""allow_model_substitution":false"#));
     assert!(requests[4].contains(r#""id":"run-id""#));
 }
 

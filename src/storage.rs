@@ -42,6 +42,7 @@ use crate::config::StoragePolicy;
 mod associative;
 mod file_mapped;
 mod legacy;
+mod model_policy;
 
 /// One persisted token record.
 ///
@@ -129,6 +130,10 @@ pub struct TokenRecord {
     /// Subscriber identity paired with `client_kind`.
     #[serde(default)]
     pub principal_id: Option<String>,
+    /// Exact model authority attached to this credential. Empty is the
+    /// backwards-compatible unpinned policy used by manually issued tokens.
+    #[serde(default)]
+    pub model_policy: crate::model_contract::ModelAccessPolicy,
 }
 
 /// Errors a [`TokenStore`] can return.

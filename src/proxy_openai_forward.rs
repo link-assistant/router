@@ -46,6 +46,39 @@ pub(super) async fn forward_openai(
         Ok(claims) => claims,
         Err(response) => return *response,
     };
+    let requested_model = routing_body
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default();
+    let model_policy = if requested_model.is_empty() {
+        match crate::proxy::model_policy_for_claims(state, &claims) {
+            Ok(policy) if policy.allowed_models.is_empty() => policy,
+            Ok(_) => {
+                return error_response(
+                    StatusCode::BAD_REQUEST,
+                    "model_required",
+                    "a pinned credential requires a non-empty exact model",
+                );
+            }
+            Err(error) => {
+                return error_response(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "model_policy_unavailable",
+                    &error.to_string(),
+                );
+            }
+        }
+    } else {
+        match crate::proxy::authorize_model_for_claims(
+            state,
+            &claims,
+            requested_model,
+            crate::api_error::ApiDialect::OpenAi,
+        ) {
+            Ok(policy) => policy,
+            Err(response) => return response,
+        }
+    };
     if !entitlement_granted {
         return error_response(
             StatusCode::FORBIDDEN,
@@ -94,6 +127,16 @@ pub(super) async fn forward_openai(
     let oauth_token = resolved.access_token;
     let selected_account = resolved.account;
     let evidence_token = resolved.evidence_token;
+    let selector_kind = selected_account.as_deref().map_or(
+        crate::model_contract::ModelSelectorKind::Unknown,
+        |account| {
+            state.model_catalogs.selector_kind_for(
+                crate::subscription::SubscriptionProvider::Claude,
+                account,
+                requested_model,
+            )
+        },
+    );
 
     let upstream_url = format!(
         "{}/v1/messages",
@@ -167,20 +210,64 @@ pub(super) async fn forward_openai(
             OpenAIShape::Chat => openai::OpenAIStreamShape::ChatCompletion,
             OpenAIShape::Response => openai::OpenAIStreamShape::Response,
         };
-        let mut translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
+        let translator = openai::OpenAIStreamTranslator::new(stream_shape, &served_model)
             .with_include_usage(include_usage);
+        let identity = crate::output_limit::ResponsesStreamRewriter::new(requested_model, None)
+            .with_model_policy(&model_policy)
+            .with_selector_kind(selector_kind);
+        let completion_audit = crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+            .with_models(Some(requested_model), Some(&served_model))
+            .with_provider(Some("claude"))
+            .with_provider_account(selected_account.as_deref())
+            .with_provider_endpoint(Some(&state.upstream_base_url))
+            .with_selector_kind(selector_kind);
+        let translation_state =
+            std::sync::Arc::new(std::sync::Mutex::new((translator, identity, false)));
+        let chunk_translation_state = std::sync::Arc::clone(&translation_state);
+        let chunk_completion_audit = completion_audit.clone();
         let response_log = std::sync::Arc::clone(&state.request_log);
         let mut usage = reservation.take().into_tracker();
         let stream = upstream_resp.bytes_stream().map(move |chunk| match chunk {
             Ok(bytes) => {
                 response_log.record_upstream_body(&correlation_id, &bytes);
                 usage.feed(&bytes);
-                Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(
-                    translator.push(&bytes).join(""),
-                ))
+                let output = {
+                    let mut state = chunk_translation_state
+                        .lock()
+                        .expect("stream translation state lock");
+                    let (translator, identity, model_audited) = &mut *state;
+                    let verified = identity.push(&bytes);
+                    let served_model = identity.upstream_model().map(str::to_string);
+                    if !*model_audited && let Some(served_model) = served_model.as_deref() {
+                        chunk_completion_audit.record_verified(served_model);
+                        *model_audited = true;
+                    }
+                    let output = translator.push(verified.as_bytes()).join("");
+                    drop(state);
+                    output
+                };
+                Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
             }
             Err(e) => Err(std::io::Error::other(e)),
         });
+        let stream = stream.chain(futures_util::stream::once(async move {
+            let output = {
+                let mut state = translation_state
+                    .lock()
+                    .expect("stream translation state lock");
+                let (translator, identity, model_audited) = &mut *state;
+                let verified = identity.finish();
+                let served_model = identity.upstream_model().map(str::to_string);
+                if !*model_audited && let Some(served_model) = served_model.as_deref() {
+                    completion_audit.record_verified(served_model);
+                    *model_audited = true;
+                }
+                let output = translator.push(verified.as_bytes()).join("");
+                drop(state);
+                output
+            };
+            Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
+        }));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = StatusCode::OK;
         *response.headers_mut() = response_headers;
@@ -247,6 +334,27 @@ pub(super) async fn forward_openai(
             );
         }
     };
+    let concrete_served_model =
+        match crate::model_contract::validate_translated_response_for_selector(
+            requested_model,
+            &anthropic,
+            &model_policy,
+            selector_kind,
+        ) {
+            Ok(served_model) => served_model,
+            Err(error) => {
+                return error_response(StatusCode::BAD_GATEWAY, &error.code, &error.to_string());
+            }
+        };
+    if let Some(concrete_served_model) = concrete_served_model.as_deref() {
+        crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
+            .with_models(Some(requested_model), Some(&served_model))
+            .with_provider(Some("claude"))
+            .with_provider_account(selected_account.as_deref())
+            .with_provider_endpoint(Some(&state.upstream_base_url))
+            .with_selector_kind(selector_kind)
+            .record_completed(concrete_served_model);
+    }
     if let Err(error) =
         crate::bridge_response::validate_anthropic_response_citations(anthropic.get("content"))
     {
@@ -260,9 +368,14 @@ pub(super) async fn forward_openai(
         .take()
         .settle(crate::usage::token_count(&anthropic).unwrap_or(0));
 
+    let concrete_served_model = concrete_served_model.as_deref().unwrap_or_default();
     let translated = match shape {
-        OpenAIShape::Chat => openai::anthropic_to_chat_completion(&anthropic, &served_model),
-        OpenAIShape::Response => responses::anthropic_to_response(&anthropic, &served_model),
+        OpenAIShape::Chat => {
+            openai::anthropic_to_chat_completion(&anthropic, concrete_served_model)
+        }
+        OpenAIShape::Response => {
+            responses::anthropic_to_response(&anthropic, concrete_served_model)
+        }
     };
 
     state

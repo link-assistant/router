@@ -396,7 +396,7 @@ fn reconcile_claude_thinking(
 /// Translate the upstream Anthropic JSON response to an `OpenAI` Chat
 /// Completions response.
 #[must_use]
-pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> Value {
+pub fn anthropic_to_chat_completion(anthropic: &Value, _resolved_model: &str) -> Value {
     let id = anthropic.get("id").and_then(Value::as_str).map_or_else(
         || format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         String::from,
@@ -443,7 +443,7 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, resolved_model: &str) -> 
     let served_model = anthropic
         .get("model")
         .and_then(Value::as_str)
-        .unwrap_or(resolved_model);
+        .unwrap_or_default();
 
     let mut response = json!({
         "id": id,
