@@ -30,6 +30,24 @@ fn sample_record(id: &str) -> TokenRecord {
     }
 }
 
+#[test]
+fn a_wrapper_can_recover_an_existing_lease_after_a_router_outage() {
+    let mut record = sample_record("recovering-wrapper");
+    record.ephemeral = true;
+    record.expires_at = 1_000;
+    record.run_lease_expires_at = Some(100);
+
+    assert_eq!(advance_run_lease(Some(&mut record), 200, 120), Some(320));
+    assert_eq!(record.run_lease_expires_at, Some(320));
+
+    record.run_lease_expires_at = None;
+    assert_eq!(
+        advance_run_lease(Some(&mut record), 200, 120),
+        None,
+        "a legacy record with no prior lease must remain unknown"
+    );
+}
+
 /// A new ephemeral issuance removes only dead ephemeral credentials in the
 /// same mutation. Permanent and active records remain available for audit and
 /// use, while repeated `router with` runs cannot grow the store forever.

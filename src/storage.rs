@@ -598,8 +598,8 @@ fn compact_ephemeral_records(records: &mut HashMap<String, TokenRecord>, now: i6
 
 fn advance_run_lease(record: Option<&mut TokenRecord>, now: i64, ttl_seconds: i64) -> Option<i64> {
     let record = record?;
-    let lease = record.run_lease_expires_at?;
-    if !record.ephemeral || record.revoked || record.expires_at <= now || lease < now {
+    record.run_lease_expires_at?;
+    if !record.ephemeral || record.revoked || record.expires_at <= now {
         return None;
     }
     let renewed = now.saturating_add(ttl_seconds);

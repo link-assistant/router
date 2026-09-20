@@ -40,7 +40,13 @@ pub(crate) fn start(credential: &RunCredential) -> Option<Guard> {
     Some(Guard(tokio::spawn(async move {
         loop {
             tokio::time::sleep(HEARTBEAT_INTERVAL).await;
-            match client.post(&url).bearer_auth(&token).send().await {
+            match client
+                .post(&url)
+                .bearer_auth(&token)
+                .timeout(Duration::from_secs(10))
+                .send()
+                .await
+            {
                 Ok(response) if response.status().is_success() => {}
                 Ok(response) => tracing::warn!(
                     status = %response.status(),

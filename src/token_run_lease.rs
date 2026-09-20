@@ -21,7 +21,8 @@ impl TokenManager {
         .map(|(token, _)| token)
     }
 
-    /// Extend an existing live lease; legacy or lapsed records stay unknown.
+    /// Extend an existing lease; an authenticated wrapper may recover after a
+    /// server outage, but a legacy record with no lease is never promoted.
     pub fn renew_run_lease(&self, token_id: &str) -> Result<i64, TokenError> {
         self.store
             .renew_run_lease(
@@ -32,7 +33,8 @@ impl TokenManager {
             .map_err(|error| TokenError::Storage(error.to_string()))?
             .ok_or_else(|| {
                 TokenError::Invalid(
-                    "run lease is absent, expired, revoked, or not ephemeral".to_string(),
+                    "run lease is absent, revoked, expired as a token, or not ephemeral"
+                        .to_string(),
                 )
             })
     }
