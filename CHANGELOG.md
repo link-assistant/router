@@ -194,6 +194,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.13.0] - 2026-09-20
+
+### Added
+- Make local `router deploy` updates candidate-first and connection-preserving, with durable rollback recovery, live/stale wrapper inventory, read-only status impact, and an explicit `--force-update` gate for legacy or otherwise interrupting migrations.
+
 ## [1.12.0] - 2026-09-20
 
 ### Added
