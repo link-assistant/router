@@ -94,15 +94,18 @@ under test. `router deploy` *does* pull an absent image — that is how it works
 a machine that has never built one — and the pull decision is pinned against a
 fake runtime in `src/deploy_tests.rs`.
 
-`--test-threads=1` because every test in that file drives the one deployment
-container, so they cannot run concurrently.
+`--test-threads=1` because every test in that file drives the same globally
+named relay, backend namespace, and private Docker network, so they cannot run
+concurrently.
 
 Without a runtime or an image the tests skip, and say so through the same
 `tiers::unavailable` path as tier 4 — a container-less checkout must not see red,
-but a test that silently no-ops reports success for work it never did. The
-converge properties themselves (a second run performs no action, a stopped
-container is restored, `--status` changes nothing) are pinned in
-`src/deploy_tests.rs` against a fake runtime, so they run everywhere, always.
+but a test that silently no-ops reports success for work it never did. Pure
+decisions such as run classification, hard-kill recovery, launch arguments, and
+CLI force conflicts are unit tested without Docker. The gated suite checks the
+daemon-level properties, including a stream held open for more than thirty
+seconds, legacy migration refusal, a true second-run no-op, and read-only
+`--status`.
 
 ## Skips are visible, and counted
 
