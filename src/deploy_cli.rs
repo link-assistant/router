@@ -126,11 +126,16 @@ mod tests {
 
     #[test]
     fn the_default_root_lives_under_the_data_directory() {
-        let root = resolved_root(&args(), Path::new("/var/lib/router")).unwrap();
+        let data_dir = std::env::current_dir()
+            .unwrap()
+            .join("var")
+            .join("lib")
+            .join("router");
+        let root = resolved_root(&args(), &data_dir).unwrap();
 
         // Under the data directory rather than beside it, so a deployment's own
         // state is not scattered across the filesystem.
-        assert_eq!(root, Path::new("/var/lib/router/deploy"));
+        assert_eq!(root, data_dir.join("deploy"));
         // Separate paths: the credential mount is read-only and the request log
         // cannot live on it.
         assert_ne!(root.join("credentials"), root.join("data"));

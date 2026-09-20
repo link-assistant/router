@@ -11,6 +11,9 @@ use link_assistant_router::cli::DeployArgs;
 mod docker;
 mod inventory;
 mod state;
+#[cfg(test)]
+#[path = "deploy_local_tests.rs"]
+mod tests;
 
 use docker::Docker;
 use inventory::Inventory;
@@ -21,7 +24,10 @@ pub const NETWORK: &str = link_assistant_router::deploy::NETWORK;
 pub const LABEL_KEY: &str = link_assistant_router::deploy::LABEL_KEY;
 const LEGACY: &str = link_assistant_router::deploy::CONTAINER;
 pub const SPEC_VERSION: &str = "local-v1";
+#[cfg(not(test))]
 const READY_ATTEMPTS: usize = 300;
+#[cfg(test)]
+const READY_ATTEMPTS: usize = 2;
 
 #[derive(Debug)]
 enum Existing {
@@ -344,6 +350,7 @@ impl Coordinator<'_> {
             if self.docker.health(container, origin) {
                 return Ok(());
             }
+            #[cfg(not(test))]
             thread::sleep(Duration::from_secs(1));
         }
         Err(format!("{container} did not become healthy"))
@@ -690,8 +697,18 @@ impl Coordinator<'_> {
 }
 
 pub fn run(args: &DeployArgs, root: &Path, image: &str, token_secret: &str) -> ExitCode {
+    run_with_docker(args, root, image, token_secret, Docker::default())
+}
+
+fn run_with_docker(
+    args: &DeployArgs,
+    root: &Path,
+    image: &str,
+    token_secret: &str,
+    docker: Docker,
+) -> ExitCode {
     let coordinator = Coordinator {
-        docker: Docker,
+        docker,
         state: State::new(root),
         root,
         image,

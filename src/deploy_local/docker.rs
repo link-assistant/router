@@ -1,11 +1,66 @@
 //! Auditable Docker command boundary for the local rolling coordinator.
 
 use std::path::Path;
-use std::process::{Command, Output};
+use std::process::Command;
 
 use super::{LABEL_KEY, NETWORK, RELAY, SPEC_VERSION};
 
-pub(super) struct Docker;
+pub(super) struct CommandOutput {
+    pub success: bool,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
+}
+
+pub(super) trait CommandRunner: Send + Sync {
+    fn run(
+        &self,
+        arguments: &[String],
+        environment: &[(&str, &str)],
+    ) -> Result<CommandOutput, String>;
+}
+
+struct ProcessRunner;
+
+impl CommandRunner for ProcessRunner {
+    fn run(
+        &self,
+        arguments: &[String],
+        environment: &[(&str, &str)],
+    ) -> Result<CommandOutput, String> {
+        let mut command = Command::new("docker");
+        command.args(arguments).envs(environment.iter().copied());
+        let output = command.output().map_err(|error| match error.kind() {
+            std::io::ErrorKind::NotFound => "Docker is not installed".to_string(),
+            _ => error.to_string(),
+        })?;
+        Ok(CommandOutput {
+            success: output.status.success(),
+            stdout: output.stdout,
+            stderr: output.stderr,
+        })
+    }
+}
+
+pub(super) struct Docker {
+    runner: Box<dyn CommandRunner>,
+}
+
+impl Default for Docker {
+    fn default() -> Self {
+        Self {
+            runner: Box::new(ProcessRunner),
+        }
+    }
+}
+
+#[cfg(test)]
+impl Docker {
+    pub(super) fn with_runner(runner: impl CommandRunner + 'static) -> Self {
+        Self {
+            runner: Box::new(runner),
+        }
+    }
+}
 
 fn compact(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes)
@@ -15,20 +70,17 @@ fn compact(bytes: &[u8]) -> String {
 }
 
 impl Docker {
-    fn command(arguments: &[String]) -> Result<Output, String> {
-        Command::new("docker")
-            .args(arguments)
-            .output()
-            .map_err(|error| match error.kind() {
-                std::io::ErrorKind::NotFound => "Docker is not installed".to_string(),
-                _ => error.to_string(),
-            })
+    fn command(
+        &self,
+        arguments: &[String],
+        environment: &[(&str, &str)],
+    ) -> Result<CommandOutput, String> {
+        self.runner.run(arguments, environment)
     }
 
-    #[allow(clippy::unused_self)]
     pub(super) fn output(&self, arguments: &[String]) -> Result<String, String> {
-        let output = Self::command(arguments)?;
-        if output.status.success() {
+        let output = self.command(arguments, &[])?;
+        if output.success {
             Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         } else {
             Err(compact(&output.stderr))
@@ -234,7 +286,6 @@ impl Docker {
             && inspect_label(&format!("{LABEL_KEY}.spec")).as_deref() == Some(SPEC_VERSION)
     }
 
-    #[allow(clippy::unused_self)]
     pub(super) fn run_backend(
         &self,
         name: &str,
@@ -243,13 +294,8 @@ impl Docker {
         token_secret: &str,
     ) -> Result<(), String> {
         let arguments = backend_arguments(name, image, root);
-        let mut command = Command::new("docker");
-        command.args(arguments);
-        let output = command
-            .env("TOKEN_SECRET", token_secret)
-            .output()
-            .map_err(|error| error.to_string())?;
-        if output.status.success() {
+        let output = self.command(&arguments, &[("TOKEN_SECRET", token_secret)])?;
+        if output.success {
             Ok(())
         } else {
             Err(compact(&output.stderr))
@@ -373,8 +419,11 @@ mod tests {
         let arguments = backend_arguments("candidate", "router:1.2.3", root);
         let joined = arguments.join(" ");
 
-        assert!(joined.contains("/srv/router/data:/data/router"));
-        assert!(joined.contains("/srv/router/credentials:/data/claude:ro"));
+        assert!(joined.contains(&format!("{}:/data/router", root.join("data").display())));
+        assert!(joined.contains(&format!(
+            "{}:/data/claude:ro",
+            root.join("credentials").display()
+        )));
         assert!(joined.contains("-e TOKEN_SECRET"));
         assert!(!joined.contains("a-secret-value"));
         assert!(!joined.contains("releases/"));
