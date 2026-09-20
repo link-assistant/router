@@ -131,6 +131,7 @@ const ROUTES: &[RouteSpec] = &[
     neutral(RouteId::Health, RouteMethod::Get, "/api/health"),
     client_neutral(RouteId::AggregateModels, RouteMethod::Get, "/api/models"),
     client_neutral(RouteId::SubscriptionUsage, RouteMethod::Get, "/api/usage"),
+    client_neutral(RouteId::RunLease, RouteMethod::Post, "/api/run-lease"),
     client_neutral(
         RouteId::SubscriptionUsageProvider,
         RouteMethod::Get,

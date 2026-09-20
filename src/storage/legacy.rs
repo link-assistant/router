@@ -92,6 +92,7 @@ fn parse_record_line(line: &str) -> Result<TokenRecord, String> {
         expires_at: 0,
         revoked: false,
         ephemeral: false,
+        run_lease_expires_at: None,
         account: None,
         max_requests: None,
         used_requests: 0,
@@ -124,6 +125,9 @@ fn parse_field(record: &mut TokenRecord, field: &str) -> Result<(), String> {
         "revoked" => {
             let value = required_atom(&mut tokens, key)?;
             record.revoked = matches!(value, "true" | "1" | "yes");
+        }
+        "run_lease_expires_at" => {
+            record.run_lease_expires_at = Some(required_number(&mut tokens, key)?);
         }
         "account" => record.account = tokens.next_string(),
         "max_requests" => record.max_requests = Some(required_number(&mut tokens, key)?),

@@ -12,6 +12,7 @@ fn sample_record(id: &str) -> TokenRecord {
         expires_at: 1_700_001_000,
         revoked: false,
         ephemeral: false,
+        run_lease_expires_at: None,
         sliding_window_seconds: None,
         account: Some("primary".into()),
         max_requests: None,
@@ -27,6 +28,24 @@ fn sample_record(id: &str) -> TokenRecord {
         principal_id: None,
         model_policy: crate::model_contract::ModelAccessPolicy::default(),
     }
+}
+
+#[test]
+fn a_wrapper_can_recover_an_existing_lease_after_a_router_outage() {
+    let mut record = sample_record("recovering-wrapper");
+    record.ephemeral = true;
+    record.expires_at = 1_000;
+    record.run_lease_expires_at = Some(100);
+
+    assert_eq!(advance_run_lease(Some(&mut record), 200, 120), Some(320));
+    assert_eq!(record.run_lease_expires_at, Some(320));
+
+    record.run_lease_expires_at = None;
+    assert_eq!(
+        advance_run_lease(Some(&mut record), 200, 120),
+        None,
+        "a legacy record with no prior lease must remain unknown"
+    );
 }
 
 /// A new ephemeral issuance removes only dead ephemeral credentials in the
@@ -327,6 +346,7 @@ fn lino_codec_handles_special_chars() {
         client_kind: Some("claude".into()),
         principal_id: Some("primary".into()),
         ephemeral: false,
+        run_lease_expires_at: None,
         model_policy: crate::model_contract::ModelAccessPolicy::default(),
     };
     let s = associative::encode_text(std::iter::once(&rec));

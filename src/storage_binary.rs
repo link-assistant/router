@@ -12,7 +12,7 @@ use super::budget::{
     add_token_usage, admit_request_reserving, consume_request, settle_token_usage,
 };
 use super::{
-    RequestAdmission, StorageError, TokenRecord, TokenStore, associative,
+    RequestAdmission, StorageError, TokenRecord, TokenStore, advance_run_lease, associative,
     compact_ephemeral_records, legacy,
 };
 
@@ -317,5 +317,14 @@ impl TokenStore for BinaryTokenStore {
 
     fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
         self.mutate(|records| settle_token_usage(records.get_mut(id), reserved, actual))
+    }
+
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        self.mutate(|records| advance_run_lease(records.get_mut(id), now, ttl_seconds))
     }
 }

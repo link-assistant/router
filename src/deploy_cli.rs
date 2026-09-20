@@ -1,22 +1,14 @@
 //! `router deploy` command surface.
 //!
 //! Split from `main.rs` to keep that file within the repository's 1000-line
-//! limit. The converge engine is in [`link_assistant_router::deploy`]; this file
-//! resolves defaults, prints the report, and maps outcomes onto exit codes.
-//!
-//! The decisions here — which image and root a run uses when none is named, and
-//! which exit code an outcome deserves — are separated from the printing so they
-//! can be tested without a container runtime. They are worth testing: defaulting
-//! to a moving image tag would defeat the immutable-reference check the converge
-//! engine performs, and a refusal that exits `1` is indistinguishable from a
-//! deployment failure to a script.
+//! limit. This file resolves defaults and dispatches to either the local
+//! transactional coordinator or the remote deployment agent.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::config::Config;
-use link_assistant_router::deploy::{self, Plan, runtime::Docker};
 
 /// Default image for a local deployment: this binary's own version.
 ///
@@ -35,56 +27,17 @@ fn default_root(data_dir: &Path) -> PathBuf {
     data_dir.join("deploy")
 }
 
-/// The plan a set of flags describes, with defaults filled in.
-fn plan_for(args: &DeployArgs, data_dir: &Path, token_secret: &str) -> Plan {
+fn resolved_root(args: &DeployArgs, data_dir: &Path) -> Result<PathBuf, String> {
     let root = args
         .root
         .as_deref()
         .map_or_else(|| default_root(data_dir), PathBuf::from);
-    let mut plan = Plan::local(
-        &root,
-        &args
-            .image
-            .as_deref()
-            .map_or_else(default_image, str::to_string),
-        token_secret,
-    );
-    plan.port = args.port;
-    plan.status_only = args.status;
-    plan.build_context = args.build.as_deref().map(PathBuf::from);
-    plan
-}
-
-/// Exit code for a removal outcome.
-///
-/// A refusal for want of consent exits `2`: it is a usage answer, and a script
-/// that cannot tell it from `1` cannot tell "you forgot --yes" from "the
-/// deployment is broken".
-fn down_code(removed: bool) -> ExitCode {
-    if removed {
-        ExitCode::SUCCESS
+    if root.is_absolute() {
+        Ok(root)
     } else {
-        ExitCode::from(2)
-    }
-}
-
-/// The closing line a converged run prints.
-fn ready_line(plan: &Plan, skipped: bool) -> String {
-    if plan.status_only {
-        format!(
-            "{} on 127.0.0.1:{}",
-            if skipped {
-                "deployment is up with steps skipped"
-            } else {
-                "deployment is converged"
-            },
-            plan.port
-        )
-    } else {
-        format!(
-            "deployment is ready: `router with claude --server http://127.0.0.1:{}`",
-            plan.port
-        )
+        std::env::current_dir()
+            .map(|directory| directory.join(root))
+            .map_err(|error| format!("could not resolve deployment root: {error}"))
     }
 }
 
@@ -96,8 +49,8 @@ fn ready_line(plan: &Plan, skipped: bool) -> String {
 /// provided data` from the process API — and if it ever stopped doing so, the
 /// deployment would sign tokens nothing can validate. Removal is exempt: it
 /// names a container and deletes it, signing nothing.
-fn secret_refusal(token_secret: &str, down: bool) -> Option<String> {
-    if down {
+fn secret_refusal(token_secret: &str, does_not_sign: bool) -> Option<String> {
+    if does_not_sign {
         return None;
     }
     link_assistant_router::token_secret::ensure_real(token_secret)
@@ -114,36 +67,20 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
     if args.server.is_some() {
         return crate::deploy_remote::run(args, &config.token_secret);
     }
-    let runtime = Docker;
-
-    if let Some(refusal) = secret_refusal(&config.token_secret, args.down) {
+    if let Some(refusal) = secret_refusal(&config.token_secret, args.down || args.status) {
         eprintln!("{refusal}");
         return ExitCode::from(2);
     }
 
-    if args.down {
-        return match deploy::down(&runtime, args.yes) {
-            Ok(message) => {
-                println!("{message}");
-                down_code(true)
-            }
-            Err(error) => {
-                eprintln!("error: {error}");
-                down_code(false)
-            }
-        };
-    }
-
-    let plan = plan_for(args, &config.data_dir, &config.token_secret);
-    let report = deploy::converge(&runtime, &plan);
-    report.print();
-
-    if report.converged() {
-        println!("\n{}", ready_line(&plan, !report.skips().is_empty()));
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
+    let root = match resolved_root(args, &config.data_dir) {
+        Ok(root) => root,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(2);
+        }
+    };
+    let image = args.image.clone().unwrap_or_else(default_image);
+    crate::deploy_local::run(args, &root, &image, &config.token_secret)
 }
 
 #[cfg(test)]
@@ -156,6 +93,7 @@ mod tests {
             status: false,
             down: false,
             yes: false,
+            force_update: false,
             port: link_assistant_router::deploy::DEFAULT_PORT,
             public_port: None,
             image: None,
@@ -166,72 +104,41 @@ mod tests {
 
     #[test]
     fn the_default_image_is_this_binarys_own_version_not_a_moving_tag() {
-        let plan = plan_for(&args(), Path::new("/tmp/state"), "secret");
+        let image = default_image();
 
         // Defaulting to `latest` would make every unqualified run fail the
         // immutable-reference check — or worse, deploy a container that disagrees
         // with the CLI about the API contract.
-        assert!(
-            plan.image.ends_with(link_assistant_router::VERSION),
-            "{}",
-            plan.image
-        );
-        deploy::immutable_ref(&plan.image).expect("the default is deployable");
+        assert!(image.ends_with(link_assistant_router::VERSION), "{image}");
+        link_assistant_router::deploy::immutable_ref(&image).expect("the default is deployable");
     }
 
     #[test]
-    fn a_named_image_and_root_are_used_verbatim() {
+    fn a_relative_root_is_made_stable_before_it_becomes_an_ownership_label() {
         let mut args = args();
-        args.image = Some("ghcr.io/link-assistant/router@sha256:abc".to_string());
-        args.root = Some("/srv/router".to_string());
-        args.port = 19000;
+        args.root = Some("router-state".to_string());
 
-        let plan = plan_for(&args, Path::new("/tmp/state"), "secret");
+        let root = resolved_root(&args, Path::new("/tmp/state")).unwrap();
 
-        assert_eq!(plan.image, "ghcr.io/link-assistant/router@sha256:abc");
-        assert_eq!(plan.credential_home, Path::new("/srv/router/credentials"));
-        assert_eq!(plan.data_home, Path::new("/srv/router/data"));
-        assert_eq!(plan.port, 19000);
+        assert!(root.is_absolute());
+        assert!(root.ends_with("router-state"));
     }
 
     #[test]
     fn the_default_root_lives_under_the_data_directory() {
-        let plan = plan_for(&args(), Path::new("/var/lib/router"), "secret");
+        let data_dir = std::env::current_dir()
+            .unwrap()
+            .join("var")
+            .join("lib")
+            .join("router");
+        let root = resolved_root(&args(), &data_dir).unwrap();
 
         // Under the data directory rather than beside it, so a deployment's own
         // state is not scattered across the filesystem.
-        assert_eq!(
-            plan.credential_home,
-            Path::new("/var/lib/router/deploy/credentials")
-        );
-        assert_eq!(plan.data_home, Path::new("/var/lib/router/deploy/data"));
+        assert_eq!(root, data_dir.join("deploy"));
         // Separate paths: the credential mount is read-only and the request log
         // cannot live on it.
-        assert_ne!(plan.credential_home, plan.data_home);
-    }
-
-    #[test]
-    fn status_and_build_flags_reach_the_plan() {
-        let mut args = args();
-        args.status = true;
-        args.build = Some("/src/router".to_string());
-
-        let plan = plan_for(&args, Path::new("/tmp/state"), "secret");
-
-        assert!(plan.status_only);
-        assert_eq!(
-            plan.build_context.as_deref(),
-            Some(Path::new("/src/router"))
-        );
-    }
-
-    #[test]
-    fn the_signing_secret_is_passed_through_rather_than_invented() {
-        let plan = plan_for(&args(), Path::new("/tmp/state"), "the-deployments-secret");
-
-        // The deployment must sign with the same secret the CLI would, or tokens
-        // minted here are rejected there.
-        assert_eq!(plan.token_secret, "the-deployments-secret");
+        assert_ne!(root.join("credentials"), root.join("data"));
     }
 
     #[test]
@@ -269,38 +176,5 @@ mod tests {
             )
             .is_none()
         );
-    }
-
-    #[test]
-    fn a_refused_removal_exits_two_rather_than_one() {
-        // `1` means the deployment failed; `2` means the command was not asked
-        // correctly. A script that cannot tell them apart cannot retry safely.
-        assert_eq!(
-            format!("{:?}", down_code(false)),
-            format!("{:?}", ExitCode::from(2))
-        );
-        assert_eq!(
-            format!("{:?}", down_code(true)),
-            format!("{:?}", ExitCode::SUCCESS)
-        );
-    }
-
-    #[test]
-    fn the_closing_line_tells_the_operator_what_to_do_next() {
-        let plan = plan_for(&args(), Path::new("/tmp/state"), "secret");
-
-        let ready = ready_line(&plan, false);
-        assert!(
-            ready.contains("router with claude"),
-            "a converged deploy names the next command: {ready}"
-        );
-        assert!(ready.contains(&plan.port.to_string()), "{ready}");
-
-        let mut reporting = plan;
-        reporting.status_only = true;
-        // `--status` reports rather than instructs, and it distinguishes a fully
-        // converged deployment from one that came up with steps skipped.
-        assert!(ready_line(&reporting, false).contains("converged"));
-        assert!(ready_line(&reporting, true).contains("skipped"));
     }
 }

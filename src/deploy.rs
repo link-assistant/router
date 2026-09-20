@@ -63,6 +63,14 @@ use step::{Failure, Outcome, Report};
 /// administers. Sharing a name would make `deploy --down` destroy a wrapper's
 /// container, or a wrapper's teardown stop a deployment.
 pub const CONTAINER: &str = "router-deploy";
+/// Stable local front door retained across backend updates.
+pub const RELAY: &str = "router-deploy-relay";
+/// Docker network shared only by the local relay and versioned backends.
+pub const NETWORK: &str = "router-deploy-network";
+/// Prefix for update candidates and accepted local backends.
+pub const BACKEND_PREFIX: &str = "router-deploy-backend-";
+/// Label key proving ownership of local deployment objects.
+pub const LABEL_KEY: &str = "com.link-assistant.router.deploy";
 /// Label proving a container is this command's to manage.
 pub const LABEL: &str = "com.link-assistant.router.deploy=1";
 /// Default published port.
@@ -330,6 +338,38 @@ fn container_step(
         expected: format!("to be able to inspect {CONTAINER}"),
         found,
     })?;
+    if state != ContainerState::Absent {
+        let current_image = runtime
+            .container_image(CONTAINER)
+            .map_err(|found| Failure {
+                step: "container",
+                purpose: "a running container is converged only when its launch specification matches the requested release",
+                expected: format!("to inspect the image configured for {CONTAINER}"),
+                found,
+            })?
+            .ok_or_else(|| Failure {
+                step: "container",
+                purpose: "a running container is converged only when its launch specification matches the requested release",
+                expected: format!("{CONTAINER} configured from {}", plan.image),
+                found: "the container has no configured image reference".to_string(),
+            })?;
+        if current_image != plan.image {
+            if !acting {
+                return Ok(Outcome::Skipped(format!(
+                    "{CONTAINER} uses {current_image}; requested {} and --status changes nothing",
+                    plan.image
+                )));
+            }
+            return Err(Failure {
+                step: "container",
+                purpose: "replacing the published container in place would sever in-flight streams and idle wrapper runs",
+                expected: format!("{CONTAINER} configured from {}", plan.image),
+                found: format!(
+                    "{current_image}; update refused before mutation because local connection-preserving cutover is not established"
+                ),
+            });
+        }
+    }
     match state {
         ContainerState::Running => Ok(Outcome::AlreadyConverged(format!("{CONTAINER} running"))),
         ContainerState::Stopped if !acting => Ok(Outcome::Skipped(format!(

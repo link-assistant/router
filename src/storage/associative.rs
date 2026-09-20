@@ -44,36 +44,9 @@ impl SemanticLink {
     }
 }
 
-pub(super) fn encode_text<'a>(records: impl IntoIterator<Item = &'a TokenRecord>) -> String {
-    let records = records
-        .into_iter()
-        .map(record_to_lino_value)
-        .collect::<Vec<_>>();
-    lino_objects_codec::encode(&LinoValue::object([
-        ("type", LinoValue::String("RouterState".into())),
-        ("subtype", LinoValue::String("TokenStore".into())),
-        ("value", LinoValue::Array(records)),
-    ]))
-}
+pub(super) use super::associative_text::{decode_text, encode_text};
 
-pub(super) fn decode_text(input: &str) -> Result<Vec<TokenRecord>, String> {
-    let root = lino_objects_codec::decode(input).map_err(|error| error.to_string())?;
-    expect_string_field(&root, "type", "token store")?
-        .eq("RouterState")
-        .then_some(())
-        .ok_or_else(|| "token store type must be RouterState".to_string())?;
-    expect_string_field(&root, "subtype", "token store")?
-        .eq("TokenStore")
-        .then_some(())
-        .ok_or_else(|| "token store subtype must be TokenStore".to_string())?;
-    let records = object_field(&root, "value", "token store")?;
-    let LinoValue::Array(records) = records else {
-        return Err("token store value must be an array".into());
-    };
-    records.iter().map(record_from_lino_value).collect()
-}
-
-fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
+pub(super) fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
     LinoValue::object([
         ("type", LinoValue::String(TOKEN_RECORD.into())),
         ("subtype", LinoValue::String(record.id.clone())),
@@ -86,6 +59,14 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                 ("expires_at", LinoValue::Int(record.expires_at)),
                 ("revoked", LinoValue::Bool(record.revoked)),
                 ("ephemeral", LinoValue::Bool(record.ephemeral)),
+                (
+                    "run_lease_expires_at",
+                    record
+                        .run_lease_expires_at
+                        .map_or(LinoValue::Null, |value| {
+                            LinoValue::String(value.to_string())
+                        }),
+                ),
                 (
                     "account",
                     record
@@ -171,7 +152,7 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
     ])
 }
 
-fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
+pub(super) fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
     if expect_string_field(value, "type", "record")? != TOKEN_RECORD {
         return Err("record type must be TokenRecord".into());
     }
@@ -188,6 +169,11 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         expires_at: expect_i64_field(fields, "expires_at", "record value")?,
         revoked: expect_bool_field(fields, "revoked", "record value")?,
         ephemeral: optional_bool_field(fields, "ephemeral", "record value")?.unwrap_or(false),
+        run_lease_expires_at: optional_i64_string_field(
+            fields,
+            "run_lease_expires_at",
+            "record value",
+        )?,
         account: optional_string_field(fields, "account", "record value")?,
         sliding_window_seconds: optional_u64_field(
             fields,
@@ -226,7 +212,7 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
     })
 }
 
-fn object_field<'a>(
+pub(super) fn object_field<'a>(
     value: &'a LinoValue,
     key: &str,
     context: &str,
@@ -247,7 +233,7 @@ fn optional_object_field<'a>(
         .find_map(|(field, value)| (field == key).then_some(value)))
 }
 
-fn expect_string_field<'a>(
+pub(super) fn expect_string_field<'a>(
     value: &'a LinoValue,
     key: &str,
     context: &str,
@@ -348,11 +334,12 @@ fn optional_i64_string_field(
         return Ok(None);
     };
     match value {
+        LinoValue::Null => Ok(None),
         LinoValue::String(value) => value
             .parse()
             .map(Some)
             .map_err(|error| format!("{context}.{key} is invalid: {error}")),
-        _ => Err(format!("{context}.{key} must be a string")),
+        _ => Err(format!("{context}.{key} must be a string or null")),
     }
 }
 
@@ -727,6 +714,14 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "ephemeral",
         &record.ephemeral.to_string(),
     );
+    if let Some(expires_at) = record.run_lease_expires_at {
+        add_field(
+            &mut links,
+            &value,
+            "run_lease_expires_at",
+            &expires_at.to_string(),
+        );
+    }
     if let Some(account) = &record.account {
         add_field(&mut links, &value, "account", account);
     }
@@ -890,6 +885,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         expires_at: parse_field(&fields, "expires_at")?,
         revoked: parse_field(&fields, "revoked")?,
         ephemeral: optional_parsed_field(&fields, "ephemeral")?.unwrap_or(false),
+        run_lease_expires_at: optional_parsed_field(&fields, "run_lease_expires_at")?,
         account: fields.get("account").cloned(),
         max_requests: optional_parsed_field(&fields, "max_requests")?,
         used_requests: parse_field(&fields, "used_requests")?,

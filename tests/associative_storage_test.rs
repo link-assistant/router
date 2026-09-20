@@ -13,6 +13,7 @@ fn sample_record() -> TokenRecord {
         expires_at: 1_700_001_000,
         revoked: false,
         ephemeral: false,
+        run_lease_expires_at: None,
         sliding_window_seconds: None,
         account: Some("primary".into()),
         max_requests: Some(100),

@@ -1,5 +1,21 @@
 use super::*;
 
+impl RunCredential {
+    /// The durable record id retained so a persistent credential remains
+    /// revocable later (issue #190).
+    #[must_use]
+    pub fn id(&self) -> Option<String> {
+        token_subject(&self.token).ok()
+    }
+
+    /// Whether this command minted the credential. Supplied tokens may be
+    /// shared with other machines and must not be revoked implicitly (#296).
+    #[must_use]
+    pub const fn was_minted(&self) -> bool {
+        self.revocation.is_some()
+    }
+}
+
 pub fn token_subject(token: &str) -> Result<String, AnyError> {
     token_claim(token)?
         .get("sub")

@@ -25,6 +25,9 @@ RUN mkdir -p src/bin && \
 # cache when only Rust source changes.
 COPY ui/dist/ ui/dist/
 
+# The capability contract validates checked provider evidence at compile time.
+COPY docs/provider-evidence/anthropic-adaptive-thinking.json docs/provider-evidence/anthropic-adaptive-thinking.json
+
 # Copy real source code
 COPY src/ src/
 

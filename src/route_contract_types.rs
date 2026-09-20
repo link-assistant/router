@@ -82,6 +82,7 @@ pub enum RouteId {
     SubscriptionUsageProvider,
     Tokens,
     ClientTokens,
+    RunLease,
     RevokeToken,
     RotateToken,
     RotateClientToken,

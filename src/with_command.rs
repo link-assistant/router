@@ -200,7 +200,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     };
     temporary.codex_bridge = codex_bridge;
     let arguments = plan.arguments;
+    let run_lease = crate::managed_server::start_run_lease(&credential);
     let launch = temporary.launch(&arguments, claude_profile.as_mut()).await;
+    drop(run_lease);
     if launch.as_ref().is_ok_and(|status| !status.success())
         && server.source == "managed local container"
         && let Some(hint) = crate::managed_server::managed_failure_hint()

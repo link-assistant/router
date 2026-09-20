@@ -1598,6 +1598,15 @@ budgeted for the partition.
 
 ## Docker Deployment
 
+On the current machine, `router deploy` creates a stable loopback relay in front
+of versioned backends. Updates verify a candidate, atomically switch new
+connections, and drain established streams from the old backend. It inventories
+live wrapper leases, stale pinned credentials, and unsafe pre-policy records
+before mutation; interruption requires the explicit local-only
+`--force-update` flag. See the
+[local deployment guide](docs/use-cases/local-deploy.md) for status output,
+rollback recovery, durable state, and legacy migration.
+
 For a server already running Docker, `router deploy --server user@host`
 performs a candidate-first, connection-draining remote deployment over strict
 OpenSSH. It copies credentials only from that target, verifies client catalogs,

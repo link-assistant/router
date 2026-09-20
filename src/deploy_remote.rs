@@ -263,6 +263,7 @@ mod tests {
             status: false,
             down: false,
             yes: false,
+            force_update: false,
             port: 8080,
             public_port: None,
             image: None,

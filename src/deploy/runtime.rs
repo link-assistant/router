@@ -85,8 +85,11 @@ pub trait ContainerRuntime: Send + Sync {
     /// path of the default command fails on a clean machine.
     fn pull(&self, image: &str) -> Result<(), String>;
 
-    /// The image a container was created from, for proving `--status` changed
-    /// nothing.
+    /// The configured image reference a container was created from.
+    ///
+    /// This deliberately reads `.Config.Image`, not Docker's resolved image id:
+    /// convergence compares the requested immutable reference with the launch
+    /// specification the operator previously asked Docker to retain.
     fn container_image(&self, name: &str) -> Result<Option<String>, String>;
 
     /// `GET /api/health` against the published port, following the rule that a
@@ -258,8 +261,8 @@ impl ContainerRuntime for Docker {
     }
 
     fn container_image(&self, name: &str) -> Result<Option<String>, String> {
-        match Self::docker(&["inspect", "--format", "{{.Image}}", name]) {
-            Ok(id) => Ok(Some(id)),
+        match Self::docker(&["inspect", "--format", "{{.Config.Image}}", name]) {
+            Ok(reference) => Ok(Some(reference)),
             Err(error) if is_absent(&error) => Ok(None),
             Err(error) => Err(error),
         }

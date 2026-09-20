@@ -52,3 +52,46 @@ fn missing_model_authority_fails_closed() {
     assert_eq!(denied.requested_model, "provider/model-a");
     assert!(denied.allowed_models.is_empty());
 }
+
+#[test]
+fn run_leases_are_explicit_and_legacy_ephemeral_tokens_stay_unknown() {
+    let manager = test_manager();
+    let request = IssueRequest {
+        ttl_hours: 1,
+        label: "idle-wrapper",
+        account: Some("primary"),
+        client_kind: Some("codex"),
+        principal_id: Some("primary"),
+        ..IssueRequest::default()
+    };
+    let policy = crate::model_contract::ModelAccessPolicy {
+        allowed_models: vec!["gpt-current".into()],
+        ..crate::model_contract::ModelAccessPolicy::default()
+    };
+
+    let leased = manager
+        .issue_ephemeral_with_model_policy_and_run_lease(&request, &policy)
+        .expect("issue leased wrapper token");
+    let leased_id = manager.validate_token(&leased).unwrap().sub;
+    let initial = manager
+        .list_tokens()
+        .unwrap()
+        .into_iter()
+        .find(|record| record.id == leased_id)
+        .unwrap()
+        .run_lease_expires_at
+        .expect("new wrapper token carries a lease");
+    let renewed = manager
+        .renew_run_lease(&leased_id)
+        .expect("a live wrapper can renew its lease");
+    assert!(renewed >= initial);
+
+    let legacy = manager
+        .issue_ephemeral_with_model_policy(&request, &policy)
+        .expect("issue legacy-shaped ephemeral token");
+    let legacy_id = manager.validate_token(&legacy).unwrap().sub;
+    assert!(
+        manager.renew_run_lease(&legacy_id).is_err(),
+        "an absent lease is unknown, never silently promoted to live"
+    );
+}

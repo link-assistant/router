@@ -21,6 +21,7 @@ mod auth_import;
 mod bin_doctor;
 #[path = "deploy_cli.rs"]
 mod deploy_cli;
+mod deploy_local;
 mod deploy_remote;
 #[path = "logs_cli.rs"]
 mod logs_cli;
