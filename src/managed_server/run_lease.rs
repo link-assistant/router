@@ -24,7 +24,7 @@ impl Lease {
     }
 }
 
-pub(crate) struct Guard(tokio::task::JoinHandle<()>);
+pub struct Guard(tokio::task::JoinHandle<()>);
 
 impl Drop for Guard {
     fn drop(&mut self) {
@@ -32,7 +32,7 @@ impl Drop for Guard {
     }
 }
 
-pub(crate) fn start(credential: &RunCredential) -> Option<Guard> {
+pub fn start(credential: &RunCredential) -> Option<Guard> {
     let lease = credential.run_lease.as_ref()?;
     let url = lease.url.clone();
     let client = lease.client.clone();

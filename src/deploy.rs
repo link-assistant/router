@@ -63,6 +63,14 @@ use step::{Failure, Outcome, Report};
 /// administers. Sharing a name would make `deploy --down` destroy a wrapper's
 /// container, or a wrapper's teardown stop a deployment.
 pub const CONTAINER: &str = "router-deploy";
+/// Stable local front door retained across backend updates.
+pub const RELAY: &str = "router-deploy-relay";
+/// Docker network shared only by the local relay and versioned backends.
+pub const NETWORK: &str = "router-deploy-network";
+/// Prefix for update candidates and accepted local backends.
+pub const BACKEND_PREFIX: &str = "router-deploy-backend-";
+/// Label key proving ownership of local deployment objects.
+pub const LABEL_KEY: &str = "com.link-assistant.router.deploy";
 /// Label proving a container is this command's to manage.
 pub const LABEL: &str = "com.link-assistant.router.deploy=1";
 /// Default published port.

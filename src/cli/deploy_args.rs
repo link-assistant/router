@@ -31,6 +31,16 @@ pub struct DeployArgs {
     /// loses them, so it is confirmed rather than assumed.
     #[arg(long)]
     pub yes: bool,
+    /// Permit a local update that cannot preserve every identified run.
+    ///
+    /// The affected connection or run ids are printed before any serving
+    /// object changes. This is deliberately local: remote deploy already owns
+    /// a stable relay and has no legacy in-place container to migrate.
+    #[arg(
+        long,
+        conflicts_with_all = ["server", "status", "down"],
+    )]
+    pub force_update: bool,
     /// Published host port.
     #[arg(long, default_value_t = crate::deploy::DEFAULT_PORT)]
     pub port: u16,

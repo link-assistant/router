@@ -45,6 +45,27 @@ fn deploy_accepts_an_ssh_server_and_public_inference_port() {
 }
 
 #[test]
+fn local_deploy_force_is_explicit_and_cannot_hide_in_status_or_remote_runs() {
+    let cli = Cli::try_parse_from(["router", "deploy", "--force-update"])
+        .expect("local force setting parses");
+    let Some(Command::Deploy(deploy_args)) = cli.command else {
+        panic!("deploy command expected");
+    };
+    assert!(deploy_args.force_update);
+
+    for incompatible in ["--status", "--down", "--server"] {
+        let mut argv = vec!["router", "deploy", "--force-update", incompatible];
+        if incompatible == "--server" {
+            argv.push("host");
+        }
+        assert!(
+            Cli::try_parse_from(argv).is_err(),
+            "accepted {incompatible}"
+        );
+    }
+}
+
+#[test]
 fn login_cli_defaults_to_bare_tui() {
     let cli = Cli::try_parse_from(["link-assistant-router"]).unwrap();
     assert!(cli.login_cli_args.is_empty());
