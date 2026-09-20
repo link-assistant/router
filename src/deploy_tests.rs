@@ -26,6 +26,7 @@ struct FakeRuntime {
 struct FakeState {
     available: Option<String>,
     container: Option<ContainerState>,
+    container_image: Option<String>,
     image_present: bool,
     healthy: bool,
     other_listeners: Vec<String>,
@@ -48,6 +49,7 @@ impl FakeRuntime {
             let mut state = fake.state.lock().expect("fake state");
             state.available = Some("29.0.0".to_string());
             state.container = Some(ContainerState::Running);
+            state.container_image = Some("ghcr.io/link-assistant/router:1.9.0".to_string());
             state.image_present = true;
             state.healthy = true;
             state.exec_result = Some(Ok("la_sk_example".to_string()));
@@ -148,7 +150,10 @@ impl ContainerRuntime for FakeRuntime {
         if let Some(error) = self.fault("run") {
             return Err(error);
         }
-        self.set(|state| state.container = Some(ContainerState::Running));
+        self.set(|state| {
+            state.container = Some(ContainerState::Running);
+            state.container_image = Some(spec.image.clone());
+        });
         Ok(())
     }
 
@@ -195,7 +200,12 @@ impl ContainerRuntime for FakeRuntime {
 
     fn container_image(&self, name: &str) -> Result<Option<String>, String> {
         self.record(format!("container_image:{name}"));
-        Ok(Some("sha256:fake".to_string()))
+        Ok(self
+            .state
+            .lock()
+            .expect("fake state")
+            .container_image
+            .clone())
     }
 
     fn health(&self, port: u16) -> bool {
@@ -285,6 +295,40 @@ fn a_converged_deployment_performs_no_actions_on_a_second_run() {
         .filter(|call| call.ends_with(":issue"))
         .count();
     assert_eq!(issues, 1, "the token is minted once, not per run");
+}
+
+#[test]
+fn a_running_container_from_an_older_image_is_not_reported_as_converged() {
+    let root = tempfile::tempdir().expect("root");
+    let runtime = FakeRuntime::healthy_deployment();
+    runtime.set(|state| {
+        state.container_image = Some("ghcr.io/link-assistant/router:1.8.0".to_string());
+    });
+
+    let report = converge(&runtime, &plan(root.path()));
+
+    assert!(
+        !report.converged(),
+        "a running old release must require an explicit update: {:?}",
+        report
+            .steps
+            .iter()
+            .map(super::deploy::step::StepReport::line)
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        runtime
+            .calls()
+            .iter()
+            .any(|call| call == &format!("container_image:{CONTAINER}")),
+        "convergence must inspect the running image: {:?}",
+        runtime.calls()
+    );
+    assert!(
+        runtime.mutations().is_empty(),
+        "the unsafe update is refused before mutation: {:?}",
+        runtime.mutations()
+    );
 }
 
 #[test]
@@ -625,6 +669,7 @@ fn readiness_is_polled_over_http_rather_than_trusting_the_container_state() {
     // The container runs and never answers: `docker ps` would call this healthy.
     runtime.set(|state| {
         state.container = Some(ContainerState::Running);
+        state.container_image = Some("ghcr.io/link-assistant/router:1.9.0".to_string());
         state.healthy = false;
     });
     let mut plan = plan(root.path());
@@ -787,7 +832,11 @@ fn a_container_that_cannot_be_created_or_started_fails_the_container_step() {
     ] {
         let root = tempfile::tempdir().expect("root");
         let runtime = FakeRuntime::empty();
-        runtime.set(|state| state.container = container);
+        runtime.set(|state| {
+            state.container = container;
+            state.container_image =
+                container.map(|_| "ghcr.io/link-assistant/router:1.9.0".to_string());
+        });
         runtime.fail(call, message);
 
         let report = converge(&runtime, &plan(root.path()));
