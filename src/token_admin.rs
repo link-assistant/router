@@ -158,7 +158,18 @@ pub async fn issue_client_token(
     if let Err(message) = model_policy.validate() {
         return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
     }
-    match if req.ephemeral {
+    if req.run_lease && !req.ephemeral {
+        return error_response(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "run_lease requires an ephemeral wrapper credential",
+        );
+    }
+    match if req.run_lease {
+        state
+            .token_manager
+            .issue_ephemeral_with_model_policy_and_run_lease(&request, &model_policy)
+    } else if req.ephemeral {
         state
             .token_manager
             .issue_ephemeral_with_model_policy(&request, &model_policy)
@@ -186,6 +197,34 @@ pub async fn issue_client_token(
             StatusCode::INTERNAL_SERVER_ERROR,
             "api_error",
             &format!("Failed to issue bound client token: {error}"),
+        ),
+    }
+}
+
+/// Renew the authenticated wrapper's own liveness lease.
+pub async fn renew_run_lease(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let claims = match crate::proxy::authenticate_client_error(&state, &headers) {
+        Ok(claims) => claims,
+        Err(error) => return error.render(crate::api_error::ApiDialect::Anthropic),
+    };
+    match state.token_manager.renew_run_lease(&claims.sub) {
+        Ok(expires_at) => (
+            StatusCode::OK,
+            axum::Json(serde_json::json!({ "run_lease_expires_at": expires_at })),
+        )
+            .into_response(),
+        Err(TokenError::Storage(_)) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "api_error",
+            "could not persist the run lease",
+        ),
+        Err(_) => error_response(
+            StatusCode::CONFLICT,
+            "invalid_request_error",
+            "this credential has no renewable live run lease",
         ),
     }
 }
@@ -440,6 +479,9 @@ pub struct IssueClientTokenRequest {
     /// compacted during later issuance.
     #[serde(default)]
     pub ephemeral: bool,
+    /// Give this wrapper-owned credential a renewable process-liveness lease.
+    #[serde(default)]
+    pub run_lease: bool,
     /// Exact provider-advertised ids this credential may request. Empty keeps
     /// the established unpinned behavior for callers that omitted a model.
     #[serde(default)]

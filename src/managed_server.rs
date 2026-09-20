@@ -23,6 +23,7 @@ mod http;
 mod model_policy;
 mod origin;
 mod process;
+mod run_lease;
 mod selection;
 
 use diagnostics::compact;
@@ -41,6 +42,7 @@ pub use model_policy::{
 pub use origin::canonical_server_origin;
 use origin::{normalize_server, same_origin};
 use process::process_alive;
+pub(crate) use run_lease::start as start_run_lease;
 pub use selection::{
     clear_persisted, configured_source, load_persisted, save_persisted, save_persisted_with_trust,
     selected_server,
@@ -180,6 +182,7 @@ pub struct RunCredential {
     available_models: Vec<RouterModel>,
     revocation: Option<Revocation>,
     principal_id: String,
+    run_lease: Option<run_lease::Lease>,
 }
 
 impl RunCredential {
@@ -198,21 +201,8 @@ impl RunCredential {
             available_models,
             revocation: None,
             principal_id: "test-principal".to_string(),
+            run_lease: None,
         }
-    }
-
-    /// The record id this credential was issued under, retained so a
-    /// persistent credential remains revocable later (issue #190).
-    #[must_use]
-    pub fn id(&self) -> Option<String> {
-        token_subject(&self.token).ok()
-    }
-
-    /// Whether this command minted the credential. Supplied tokens may be
-    /// shared with other machines and must not be revoked implicitly (#296).
-    #[must_use]
-    pub const fn was_minted(&self) -> bool {
-        self.revocation.is_some()
     }
 }
 
@@ -480,6 +470,7 @@ async fn prepare_credential(
                     // (issue #354).
                     "sliding_expiry": options.sliding,
                     "ephemeral": options.ephemeral,
+                    "run_lease": options.ephemeral,
                     "allowed_models": model_policy.allowed_models,
                     "allow_model_substitution": model_policy.allow_substitution,
                     "model_substitution_source": model_policy.substitution_source,
@@ -517,6 +508,9 @@ async fn prepare_credential(
                     client: management_client.clone(),
                 }),
                 principal_id,
+                run_lease: options
+                    .ephemeral
+                    .then(|| run_lease::Lease::new(&server.base_url, inference_client.clone())),
             };
             match fetch_models(
                 &inference_client,
@@ -559,6 +553,7 @@ async fn prepare_credential(
                 available_models,
                 revocation: None,
                 principal_id,
+                run_lease: None,
             })
         }
         Ok(response) if response.status().as_u16() == 404 => {
@@ -586,6 +581,7 @@ async fn prepare_credential(
                 available_models,
                 revocation: None,
                 principal_id,
+                run_lease: None,
             })
         }
         Ok(response) => Err(format!(

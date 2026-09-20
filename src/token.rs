@@ -372,7 +372,7 @@ impl TokenManager {
         request: &IssueRequest<'_>,
         model_policy: &ModelAccessPolicy,
     ) -> Result<String, jsonwebtoken::errors::Error> {
-        self.issue_with_id_and_model_policy(request, false, model_policy)
+        self.issue_with_id_and_model_policy(request, false, model_policy, None)
             .map(|(token, _)| token)
     }
 
@@ -391,7 +391,7 @@ impl TokenManager {
         request: &IssueRequest<'_>,
         model_policy: &ModelAccessPolicy,
     ) -> Result<String, jsonwebtoken::errors::Error> {
-        self.issue_with_id_and_model_policy(request, true, model_policy)
+        self.issue_with_id_and_model_policy(request, true, model_policy, None)
             .map(|(token, _)| token)
     }
 
@@ -412,7 +412,7 @@ impl TokenManager {
         request: &IssueRequest<'_>,
         ephemeral: bool,
     ) -> Result<(String, String), jsonwebtoken::errors::Error> {
-        self.issue_with_id_and_model_policy(request, ephemeral, &ModelAccessPolicy::default())
+        self.issue_with_id_and_model_policy(request, ephemeral, &ModelAccessPolicy::default(), None)
     }
 
     fn issue_with_id_and_model_policy(
@@ -420,6 +420,7 @@ impl TokenManager {
         request: &IssueRequest<'_>,
         ephemeral: bool,
         model_policy: &ModelAccessPolicy,
+        run_lease_seconds: Option<i64>,
     ) -> Result<(String, String), jsonwebtoken::errors::Error> {
         // A command that will never sign installs a stand-in secret so it need
         // not carry this machine's. Signing with one produced a normal-looking
@@ -465,6 +466,8 @@ impl TokenManager {
             expires_at: claims.exp,
             revoked: false,
             ephemeral,
+            run_lease_expires_at: run_lease_seconds
+                .map(|seconds| now.timestamp().saturating_add(seconds)),
             sliding_window_seconds: request.sliding_window_seconds,
             account: account.map(String::from),
             max_requests,
@@ -966,25 +969,13 @@ impl TokenManager {
     }
 }
 
-/// Compare two secrets without leaking their contents through timing.
-///
-/// Both sides are hashed with SHA-256 first, so the comparison always runs
-/// over 32 bytes and neither the length nor the position of the first
-/// differing byte is observable. The fold over the whole digest is what makes
-/// it constant-time; a plain `==` on the raw strings (which is what the flat
-/// `TOKEN_ADMIN_KEY` path used to do) short-circuits on the first mismatch.
-#[must_use]
-pub fn constant_time_eq(a: &str, b: &str) -> bool {
-    use sha2::{Digest, Sha256};
+#[path = "token_constant_time.rs"]
+mod constant_time;
+pub use constant_time::constant_time_eq;
 
-    let left = Sha256::digest(a.as_bytes());
-    let right = Sha256::digest(b.as_bytes());
-    let mut diff = 0u8;
-    for (x, y) in left.iter().zip(right.iter()) {
-        diff |= x ^ y;
-    }
-    diff == 0
-}
+#[path = "token_run_lease.rs"]
+mod run_lease;
+pub use run_lease::RUN_LEASE_TTL_SECONDS;
 
 #[path = "token_error.rs"]
 mod error;

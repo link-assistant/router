@@ -151,6 +151,10 @@ pub(crate) fn management_routes(
 fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
     let mut routes = Router::new()
         .route(
+            route_template(RouteId::RunLease),
+            post(token_admin::renew_run_lease),
+        )
+        .route(
             route_template(RouteId::AggregateModels),
             get(crate::model_routing::aggregate_models),
         )

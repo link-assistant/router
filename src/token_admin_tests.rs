@@ -30,6 +30,7 @@ fn client_request(client_kind: &str) -> IssueClientTokenRequest {
         label: None,
         max_requests: None,
         ephemeral: false,
+        run_lease: false,
         model_substitution_source: None,
         allowed_models: Vec::new(),
         allow_model_substitution: false,
@@ -130,6 +131,7 @@ async fn successful_client_route_response_is_present_after_binary_reopen() {
     let observer = state.clone();
     let mut request = client_request("claude");
     request.ephemeral = true;
+    request.run_lease = true;
 
     let response = issue_client_over_route(state, request).await;
     assert_eq!(response.status(), StatusCode::OK);
@@ -144,6 +146,7 @@ async fn successful_client_route_response_is_present_after_binary_reopen() {
         .expect("read reopened token store")
         .expect("issued record is durable");
     assert!(record.ephemeral);
+    assert!(record.run_lease_expires_at.is_some());
     assert_eq!(record.client_kind.as_deref(), Some("claude"));
 }
 

@@ -10,6 +10,7 @@ fn sample_record() -> TokenRecord {
         expires_at: i64::MAX,
         revoked: true,
         ephemeral: false,
+        run_lease_expires_at: None,
         sliding_window_seconds: None,
         account: Some(String::new()),
         max_requests: Some(u64::MAX),

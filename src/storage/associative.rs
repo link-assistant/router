@@ -87,6 +87,14 @@ fn record_to_lino_value(record: &TokenRecord) -> LinoValue {
                 ("revoked", LinoValue::Bool(record.revoked)),
                 ("ephemeral", LinoValue::Bool(record.ephemeral)),
                 (
+                    "run_lease_expires_at",
+                    record
+                        .run_lease_expires_at
+                        .map_or(LinoValue::Null, |value| {
+                            LinoValue::String(value.to_string())
+                        }),
+                ),
+                (
                     "account",
                     record
                         .account
@@ -188,6 +196,11 @@ fn record_from_lino_value(value: &LinoValue) -> Result<TokenRecord, String> {
         expires_at: expect_i64_field(fields, "expires_at", "record value")?,
         revoked: expect_bool_field(fields, "revoked", "record value")?,
         ephemeral: optional_bool_field(fields, "ephemeral", "record value")?.unwrap_or(false),
+        run_lease_expires_at: optional_i64_string_field(
+            fields,
+            "run_lease_expires_at",
+            "record value",
+        )?,
         account: optional_string_field(fields, "account", "record value")?,
         sliding_window_seconds: optional_u64_field(
             fields,
@@ -348,11 +361,12 @@ fn optional_i64_string_field(
         return Ok(None);
     };
     match value {
+        LinoValue::Null => Ok(None),
         LinoValue::String(value) => value
             .parse()
             .map(Some)
             .map_err(|error| format!("{context}.{key} is invalid: {error}")),
-        _ => Err(format!("{context}.{key} must be a string")),
+        _ => Err(format!("{context}.{key} must be a string or null")),
     }
 }
 
@@ -727,6 +741,14 @@ fn record_to_links(record: &TokenRecord) -> BTreeSet<SemanticLink> {
         "ephemeral",
         &record.ephemeral.to_string(),
     );
+    if let Some(expires_at) = record.run_lease_expires_at {
+        add_field(
+            &mut links,
+            &value,
+            "run_lease_expires_at",
+            &expires_at.to_string(),
+        );
+    }
     if let Some(account) = &record.account {
         add_field(&mut links, &value, "account", account);
     }
@@ -890,6 +912,7 @@ fn record_from_links(root: &str, links: &BTreeSet<SemanticLink>) -> Result<Token
         expires_at: parse_field(&fields, "expires_at")?,
         revoked: parse_field(&fields, "revoked")?,
         ephemeral: optional_parsed_field(&fields, "ephemeral")?.unwrap_or(false),
+        run_lease_expires_at: optional_parsed_field(&fields, "run_lease_expires_at")?,
         account: fields.get("account").cloned(),
         max_requests: optional_parsed_field(&fields, "max_requests")?,
         used_requests: parse_field(&fields, "used_requests")?,

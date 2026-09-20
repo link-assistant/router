@@ -61,6 +61,12 @@ pub struct TokenRecord {
     /// repeated `router with` runs cannot grow durable storage forever.
     #[serde(default)]
     pub ephemeral: bool,
+    /// Expiry of the wrapper process's renewable liveness lease.
+    ///
+    /// `None` is deliberately not treated as live: records written before run
+    /// leases existed cannot prove whether their wrapper still exists.
+    #[serde(default)]
+    pub run_lease_expires_at: Option<i64>,
     /// How long, in seconds, an active token's expiry slides ahead of now.
     ///
     /// `None` is a fixed clock: the expiry set at issue time is final, which
@@ -205,6 +211,23 @@ pub trait TokenStore: Send + Sync {
             .filter(|r| r.revoked)
             .map(|r| r.id)
             .collect())
+    }
+
+    /// Renew an existing wrapper lease without creating one on a legacy token.
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        let Some(mut record) = self.get(id)? else {
+            return Ok(None);
+        };
+        let renewed = advance_run_lease(Some(&mut record), now, ttl_seconds);
+        if renewed.is_some() {
+            self.put(record)?;
+        }
+        Ok(renewed)
     }
 
     /// Atomically check the request budget for `id` and, when there is room,
@@ -371,6 +394,16 @@ impl TokenStore for MemoryTokenStore {
         let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
         settle_token_usage(guard.get_mut(id), reserved, actual);
         Ok(())
+    }
+
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        let mut guard = self.inner.write().map_err(|_| StorageError::LockPoisoned)?;
+        Ok(advance_run_lease(guard.get_mut(id), now, ttl_seconds))
     }
 }
 
@@ -541,6 +574,15 @@ impl TokenStore for TextTokenStore {
     fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
         self.mutate(|records| settle_token_usage(records.get_mut(id), reserved, actual))
     }
+
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        self.mutate(|records| advance_run_lease(records.get_mut(id), now, ttl_seconds))
+    }
 }
 
 #[path = "storage_budget.rs"]
@@ -552,6 +594,17 @@ use budget::{
 
 fn compact_ephemeral_records(records: &mut HashMap<String, TokenRecord>, now: i64) {
     records.retain(|_, record| !record.ephemeral || (!record.revoked && record.expires_at > now));
+}
+
+fn advance_run_lease(record: Option<&mut TokenRecord>, now: i64, ttl_seconds: i64) -> Option<i64> {
+    let record = record?;
+    let lease = record.run_lease_expires_at?;
+    if !record.ephemeral || record.revoked || record.expires_at <= now || lease < now {
+        return None;
+    }
+    let renewed = now.saturating_add(ttl_seconds);
+    record.run_lease_expires_at = Some(renewed);
+    Some(renewed)
 }
 
 #[path = "storage_binary.rs"]
@@ -627,6 +680,17 @@ impl TokenStore for DualTokenStore {
     fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
         self.primary.settle_token_usage(id, reserved, actual)?;
         self.secondary.settle_token_usage(id, reserved, actual)
+    }
+
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        let primary = self.primary.renew_run_lease(id, now, ttl_seconds)?;
+        let secondary = self.secondary.renew_run_lease(id, now, ttl_seconds)?;
+        Ok(primary.or(secondary))
     }
 }
 
@@ -840,6 +904,15 @@ impl TokenStore for DurableDualTokenStore {
 
     fn settle_token_usage(&self, id: &str, reserved: u64, actual: u64) -> Result<(), StorageError> {
         self.with_records(|records| settle_token_usage(records.get_mut(id), reserved, actual))
+    }
+
+    fn renew_run_lease(
+        &self,
+        id: &str,
+        now: i64,
+        ttl_seconds: i64,
+    ) -> Result<Option<i64>, StorageError> {
+        self.with_records(|records| advance_run_lease(records.get_mut(id), now, ttl_seconds))
     }
 }
 

@@ -32,9 +32,12 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
                         RouteId::AggregateModels
                             | RouteId::SubscriptionUsage
                             | RouteId::SubscriptionUsageProvider
+                            | RouteId::RunLease
                     ));
                     assert!(
-                        spec.template == "/api/models" || spec.template.starts_with("/api/usage")
+                        spec.template == "/api/models"
+                            || spec.template == "/api/run-lease"
+                            || spec.template.starts_with("/api/usage")
                     );
                     assert_eq!(spec.auth, RouteAuth::Client);
                 }
@@ -112,8 +115,13 @@ fn listener_eligibility_is_a_security_boundary() {
     assert!(health.listeners.contains(&ListenerKind::Combined));
     assert!(health.listeners.contains(&ListenerKind::InferenceOnly));
 
-    for path in ["/api/models", "/api/usage", "/api/usage/openai"] {
-        let client_neutral = route_for_path(&http::Method::GET, path).unwrap();
+    for (method, path) in [
+        (http::Method::GET, "/api/models"),
+        (http::Method::GET, "/api/usage"),
+        (http::Method::GET, "/api/usage/openai"),
+        (http::Method::POST, "/api/run-lease"),
+    ] {
+        let client_neutral = route_for_path(&method, path).unwrap();
         assert_eq!(client_neutral.class, RouteClass::Neutral);
         assert_eq!(client_neutral.auth, RouteAuth::Client);
         assert!(client_neutral.listeners.contains(&ListenerKind::Combined));

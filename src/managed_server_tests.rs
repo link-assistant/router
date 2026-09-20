@@ -22,6 +22,7 @@ fn claude_context_variants_require_the_exact_anthropic_base() {
         ],
         revocation: None,
         principal_id: "test-principal".into(),
+        run_lease: None,
     };
 
     for allowed in ["claude-opus-5", "claude-opus-5[1m]", "glm-5.3-flash"] {
