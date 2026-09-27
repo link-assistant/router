@@ -38,7 +38,9 @@ mod value_parsers;
 mod with;
 
 pub use self::auth_ops::{AuthOp, AuthTarget, ImportProvider, ImportTarget, RemoteGh, TlsOp};
-pub use self::client_ops::ClientOp;
+pub use self::client_ops::{
+    BackupOp, ClientOp, ClientSelection, MaintenanceArgs, ProfileSelection,
+};
 pub use self::configure::ConfigureArgs;
 pub use self::deploy_args::{DeployArgs, UsageArgs};
 pub use self::log_ops::LogsOp;

@@ -17,6 +17,33 @@ pub const CLIENT_TOKEN_ENV_ALIAS: &str = "LINK_ASSISTANT_TOKEN";
 
 /// Run one local client-management operation.
 pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCode {
+    let lifecycle = match op {
+        ClientOp::Backup { op } => Some(crate::client_lifecycle::backup::run(home, op)),
+        ClientOp::Reset {
+            selection,
+            dry_run,
+            full,
+            yes,
+            json,
+        } => Some(crate::client_lifecycle::reset::run(
+            home, selection, *dry_run, *full, *yes, *json,
+        )),
+        ClientOp::Install(args) => Some(crate::client_lifecycle::maintenance::run(
+            home, "install", args,
+        )),
+        ClientOp::Update(args) => Some(crate::client_lifecycle::maintenance::run(
+            home, "update", args,
+        )),
+        ClientOp::Reinstall(args) => Some(crate::client_lifecycle::maintenance::run(
+            home,
+            "reinstall",
+            args,
+        )),
+        _ => None,
+    };
+    if let Some(result) = lifecycle {
+        return result;
+    }
     let manager = match home {
         Some(home) => ClientManager::isolated(home),
         None => match ClientManager::from_env() {
@@ -25,6 +52,11 @@ pub async fn run(config: &Config, home: Option<&Path>, op: &ClientOp) -> ExitCod
         },
     };
     match op {
+        ClientOp::Backup { .. }
+        | ClientOp::Reset { .. }
+        | ClientOp::Install(_)
+        | ClientOp::Update(_)
+        | ClientOp::Reinstall(_) => unreachable!("lifecycle commands return before client setup"),
         ClientOp::List { json } => list(&manager, *json),
         ClientOp::Setup {
             client,

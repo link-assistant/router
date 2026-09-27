@@ -11,7 +11,7 @@
 //! natural way to say "do not inherit the user's config" in most CI runners,
 //! and it did the opposite here.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// The value of `name`, treating a set-but-empty variable as unset.
 ///
@@ -21,6 +21,36 @@ use std::path::PathBuf;
 #[must_use]
 pub fn directory(name: &str) -> Option<PathBuf> {
     from_value(std::env::var_os(name))
+}
+
+/// Configuration root used by persistent `router with` client homes.
+/// Keep profile inventory on the same path, including Windows HOME/USERPROFILE.
+pub fn router_client_config_root() -> Result<PathBuf, String> {
+    let root = directory("XDG_CONFIG_HOME")
+        .or_else(|| {
+            directory("HOME")
+                .or_else(|| directory("USERPROFILE"))
+                .map(|home| home.join(".config"))
+        })
+        .ok_or("HOME, USERPROFILE and XDG_CONFIG_HOME are unset; cannot keep a client profile")?;
+    require_absolute(root, "the client profile directory")
+}
+
+/// Qwen documents relative and `~/` overrides; resolve them once so later
+/// profile operations never write through a changing process directory.
+pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String> {
+    let Some(value) = directory(name) else {
+        return Ok(None);
+    };
+    if value.is_absolute() {
+        return Ok(Some(value));
+    }
+    if let Ok(suffix) = value.strip_prefix("~") {
+        return Ok(Some(home.join(suffix)));
+    }
+    let current =
+        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))?;
+    Ok(Some(current.join(value)))
 }
 
 /// The rule itself, separated from the lookup so it can be tested.

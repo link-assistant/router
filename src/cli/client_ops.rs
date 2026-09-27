@@ -3,12 +3,117 @@
 //! Split from `cli.rs` to keep that file within the repository's 1000-line
 //! limit.
 
-use clap::Subcommand;
+use clap::{Args, Subcommand, ValueEnum};
 
 use crate::clients::ClientKind;
+use std::path::PathBuf;
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
+pub enum ProfileSelection {
+    #[default]
+    Normal,
+    Router,
+    Both,
+}
+
+#[derive(Debug, Args)]
+pub struct ClientSelection {
+    #[arg(value_enum, required_unless_present = "all")]
+    pub client: Option<ClientKind>,
+    #[arg(long, conflicts_with = "client")]
+    pub all: bool,
+    #[arg(long, value_enum, default_value_t = ProfileSelection::Normal)]
+    pub profile: ProfileSelection,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum BackupOp {
+    /// Copy selected local profiles into a verified, owner-only backup.
+    Create {
+        #[command(flatten)]
+        selection: ClientSelection,
+        #[arg(long, value_name = "DIR")]
+        destination: Option<PathBuf>,
+        /// Include local credential files; the backup remains unencrypted and must stay local.
+        #[arg(long)]
+        include_credentials: bool,
+    },
+    /// List complete backups in the default local backup directory.
+    List {
+        #[arg(long)]
+        json: bool,
+        #[arg(long, value_name = "DIR")]
+        destination: Option<PathBuf>,
+    },
+    /// Verify every file, inventory entry, permission and a sample restore.
+    Verify {
+        id: String,
+        #[arg(long, value_name = "DIR")]
+        destination: Option<PathBuf>,
+    },
+    /// Restore a verified backup. Merge is the default.
+    Restore {
+        id: String,
+        #[arg(long, value_enum)]
+        client: Option<ClientKind>,
+        #[arg(long, conflicts_with = "overwrite")]
+        merge: bool,
+        #[arg(long)]
+        overwrite: bool,
+        #[arg(long)]
+        dry_run: bool,
+        #[arg(long, requires = "overwrite")]
+        yes: bool,
+        #[arg(long, value_name = "DIR")]
+        destination: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug, Args)]
+pub struct MaintenanceArgs {
+    #[command(flatten)]
+    pub selection: ClientSelection,
+    #[arg(long)]
+    pub dry_run: bool,
+    #[arg(long)]
+    pub json: bool,
+    #[arg(long, conflicts_with = "channel")]
+    pub latest: bool,
+    #[arg(long, conflicts_with = "latest")]
+    pub channel: Option<String>,
+    /// Required for a fresh install when no existing installation identifies a method.
+    #[arg(long)]
+    pub method: Option<String>,
+    #[arg(long)]
+    pub yes: bool,
+}
 
 #[derive(Debug, Subcommand)]
 pub enum ClientOp {
+    /// Create, inspect, verify and restore local client backups.
+    Backup {
+        #[command(subcommand)]
+        op: BackupOp,
+    },
+    /// Reset preferences or, with --full, the selected local profile.
+    Reset {
+        #[command(flatten)]
+        selection: ClientSelection,
+        #[arg(long)]
+        dry_run: bool,
+        #[arg(long)]
+        full: bool,
+        #[arg(long, requires = "full")]
+        yes: bool,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Install a client using an explicitly selected vendor method.
+    Install(MaintenanceArgs),
+    /// Update an installed client using its detected method and channel.
+    Update(MaintenanceArgs),
+    /// Reinstall an installed client after a verified profile backup.
+    Reinstall(MaintenanceArgs),
     /// List supported clients and their local installation/configuration state.
     List {
         /// Emit JSON instead of the table (issue #314).

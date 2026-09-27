@@ -36,7 +36,7 @@ containment controls local to the operator.
 - **Persistent token store** — text (Lino) **and** binary backends, both on by default; tokens survive restarts
 - **Live observability** — Prometheus `/api/management/metrics`, JSON `/api/management/usage`, per-account state at `/api/management/accounts`, provider-verified credential state at `/api/management/auth/status`, subscription health at `/api/management/health/subscriptions`
 - **`lino-arguments` + `.lenv`** — every flag has an env-var alias and an optional `.lenv` file fallback
-- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, `clients list|show|remove|doctor|repair`, and deployment diagnostics
+- **First-class CLI** — `serve`, token/provider/account management, `configure <client>`, client backup/reset/binary maintenance, and deployment diagnostics
 - **Replaces custom tokens with real OAuth credentials** internally, so the OAuth token is never exposed to clients
 - **Runs as a single Docker container** for easy deployment
 
@@ -1542,6 +1542,12 @@ router clients show codex
 router clients doctor codex
 router clients remove codex
 
+# Keep a verified local copy before repairs; restore merges sessions by default:
+router clients backup create claude --profile both
+router clients backup restore BACKUP_ID --dry-run
+router clients reset claude --profile router --dry-run
+router clients update claude --dry-run
+
 # Show subscription limits visible to one signed client token. The environment
 # token takes precedence over a saved server token.
 LINK_ASSISTANT_TOKEN=<client-token> router usage
@@ -1562,6 +1568,9 @@ router usage anthropic
 # machine it runs on, so with another router selected it says so and names it.
 router doctor --local
 ```
+
+See [local client profile lifecycle](docs/client-lifecycle.md) for backup
+locations, recovery steps, profile coverage, and maintenance limitations.
 
 ### Logging
 

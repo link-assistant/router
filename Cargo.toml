@@ -77,6 +77,8 @@ rcgen = "0.14.9"
 flate2 = "1.1.10"
 brotli = "9.0.0"
 zstd = "0.14.0"
+fs2 = "0.4"
+reflink-copy = "0.1.30"
 
 [dev-dependencies]
 proptest = "1"
