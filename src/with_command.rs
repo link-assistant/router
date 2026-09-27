@@ -71,6 +71,9 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     if args.reset_to_default_configuration && args.client != ClientKind::ClaudeCode {
         return Err("--reset-to-default-configuration is available only for Claude".into());
     }
+    if args.reset_to_default_configuration && (args.isolated_config || args.extend_global_config) {
+        return Err("--reset-to-default-configuration requires the Router-owned Claude profile; omit --isolated-config and --extend-global-config".into());
+    }
     if args.reset_to_default_configuration {
         confirm_claude_profile_reset(args.yes)?;
     }
@@ -154,13 +157,13 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         && !args.isolated_config
         && !args.extend_global_config
     {
-        let path = persistent_profile_path(args.client, None)?;
-        match crate::claude_profile::ProfileSession::prepare(
-            path.clone(),
-            args.reset_to_default_configuration,
-        )
-        .await
+        if args.reset_to_default_configuration
+            && let Some(id) = crate::client_lifecycle::reset::reset_router_claude_for_with()?
         {
+            eprintln!("Router-owned Claude settings reset; verified backup: {id}");
+        }
+        let path = persistent_profile_path(args.client, None)?;
+        match crate::claude_profile::ProfileSession::prepare(path.clone(), false).await {
             Ok(profile) => {
                 debug_assert_eq!(profile.path(), path);
                 Some(profile)

@@ -38,6 +38,7 @@ pub mod cli;
 pub mod client_command;
 pub mod client_global;
 mod client_launch;
+pub mod client_lifecycle;
 pub mod client_policy;
 mod client_repair_command;
 pub mod clients;

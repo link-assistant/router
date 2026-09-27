@@ -547,7 +547,7 @@ fn explicit_claude_ai_operation_fails_before_router_access_or_client_launch() {
 }
 
 #[test]
-fn exact_post_client_reset_is_recoverable_and_requires_confirmation() {
+fn exact_post_client_reset_keeps_sessions_and_requires_confirmation() {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -596,7 +596,7 @@ fn exact_post_client_reset_is_recoverable_and_requires_confirmation() {
             "claude",
             "--reset-to-default-configuration",
         ],
-        &[("REQUIRE_EMPTY_PROFILE", "1"), ("WRITE_SESSION", "1")],
+        &[("REQUIRE_SESSION", "1")],
     );
     assert!(
         reset.status.success(),
@@ -606,28 +606,28 @@ fn exact_post_client_reset_is_recoverable_and_requires_confirmation() {
     );
     assert_eq!(requests.join().expect("reset Router requests").len(), 3);
     assert_eq!(
-        fs::read(profile.join("session.jsonl")).expect("new session"),
-        b"Router session\n"
+        fs::read(profile.join("session.jsonl")).expect("retained session"),
+        b"previous session"
     );
-    let backups = fs::read_dir(profile.parent().unwrap())
-        .expect("list profile backups")
+    let backups = fs::read_dir(home.join(".config/link-assistant-router/client-backups"))
+        .expect("list verified backups")
         .flatten()
-        .filter(|entry| {
-            entry
-                .file_name()
-                .to_string_lossy()
-                .starts_with("home.reset-")
-        })
+        .filter(|entry| entry.path().join("manifest.sha256").exists())
         .collect::<Vec<_>>();
     assert_eq!(backups.len(), 1);
     assert_eq!(
-        fs::read(backups[0].path().join("session.jsonl")).expect("recoverable session"),
+        fs::read(
+            backups[0]
+                .path()
+                .join("data/claude/router/home/session.jsonl")
+        )
+        .expect("recoverable session"),
         b"previous session"
     );
 }
 
 #[test]
-fn reset_rolls_back_when_claude_cannot_spawn() {
+fn reset_keeps_session_when_a_required_local_command_is_unavailable() {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -657,7 +657,10 @@ fn reset_rolls_back_when_claude_cannot_spawn() {
     );
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("client executable `claude`"), "{stderr}");
+    assert!(
+        stderr.contains("cannot check active") || stderr.contains("client executable `claude`"),
+        "{stderr}"
+    );
     assert_eq!(requests.join().expect("mock Router requests").len(), 3);
     assert_eq!(
         fs::read(profile.join("session.jsonl")).expect("restored session"),

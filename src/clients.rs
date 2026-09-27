@@ -483,10 +483,13 @@ impl ClientManager {
         let codex_home = directory("CODEX_HOME").unwrap_or_else(|| home.join(".codex"));
         let claude_home = directory("CLAUDE_CONFIG_DIR").unwrap_or_else(|| home.join(".claude"));
         let config_home = directory("XDG_CONFIG_HOME").unwrap_or_else(|| home.join(".config"));
-        let qwen_home = directory("QWEN_HOME").unwrap_or_else(|| home.join(".qwen"));
-        let gemini_home = directory("GEMINI_CLI_HOME").unwrap_or_else(|| home.join(".gemini"));
-        let cursor_home = std::env::var_os("CURSOR_CONFIG_DIR")
-            .map_or_else(|| home.join(".cursor"), PathBuf::from);
+        let qwen_home = crate::env_paths::qwen_directory("QWEN_HOME", &home)
+            .map_err(ClientError::message)?
+            .unwrap_or_else(|| home.join(".qwen"));
+        let gemini_home = directory("GEMINI_CLI_HOME")
+            .unwrap_or_else(|| home.clone())
+            .join(".gemini");
+        let cursor_home = directory("CURSOR_CONFIG_DIR").unwrap_or_else(|| home.join(".cursor"));
         Ok(Self {
             home,
             codex_home,
