@@ -287,12 +287,7 @@ fn persistent_profile_path(client: ClientKind, root: Option<&Path>) -> Result<Pa
     let root = match root {
         Some(root) => root.to_path_buf(),
         // An empty variable is unset, not configured (issue #340).
-        None => crate::env_paths::require_absolute(
-            crate::env_paths::directory("XDG_CONFIG_HOME")
-                .or_else(|| crate::env_paths::directory("HOME").map(|home| home.join(".config")))
-                .ok_or("HOME and XDG_CONFIG_HOME are unset; cannot keep a client profile")?,
-            "the client profile directory",
-        )?,
+        None => crate::env_paths::router_client_config_root()?,
     };
     Ok(root
         .join("link-assistant-router/clients")

@@ -121,7 +121,9 @@ failure rather than claiming a rollback that the vendor does not offer.
 | Agent | Router agent config and data directories | none | `XDG_CONFIG_HOME`, `XDG_DATA_HOME` |
 
 On Unix, XDG config defaults to `~/.config` and XDG data to `~/.local/share`.
-On Windows, Router uses `%APPDATA%` for config and `%LOCALAPPDATA%` for data.
+On Windows, normal client config/data use `%APPDATA%` and `%LOCALAPPDATA%`
+where applicable. Persistent `router with` profiles retain their existing
+`%USERPROFILE%/.config` location (or `XDG_CONFIG_HOME` when set).
 Only known user-level stores are included; project-local files outside those
 stores and OS keychain entries are not silently copied. Profiles with an
 unknown root, unsupported file type or unreadable entry stop with an error.

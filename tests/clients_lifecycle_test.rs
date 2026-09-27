@@ -622,6 +622,82 @@ fn backup_refuses_destination_inside_selected_profile() {
     );
 }
 
+#[test]
+fn router_owned_claude_active_marker_blocks_lifecycle_mutation() {
+    let home = tempfile::tempdir().unwrap();
+    let state = home
+        .path()
+        .join(".config/link-assistant-router/clients/claude");
+    let profile = state.join("home");
+    fs::create_dir_all(&profile).unwrap();
+    fs::create_dir_all(state.join("active")).unwrap();
+    fs::write(profile.join("settings.json"), b"{}").unwrap();
+    fs::write(
+        state.join("active/current.run"),
+        format!("{}\n", std::process::id()),
+    )
+    .unwrap();
+    let reset = router(
+        home.path(),
+        &["clients", "reset", "claude", "--profile", "router"],
+    );
+    assert!(!reset.status.success());
+    assert!(
+        String::from_utf8_lossy(&reset.stderr).contains("active Router-launched Claude"),
+        "{}",
+        String::from_utf8_lossy(&reset.stderr)
+    );
+    assert_eq!(fs::read(profile.join("settings.json")).unwrap(), b"{}");
+    let backup = router(
+        home.path(),
+        &[
+            "clients",
+            "backup",
+            "create",
+            "claude",
+            "--profile",
+            "router",
+        ],
+    );
+    assert!(!backup.status.success());
+    assert!(String::from_utf8_lossy(&backup.stderr).contains("active Router-launched Claude"));
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_router_profile_inventory_uses_the_wrapper_home() {
+    let home = tempfile::tempdir().unwrap();
+    let profile = home
+        .path()
+        .join(".config/link-assistant-router/clients/claude/home");
+    fs::create_dir_all(&profile).unwrap();
+    fs::write(profile.join("session.jsonl"), b"session").unwrap();
+    let appdata = home.path().join("Roaming");
+    let result = router_with_env(
+        home.path(),
+        &[
+            "clients",
+            "backup",
+            "create",
+            "claude",
+            "--profile",
+            "router",
+        ],
+        &[("APPDATA", appdata.to_str().unwrap())],
+    );
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let id = String::from_utf8(result.stdout).unwrap();
+    let saved = appdata
+        .join("link-assistant-router/client-backups")
+        .join(id.trim())
+        .join("data/claude/router/home/session.jsonl");
+    assert_eq!(fs::read(saved).unwrap(), b"session");
+}
+
 #[cfg(target_os = "linux")]
 #[test]
 fn active_client_blocks_backup_without_publishing_an_archive() {

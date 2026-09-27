@@ -171,12 +171,17 @@ pub fn profiles(
     }
     if scope != ProfileSelection::Normal {
         if matches!(client, ClientKind::ClaudeCode | ClientKind::GeminiCli) {
+            let router_config = if home.is_some() {
+                root.join(".config")
+            } else {
+                crate::env_paths::router_client_config_root()?
+            };
             result.push(Profile {
                 client,
                 scope: "router",
                 stores: vec![store(
                     "home",
-                    config
+                    router_config
                         .join("link-assistant-router/clients")
                         .join(client.canonical_name())
                         .join("home"),
@@ -273,9 +278,91 @@ pub fn lock_operations(root: &Path) -> Result<File, String> {
     Ok(file)
 }
 
+fn marker_process_alive(pid: u32) -> Result<bool, String> {
+    #[cfg(target_os = "linux")]
+    {
+        match fs::read_to_string(format!("/proc/{pid}/status")) {
+            Ok(status) => Ok(!status
+                .lines()
+                .any(|line| line.starts_with("State:") && line.contains('Z'))),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+            Err(error) => Err(format!(
+                "cannot inspect Router-launched Claude PID: {error}"
+            )),
+        }
+    }
+    #[cfg(all(unix, not(target_os = "linux")))]
+    {
+        let output = std::process::Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "pid="])
+            .output()
+            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
+        Ok(output.status.success() && !output.stdout.is_empty())
+    }
+    #[cfg(windows)]
+    {
+        let expected = pid.to_string();
+        let output = std::process::Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {expected}"), "/NH", "/FO", "CSV"])
+            .output()
+            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
+        if !output.status.success() {
+            return Err("cannot inspect Router-launched Claude PID".into());
+        }
+        Ok(String::from_utf8_lossy(&output.stdout).lines().any(|line| {
+            line.split(',')
+                .nth(1)
+                .is_some_and(|value| value.trim_matches('"') == expected)
+        }))
+    }
+}
+
+fn refuse_active_claude_marker(home: Option<&Path>) -> Result<(), String> {
+    let root = home_dir(home)?;
+    let config = if home.is_some() {
+        root.join(".config")
+    } else {
+        crate::env_paths::router_client_config_root()?
+    };
+    let active = config.join("link-assistant-router/clients/claude/active");
+    let entries = match fs::read_dir(active) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => {
+            return Err(format!(
+                "cannot inspect Router-launched Claude sessions: {error}"
+            ));
+        }
+    };
+    for entry in entries {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let marker = fs::read_to_string(entry.path())
+            .map_err(|error| format!("cannot inspect Router-launched Claude marker: {error}"))?;
+        let mut seen = false;
+        for line in marker.lines() {
+            let pid = line
+                .parse::<u32>()
+                .map_err(|_| "invalid Router-launched Claude marker; inspect it before retrying")?;
+            seen = true;
+            if marker_process_alive(pid)? {
+                return Err("active Router-launched Claude session; close it before backup, reset or restore".into());
+            }
+        }
+        if !seen {
+            return Err("empty Router-launched Claude marker; inspect it before retrying".into());
+        }
+        fs::remove_file(entry.path())
+            .map_err(|error| format!("cannot remove stale Claude session marker: {error}"))?;
+    }
+    Ok(())
+}
+
 /// A conservative process check. The client may be launched outside Router;
 /// such a writer cannot honor Router's lock, so refuse while it is present.
 pub fn refuse_active(client: ClientKind, home: Option<&Path>) -> Result<(), String> {
+    if client == ClientKind::ClaudeCode {
+        refuse_active_claude_marker(home)?;
+    }
     #[cfg(target_os = "linux")]
     {
         let selected_home = home.map(Path::to_path_buf).or_else(|| directory("HOME"));

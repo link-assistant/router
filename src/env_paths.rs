@@ -23,6 +23,19 @@ pub fn directory(name: &str) -> Option<PathBuf> {
     from_value(std::env::var_os(name))
 }
 
+/// Configuration root used by persistent `router with` client homes.
+/// Keep profile inventory on the same path, including Windows HOME/USERPROFILE.
+pub fn router_client_config_root() -> Result<PathBuf, String> {
+    let root = directory("XDG_CONFIG_HOME")
+        .or_else(|| {
+            directory("HOME")
+                .or_else(|| directory("USERPROFILE"))
+                .map(|home| home.join(".config"))
+        })
+        .ok_or("HOME, USERPROFILE and XDG_CONFIG_HOME are unset; cannot keep a client profile")?;
+    require_absolute(root, "the client profile directory")
+}
+
 /// Qwen documents relative and `~/` overrides; resolve them once so later
 /// profile operations never write through a changing process directory.
 pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String> {
