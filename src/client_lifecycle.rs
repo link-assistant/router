@@ -231,18 +231,7 @@ fn owner_directory_windows(path: &Path) -> Result<(), String> {
         .output()
         .map_err(|error| format!("cannot identify Windows account: {error}"))?;
     let identity_text = String::from_utf8_lossy(&identity.stdout);
-    let sid = identity_text
-        .trim()
-        .split(',')
-        .nth(1)
-        .map(|part| part.trim_matches('"'))
-        .filter(|part| {
-            part.starts_with("S-1-")
-                && part
-                    .chars()
-                    .all(|character| character.is_ascii_digit() || character == '-')
-        })
-        .ok_or("cannot identify Windows account SID")?;
+    let sid = parse_windows_sid(&identity_text).ok_or("cannot identify Windows account SID")?;
     if !identity.status.success() {
         return Err("cannot identify Windows account SID".into());
     }
@@ -263,6 +252,19 @@ fn owner_directory_windows(path: &Path) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(any(windows, test))]
+fn parse_windows_sid(output: &str) -> Option<&str> {
+    let sid = output.trim().rsplit(',').next()?.trim_matches('"');
+    sid.strip_prefix("S-1-")
+        .filter(|tail| {
+            !tail.is_empty()
+                && tail
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || byte == b'-')
+        })
+        .map(|_| sid)
 }
 
 pub fn lock_operations(root: &Path) -> Result<File, String> {
@@ -443,4 +445,18 @@ pub fn refuse_active(client: ClientKind, home: Option<&Path>) -> Result<(), Stri
 pub fn failed(error: impl std::fmt::Display) -> ExitCode {
     eprintln!("error: {error}");
     ExitCode::from(1)
+}
+
+#[cfg(test)]
+mod windows_sid_tests {
+    use super::parse_windows_sid;
+
+    #[test]
+    fn accepts_a_whoami_csv_sid_even_when_the_username_contains_a_comma() {
+        assert_eq!(
+            parse_windows_sid("\"domain\\last, first\",\"S-1-5-21-123\"\r\n"),
+            Some("S-1-5-21-123")
+        );
+        assert_eq!(parse_windows_sid("\"user\",\"S-1-5-invalid\""), None);
+    }
 }

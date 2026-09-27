@@ -182,8 +182,13 @@ fn validate_links(path: &Path, stage: &Path, live: &Path) -> Result<(), String> 
     let metadata = fs::symlink_metadata(path).map_err(|error| error.to_string())?;
     if metadata.file_type().is_symlink() {
         let target = fs::read_link(path).map_err(|error| error.to_string())?;
+        let canonical_live = fs::canonicalize(live).ok();
         if target.is_absolute() {
-            if !target.starts_with(live)
+            let within_live = target.starts_with(live)
+                || canonical_live.as_ref().is_some_and(|root| {
+                    fs::canonicalize(&target).is_ok_and(|resolved| resolved.starts_with(root))
+                });
+            if !within_live
                 || target
                     .components()
                     .any(|part| matches!(part, std::path::Component::ParentDir))
@@ -193,7 +198,13 @@ fn validate_links(path: &Path, stage: &Path, live: &Path) -> Result<(), String> 
         } else {
             let resolved = fs::canonicalize(path)
                 .map_err(|_| "staged symlink target is missing".to_string())?;
-            if !resolved.starts_with(stage) && !resolved.starts_with(live) {
+            let canonical_stage =
+                fs::canonicalize(stage).map_err(|_| "staged profile is missing".to_string())?;
+            if !resolved.starts_with(canonical_stage)
+                && !canonical_live
+                    .as_ref()
+                    .is_some_and(|root| resolved.starts_with(root))
+            {
                 return Err("staged symlink escapes the selected profile".to_string());
             }
         }

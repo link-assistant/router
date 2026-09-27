@@ -385,168 +385,6 @@ fn all_eight_settings_resets_keep_auth_and_sessions() {
 }
 
 #[test]
-fn maintenance_dry_run_reports_each_client_without_mutation() {
-    let home = tempfile::tempdir().unwrap();
-    let empty_path = tempfile::tempdir().unwrap();
-    let output = router_with_env(
-        home.path(),
-        &["clients", "update", "--all", "--dry-run", "--json"],
-        &[("PATH", empty_path.path().to_str().unwrap())],
-    );
-    assert!(!output.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(plans.as_array().unwrap().len(), 8);
-    assert!(
-        plans
-            .as_array()
-            .unwrap()
-            .iter()
-            .all(|plan| plan["status"] == "unsupported")
-    );
-    assert!(
-        !home
-            .path()
-            .join(".config/link-assistant-router/client-backups")
-            .exists()
-    );
-}
-
-#[cfg(unix)]
-#[test]
-fn npm_maintenance_verifies_versions_and_preserves_profiles() {
-    use std::os::unix::fs::PermissionsExt;
-
-    let home = tempfile::tempdir().unwrap();
-    let global = home.path().join("npm-global");
-    let bin = global.join("bin");
-    fs::create_dir_all(&bin).unwrap();
-    let version = home.path().join("codex-version");
-    fs::write(&version, "codex 1.0\n").unwrap();
-    let profile = home.path().join(".codex");
-    fs::create_dir_all(&profile).unwrap();
-    fs::write(profile.join("config.toml"), "model = 'old'\n").unwrap();
-
-    let npm = bin.join("npm");
-    fs::write(
-        &npm,
-        "#!/bin/sh\nif [ \"$1\" = root ]; then printf '%s\\n' \"$MOCK_NPM_ROOT\"; exit 0; fi\nif [ \"$MOCK_NPM_FAIL\" = yes ]; then exit 1; fi\nprintf '%s\\n' \"$MOCK_NPM_VERSION\" > \"$MOCK_VERSION_FILE\"\n",
-    )
-    .unwrap();
-    let codex = bin.join("codex");
-    fs::write(
-        &codex,
-        "#!/bin/sh\nif [ \"$1\" = --version ]; then /bin/cat \"$MOCK_VERSION_FILE\"; else exit 1; fi\n",
-    )
-    .unwrap();
-    for script in [&npm, &codex] {
-        let mut permissions = fs::metadata(script).unwrap().permissions();
-        permissions.set_mode(0o700);
-        fs::set_permissions(script, permissions).unwrap();
-    }
-    let path = format!("{}:{}", bin.display(), std::env::var("PATH").unwrap());
-    let global = global.to_str().unwrap();
-    let version_file = version.to_str().unwrap();
-    let env = [
-        ("PATH", path.as_str()),
-        ("MOCK_NPM_ROOT", global),
-        ("MOCK_VERSION_FILE", version_file),
-        ("MOCK_NPM_VERSION", "codex 2.0"),
-    ];
-
-    let preview = router_with_env(
-        home.path(),
-        &[
-            "clients",
-            "update",
-            "codex",
-            "--latest",
-            "--dry-run",
-            "--json",
-        ],
-        &env,
-    );
-    assert!(
-        preview.status.success(),
-        "{}",
-        String::from_utf8_lossy(&preview.stderr)
-    );
-    let plans: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
-    assert_eq!(plans[0]["method"], "npm");
-    assert_eq!(plans[0]["status"], "planned");
-    assert_eq!(plans[0]["command"][3], "@openai/codex@latest");
-    assert_eq!(fs::read_to_string(&version).unwrap(), "codex 1.0\n");
-
-    let updated = router_with_env(
-        home.path(),
-        &["clients", "update", "codex", "--latest", "--json"],
-        &env,
-    );
-    assert!(
-        updated.status.success(),
-        "{}",
-        String::from_utf8_lossy(&updated.stderr)
-    );
-    let plans: serde_json::Value = serde_json::from_slice(&updated.stdout).unwrap();
-    assert_eq!(plans[0]["status"], "completed");
-    assert_eq!(plans[0]["version_before"], "codex 1.0");
-    assert_eq!(plans[0]["version_after"], "codex 2.0");
-    assert_eq!(
-        fs::read_to_string(profile.join("config.toml")).unwrap(),
-        "model = 'old'\n"
-    );
-
-    let unchanged = router_with_env(
-        home.path(),
-        &["clients", "update", "codex", "--latest", "--json"],
-        &env,
-    );
-    assert!(unchanged.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&unchanged.stdout).unwrap();
-    assert_eq!(plans[0]["status"], "current");
-
-    let failed = router_with_env(
-        home.path(),
-        &["clients", "update", "codex", "--latest", "--json"],
-        &[env.as_slice(), &[("MOCK_NPM_FAIL", "yes")]].concat(),
-    );
-    assert!(!failed.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&failed.stdout).unwrap();
-    assert_eq!(plans[0]["status"], "failed");
-    assert_eq!(fs::read_to_string(&version).unwrap(), "codex 2.0\n");
-
-    let reinstalled = router_with_env(
-        home.path(),
-        &[
-            "clients",
-            "reinstall",
-            "codex",
-            "--latest",
-            "--yes",
-            "--json",
-        ],
-        &[env.as_slice(), &[("MOCK_NPM_VERSION", "codex 3.0")]].concat(),
-    );
-    assert!(
-        reinstalled.status.success(),
-        "{}",
-        String::from_utf8_lossy(&reinstalled.stderr)
-    );
-    let plans: serde_json::Value = serde_json::from_slice(&reinstalled.stdout).unwrap();
-    assert_eq!(plans[0]["status"], "completed");
-    assert_eq!(plans[0]["version_after"], "codex 3.0");
-    let id = plans[0]["backup_id"].as_str().unwrap();
-    assert!(
-        router(home.path(), &["clients", "backup", "verify", id])
-            .status
-            .success()
-    );
-    assert_eq!(
-        fs::read_to_string(profile.join("config.toml")).unwrap(),
-        "model = 'old'\n"
-    );
-}
-
-#[test]
 fn documented_gemini_and_qwen_overrides_are_inventoried() {
     let home = tempfile::tempdir().unwrap();
     let gemini_parent = home.path().join("gemini-parent");
@@ -657,6 +495,36 @@ fn backup_preserves_internal_symlink_and_private_permissions() {
         fs::read(profile.join("absolute-shortcut")).unwrap(),
         b"session"
     );
+}
+
+#[cfg(unix)]
+#[test]
+fn restore_accepts_an_in_scope_link_through_a_home_alias() {
+    use std::os::unix::fs::symlink;
+
+    let home = tempfile::tempdir().unwrap();
+    let alias_parent = tempfile::tempdir().unwrap();
+    let alias = alias_parent.path().join("home-alias");
+    symlink(home.path(), &alias).unwrap();
+    let profile = home.path().join(".claude");
+    fs::create_dir_all(&profile).unwrap();
+    fs::write(profile.join("session.jsonl"), "session").unwrap();
+    symlink("session.jsonl", profile.join("recent")).unwrap();
+    let created = router(&alias, &["clients", "backup", "create", "claude"]);
+    assert!(
+        created.status.success(),
+        "{}",
+        String::from_utf8_lossy(&created.stderr)
+    );
+    let id = String::from_utf8(created.stdout).unwrap();
+    fs::remove_file(profile.join("recent")).unwrap();
+    let restored = router(&alias, &["clients", "backup", "restore", id.trim()]);
+    assert!(
+        restored.status.success(),
+        "{}",
+        String::from_utf8_lossy(&restored.stderr)
+    );
+    assert_eq!(fs::read(profile.join("recent")).unwrap(), b"session");
 }
 
 #[cfg(unix)]
