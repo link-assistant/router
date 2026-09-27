@@ -195,6 +195,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.14.0] - 2026-09-27
+
+### Added
+- Verified local client profile backup, merge-first restore, settings/full reset, and conservative binary maintenance commands for all eight supported clients.
+
+### Changed
+- `router with --reset-to-default-configuration claude` now retains resumable sessions in the active Router-owned profile.
+
 ## [1.13.0] - 2026-09-20
 
 ### Added
