@@ -2,7 +2,10 @@
 
 mod common;
 
-use common::{router, router_with_env};
+#[cfg(unix)]
+use common::router;
+use common::router_with_env;
+#[cfg(unix)]
 use std::fs;
 
 #[test]
