@@ -16,6 +16,8 @@ fn restore_link(
     live_root: &Path,
 ) -> Result<(), String> {
     let target = PathBuf::from(original_link);
+    #[cfg(windows)]
+    let original_target = target.clone();
     let replacement = if target.is_absolute() {
         let relative = target
             .strip_prefix(original_root)
@@ -50,7 +52,7 @@ fn restore_link(
     std::os::unix::fs::symlink(&replacement, destination).map_err(|error| error.to_string())?;
     #[cfg(windows)]
     {
-        let archived_target = if target.is_absolute() {
+        let archived_target = if original_target.is_absolute() {
             let link_relative = destination
                 .strip_prefix(stage)
                 .map_err(|_| "unsafe symlink location")?;
@@ -59,7 +61,7 @@ fn restore_link(
                 .nth(link_relative.components().count())
                 .ok_or("unsafe archive symlink location")?;
             archive_root.join(
-                target
+                original_target
                     .strip_prefix(original_root)
                     .map_err(|_| "unsafe symlink target")?,
             )
@@ -67,7 +69,7 @@ fn restore_link(
             _source
                 .parent()
                 .ok_or("symlink has no parent")?
-                .join(&target)
+                .join(&original_target)
         };
         if archived_target.is_dir() {
             std::os::windows::fs::symlink_dir(&replacement, destination)

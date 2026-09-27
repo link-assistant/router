@@ -363,6 +363,8 @@ pub fn refuse_active(client: ClientKind, home: Option<&Path>) -> Result<(), Stri
     if client == ClientKind::ClaudeCode {
         refuse_active_claude_marker(home)?;
     }
+    #[cfg(not(target_os = "linux"))]
+    let _ = home;
     #[cfg(target_os = "linux")]
     {
         let selected_home = home.map(Path::to_path_buf).or_else(|| directory("HOME"));

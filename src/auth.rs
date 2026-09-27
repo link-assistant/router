@@ -921,11 +921,7 @@ mod tests {
         .unwrap();
         let port = login.port();
         assert!(login.complete().await.unwrap_err().contains("timed out"));
-        assert!(
-            tokio::net::TcpListener::bind(("127.0.0.1", port))
-                .await
-                .is_ok()
-        );
+        assert!(listener_eventually_releases(port).await);
     }
 
     #[tokio::test]
