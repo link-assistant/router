@@ -243,13 +243,13 @@ pub(super) fn run(
             continue;
         }
         let client = ClientKind::from_str_opt(&record.client).ok_or("unknown client in backup")?;
-        refuse_active(client, home)?;
         let selection = if record.scope == "router" {
             ProfileSelection::Router
         } else {
             ProfileSelection::Normal
         };
         let current = profiles(home, client, selection)?;
+        refuse_active(&current[0], home)?;
         let store = current[0]
             .stores
             .iter()

@@ -730,3 +730,67 @@ fn active_client_blocks_backup_without_publishing_an_archive() {
             .any(|entry| { entry.unwrap().file_name().to_string_lossy().len() == 32 })
     );
 }
+
+#[test]
+fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
+    // Router runs Gemini with GEMINI_CLI_HOME at the store, so its settings
+    // live one level down, in `.gemini/` (issue #611).
+    let home = tempfile::tempdir().unwrap();
+    let store = home
+        .path()
+        .join(".config/link-assistant-router/clients/gemini/home");
+    let settings = store.join(".gemini/settings.json");
+    fs::create_dir_all(store.join(".gemini/tmp/session")).unwrap();
+    fs::write(&settings, b"{\"model\":{\"name\":\"router\"}}").unwrap();
+    fs::write(store.join(".gemini/oauth_creds.json"), b"login").unwrap();
+    fs::write(store.join(".gemini/tmp/session/chat.json"), b"session").unwrap();
+    let args = [
+        "clients",
+        "reset",
+        "gemini",
+        "--profile",
+        "router",
+        "--json",
+    ];
+
+    let preview = router(home.path(), &[&args[..], &["--dry-run"]].concat());
+    assert!(
+        preview.status.success(),
+        "{}",
+        String::from_utf8_lossy(&preview.stderr)
+    );
+    let rows: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
+    assert_eq!(rows[0]["status"], "planned");
+    assert_eq!(rows[0]["targets"][0], settings.to_str().unwrap());
+    assert!(settings.exists(), "a dry run must not remove settings");
+
+    let reset = router(home.path(), &args);
+    assert!(
+        reset.status.success(),
+        "{}",
+        String::from_utf8_lossy(&reset.stderr)
+    );
+    let rows: serde_json::Value = serde_json::from_slice(&reset.stdout).unwrap();
+    assert_eq!(rows[0]["status"], "reset");
+    assert_eq!(rows[0]["targets"][0], settings.to_str().unwrap());
+    assert!(rows[0]["backup_id"].is_string());
+    assert!(!settings.exists());
+    assert_eq!(
+        fs::read(store.join(".gemini/oauth_creds.json")).unwrap(),
+        b"login"
+    );
+    assert_eq!(
+        fs::read(store.join(".gemini/tmp/session/chat.json")).unwrap(),
+        b"session"
+    );
+
+    // With the settings gone there is nothing left to reset, and that is what
+    // is reported: no second backup, no claim of a reset.
+    let again = router(home.path(), &args);
+    assert!(again.status.success());
+    let rows: serde_json::Value = serde_json::from_slice(&again.stdout).unwrap();
+    assert_eq!(rows[0]["status"], "unchanged");
+    assert_eq!(rows[0]["targets"], serde_json::json!([]));
+    assert!(rows[0]["backup_id"].is_null());
+    assert_eq!(rows[0]["checked"][0], settings.to_str().unwrap());
+}

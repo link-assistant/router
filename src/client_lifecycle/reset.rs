@@ -16,6 +16,9 @@ fn settings_paths(profile: &Profile) -> Vec<PathBuf> {
             ClientKind::Codex => &["config.toml"],
             ClientKind::ClaudeCode => &["settings.json", "settings.local.json"],
             ClientKind::Cursor => &["cli-config.json"],
+            // Router runs Gemini with `GEMINI_CLI_HOME` naming the store, and
+            // Gemini reads `<GEMINI_CLI_HOME>/.gemini/settings.json` (#611).
+            ClientKind::GeminiCli if profile.scope == "router" => &[".gemini/settings.json"],
             ClientKind::GeminiCli | ClientKind::QwenCode => &["settings.json"],
             ClientKind::GrokCli => &["user-settings.json"],
             ClientKind::Opencode => {
@@ -102,7 +105,7 @@ fn run_one(
     full: bool,
     yes: bool,
 ) -> Result<serde_json::Value, String> {
-    refuse_active(profile.client, home)?;
+    refuse_active(profile, home)?;
     let selected = profile
         .stores
         .iter()
@@ -119,6 +122,20 @@ fn run_one(
         validate_setting(path)?;
     }
     let overrides = ambient(profile.client);
+    if !full && settings.iter().all(|path| !path.exists()) {
+        // Nothing to reset is reported as such, not as a reset: no backup is
+        // taken and the checked locations are named (issue #611).
+        let checked = settings
+            .iter()
+            .map(|path| path.to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+        return Ok(
+            serde_json::json!({ "client": profile.client.canonical_name(), "profile": profile.scope,
+            "mode": "settings", "targets": [], "checked": checked,
+            "categories": ["settings", "Router integration"], "ambient_overrides": overrides,
+            "status": "unchanged" }),
+        );
+    }
     let targets = if full {
         selected
             .iter()
@@ -321,6 +338,11 @@ pub fn run(
             if let Some(targets) = row["targets"].as_array() {
                 for target in targets {
                     println!("  target: {}", target.as_str().unwrap_or("?"));
+                }
+            }
+            if let Some(checked) = row["checked"].as_array() {
+                for path in checked {
+                    println!("  no settings at: {}", path.as_str().unwrap_or("?"));
                 }
             }
             if let Some(id) = row["backup_id"].as_str() {

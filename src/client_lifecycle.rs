@@ -6,14 +6,17 @@
 
 use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
-use std::process::{ExitCode, Stdio};
+use std::process::ExitCode;
 
 use crate::cli::{ClientSelection, ProfileSelection};
 use crate::clients::ClientKind;
 
+pub mod active;
 pub mod backup;
 pub mod maintenance;
 pub mod reset;
+
+pub use active::refuse_active;
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -41,11 +44,22 @@ fn directory(name: &str) -> Option<PathBuf> {
     crate::env_paths::directory(name)
 }
 
+/// Resolves a variable in the environment the profile roots come from: this
+/// process's own, or the one captured from a running client (issue #610).
+type Lookup<'a> = &'a dyn Fn(&str) -> Option<PathBuf>;
+
+/// The working directory of that same environment, for relative overrides.
+type Current<'a> = &'a dyn Fn(&str) -> Result<PathBuf, String>;
+
 fn home_dir(home: Option<&Path>) -> Result<PathBuf, String> {
+    home_dir_in(home, &directory)
+}
+
+fn home_dir_in(home: Option<&Path>, env: Lookup) -> Result<PathBuf, String> {
     let root = home
         .map(Path::to_path_buf)
-        .or_else(|| directory("HOME"))
-        .or_else(|| directory("USERPROFILE"))
+        .or_else(|| env("HOME"))
+        .or_else(|| env("USERPROFILE"))
         .ok_or("HOME or USERPROFILE is required to locate client profiles")?;
     crate::env_paths::require_absolute(root, "the client home")
 }
@@ -58,32 +72,25 @@ pub fn backup_root(home: Option<&Path>, destination: Option<&Path>) -> Result<Pa
         return crate::env_paths::require_absolute(destination.to_path_buf(), "backup destination");
     }
     let user_home = home_dir(home)?;
-    let config = if home.is_some() {
-        user_home.join(".config")
-    } else {
-        directory("XDG_CONFIG_HOME")
-            .or_else(|| directory("APPDATA"))
-            .unwrap_or_else(|| user_home.join(".config"))
-    };
-    Ok(config.join("link-assistant-router/client-backups"))
+    Ok(user_config(home, &user_home, &directory).join("link-assistant-router/client-backups"))
 }
 
-fn user_config(home: Option<&Path>, root: &Path) -> PathBuf {
+fn user_config(home: Option<&Path>, root: &Path, env: Lookup) -> PathBuf {
     if home.is_some() {
         root.join(".config")
     } else {
-        directory("XDG_CONFIG_HOME")
-            .or_else(|| directory("APPDATA"))
+        env("XDG_CONFIG_HOME")
+            .or_else(|| env("APPDATA"))
             .unwrap_or_else(|| root.join(".config"))
     }
 }
 
-fn user_data(home: Option<&Path>, root: &Path) -> PathBuf {
+fn user_data(home: Option<&Path>, root: &Path, env: Lookup) -> PathBuf {
     if home.is_some() {
         root.join(".local/share")
     } else {
-        directory("XDG_DATA_HOME")
-            .or_else(|| directory("LOCALAPPDATA"))
+        env("XDG_DATA_HOME")
+            .or_else(|| env("LOCALAPPDATA"))
             .unwrap_or_else(|| root.join(".local/share"))
     }
 }
@@ -95,23 +102,25 @@ fn store(name: &str, path: PathBuf) -> Store {
     }
 }
 
-/// Inventory the known user and Router-owned stores. Optional roots that do
-/// not exist are reported as unavailable by the backup plan, not invented.
-pub fn profiles(
+/// The normal stores of `client` and, for the clients Router keeps a
+/// persistent profile for, the Router-owned one, resolved in `env`.
+fn inventory(
     home: Option<&Path>,
     client: ClientKind,
-    scope: ProfileSelection,
-) -> Result<Vec<Profile>, String> {
-    let root = home_dir(home)?;
-    let config = user_config(home, &root);
-    let data = user_data(home, &root);
+    env: Lookup,
+    current: Current,
+) -> Result<(Vec<Store>, Option<Vec<Store>>), String> {
+    let root = home_dir_in(home, env)?;
+    let config = user_config(home, &root, env);
+    let data = user_data(home, &root, env);
     let selected = |name: &str, fallback: PathBuf| {
         if home.is_some() {
             fallback
         } else {
-            directory(name).unwrap_or(fallback)
+            env(name).unwrap_or(fallback)
         }
     };
+    let qwen = |name: &str| crate::env_paths::qwen_directory_in(env, name, &root, || current(name));
     let normal = match client {
         ClientKind::Codex => vec![store("home", selected("CODEX_HOME", root.join(".codex")))],
         ClientKind::ClaudeCode => vec![
@@ -127,7 +136,7 @@ pub fn profiles(
             if home.is_some() {
                 root.join(".gemini")
             } else {
-                directory("GEMINI_CLI_HOME")
+                env("GEMINI_CLI_HOME")
                     .unwrap_or_else(|| root.clone())
                     .join(".gemini")
             },
@@ -144,12 +153,11 @@ pub fn profiles(
             let main = if home.is_some() {
                 root.join(".qwen")
             } else {
-                crate::env_paths::qwen_directory("QWEN_HOME", &root)?
-                    .unwrap_or_else(|| root.join(".qwen"))
+                qwen("QWEN_HOME")?.unwrap_or_else(|| root.join(".qwen"))
             };
             let mut stores = vec![store("home", main.clone())];
             if home.is_none()
-                && let Some(runtime) = crate::env_paths::qwen_directory("QWEN_RUNTIME_DIR", &root)?
+                && let Some(runtime) = qwen("QWEN_RUNTIME_DIR")?
                 && !runtime.starts_with(&main)
             {
                 stores.push(store("runtime", runtime));
@@ -161,6 +169,35 @@ pub fn profiles(
             store("data", data.join("link-assistant-agent")),
         ],
     };
+    let router = if matches!(client, ClientKind::ClaudeCode | ClientKind::GeminiCli) {
+        let router_config = if home.is_some() {
+            root.join(".config")
+        } else {
+            crate::env_paths::router_client_config_root_in(env)?
+        };
+        Some(vec![store(
+            "home",
+            router_config
+                .join("link-assistant-router/clients")
+                .join(client.canonical_name())
+                .join("home"),
+        )])
+    } else {
+        None
+    };
+    Ok((normal, router))
+}
+
+/// Inventory the known user and Router-owned stores. Optional roots that do
+/// not exist are reported as unavailable by the backup plan, not invented.
+pub fn profiles(
+    home: Option<&Path>,
+    client: ClientKind,
+    scope: ProfileSelection,
+) -> Result<Vec<Profile>, String> {
+    let (normal, router) = inventory(home, client, &directory, &|name| {
+        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))
+    })?;
     let mut result = Vec::new();
     if scope != ProfileSelection::Router {
         result.push(Profile {
@@ -170,22 +207,11 @@ pub fn profiles(
         });
     }
     if scope != ProfileSelection::Normal {
-        if matches!(client, ClientKind::ClaudeCode | ClientKind::GeminiCli) {
-            let router_config = if home.is_some() {
-                root.join(".config")
-            } else {
-                crate::env_paths::router_client_config_root()?
-            };
+        if let Some(stores) = router {
             result.push(Profile {
                 client,
                 scope: "router",
-                stores: vec![store(
-                    "home",
-                    router_config
-                        .join("link-assistant-router/clients")
-                        .join(client.canonical_name())
-                        .join("home"),
-                )],
+                stores,
             });
         } else if scope == ProfileSelection::Router {
             return Err(format!("{client} has no persistent Router-owned profile"));
@@ -243,8 +269,8 @@ fn owner_directory_windows(path: &Path) -> Result<(), String> {
         let status = std::process::Command::new("icacls")
             .arg(path)
             .args(arguments)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
             .status()
             .map_err(|error| format!("cannot make Windows backup directory private: {error}"))?;
         if !status.success() {
@@ -278,168 +304,6 @@ pub fn lock_operations(root: &Path) -> Result<File, String> {
     file.try_lock()
         .map_err(|_| "another client backup, reset or restore is running".to_string())?;
     Ok(file)
-}
-
-fn marker_process_alive(pid: u32) -> Result<bool, String> {
-    #[cfg(target_os = "linux")]
-    {
-        match fs::read_to_string(format!("/proc/{pid}/status")) {
-            Ok(status) => Ok(!status
-                .lines()
-                .any(|line| line.starts_with("State:") && line.contains('Z'))),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
-            Err(error) => Err(format!(
-                "cannot inspect Router-launched Claude PID: {error}"
-            )),
-        }
-    }
-    #[cfg(all(unix, not(target_os = "linux")))]
-    {
-        let output = std::process::Command::new("ps")
-            .args(["-p", &pid.to_string(), "-o", "pid="])
-            .output()
-            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
-        Ok(output.status.success() && !output.stdout.is_empty())
-    }
-    #[cfg(windows)]
-    {
-        let expected = pid.to_string();
-        let output = std::process::Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {expected}"), "/NH", "/FO", "CSV"])
-            .output()
-            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
-        if !output.status.success() {
-            return Err("cannot inspect Router-launched Claude PID".into());
-        }
-        Ok(String::from_utf8_lossy(&output.stdout).lines().any(|line| {
-            line.split(',')
-                .nth(1)
-                .is_some_and(|value| value.trim_matches('"') == expected)
-        }))
-    }
-}
-
-fn refuse_active_claude_marker(home: Option<&Path>) -> Result<(), String> {
-    let root = home_dir(home)?;
-    let config = if home.is_some() {
-        root.join(".config")
-    } else {
-        crate::env_paths::router_client_config_root()?
-    };
-    let active = config.join("link-assistant-router/clients/claude/active");
-    let entries = match fs::read_dir(active) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => {
-            return Err(format!(
-                "cannot inspect Router-launched Claude sessions: {error}"
-            ));
-        }
-    };
-    for entry in entries {
-        let entry = entry.map_err(|error| error.to_string())?;
-        let marker = fs::read_to_string(entry.path())
-            .map_err(|error| format!("cannot inspect Router-launched Claude marker: {error}"))?;
-        let mut seen = false;
-        for line in marker.lines() {
-            let pid = line
-                .parse::<u32>()
-                .map_err(|_| "invalid Router-launched Claude marker; inspect it before retrying")?;
-            seen = true;
-            if marker_process_alive(pid)? {
-                return Err("active Router-launched Claude session; close it before backup, reset or restore".into());
-            }
-        }
-        if !seen {
-            return Err("empty Router-launched Claude marker; inspect it before retrying".into());
-        }
-        fs::remove_file(entry.path())
-            .map_err(|error| format!("cannot remove stale Claude session marker: {error}"))?;
-    }
-    Ok(())
-}
-
-/// A conservative process check. The client may be launched outside Router;
-/// such a writer cannot honor Router's lock, so refuse while it is present.
-pub fn refuse_active(client: ClientKind, home: Option<&Path>) -> Result<(), String> {
-    if client == ClientKind::ClaudeCode {
-        refuse_active_claude_marker(home)?;
-    }
-    #[cfg(not(target_os = "linux"))]
-    let _ = home;
-    #[cfg(target_os = "linux")]
-    {
-        let selected_home = home.map(Path::to_path_buf).or_else(|| directory("HOME"));
-        let output = std::process::Command::new("pgrep")
-            .args(["-x", client.command()])
-            .stderr(Stdio::null())
-            .output()
-            .map_err(|error| format!("cannot check active {client} processes: {error}"))?;
-        if !output.status.success() && output.status.code() != Some(1) {
-            return Err(format!("cannot check active {client} processes"));
-        }
-        let pids = String::from_utf8_lossy(&output.stdout);
-        for pid in pids.lines() {
-            if fs::read_to_string(format!("/proc/{pid}/status")).is_ok_and(|status| {
-                status
-                    .lines()
-                    .any(|line| line.starts_with("State:") && line.contains('Z'))
-            }) {
-                continue;
-            }
-            let env = match fs::read(format!("/proc/{pid}/environ")) {
-                Ok(env) => env,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
-                Err(_) => {
-                    return Err(format!(
-                        "{client} may be running; cannot inspect its profile"
-                    ));
-                }
-            };
-            let process_home = env.split(|byte| *byte == 0).find_map(|part| {
-                part.strip_prefix(b"HOME=")
-                    .map(|value| PathBuf::from(String::from_utf8_lossy(value).into_owned()))
-            });
-            if process_home == selected_home {
-                return Err(format!(
-                    "{client} is running; close it before backup, reset or restore"
-                ));
-            }
-        }
-    }
-    #[cfg(all(unix, not(target_os = "linux")))]
-    {
-        let status = std::process::Command::new("pgrep")
-            .args(["-x", client.command()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .map_err(|error| format!("cannot check active {client} processes: {error}"))?;
-        if status.success() {
-            return Err(format!(
-                "{client} is running; close it before backup, reset or restore"
-            ));
-        }
-        if status.code() != Some(1) {
-            return Err(format!("cannot check active {client} processes"));
-        }
-    }
-    #[cfg(windows)]
-    {
-        let output = std::process::Command::new("tasklist")
-            .args(["/FI", &format!("IMAGENAME eq {}.exe", client.command())])
-            .output()
-            .map_err(|error| format!("cannot check active client: {error}"))?;
-        if String::from_utf8_lossy(&output.stdout)
-            .to_ascii_lowercase()
-            .contains(&format!("{}.exe", client.command()))
-        {
-            return Err(format!(
-                "{client} is running; close it before backup, reset or restore"
-            ));
-        }
-    }
-    Ok(())
 }
 
 pub fn failed(error: impl std::fmt::Display) -> ExitCode {

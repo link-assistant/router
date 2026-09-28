@@ -6,7 +6,8 @@ use std::process::{Command, ExitCode, Stdio};
 
 use serde::Serialize;
 
-use super::{backup_root, clients, lock_operations, profiles, refuse_active};
+use super::active::refuse_active_client;
+use super::{backup_root, clients, lock_operations, profiles};
 use crate::cli::MaintenanceArgs;
 use crate::clients::ClientKind;
 
@@ -356,7 +357,7 @@ fn plan(home: Option<&Path>, operation: &str, client: ClientKind, args: &Mainten
         result.status = "unsupported".into();
         return result;
     }
-    if let Err(error) = refuse_active(client, home) {
+    if let Err(error) = refuse_active_client(client, home) {
         result.status = "blocked".into();
         result.reason = Some(error);
         return result;
