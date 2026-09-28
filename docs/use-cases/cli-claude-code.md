@@ -47,9 +47,11 @@ cached Opus/Sonnet/Haiku selections are rejected locally with a provider-
 specific diagnostic while Default/main and subagent fallback remain exact GLM
 models. A model saved through `/model` remains the next launch's authoritative
 selection when it is still authorized.
-Code 2.1.255 through 2.1.265 is the reviewed range. Newer releases fail closed
-until the pinned hermetic real-client capture reviews their gateway and
-authentication behavior. See [with-router.md](with-router.md) for server and
+Code 2.1.255 or newer is required for current gateway alias resolution. There
+is no upper version limit: 2.1.265 is the pinned hermetic real-client baseline,
+not a maximum, and the same capture also runs against a newer release (2.1.283
+at the time of writing). A newer release is never refused by number alone; a
+missing capability fails at the operation that needs it (issue #609). See [with-router.md](with-router.md) for server and
 token options.
 
 ## Privacy defaults and feature-gated tools

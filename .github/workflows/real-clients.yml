@@ -70,3 +70,49 @@ jobs:
       # It lives in `live-tier.yml`, on manual dispatch, where an operator asks
       # for it and reads the result. This job stays what its name says: real
       # clients, no credentials, nothing spent.
+
+  # The pinned 2.1.265 capture above is a tested baseline, not a maximum:
+  # Router does not refuse a newer Claude by version number (issue #609). Run
+  # the same hermetic Claude capture -- native model discovery, Router-only
+  # sampling credentials, the untouched stored Claude.ai login, and the model
+  # selector -- against newer releases so client drift fails here, at the
+  # operation that changed, rather than being hidden behind a version gate.
+  claude-newer-release:
+    name: Claude Code ${{ matrix.claude }} (newer than baseline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # `latest` moves under every pull request; keep pull requests on a
+        # pinned newer release and let push, nightly, and manual runs also
+        # track the moving tag.
+        claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.283"]' || '["2.1.283", "latest"]') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Claude Code ${{ matrix.claude }}
+        env:
+          CLAUDE_TAG: ${{ matrix.claude }}
+        run: |
+          version="$(npm view "@anthropic-ai/claude-code@${CLAUDE_TAG}" version)"
+          npm install --global "@anthropic-ai/claude-code@${version}"
+          claude --version | grep -F "${version}"
+          echo "ROUTER_REAL_CLIENT_CLAUDE_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Capture native Claude requests against the offline mock
+        env:
+          ROUTER_REAL_CLIENT_TESTS: '1'
+        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1 claude
