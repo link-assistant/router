@@ -145,6 +145,36 @@ fn matching_processes(client: ClientKind) -> Result<Vec<String>, String> {
         .collect())
 }
 
+/// How often an unreadable client is looked at again before it counts.
+const SETTLE_ATTEMPTS: usize = 5;
+const SETTLE_DELAY: std::time::Duration = std::time::Duration::from_millis(20);
+
+/// The environment of a process that `still_client` keeps naming as the
+/// client, once any exec in progress has finished.
+///
+/// A client that execs another program becomes unreadable before the kernel
+/// renames it, so a child that Claude Code is starting briefly looks like an
+/// uninspectable `claude` (issue #610). Only a process that stays the client
+/// and stays unreadable is reported as unknown; one that is gone or renamed
+/// is no longer a client.
+fn settle_environment(
+    mut read: impl FnMut() -> Option<Environment>,
+    mut still_client: impl FnMut() -> Result<bool, String>,
+) -> Result<Option<Environment>, String> {
+    let mut environment = read();
+    for _ in 0..SETTLE_ATTEMPTS {
+        if !matches!(environment, Some(Environment::Unknown(_))) {
+            break;
+        }
+        std::thread::sleep(SETTLE_DELAY);
+        if !still_client()? {
+            return Ok(None);
+        }
+        environment = read();
+    }
+    Ok(environment)
+}
+
 fn keep_profile_variable(variables: &mut HashMap<String, PathBuf>, name: &str, value: &str) {
     if PROFILE_VARIABLES.contains(&name) && !value.is_empty() {
         variables.insert(name.to_owned(), PathBuf::from(value));
@@ -319,7 +349,11 @@ pub fn refuse_active(profile: &Profile, home: Option<&Path>) -> Result<(), Strin
         .map_or_else(String::new, |store| format!(" at {}", store.path.display()));
     #[cfg(unix)]
     for pid in matching_processes(client)? {
-        match process_environment(&pid) {
+        let environment = settle_environment(
+            || process_environment(&pid),
+            || Ok(matching_processes(client)?.contains(&pid)),
+        )?;
+        match environment {
             None => {}
             Some(Environment::Known(environment)) => match written_store(profile, &environment) {
                 Ok(None) => {}

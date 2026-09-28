@@ -122,20 +122,6 @@ fn run_one(
         validate_setting(path)?;
     }
     let overrides = ambient(profile.client);
-    if !full && settings.iter().all(|path| !path.exists()) {
-        // Nothing to reset is reported as such, not as a reset: no backup is
-        // taken and the checked locations are named (issue #611).
-        let checked = settings
-            .iter()
-            .map(|path| path.to_string_lossy().into_owned())
-            .collect::<Vec<_>>();
-        return Ok(
-            serde_json::json!({ "client": profile.client.canonical_name(), "profile": profile.scope,
-            "mode": "settings", "targets": [], "checked": checked,
-            "categories": ["settings", "Router integration"], "ambient_overrides": overrides,
-            "status": "unchanged" }),
-        );
-    }
     let targets = if full {
         selected
             .iter()
@@ -161,12 +147,24 @@ fn run_one(
     } else {
         vec!["settings", "Router integration"]
     };
+    // Nothing to reset is reported as such, not as a reset, and the checked
+    // locations are named (issue #611). The verified backup is still taken.
+    let unchanged = targets.is_empty();
+    let report = |status: &str, backup: Option<&str>| {
+        let mut row = serde_json::json!({ "client": profile.client.canonical_name(),
+            "profile": profile.scope, "mode": if full { "full" } else { "settings" },
+            "targets": targets, "categories": categories, "ambient_overrides": overrides,
+            "status": if unchanged { "unchanged" } else { status } });
+        if let Some(backup) = backup {
+            row["backup_id"] = backup.into();
+        }
+        if unchanged {
+            row["checked"] = settings.iter().map(|path| path.to_string_lossy()).collect();
+        }
+        row
+    };
     if dry_run {
-        return Ok(
-            serde_json::json!({ "client": profile.client.canonical_name(), "profile": profile.scope,
-            "mode": if full { "full" } else { "settings" }, "targets": targets,
-            "categories": categories, "ambient_overrides": overrides, "status": "planned" }),
-        );
+        return Ok(report("planned", None));
     }
     if full && !yes {
         return Err("full reset requires --yes after reviewing --dry-run".to_string());
@@ -268,11 +266,7 @@ fn run_one(
             fs::remove_file(old).map_err(|error| error.to_string())?;
         }
     }
-    Ok(
-        serde_json::json!({ "client": profile.client.canonical_name(), "profile": profile.scope,
-        "mode": if full { "full" } else { "settings" }, "targets": targets,
-        "categories": categories, "ambient_overrides": overrides, "backup_id": backup, "status": "reset" }),
-    )
+    Ok(report("reset", Some(&backup)))
 }
 
 #[must_use]

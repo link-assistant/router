@@ -4,6 +4,7 @@ mod common;
 
 use common::{router, router_with_env};
 use std::fs;
+use std::path::Path;
 
 #[test]
 fn claude_backup_merge_preserves_new_sessions_and_authentication() {
@@ -761,7 +762,7 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
     );
     let rows: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
     assert_eq!(rows[0]["status"], "planned");
-    assert_eq!(rows[0]["targets"][0], settings.to_str().unwrap());
+    assert_eq!(Path::new(rows[0]["targets"][0].as_str().unwrap()), settings);
     assert!(settings.exists(), "a dry run must not remove settings");
 
     let reset = router(home.path(), &args);
@@ -772,7 +773,7 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
     );
     let rows: serde_json::Value = serde_json::from_slice(&reset.stdout).unwrap();
     assert_eq!(rows[0]["status"], "reset");
-    assert_eq!(rows[0]["targets"][0], settings.to_str().unwrap());
+    assert_eq!(Path::new(rows[0]["targets"][0].as_str().unwrap()), settings);
     assert!(rows[0]["backup_id"].is_string());
     assert!(!settings.exists());
     assert_eq!(
@@ -785,12 +786,12 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
     );
 
     // With the settings gone there is nothing left to reset, and that is what
-    // is reported: no second backup, no claim of a reset.
+    // is reported rather than a reset; the profile is still backed up first.
     let again = router(home.path(), &args);
     assert!(again.status.success());
     let rows: serde_json::Value = serde_json::from_slice(&again.stdout).unwrap();
     assert_eq!(rows[0]["status"], "unchanged");
     assert_eq!(rows[0]["targets"], serde_json::json!([]));
-    assert!(rows[0]["backup_id"].is_null());
-    assert_eq!(rows[0]["checked"][0], settings.to_str().unwrap());
+    assert!(rows[0]["backup_id"].is_string());
+    assert_eq!(Path::new(rows[0]["checked"][0].as_str().unwrap()), settings);
 }

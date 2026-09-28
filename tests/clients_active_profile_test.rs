@@ -20,28 +20,32 @@ use std::time::{Duration, Instant};
 /// macOS names a process after the file it executed, so a copy of `sleep`
 /// works there. Linux takes the name from the script path instead, which
 /// keeps working where `sleep` is a multi-call binary that dispatches on it.
+/// The binary is written once: macOS kills a process whose executable was
+/// just rewritten in place.
 fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running {
     use std::os::unix::fs::PermissionsExt as _;
 
     fs::create_dir_all(directory).unwrap();
     let binary = directory.join(name);
-    if cfg!(target_os = "linux") {
-        fs::write(
-            &binary,
-            "#!/bin/sh\n[ \"$1\" = --version ] && exit 1\nwhile :; do sleep 1; done\n",
-        )
-        .unwrap();
-    } else {
-        fs::copy("/bin/sleep", &binary).unwrap();
+    if !binary.exists() {
+        if cfg!(target_os = "linux") {
+            fs::write(
+                &binary,
+                "#!/bin/sh\n[ \"$1\" = --version ] && exit 1\nwhile :; do sleep 1; done\n",
+            )
+            .unwrap();
+        } else {
+            fs::copy("/bin/sleep", &binary).unwrap();
+        }
+        fs::set_permissions(&binary, fs::Permissions::from_mode(0o755)).unwrap();
     }
-    fs::set_permissions(&binary, fs::Permissions::from_mode(0o755)).unwrap();
     let mut command = Command::new(&binary);
     command.arg("30").env_clear().env("PATH", "/usr/bin:/bin");
     for (key, value) in env {
         command.env(key, value);
     }
     // Owned by the guard at once, so a panic below still reaps it.
-    let child = Running(command.spawn().unwrap());
+    let child = Running(spawn_retrying_busy(&mut command));
     let pid = child.0.id().to_string();
     let deadline = Instant::now() + Duration::from_secs(10);
     while Instant::now() < deadline {
@@ -55,6 +59,20 @@ fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running 
         std::thread::sleep(Duration::from_millis(50));
     }
     panic!("{name} process {pid} never became visible to pgrep");
+}
+
+/// Another test thread may fork while this one still holds the new script
+/// open for writing, and exec then fails with ETXTBSY until that child execs.
+fn spawn_retrying_busy(command: &mut Command) -> Child {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        match command.spawn() {
+            Err(error) if error.raw_os_error() == Some(26) && Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            result => return result.unwrap(),
+        }
+    }
 }
 
 struct Running(Child);

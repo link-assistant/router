@@ -142,3 +142,51 @@ fn symlinked_roots_compare_as_the_same_place() {
         &real.path().join(".claude")
     ));
 }
+
+fn still_named(answers: &[bool]) -> impl FnMut() -> Result<bool, String> + '_ {
+    let mut answers = answers.iter();
+    move || Ok(*answers.next().expect("asked more often than expected"))
+}
+
+#[test]
+fn a_client_caught_while_it_execs_something_else_is_not_a_writer() {
+    // Unreadable once, then no longer named like the client.
+    let mut reads = 0;
+    let settled = settle_environment(
+        || {
+            reads += 1;
+            Some(Environment::Unknown("cannot read its environment".into()))
+        },
+        still_named(&[false]),
+    )
+    .unwrap();
+    assert!(settled.is_none());
+    assert_eq!(reads, 1);
+    // Unreadable once, then readable under the same name.
+    let mut first = true;
+    let settled = settle_environment(
+        || {
+            if std::mem::take(&mut first) {
+                Some(Environment::Unknown("cannot read its environment".into()))
+            } else {
+                Some(Environment::Known(HashMap::new()))
+            }
+        },
+        still_named(&[true]),
+    )
+    .unwrap();
+    assert!(matches!(settled, Some(Environment::Known(_))));
+}
+
+#[test]
+fn a_client_that_stays_unreadable_is_still_reported() {
+    let settled = settle_environment(
+        || Some(Environment::Unknown("cannot read its environment".into())),
+        still_named(&[true; SETTLE_ATTEMPTS]),
+    )
+    .unwrap();
+    match settled {
+        Some(Environment::Unknown(reason)) => assert!(reason.contains("cannot read")),
+        _ => panic!("a persistently unreadable client must stay unknown"),
+    }
+}
