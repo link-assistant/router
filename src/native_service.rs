@@ -134,6 +134,9 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
     if path == "/api/services/codex/v1/user-auth-credential/whoami" {
         return whoami(&state, &headers, &claims).await;
     }
+    if path == "/api/services/codex/backend-api/wham/accounts/check" {
+        return codex_accounts_check(&state, &headers, &claims).await;
+    }
     if path == "/api/services/openai/v1/realtime/client_secrets" {
         return error(
             StatusCode::NOT_IMPLEMENTED,
@@ -840,4 +843,5 @@ mod tests {
     include!("native_service_tests_resources.rs");
     include!("native_service_tests_relay.rs");
     include!("native_service_tests_codex_apps.rs");
+    include!("native_service_tests_codex_accounts.rs");
 }

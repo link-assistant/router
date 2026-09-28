@@ -37,7 +37,12 @@ const CLAUDE_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CLAUDE_VERSIO
     Some(version) => version,
     None => "2.1.265",
 };
-const CODEX_VERSION: &str = "0.154.0";
+/// The pinned baseline, or a newer release CI installs so that bootstrap drift,
+/// such as the 0.157 workspace discovery (issue #612), fails where it changed.
+const CODEX_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CODEX_VERSION") {
+    Some(version) => version,
+    None => "0.154.0",
+};
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";
@@ -400,6 +405,12 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
             "200 OK",
             "application/json",
             r#"{"email":null,"chatgpt_user_id":"usr_offline","chatgpt_account_id":"acct_offline","chatgpt_plan_type":"pro","chatgpt_account_is_fedramp":false}"#,
+        ),
+        // Codex 0.157+ account discovery lists only whoami's handle (issue #612).
+        ("GET", "/api/services/codex/backend-api/wham/accounts/check") => http_response(
+            "200 OK",
+            "application/json",
+            r#"{"accounts":[{"id":"acct_offline","plan_type":"pro","workspace_backend_origin":"https://chatgpt.com","account_routing_override":"NO_CONSTRAINT"}],"account_ordering":["acct_offline"],"default_account_id":"acct_offline"}"#,
         ),
         ("GET", "/api/services/codex/backend-api/plugins/featured") => {
             http_response("200 OK", "application/json", r#"{"plugins":[]}"#)
@@ -864,10 +875,16 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
             Duration::from_secs(30),
         )
         .unwrap_or_else(|error| {
+            let transcript = session.transcript_tail(2_000);
+            // Name the bootstrap capability the client refused, not just the timeout.
+            let failure = if transcript.contains("workspace routing discovery") {
+                format!("Codex {CODEX_VERSION} refused wham/accounts/check (issue #612)")
+            } else {
+                format!("Codex TUI did not become ready: {error}")
+            };
             panic!(
-                "Codex TUI did not become ready: {error}; routes: {:?}; transcript: {}",
-                router.routes(),
-                session.transcript_tail(2_000)
+                "{failure}; routes: {:?}; transcript: {transcript}",
+                router.routes()
             )
         });
 
@@ -895,9 +912,11 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
     session
         .wait_for(
             |text| {
+                // The catalog's own xhigh description: Codex 0.157+ redraws
+                // only changed cells, so the fixed "Extra high" can be split.
                 text.contains(&format!(
                     "Select Reasoning Level for {CODEX_ALTERNATE_MODEL}"
-                )) && text.contains("Extra high")
+                )) && text.contains("Maximum reasoning")
             },
             Duration::from_millis(250),
             Duration::from_secs(10),
@@ -914,9 +933,11 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
     session
         .send_key(Key::Enter)
         .expect("confirm model and effort");
+    // Codex 0.157+ moves the cursor instead of printing spaces.
+    let changed = format!("Modelchangedto{CODEX_ALTERNATE_MODEL}xhigh");
     session
         .wait_for(
-            |text| text.contains(&format!("Model changed to {CODEX_ALTERNATE_MODEL} xhigh")),
+            |t| t.split_whitespace().collect::<String>().contains(&changed),
             Duration::from_millis(250),
             Duration::from_secs(10),
         )

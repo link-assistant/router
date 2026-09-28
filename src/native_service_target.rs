@@ -33,36 +33,39 @@ fn authorize_service(
     }
 }
 
+/// The selected Codex account behind a paired at- token, for the identity
+/// endpoints Router answers itself instead of relaying upstream ids.
+async fn codex_identity<'a>(
+    state: &AppState,
+    headers: &HeaderMap,
+    claims: &'a crate::token::TokenClaims,
+    endpoint: &str,
+) -> Result<(&'a str, crate::accounts::SelectedSubscriptionAccount), Response> {
+    if crate::proxy::extract_client_token(headers)
+        .is_none_or(|token| !token.starts_with(crate::token::CODEX_TOKEN_PREFIX))
+    {
+        return Err(error(
+            StatusCode::UNAUTHORIZED,
+            "authentication_error",
+            &format!("Codex {endpoint} requires the paired Router-issued at- token"),
+        ));
+    }
+    authorize_service(state, claims, Service::Codex)?;
+    let selected =
+        selected_subscription(state, headers, claims, SubscriptionProvider::Codex, None).await?;
+    let (_, principal) = crate::client_policy::bound_client(claims).expect("authorized above");
+    Ok((principal, selected))
+}
+
 async fn whoami(
     state: &AppState,
     headers: &HeaderMap,
     claims: &crate::token::TokenClaims,
 ) -> Response {
-    if crate::proxy::extract_client_token(headers)
-        .is_none_or(|token| !token.starts_with(crate::token::CODEX_TOKEN_PREFIX))
-    {
-        return error(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "Codex whoami requires the paired Router-issued at- token",
-        );
-    }
-    if let Err(response) = authorize_service(state, claims, Service::Codex) {
-        return response;
-    }
-    let selected = match selected_subscription(
-        state,
-        headers,
-        claims,
-        SubscriptionProvider::Codex,
-        None,
-    )
-    .await
-    {
-        Ok(selected) => selected,
+    let (principal, selected) = match codex_identity(state, headers, claims, "whoami").await {
+        Ok(identity) => identity,
         Err(response) => return response,
     };
-    let (_, principal) = crate::client_policy::bound_client(claims).expect("authorized above");
     let user = opaque_handle("usr", principal);
     let account = codex_account_handle(
         principal,
@@ -78,6 +81,62 @@ async fn whoami(
         "chatgpt_account_is_fedramp": fedramp,
     }))
     .into_response()
+}
+
+/// Codex 0.157+ reads its workspace routing from `wham/accounts/check` before
+/// `account/read` succeeds (issue #612). Relaying the upstream list would hand
+/// the client every real account id, so Router lists only the selected account
+/// under the same opaque handle whoami reports (#519, #528).
+///
+/// Codex applies `workspace_backend_origin` only to a provider whose base URL
+/// ends in `/backend-api/codex`. Router's provider ends in `/api/services/codex`,
+/// so inference keeps going through Router; the origin is only required to be
+/// a well-formed https origin, and it names the backend Router relays to.
+async fn codex_accounts_check(
+    state: &AppState,
+    headers: &HeaderMap,
+    claims: &crate::token::TokenClaims,
+) -> Response {
+    let (principal, selected) =
+        match codex_identity(state, headers, claims, "account discovery").await {
+            Ok(identity) => identity,
+            Err(response) => return response,
+        };
+    let account = codex_account_handle(
+        principal,
+        &selected.name,
+        selected.token.account_id.as_deref(),
+    );
+    let (plan, _) = codex_identity_metadata(state, &selected.name, &selected.token);
+    let upstream = state
+        .subscription_base_url
+        .clone()
+        .unwrap_or_else(|| selected.token.base_url(SubscriptionProvider::Codex));
+    axum::Json(serde_json::json!({
+        "accounts": [{
+            "id": account,
+            "plan_type": plan,
+            "workspace_backend_origin": codex_backend_origin(&upstream),
+            "account_routing_override": "NO_CONSTRAINT",
+        }],
+        "account_ordering": [account],
+        "default_account_id": account,
+    }))
+    .into_response()
+}
+
+/// The https origin of `upstream`, or of the vendor backend when the upstream
+/// is not https (a loopback test server, say), which Codex would reject.
+fn codex_backend_origin(upstream: &str) -> String {
+    let https = |value: &str| {
+        url::Url::parse(value)
+            .ok()
+            .filter(|url| url.scheme() == "https" && url.host_str().is_some())
+            .map(|url| url.origin().ascii_serialization())
+    };
+    https(upstream)
+        .or_else(|| https(SubscriptionProvider::Codex.default_base_url()))
+        .expect("the vendor Codex backend is https")
 }
 
 fn opaque_handle(prefix: &str, value: &str) -> String {

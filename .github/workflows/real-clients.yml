@@ -116,3 +116,46 @@ jobs:
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
         run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1 claude
+
+  # Codex 0.157 made TUI startup depend on workspace discovery through
+  # `wham/accounts/check` (issue #612), which the pinned 0.154.0 capture never
+  # calls. Run the Codex capture, history/notes, and TUI model selector against
+  # a newer release so bootstrap drift fails at the operation that changed.
+  codex-newer-release:
+    name: Codex ${{ matrix.codex }} (newer than baseline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Same policy as Claude: pull requests pin a newer release; push,
+        # nightly, and manual runs also track the moving tag.
+        codex: ${{ fromJSON(github.event_name == 'pull_request' && '["0.158.0"]' || '["0.158.0", "latest"]') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Codex ${{ matrix.codex }}
+        env:
+          CODEX_TAG: ${{ matrix.codex }}
+        run: |
+          version="$(npm view "@openai/codex@${CODEX_TAG}" version)"
+          npm install --global "@openai/codex@${version}"
+          codex --version | grep -F "${version}"
+          echo "ROUTER_REAL_CLIENT_CODEX_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Capture native Codex requests against the offline mock
+        env:
+          ROUTER_REAL_CLIENT_TESTS: '1'
+        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1 codex
