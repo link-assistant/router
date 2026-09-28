@@ -197,6 +197,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.14.2] - 2026-09-28
+
+### Fixed
+- `router clients backup`, `reset`, `backup restore` and `update` no longer refuse because an unrelated `claude`, `codex` or other client process is running. On Linux and macOS a running client now blocks only the profile it can write, read from its own `HOME`, config-directory overrides and Router-owned roots; a process whose environment stays unreadable still blocks, with a message naming the process and reason, while a child the client is just starting under another program no longer does. Windows keeps refusing on any running client because it does not expose the environment (#610).
+- `router clients reset gemini --profile router` now removes the Router-owned `home/.gemini/settings.json` that `router with gemini` reads, reports it as a target, and reports `unchanged` with the checked paths instead of claiming `reset` when there is nothing to remove; the verified pre-reset backup is still taken (#611).
+
+### Fixed
+- Preparing a `router with claude --extend-global-config` launch no longer reads the user's Claude settings from inside the launch setup; the caller resolves that file and passes it in. The library test `claude_receives_the_selected_router_ca_as_additional_trust` therefore no longer fails on a machine whose own Claude profile has a saved model such as `opus`, and it never reads the real profile (#613).
+
+### Fixed
+
+- Codex 0.157 and newer start through Router again. Their TUI failed with `account/read failed: workspace routing discovery failed` because Router did not answer `wham/accounts/check`. Router now answers it itself and lists only the selected subscription account under the same opaque handle that `whoami` reports, so real upstream account ids still never reach the client (#612, #519, #528). The real-client capture now also runs against a Codex release newer than the pinned 0.154.0 baseline, and it names the refused account discovery when a client rejects it.
+
 ## [1.14.1] - 2026-09-28
 
 ### Fixed
