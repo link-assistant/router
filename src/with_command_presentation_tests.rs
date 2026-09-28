@@ -30,6 +30,7 @@ fn claude_zai_only_picker_replaces_unavailable_native_families() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
         ca_cert: None,
+        user_claude_settings: None,
     })
     .expect("prepare z.ai-only Claude catalog");
     let arguments = prepared
@@ -89,6 +90,7 @@ fn a_default_claude_launch_keeps_completed_thinking_visible() {
             codex_reasoning_effort: None,
             codex_backend_base_url: None,
             ca_cert: None,
+            user_claude_settings: None,
         })
         .expect("prepare a default Claude launch");
         let arguments = prepared
@@ -146,6 +148,7 @@ fn router_settings_precede_forwarded_claude_arguments() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
         ca_cert: None,
+        user_claude_settings: None,
     })
     .expect("prepare a default Claude launch");
     // The same append `launch` performs before spawning.
@@ -203,6 +206,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
             codex_reasoning_effort: None,
             codex_backend_base_url: None,
             ca_cert: None,
+            user_claude_settings: None,
         })
         .expect("prepare a z.ai-only Claude session");
         prepared
@@ -336,6 +340,7 @@ fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
         ca_cert: None,
+        user_claude_settings: None,
     });
     let Err(error) = result else {
         panic!("a stale native model must not reach Claude");

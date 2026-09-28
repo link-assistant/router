@@ -179,6 +179,10 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     let user_claude_model = std::env::var("ANTHROPIC_MODEL")
         .ok()
         .filter(|value| !value.trim().is_empty());
+    let user_claude_settings = (args.client == ClientKind::ClaudeCode && args.extend_global_config)
+        .then(|| ClientManager::from_env().ok())
+        .flatten()
+        .map(|manager| manager.config_path(ClientKind::ClaudeCode));
     let mut temporary = match TemporaryClient::prepare(&Preparation {
         client: args.client,
         base_url: &server.base_url,
@@ -194,6 +198,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         codex_reasoning_effort: codex_reasoning_effort.as_deref(),
         codex_backend_base_url,
         ca_cert: server.ca_cert.as_deref(),
+        user_claude_settings: user_claude_settings.as_deref(),
     }) {
         Ok(temporary) => temporary,
         Err(error) => {
@@ -377,6 +382,13 @@ struct Preparation<'a> {
     codex_reasoning_effort: Option<&'a str>,
     codex_backend_base_url: Option<&'a str>,
     ca_cert: Option<&'a Path>,
+    /// The settings file the user's own Claude reads, consulted for a saved
+    /// model only under `--extend-global-config`.
+    ///
+    /// Resolved by the caller for the same reason as `user_model_selection`:
+    /// read here, a unit test inherited the developer's real profile and its
+    /// saved model decided whether the test could pass (issue #613).
+    user_claude_settings: Option<&'a Path>,
 }
 
 impl TemporaryClient {
@@ -395,6 +407,7 @@ impl TemporaryClient {
             codex_reasoning_effort,
             codex_backend_base_url,
             ca_cert,
+            user_claude_settings,
         } = request;
         // A client that can be extended never reads this directory — the
         // router's whole contribution is two environment variables — so it is
@@ -531,6 +544,7 @@ impl TemporaryClient {
                                 isolated_config,
                                 extend_user_configuration,
                             ),
+                            user_claude_settings,
                         )
                     })
                     .map(|selection| validate_claude_model_selection(selection, models))
