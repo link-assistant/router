@@ -403,7 +403,8 @@ currently provides no supported environment
 combination that both disables usage telemetry and guarantees freshly evaluated
 remote feature flags.
 
-Claude Code 2.1.265 still resolves authentication once for the whole process:
+Released Claude Code (checked through 2.1.283) still resolves authentication
+once for the whole process:
 the Router bearer and non-Anthropic base URL correctly route inference and
 model discovery, but take precedence over a stored Claude.ai login. Router
 therefore prints the exact limitation during setup, repair, and status checks,
@@ -414,8 +415,10 @@ Connectors, Remote Control, `/schedule`, notification preferences, cloud
 sessions, remote managed settings, and organization policy are unavailable in
 that Router-directed process. Run those operations directly with Claude.ai
 authentication. Router never reads, copies, patches, logs, or deletes the
-stored Claude login; a future Claude release is refused until its auth boundary
-passes the pinned real-client review.
+stored Claude login. These Claude.ai operations stay refused for every Claude
+release, including ones newer than the pinned test baseline, until Claude Code
+ships a supported split-auth mechanism; a newer release is otherwise not
+refused by version number alone.
 
 Reset only the Router-owned profile, retain a recoverable private backup, and
 launch Claude against a new empty profile with:

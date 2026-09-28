@@ -74,7 +74,7 @@ fn fake_claude(bin_dir: &std::path::Path) {
         &path,
         r#"#!/bin/sh
 if [ "${1:-}" = "--version" ]; then
-  printf '%s\n' '2.1.265 (Claude Code)'
+  printf '%s\n' "${FAKE_CLAUDE_VERSION:-2.1.265} (Claude Code)"
   if [ "${DELETE_AFTER_VERSION:-}" = 1 ]; then
     /bin/rm "$0"
   fi
@@ -503,8 +503,17 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
     );
 }
 
+/// The Claude.ai refusal is per operation, not per version: a release newer
+/// than the pinned fixture passes the version check, so this boundary must
+/// still hold for it (issues #520 and #609).
 #[test]
 fn explicit_claude_ai_operation_fails_before_router_access_or_client_launch() {
+    for version in ["2.1.265", "2.1.283"] {
+        assert_claude_ai_operation_fails_closed(version);
+    }
+}
+
+fn assert_claude_ai_operation_fails_closed(version: &str) {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -529,20 +538,101 @@ fn explicit_claude_ai_operation_fails_before_router_access_or_client_launch() {
             "claude",
             "--remote-control",
         ],
-        &[],
+        &[("FAKE_CLAUDE_VERSION", version)],
     );
-    assert!(!output.status.success());
+    assert!(!output.status.success(), "{version}: {output:?}");
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("Claude.ai"), "{stderr}");
     assert!(stderr.contains("no Router token was minted"), "{stderr}");
     assert!(
         !capture.join("args").exists(),
-        "Claude must not be launched for an operation known to be unavailable"
+        "Claude {version} must not be launched for an operation known to be unavailable"
     );
     assert_eq!(
         fs::read(home.join(".claude/.credentials.json"))
             .expect("Claude credentials after rejected launch"),
         credentials
+    );
+}
+
+/// Claude Code 2.1.283 launched through `with` exited before the client ran
+/// because 2.1.265, the pinned fixture, was treated as a maximum (issue #609).
+#[test]
+fn newer_claude_release_is_not_rejected_by_version_alone() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+    let token = bound_client_token("claude");
+    let (server, requests) = mock_claude_router();
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server",
+            &server,
+            "--token",
+            &token,
+            "claude",
+            "--resume",
+            "2a42a73e-19de-459a-8c24-c5e75abf9a65",
+        ],
+        &[("FAKE_CLAUDE_VERSION", "2.1.283")],
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stderr}");
+    assert!(
+        !stderr.contains("is required"),
+        "a newer client must not be refused by number: {stderr}"
+    );
+    assert!(stderr.contains("FAKE_CLAUDE_LAUNCHED"), "{stderr}");
+    assert_eq!(
+        requests.join().expect("mock Router requests"),
+        ["/api/health", "/api/management/tokens", "/api/models"]
+    );
+    let arguments = fs::read_to_string(capture.join("args")).expect("captured Claude arguments");
+    let arguments = arguments.lines().collect::<Vec<_>>();
+    assert_eq!(
+        &arguments[arguments.len() - 2..],
+        ["--resume", "2a42a73e-19de-459a-8c24-c5e75abf9a65"],
+        "the resumed session must reach the newer client unchanged: {arguments:?}"
+    );
+}
+
+/// The minimum stays: older releases lack current gateway alias resolution.
+#[test]
+fn claude_below_the_gateway_alias_minimum_is_refused_before_router_access() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server",
+            "http://127.0.0.1:9",
+            "--token",
+            "synthetic-router-token",
+            "claude",
+        ],
+        &[("FAKE_CLAUDE_VERSION", "2.1.252")],
+    );
+    assert!(!output.status.success(), "{output:?}");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("2.1.255 or newer"), "{stderr}");
+    assert!(stderr.contains("2.1.252"), "{stderr}");
+    assert!(
+        !capture.join("args").exists(),
+        "an unsupported Claude must not be launched"
     );
 }
 

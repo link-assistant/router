@@ -30,7 +30,13 @@ use wait_timeout::ChildExt as _;
 mod anthropic_mock;
 use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
-const CLAUDE_VERSION: &str = "2.1.265";
+/// The pinned 2.1.265 baseline, or the newer release CI installs to prove
+/// that Router does not depend on the baseline being the newest client
+/// (issue #609). It is a tested version, not a supported maximum.
+const CLAUDE_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CLAUDE_VERSION") {
+    Some(version) => version,
+    None => "2.1.265",
+};
 const CODEX_VERSION: &str = "0.154.0";
 const OPENCODE_VERSION: &str = "1.18.29";
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
@@ -59,7 +65,7 @@ const CLAUDE: ClientCase = ClientCase {
     owner: "anthropic",
     catalog_path: "/api/services/anthropic/v1/models",
     inference_path: "/api/services/anthropic/v1/messages",
-    user_agent_prefix: "claude-cli/2.1.265",
+    user_agent_prefix: "claude-cli/",
     credential_header: "authorization",
 };
 
@@ -71,7 +77,7 @@ const CODEX: ClientCase = ClientCase {
     owner: "openai",
     catalog_path: "/api/services/codex/v1/models",
     inference_path: "/api/services/codex/v1/responses",
-    user_agent_prefix: "codex_exec/0.154.0",
+    user_agent_prefix: "codex_exec/",
     credential_header: "authorization",
 };
 
@@ -83,7 +89,7 @@ const OPENCODE: ClientCase = ClientCase {
     owner: "openai-compatible",
     catalog_path: "/api/services/openai/v1/models",
     inference_path: "/api/services/openai/v1/chat/completions",
-    user_agent_prefix: "opencode/1.18.29",
+    user_agent_prefix: "opencode/",
     credential_header: "authorization",
 };
 
@@ -716,9 +722,9 @@ fn assert_real_client_capture(case: ClientCase) {
     };
     assert_eq!(request.method, "POST");
     assert!(
-        request
-            .header("user-agent")
-            .is_some_and(|value| value.starts_with(case.user_agent_prefix)),
+        request.header("user-agent").is_some_and(|value| value
+            .strip_prefix(case.user_agent_prefix)
+            .is_some_and(|version| version.starts_with(case.version))),
         "unexpected {} user-agent: {:?}",
         case.client,
         request.header("user-agent")
