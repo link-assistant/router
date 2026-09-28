@@ -26,6 +26,14 @@ pub fn directory(name: &str) -> Option<PathBuf> {
 /// Configuration root used by persistent `router with` client homes.
 /// Keep profile inventory on the same path, including Windows HOME/USERPROFILE.
 pub fn router_client_config_root() -> Result<PathBuf, String> {
+    router_client_config_root_in(&directory)
+}
+
+/// [`router_client_config_root`] resolved from another environment, such as
+/// the one captured from a running client process (issue #610).
+pub fn router_client_config_root_in(
+    directory: &dyn Fn(&str) -> Option<PathBuf>,
+) -> Result<PathBuf, String> {
     let root = directory("XDG_CONFIG_HOME")
         .or_else(|| {
             directory("HOME")
@@ -39,6 +47,19 @@ pub fn router_client_config_root() -> Result<PathBuf, String> {
 /// Qwen documents relative and `~/` overrides; resolve them once so later
 /// profile operations never write through a changing process directory.
 pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String> {
+    qwen_directory_in(&directory, name, home, || {
+        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))
+    })
+}
+
+/// [`qwen_directory`] resolved from another environment. A relative value is
+/// joined to whatever `current` reports as that environment's directory.
+pub fn qwen_directory_in(
+    directory: &dyn Fn(&str) -> Option<PathBuf>,
+    name: &str,
+    home: &Path,
+    current: impl FnOnce() -> Result<PathBuf, String>,
+) -> Result<Option<PathBuf>, String> {
     let Some(value) = directory(name) else {
         return Ok(None);
     };
@@ -48,9 +69,7 @@ pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String
     if let Ok(suffix) = value.strip_prefix("~") {
         return Ok(Some(home.join(suffix)));
     }
-    let current =
-        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))?;
-    Ok(Some(current.join(value)))
+    Ok(Some(current()?.join(value)))
 }
 
 /// The rule itself, separated from the lookup so it can be tested.

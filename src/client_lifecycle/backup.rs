@@ -416,7 +416,7 @@ pub fn create_unlocked(
     };
     let mut total = 0u64;
     for profile in chosen {
-        refuse_active(profile.client, home)?;
+        refuse_active(profile, home)?;
         for store in &profile.stores {
             if !store.path.exists() {
                 manifest.unavailable.push(format!(

@@ -193,14 +193,14 @@ pub(super) fn claude_saved_model_selection(
     manager: &ClientManager,
     root: &Path,
     extends_user_configuration: bool,
+    user_settings: Option<&Path>,
 ) -> Option<ClaudeModelSelection> {
     // Under `--extend-global-config` the client reads the user's real profile,
-    // which this manager is not rooted at; ask the environment's own manager so
-    // the saved default is read from the file Claude will actually open.
+    // which this manager is not rooted at. The caller resolved the file Claude
+    // will actually open from its own environment, so nothing here reads the
+    // process environment and a test cannot inherit a real profile (#613).
     let settings = if extends_user_configuration {
-        ClientManager::from_env()
-            .ok()
-            .map(|manager| manager.config_path(ClientKind::ClaudeCode))
+        user_settings?.to_path_buf()
     } else {
         debug_assert!(
             manager
@@ -208,8 +208,8 @@ pub(super) fn claude_saved_model_selection(
                 .starts_with(root),
             "the isolated manager must be rooted at this run's profile"
         );
-        Some(manager.config_path(ClientKind::ClaudeCode))
-    }?;
+        manager.config_path(ClientKind::ClaudeCode)
+    };
     let saved = fs::read_to_string(settings).ok()?;
     // A profile Claude has not written yet, or one hand-edited into invalid
     // JSON, is not a selection. Failing open here would pin over a choice; the

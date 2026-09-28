@@ -46,6 +46,7 @@ fn codex_selected_zai_model_disables_websocket_transport() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
         ca_cert: None,
+        user_claude_settings: None,
     })
     .expect("prepare selected z.ai model");
     let provider = prepared
@@ -73,6 +74,7 @@ fn codex_selected_zai_model_disables_websocket_transport() {
         codex_reasoning_effort: None,
         codex_backend_base_url: None,
         ca_cert: None,
+        user_claude_settings: None,
     })
     .expect("prepare isolated selected z.ai model");
     let config = std::fs::read_to_string(isolated.directory.path().join(".codex/config.toml"))

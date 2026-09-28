@@ -479,6 +479,13 @@ pub(super) const NATIVE_ROUTES: &[RouteSpec] = &[
     ),
     native!(
         NativeCodexBackend,
+        Get,
+        "/api/services/codex/backend-api/wham/accounts/check",
+        Codex,
+        OpenAi
+    ),
+    native!(
+        NativeCodexBackend,
         Post,
         "/api/services/codex/backend-api/wham/accounts/send_add_credits_nudge_email",
         Codex,
