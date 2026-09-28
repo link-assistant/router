@@ -922,6 +922,10 @@ mod presentation_tests;
 mod codex_transport_tests;
 
 #[cfg(test)]
+#[path = "with_command_codex_catalog_tests.rs"]
+mod codex_catalog_tests;
+
+#[cfg(test)]
 #[path = "with_command_ca_tests.rs"]
 mod ca_tests;
 
