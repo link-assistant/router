@@ -222,3 +222,30 @@ fn an_unusable_login_is_refused_before_any_container_exists() {
         "no backend was started: {output}"
     );
 }
+
+#[test]
+fn a_refused_share_needs_no_container_runtime_to_say_why() {
+    // No image and no runtime: the refusal is decided before either matters.
+    let root = tempfile::tempdir().expect("deployment root");
+    let claude = tempfile::tempdir().expect("empty Claude Code home");
+
+    let refused = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        .args(["deploy", "--claude-credentials", "share", "--root"])
+        .arg(root.path())
+        .env("CLAUDE_CONFIG_DIR", claude.path())
+        .env("TOKEN_SECRET", "deploy-share-test-signing-secret")
+        .env("NO_COLOR", "1")
+        .output()
+        .expect("the router binary runs");
+
+    let output = text(&refused);
+    assert_eq!(refused.status.code(), Some(2), "{output}");
+    // On a macOS host with a Keychain login the reason names the Keychain
+    // instead; either way nothing is deployed.
+    assert!(output.contains("anthropic_credential=refused"), "{output}");
+    assert!(
+        output.contains("refused before deployment mutation"),
+        "{output}"
+    );
+    assert!(!root.path().join("state/current").exists(), "{output}");
+}

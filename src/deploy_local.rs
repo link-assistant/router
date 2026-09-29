@@ -773,6 +773,16 @@ fn run_assessed(
             .claude_credentials
             .unwrap_or_else(|| coordinator.active_claude_mode());
         coordinator.claude = assess(mode, &root.join("data"));
+        // A refusal needs no container runtime to explain itself.
+        if let Provision::Refused(reason) = &coordinator.claude
+            && !args.status
+        {
+            println!("{}", coordinator.claude.status_line(root));
+            eprintln!(
+                "error: --claude-credentials share refused before deployment mutation: {reason}"
+            );
+            return ExitCode::from(2);
+        }
     }
     if let Err(error) = coordinator.docker.available() {
         eprintln!("error: container runtime unavailable: {error}");
@@ -787,13 +797,6 @@ fn run_assessed(
     }
     if let Err(error) = link_assistant_router::deploy::immutable_ref(image) {
         eprintln!("error: image-ref: {error}");
-        return ExitCode::from(2);
-    }
-    if let Provision::Refused(reason) = &coordinator.claude
-        && !args.status
-    {
-        println!("{}", coordinator.claude.status_line(root));
-        eprintln!("error: --claude-credentials share refused before deployment mutation: {reason}");
         return ExitCode::from(2);
     }
     let transaction = match coordinator.state.transaction() {

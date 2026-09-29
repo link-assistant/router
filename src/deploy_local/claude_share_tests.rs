@@ -5,6 +5,8 @@
 
 use std::path::Path;
 
+use link_assistant_router::cli::ClaudeCredentials;
+
 use super::{Provision, share};
 
 const ACCESS: &str = "sk-ant-oat01-stand-in-access";
@@ -64,6 +66,9 @@ fn a_file_login_is_shared_in_place_as_its_owner() {
         let metadata = std::fs::metadata(home.path().join(".credentials.json")).unwrap();
         assert_eq!(*owner, Some((metadata.uid(), metadata.gid())));
     }
+    // Without numeric owners the backend keeps the image's own user.
+    #[cfg(not(unix))]
+    assert_eq!(*owner, None);
     let line = provision.status_line(Path::new("/srv/router"));
     assert!(
         line.starts_with("anthropic_credential=imported method=shared-mount"),
@@ -119,6 +124,10 @@ fn empty_missing_and_unusable_logins_are_refused_with_a_clear_status() {
             "no refresh token",
         ),
         (
+            r#"{"claudeAiOauth":{"refreshToken":"sk-ant-ort01-stand-in-refresh"}}"#,
+            "no access token",
+        ),
+        (
             r#"{"_link_assistant_router":{"credential_source":"/elsewhere"}}"#,
             "Router pointer",
         ),
@@ -155,6 +164,22 @@ fn an_unreadable_or_read_only_login_is_refused_not_mounted() {
 }
 
 #[cfg(unix)]
+#[test]
+fn data_an_earlier_root_backend_left_is_refused_with_the_repair() {
+    if nix_is_root() {
+        // Root owns everything it would inspect; nothing is foreign to it.
+        return;
+    }
+    let home = home_with(Some(&login()));
+
+    // `/` stands in for a data directory an earlier backend wrote as root.
+    let reason = refused(&share(Some(home.path()), || false, Path::new("/"))).to_string();
+
+    assert!(reason.contains("belongs to another user"), "{reason}");
+    assert!(reason.contains("sudo chown -R"), "{reason}");
+}
+
+#[cfg(unix)]
 fn nix_is_root() -> bool {
     use std::os::unix::fs::MetadataExt as _;
     let probe = tempfile::NamedTempFile::new().unwrap();
@@ -171,6 +196,38 @@ fn the_default_names_what_was_skipped_and_how_to_opt_in() {
     assert!(line.starts_with("anthropic_credential=skipped"), "{line}");
     assert!(line.contains("the directory is empty"), "{line}");
     assert!(line.contains("--claude-credentials share"), "{line}");
+}
+
+#[test]
+fn a_deployment_with_its_own_credentials_is_not_called_empty() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(root.path().join("credentials")).unwrap();
+    std::fs::write(root.path().join("credentials/.credentials.json"), "{}").unwrap();
+
+    let line = Provision::Isolated.status_line(root.path());
+
+    assert!(line.starts_with("anthropic_credential=skipped"), "{line}");
+    assert!(!line.contains("the directory is empty"), "{line}");
+}
+
+#[test]
+fn isolation_is_decided_without_looking_at_the_host_login() {
+    let data = tempfile::tempdir().unwrap();
+    assert_eq!(
+        Provision::assess(ClaudeCredentials::Isolated, data.path()),
+        Provision::Isolated
+    );
+}
+
+#[test]
+fn a_share_without_numeric_owners_keeps_the_image_user() {
+    let line = Provision::Shared {
+        home: "/home/operator/.claude".into(),
+        owner: None,
+    }
+    .status_line(Path::new("/srv/router"));
+    assert!(line.contains("user=container-default"), "{line}");
+    assert_eq!(Provision::Refused("x".into()).label(), "refused");
 }
 
 #[test]
