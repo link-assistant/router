@@ -28,6 +28,7 @@ use wait_timeout::ChildExt as _;
 
 #[path = "real_clients/anthropic_mock.rs"]
 mod anthropic_mock;
+mod common;
 use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
 /// The pinned 2.1.265 baseline, or the newer release CI installs to prove
@@ -229,7 +230,10 @@ impl Drop for MockRouter {
 }
 
 fn enabled() -> bool {
-    std::env::var("ROUTER_REAL_CLIENT_TESTS").as_deref() == Ok("1")
+    common::tiers::opt_in(
+        common::tiers::Tier::RealClientOffline,
+        "ROUTER_REAL_CLIENT_TESTS",
+    )
 }
 
 fn command_exists(command: &str) -> bool {

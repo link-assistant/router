@@ -142,6 +142,74 @@ SKIP [tier4-live-credentialed] real_zai_exact_model_is_pinned_and_served_identit
 Only the variable's *name* is ever printed. `tiers::skipped_live_tests()` returns
 the count for a harness that wants to assert on it without parsing output.
 
+Tests behind a switch rather than a credential announce themselves the same way,
+through `tiers::opt_in`. These switches are `ROUTER_REAL_CLIENT_TESTS=1`,
+`ROUTER_HOST_CLI_TESTS=1`, `ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1`, and
+`LEFINE_INFERENCE_ACCEPTANCE=1`. Before issue #629 they returned early without a
+word, so a green run could not say which real-client cases never ran.
+
+## Router-owned verification for downstream projects
+
+Downstream projects should not copy Router's generic tests. They can run Router's
+own tests and read one machine-readable result (issue #629):
+
+```bash
+rust-script scripts/verify-contracts.rs                  # every area
+rust-script scripts/verify-contracts.rs --list           # the areas and what they cover
+rust-script scripts/verify-contracts.rs --area rolling-updates
+rust-script scripts/verify-contracts.rs --require-parity # exit 3 unless every area is proven
+```
+
+| Area | Covers |
+| --- | --- |
+| `catalogs` | token-authorized `/api/models` and `/v1/models`, entitlement filtering, synthetic and namespaced rows, live provider catalogs |
+| `real-clients` | every supported wrapper launched as its real vendor binary, and the host CLI lifecycle |
+| `zai-only-entitlements` | a z.ai-only token: catalog rows, Claude and Codex launch profiles, pinned selection, usage |
+| `anthropic-entitlements` | Anthropic-enabled and mixed entitlements, cross-vendor translation, Claude picker rows |
+| `request-logs` | request and denied-request logging, `router logs`, format migration, conversation records |
+| `backup-reset-restore` | client profile backup, reset, restore, and maintenance |
+| `rolling-updates` | `router deploy`: draining updates, `TOKEN_SECRET` continuity, relay rotation, recovery, host mode |
+
+The result goes to `target/verification/result.json` (or `--output PATH`), and
+each area's full test output is written beside it:
+
+```json
+{
+  "schema": "link-assistant-router/verification/v1",
+  "router_version": "1.15.0",
+  "commit": "…",
+  "complete": true,
+  "parity": false,
+  "failed": false,
+  "skipped": 12,
+  "areas": [
+    {
+      "name": "real-clients",
+      "status": "not-proven",
+      "passed": 13, "failed": 0, "ignored": 0,
+      "skipped": [
+        {"tier": "tier3-real-client-offline", "test": "current_codex_reaches_the_native_responses_surface_offline", "reason": "ROUTER_REAL_CLIENT_TESTS=1 is not set"}
+      ],
+      "enable_skipped_with": "ROUTER_REAL_CLIENT_TESTS=1 with the vendor CLIs on PATH; …",
+      "commands": ["cargo test --locked --test real_clients_test --test host_client_lifecycle_test -- --nocapture --test-threads=1"],
+      "log": "…/target/verification/real-clients.log"
+    }
+  ]
+}
+```
+
+An area is `proven` only when its tests ran and none failed, skipped, or was
+ignored. It is `not-proven` when any case was skipped, and `failed` when a test
+failed. `parity` is true only for a complete run where every area is proven, so a
+green suite with skipped live-client cases never reads as parity. Each skip is
+listed by test, with the tier and the reason, which the tests append as JSON
+lines to the file named by `ROUTER_VERIFICATION_SKIPS`. The exit status is 1 when
+a test failed, and 3 when `--require-parity` was given without parity.
+
+A downstream can then drop its copies of these areas and keep only the
+assertions that are its own: SSH tunnels, its entitlement choices, and its
+deployment.
+
 ## In CI
 
 Tier 4 runs from `.github/workflows/live-tier.yml`, on `workflow_dispatch` only,

@@ -634,13 +634,11 @@ async fn current_claude_serves_each_live_glm_model_with_only_verified_metadata()
     ) else {
         return;
     };
-    if std::env::var("ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST").as_deref() != Ok("1") {
-        eprintln!(
-            "SKIP [tier4-live-credentialed] \
-             current_claude_serves_each_live_glm_model_with_only_verified_metadata: \
-             ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 was not set; the current-Claude, billed \
-             context probe was not authorized."
-        );
+    // The current-Claude probe is billed, so it is authorized separately.
+    if !common::tiers::opt_in(
+        common::tiers::Tier::LiveCredentialed,
+        "ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST",
+    ) {
         return;
     }
     let version = Command::new("claude")

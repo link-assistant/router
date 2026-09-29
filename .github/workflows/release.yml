@@ -273,6 +273,11 @@ jobs:
       - name: Check terminology
         run: rust-script scripts/check-terminology.rs
 
+      # The downstream verification command (issue #629): its result parsing,
+      # skip accounting, and area-to-target mapping.
+      - name: Test contract verification command
+        run: rust-script --test scripts/verify-contracts.rs
+
       - name: Test release automation
         run: |
           rust-script --test scripts/version-and-commit.rs
