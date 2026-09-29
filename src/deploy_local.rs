@@ -9,6 +9,7 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 
 mod claude_share;
+mod diagnose;
 mod docker;
 mod inventory;
 mod state;
@@ -537,12 +538,16 @@ impl Coordinator<'_> {
     /// An update without `--claude-credentials` keeps the active mode, so a
     /// routine image update never silently drops a shared login.
     fn active_claude_mode(&self) -> link_assistant_router::cli::ClaudeCredentials {
+        // Without a readable record, the pointer still names the serving
+        // backend whose mode an adoption must keep (issue #631).
         let shared = self
             .state
             .active()
             .ok()
             .flatten()
-            .is_some_and(|active| self.claude_label(&active.backend).starts_with("shared:"));
+            .map(|active| active.backend)
+            .or_else(|| self.state.current().ok().flatten())
+            .is_some_and(|backend| self.claude_label(&backend).starts_with("shared:"));
         if shared {
             link_assistant_router::cli::ClaudeCredentials::Share
         } else {
@@ -801,6 +806,7 @@ fn run_assessed(
     }
     let transaction = match coordinator.state.transaction() {
         Ok(transaction) => transaction,
+        Err(error) if args.status => return coordinator.diagnose(&error),
         Err(error) => return result_code(Err(error)),
     };
     let interrupted = transaction
@@ -828,7 +834,11 @@ fn run_assessed(
     }
     let existing = match coordinator.existing() {
         Ok(existing) => existing,
-        Err(error) => return result_code(Err(error)),
+        Err(error) if args.status => return coordinator.diagnose(&error),
+        Err(error) => match coordinator.adopt(&error) {
+            Ok(existing) => existing,
+            Err(error) => return result_code(Err(error)),
+        },
     };
     if args.status {
         return match coordinator.print_status(&existing) {

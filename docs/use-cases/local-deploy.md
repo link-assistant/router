@@ -100,6 +100,41 @@ A second deploy with the same image, port, and launch specification is a true
 no-op: it does not replace containers or rewrite the pointer, tokens,
 credentials, logs, or configuration.
 
+## Inconsistent state
+
+`--status` describes a deployment whose durable records disagree with the
+containers instead of stopping at the first disagreement (issue #631). A relay
+and backend that still serve while `state/active` is missing or unparseable are
+reported with the record's condition, the relay pointer, the pending
+transaction, and every container owned by the root (role, running state, image,
+launch-specification version, relay port, and backend Claude credential
+source), followed by the established connection count, the run inventory, and a
+recovery plan:
+
+```text
+consistency=inconsistent reason="router-deploy-relay exists without a durable active deployment record"
+active_record=absent
+relay_pointer=router-deploy-backend-…
+container=router-deploy-backend-… role=backend running=true image=ghcr.io/link-assistant/router:1.14.3 spec=local-v1 claude_credentials=isolated pointer=true
+container=router-deploy-relay role=relay running=true image=ghcr.io/link-assistant/router:1.14.3 spec=local-v1 port=8080
+connections=0
+recovery_plan=adopt backend=router-deploy-backend-… image=… port=8080 mutation=active-record-only containers_unchanged=true
+status_is_read_only=true
+```
+
+Status never changes a container or a state file, so it can be repeated; it
+exits nonzero while the state is inconsistent. `recovery_plan=adopt` is offered
+only when the pointer names a backend this root owns, with a known launch
+specification, and the relay is owned by the same root. The next ordinary
+`router deploy` then takes the update lock, keeps a corrupt record as
+`state/active.corrupt-<time>`, and writes the record that the running topology
+proves, without starting, stopping, or replacing any container. Established
+streams and issued tokens are therefore untouched; the deploy then continues
+as a no-op, repair, or rolling update. A record written by a newer Router, a
+foreign relay, or a pointer to an unowned backend is never adopted:
+`recovery_plan=manual` explains why and names `router deploy --down --yes`,
+which retains credentials, data, and issued tokens.
+
 ## Refusals and explicit force
 
 The first upgrade from the older direct-container topology cannot prove whether
