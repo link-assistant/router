@@ -83,66 +83,26 @@ pub(super) fn validate_claude_model_selection(
 /// Build the process-local Claude settings a Router-directed launch needs.
 ///
 /// Two things live here: the presentation default that keeps a completed
-/// thinking trace visible (issue #560), and the exact compatible model IDs that
-/// Claude's gateway discovery filter removes from its native picker.
+/// thinking trace visible (issue #560), and the `/model` picker rows for every
+/// exact model this client's authorized live catalog can serve (issue #621).
+///
+/// Claude's own gateway discovery keeps only `claude`/`anthropic`-shaped IDs,
+/// so the picker is filled from the Router catalog instead: every usable row,
+/// Anthropic's exact IDs included when Anthropic is authorized. A row is
+/// `{label, model}`, which Claude Code accepts on its own; `behavesAs` is
+/// optional there and is added only when Router holds verified capability
+/// metadata for that exact ID. Requiring it made a z.ai-only catalog — whose
+/// rows never carry it — refuse to launch at all (issue #620). Nothing is
+/// inferred from a model's spelling.
 ///
 /// This is a command-line setting for this process only: neither the
-/// Router-owned profile nor the user's profile is rewritten.
+/// Router-owned profile nor the user's profile is rewritten, so the next
+/// launch lists whatever the authorized catalog holds then.
 pub(super) fn append_claude_model_picker(
     command: &mut Command,
     models: &[RouterModel],
 ) -> Result<(), AnyError> {
-    const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
-
-    let usable = crate::clients::usable_models(ClientKind::ClaudeCode, models);
-    let has_anthropic = usable
-        .iter()
-        .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
-    let mut candidates = usable
-        .into_iter()
-        .filter(|model| {
-            let folded = model.id.to_ascii_lowercase();
-            model.owned_by == crate::clients::ZAI_MODEL_OWNER
-                && !BUILT_INS.contains(&folded.as_str())
-        })
-        .collect::<Vec<_>>();
-    candidates.sort_by(|left, right| left.id.cmp(&right.id));
-    let mut options = Vec::with_capacity(candidates.len());
-    let mut previous: Option<(String, String, String)> = None;
-    for model in candidates {
-        let Some(capability) = model.client_capabilities.claude else {
-            return Err(format!(
-                "Claude model `{}` has no verified capability metadata; update Router or the provider adapter before selecting it",
-                model.id
-            )
-            .into());
-        };
-        if capability.behaves_as.trim().is_empty() || capability.source.trim().is_empty() {
-            return Err(format!(
-                "Claude model `{}` has incomplete capability metadata; update Router or the provider adapter before selecting it",
-                model.id
-            )
-            .into());
-        }
-        if let Some((id, behaves_as, source)) = &previous
-            && id == &model.id
-        {
-            if behaves_as != &capability.behaves_as || source != &capability.source {
-                return Err(format!(
-                    "Claude model `{}` has ambiguous capability metadata; update the provider adapter before selecting it",
-                    model.id
-                )
-                .into());
-            }
-            continue;
-        }
-        options.push(json!({
-            "label": model.id,
-            "model": model.id,
-            "behavesAs": capability.behaves_as,
-        }));
-        previous = Some((model.id, capability.behaves_as, capability.source));
-    }
+    let (options, has_anthropic) = claude_model_picker_options(models);
     // Keeping a completed thinking trace on screen is a presentation default,
     // and the Router-owned profile starts empty by design (issue #536) — so it
     // carries none of the preferences the user's normal Claude profile has.
@@ -176,6 +136,63 @@ pub(super) fn append_claude_model_picker(
         .arg("--settings")
         .arg(serde_json::to_string(&Value::Object(settings))?);
     Ok(())
+}
+
+/// The picker rows for `models`, and whether Anthropic is among them.
+///
+/// Built-in family names are left to Claude's own rows. Duplicate catalog rows
+/// for one exact ID collapse into one picker row; their capability metadata
+/// is kept only when every row agrees, since a disagreement is not evidence.
+fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
+    const BUILT_INS: [&str; 4] = ["default", "opus", "sonnet", "haiku"];
+
+    let usable = crate::clients::usable_models(ClientKind::ClaudeCode, models);
+    let has_anthropic = usable
+        .iter()
+        .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+    let mut candidates = usable
+        .into_iter()
+        .filter(|model| {
+            let folded = model.id.trim().to_ascii_lowercase();
+            !folded.is_empty() && !BUILT_INS.contains(&folded.as_str())
+        })
+        .collect::<Vec<_>>();
+    // Anthropic's own models first, then every other provider; each by ID.
+    candidates.sort_by(|left, right| {
+        let other = |model: &RouterModel| model.owned_by != crate::clients::ANTHROPIC_MODEL_OWNER;
+        other(left)
+            .cmp(&other(right))
+            .then_with(|| left.id.cmp(&right.id))
+    });
+    let mut rows: Vec<(String, Option<String>)> = Vec::with_capacity(candidates.len());
+    for model in candidates {
+        let behaves_as = model
+            .client_capabilities
+            .claude
+            .as_ref()
+            .filter(|capability| {
+                !capability.behaves_as.trim().is_empty() && !capability.source.trim().is_empty()
+            })
+            .map(|capability| capability.behaves_as.clone());
+        match rows.iter_mut().find(|(id, _)| id == &model.id) {
+            Some((_, existing)) if *existing != behaves_as => *existing = None,
+            Some(_) => {}
+            None => rows.push((model.id.clone(), behaves_as)),
+        }
+    }
+    let options = rows
+        .into_iter()
+        .map(|(id, behaves_as)| {
+            let mut row = serde_json::Map::new();
+            row.insert("label".into(), json!(id));
+            row.insert("model".into(), json!(id));
+            if let Some(behaves_as) = behaves_as {
+                row.insert("behavesAs".into(), json!(behaves_as));
+            }
+            Value::Object(row)
+        })
+        .collect();
+    (options, has_anthropic)
 }
 
 /// The Claude model the client itself has saved as its default, if any.

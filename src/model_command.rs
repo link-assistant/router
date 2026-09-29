@@ -193,14 +193,7 @@ fn selector_kind(entry: Option<&Value>) -> (&str, ModelSelectorKind) {
         .and_then(|value| value.get("selector_kind"))
         .and_then(Value::as_str)
         .unwrap_or("unknown");
-    let kind = match label {
-        "provider_dynamic_alias" | "provider_advertised_alias" => {
-            ModelSelectorKind::ProviderDynamicAlias
-        }
-        "operator_alias" => ModelSelectorKind::OperatorAlias,
-        "concrete" | "provider_advertised_exact_id" => ModelSelectorKind::Concrete,
-        _ => ModelSelectorKind::Unknown,
-    };
+    let kind = ModelSelectorKind::from_wire(label);
     (label, kind)
 }
 

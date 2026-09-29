@@ -8,7 +8,17 @@ use serde::{Deserialize, Serialize};
 
 /// Kind of selector a caller supplied. Dynamic aliases are factual only when
 /// the authenticated provider catalog advertised that exact spelling.
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+///
+/// This is the one wire contract for `selector_kind`: every producer
+/// serializes the canonical `snake_case` spelling, and every consumer —
+/// catalog projection, `router model` diagnostics and the wrapper's typed
+/// catalog rows — reads through [`Self::from_wire`]. Router once emitted
+/// `provider_advertised_exact_id` for live z.ai rows while the wrapper's
+/// derived parser accepted only the canonical names, so one such row made
+/// `router with` reject the whole catalog (issue #620). A spelling this
+/// build does not know is `Unknown`, never a parse failure: an older wrapper
+/// must degrade to "no alias evidence", not to "no models".
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ModelSelectorKind {
     Concrete,
@@ -18,18 +28,43 @@ pub enum ModelSelectorKind {
     Unknown,
 }
 
+impl<'de> Deserialize<'de> for ModelSelectorKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = Option::<String>::deserialize(deserializer)?;
+        Ok(value.as_deref().map_or(Self::Unknown, Self::from_wire))
+    }
+}
+
 impl ModelSelectorKind {
+    /// Interpret one wire spelling, including the provider-advertised
+    /// synonyms earlier releases emitted.
+    #[must_use]
+    pub fn from_wire(value: &str) -> Self {
+        match value {
+            "provider_dynamic_alias" | "provider_advertised_alias" => Self::ProviderDynamicAlias,
+            "operator_alias" => Self::OperatorAlias,
+            "concrete" | "provider_advertised_exact_id" => Self::Concrete,
+            _ => Self::Unknown,
+        }
+    }
+
     /// Interpret only explicit catalog metadata; selector spelling is never
     /// evidence that an id is an alias.
     #[must_use]
     pub fn from_catalog_value(value: Option<&serde_json::Value>) -> Self {
-        match value.and_then(serde_json::Value::as_str) {
-            Some("provider_dynamic_alias" | "provider_advertised_alias") => {
-                Self::ProviderDynamicAlias
-            }
-            Some("operator_alias") => Self::OperatorAlias,
-            Some("concrete" | "provider_advertised_exact_id") => Self::Concrete,
-            _ => Self::Unknown,
+        value
+            .and_then(serde_json::Value::as_str)
+            .map_or(Self::Unknown, Self::from_wire)
+    }
+
+    /// The canonical wire spelling every producer emits.
+    #[must_use]
+    pub const fn as_wire(self) -> &'static str {
+        match self {
+            Self::Concrete => "concrete",
+            Self::ProviderDynamicAlias => "provider_dynamic_alias",
+            Self::OperatorAlias => "operator_alias",
+            Self::Unknown => "unknown",
         }
     }
 
@@ -333,6 +368,55 @@ pub fn validate_translated_response_for_selector(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every spelling Router has emitted — and one it has not yet — parses
+    /// through serde exactly as the hand-written catalog reader does, so a
+    /// single row can never fail a typed catalog again (issue #620).
+    #[test]
+    fn selector_kind_has_one_forward_compatible_wire_contract() {
+        let cases = [
+            ("concrete", ModelSelectorKind::Concrete),
+            ("provider_advertised_exact_id", ModelSelectorKind::Concrete),
+            (
+                "provider_dynamic_alias",
+                ModelSelectorKind::ProviderDynamicAlias,
+            ),
+            (
+                "provider_advertised_alias",
+                ModelSelectorKind::ProviderDynamicAlias,
+            ),
+            ("operator_alias", ModelSelectorKind::OperatorAlias),
+            ("unknown", ModelSelectorKind::Unknown),
+            ("a_kind_from_a_future_release", ModelSelectorKind::Unknown),
+        ];
+        for (wire, expected) in cases {
+            let value = serde_json::Value::String(wire.into());
+            assert_eq!(ModelSelectorKind::from_wire(wire), expected, "{wire}");
+            assert_eq!(
+                ModelSelectorKind::from_catalog_value(Some(&value)),
+                expected,
+                "{wire}"
+            );
+            assert_eq!(
+                serde_json::from_value::<ModelSelectorKind>(value).unwrap(),
+                expected,
+                "{wire}"
+            );
+        }
+        assert_eq!(
+            serde_json::from_value::<ModelSelectorKind>(serde_json::Value::Null).unwrap(),
+            ModelSelectorKind::Unknown
+        );
+        for kind in [
+            ModelSelectorKind::Concrete,
+            ModelSelectorKind::ProviderDynamicAlias,
+            ModelSelectorKind::OperatorAlias,
+            ModelSelectorKind::Unknown,
+        ] {
+            assert_eq!(serde_json::to_value(kind).unwrap(), kind.as_wire());
+            assert_eq!(ModelSelectorKind::from_wire(kind.as_wire()), kind);
+        }
+    }
 
     #[test]
     fn exact_policy_is_case_sensitive_and_fail_closed() {

@@ -109,7 +109,9 @@ reviewed versioned direct-provider source for the same model/product, then an
 explicit operator override, then unknown. This release does not bundle static
 capability fallbacks or capability overrides, so absent live fields remain
 absent. It specifically does not synthesize z.ai Claude `behavesAs` identities
-or Codex reasoning profiles by owner.
+or Codex reasoning profiles by owner. A missing identity is not a reason to hide
+a served model, though: `router with claude` lists every authorized exact ID in
+`/model` and adds `behavesAs` only where verified metadata exists.
 
 One reviewed static protocol evidence manifest remains outside catalog
 capability claims:
@@ -162,13 +164,16 @@ ROUTER_LIVE_ZAI_API_KEY=... \
 
 The stricter issue #594 check requires the currently supported `claude` binary
 and a second billing opt-in. It attempts each named GLM model separately. Exact
-consumable metadata must produce the same context/compaction limit in Claude;
-missing evidence must stop locally before inference:
+consumable metadata must produce the same context/compaction limit in Claude.
+Without that evidence the model is still listed and served as a plain
+`{label, model}` picker row — Claude Code accepts `behavesAs` as optional — so
+Claude applies its own default for an unknown model and Router invents nothing
+(issues #620 and #621):
 
 ```console
 ROUTER_LIVE_ZAI_API_KEY=... ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 \
   cargo test --locked --test subscription_usage_live_test \
-  current_claude_reports_each_live_glm_context_or_router_blocks_the_launch \
+  current_claude_serves_each_live_glm_model_with_only_verified_metadata \
   -- --nocapture --test-threads=1
 ```
 

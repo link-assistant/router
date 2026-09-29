@@ -51,13 +51,14 @@ whose exact live metadata is safe for Claude to consume:
 ```bash
 ROUTER_LIVE_ZAI_API_KEY=… ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 \
   cargo test --test subscription_usage_live_test \
-  current_claude_reports_each_live_glm_context_or_router_blocks_the_launch \
+  current_claude_serves_each_live_glm_model_with_only_verified_metadata \
   -- --nocapture
 ```
 
-For an inventory-only catalog, the successful outcome is an actionable local
-refusal before inference: Router must not manufacture a Claude identity just to
-make the process start. If the endpoint supplies exact, scoped Claude and
+For an inventory-only catalog, the successful outcome is a launch that answers
+the prompt with no Claude identity attached: Router must not manufacture one,
+and it must not refuse a model the token can use (issues #620 and #621). If the
+endpoint supplies exact, scoped Claude and
 context evidence, the test launches the installed supported Claude Code and
 compares its reported model/compaction limit with that evidence.
 
