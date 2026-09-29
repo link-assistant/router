@@ -127,6 +127,46 @@ A second deploy with the same image, port, and launch specification is a true
 no-op: it does not replace containers or rewrite the pointer, tokens,
 credentials, logs, or configuration.
 
+## Token signing secret
+
+`TOKEN_SECRET` signs every issued client token and encrypts stored provider
+keys, so it is part of the launch specification (issue #625). Each backend
+carries a label with a keyed fingerprint of its secret
+(`hmac-sha256:` followed by 128 bits of HMAC-SHA256 keyed by the secret over a
+fixed context). The fingerprint identifies the secret without revealing it.
+Backends started by v1.14.3 have no label; their secret is read from the
+container environment in memory and fingerprinted, and it is never printed.
+`--status` reports the comparison:
+
+```text
+token_secret=changed
+blocker=token-secret-change reason="router-deploy-backend-… verifies tokens with a different TOKEN_SECRET; its issued client tokens would be rejected with HTTP 401"
+force_update_interrupts=true
+```
+
+A deploy with another secret is therefore neither "already converged" nor
+silently applied: it is refused before any mutation, on the same image or a
+new one. Every ordinary update also proves token continuity before cutover.
+The candidate is shown a short-lived token signed with the supplied secret
+through `docker exec` environment (never argv), and it takes traffic only when
+it accepts that signature (`token_probe=accepted status=403`, since the probe
+token has no managed-client binding). A candidate that answers 401 is rolled
+back and the old backend keeps serving.
+
+To recover a backend that was started with a wrong secret, rerun with the
+correct secret and accept the rotation explicitly. No image switch and no
+manual container removal is needed:
+
+```bash
+TOKEN_SECRET="$SAVED_TOKEN_SECRET" router deploy --status
+TOKEN_SECRET="$SAVED_TOKEN_SECRET" router deploy --force-update
+```
+
+The force report names the rotation and the number of issued client tokens it
+affects (`force_update accepted token_secret_rotation token_secret=changed
+issued_client_tokens=2`). The data directory and token store are kept, so
+tokens signed with the restored secret are authorized again.
+
 ## Inconsistent state
 
 `--status` describes a deployment whose durable records disagree with the

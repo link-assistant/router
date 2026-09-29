@@ -13,6 +13,7 @@ mod diagnose;
 mod docker;
 mod inventory;
 mod relay_rotation;
+mod secret;
 mod state;
 #[cfg(test)]
 #[path = "deploy_local_tests.rs"]
@@ -152,6 +153,7 @@ impl Coordinator<'_> {
                     println!("run_inventory=unknown blockers=unknown reason={error}");
                 }
                 println!("blocker=legacy-direct-front-door has unknown established connections");
+                self.print_secret(LEGACY);
                 if let Ok(inventory) = inventory {
                     for run in &inventory.runs {
                         println!(
@@ -202,6 +204,7 @@ impl Coordinator<'_> {
                         active.port, self.port
                     );
                 }
+                let force_interrupts = self.print_secret(&active.backend) || force_interrupts;
                 println!("force_update_interrupts={force_interrupts}");
                 // Mixed images are never reported as converged (issue #627).
                 let versions_match = self.print_versions(active)?;
@@ -286,6 +289,7 @@ impl Coordinator<'_> {
                     );
                 }
                 println!("force_update accepted impact=legacy-direct-front-door");
+                self.secret_preflight(LEGACY)?;
                 Ok(Some(inventory))
             }
             Existing::Managed(active) => {
@@ -304,6 +308,7 @@ impl Coordinator<'_> {
                             .to_string(),
                     );
                 }
+                self.secret_preflight(&active.backend)?;
                 if self.force {
                     for blocker in blockers {
                         println!(
@@ -567,6 +572,7 @@ impl Coordinator<'_> {
             || self.claude_label(&active.backend) != self.claude.label()
             || self.state.current()?.as_deref() != Some(&active.backend)
             || !self.docker.owned(&active.backend, self.root, "backend")
+            || self.secret_match(&active.backend) != secret::SecretMatch::Matches
         {
             return Ok(false);
         }
@@ -666,6 +672,10 @@ impl Coordinator<'_> {
                 }
             }
             Existing::Legacy => {
+                if let Err(error) = self.probe_candidate(&candidate, LEGACY) {
+                    self.rollback(&transaction)?;
+                    return Err(format!("token probe failed and was rolled back: {error}"));
+                }
                 self.docker.stop(LEGACY)?;
                 self.state.set_current(&candidate)?;
                 if let Err(error) = self
@@ -680,6 +690,10 @@ impl Coordinator<'_> {
                 }
             }
             Existing::Managed(active) => {
+                if let Err(error) = self.probe_candidate(&candidate, &active.backend) {
+                    self.rollback(&transaction)?;
+                    return Err(format!("token probe failed and was rolled back: {error}"));
+                }
                 self.state.set_current(&candidate)?;
                 if active.port != self.port {
                     self.remove_relay()?;
