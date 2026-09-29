@@ -961,11 +961,17 @@ impl TokenManager {
         }
     }
 
-    /// List all known tokens (for admin / CLI inspection).
+    /// List all known tokens (for admin / CLI inspection), oldest first.
+    ///
+    /// Stores keep records in a per-process-seeded `HashMap`, so the same
+    /// store listed twice came back in two orders (issue #618).
     pub fn list_tokens(&self) -> Result<Vec<TokenRecord>, TokenError> {
-        self.store
+        let mut records = self
+            .store
             .list()
-            .map_err(|e: StorageError| TokenError::Storage(e.to_string()))
+            .map_err(|e: StorageError| TokenError::Storage(e.to_string()))?;
+        records.sort_by(|a, b| (a.issued_at, &a.id).cmp(&(b.issued_at, &b.id)));
+        Ok(records)
     }
 }
 

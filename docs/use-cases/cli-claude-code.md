@@ -49,7 +49,7 @@ models. A model saved through `/model` remains the next launch's authoritative
 selection when it is still authorized.
 Code 2.1.255 or newer is required for current gateway alias resolution. There
 is no upper version limit: 2.1.265 is the pinned hermetic real-client baseline,
-not a maximum, and the same capture also runs against a newer release (2.1.283
+not a maximum, and the same capture also runs against a newer release (2.1.284
 at the time of writing). A newer release is never refused by number alone; a
 missing capability fails at the operation that needs it (issue #609). See [with-router.md](with-router.md) for server and
 token options.

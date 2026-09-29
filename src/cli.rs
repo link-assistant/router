@@ -42,7 +42,7 @@ pub use self::client_ops::{
     BackupOp, ClientOp, ClientSelection, MaintenanceArgs, ProfileSelection,
 };
 pub use self::configure::ConfigureArgs;
-pub use self::deploy_args::{DeployArgs, UsageArgs};
+pub use self::deploy_args::{ClaudeCredentials, DeployArgs, UsageArgs};
 pub use self::log_ops::LogsOp;
 pub use self::model_ops::ModelOp;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};

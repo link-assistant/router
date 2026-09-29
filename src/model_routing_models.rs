@@ -240,7 +240,11 @@ fn apply_model_policy(
             entry.insert("id".into(), serde_json::Value::String(allowed.clone()));
             entry.insert(
                 "selector_kind".into(),
-                serde_json::Value::String("operator_alias".into()),
+                serde_json::Value::String(
+                    crate::model_contract::ModelSelectorKind::OperatorAlias
+                        .as_wire()
+                        .into(),
+                ),
             );
             entry.insert(
                 "variant_of".into(),

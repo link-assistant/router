@@ -218,8 +218,7 @@ fn process_environment(pid: &str) -> Option<Environment> {
 #[cfg(all(unix, not(target_os = "linux")))]
 fn process_environment(pid: &str) -> Option<Environment> {
     let output = match std::process::Command::new("ps")
-        .args(["-E", "-ww", "-o", "command=", "-p", pid])
-        .stderr(Stdio::null())
+        .args(["-E", "-ww", "-o", "stat=", "-o", "command=", "-p", pid])
         .output()
     {
         Ok(output) => output,
@@ -229,11 +228,44 @@ fn process_environment(pid: &str) -> Option<Environment> {
             )));
         }
     };
-    let text = String::from_utf8_lossy(&output.stdout);
-    if !output.status.success() || text.trim().is_empty() {
+    read_ps_process(
+        output.status.success(),
+        &String::from_utf8_lossy(&output.stdout),
+        &String::from_utf8_lossy(&output.stderr),
+    )
+}
+
+/// What one `ps -E -o stat= -o command= -p PID` run says about that process.
+///
+/// Only an answer that the process is gone is `None`: `ps` lists nothing and
+/// reports no error, or lists a zombie that has exited but is not yet reaped,
+/// as `/proc` does on Linux. Anything else it cannot account for is reported,
+/// never read as "not running" — a failed `ps` used to let a live client pass
+/// as absent, and backup then ran over the profile it was writing (#619).
+#[cfg_attr(target_os = "linux", allow(dead_code))]
+fn read_ps_process(success: bool, stdout: &str, stderr: &str) -> Option<Environment> {
+    let line = stdout.lines().find(|line| !line.trim().is_empty());
+    let Some(line) = line else {
+        let stderr = stderr.trim();
+        return if success || !stderr.is_empty() {
+            Some(Environment::Unknown(format!(
+                "ps could not inspect it{}",
+                if stderr.is_empty() {
+                    String::new()
+                } else {
+                    format!(": {stderr}")
+                }
+            )))
+        } else {
+            None
+        };
+    };
+    let line = line.trim_start();
+    let (stat, command) = line.split_once([' ', '\t']).unwrap_or((line, ""));
+    if stat.starts_with('Z') {
         return None;
     }
-    Some(parse_ps_environment(&text))
+    Some(parse_ps_environment(command.trim_start()))
 }
 
 /// Read the profile variables from one line of `ps -E -o command=`.
@@ -243,7 +275,9 @@ fn process_environment(pid: &str) -> Option<Environment> {
 /// without one continues the previous value (a home such as `/Users/A B`).
 /// A profile variable seen twice with different values cannot be attributed
 /// and is reported rather than guessed; a missing `HOME` means `ps` could not
-/// read the environment at all, as for another user's process.
+/// read the environment at all. macOS withholds it for another user's process
+/// and, while System Integrity Protection is on, for a restricted or Apple
+/// platform binary, printing only the arguments.
 #[cfg_attr(target_os = "linux", allow(dead_code))]
 fn parse_ps_environment(line: &str) -> Environment {
     let mut entries = Vec::<(String, String)>::new();
@@ -277,7 +311,11 @@ fn parse_ps_environment(line: &str) -> Environment {
     if variables.contains_key("HOME") {
         Environment::Known(variables)
     } else {
-        Environment::Unknown("its environment is not readable".into())
+        Environment::Unknown(
+            "its environment is not readable (macOS withholds it for another user's process \
+             and, under System Integrity Protection, for a restricted or Apple platform binary)"
+                .into(),
+        )
     }
 }
 

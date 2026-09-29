@@ -267,8 +267,9 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
 }
 
 /// Claude filters exact non-Anthropic gateway IDs out of `/model`. Router
-/// restores only those authorized compatible rows through Claude's supported
-/// process-local `--settings` surface, without aliases or duplicates (#419).
+/// lists every authorized exact row through Claude's supported process-local
+/// `--settings` surface, without aliases or duplicates (#419), Anthropic's own
+/// exact IDs included when Anthropic is authorized (#621).
 #[test]
 fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     let profiles = tempfile::tempdir().expect("profile root");
@@ -317,6 +318,7 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
             "verbose": true,
             "modelPicker": {
                 "options": [
+                    {"model": "future-native-id", "label": "future-native-id"},
                     {"model": "future-claude-shaped-zai", "label": "future-claude-shaped-zai", "behavesAs": "claude-sonnet-5"},
                     {"model": "future-glm-alpha", "label": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
                     {"model": "future-glm-beta", "label": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
@@ -327,20 +329,15 @@ fn claude_picker_adds_each_filtered_authorized_model_exactly_once() {
     );
 }
 
-#[test]
-fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
+/// The Claude settings Router hands this launch.
+fn prepared_claude_settings(models: &[RouterModel]) -> serde_json::Value {
     let profiles = tempfile::tempdir().expect("profile root");
-    let models = [RouterModel {
-        id: "glm-looking-but-unverified".to_string(),
-        owned_by: crate::clients::ZAI_MODEL_OWNER.to_string(),
-        ..RouterModel::default()
-    }];
-    let result = TemporaryClient::prepare(&Preparation {
+    let prepared = TemporaryClient::prepare(&Preparation {
         client: ClientKind::ClaudeCode,
         base_url: "http://router.test",
         token: "task-token",
         model_override: None,
-        models: &models,
+        models,
         isolated_config: false,
         extend_user_configuration: false,
         one_shot: false,
@@ -350,42 +347,77 @@ fn claude_picker_fails_closed_when_a_dynamic_model_has_no_profile() {
         codex_backend_base_url: None,
         ca_cert: None,
         user_claude_settings: None,
-    });
-    let Err(error) = result else {
-        panic!("an unknown capability profile must not reach Claude Code");
-    };
-    assert!(
-        error.to_string().contains("glm-looking-but-unverified"),
-        "{error}"
-    );
-    assert!(error.to_string().contains("capability metadata"), "{error}");
+    })
+    .expect("a catalog without capability metadata must still launch Claude");
+    let arguments = prepared
+        .command
+        .get_args()
+        .map(|argument| argument.to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    let settings = arguments
+        .windows(2)
+        .find_map(|pair| (pair[0] == "--settings").then_some(&pair[1]))
+        .expect("Router must provide process-local settings");
+    serde_json::from_str(settings).expect("valid settings JSON")
+}
 
+/// Issues #620 and #621: a live z.ai row carries no Claude capability
+/// metadata, and Claude Code accepts a `{label, model}` picker row without
+/// `behavesAs`. Requiring the metadata refused every z.ai-only launch, even an
+/// explicit `--model`. The row is listed as it is, and nothing is invented.
+#[test]
+fn claude_picker_lists_rows_without_capability_metadata() {
+    // The exact row a released z.ai Coding Plan deployment serves.
+    let models = crate::clients::parse_router_models(&[
+        json!({
+            "id": "glm-5.3",
+            "object": "model",
+            "owned_by": "z.ai",
+            "selector_kind": "provider_advertised_exact_id",
+            "capability_provenance": {"fields": {}},
+            "router_protocols": ["anthropic"]
+        }),
+        json!({
+            "id": "glm-5.3-flash",
+            "object": "model",
+            "owned_by": "z.ai",
+            "selector_kind": "provider_advertised_exact_id",
+            "capability_provenance": {"fields": {}},
+            "router_protocols": ["anthropic"]
+        }),
+    ])
+    .expect("the released z.ai row parses");
+    assert_eq!(
+        models[0].selector_kind,
+        crate::model_contract::ModelSelectorKind::Concrete
+    );
+    let settings = prepared_claude_settings(&models);
+    assert_eq!(
+        settings["modelPicker"],
+        json!({
+            "options": [
+                {"label": "glm-5.3", "model": "glm-5.3"},
+                {"label": "glm-5.3-flash", "model": "glm-5.3-flash"}
+            ],
+            "replaceBuiltInOptions": true
+        })
+    );
+
+    // Rows that disagree about one exact ID are no evidence of either value:
+    // one picker row, and no `behavesAs` on it.
     let models: Vec<RouterModel> = serde_json::from_value(json!([
         {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
-        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-haiku-4-5", "source": "provider-protocol:z.ai-anthropic"}}}
+        {"id": "future-conflict", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-haiku-4-5", "source": "provider-protocol:z.ai-anthropic"}}},
+        {"id": "future-incomplete", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": " "}}}
     ]))
     .expect("deserialize conflicting capability fixture");
-    let result = TemporaryClient::prepare(&Preparation {
-        client: ClientKind::ClaudeCode,
-        base_url: "http://router.test",
-        token: "task-token",
-        model_override: None,
-        models: &models,
-        isolated_config: false,
-        extend_user_configuration: false,
-        one_shot: false,
-        user_model_selection: None,
-        profile_root: Some(profiles.path()),
-        codex_reasoning_effort: None,
-        codex_backend_base_url: None,
-        ca_cert: None,
-        user_claude_settings: None,
-    });
-    let Err(error) = result else {
-        panic!("conflicting capability profiles must not reach Claude Code");
-    };
-    assert!(error.to_string().contains("future-conflict"), "{error}");
-    assert!(error.to_string().contains("ambiguous"), "{error}");
+    assert_eq!(
+        prepared_claude_settings(&models)["modelPicker"]["options"],
+        json!([
+            {"label": "future-conflict", "model": "future-conflict"},
+            {"label": "future-incomplete", "model": "future-incomplete"}
+        ])
+    );
 }
 
 /// Issue #379: Codex supports repeatable global `-c` overlays, so routing does

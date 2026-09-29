@@ -29,12 +29,12 @@ pub(super) async fn fetch_models(
     if status.is_success() {
         let value: Value = serde_json::from_str(&body)
             .map_err(|error| format!("router model catalog returned invalid JSON: {error}"))?;
-        let models: Vec<RouterModel> = value
+        let rows = value
             .get("data")
             .and_then(Value::as_array)
-            .ok_or("router model catalog did not contain a data array")?
-            .iter()
-            .filter_map(|model| serde_json::from_value::<RouterModel>(model.clone()).ok())
+            .ok_or("router model catalog did not contain a data array")?;
+        let models: Vec<RouterModel> = crate::clients::parse_router_models(rows)?
+            .into_iter()
             .filter(|model| !model.id.trim().is_empty())
             .collect();
         if models.is_empty() {

@@ -624,12 +624,12 @@ async fn real_zai_exact_model_is_pinned_and_served_identity_is_truthful() {
 /// `claude` binary and can bill one minimal inference per verified model.
 ///
 /// An inventory-only catalog is expected to take the other valid branch: the
-/// launch attempt must stop before Claude starts instead of giving both GLM
-/// models one fabricated Anthropic identity and a 200K effective window.
+/// model is served without a fabricated Anthropic identity, so Claude applies
+/// its own default for an unknown model (issues #620 and #621).
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn current_claude_reports_each_live_glm_context_or_router_blocks_the_launch() {
+async fn current_claude_serves_each_live_glm_model_with_only_verified_metadata() {
     let Some(api_key) = live_credential(
-        "current_claude_reports_each_live_glm_context_or_router_blocks_the_launch",
+        "current_claude_serves_each_live_glm_model_with_only_verified_metadata",
         "ROUTER_LIVE_ZAI_API_KEY",
     ) else {
         return;
@@ -637,7 +637,7 @@ async fn current_claude_reports_each_live_glm_context_or_router_blocks_the_launc
     if std::env::var("ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST").as_deref() != Ok("1") {
         eprintln!(
             "SKIP [tier4-live-credentialed] \
-             current_claude_reports_each_live_glm_context_or_router_blocks_the_launch: \
+             current_claude_serves_each_live_glm_model_with_only_verified_metadata: \
              ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 was not set; the current-Claude, billed \
              context probe was not authorized."
         );
@@ -751,17 +751,13 @@ async fn current_claude_reports_each_live_glm_context_or_router_blocks_the_launc
             eprintln!("PROVEN: current Claude reported {reported} tokens for exact `{model}`");
         } else {
             assert!(
-                !output.status.success(),
-                "`{model}` lacks exact consumable Claude/context evidence but launched"
-            );
-            assert!(
-                stderr.contains("no verified capability metadata")
-                    || stderr.contains("incomplete capability metadata"),
-                "`{model}` must fail with an actionable unsupported-capability error: {stderr}"
+                output.status.success(),
+                "`{model}` is authorized and served, so a launch without Claude capability \
+                 metadata must still answer: {stderr}"
             );
             eprintln!(
-                "PROVEN: `{model}` has no exact consumable Claude/context evidence and Router \
-                 stopped before inference"
+                "PROVEN: `{model}` has no exact consumable Claude/context evidence; Router \
+                 served it without inventing any"
             );
         }
     }

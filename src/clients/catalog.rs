@@ -101,7 +101,32 @@ pub struct RouterReasoningLevel {
 
 #[derive(Deserialize)]
 struct RouterCatalog {
-    data: Vec<RouterModel>,
+    data: Vec<serde_json::Value>,
+}
+
+/// Parse every row of a catalog's `data` array, naming the first row that
+/// does not fit [`RouterModel`].
+///
+/// A row is never dropped silently: skipping it turned one unparsable z.ai
+/// row into "no models authorized for this client token", which hid the
+/// real contract mismatch behind an authorization error (issue #620).
+pub fn parse_router_models(data: &[serde_json::Value]) -> Result<Vec<RouterModel>, String> {
+    data.iter()
+        .enumerate()
+        .map(|(index, row)| {
+            serde_json::from_value::<RouterModel>(row.clone()).map_err(|error| {
+                let id = row
+                    .get("id")
+                    .and_then(serde_json::Value::as_str)
+                    .map_or_else(String::new, |id| format!(" (`{id}`)"));
+                format!(
+                    "router model catalog row {index}{id} does not match this Router \
+                     version's catalog contract: {error}; update Router on this machine or \
+                     on the server so both speak the same contract"
+                )
+            })
+        })
+        .collect()
 }
 
 impl ClientManager {
@@ -151,8 +176,8 @@ impl ClientManager {
         let catalog: RouterCatalog = serde_json::from_str(&response_body).map_err(|error| {
             ClientError::message(format!("router returned an invalid model catalog: {error}"))
         })?;
-        let mut models = catalog
-            .data
+        let mut models = parse_router_models(&catalog.data)
+            .map_err(ClientError::message)?
             .into_iter()
             .filter(|model| !model.id.trim().is_empty())
             .collect::<Vec<_>>();

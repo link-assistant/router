@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use link_assistant_router::cli::DeployArgs;
 
+mod claude_share;
 mod docker;
 mod inventory;
 mod state;
@@ -15,6 +16,7 @@ mod state;
 #[path = "deploy_local_tests.rs"]
 mod tests;
 
+use claude_share::Provision;
 use docker::Docker;
 use inventory::Inventory;
 use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
@@ -45,6 +47,7 @@ struct Coordinator<'a> {
     port: u16,
     token_secret: &'a str,
     force: bool,
+    claude: Provision,
 }
 
 impl Coordinator<'_> {
@@ -125,6 +128,7 @@ impl Coordinator<'_> {
         println!(
             "credential_ownership=shared-data durable-per-credential-locks single-refresh-writer"
         );
+        println!("{}", self.claude.status_line(self.root));
         match existing {
             Existing::Absent => {
                 println!("old_backend=absent");
@@ -163,6 +167,10 @@ impl Coordinator<'_> {
                 let backend_running = self.docker.running(&active.backend)?;
                 let relay_running = self.docker.running(RELAY).unwrap_or(false);
                 println!("old_backend={} image={}", active.backend, active.image_ref);
+                println!(
+                    "old_backend_claude_credentials={}",
+                    self.claude_label(&active.backend)
+                );
                 println!("candidate_backend=not-started image={}", self.image);
                 println!("connections={}", self.connection_count(&active.backend)?);
                 println!("backend_running={backend_running}");
@@ -515,10 +523,38 @@ impl Coordinator<'_> {
         }
     }
 
+    /// The credential an existing backend was started with; backends from
+    /// before issue #622 carry no label and always used `<root>/credentials`.
+    fn claude_label(&self, backend: &str) -> String {
+        self.docker
+            .label(
+                backend,
+                &format!("{LABEL_KEY}.{}", claude_share::LABEL_SUFFIX),
+            )
+            .unwrap_or_else(|| Provision::Isolated.label())
+    }
+
+    /// An update without `--claude-credentials` keeps the active mode, so a
+    /// routine image update never silently drops a shared login.
+    fn active_claude_mode(&self) -> link_assistant_router::cli::ClaudeCredentials {
+        let shared = self
+            .state
+            .active()
+            .ok()
+            .flatten()
+            .is_some_and(|active| self.claude_label(&active.backend).starts_with("shared:"));
+        if shared {
+            link_assistant_router::cli::ClaudeCredentials::Share
+        } else {
+            link_assistant_router::cli::ClaudeCredentials::Isolated
+        }
+    }
+
     fn no_op(&self, active: &Active) -> Result<bool, String> {
         if self.build.is_some()
             || active.image_ref != self.image
             || active.port != self.port
+            || self.claude_label(&active.backend) != self.claude.label()
             || self.state.current()?.as_deref() != Some(&active.backend)
             || !self.docker.owned(&active.backend, self.root, "backend")
         {
@@ -590,10 +626,13 @@ impl Coordinator<'_> {
             port: self.port,
         };
         self.state.write_transaction(&transaction)?;
-        if let Err(error) =
-            self.docker
-                .run_backend(&candidate, self.image, self.root, self.token_secret)
-        {
+        if let Err(error) = self.docker.run_backend(
+            &candidate,
+            self.image,
+            self.root,
+            self.token_secret,
+            &self.claude,
+        ) {
             self.rollback(&transaction)?;
             return Err(format!("could not start candidate: {error}"));
         }
@@ -707,7 +746,18 @@ fn run_with_docker(
     token_secret: &str,
     docker: Docker,
 ) -> ExitCode {
-    let coordinator = Coordinator {
+    run_assessed(args, root, image, token_secret, docker, &Provision::assess)
+}
+
+fn run_assessed(
+    args: &DeployArgs,
+    root: &Path,
+    image: &str,
+    token_secret: &str,
+    docker: Docker,
+    assess: &dyn Fn(link_assistant_router::cli::ClaudeCredentials, &Path) -> Provision,
+) -> ExitCode {
+    let mut coordinator = Coordinator {
         docker,
         state: State::new(root),
         root,
@@ -716,7 +766,24 @@ fn run_with_docker(
         port: args.port,
         token_secret,
         force: args.force_update,
+        claude: Provision::Isolated,
     };
+    if !args.down {
+        let mode = args
+            .claude_credentials
+            .unwrap_or_else(|| coordinator.active_claude_mode());
+        coordinator.claude = assess(mode, &root.join("data"));
+        // A refusal needs no container runtime to explain itself.
+        if let Provision::Refused(reason) = &coordinator.claude
+            && !args.status
+        {
+            println!("{}", coordinator.claude.status_line(root));
+            eprintln!(
+                "error: --claude-credentials share refused before deployment mutation: {reason}"
+            );
+            return ExitCode::from(2);
+        }
+    }
     if let Err(error) = coordinator.docker.available() {
         eprintln!("error: container runtime unavailable: {error}");
         return ExitCode::from(1);

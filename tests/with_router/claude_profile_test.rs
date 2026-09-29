@@ -234,7 +234,9 @@ DISABLE_FEEDBACK_COMMAND=1\n",
             // assertion below — stays byte-identical (issue #560).
             "verbose": true,
             "modelPicker": {
+                // Every authorized exact model, Anthropic's included (#621).
                 "options": [
+                    {"label": "claude-opus-5", "model": "claude-opus-5"},
                     {"label": "future-glm-alpha", "model": "future-glm-alpha", "behavesAs": "claude-sonnet-5"},
                     {"label": "future-glm-beta", "model": "future-glm-beta", "behavesAs": "claude-sonnet-5"}
                 ],
@@ -258,6 +260,63 @@ DISABLE_FEEDBACK_COMMAND=1\n",
     assert_eq!(
         fs::read(home.join(".claude/settings.json")).expect("normal settings after second launch"),
         normal
+    );
+}
+
+/// Issue #620: Router v1.14.2 serves live z.ai rows as
+/// `selector_kind: provider_advertised_exact_id` with no Claude capability
+/// metadata. The wrapper dropped every such row while parsing and then refused
+/// to launch with "router catalog contains no models authorized for this client
+/// token". This fixture is the exact released row shape; the launch must reach
+/// Claude with both models in its `/model` picker (issue #621).
+#[test]
+fn released_zai_exact_rows_launch_claude_with_every_model_listed() {
+    let directory = tempfile::tempdir().expect("temporary test directory");
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).expect("create capture directory");
+    fake_claude(&bin);
+    let token = bound_client_token("claude");
+    let (server, requests) = mock_claude_router_with_catalog(
+        r#"{"object":"list","data":[{"id":"glm-5.3","object":"model","owned_by":"z.ai","router_protocols":["anthropic"],"selector_kind":"provider_advertised_exact_id","capability_provenance":{"fields":{}}},{"id":"glm-5.3-flash","object":"model","owned_by":"z.ai","router_protocols":["anthropic"],"selector_kind":"provider_advertised_exact_id","capability_provenance":{"fields":{}}}]}"#,
+    );
+
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &[
+            "--server", &server, "--token", &token, "claude", "--", "-p", "hi",
+        ],
+        &[],
+    );
+
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        requests.join().expect("mock Router requests"),
+        ["/api/health", "/api/management/tokens", "/api/models"]
+    );
+    let arguments = fs::read_to_string(capture.join("args")).expect("captured Claude arguments");
+    let arguments = arguments.lines().collect::<Vec<_>>();
+    let settings = arguments
+        .windows(2)
+        .find_map(|pair| (pair[0] == "--settings").then_some(pair[1]))
+        .expect("process-local model picker");
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(settings).expect("settings JSON")["modelPicker"],
+        serde_json::json!({
+            "options": [
+                {"label": "glm-5.3", "model": "glm-5.3"},
+                {"label": "glm-5.3-flash", "model": "glm-5.3-flash"}
+            ],
+            "replaceBuiltInOptions": true
+        })
     );
 }
 

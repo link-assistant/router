@@ -140,7 +140,13 @@ pub(super) async fn append_zai_models(
         );
         projected.insert(
             "selector_kind".into(),
-            Value::String("provider_advertised_exact_id".into()),
+            // The canonical spelling, which every released wrapper parses
+            // (issue #620); see `ModelSelectorKind`.
+            Value::String(
+                crate::model_contract::ModelSelectorKind::Concrete
+                    .as_wire()
+                    .into(),
+            ),
         );
         projected
             .entry("object")

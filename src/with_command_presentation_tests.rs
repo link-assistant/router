@@ -64,10 +64,9 @@ fn claude_zai_only_picker_replaces_unavailable_native_families() {
 #[test]
 fn a_default_claude_launch_keeps_completed_thinking_visible() {
     for models in [
-        // Nothing for the picker to add: every row is either Anthropic-owned or
-        // a built-in family name.
+        // Nothing for the picker to add: the only row is a built-in family
+        // name, which Claude's own rows already cover.
         json!([
-            {"id": "future-native-id", "owned_by": "anthropic"},
             {"id": "sonnet", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
         ]),
         // An empty catalog, which reaches the same early return.

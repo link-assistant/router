@@ -3,7 +3,7 @@
 //! Split from `cli.rs` to keep that file within the repository's 1000-line
 //! limit.
 
-use clap::Args;
+use clap::{Args, ValueEnum};
 
 /// What a `router deploy` run should do.
 #[derive(Debug, Args)]
@@ -70,6 +70,26 @@ pub struct DeployArgs {
     /// Router data and its request log.
     #[arg(long, value_name = "DIR")]
     pub root: Option<String>,
+    /// Whether the backend uses this machine's Claude Code login.
+    ///
+    /// `share` mounts the Claude Code home (`$CLAUDE_CONFIG_DIR` or
+    /// `~/.claude`) read-write, as its owner, so the host CLI and Router
+    /// advance one rotating refresh chain. Nothing is copied. A login the
+    /// container cannot share (macOS Keychain, empty, unreadable) is refused
+    /// with the reason before anything changes. Without this flag an update
+    /// keeps the mode the active deployment uses; a first deploy is isolated.
+    #[arg(long, value_enum, conflicts_with_all = ["server", "down"])]
+    pub claude_credentials: Option<ClaudeCredentials>,
+}
+
+/// How a local deployment's backend obtains the Anthropic credential.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum)]
+pub enum ClaudeCredentials {
+    /// Only the deployment's own `<root>/credentials`, mounted read-only.
+    #[default]
+    Isolated,
+    /// The host's Claude Code home, shared read-write without copying.
+    Share,
 }
 
 /// Which subscription's remaining limits to report.

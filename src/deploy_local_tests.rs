@@ -10,6 +10,8 @@ use super::{
     Coordinator, Existing, LABEL_KEY, LEGACY, NETWORK, RELAY, SPEC_VERSION, run_with_docker,
 };
 
+#[path = "deploy_local_claude_tests.rs"]
+mod claude_tests;
 #[path = "deploy_local_failure_tests.rs"]
 mod failure_tests;
 
@@ -403,6 +405,7 @@ fn coordinator<'a>(
         port,
         token_secret: "integration-test-signing-secret",
         force,
+        claude: super::Provision::Isolated,
     }
 }
 
@@ -418,6 +421,7 @@ fn deploy_args() -> DeployArgs {
         image: None,
         build: None,
         root: None,
+        claude_credentials: None,
     }
 }
 

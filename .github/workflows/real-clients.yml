@@ -87,7 +87,7 @@ jobs:
         # `latest` moves under every pull request; keep pull requests on a
         # pinned newer release and let push, nightly, and manual runs also
         # track the moving tag.
-        claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.283"]' || '["2.1.283", "latest"]') }}
+        claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.284"]' || '["2.1.284", "latest"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

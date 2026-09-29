@@ -22,6 +22,13 @@ use std::time::{Duration, Instant};
 /// keeps working where `sleep` is a multi-call binary that dispatches on it.
 /// The binary is written once: macOS kills a process whose executable was
 /// just rewritten in place.
+///
+/// The copy is re-signed ad hoc on macOS. It would otherwise still be Apple's
+/// platform binary, whose environment macOS withholds while System Integrity
+/// Protection is on, so the same test would take a different path on a
+/// developer's Mac than on CI (#619). It runs for an hour, not for seconds: a
+/// fixture that exits in the middle of a loaded full run makes a correct
+/// "nothing is running" answer look like a failure to block.
 fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running {
     use std::os::unix::fs::PermissionsExt as _;
 
@@ -38,9 +45,15 @@ fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running 
             fs::copy("/bin/sleep", &binary).unwrap();
         }
         fs::set_permissions(&binary, fs::Permissions::from_mode(0o755)).unwrap();
+        if cfg!(target_os = "macos") {
+            let _ = Command::new("codesign")
+                .args(["--force", "--sign", "-"])
+                .arg(&binary)
+                .output();
+        }
     }
     let mut command = Command::new(&binary);
-    command.arg("30").env_clear().env("PATH", "/usr/bin:/bin");
+    command.arg("3600").env_clear().env("PATH", "/usr/bin:/bin");
     for (key, value) in env {
         command.env(key, value);
     }
@@ -76,6 +89,34 @@ fn spawn_retrying_busy(command: &mut Command) -> Child {
 }
 
 struct Running(Child);
+
+impl Running {
+    /// Fail with what `ps` saw unless the fixture is still running after
+    /// `step`, so a fixture that exited is never mistaken for Router letting
+    /// a live writer through.
+    fn assert_alive(&mut self, step: &str) {
+        let exited = self.0.try_wait().unwrap();
+        assert!(
+            exited.is_none(),
+            "the fixture client exited ({exited:?}) before {step} finished"
+        );
+    }
+
+    /// The fixture as `ps -E` shows it, for a failure message.
+    fn describe(&self) -> String {
+        let shown = Command::new("ps")
+            .args(["-E", "-ww", "-o", "stat=", "-o", "command=", "-p"])
+            .arg(self.0.id().to_string())
+            .output()
+            .unwrap();
+        format!(
+            "process {} as ps sees it: {}{}",
+            self.0.id(),
+            String::from_utf8_lossy(&shown.stdout).trim(),
+            String::from_utf8_lossy(&shown.stderr).trim()
+        )
+    }
+}
 
 impl Drop for Running {
     fn drop(&mut self) {
@@ -170,13 +211,19 @@ fn a_client_writing_the_fixture_still_blocks_it() {
     let backup = ["backup", "create", "claude", "--profile", "normal"];
 
     {
-        let _claude = spawn_client(bin.path(), "claude", &[("HOME", fixture.path())]);
+        let mut claude = spawn_client(bin.path(), "claude", &[("HOME", fixture.path())]);
         let blocked = clients(user.path(), fixture.path(), &backup, &path);
-        assert!(!blocked.status.success());
+        claude.assert_alive("backup");
+        assert!(
+            !blocked.status.success(),
+            "backup ran over a live writer; {}",
+            claude.describe()
+        );
         assert!(
             stderr(&blocked).contains("claude is running with the normal profile"),
-            "{}",
-            stderr(&blocked)
+            "{}; {}",
+            stderr(&blocked),
+            claude.describe()
         );
         let update = clients(
             user.path(),
@@ -184,19 +231,31 @@ fn a_client_writing_the_fixture_still_blocks_it() {
             &["update", "claude", "--dry-run", "--json"],
             &path,
         );
+        claude.assert_alive("the update dry-run");
         let plans: serde_json::Value = serde_json::from_slice(&update.stdout).unwrap();
-        assert_eq!(plans[0]["status"], "blocked", "{}", plans[0]);
+        assert_eq!(
+            plans[0]["status"],
+            "blocked",
+            "{}; {}",
+            plans[0],
+            claude.describe()
+        );
     }
 
     // The home alone is not the profile: a redirected config dir is matched.
     let config = fixture.path().join(".claude");
-    let _claude = spawn_client(
+    let mut claude = spawn_client(
         bin.path(),
         "claude",
         &[("HOME", user.path()), ("CLAUDE_CONFIG_DIR", &config)],
     );
     let blocked = clients(user.path(), fixture.path(), &backup, &path);
-    assert!(!blocked.status.success());
+    claude.assert_alive("backup");
+    assert!(
+        !blocked.status.success(),
+        "backup ran over a live writer; {}",
+        claude.describe()
+    );
     assert!(
         stderr(&blocked).contains("is running"),
         "{}",
