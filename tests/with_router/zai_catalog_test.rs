@@ -42,7 +42,15 @@ fn mock_chatgpt_and_zai_catalog_router() -> (String, thread::JoinHandle<Vec<Stri
 
 #[test]
 fn router_with_codex_launches_with_live_chatgpt_and_zai_catalogs() {
-    for (effort, expected_ids) in [("high", &["gpt-live"][..]), ("xhigh", &["gpt-live"][..])] {
+    // Rows without reasoning metadata are unknown, not unsupported: they stay
+    // listed and carry the configured effort as their default (issue #628).
+    let listed = [
+        "glm-live",
+        "glm-newly-discovered",
+        "gpt-live",
+        "incomplete-unrelated",
+    ];
+    for (effort, expected_ids) in [("high", &listed[..]), ("xhigh", &listed[..])] {
         let directory = tempfile::tempdir().expect("temporary test directory");
         let home = directory.path().join("home");
         let bin = directory.path().join("bin");
@@ -72,11 +80,6 @@ fn router_with_codex_launches_with_live_chatgpt_and_zai_catalogs() {
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
         );
-        assert!(
-            String::from_utf8_lossy(&output.stderr).contains("incomplete-unrelated"),
-            "the omitted capability limitation was not explicit: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
         assert_eq!(
             fs::read_to_string(capture.join("config")).expect("captured real config"),
             original,
@@ -95,14 +98,20 @@ fn router_with_codex_launches_with_live_chatgpt_and_zai_catalogs() {
         assert_eq!(ids, expected_ids, "wrong {effort} compatibility filter");
         for model in models {
             let default = model["default_reasoning_level"].as_str().unwrap();
-            assert!(
-                model["supported_reasoning_levels"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .any(|level| level["effort"] == default),
-                "invalid reasoning metadata for {model}"
-            );
+            let levels = model["supported_reasoning_levels"].as_array().unwrap();
+            if model["slug"] == "gpt-live" {
+                assert!(
+                    levels.iter().any(|level| level["effort"] == default),
+                    "invalid reasoning metadata for {model}"
+                );
+            } else {
+                // No capability is claimed; the user's own effort is kept.
+                assert!(levels.is_empty(), "invented reasoning levels for {model}");
+                assert_eq!(
+                    default, effort,
+                    "the configured effort was replaced: {model}"
+                );
+            }
         }
         assert_eq!(
             requests.join().expect("mock router thread"),

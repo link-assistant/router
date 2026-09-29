@@ -242,6 +242,15 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
             "{key} must not be overwritten when the user chose a model"
         );
     }
+    // The Default row is a different row from the user's choice. It still
+    // must not describe an unauthorized Opus beside it (issue #630).
+    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+        assert_eq!(
+            respected.get(key).map(String::as_str),
+            Some("glm-5.3-flash"),
+            "{key} must keep Default on an authorized model"
+        );
+    }
 
     // A default Claude Code itself saved in the profile it will read counts the
     // same way: this is the `/model` choice from a previous session, which the
@@ -249,7 +258,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let saved = tempfile::tempdir().expect("profile root");
     let profile = saved
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&profile).expect("create the Router-owned Claude profile");
     std::fs::write(
         profile.join("settings.json"),
@@ -263,13 +272,20 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
             "{key} must not override the model saved in the profile"
         );
     }
+    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+        assert_eq!(
+            honoured.get(key).map(String::as_str),
+            Some("glm-5.3-flash"),
+            "{key} must keep Default on an authorized model"
+        );
+    }
 
     // Claude's semantic Default row is still usable without Anthropic: it
     // delegates main and subagent selection to Router's exact live fallback.
     let saved_default = tempfile::tempdir().expect("profile root");
     let default_profile = saved_default
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&default_profile).expect("create the Router-owned Claude profile");
     std::fs::write(
         default_profile.join("settings.json"),
@@ -291,7 +307,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let unsaved = tempfile::tempdir().expect("profile root");
     let other = unsaved
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&other).expect("create the Router-owned Claude profile");
     std::fs::write(other.join("settings.json"), br#"{"verbose":true}"#)
         .expect("seed a profile with no model");
@@ -314,7 +330,7 @@ fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
     let profiles = tempfile::tempdir().expect("profile root");
     let profile = profiles
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&profile).expect("create Router-owned Claude profile");
     std::fs::write(
         profile.join("settings.json"),
@@ -415,4 +431,51 @@ fn a_non_anthropic_saved_context_variant_remains_unavailable_to_claude() {
     .expect_err("a non-Anthropic base must not authorize Claude's context variant")
     .to_string();
     assert!(error.contains("glm-5.3-flash[1m]"), "{error}");
+}
+
+/// Issue #630 pins the Default row's families only where the picker hides the
+/// built-in family rows. With Anthropic authorized those rows stay, so even an
+/// explicit z.ai model must not relabel the native Opus/Sonnet/Haiku rows.
+#[test]
+fn a_mixed_catalog_keeps_native_family_rows_unpinned() {
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "future-claude-native", "owned_by": "anthropic"},
+        {"id": "future-glm-mixed", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}}
+    ]))
+    .expect("deserialize a mixed catalog");
+    let profiles = tempfile::tempdir().expect("profile root");
+    let prepared = TemporaryClient::prepare(&Preparation {
+        client: ClientKind::ClaudeCode,
+        base_url: "http://router.test",
+        token: "task-token",
+        model_override: Some("future-glm-mixed"),
+        models: &models,
+        isolated_config: false,
+        extend_user_configuration: false,
+        one_shot: true,
+        user_model_selection: None,
+        profile_root: Some(profiles.path()),
+        codex_reasoning_effort: None,
+        codex_backend_base_url: None,
+        ca_cert: None,
+        user_claude_settings: None,
+    })
+    .expect("prepare a mixed Claude session");
+    let environment = prepared
+        .command
+        .get_envs()
+        .filter_map(|(key, value)| {
+            Some((
+                key.to_string_lossy().into_owned(),
+                value?.to_string_lossy().into_owned(),
+            ))
+        })
+        .collect::<std::collections::HashMap<_, _>>();
+    assert_eq!(
+        environment.get("ANTHROPIC_MODEL").map(String::as_str),
+        Some("future-glm-mixed")
+    );
+    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+        assert!(!environment.contains_key(key), "{key} must stay native");
+    }
 }

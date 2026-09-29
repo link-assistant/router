@@ -59,7 +59,7 @@ reason, even on a host without a container runtime, when:
   replaced by rename beside it);
 - the login lives in the macOS Keychain. Claude Code keeps its live credential
   there, and the file beside it is a snapshot nothing rotates; a container can
-  neither read nor update the Keychain. Run `router serve` on the host instead;
+  neither read nor update the Keychain. Use host mode (below) instead;
 - a file under `data/` belongs to another user, typically left by an earlier
   backend that ran as root. The message gives the `sudo chown -R` command.
 
@@ -67,6 +67,62 @@ Caveats: the host CLI does not take Router's per-credential locks, so a refresh
 by both at the same instant can still race; Router then re-reads the file and
 recovers from its rotated-token record. File locks are not reliable across
 Docker Desktop's macOS file sharing.
+
+## Host mode for a macOS Keychain login
+
+On macOS, Claude Code keeps its live login in the Keychain, which no container
+can read, so a container deployment cannot serve Anthropic models (issue #626).
+`--mode host` moves the deployment to this same Router binary running on the
+host, which reads the Keychain in place, while keeping exactly one endpoint:
+
+```bash
+# Read-only plan: what would stop, start, and be preserved, and every blocker.
+TOKEN_SECRET='a-long-random-secret' router deploy --mode host --status
+
+TOKEN_SECRET='a-long-random-secret' router deploy --mode host
+
+# Back to the containers, which were stopped, not removed.
+TOKEN_SECRET='a-long-random-secret' router deploy --mode container
+```
+
+The host Router uses the deployment's `data/` directory and `TOKEN_SECRET`, so
+the token store, signing secret, request logs, and provider configuration (for
+example z.ai) are the ones the containers used. It listens on the same
+`127.0.0.1:<port>`, so client profiles, the selected server, and resumable
+sessions need no change. It gets no `CLAUDE_CODE_HOME`, so it reads the host
+Claude Code login the way `router serve` does. OAuth bytes are never printed or
+copied (`claude_login=keychain read_in_place=true oauth_bytes_copied=0`).
+
+The move is candidate-first:
+
+1. A host Router is started on an ephemeral loopback port and must answer
+   `/api/health` and accept a token signed with the deployment's secret.
+   Otherwise it is stopped and nothing else changes.
+2. The relay is stopped and the host Router is started on the stable port and
+   validated the same way. If that fails, the relay is restarted and the
+   container deployment keeps serving.
+3. The backend is stopped and retained for rollback.
+
+The move is refused before any change, with exit code 2, when a live run or an
+established connection would be interrupted (`--force-update` accepts that
+after review), when the run inventory is unknown, when the `TOKEN_SECRET` differs
+from the deployment's, when a transaction is pending, when another process
+holds the port, or when a file under `data/` belongs to another user. On Linux
+an earlier backend ran as root, and the message names the `sudo chown -R`
+command; Docker Desktop on macOS maps bind-mount files to the host user.
+
+Once in host mode, `router deploy` and `router deploy --status` keep the mode.
+A rerun with the same Router and secret reports `converged=true` and changes
+nothing. Replacing a serving host Router, for a newer binary or a changed
+secret, closes its connections, so it is planned as a blocker and needs
+`--force-update`; the replacement goes through the same validation. `router deploy --mode container` restarts the
+retained backend, stops the host Router, and restarts the relay; if the relay
+does not become healthy, the host Router is started again. `router deploy
+--down --yes` stops the host Router as well as the containers.
+
+The host process is recorded in `state/host` and logs to `state/host.log`. It
+does not survive a reboot or logout by itself; rerun `router deploy` or start it
+from a launchd agent.
 
 ## What happens during an update
 
@@ -96,9 +152,111 @@ deploy reads the durable transaction and either rolls back the unaccepted
 candidate or finishes the accepted drain. `--status` never performs that
 recovery; it reports the pending transaction and exits nonzero.
 
+The relay runs the same Router image as the backend, so it is updated too
+(issue #627). After the old backend has drained, the coordinator waits until
+the relay carries no established connection, observed twice in a row, then
+replaces it with a relay on the new image and verifies the path through it.
+Docker cannot hand a published port from one container to another, so the old
+relay is removed before its replacement starts: at no point do two containers
+publish the listener. Because rotation waits for idleness, no in-flight request
+or stream is cut; a new connection attempted during the sub-second swap is
+refused and must be retried by the client. If the relay stays busy for two
+minutes, the backend update is kept, the relay stays on its old image, and the
+deploy exits nonzero with `relay_rotation=deferred`. Rerun `router deploy` when
+clients are idle, or pass `--force-update` to rotate immediately and accept the
+interruption. A failed replacement restores a relay on the previous image.
+
+Status names both images and never calls mixed images converged:
+
+```text
+backend_image=ghcr.io/link-assistant/router:1.14.3 image_id=sha256:…
+relay_image=ghcr.io/link-assistant/router:1.14.2 image_id=sha256:…
+version_skew=true
+converged=false
+```
+
+Image ids decide skew, so a second tag of the same image is not skew. A
+deployment left mixed by v1.14.3 converges on the next ordinary `router
+deploy` of the same image; only the relay is replaced.
+
 A second deploy with the same image, port, and launch specification is a true
 no-op: it does not replace containers or rewrite the pointer, tokens,
 credentials, logs, or configuration.
+
+## Token signing secret
+
+`TOKEN_SECRET` signs every issued client token and encrypts stored provider
+keys, so it is part of the launch specification (issue #625). Each backend
+carries a label with a keyed fingerprint of its secret
+(`hmac-sha256:` followed by 128 bits of HMAC-SHA256 keyed by the secret over a
+fixed context). The fingerprint identifies the secret without revealing it.
+Backends started by v1.14.3 have no label; their secret is read from the
+container environment in memory and fingerprinted, and it is never printed.
+`--status` reports the comparison:
+
+```text
+token_secret=changed
+blocker=token-secret-change reason="router-deploy-backend-… verifies tokens with a different TOKEN_SECRET; its issued client tokens would be rejected with HTTP 401"
+force_update_interrupts=true
+```
+
+A deploy with another secret is therefore neither "already converged" nor
+silently applied: it is refused before any mutation, on the same image or a
+new one. Every ordinary update also proves token continuity before cutover.
+The candidate is shown a short-lived token signed with the supplied secret
+through `docker exec` environment (never argv), and it takes traffic only when
+it accepts that signature (`token_probe=accepted status=403`, since the probe
+token has no managed-client binding). A candidate that answers 401 is rolled
+back and the old backend keeps serving.
+
+To recover a backend that was started with a wrong secret, rerun with the
+correct secret and accept the rotation explicitly. No image switch and no
+manual container removal is needed:
+
+```bash
+TOKEN_SECRET="$SAVED_TOKEN_SECRET" router deploy --status
+TOKEN_SECRET="$SAVED_TOKEN_SECRET" router deploy --force-update
+```
+
+The force report names the rotation and the number of issued client tokens it
+affects (`force_update accepted token_secret_rotation token_secret=changed
+issued_client_tokens=2`). The data directory and token store are kept, so
+tokens signed with the restored secret are authorized again.
+
+## Inconsistent state
+
+`--status` describes a deployment whose durable records disagree with the
+containers instead of stopping at the first disagreement (issue #631). A relay
+and backend that still serve while `state/active` is missing or unparseable are
+reported with the record's condition, the relay pointer, the pending
+transaction, and every container owned by the root (role, running state, image,
+launch-specification version, relay port, and backend Claude credential
+source), followed by the established connection count, the run inventory, and a
+recovery plan:
+
+```text
+consistency=inconsistent reason="router-deploy-relay exists without a durable active deployment record"
+active_record=absent
+relay_pointer=router-deploy-backend-…
+container=router-deploy-backend-… role=backend running=true image=ghcr.io/link-assistant/router:1.14.3 spec=local-v1 claude_credentials=isolated pointer=true
+container=router-deploy-relay role=relay running=true image=ghcr.io/link-assistant/router:1.14.3 spec=local-v1 port=8080
+connections=0
+recovery_plan=adopt backend=router-deploy-backend-… image=… port=8080 mutation=active-record-only containers_unchanged=true
+status_is_read_only=true
+```
+
+Status never changes a container or a state file, so it can be repeated; it
+exits nonzero while the state is inconsistent. `recovery_plan=adopt` is offered
+only when the pointer names a backend this root owns, with a known launch
+specification, and the relay is owned by the same root. The next ordinary
+`router deploy` then takes the update lock, keeps a corrupt record as
+`state/active.corrupt-<time>`, and writes the record that the running topology
+proves, without starting, stopping, or replacing any container. Established
+streams and issued tokens are therefore untouched; the deploy then continues
+as a no-op, repair, or rolling update. A record written by a newer Router, a
+foreign relay, or a pointer to an unowned backend is never adopted:
+`recovery_plan=manual` explains why and names `router deploy --down --yes`,
+which retains credentials, data, and issued tokens.
 
 ## Refusals and explicit force
 

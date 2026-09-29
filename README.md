@@ -1616,7 +1616,9 @@ connections, and drain established streams from the old backend. It inventories
 live wrapper leases, stale pinned credentials, and unsafe pre-policy records
 before mutation; interruption requires the explicit local-only
 `--force-update` flag. The backend is isolated from the host's Claude Code
-login unless `--claude-credentials share` mounts it in place; see the
+login unless `--claude-credentials share` mounts it in place. For a login kept
+in the macOS Keychain, `--mode host` moves the deployment to this Router on the
+host with the same data, secret, and endpoint; see the
 [local deployment guide](docs/use-cases/local-deploy.md) for status output,
 rollback recovery, durable state, and legacy migration.
 

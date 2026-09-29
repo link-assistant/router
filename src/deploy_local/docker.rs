@@ -4,6 +4,7 @@ use std::path::Path;
 use std::process::Command;
 
 use super::claude_share::{LABEL_SUFFIX, Provision};
+use super::secret::{self, fingerprint};
 use super::{LABEL_KEY, NETWORK, RELAY, SPEC_VERSION};
 
 pub(super) struct CommandOutput {
@@ -192,6 +193,45 @@ impl Docker {
         self.output(&command)
     }
 
+    /// `docker exec -e NAME`: each value reaches the container through this
+    /// process's environment, never through argv.
+    pub(super) fn exec_with_env(
+        &self,
+        name: &str,
+        environment: &[(&str, &str)],
+        arguments: &[&str],
+    ) -> Result<String, String> {
+        let mut command = vec!["exec".to_string()];
+        for (key, _) in environment {
+            command.extend(["-e".to_string(), (*key).to_string()]);
+        }
+        command.push(name.to_string());
+        command.extend(arguments.iter().map(|value| (*value).to_string()));
+        let output = self.command(&command, environment)?;
+        if output.success {
+            Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+        } else {
+            Err(compact(&output.stderr))
+        }
+    }
+
+    /// One variable of a container's launch environment, held in memory
+    /// only; the caller must not print it.
+    pub(super) fn env_value(&self, name: &str, key: &str) -> Option<String> {
+        let rendered = self
+            .output(&[
+                "inspect".into(),
+                "--format".into(),
+                "{{range .Config.Env}}{{println .}}{{end}}".into(),
+                name.into(),
+            ])
+            .ok()?;
+        rendered
+            .lines()
+            .find_map(|line| line.strip_prefix(key)?.strip_prefix('='))
+            .map(str::to_string)
+    }
+
     pub(super) fn token_inventory(&self, name: &str) -> Result<String, String> {
         self.exec(name, &["router", "tokens", "list", "--json"])
     }
@@ -295,7 +335,7 @@ impl Docker {
         token_secret: &str,
         claude: &Provision,
     ) -> Result<(), String> {
-        let arguments = backend_arguments(name, image, root, claude);
+        let arguments = backend_arguments(name, image, root, claude, &fingerprint(token_secret));
         let output = self.command(&arguments, &[("TOKEN_SECRET", token_secret)])?;
         if output.success {
             Ok(())
@@ -374,7 +414,13 @@ impl Docker {
     }
 }
 
-fn backend_arguments(name: &str, image: &str, root: &Path, claude: &Provision) -> Vec<String> {
+fn backend_arguments(
+    name: &str,
+    image: &str,
+    root: &Path,
+    claude: &Provision,
+    secret_fingerprint: &str,
+) -> Vec<String> {
     let mut arguments: Vec<String> = vec![
         "run".into(),
         "-d".into(),
@@ -396,6 +442,8 @@ fn backend_arguments(name: &str, image: &str, root: &Path, claude: &Provision) -
         format!("{LABEL_KEY}.spec={SPEC_VERSION}"),
         "--label".into(),
         format!("{LABEL_KEY}.{LABEL_SUFFIX}={}", claude.label()),
+        "--label".into(),
+        format!("{LABEL_KEY}.{}={secret_fingerprint}", secret::LABEL_SUFFIX),
     ];
     if let Provision::Shared { home, owner } = claude {
         // Read-write and the whole directory: both Router and Claude Code
@@ -440,7 +488,13 @@ mod tests {
     #[test]
     fn old_and_candidate_use_one_durable_state_and_never_put_the_secret_in_argv() {
         let root = Path::new("/srv/router");
-        let arguments = backend_arguments("candidate", "router:1.2.3", root, &Provision::Isolated);
+        let arguments = backend_arguments(
+            "candidate",
+            "router:1.2.3",
+            root,
+            &Provision::Isolated,
+            &fingerprint("a-secret-value"),
+        );
         let joined = arguments.join(" ");
 
         assert!(joined.contains(&format!("{}:/data/router", root.join("data").display())));
@@ -450,6 +504,10 @@ mod tests {
         )));
         assert!(joined.contains("-e TOKEN_SECRET"));
         assert!(!joined.contains("a-secret-value"));
+        assert!(joined.contains(&format!(
+            "{LABEL_KEY}.token-secret={}",
+            fingerprint("a-secret-value")
+        )));
         assert!(!joined.contains("releases/"));
         assert!(joined.contains(&format!("{LABEL_KEY}.{LABEL_SUFFIX}=isolated")));
         assert!(!joined.contains("--user"));
@@ -462,7 +520,7 @@ mod tests {
             home: "/home/operator/.claude".into(),
             owner: Some((1000, 1000)),
         };
-        let arguments = backend_arguments("candidate", "router:1.2.3", root, &claude);
+        let arguments = backend_arguments("candidate", "router:1.2.3", root, &claude, "fp");
         let joined = arguments.join(" ");
 
         assert!(joined.contains("-v /home/operator/.claude:/data/claude -"));

@@ -264,8 +264,9 @@ pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str>
 /// an Anthropic model. With z.ai-only compatible access, Claude Code cannot
 /// resolve its built-in Default and subagent fallback itself, so the smallest
 /// supported pair of pins targets one exact currently advertised z.ai model.
-/// The family pins stay absent so one GLM model is not presented as three fake
-/// Anthropic families. An explicit z.ai model wins at both real boundaries.
+/// An explicit z.ai model wins at both real boundaries. `router with` also
+/// points the Default row's family variables here when no Anthropic row exists
+/// (issue #630); its picker hides the built-in family rows in that case.
 #[must_use]
 pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> Option<String> {
     if let Some(explicit) = explicit

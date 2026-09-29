@@ -28,6 +28,7 @@ use wait_timeout::ChildExt as _;
 
 #[path = "real_clients/anthropic_mock.rs"]
 mod anthropic_mock;
+mod common;
 use anthropic_mock::{THINKING_TRACE, anthropic_answer};
 
 /// The pinned 2.1.265 baseline, or the newer release CI installs to prove
@@ -229,7 +230,10 @@ impl Drop for MockRouter {
 }
 
 fn enabled() -> bool {
-    std::env::var("ROUTER_REAL_CLIENT_TESTS").as_deref() == Ok("1")
+    common::tiers::opt_in(
+        common::tiers::Tier::RealClientOffline,
+        "ROUTER_REAL_CLIENT_TESTS",
+    )
 }
 
 fn command_exists(command: &str) -> bool {
@@ -447,7 +451,8 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
                         "display_name": model["display_name"],
                         "description": "OpenAI via Link.Assistant.Router",
                         "default_reasoning_level": model["default_reasoning_level"],
-                        "supported_reasoning_levels": model["supported_reasoning_levels"],
+                        // Router's own projection: no metadata is an empty list.
+                        "supported_reasoning_levels": model.get("supported_reasoning_levels").cloned().unwrap_or_else(|| json!([])),
                         "shell_type": "unified_exec",
                         "visibility": "list",
                         "supported_in_api": true,
@@ -567,20 +572,9 @@ fn chat_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
     http_response("200 OK", "application/json", &body.to_string())
 }
 
-fn version_output(case: ClientCase, home: &Path) -> Output {
-    Command::new(case.executable)
-        .arg("--version")
-        .env("HOME", home)
-        .env("XDG_CONFIG_HOME", home.join(".config"))
-        .env("CODEX_HOME", home.join(".codex"))
-        .stdin(Stdio::null())
-        .output()
-        .unwrap_or_else(|error| panic!("launch {} --version: {error}", case.executable))
-}
-
 #[path = "real_clients/wrapper.rs"]
 mod wrapper;
-use wrapper::{run_wrapper_with_options, run_wrapper_with_options_and_env};
+use wrapper::{run_wrapper_with_options, run_wrapper_with_options_and_env, version_output};
 
 fn run_wrapper(case: ClientCase, working_directory: &Path, home: &Path, server: &str) -> Output {
     run_wrapper_with_model(case, working_directory, home, server, case.model)
@@ -821,6 +815,8 @@ fn current_codex_reaches_the_native_responses_surface_offline() {
     assert_real_client_capture(CODEX);
 }
 
+#[path = "real_clients/codex_zai.rs"]
+mod codex_zai;
 #[path = "real_clients/history_notes.rs"]
 mod history_notes;
 

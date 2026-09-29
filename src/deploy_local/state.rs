@@ -21,6 +21,46 @@ pub(super) struct Active {
     pub port: u16,
 }
 
+/// The Router process serving this root from the host (issue #626). Its
+/// containers stay stopped, not removed, so returning is one command.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub(super) struct Host {
+    pub version: u8,
+    pub pid: u32,
+    pub port: u16,
+    pub executable: String,
+    pub router_version: String,
+    /// [`super::secret::fingerprint`] of the secret it was started with.
+    pub token_secret: String,
+    /// The container backend it replaced, retained stopped for rollback.
+    pub previous_backend: Option<String>,
+    pub started_at: i64,
+}
+
+/// What the durable active record says, classified without failing, so a
+/// read-only status can describe a damaged record instead of stopping at it
+/// (issue #631).
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) enum ActiveRecord {
+    Absent,
+    Valid(Active),
+    /// Unparseable bytes or an unsafe backend name; safe to set aside.
+    Corrupt(String),
+    /// Unreadable, or written by a newer Router; never overwritten.
+    Unsupported(String),
+}
+
+impl ActiveRecord {
+    pub(super) fn describe(&self) -> String {
+        match self {
+            Self::Absent => "absent".to_string(),
+            Self::Valid(active) => format!("present backend={}", active.backend),
+            Self::Corrupt(reason) => format!("corrupt reason={reason:?}"),
+            Self::Unsupported(reason) => format!("unsupported reason={reason:?}"),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(super) enum Phase {
@@ -108,8 +148,75 @@ impl State {
         Ok(active)
     }
 
+    pub(super) fn active_record(&self) -> ActiveRecord {
+        let path = self.directory.join("active");
+        let bytes = match std::fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return ActiveRecord::Absent;
+            }
+            Err(error) => return ActiveRecord::Unsupported(format!("unreadable: {error}")),
+        };
+        let active = match serde_json::from_slice::<Active>(&bytes) {
+            Ok(active) => active,
+            Err(error) => {
+                // A newer record may add fields but keeps `version`; only a
+                // record that says it is v1 (or says nothing) is ours to judge.
+                let version = serde_json::from_slice::<serde_json::Value>(&bytes)
+                    .ok()
+                    .and_then(|value| value.get("version").and_then(serde_json::Value::as_u64));
+                return match version {
+                    Some(version) if version != 1 => ActiveRecord::Unsupported(format!(
+                        "unsupported local deployment state v{version}"
+                    )),
+                    _ => ActiveRecord::Corrupt(format!("could not parse: {error}")),
+                };
+            }
+        };
+        if active.version != 1 {
+            return ActiveRecord::Unsupported(format!(
+                "unsupported local deployment state v{}",
+                active.version
+            ));
+        }
+        match valid_backend(&active.backend) {
+            Ok(()) => ActiveRecord::Valid(active),
+            Err(error) => ActiveRecord::Corrupt(error),
+        }
+    }
+
+    /// Keep a damaged record for inspection instead of deleting it.
+    pub(super) fn set_aside_active(&self) -> Result<PathBuf, String> {
+        let path = self.directory.join("active");
+        let aside = self.directory.join(format!(
+            "active.corrupt-{}",
+            chrono::Utc::now().format("%Y%m%dT%H%M%S%.fZ")
+        ));
+        std::fs::rename(&path, &aside)
+            .map_err(|error| format!("could not set aside {}: {error}", path.display()))?;
+        Ok(aside)
+    }
+
     pub(super) fn write_active(&self, active: &Active) -> Result<(), String> {
         write_json(&self.directory.join("active"), active)
+    }
+
+    pub(super) fn host(&self) -> Result<Option<Host>, String> {
+        let host: Option<Host> = read_json(&self.directory.join("host"))?;
+        if let Some(host) = &host
+            && host.version != 1
+        {
+            return Err(format!("unsupported host-mode record v{}", host.version));
+        }
+        Ok(host)
+    }
+
+    pub(super) fn write_host(&self, host: &Host) -> Result<(), String> {
+        write_json(&self.directory.join("host"), host)
+    }
+
+    pub(super) fn clear_host(&self) -> Result<(), String> {
+        remove_if_present(&self.directory.join("host"))
     }
 
     pub(super) fn transaction(&self) -> Result<Option<Transaction>, String> {

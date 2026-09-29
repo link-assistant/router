@@ -14,6 +14,14 @@ use super::{
 mod claude_tests;
 #[path = "deploy_local_failure_tests.rs"]
 mod failure_tests;
+#[path = "deploy_local_host_tests.rs"]
+mod host_tests;
+#[path = "deploy_local_relay_tests.rs"]
+mod relay_tests;
+#[path = "deploy_local_secret_tests.rs"]
+mod secret_tests;
+#[path = "deploy_local_status_tests.rs"]
+mod status_tests;
 
 #[derive(Clone, Debug)]
 struct Container {
@@ -37,7 +45,15 @@ struct World {
     fail_backend_runs: usize,
     fail_relay_runs: usize,
     fail_token_issue: bool,
+    /// The `TOKEN_SECRET` each container was started with; containers a test
+    /// placed directly were started with [`DEFAULT_SECRET`].
+    secrets: HashMap<String, String>,
+    /// Replaces the candidate's verdict on a token probe.
+    probe_status: Option<u16>,
+    probes: usize,
 }
+
+const DEFAULT_SECRET: &str = "integration-test-signing-secret";
 
 impl Default for World {
     fn default() -> Self {
@@ -54,6 +70,9 @@ impl Default for World {
             fail_backend_runs: 0,
             fail_relay_runs: 0,
             fail_token_issue: false,
+            secrets: HashMap::new(),
+            probe_status: None,
+            probes: 0,
         }
     }
 }
@@ -149,8 +168,18 @@ impl CommandRunner for FakeRunner {
             Some("inspect") => inspect(&world, arguments),
             Some("network") => network(&mut world, arguments),
             Some("ps") => list_containers(&world, arguments),
-            Some("run") => run_container(&mut world, arguments),
-            Some("exec") => exec(&mut world, arguments),
+            Some("run") => {
+                let output = run_container(&mut world, arguments)?;
+                if let Some((_, secret)) =
+                    environment.iter().find(|(key, _)| *key == "TOKEN_SECRET")
+                    && output.success
+                {
+                    let name = option(arguments, "--name").unwrap();
+                    world.secrets.insert(name, (*secret).to_string());
+                }
+                Ok(output)
+            }
+            Some("exec") => exec(&mut world, arguments, environment),
             Some("start" | "stop") => {
                 let running = arguments[0] == "start";
                 let name = arguments.last().unwrap();
@@ -201,6 +230,22 @@ fn inspect(world: &World, arguments: &[String]) -> Result<CommandOutput, String>
                 .get(key)
                 .map_or_else(|| "<no value>\n".to_string(), |value| format!("{value}\n")),
         );
+    }
+    if format.contains(".Config.Env") {
+        let secret = world
+            .secrets
+            .get(name)
+            .map_or(DEFAULT_SECRET, String::as_str);
+        let is_relay = container
+            .labels
+            .get(&format!("{LABEL_KEY}.role"))
+            .map(String::as_str)
+            == Some("relay");
+        return FakeRunner::ok(if is_relay {
+            "PATH=/usr/bin\n".to_string()
+        } else {
+            format!("PATH=/usr/bin\nTOKEN_SECRET={secret}\nDATA_DIR=/data/router\n")
+        });
     }
     if format.contains(".Mounts") {
         let destination = format.split('"').nth(1).unwrap();
@@ -346,7 +391,38 @@ fn run_container(world: &mut World, arguments: &[String]) -> Result<CommandOutpu
     FakeRunner::ok(format!("{name}\n"))
 }
 
-fn exec(world: &mut World, arguments: &[String]) -> Result<CommandOutput, String> {
+fn exec(
+    world: &mut World,
+    arguments: &[String],
+    environment: &[(&str, &str)],
+) -> Result<CommandOutput, String> {
+    if let Some((_, token)) = environment
+        .iter()
+        .find(|(key, _)| *key == super::secret::PROBE_ENV)
+    {
+        world.probes += 1;
+        let container = arguments
+            .iter()
+            .skip(1)
+            .find(|argument| world.containers.contains_key(*argument))
+            .unwrap();
+        let secret = world
+            .secrets
+            .get(container)
+            .map_or(DEFAULT_SECRET, String::as_str);
+        let verified = jsonwebtoken::decode::<link_assistant_router::token::TokenClaims>(
+            token
+                .strip_prefix(link_assistant_router::token::TOKEN_PREFIX)
+                .unwrap(),
+            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+            &jsonwebtoken::Validation::default(),
+        )
+        .is_ok();
+        let status = world
+            .probe_status
+            .unwrap_or(if verified { 403 } else { 401 });
+        return FakeRunner::ok(format!("{status}\n"));
+    }
     if arguments.iter().any(|argument| argument == "tokens")
         && arguments.iter().any(|argument| argument == "list")
     {
@@ -422,6 +498,7 @@ fn deploy_args() -> DeployArgs {
         build: None,
         root: None,
         claude_credentials: None,
+        mode: None,
     }
 }
 

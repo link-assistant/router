@@ -10,8 +10,13 @@ use std::io::Write as _;
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
 
+mod common;
+
 fn enabled() -> bool {
-    std::env::var("ROUTER_HOST_CLI_TESTS").as_deref() == Ok("1")
+    common::tiers::opt_in(
+        common::tiers::Tier::LiveCredentialed,
+        "ROUTER_HOST_CLI_TESTS",
+    )
 }
 
 fn router_url() -> String {

@@ -9,8 +9,13 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 
 mod claude_share;
+mod diagnose;
 mod docker;
+mod host;
+mod host_runtime;
 mod inventory;
+mod relay_rotation;
+mod secret;
 mod state;
 #[cfg(test)]
 #[path = "deploy_local_tests.rs"]
@@ -150,6 +155,7 @@ impl Coordinator<'_> {
                     println!("run_inventory=unknown blockers=unknown reason={error}");
                 }
                 println!("blocker=legacy-direct-front-door has unknown established connections");
+                self.print_secret(LEGACY);
                 if let Ok(inventory) = inventory {
                     for run in &inventory.runs {
                         println!(
@@ -200,8 +206,13 @@ impl Coordinator<'_> {
                         active.port, self.port
                     );
                 }
+                let force_interrupts = self.print_secret(&active.backend) || force_interrupts;
                 println!("force_update_interrupts={force_interrupts}");
-                Ok(backend_running && relay_running && inventory.is_ok())
+                // Mixed images are never reported as converged (issue #627).
+                let versions_match = self.print_versions(active)?;
+                let converged = backend_running && relay_running && versions_match;
+                println!("converged={converged}");
+                Ok(converged && inventory.is_ok())
             }
         }
     }
@@ -280,6 +291,7 @@ impl Coordinator<'_> {
                     );
                 }
                 println!("force_update accepted impact=legacy-direct-front-door");
+                self.secret_preflight(LEGACY)?;
                 Ok(Some(inventory))
             }
             Existing::Managed(active) => {
@@ -298,6 +310,7 @@ impl Coordinator<'_> {
                             .to_string(),
                     );
                 }
+                self.secret_preflight(&active.backend)?;
                 if self.force {
                     for blocker in blockers {
                         println!(
@@ -537,12 +550,16 @@ impl Coordinator<'_> {
     /// An update without `--claude-credentials` keeps the active mode, so a
     /// routine image update never silently drops a shared login.
     fn active_claude_mode(&self) -> link_assistant_router::cli::ClaudeCredentials {
+        // Without a readable record, the pointer still names the serving
+        // backend whose mode an adoption must keep (issue #631).
         let shared = self
             .state
             .active()
             .ok()
             .flatten()
-            .is_some_and(|active| self.claude_label(&active.backend).starts_with("shared:"));
+            .map(|active| active.backend)
+            .or_else(|| self.state.current().ok().flatten())
+            .is_some_and(|backend| self.claude_label(&backend).starts_with("shared:"));
         if shared {
             link_assistant_router::cli::ClaudeCredentials::Share
         } else {
@@ -557,6 +574,7 @@ impl Coordinator<'_> {
             || self.claude_label(&active.backend) != self.claude.label()
             || self.state.current()?.as_deref() != Some(&active.backend)
             || !self.docker.owned(&active.backend, self.root, "backend")
+            || self.secret_match(&active.backend) != secret::SecretMatch::Matches
         {
             return Ok(false);
         }
@@ -656,6 +674,10 @@ impl Coordinator<'_> {
                 }
             }
             Existing::Legacy => {
+                if let Err(error) = self.probe_candidate(&candidate, LEGACY) {
+                    self.rollback(&transaction)?;
+                    return Err(format!("token probe failed and was rolled back: {error}"));
+                }
                 self.docker.stop(LEGACY)?;
                 self.state.set_current(&candidate)?;
                 if let Err(error) = self
@@ -670,6 +692,10 @@ impl Coordinator<'_> {
                 }
             }
             Existing::Managed(active) => {
+                if let Err(error) = self.probe_candidate(&candidate, &active.backend) {
+                    self.rollback(&transaction)?;
+                    return Err(format!("token probe failed and was rolled back: {error}"));
+                }
                 self.state.set_current(&candidate)?;
                 if active.port != self.port {
                     self.remove_relay()?;
@@ -692,6 +718,9 @@ impl Coordinator<'_> {
         transaction.phase = Phase::Accepted;
         self.state.write_transaction(&transaction)?;
         self.finish_accepted(&transaction)?;
+        if let Some(active) = self.state.active()? {
+            self.converge_relay(&active)?;
+        }
         println!(
             "deployment is ready: relay={RELAY} backend={candidate} port={}",
             self.port
@@ -746,7 +775,16 @@ fn run_with_docker(
     token_secret: &str,
     docker: Docker,
 ) -> ExitCode {
-    run_assessed(args, root, image, token_secret, docker, &Provision::assess)
+    let host = host_runtime::System::default();
+    run_assessed(
+        args,
+        root,
+        image,
+        token_secret,
+        docker,
+        &Provision::assess,
+        &host,
+    )
 }
 
 fn run_assessed(
@@ -756,6 +794,7 @@ fn run_assessed(
     token_secret: &str,
     docker: Docker,
     assess: &dyn Fn(link_assistant_router::cli::ClaudeCredentials, &Path) -> Provision,
+    host: &dyn host_runtime::HostRuntime,
 ) -> ExitCode {
     let mut coordinator = Coordinator {
         docker,
@@ -768,6 +807,9 @@ fn run_assessed(
         force: args.force_update,
         claude: Provision::Isolated,
     };
+    if let Some(code) = host::dispatch(&coordinator, args, host) {
+        return code;
+    }
     if !args.down {
         let mode = args
             .claude_credentials
@@ -801,6 +843,7 @@ fn run_assessed(
     }
     let transaction = match coordinator.state.transaction() {
         Ok(transaction) => transaction,
+        Err(error) if args.status => return coordinator.diagnose(&error),
         Err(error) => return result_code(Err(error)),
     };
     let interrupted = transaction
@@ -828,7 +871,11 @@ fn run_assessed(
     }
     let existing = match coordinator.existing() {
         Ok(existing) => existing,
-        Err(error) => return result_code(Err(error)),
+        Err(error) if args.status => return coordinator.diagnose(&error),
+        Err(error) => match coordinator.adopt(&error) {
+            Ok(existing) => existing,
+            Err(error) => return result_code(Err(error)),
+        },
     };
     if args.status {
         return match coordinator.print_status(&existing) {
@@ -893,7 +940,15 @@ fn run_assessed(
             Err(error) => return result_code(Err(error)),
         };
         if specification_matches {
-            if restored {
+            let rotation = match coordinator.converge_relay(active) {
+                Ok(rotation) => rotation,
+                Err(error) => return result_code(Err(error)),
+            };
+            if rotation == relay_rotation::Rotation::Rotated {
+                println!(
+                    "deployment specification already matched; relay moved to the backend image"
+                );
+            } else if restored {
                 println!("deployment specification already matched; serving topology restored");
             } else {
                 println!(

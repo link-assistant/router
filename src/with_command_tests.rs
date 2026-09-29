@@ -177,8 +177,11 @@ fn default_claude_launch_uses_an_empty_persistent_router_profile() {
     );
 }
 
+/// A z.ai-only launch pins the main/subagent pair and the families Claude's
+/// Default row resolves through, all to one authorized model: an unpinned
+/// family describes Default as an unauthorized Opus (issue #630).
 #[test]
-fn zai_only_claude_launch_pins_only_main_and_subagent() {
+fn zai_only_claude_launch_pins_main_subagent_and_default_row() {
     let profiles = tempfile::tempdir().expect("profile root");
     let models: Vec<RouterModel> = serde_json::from_value(json!([
         {"id": "future-first-2099", "owned_by": "z.ai", "client_capabilities": {"claude": {"behaves_as": "claude-sonnet-5", "source": "provider-protocol:z.ai-anthropic"}}},
@@ -219,10 +222,12 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
             "{key}"
         );
     }
-    for key in crate::clients::CLAUDE_MODEL_ENV {
-        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
-            assert!(!resumed_env.contains_key(key), "{key}");
-        }
+    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+        assert_eq!(
+            resumed_env.get(key).map(String::as_str),
+            Some("future-first-2099"),
+            "{key}"
+        );
     }
 
     let explicit = TemporaryClient::prepare(&Preparation {
@@ -259,10 +264,12 @@ fn zai_only_claude_launch_pins_only_main_and_subagent() {
             "explicit model must win for {key}"
         );
     }
-    for key in crate::clients::CLAUDE_MODEL_ENV {
-        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
-            assert!(!explicit_env.contains_key(key), "{key}");
-        }
+    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+        assert_eq!(
+            explicit_env.get(key).map(String::as_str),
+            Some("future-explicit-2099"),
+            "Default row must follow the explicit model for {key}"
+        );
     }
 }
 

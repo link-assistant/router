@@ -18,11 +18,11 @@ pub(super) fn write_codex_model_catalog(
     if models.is_empty() {
         return Err("the Router advertised no models for Codex".into());
     }
-    let mut described = Vec::with_capacity(models.len());
+    let mut listed = Vec::with_capacity(models.len());
     let mut omitted = Vec::new();
     for model in models {
         match validate_codex_reasoning_metadata(model) {
-            Ok(()) => described.push(model),
+            Ok(()) => listed.push(model),
             Err(error) if selected_model == Some(model.id.as_str()) => return Err(error),
             Err(error) => omitted.push((model.id.as_str(), error.to_string())),
         }
@@ -34,28 +34,29 @@ pub(super) fn write_codex_model_catalog(
             .collect::<Vec<_>>()
             .join(", ");
         eprintln!(
-            "warning: omitted Codex model(s) with unavailable reasoning metadata: {ids}; \
-             fully described models remain available"
+            "warning: omitted Codex model(s) with inconsistent reasoning metadata: {ids}; \
+             the other models remain available"
         );
     }
-    if described.is_empty() {
+    if listed.is_empty() {
         let ids = omitted
             .iter()
             .map(|(id, _)| *id)
             .collect::<Vec<_>>()
             .join(", ");
         return Err(format!(
-            "the live Codex catalog has no model with usable reasoning metadata; omitted: {ids}"
+            "the live Codex catalog has no model with consistent reasoning metadata; \
+             omitted: {ids}"
         )
         .into());
     }
     if let (Some(effort), Some(selected)) = (configured_effort, selected_model) {
-        let model = described
+        let model = listed
             .iter()
             .copied()
             .find(|model| model.id == selected)
             .ok_or_else(|| format!("the Router advertised no Codex model named `{selected}`"))?;
-        if !model_supports_reasoning_effort(model, effort) {
+        if !model_may_keep_reasoning_effort(model, effort) {
             return Err(format!(
                 "Codex model `{selected}` does not support configured reasoning effort \
                  `{effort}`; choose a supported model or change `model_reasoning_effort`"
@@ -63,10 +64,10 @@ pub(super) fn write_codex_model_catalog(
             .into());
         }
     }
-    let compatible = described
+    let compatible = listed
         .into_iter()
         .filter(|model| {
-            configured_effort.is_none_or(|effort| model_supports_reasoning_effort(model, effort))
+            configured_effort.is_none_or(|effort| model_may_keep_reasoning_effort(model, effort))
         })
         .collect::<Vec<_>>();
     if compatible.is_empty() {
@@ -80,26 +81,7 @@ pub(super) fn write_codex_model_catalog(
     let entries = compatible
         .iter()
         .enumerate()
-        .map(|(index, model)| {
-            let supported = model
-                .supported_reasoning_levels
-                .as_ref()
-                .expect("metadata was validated before projection");
-            crate::codex_catalog::model_info(
-                &crate::codex_catalog::ModelDescription {
-                    id: &model.id,
-                    display_name: &model.id,
-                    owner: &model.owned_by,
-                    default_reasoning_level: model
-                        .default_reasoning_level
-                        .clone()
-                        .map(Value::String),
-                    supported_reasoning_levels: serde_json::to_value(supported)
-                        .expect("reasoning metadata serializes"),
-                },
-                index,
-            )
-        })
+        .map(|(index, model)| codex_entry(model, configured_effort, index))
         .collect::<Vec<_>>();
     let path = root.join("router-codex-models.json");
     let rendered = format!(
@@ -110,15 +92,51 @@ pub(super) fn write_codex_model_catalog(
     Ok(path)
 }
 
+/// One Codex catalog entry for `model`.
+///
+/// A row whose provider publishes no reasoning metadata (every z.ai row today)
+/// is listed rather than refused (issue #628): unknown is not unsupported. It
+/// claims no levels, and its default is the user's configured effort, or none.
+/// Codex 0.158 keeps an effort across `/model` only when the chosen row lists
+/// it and otherwise falls back to that row's default, so this keeps the user's
+/// setting on startup and on every switch without inventing a capability.
+fn codex_entry(model: &RouterModel, configured_effort: Option<&str>, index: usize) -> Value {
+    let Some(supported) = model.supported_reasoning_levels.as_ref() else {
+        let mut entry = crate::codex_catalog::model_info(
+            &crate::codex_catalog::ModelDescription {
+                id: &model.id,
+                display_name: &model.id,
+                owner: &model.owned_by,
+                default_reasoning_level: configured_effort.map(|effort| json!(effort)),
+                supported_reasoning_levels: json!([]),
+            },
+            index,
+        );
+        entry["description"] = json!(format!(
+            "{} via Link.Assistant.Router; reasoning metadata unavailable, so Codex keeps \
+             your configured reasoning effort",
+            model.owned_by
+        ));
+        return entry;
+    };
+    crate::codex_catalog::model_info(
+        &crate::codex_catalog::ModelDescription {
+            id: &model.id,
+            display_name: &model.id,
+            owner: &model.owned_by,
+            default_reasoning_level: model.default_reasoning_level.clone().map(Value::String),
+            supported_reasoning_levels: serde_json::to_value(supported)
+                .expect("reasoning metadata serializes"),
+        },
+        index,
+    )
+}
+
+/// Refuse metadata that contradicts itself. Absent metadata is not refused.
 fn validate_codex_reasoning_metadata(model: &RouterModel) -> Result<(), AnyError> {
-    let supported = model.supported_reasoning_levels.as_ref().ok_or_else(|| {
-        format!(
-            "the live Codex catalog omitted reasoning metadata for model `{}`; refusing to \
-             launch because model selection could silently replace the user's configured \
-             reasoning effort",
-            model.id
-        )
-    })?;
+    let Some(supported) = model.supported_reasoning_levels.as_ref() else {
+        return Ok(());
+    };
     if let Some(default) = model.default_reasoning_level.as_deref()
         && !supported.iter().any(|level| level.effort == default)
     {
@@ -132,9 +150,11 @@ fn validate_codex_reasoning_metadata(model: &RouterModel) -> Result<(), AnyError
     Ok(())
 }
 
-fn model_supports_reasoning_effort(model: &RouterModel, effort: &str) -> bool {
+/// Whether choosing `model` keeps `effort`: a listed level does, and so does a
+/// row with unknown levels, which carries the effort as its default.
+fn model_may_keep_reasoning_effort(model: &RouterModel, effort: &str) -> bool {
     model
         .supported_reasoning_levels
         .as_ref()
-        .is_some_and(|levels| levels.iter().any(|level| level.effort == effort))
+        .is_none_or(|levels| levels.iter().any(|level| level.effort == effort))
 }

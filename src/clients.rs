@@ -68,6 +68,17 @@ pub(crate) const CLAUDE_MODEL_ENV: [&str; 5] = [
 /// one GLM id to Opus, Sonnet, and Haiku creates three fake selectable rows.
 pub(crate) const CLAUDE_GATEWAY_TARGET_ENV: [&str; 2] =
     ["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"];
+/// The family variables Claude Code resolves its `/model` Default row from.
+/// Claude 2.1.284 describes Default as its tier's Opus or Sonnet default, so on
+/// a z.ai-only catalog an unpinned family advertises an unauthorized Anthropic
+/// model even while the main pair is pinned (issue #630). `router with` pins
+/// them only where its picker replaces the built-in family rows, so the pin
+/// cannot surface as a fake family row.
+pub(crate) const CLAUDE_DEFAULT_ROW_ENV: [&str; 3] = [
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+];
 
 /// Catalog owner whose models suit an `OpenAI`-dialect client.
 pub const OPENAI_MODEL_OWNER: &str = "openai";

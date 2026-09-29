@@ -3,6 +3,8 @@
 //! The secret is read only from `LEFINE_API_KEY`. Without that environment
 //! variable this test is an ordinary offline no-op.
 
+mod common;
+
 use std::fs;
 use std::process::Command;
 use std::sync::Arc;
@@ -145,14 +147,12 @@ fn logged_records(root: &std::path::Path) -> Vec<Value> {
 
 #[tokio::test]
 async fn real_lefine_catalog_and_operator_surfaces_are_secret_free() {
-    let Ok(api_key) = std::env::var("LEFINE_API_KEY") else {
-        eprintln!("SKIP: LEFINE_API_KEY is not configured; live Lefine catalog check did not run");
+    let Some(api_key) = common::tiers::live_credential(
+        "real_lefine_catalog_and_operator_surfaces_are_secret_free",
+        "LEFINE_API_KEY",
+    ) else {
         return;
     };
-    if api_key.is_empty() {
-        eprintln!("SKIP: LEFINE_API_KEY is empty; live Lefine catalog check did not run");
-        return;
-    }
     eprintln!("RUN: validating Lefine through the non-inference catalog endpoint");
 
     let data = tempfile::tempdir().expect("data dir");
@@ -260,20 +260,18 @@ async fn real_lefine_catalog_and_operator_surfaces_are_secret_free() {
 
 #[tokio::test]
 async fn real_lefine_inference_requires_separate_explicit_opt_in() {
-    if std::env::var("LEFINE_INFERENCE_ACCEPTANCE").as_deref() != Ok("1") {
-        eprintln!(
-            "SKIP: LEFINE_INFERENCE_ACCEPTANCE=1 is not set; Lefine inference check did not run"
-        );
+    if !common::tiers::opt_in(
+        common::tiers::Tier::LiveCredentialed,
+        "LEFINE_INFERENCE_ACCEPTANCE",
+    ) {
         return;
     }
-    let Ok(api_key) = std::env::var("LEFINE_API_KEY") else {
-        eprintln!("SKIP: LEFINE_API_KEY is not configured; Lefine inference check did not run");
+    let Some(api_key) = common::tiers::live_credential(
+        "real_lefine_inference_requires_separate_explicit_opt_in",
+        "LEFINE_API_KEY",
+    ) else {
         return;
     };
-    if api_key.is_empty() {
-        eprintln!("SKIP: LEFINE_API_KEY is empty; Lefine inference check did not run");
-        return;
-    }
     eprintln!("RUN: explicitly enabled Lefine end-to-end inference acceptance");
 
     let data = tempfile::tempdir().expect("data dir");

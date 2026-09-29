@@ -40,6 +40,12 @@ exact selected model owner also selects transport capability: native Codex
 models keep Responses WebSockets, while a z.ai model sets
 `supports_websockets = false` so Codex uses its supported HTTP/SSE path.
 
+A catalog row without reasoning metadata, as z.ai's GLM rows are today, is
+still listed. Router declares no supported efforts for it and makes your
+configured `model_reasoning_effort` its default, so Codex sends that effort
+unchanged rather than resetting it; nothing is claimed about the model's
+capability (issue #628).
+
 ## Manual or permanent configuration
 
 Automatic setup (merges this provider and backs up an existing config):

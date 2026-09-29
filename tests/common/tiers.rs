@@ -91,6 +91,7 @@ pub fn protected(name: &str) -> Option<String> {
 /// is the failure the visible-skip rule prevents (issue #567).
 pub fn unavailable(tier: Tier, test: &str, reason: &str) {
     SKIPPED.fetch_add(1, Ordering::Relaxed);
+    record(tier, test, reason);
     eprintln!(
         "SKIP [{tier}] {test}: {reason}; this property is not proven by this run. \
          See docs/testing-tiers.md.",
@@ -104,6 +105,11 @@ pub fn live_credential(test: &str, variable: &str) -> Option<String> {
         return Some(value);
     }
     SKIPPED.fetch_add(1, Ordering::Relaxed);
+    record(
+        Tier::LiveCredentialed,
+        test,
+        &format!("{variable} is not set"),
+    );
     // Never the value, only the name: this line is written to CI logs.
     eprintln!(
         "SKIP [{tier}] {test}: {variable} is not set; \
@@ -113,4 +119,47 @@ pub fn live_credential(test: &str, variable: &str) -> Option<String> {
         tier = Tier::LiveCredentialed.name(),
     );
     None
+}
+
+/// The running test's name, as libtest names the thread it runs on.
+#[must_use]
+pub fn current_test() -> String {
+    std::thread::current()
+        .name()
+        .unwrap_or("unnamed test")
+        .to_string()
+}
+
+/// Whether an opt-in gate is `1`, having announced the skip when it is not.
+///
+/// A tier behind a switch rather than a credential (installed vendor clients,
+/// a remote router, a billed probe) used to return early without a word, so a
+/// green suite could not say which real-client cases never ran (issue #629).
+#[must_use]
+pub fn opt_in(tier: Tier, variable: &str) -> bool {
+    let enabled = std::env::var(variable).as_deref() == Ok("1");
+    if !enabled {
+        unavailable(tier, &current_test(), &format!("{variable}=1 is not set"));
+    }
+    enabled
+}
+
+/// Append a skip to the file `scripts/verify-contracts.rs` names, as one JSON
+/// line, so the verification result lists skipped tests by name. Parallel
+/// tests interleave their stderr; one short append each does not.
+fn record(tier: Tier, test: &str, reason: &str) {
+    use std::io::Write as _;
+
+    let Some(path) = std::env::var_os("ROUTER_VERIFICATION_SKIPS") else {
+        return;
+    };
+    let line = serde_json::json!({"tier": tier.name(), "test": test, "reason": reason});
+    let appended = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .and_then(|mut file| file.write_all(format!("{line}\n").as_bytes()));
+    if let Err(error) = appended {
+        eprintln!("warning: could not record the skip of {test}: {error}");
+    }
 }

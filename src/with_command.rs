@@ -512,9 +512,10 @@ impl TemporaryClient {
                     .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1");
                 apply_claude_privacy_overlay(&mut command);
                 // Claude Code's built-in family aliases describe Anthropic
-                // models. A z.ai-only catalog needs only the same exact pair
-                // of main/subagent pins as persistent setup. Assigning one GLM
-                // id to every family creates fake Opus/Sonnet/Haiku rows.
+                // models. A z.ai-only catalog pins the main/subagent pair and
+                // the families behind the Default row; the picker replaces its
+                // built-in family rows there, so no fake Opus/Sonnet/Haiku row
+                // is shown for the GLM id.
                 //
                 // A pin Router supplies is a *fallback* for a client that
                 // cannot resolve its own default, never an override of a choice
@@ -537,7 +538,6 @@ impl TemporaryClient {
                             return None;
                         }
                         claude_saved_model_selection(
-                            &manager,
                             directory.path(),
                             extends_user_configuration(
                                 client,
@@ -551,6 +551,25 @@ impl TemporaryClient {
                     .transpose()?
                     .flatten();
                 let gateway_model = crate::clients::claude_gateway_model(models, model_override);
+                // The picker's Default row is not the user's selection: Claude
+                // resolves it through its family variables, so an unpinned
+                // family on a z.ai-only catalog advertises an unauthorized
+                // Opus as the default (issue #630). It is pinned whether or
+                // not the user chose a model, and only to an authorized row.
+                // A catalog with Anthropic keeps the native family rows, so a
+                // GLM pin there would relabel one of them; it stays unpinned.
+                let replaces_family_rows = !models
+                    .iter()
+                    .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
+                if replaces_family_rows && let Some(gateway_model) = gateway_model.as_deref() {
+                    for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
+                        let inherited = std::env::var(key).ok();
+                        let authorized = inherited
+                            .as_deref()
+                            .filter(|value| models.iter().any(|model| model.id == *value));
+                        command.env(key, authorized.unwrap_or(gateway_model));
+                    }
+                }
                 if let Some(reason) = chosen_by_user {
                     eprintln!(
                         "note: keeping your own Claude model selection ({reason}); Router is not \
@@ -560,11 +579,6 @@ impl TemporaryClient {
                 } else if let Some(gateway_model) = gateway_model {
                     for key in crate::clients::CLAUDE_GATEWAY_TARGET_ENV {
                         command.env(key, &gateway_model);
-                    }
-                    for key in crate::clients::CLAUDE_MODEL_ENV {
-                        if !crate::clients::CLAUDE_GATEWAY_TARGET_ENV.contains(&key) {
-                            command.env_remove(key);
-                        }
                     }
                 }
             }

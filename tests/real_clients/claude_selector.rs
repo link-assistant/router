@@ -277,7 +277,12 @@ fn seed_home(home: &Path, working_directory: &Path) {
     .expect("seed isolated Claude TUI settings");
 }
 
-fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> String {
+fn selector_transcript(
+    home: &Path,
+    router: &MockRouter,
+    visible: &[&str],
+    choose_default: bool,
+) -> String {
     let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
     let profile = home.join(".config/link-assistant-router/clients/claude/home");
     seed_home(&profile, working_directory);
@@ -332,13 +337,17 @@ fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> St
                 session.transcript_tail(2_000)
             )
         });
-    // Let the wrapper drop its active-profile marker normally. Killing the
-    // PTY leader can orphan Claude briefly under a container PID 1, making an
-    // immediately following reset look active even though the TUI is gone.
-    session.send_key(Key::Escape).expect("close model selector");
-    session
-        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
-        .expect("settle closed model selector");
+    if choose_default {
+        choose_default_row_and_prompt(&session, router);
+    } else {
+        // Let the wrapper drop its active-profile marker normally. Killing the
+        // PTY leader can orphan Claude briefly under a container PID 1, making
+        // an immediately following reset look active though the TUI is gone.
+        session.send_key(Key::Escape).expect("close model selector");
+        session
+            .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+            .expect("settle closed model selector");
+    }
     session.send_text("/exit").expect("type /exit");
     session
         .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
@@ -356,6 +365,100 @@ fn selector_transcript(home: &Path, router: &MockRouter, visible: &[&str]) -> St
     transcript
 }
 
+/// Choose the picker's first row, `Default (recommended)`, the way a user does,
+/// then prompt: the next inference is what that row really selects (#630).
+fn choose_default_row_and_prompt(session: &PtySession, router: &MockRouter) {
+    let before = router.inference_requests(CLAUDE.inference_path).len();
+    let compact = |text: &str| {
+        text.chars()
+            .filter(|character| !character.is_whitespace())
+            .collect::<String>()
+    };
+    session.send_text("1").expect("choose the Default row");
+    // Text typed while the selector is still closing is dropped, so wait for
+    // Claude's confirmation, then for the prompt to reach the input.
+    session
+        .wait_for(
+            |text| compact(text).contains("Setmodelto"),
+            Duration::from_millis(300),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "the Default row was not selected: {error}; transcript: {}",
+                session.transcript_tail(3_000)
+            )
+        });
+    session
+        .send_text(PROMPT)
+        .expect("type a prompt on the Default row");
+    let typed = compact(PROMPT);
+    session
+        .wait_for(
+            |text| compact(text).contains(&typed),
+            Duration::from_millis(200),
+            Duration::from_secs(10),
+        )
+        .unwrap_or_else(|error| {
+            panic!(
+                "the Default-row prompt was not typed: {error}; transcript: {}",
+                session.transcript_tail(3_000)
+            )
+        });
+    session
+        .send_key(Key::Enter)
+        .expect("send the Default-row prompt");
+    let deadline = Instant::now() + Duration::from_secs(30);
+    while router.inference_requests(CLAUDE.inference_path).len() == before {
+        assert!(
+            Instant::now() < deadline,
+            "the Default row sent no inference; routes: {:?}; transcript: {}",
+            router.routes(),
+            session.transcript_tail(3_000)
+        );
+        thread::sleep(Duration::from_millis(100));
+    }
+    session
+        .wait_idle(Duration::from_millis(500), Duration::from_secs(20))
+        .expect("settle the Default-row response");
+}
+
+/// The Default row must describe an advertised model, never Claude's built-in
+/// family default: on a z.ai-only catalog that default names a model the token
+/// cannot reach, so selecting it fails on the next prompt (issue #630).
+fn assert_default_row_is_authorized(compact: &str, models: &[(&str, &str)]) {
+    let marker = "Usethedefaultmodel(currently";
+    let offset = compact
+        .find(marker)
+        .unwrap_or_else(|| panic!("/model did not describe its Default row: {compact}"));
+    let described = compact[offset + marker.len()..]
+        .chars()
+        .take(120)
+        .collect::<String>();
+    for family in ["Opus", "Sonnet", "Haiku"] {
+        assert!(
+            !described.starts_with(family),
+            "z.ai-only Default row resolves to the unavailable {family} family: {described}"
+        );
+    }
+    // The transcript is the raw terminal stream, and Claude redraws a row by
+    // rewriting only the characters that changed, so a captured name can miss
+    // letters (`futu-glm-only` for `future-glm-only`). What is on screen must
+    // still be drawn from one advertised ID; the exact outbound model is
+    // asserted separately from the inference itself.
+    let shown = described.split(['[', ')']).next().unwrap_or_default();
+    let drawn_from = |model: &str| {
+        let mut remaining = model.chars();
+        shown
+            .chars()
+            .all(|character| remaining.any(|candidate| candidate == character))
+    };
+    assert!(
+        shown.chars().count() >= 4 && models.iter().any(|(model, _)| drawn_from(model)),
+        "z.ai-only Default row does not name an advertised model: {described}"
+    );
+}
+
 fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool) {
     let router = MockRouter::start_with_models(
         CLAUDE,
@@ -365,7 +468,9 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
             .collect(),
     );
     let home = tempfile::tempdir().expect("temporary Claude home");
-    let transcript = selector_transcript(home.path(), &router, visible);
+    let zai_only = models.iter().all(|(_, owner)| *owner == "z.ai");
+    let inference_before = router.inference_requests(CLAUDE.inference_path).len();
+    let transcript = selector_transcript(home.path(), &router, visible, zai_only);
     // The TUI stays open long enough for Claude's unawaited gateway discovery
     // to reach the native catalog, so here that path is required (#617).
     let native_discovery = router
@@ -390,7 +495,24 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect::<String>();
-    if models.iter().all(|(_, owner)| *owner == "z.ai") {
+    if zai_only {
+        assert_default_row_is_authorized(&compact, models);
+        // Every request the Default row caused, the title and the prompt
+        // alike, must name an advertised model, never an unauthorized Opus.
+        let requests = router.inference_requests(CLAUDE.inference_path);
+        assert!(
+            requests.len() > inference_before,
+            "the Default row sent no inference"
+        );
+        for request in &requests[inference_before..] {
+            let body: Value =
+                serde_json::from_slice(&request.body).expect("Claude Default-row JSON");
+            let model = body["model"].as_str().expect("exact Default-row model");
+            assert!(
+                models.iter().any(|(advertised, _)| *advertised == model),
+                "the Default row sent the unadvertised model {model}"
+            );
+        }
         for unavailable in ["Opus", "Sonnet", "Haiku"] {
             for number in 1..=8 {
                 let choice = format!("{number}.{unavailable}");
@@ -676,5 +798,98 @@ fn current_claude_model_selector_keeps_exact_provider_models_distinct() {
         ],
         &["future-claude-native", "future-glm-mixed"],
         true,
+    );
+    // An Anthropic-only catalog lists its native rows and serves the exact
+    // selection (issue #630).
+    assert_scenario(
+        &[("future-claude-native", "anthropic")],
+        &["future-claude-native"],
+        false,
+    );
+}
+
+/// A model Claude remembered while the catalog authorized it must be refused
+/// before launch once the catalog no longer does, with no inference and no
+/// silent substitution (issues #577 and #630).
+#[test]
+fn current_claude_refuses_a_saved_choice_the_changed_catalog_no_longer_authorizes() {
+    if !enabled() {
+        return;
+    }
+    assert!(
+        command_exists("claude"),
+        "the real-client gate requires claude"
+    );
+    let native = "claude-sonnet-5-5";
+    let home = tempfile::tempdir().expect("temporary Claude home");
+    let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let profile = home
+        .path()
+        .join(".config/link-assistant-router/clients/claude/home");
+    seed_home(&profile, working_directory);
+    // `CLAUDE_CONFIG_DIR` is the profile itself, where Claude saves `/model`.
+    std::fs::write(
+        profile.join("settings.json"),
+        json!({"model": native}).to_string(),
+    )
+    .expect("save the /model choice");
+
+    let mixed = MockRouter::start_with_models(
+        CLAUDE,
+        vec![
+            catalog_model(native, "anthropic"),
+            catalog_model("future-glm-mixed", "z.ai"),
+        ],
+    );
+    let served = run_wrapper_with_options(
+        CLAUDE,
+        working_directory,
+        home.path(),
+        &mixed.origin,
+        None,
+        &[PROMPT],
+    );
+    assert!(
+        served.status.success(),
+        "the saved choice was not served while authorized: {}{}",
+        String::from_utf8_lossy(&served.stdout),
+        String::from_utf8_lossy(&served.stderr)
+    );
+    let request = mixed
+        .inference_requests(CLAUDE.inference_path)
+        .into_iter()
+        .last()
+        .expect("the saved choice reaches inference");
+    let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
+    assert_eq!(body["model"], native);
+    assert!(
+        String::from_utf8_lossy(&served.stderr).contains("keeping your own Claude model selection"),
+        "Router pinned over the saved choice"
+    );
+
+    let changed =
+        MockRouter::start_with_models(CLAUDE, vec![catalog_model("future-glm-mixed", "z.ai")]);
+    let refused = run_wrapper_with_options(
+        CLAUDE,
+        working_directory,
+        home.path(),
+        &changed.origin,
+        None,
+        &[PROMPT],
+    );
+    let diagnostics = format!(
+        "{}{}",
+        String::from_utf8_lossy(&refused.stdout),
+        String::from_utf8_lossy(&refused.stderr)
+    );
+    assert!(
+        !refused.status.success(),
+        "a stale saved choice launched: {diagnostics}"
+    );
+    assert!(diagnostics.contains(native), "{diagnostics}");
+    assert!(diagnostics.contains("/model"), "{diagnostics}");
+    assert!(
+        changed.inference_requests(CLAUDE.inference_path).is_empty(),
+        "a stale saved choice sent inference"
     );
 }

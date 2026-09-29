@@ -93,7 +93,16 @@ the exact live model row supplies them. It does not supplement all z.ai-owned
 models with one `low`/`high`/`max` profile or a shared default. A model with no
 reasoning metadata remains visible as inventory, while the corresponding
 capability is absent; Router never changes `model_reasoning_effort` based on an
-owner-wide guess. Claude capability identities follow the same exact-row rule,
+owner-wide guess.
+
+`router with codex` lists such a row in its process-local catalog with an empty
+supported-effort list and the user's own configured effort as the row default,
+so Codex keeps that effort at startup and when `/model` switches to it. The row
+description says the metadata is unavailable. A z.ai-only catalog whose GLM
+rows omit metadata therefore launches `--version`, an explicit `--model`, and
+the interactive TUI, instead of refusing every model as v1.14.3 did (issue
+#628). Only a row whose metadata contradicts itself, such as a default that is
+not among its supported levels, is left out, with a warning naming it. Claude capability identities follow the same exact-row rule,
 and a Claude launch that requires missing metadata fails with the affected
 model ID.
 
@@ -133,8 +142,11 @@ Router also builds a process-local `modelPicker` from the client-authorized live
 catalog, adding every exact GLM ID that Claude's discovery filter removes. Each
 ID appears once and reaches Router unchanged. Router never invents a prefix,
 writes Claude's model cache, or maps GLM onto Opus, Sonnet, or Haiku. When z.ai
-is the only compatible catalog, Default/main and subagent fallback still use
-the first exact live model; an explicit `--model` wins at both boundaries.
+is the only compatible catalog, main and subagent fallback use the newest exact
+live model (by the provider's `created` timestamp), and the family variables
+behind Claude's `Default (recommended)` row are pinned to the same model, so
+Default never describes an unauthorized Opus (issue #630). An explicit `--model`
+wins at every one of these boundaries.
 Router validates every selected exact ID locally against the current signed
 client/provider registry, so a built-in or cached choice cannot silently select
 another credential.
