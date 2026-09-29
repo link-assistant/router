@@ -281,3 +281,42 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
     assert!(error.contains("future-medium-only"), "{error}");
     assert!(error.contains("xhigh"), "{error}");
 }
+
+/// A catalog with nothing launchable is refused with the reason, instead of
+/// handing Codex an empty list it would silently replace with its own.
+#[test]
+fn codex_catalog_refuses_a_catalog_with_nothing_launchable() {
+    let root = tempfile::tempdir().expect("temporary catalog directory");
+    let model = |id: &str, default: &str, supported: &str| RouterModel {
+        id: id.to_string(),
+        owned_by: "openai".to_string(),
+        selector_kind: crate::model_contract::ModelSelectorKind::default(),
+        capability_provenance: serde_json::Value::Null,
+        default_reasoning_level: Some(default.to_string()),
+        supported_reasoning_levels: Some(vec![crate::clients::RouterReasoningLevel {
+            effort: supported.to_string(),
+            description: "Only supported level".to_string(),
+        }]),
+        provider_created_at: None,
+        client_capabilities: crate::clients::RouterClientCapabilities::default(),
+    };
+
+    let error = write_codex_model_catalog(root.path(), &[], None, None)
+        .expect_err("an empty catalog must be refused")
+        .to_string();
+    assert!(error.contains("no models"), "{error}");
+
+    let inconsistent = [model("future-inconsistent", "xhigh", "low")];
+    let error = write_codex_model_catalog(root.path(), &inconsistent, None, None)
+        .expect_err("a catalog of inconsistent rows must be refused")
+        .to_string();
+    assert!(error.contains("consistent reasoning metadata"), "{error}");
+    assert!(error.contains("future-inconsistent"), "{error}");
+
+    let medium_only = [model("future-medium-only", "medium", "medium")];
+    let error = write_codex_model_catalog(root.path(), &medium_only, Some("xhigh"), None)
+        .expect_err("no row keeps the configured effort")
+        .to_string();
+    assert!(error.contains("model_reasoning_effort"), "{error}");
+    assert!(error.contains("xhigh"), "{error}");
+}

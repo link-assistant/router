@@ -378,3 +378,82 @@ fn host_mode_without_containers_down_and_refusals() {
     assert!(State::new(root.path()).host().unwrap().is_none());
     no_secret_leaks(&runner, root.path());
 }
+
+#[test]
+fn the_return_plan_is_read_only() {
+    let root = tempfile::tempdir().unwrap();
+    let (runner, backend) = installed(root.path());
+    let host = FakeHost::default();
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+    runner.0.lock().unwrap().commands.clear();
+
+    let code = run(&runner, &host, root.path(), |args| {
+        args.mode = Some(DeployMode::Container);
+        args.status = true;
+    });
+
+    assert_eq!(code, ExitCode::SUCCESS);
+    assert!(mutations(&runner.0.lock().unwrap()).is_empty());
+    assert_eq!(host.world().processes.len(), 1);
+    assert!(State::new(root.path()).host().unwrap().is_some());
+    assert!(!running(&runner, RELAY) && !running(&runner, &backend));
+}
+
+#[test]
+fn a_relay_failing_on_return_leaves_the_host_router_serving() {
+    let root = tempfile::tempdir().unwrap();
+    let (runner, backend) = installed(root.path());
+    let host = FakeHost::default();
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+    let before = State::new(root.path()).host().unwrap().unwrap();
+    // The backend becomes healthy; the relay never does.
+    runner.0.lock().unwrap().health_results = [true, false, false].into();
+
+    let code = run(&runner, &host, root.path(), |args| {
+        args.mode = Some(DeployMode::Container);
+    });
+
+    assert_eq!(code, ExitCode::from(1));
+    assert!(!running(&runner, RELAY));
+    let after = State::new(root.path()).host().unwrap().unwrap();
+    assert_ne!(after.pid, before.pid, "the host Router was restarted");
+    assert_eq!(after.previous_backend.as_deref(), Some(backend.as_str()));
+    assert!(host.serving(after.pid, Path::new(EXECUTABLE)));
+    assert_eq!(host.world().spawned_ports, [CANDIDATE_PORT, 8080, 8080]);
+    no_secret_leaks(&runner, root.path());
+}
+
+#[test]
+fn leaving_a_host_deployment_without_containers() {
+    let root = tempfile::tempdir().unwrap();
+    let runner = FakeRunner::default();
+    let host = FakeHost::default();
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+
+    let code = run(&runner, &host, root.path(), |args| {
+        args.mode = Some(DeployMode::Container);
+        args.status = true;
+    });
+    assert_eq!(code, ExitCode::SUCCESS);
+    assert_eq!(host.world().processes.len(), 1);
+
+    // The host Router stops, then the container deployment is created.
+    let code = run(&runner, &host, root.path(), |args| {
+        args.mode = Some(DeployMode::Container);
+    });
+    assert_eq!(code, ExitCode::SUCCESS);
+    assert!(host.world().processes.is_empty());
+    assert!(State::new(root.path()).host().unwrap().is_none());
+    let backend = State::new(root.path()).current().unwrap().unwrap();
+    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    no_secret_leaks(&runner, root.path());
+}
