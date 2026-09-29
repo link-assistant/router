@@ -1,5 +1,16 @@
 use super::*;
 
+pub fn version_output(case: ClientCase, home: &Path) -> Output {
+    Command::new(case.executable)
+        .arg("--version")
+        .env("HOME", home)
+        .env("XDG_CONFIG_HOME", home.join(".config"))
+        .env("CODEX_HOME", home.join(".codex"))
+        .stdin(Stdio::null())
+        .output()
+        .unwrap_or_else(|error| panic!("launch {} --version: {error}", case.executable))
+}
+
 pub fn run_wrapper_with_options(
     case: ClientCase,
     working_directory: &Path,

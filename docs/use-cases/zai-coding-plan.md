@@ -93,7 +93,16 @@ the exact live model row supplies them. It does not supplement all z.ai-owned
 models with one `low`/`high`/`max` profile or a shared default. A model with no
 reasoning metadata remains visible as inventory, while the corresponding
 capability is absent; Router never changes `model_reasoning_effort` based on an
-owner-wide guess. Claude capability identities follow the same exact-row rule,
+owner-wide guess.
+
+`router with codex` lists such a row in its process-local catalog with an empty
+supported-effort list and the user's own configured effort as the row default,
+so Codex keeps that effort at startup and when `/model` switches to it. The row
+description says the metadata is unavailable. A z.ai-only catalog whose GLM
+rows omit metadata therefore launches `--version`, an explicit `--model`, and
+the interactive TUI, instead of refusing every model as v1.14.3 did (issue
+#628). Only a row whose metadata contradicts itself, such as a default that is
+not among its supported levels, is left out, with a warning naming it. Claude capability identities follow the same exact-row rule,
 and a Claude launch that requires missing metadata fails with the affected
 model ID.
 
