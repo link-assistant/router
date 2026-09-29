@@ -182,11 +182,7 @@ fn rolling_update_drains_a_stream_older_than_thirty_seconds() {
         .unwrap()
         .trim()
         .to_string();
-    let tokens_before = Command::new("docker")
-        .args(["exec", &old, "router", "tokens", "list", "--json"])
-        .output()
-        .unwrap()
-        .stdout;
+    let tokens_before = token_records(&old);
     let retained = deployment.root.path().join("data/selected-server.json");
     std::fs::write(&retained, b"exact-model-server\n").unwrap();
     let alias = format!("router-issue-598:{}", uuid::Uuid::new_v4().simple());
@@ -258,18 +254,26 @@ fn rolling_update_drains_a_stream_older_than_thirty_seconds() {
         .unwrap()
         .trim()
         .to_string();
-    assert_eq!(
-        Command::new("docker")
-            .args(["exec", &successor, "router", "tokens", "list", "--json",])
-            .output()
-            .unwrap()
-            .stdout,
-        tokens_before
-    );
+    assert_eq!(token_records(&successor), tokens_before);
     assert_eq!(std::fs::read(retained).unwrap(), b"exact-model-server\n");
     let _ = Command::new("docker")
         .args(["image", "rm", &alias])
         .output();
+}
+
+/// The backend's issued tokens, keyed by id. Compared as records rather
+/// than bytes: a release before #618 listed them in per-process hash order.
+fn token_records(container: &str) -> std::collections::BTreeMap<String, serde_json::Value> {
+    let output = Command::new("docker")
+        .args(["exec", container, "router", "tokens", "list", "--json"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "tokens list failed in {container}");
+    let records: Vec<serde_json::Value> = serde_json::from_slice(&output.stdout).unwrap();
+    records
+        .into_iter()
+        .map(|record| (record["id"].as_str().unwrap().to_string(), record))
+        .collect()
 }
 
 /// A pre-policy wrapper record cannot be called exact-model protected. Legacy
