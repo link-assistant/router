@@ -51,7 +51,7 @@ An update without the flag keeps the active deployment's mode; passing the
 other mode replaces the backend through the normal candidate-first update.
 
 `share` is refused before any container is changed, with exit code 2 and the
-reason, when:
+reason, even on a host without a container runtime, when:
 
 - there is no Claude Code home, or it holds no `.credentials.json` with a
   Claude.ai OAuth access and refresh token (run `claude` and log in first);
