@@ -441,8 +441,20 @@ fn assert_default_row_is_authorized(compact: &str, models: &[(&str, &str)]) {
             "z.ai-only Default row resolves to the unavailable {family} family: {described}"
         );
     }
+    // The transcript is the raw terminal stream, and Claude redraws a row by
+    // rewriting only the characters that changed, so a captured name can miss
+    // letters (`futu-glm-only` for `future-glm-only`). What is on screen must
+    // still be drawn from one advertised ID; the exact outbound model is
+    // asserted separately from the inference itself.
+    let shown = described.split(['[', ')']).next().unwrap_or_default();
+    let drawn_from = |model: &str| {
+        let mut remaining = model.chars();
+        shown
+            .chars()
+            .all(|character| remaining.any(|candidate| candidate == character))
+    };
     assert!(
-        models.iter().any(|(model, _)| described.starts_with(model)),
+        shown.chars().count() >= 4 && models.iter().any(|(model, _)| drawn_from(model)),
         "z.ai-only Default row does not name an advertised model: {described}"
     );
 }
