@@ -407,6 +407,19 @@ jobs:
         if: runner.os != 'Windows'
         run: cargo test --locked --all-features --verbose
 
+      # A running client must keep blocking backup and maintenance of the
+      # profile it writes. On macOS that check reads other processes through
+      # `ps -E`, which SIP and timing can both affect, so one green run proves
+      # little: repeat it, in parallel and one test at a time (issue #619).
+      - name: Repeat the active-client safety tests
+        if: runner.os == 'macOS'
+        run: |
+          csrutil status || true
+          for attempt in 1 2 3 4 5; do
+            cargo test --locked --all-features --test clients_active_profile_test
+            cargo test --locked --all-features --test clients_active_profile_test -- --test-threads=1
+          done
+
       - name: Compile Windows tests
         if: runner.os == 'Windows'
         run: cargo test --locked --all-features --verbose --no-run

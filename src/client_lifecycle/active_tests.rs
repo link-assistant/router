@@ -44,6 +44,36 @@ fn ps_environment_without_home_or_with_a_conflict_is_not_guessed() {
     );
 }
 
+#[test]
+fn a_ps_answer_is_absence_only_when_ps_says_the_process_is_gone() {
+    // Nothing listed and nothing wrong: the process has exited.
+    assert!(read_ps_process(false, "", "").is_none());
+    // Exited but not yet reaped, as `/proc` reports it on Linux.
+    assert!(read_ps_process(true, "Z    <defunct>\n", "").is_none());
+    let running = read_ps_process(true, "S    claude 3600 HOME=/tmp/fixture\n", "");
+    assert!(matches!(
+        running,
+        Some(Environment::Known(variables)) if variables["HOME"] == Path::new("/tmp/fixture")
+    ));
+    // A `ps` that failed, or printed nothing yet claimed success, cannot
+    // clear a live client (#619).
+    for (success, stderr) in [(false, "ps: illegal option -- E"), (true, "")] {
+        match read_ps_process(success, "", stderr) {
+            Some(Environment::Unknown(reason)) => {
+                assert!(reason.contains("ps could not inspect it"), "{reason}");
+                assert!(reason.contains(stderr), "{reason}");
+            }
+            _ => panic!("a ps failure was read as an absent process"),
+        }
+    }
+    // Arguments without any environment: macOS withheld it, so the process
+    // is still reported rather than trusted.
+    match read_ps_process(true, "S+   /tmp/bin/claude 3600\n", "") {
+        Some(Environment::Unknown(reason)) => assert!(reason.contains("not readable"), "{reason}"),
+        _ => panic!("a withheld environment was trusted"),
+    }
+}
+
 fn claude_profile(home: &Path) -> Profile {
     Profile {
         client: ClientKind::ClaudeCode,
