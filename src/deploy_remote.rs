@@ -269,6 +269,7 @@ mod tests {
             image: None,
             build: None,
             root: None,
+            claude_credentials: None,
         }
     }
 

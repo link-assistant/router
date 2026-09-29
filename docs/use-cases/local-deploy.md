@@ -12,6 +12,9 @@ TOKEN_SECRET='a-long-random-secret' router deploy
 TOKEN_SECRET='a-long-random-secret' router deploy \
   --image ghcr.io/link-assistant/router:1.12.0
 
+# Let the backend use this machine's Claude Code login (issue #622).
+TOKEN_SECRET='a-long-random-secret' router deploy --claude-credentials share
+
 # Read-only report; TOKEN_SECRET is not required.
 router deploy --status
 
@@ -22,6 +25,48 @@ router deploy --down --yes
 The default root is the configured Router data directory followed by `deploy/`.
 Use `--root DIR` to select another root. Its `credentials/`, `data/`, and
 `state/` subdirectories are durable; `--down` does not delete them.
+
+## Anthropic credentials
+
+By default the backend is isolated from the host's Claude Code login: it reads
+only the deployment's own `credentials/` directory, mounted read-only. The
+status output says so instead of leaving Anthropic silently absent:
+
+```text
+anthropic_credential=skipped source=/…/deploy/credentials reason=the directory is empty and the host Claude Code login was not requested; pass --claude-credentials share to use it
+```
+
+`--claude-credentials share` mounts the host's Claude Code home
+(`$CLAUDE_CONFIG_DIR`, else `~/.claude`) at `/data/claude` in place, read-write,
+and runs the backend as the owner of `.credentials.json`. Nothing is copied:
+Claude.ai refresh tokens rotate, and two independent copies of one chain fork
+it on the first refresh, logging one side out. Sharing the one file means a
+refresh by either the host CLI or the backend is the other's next read, and
+files Router rewrites stay readable by the host user. The status reports
+`anthropic_credential=imported method=shared-mount source=… user=uid:gid
+refresh_tokens_copied=0`; credential bytes are never printed.
+
+The mode is part of the launch specification and is recorded on the backend.
+An update without the flag keeps the active deployment's mode; passing the
+other mode replaces the backend through the normal candidate-first update.
+
+`share` is refused before any container is changed, with exit code 2 and the
+reason, when:
+
+- there is no Claude Code home, or it holds no `.credentials.json` with a
+  Claude.ai OAuth access and refresh token (run `claude` and log in first);
+- the home or the file cannot be read, or the home is not writable (the file is
+  replaced by rename beside it);
+- the login lives in the macOS Keychain. Claude Code keeps its live credential
+  there, and the file beside it is a snapshot nothing rotates; a container can
+  neither read nor update the Keychain. Run `router serve` on the host instead;
+- a file under `data/` belongs to another user, typically left by an earlier
+  backend that ran as root. The message gives the `sudo chown -R` command.
+
+Caveats: the host CLI does not take Router's per-credential locks, so a refresh
+by both at the same instant can still race; Router then re-reads the file and
+recovers from its rotated-token record. File locks are not reliable across
+Docker Desktop's macOS file sharing.
 
 ## What happens during an update
 
@@ -38,9 +83,10 @@ run-credential classes:
 
 The candidate mounts the same durable Router data as the old backend. OAuth
 refresh, login, and import use the shared per-credential transaction locks, so
-only one process can advance a refresh-token chain at a time. The source
+only one process can advance a refresh-token chain at a time. An isolated
 credential directory remains read-only; rotated-token recovery state is in the
-shared writable data directory.
+shared writable data directory. A shared Claude Code home is mounted by the
+old backend and the candidate alike.
 
 After direct candidate health succeeds, one atomic pointer update sends new
 relay connections to it. The old backend is retained until its connection count

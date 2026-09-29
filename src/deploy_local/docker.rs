@@ -3,6 +3,7 @@
 use std::path::Path;
 use std::process::Command;
 
+use super::claude_share::{LABEL_SUFFIX, Provision};
 use super::{LABEL_KEY, NETWORK, RELAY, SPEC_VERSION};
 
 pub(super) struct CommandOutput {
@@ -292,8 +293,9 @@ impl Docker {
         image: &str,
         root: &Path,
         token_secret: &str,
+        claude: &Provision,
     ) -> Result<(), String> {
-        let arguments = backend_arguments(name, image, root);
+        let arguments = backend_arguments(name, image, root, claude);
         let output = self.command(&arguments, &[("TOKEN_SECRET", token_secret)])?;
         if output.success {
             Ok(())
@@ -372,8 +374,8 @@ impl Docker {
     }
 }
 
-fn backend_arguments(name: &str, image: &str, root: &Path) -> Vec<String> {
-    vec![
+fn backend_arguments(name: &str, image: &str, root: &Path, claude: &Provision) -> Vec<String> {
+    let mut arguments: Vec<String> = vec![
         "run".into(),
         "-d".into(),
         "--name".into(),
@@ -392,8 +394,29 @@ fn backend_arguments(name: &str, image: &str, root: &Path) -> Vec<String> {
         format!("{LABEL_KEY}.image-ref={image}"),
         "--label".into(),
         format!("{LABEL_KEY}.spec={SPEC_VERSION}"),
-        "-v".into(),
-        format!("{}:/data/claude:ro", root.join("credentials").display()),
+        "--label".into(),
+        format!("{LABEL_KEY}.{LABEL_SUFFIX}={}", claude.label()),
+    ];
+    if let Provision::Shared { home, owner } = claude {
+        // Read-write and the whole directory: both Router and Claude Code
+        // replace the credential by rename. As the file's owner, so the host
+        // CLI can still read what Router rewrote (issue #622).
+        arguments.extend(["-v".into(), format!("{}:/data/claude", home.display())]);
+        if let Some((uid, gid)) = owner {
+            arguments.extend([
+                "--user".into(),
+                format!("{uid}:{gid}"),
+                "-e".into(),
+                "HOME=/data/router".into(),
+            ]);
+        }
+    } else {
+        arguments.extend([
+            "-v".into(),
+            format!("{}:/data/claude:ro", root.join("credentials").display()),
+        ]);
+    }
+    arguments.extend([
         "-v".into(),
         format!("{}:/data/router", root.join("data").display()),
         "-e".into(),
@@ -406,7 +429,8 @@ fn backend_arguments(name: &str, image: &str, root: &Path) -> Vec<String> {
         "CLAUDE_CODE_HOME=/data/claude".into(),
         image.into(),
         "serve".into(),
-    ]
+    ]);
+    arguments
 }
 
 #[cfg(test)]
@@ -416,7 +440,7 @@ mod tests {
     #[test]
     fn old_and_candidate_use_one_durable_state_and_never_put_the_secret_in_argv() {
         let root = Path::new("/srv/router");
-        let arguments = backend_arguments("candidate", "router:1.2.3", root);
+        let arguments = backend_arguments("candidate", "router:1.2.3", root, &Provision::Isolated);
         let joined = arguments.join(" ");
 
         assert!(joined.contains(&format!("{}:/data/router", root.join("data").display())));
@@ -427,5 +451,27 @@ mod tests {
         assert!(joined.contains("-e TOKEN_SECRET"));
         assert!(!joined.contains("a-secret-value"));
         assert!(!joined.contains("releases/"));
+        assert!(joined.contains(&format!("{LABEL_KEY}.{LABEL_SUFFIX}=isolated")));
+        assert!(!joined.contains("--user"));
+    }
+
+    #[test]
+    fn a_shared_login_mounts_the_vendor_home_writable_as_its_owner() {
+        let root = Path::new("/srv/router");
+        let claude = Provision::Shared {
+            home: "/home/operator/.claude".into(),
+            owner: Some((1000, 1000)),
+        };
+        let arguments = backend_arguments("candidate", "router:1.2.3", root, &claude);
+        let joined = arguments.join(" ");
+
+        assert!(joined.contains("-v /home/operator/.claude:/data/claude -"));
+        assert!(!joined.contains(":/data/claude:ro"));
+        assert!(!joined.contains(&root.join("credentials").display().to_string()));
+        assert!(joined.contains("--user 1000:1000"));
+        assert!(joined.contains(&format!(
+            "{LABEL_KEY}.{LABEL_SUFFIX}=shared:/home/operator/.claude"
+        )));
+        assert_eq!(arguments[arguments.len() - 2..], ["router:1.2.3", "serve"]);
     }
 }
