@@ -14,6 +14,8 @@ use super::{
 mod claude_tests;
 #[path = "deploy_local_failure_tests.rs"]
 mod failure_tests;
+#[path = "deploy_local_relay_tests.rs"]
+mod relay_tests;
 #[path = "deploy_local_status_tests.rs"]
 mod status_tests;
 

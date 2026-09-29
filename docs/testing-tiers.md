@@ -89,6 +89,17 @@ ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.10.0 \
   cargo test --test deploy_docker_test -- --test-threads=1
 ```
 
+`tests/deploy_docker_relay_test.rs` also needs an earlier release to update
+from. It deploys that release, updates while two requests are in flight, and
+asserts the backend and relay images, request continuity, and a single
+published listener (issue #627):
+
+```bash
+ROUTER_DEPLOY_TEST_PREVIOUS_IMAGE=ghcr.io/link-assistant/router:1.14.2 \
+ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.14.3 \
+  cargo test --test deploy_docker_relay_test
+```
+
 `tests/deploy_docker_claude_share_test.rs` takes the same variable and proves
 `--claude-credentials share` against a stand-in login in a temporary
 `CLAUDE_CONFIG_DIR`; the operator's real `~/.claude` is never read.

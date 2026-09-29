@@ -12,6 +12,7 @@ mod claude_share;
 mod diagnose;
 mod docker;
 mod inventory;
+mod relay_rotation;
 mod state;
 #[cfg(test)]
 #[path = "deploy_local_tests.rs"]
@@ -202,7 +203,11 @@ impl Coordinator<'_> {
                     );
                 }
                 println!("force_update_interrupts={force_interrupts}");
-                Ok(backend_running && relay_running && inventory.is_ok())
+                // Mixed images are never reported as converged (issue #627).
+                let versions_match = self.print_versions(active)?;
+                let converged = backend_running && relay_running && versions_match;
+                println!("converged={converged}");
+                Ok(converged && inventory.is_ok())
             }
         }
     }
@@ -697,6 +702,9 @@ impl Coordinator<'_> {
         transaction.phase = Phase::Accepted;
         self.state.write_transaction(&transaction)?;
         self.finish_accepted(&transaction)?;
+        if let Some(active) = self.state.active()? {
+            self.converge_relay(&active)?;
+        }
         println!(
             "deployment is ready: relay={RELAY} backend={candidate} port={}",
             self.port
@@ -903,7 +911,15 @@ fn run_assessed(
             Err(error) => return result_code(Err(error)),
         };
         if specification_matches {
-            if restored {
+            let rotation = match coordinator.converge_relay(active) {
+                Ok(rotation) => rotation,
+                Err(error) => return result_code(Err(error)),
+            };
+            if rotation == relay_rotation::Rotation::Rotated {
+                println!(
+                    "deployment specification already matched; relay moved to the backend image"
+                );
+            } else if restored {
                 println!("deployment specification already matched; serving topology restored");
             } else {
                 println!(

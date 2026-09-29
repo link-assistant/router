@@ -96,6 +96,33 @@ deploy reads the durable transaction and either rolls back the unaccepted
 candidate or finishes the accepted drain. `--status` never performs that
 recovery; it reports the pending transaction and exits nonzero.
 
+The relay runs the same Router image as the backend, so it is updated too
+(issue #627). After the old backend has drained, the coordinator waits until
+the relay carries no established connection, observed twice in a row, then
+replaces it with a relay on the new image and verifies the path through it.
+Docker cannot hand a published port from one container to another, so the old
+relay is removed before its replacement starts: at no point do two containers
+publish the listener. Because rotation waits for idleness, no in-flight request
+or stream is cut; a new connection attempted during the sub-second swap is
+refused and must be retried by the client. If the relay stays busy for two
+minutes, the backend update is kept, the relay stays on its old image, and the
+deploy exits nonzero with `relay_rotation=deferred`. Rerun `router deploy` when
+clients are idle, or pass `--force-update` to rotate immediately and accept the
+interruption. A failed replacement restores a relay on the previous image.
+
+Status names both images and never calls mixed images converged:
+
+```text
+backend_image=ghcr.io/link-assistant/router:1.14.3 image_id=sha256:…
+relay_image=ghcr.io/link-assistant/router:1.14.2 image_id=sha256:…
+version_skew=true
+converged=false
+```
+
+Image ids decide skew, so a second tag of the same image is not skew. A
+deployment left mixed by v1.14.3 converges on the next ordinary `router
+deploy` of the same image; only the relay is replaced.
+
 A second deploy with the same image, port, and launch specification is a true
 no-op: it does not replace containers or rewrite the pointer, tokens,
 credentials, logs, or configuration.
