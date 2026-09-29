@@ -158,21 +158,36 @@ pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
         let captured = router.requests.lock().expect("read split-auth capture");
         let split_requests = captured[request_start..].to_vec();
         drop(captured);
+        // Two discovery paths are real, and neither may carry anything but the
+        // Router credential. The wrapper always reads its client-scoped
+        // `/api/models` before launch. Claude's own gateway discovery reads the
+        // native `/v1/models` as an unawaited start-up task, so a short `-p`
+        // run can exit before sending it; its absence is not an inference
+        // failure (issue #617). The TUI scenario below, which stays open,
+        // asserts that native path deterministically.
         let catalog_requests = split_requests
             .iter()
-            .filter(|request| request.method == "GET" && request.path == CLAUDE.catalog_path)
+            .filter(|request| {
+                request.method == "GET"
+                    && (request.path == "/api/models" || request.path == CLAUDE.catalog_path)
+            })
             .collect::<Vec<_>>();
         assert!(
-            !catalog_requests.is_empty(),
-            "Claude must discover its native Router catalog: {split_requests:?}"
+            catalog_requests
+                .iter()
+                .any(|request| request.path == "/api/models"),
+            "the launch must discover the client-scoped Router catalog: {split_requests:?}"
         );
-        for request in catalog_requests {
-            assert_eq!(
-                request.header("authorization"),
-                Some(router_credential.as_str()),
-                "Claude native model discovery must carry only the Router credential"
-            );
-        }
+        assert_catalog_credentials(&catalog_requests);
+        assert!(
+            split_requests.iter().all(|request| {
+                request.method != "GET"
+                    || !request.path.ends_with("/models")
+                    || request.path == "/api/models"
+                    || request.path == CLAUDE.catalog_path
+            }),
+            "Claude crossed into a different protocol catalog: {split_requests:?}"
+        );
         format!("{split_requests:?}")
     };
     assert!(
@@ -198,12 +213,40 @@ pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
     }
 }
 
+/// Every model-discovery request carries exactly the Router run token, in
+/// the one header its caller uses, and never the stored Claude.ai login.
+fn assert_catalog_credentials(requests: &[&CapturedRequest]) {
+    let token = run_token(CLAUDE);
+    let bearer = format!("Bearer {token}");
+    for request in requests {
+        let credentials = (request.header("authorization"), request.header("x-api-key"));
+        assert!(
+            credentials == (Some(bearer.as_str()), None)
+                || credentials == (None, Some(token.as_str())),
+            "model discovery on {} must carry only the Router credential: {request:?}",
+            request.path
+        );
+    }
+}
+
+/// Router-verified Claude capability metadata exists only for the synthetic
+/// `future-glm-*` rows. `glm-5.3*` rows are the exact shape Router v1.14.2
+/// served for a live z.ai catalog: no capability metadata and the old
+/// `provider_advertised_exact_id` spelling (issues #620 and #621).
+fn has_verified_profile(id: &str) -> bool {
+    id.starts_with("future-glm")
+}
+
 fn catalog_model(id: &str, owner: &str) -> Value {
     let mut model = json!({
         "id": id, "type": "model", "display_name": id,
         "created_at": "2026-09-05T00:00:00Z", "owned_by": owner
     });
-    if owner == "z.ai" {
+    if owner == "z.ai" && !has_verified_profile(id) {
+        model["router_protocols"] = json!(["anthropic"]);
+        model["selector_kind"] = json!("provider_advertised_exact_id");
+        model["capability_provenance"] = json!({"fields": {}});
+    } else if owner == "z.ai" {
         model["client_capabilities"] = json!({
             "claude": {
                 "behaves_as": "claude-sonnet-5",
@@ -323,6 +366,22 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
     );
     let home = tempfile::tempdir().expect("temporary Claude home");
     let transcript = selector_transcript(home.path(), &router, visible);
+    // The TUI stays open long enough for Claude's unawaited gateway discovery
+    // to reach the native catalog, so here that path is required (#617).
+    let native_discovery = router
+        .requests
+        .lock()
+        .expect("read TUI discovery capture")
+        .iter()
+        .filter(|request| request.method == "GET" && request.path == CLAUDE.catalog_path)
+        .cloned()
+        .collect::<Vec<_>>();
+    assert!(
+        !native_discovery.is_empty(),
+        "Claude did not discover its native Router catalog: {:?}",
+        router.routes()
+    );
+    assert_catalog_credentials(&native_discovery.iter().collect::<Vec<_>>());
     assert!(
         !home.path().join(".claude").exists() && !home.path().join(".claude.json").exists(),
         "a default Router launch must not create or change the normal Claude tree"
@@ -377,10 +436,14 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
+    // Only a row with verified metadata carries `behavesAs`. For one without,
+    // Claude's own `unrecognized_model` note is the honest outcome: Router
+    // invents no identity for it, and the request is still served (#621).
     assert!(
-        !diagnostics.contains("unrecognized_model")
-            && !diagnostics.contains("isn't described by this version's model catalog")
-            && !diagnostics.contains("within 200k tokens"),
+        !has_verified_profile(selected)
+            || (!diagnostics.contains("unrecognized_model")
+                && !diagnostics.contains("isn't described by this version's model catalog")
+                && !diagnostics.contains("within 200k tokens")),
         "the verified dynamic model was treated as unknown: {diagnostics}"
     );
     let request = router
@@ -392,7 +455,7 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
     assert_eq!(body["model"], selected);
     if models
         .iter()
-        .any(|(model, owner)| *model == selected && *owner == "z.ai")
+        .any(|(model, owner)| *model == selected && *owner == "z.ai" && has_verified_profile(model))
     {
         // Which shape the client sends follows the capability identity Router
         // advertises: a fixed `budget_tokens` for some identities, an
@@ -469,7 +532,7 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
     }
     if models
         .iter()
-        .any(|(model, owner)| *model == selected && *owner == "z.ai")
+        .any(|(model, owner)| *model == selected && *owner == "z.ai" && has_verified_profile(model))
     {
         let traced = run_wrapper_with_options(
             CLAUDE,
@@ -597,6 +660,13 @@ fn current_claude_model_selector_keeps_exact_provider_models_distinct() {
             ("future-glm-gamma", "z.ai"),
         ],
         &["future-glm-alpha", "future-glm-beta", "future-glm-gamma"],
+        false,
+    );
+    // The exact rows a z.ai-only v1.14.2 Router served: no capability
+    // metadata, yet both must be listed and served (issues #620 and #621).
+    assert_scenario(
+        &[("glm-5.3", "z.ai"), ("glm-5.3-flash", "z.ai")],
+        &["glm-5.3", "glm-5.3-flash"],
         false,
     );
     assert_scenario(
