@@ -198,6 +198,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.14.3] - 2026-09-29
+
+### Fixed
+- `router with claude` no longer refuses to launch with "router catalog contains no models authorized for this client token" on a z.ai-only catalog. Router v1.14.2 served z.ai rows as `selector_kind: provider_advertised_exact_id`, a spelling the wrapper could not parse, and the wrapper dropped every such row without a word. `selector_kind` now has one shared, forward-compatible wire contract: the server emits `concrete`, every known spelling parses (an unknown one reads as `unknown` instead of discarding the model), and a catalog row that still cannot be parsed fails loudly by index and ID, asking you to align the Router versions (#620).
+- Claude Code's `/model` picker under `router with claude` now lists every exact model the client's authorized catalog serves, Anthropic's own IDs included, rather than only rows that carry Router-verified capability metadata. A row without that evidence is listed as `{label, model}` and no identity is invented for it. Before, one z.ai model without a verified profile was enough to refuse the whole launch (#621).
+
+### Fixed
+- The hermetic Claude Code capture no longer fails intermittently on Claude Code 2.1.284 with "Claude Code must discover models through the authenticated native Anthropic route". The `GET /api/models` it saw was the `router with` wrapper's own catalog read, which uses the Router token as `x-api-key`. Claude's own gateway discovery is an unawaited startup task, so a short `-p` run can exit before sending it. The split-auth check now accepts either credential shape on a catalog read and still forbids every other model route. The model-selector scenario, which waits for the TUI, continues to require Claude's native `GET /api/services/anthropic/v1/models` with only the Router bearer token. The capture now also covers exact z.ai rows that have no verified capability metadata, and the newer-release job runs against 2.1.284 (#617).
+
+### Fixed
+- On macOS, backup, reset, restore and `clients update` no longer treat a running client as absent when `ps` cannot inspect it. A failed `ps`, or one that printed nothing yet claimed success, used to read as "not running". It now blocks the operation and names the process and the reason. Only a process `ps` no longer lists, or a zombie, counts as gone. When macOS withholds a process's environment (another user's process, or a restricted or Apple platform binary under System Integrity Protection), the message now says so (#619).
+- The macOS active-client safety test can no longer pass or fail by accident. Its fixture used to exit after 30 seconds, so a loaded full run could see a real "nothing is running" answer, which then looked like the maintenance plan reporting `unsupported` instead of `blocked`. The fixture now runs until the test ends, and the test checks it is alive after every Router call. The fixture is re-signed ad hoc so that SIP does not hide its environment, and every assertion reports what `ps -E` saw. CI repeats these tests on macOS (#619).
+
+### Fixed
+- `router tokens list`, the admin token API and the `/tokens` chat command now list tokens oldest first, then by id. They used to follow a per-process hash order, so the same store listed twice gave two different orders. The Docker rolling-update test compared the old backend's `tokens list --json` output byte for byte with its successor's and failed even though no token was lost. That test now compares the records keyed by id (#618).
+
+### Added
+- `router deploy --claude-credentials share` lets a local deployment use this machine's Claude Code login. It mounts the Claude Code home (`$CLAUDE_CONFIG_DIR`, else `~/.claude`) in place, read-write, and runs the backend as the credential file's owner. Refresh tokens are never copied: a rotation by either the host CLI or Router is the other's next read, so neither side gets logged out. The mode is recorded on the backend. An update without the flag keeps it, and switching modes is a normal candidate-first update (#622).
+
+### Fixed
+- `router deploy` no longer leaves Anthropic silently absent while `/api/health` stays green. The status output now prints an `anthropic_credential=` line. It says whether the login was skipped (and how to opt in), shared (with `refresh_tokens_copied=0`) or refused. `share` is refused before any container changes, with exit code 2 and the reason, in these cases: there is no usable Claude.ai OAuth login; the home cannot be written; the login lives only in the macOS Keychain, which a container can neither read nor update; or earlier root-owned data needs a `chown`. Credential bytes are never printed (#622).
+
 ## [1.14.2] - 2026-09-28
 
 ### Fixed
