@@ -73,12 +73,15 @@ usage telemetry and guarantees fresh remote feature flags.
 The process overlay sets Router's URL/token, clears the higher-priority API key,
 enables gateway discovery, and adds a dynamic `modelPicker` through Claude's
 supported `--settings` option. Gateway discovery supplies exact Claude IDs;
-the picker adds a compatible authorized ID that Claude's discovery filter would
-hide only when that exact live catalog row supplies a verified `behavesAs`
-capability. Router does not assign one identity to every model owned by z.ai or
-infer an identity from a GLM name. Missing or conflicting per-model capability
-metadata stops the launch with the affected id instead of guessing. Router does
-not write a model cache or invent prefixes. Claude Code 2.1.255 or newer is
+the picker adds every authorized ID that Claude's discovery filter would hide.
+A row carries `behavesAs` only when that exact live catalog row supplies a
+verified capability; a row without it is still listed (issue #620). Router does
+not assign one identity to every model owned by z.ai or infer an identity from a
+GLM name, and it does not write a model cache or invent prefixes. On a z.ai-only
+catalog the picker replaces Claude's built-in family rows, and Router pins the
+family variables behind the `Default (recommended)` row to an authorized exact
+model, so every selectable row, Default included, names a model the token can
+reach (issue #630). Claude Code 2.1.255 or newer is
 required; 2.1.265 is the pinned test baseline, not a maximum.
 
 When present, that identity is load-bearing twice over. It sets the context window Claude Code assumes:

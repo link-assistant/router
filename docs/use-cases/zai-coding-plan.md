@@ -133,8 +133,11 @@ Router also builds a process-local `modelPicker` from the client-authorized live
 catalog, adding every exact GLM ID that Claude's discovery filter removes. Each
 ID appears once and reaches Router unchanged. Router never invents a prefix,
 writes Claude's model cache, or maps GLM onto Opus, Sonnet, or Haiku. When z.ai
-is the only compatible catalog, Default/main and subagent fallback still use
-the first exact live model; an explicit `--model` wins at both boundaries.
+is the only compatible catalog, main and subagent fallback use the newest exact
+live model (by the provider's `created` timestamp), and the family variables
+behind Claude's `Default (recommended)` row are pinned to the same model, so
+Default never describes an unauthorized Opus (issue #630). An explicit `--model`
+wins at every one of these boundaries.
 Router validates every selected exact ID locally against the current signed
 client/provider registry, so a built-in or cached choice cannot silently select
 another credential.

@@ -45,7 +45,15 @@ native family rows are retained only when that authorized catalog actually
 contains an Anthropic model. A z.ai-only catalog replaces the built-ins, so
 cached Opus/Sonnet/Haiku selections are rejected locally with a provider-
 specific diagnostic while Default/main and subagent fallback remain exact GLM
-models. A model saved through `/model` remains the next launch's authoritative
+models. Claude describes its `Default (recommended)` row through its
+Opus/Sonnet/Haiku family variables, so on a z.ai-only catalog Router also pins
+`ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and
+`ANTHROPIC_DEFAULT_HAIKU_MODEL` to that exact GLM model. It does this even when
+you chose your own model: otherwise the Default row reads "currently Opus 5.5"
+and names a model the token cannot reach (issue #630). An inherited family
+value is kept only when it names an authorized row. With Anthropic in the
+catalog the native family rows stay, so the family variables are left alone.
+A model saved through `/model` remains the next launch's authoritative
 selection when it is still authorized.
 Code 2.1.255 or newer is required for current gateway alias resolution. There
 is no upper version limit: 2.1.265 is the pinned hermetic real-client baseline,
