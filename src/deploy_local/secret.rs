@@ -63,7 +63,7 @@ impl SecretMatch {
 /// The probe outcome rule: authentication passed unless the candidate said
 /// 401 or failed outright. `/api/models` answers 403 for a token without a
 /// managed-client binding, which still proves the signature was accepted.
-const fn probe_accepted(status: u16) -> bool {
+pub(super) const fn probe_accepted(status: u16) -> bool {
     status != 401 && status < 500
 }
 
@@ -181,7 +181,7 @@ impl Coordinator<'_> {
         Ok(())
     }
 
-    fn probe_token(&self) -> Result<String, String> {
+    pub(super) fn probe_token(&self) -> Result<String, String> {
         let now = chrono::Utc::now().timestamp();
         let claims = link_assistant_router::token::TokenClaims {
             sub: format!("deploy-probe-{}", uuid::Uuid::new_v4().simple()),

@@ -80,6 +80,25 @@ pub struct DeployArgs {
     /// keeps the mode the active deployment uses; a first deploy is isolated.
     #[arg(long, value_enum, conflicts_with_all = ["server", "down"])]
     pub claude_credentials: Option<ClaudeCredentials>,
+    /// Where the local Router process runs (issue #626).
+    ///
+    /// `host` runs this Router binary on the host, on the same loopback port
+    /// and with the same data directory as the container deployment, so it
+    /// reads a Claude Code login kept in the macOS Keychain. The containers
+    /// are stopped, not removed, and `--mode container` restores them. With
+    /// `--status` the migration plan is printed without changing anything.
+    /// Without this flag a deploy keeps the current mode.
+    #[arg(long, value_enum, conflicts_with_all = ["server", "down"])]
+    pub mode: Option<DeployMode>,
+}
+
+/// Where a local deployment serves from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
+pub enum DeployMode {
+    /// Versioned backends behind a loopback relay container.
+    Container,
+    /// One Router process on the host, reading the host's own logins.
+    Host,
 }
 
 /// How a local deployment's backend obtains the Anthropic credential.

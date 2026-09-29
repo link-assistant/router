@@ -59,7 +59,7 @@ reason, even on a host without a container runtime, when:
   replaced by rename beside it);
 - the login lives in the macOS Keychain. Claude Code keeps its live credential
   there, and the file beside it is a snapshot nothing rotates; a container can
-  neither read nor update the Keychain. Run `router serve` on the host instead;
+  neither read nor update the Keychain. Use host mode (below) instead;
 - a file under `data/` belongs to another user, typically left by an earlier
   backend that ran as root. The message gives the `sudo chown -R` command.
 
@@ -67,6 +67,62 @@ Caveats: the host CLI does not take Router's per-credential locks, so a refresh
 by both at the same instant can still race; Router then re-reads the file and
 recovers from its rotated-token record. File locks are not reliable across
 Docker Desktop's macOS file sharing.
+
+## Host mode for a macOS Keychain login
+
+On macOS, Claude Code keeps its live login in the Keychain, which no container
+can read, so a container deployment cannot serve Anthropic models (issue #626).
+`--mode host` moves the deployment to this same Router binary running on the
+host, which reads the Keychain in place, while keeping exactly one endpoint:
+
+```bash
+# Read-only plan: what would stop, start, and be preserved, and every blocker.
+TOKEN_SECRET='a-long-random-secret' router deploy --mode host --status
+
+TOKEN_SECRET='a-long-random-secret' router deploy --mode host
+
+# Back to the containers, which were stopped, not removed.
+TOKEN_SECRET='a-long-random-secret' router deploy --mode container
+```
+
+The host Router uses the deployment's `data/` directory and `TOKEN_SECRET`, so
+the token store, signing secret, request logs, and provider configuration (for
+example z.ai) are the ones the containers used. It listens on the same
+`127.0.0.1:<port>`, so client profiles, the selected server, and resumable
+sessions need no change. It gets no `CLAUDE_CODE_HOME`, so it reads the host
+Claude Code login the way `router serve` does. OAuth bytes are never printed or
+copied (`claude_login=keychain read_in_place=true oauth_bytes_copied=0`).
+
+The move is candidate-first:
+
+1. A host Router is started on an ephemeral loopback port and must answer
+   `/api/health` and accept a token signed with the deployment's secret.
+   Otherwise it is stopped and nothing else changes.
+2. The relay is stopped and the host Router is started on the stable port and
+   validated the same way. If that fails, the relay is restarted and the
+   container deployment keeps serving.
+3. The backend is stopped and retained for rollback.
+
+The move is refused before any change, with exit code 2, when a live run or an
+established connection would be interrupted (`--force-update` accepts that
+after review), when the run inventory is unknown, when the `TOKEN_SECRET` differs
+from the deployment's, when a transaction is pending, when another process
+holds the port, or when a file under `data/` belongs to another user. On Linux
+an earlier backend ran as root, and the message names the `sudo chown -R`
+command; Docker Desktop on macOS maps bind-mount files to the host user.
+
+Once in host mode, `router deploy` and `router deploy --status` keep the mode.
+A rerun with the same Router and secret reports `converged=true` and changes
+nothing. Replacing a serving host Router, for a newer binary or a changed
+secret, closes its connections, so it is planned as a blocker and needs
+`--force-update`; the replacement goes through the same validation. `router deploy --mode container` restarts the
+retained backend, stops the host Router, and restarts the relay; if the relay
+does not become healthy, the host Router is started again. `router deploy
+--down --yes` stops the host Router as well as the containers.
+
+The host process is recorded in `state/host` and logs to `state/host.log`. It
+does not survive a reboot or logout by itself; rerun `router deploy` or start it
+from a launchd agent.
 
 ## What happens during an update
 

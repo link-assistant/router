@@ -129,7 +129,8 @@ pub(super) fn share(
         return Provision::Refused(format!(
             "Claude Code keeps this login in the macOS Keychain, which a container can neither \
              read nor update; {} holds a snapshot nothing rotates, and copying the Keychain \
-             entry would fork its rotating refresh chain. Run `router serve` on the host instead",
+             entry would fork its rotating refresh chain. Run `router deploy --mode host` to move this \
+             deployment to a host Router that reads the Keychain in place",
             home.join(CREDENTIAL_FILE).display()
         ));
     }
@@ -216,7 +217,7 @@ const fn owner(_file: &Path) -> Option<(u32, u32)> {
 
 /// The first entry under `data` another user owns, if any.
 #[cfg(unix)]
-fn foreign_entry(data: &Path, uid: u32) -> Option<PathBuf> {
+pub(super) fn foreign_entry(data: &Path, uid: u32) -> Option<PathBuf> {
     use std::os::unix::fs::MetadataExt as _;
     let mut pending = vec![data.to_path_buf()];
     while let Some(path) = pending.pop() {
@@ -236,7 +237,7 @@ fn foreign_entry(data: &Path, uid: u32) -> Option<PathBuf> {
 }
 
 #[cfg(not(unix))]
-const fn foreign_entry(_data: &Path, _uid: u32) -> Option<PathBuf> {
+pub(super) const fn foreign_entry(_data: &Path, _uid: u32) -> Option<PathBuf> {
     None
 }
 

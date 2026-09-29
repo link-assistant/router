@@ -41,6 +41,7 @@ fn deploy(
                 ClaudeCredentials::Share => shared(home),
             }
         },
+        &crate::deploy_local::host_runtime::System::default(),
     );
     (code, asked.get())
 }
@@ -175,6 +176,7 @@ fn a_refused_share_changes_nothing_and_says_why() {
         SECRET,
         Docker::with_runner(runner.clone()),
         &|_, _| Provision::Refused("the login is in the macOS Keychain".to_string()),
+        &crate::deploy_local::host_runtime::System::default(),
     );
 
     assert_eq!(code, ExitCode::from(2));

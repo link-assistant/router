@@ -103,6 +103,10 @@ ROUTER_DEPLOY_TEST_IMAGE=ghcr.io/link-assistant/router:1.14.3 \
 `tests/deploy_docker_claude_share_test.rs` takes the same variable and proves
 `--claude-credentials share` against a stand-in login in a temporary
 `CLAUDE_CONFIG_DIR`; the operator's real `~/.claude` is never read.
+`tests/deploy_docker_host_test.rs` moves a container deployment to
+`--mode host` and back and checks that a token issued by the backend keeps
+authorizing on the same port. `tests/deploy_host_test.rs` covers host mode
+without a container runtime and always runs.
 
 The image is named rather than pulled by the tests themselves: a test that
 reaches a registry fails when the network does, which says nothing about the code

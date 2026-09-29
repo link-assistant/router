@@ -21,6 +21,22 @@ pub(super) struct Active {
     pub port: u16,
 }
 
+/// The Router process serving this root from the host (issue #626). Its
+/// containers stay stopped, not removed, so returning is one command.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub(super) struct Host {
+    pub version: u8,
+    pub pid: u32,
+    pub port: u16,
+    pub executable: String,
+    pub router_version: String,
+    /// [`super::secret::fingerprint`] of the secret it was started with.
+    pub token_secret: String,
+    /// The container backend it replaced, retained stopped for rollback.
+    pub previous_backend: Option<String>,
+    pub started_at: i64,
+}
+
 /// What the durable active record says, classified without failing, so a
 /// read-only status can describe a damaged record instead of stopping at it
 /// (issue #631).
@@ -183,6 +199,24 @@ impl State {
 
     pub(super) fn write_active(&self, active: &Active) -> Result<(), String> {
         write_json(&self.directory.join("active"), active)
+    }
+
+    pub(super) fn host(&self) -> Result<Option<Host>, String> {
+        let host: Option<Host> = read_json(&self.directory.join("host"))?;
+        if let Some(host) = &host
+            && host.version != 1
+        {
+            return Err(format!("unsupported host-mode record v{}", host.version));
+        }
+        Ok(host)
+    }
+
+    pub(super) fn write_host(&self, host: &Host) -> Result<(), String> {
+        write_json(&self.directory.join("host"), host)
+    }
+
+    pub(super) fn clear_host(&self) -> Result<(), String> {
+        remove_if_present(&self.directory.join("host"))
     }
 
     pub(super) fn transaction(&self) -> Result<Option<Transaction>, String> {

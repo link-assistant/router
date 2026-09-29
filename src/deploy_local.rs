@@ -11,6 +11,8 @@ use link_assistant_router::cli::DeployArgs;
 mod claude_share;
 mod diagnose;
 mod docker;
+mod host;
+mod host_runtime;
 mod inventory;
 mod relay_rotation;
 mod secret;
@@ -773,7 +775,16 @@ fn run_with_docker(
     token_secret: &str,
     docker: Docker,
 ) -> ExitCode {
-    run_assessed(args, root, image, token_secret, docker, &Provision::assess)
+    let host = host_runtime::System::default();
+    run_assessed(
+        args,
+        root,
+        image,
+        token_secret,
+        docker,
+        &Provision::assess,
+        &host,
+    )
 }
 
 fn run_assessed(
@@ -783,6 +794,7 @@ fn run_assessed(
     token_secret: &str,
     docker: Docker,
     assess: &dyn Fn(link_assistant_router::cli::ClaudeCredentials, &Path) -> Provision,
+    host: &dyn host_runtime::HostRuntime,
 ) -> ExitCode {
     let mut coordinator = Coordinator {
         docker,
@@ -795,6 +807,9 @@ fn run_assessed(
         force: args.force_update,
         claude: Provision::Isolated,
     };
+    if let Some(code) = host::dispatch(&coordinator, args, host) {
+        return code;
+    }
     if !args.down {
         let mode = args
             .claude_credentials

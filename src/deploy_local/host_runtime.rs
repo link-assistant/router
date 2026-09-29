@@ -1,0 +1,295 @@
+//! The host process behind `router deploy --mode host` (issue #626).
+//!
+//! Separated behind [`HostRuntime`] so the migration, its refusals and its
+//! rollback are tested without starting processes or reading a Keychain.
+
+use std::io::{Read as _, Write as _};
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command, Stdio};
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
+
+/// How a host Router process is started.
+pub(super) struct Launch<'a> {
+    pub executable: &'a Path,
+    pub port: u16,
+    pub data_dir: &'a Path,
+    /// Passed through the environment only, never argv.
+    pub token_secret: &'a str,
+    pub log: &'a Path,
+}
+
+/// Where the host login lives; presence only, never its bytes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum ClaudeLogin {
+    Keychain,
+    File,
+    Absent,
+}
+
+impl ClaudeLogin {
+    pub(super) const fn as_str(self) -> &'static str {
+        match self {
+            Self::Keychain => "keychain",
+            Self::File => "file",
+            Self::Absent => "absent",
+        }
+    }
+}
+
+pub(super) trait HostRuntime {
+    /// The Router binary a host deployment runs: this one.
+    fn executable(&self) -> Result<PathBuf, String>;
+    fn spawn(&self, launch: &Launch<'_>) -> Result<u32, String>;
+    /// Whether `pid` is still a `serve` process of `executable`, so a reused
+    /// pid is never mistaken for the deployment or signalled.
+    fn serving(&self, pid: u32, executable: &Path) -> bool;
+    fn terminate(&self, pid: u32) -> Result<(), String>;
+    /// The HTTP status of `GET path` on the loopback `port`, if it answers.
+    fn status(&self, port: u16, path: &str, bearer: Option<&str>) -> Option<u16>;
+    fn free_port(&self) -> Result<u16, String>;
+    fn user_id(&self) -> Option<u32>;
+    fn claude_login(&self) -> ClaudeLogin;
+    /// `router tokens list --json` over the host's view of the data.
+    fn token_inventory(&self, executable: &Path, data_dir: &Path) -> Result<String, String>;
+}
+
+/// The real host: processes, loopback HTTP and the platform secret store.
+#[derive(Default)]
+pub(super) struct System {
+    /// Children started by this run, reaped on termination so a stopped
+    /// candidate does not linger as a zombie that still answers `kill -0`.
+    children: Mutex<Vec<Child>>,
+}
+
+impl HostRuntime for System {
+    fn executable(&self) -> Result<PathBuf, String> {
+        std::env::current_exe()
+            .and_then(|path| path.canonicalize())
+            .map_err(|error| format!("could not resolve the Router executable: {error}"))
+    }
+
+    fn spawn(&self, launch: &Launch<'_>) -> Result<u32, String> {
+        let log = open_log(launch.log)?;
+        let error_log = log
+            .try_clone()
+            .map_err(|error| format!("could not open {}: {error}", launch.log.display()))?;
+        let mut command = Command::new(launch.executable);
+        command
+            .arg("serve")
+            .current_dir(launch.data_dir)
+            .env("ROUTER_HOST", "127.0.0.1")
+            .env("ROUTER_PORT", launch.port.to_string())
+            .env("DATA_DIR", launch.data_dir)
+            .env("STORAGE_POLICY", "text")
+            .env("TOKEN_SECRET", launch.token_secret)
+            // One loopback listener, exactly where the relay published.
+            .env_remove("LISTENERS")
+            .stdin(Stdio::null())
+            .stdout(log)
+            .stderr(error_log);
+        detach(&mut command);
+        let child = command.spawn().map_err(|error| {
+            format!(
+                "could not start {} serve: {error}",
+                launch.executable.display()
+            )
+        })?;
+        let pid = child.id();
+        self.children
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(child);
+        Ok(pid)
+    }
+
+    fn serving(&self, pid: u32, executable: &Path) -> bool {
+        if self.exited(pid) {
+            return false;
+        }
+        Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "command="])
+            .output()
+            .is_ok_and(|output| {
+                let command = String::from_utf8_lossy(&output.stdout);
+                output.status.success()
+                    && command.contains(&executable.display().to_string())
+                    && command.split_whitespace().any(|word| word == "serve")
+            })
+    }
+
+    fn terminate(&self, pid: u32) -> Result<(), String> {
+        signal("TERM", pid);
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            if self.exited(pid) || !alive(pid) {
+                return Ok(());
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        signal("KILL", pid);
+        std::thread::sleep(Duration::from_millis(200));
+        if self.exited(pid) || !alive(pid) {
+            Ok(())
+        } else {
+            Err(format!("host Router process {pid} did not stop"))
+        }
+    }
+
+    fn status(&self, port: u16, path: &str, bearer: Option<&str>) -> Option<u16> {
+        let mut stream = std::net::TcpStream::connect(("127.0.0.1", port)).ok()?;
+        stream
+            .set_read_timeout(Some(Duration::from_secs(10)))
+            .ok()?;
+        stream
+            .set_write_timeout(Some(Duration::from_secs(5)))
+            .ok()?;
+        let authorization = bearer.map_or_else(String::new, |token| {
+            format!("Authorization: Bearer {token}\r\n")
+        });
+        write!(
+            stream,
+            "GET {path} HTTP/1.1\r\nHost: localhost\r\n{authorization}Connection: close\r\n\r\n"
+        )
+        .ok()?;
+        let mut head = [0_u8; 64];
+        let read = stream.read(&mut head).ok()?;
+        String::from_utf8_lossy(&head[..read])
+            .split_whitespace()
+            .nth(1)?
+            .parse()
+            .ok()
+    }
+
+    fn free_port(&self) -> Result<u16, String> {
+        std::net::TcpListener::bind(("127.0.0.1", 0))
+            .and_then(|listener| listener.local_addr())
+            .map(|address| address.port())
+            .map_err(|error| format!("no free loopback port for the host candidate: {error}"))
+    }
+
+    fn user_id(&self) -> Option<u32> {
+        let output = Command::new("id").arg("-u").output().ok()?;
+        String::from_utf8_lossy(&output.stdout).trim().parse().ok()
+    }
+
+    fn claude_login(&self) -> ClaudeLogin {
+        // The secret is dropped here; only its presence is used.
+        if link_assistant_router::platform_keychain::lookup(
+            link_assistant_router::subscription::SubscriptionProvider::Claude,
+        )
+        .is_some()
+        {
+            return ClaudeLogin::Keychain;
+        }
+        let home = link_assistant_router::env_paths::directory("CLAUDE_CONFIG_DIR").or_else(|| {
+            link_assistant_router::env_paths::directory("HOME").map(|home| home.join(".claude"))
+        });
+        if home.is_some_and(|home| home.join(".credentials.json").is_file()) {
+            ClaudeLogin::File
+        } else {
+            ClaudeLogin::Absent
+        }
+    }
+
+    fn token_inventory(&self, executable: &Path, data_dir: &Path) -> Result<String, String> {
+        let output = Command::new(executable)
+            .args(["tokens", "list", "--json"])
+            .env("DATA_DIR", data_dir)
+            .env("STORAGE_POLICY", "text")
+            .stdin(Stdio::null())
+            .output()
+            .map_err(|error| format!("could not list tokens: {error}"))?;
+        if !output.status.success() {
+            return Err(format!(
+                "`router tokens list` failed: {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            ));
+        }
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    }
+}
+
+impl System {
+    /// Whether a child this run started has exited, reaping it if so.
+    fn exited(&self, pid: u32) -> bool {
+        let mut children = self
+            .children
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        children
+            .iter_mut()
+            .find(|child| child.id() == pid)
+            .is_some_and(|child| matches!(child.try_wait(), Ok(Some(_))))
+    }
+}
+
+fn open_log(path: &Path) -> Result<std::fs::File, String> {
+    let mut options = std::fs::OpenOptions::new();
+    options.create(true).append(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.mode(0o600);
+    }
+    let mut file = options
+        .open(path)
+        .map_err(|error| format!("could not open {}: {error}", path.display()))?;
+    let _ = writeln!(
+        file,
+        "--- router deploy --mode host {}",
+        chrono::Utc::now().to_rfc3339()
+    );
+    Ok(file)
+}
+
+/// Its own process group: closing the terminal that ran `router deploy`
+/// signals that terminal's jobs, not the deployment.
+#[cfg(unix)]
+fn detach(command: &mut Command) {
+    use std::os::unix::process::CommandExt as _;
+    command.process_group(0);
+}
+
+#[cfg(not(unix))]
+const fn detach(_command: &mut Command) {}
+
+fn signal(name: &str, pid: u32) {
+    #[cfg(unix)]
+    let _ = Command::new("kill")
+        .args([&format!("-{name}"), &pid.to_string()])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+    #[cfg(windows)]
+    let _ = (
+        name,
+        Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/F"])
+            .status(),
+    );
+}
+
+fn alive(pid: u32) -> bool {
+    // A stopped process whose parent (not this command, which may have
+    // exited long ago) has not reaped it yet is a zombie: `kill -0` still
+    // succeeds for it, `ps` reports state `Z`.
+    #[cfg(unix)]
+    {
+        Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "stat="])
+            .output()
+            .is_ok_and(|output| {
+                let state = String::from_utf8_lossy(&output.stdout);
+                let state = state.trim();
+                output.status.success() && !state.is_empty() && !state.starts_with('Z')
+            })
+    }
+    #[cfg(windows)]
+    {
+        Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
+            .output()
+            .is_ok_and(|output| String::from_utf8_lossy(&output.stdout).contains(&pid.to_string()))
+    }
+}

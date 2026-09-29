@@ -100,6 +100,7 @@ mod tests {
             build: None,
             root: None,
             claude_credentials: None,
+            mode: None,
         }
     }
 

@@ -14,6 +14,8 @@ use super::{
 mod claude_tests;
 #[path = "deploy_local_failure_tests.rs"]
 mod failure_tests;
+#[path = "deploy_local_host_tests.rs"]
+mod host_tests;
 #[path = "deploy_local_relay_tests.rs"]
 mod relay_tests;
 #[path = "deploy_local_secret_tests.rs"]
@@ -496,6 +498,7 @@ fn deploy_args() -> DeployArgs {
         build: None,
         root: None,
         claude_credentials: None,
+        mode: None,
     }
 }
 
