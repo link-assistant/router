@@ -258,7 +258,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let saved = tempfile::tempdir().expect("profile root");
     let profile = saved
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&profile).expect("create the Router-owned Claude profile");
     std::fs::write(
         profile.join("settings.json"),
@@ -285,7 +285,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let saved_default = tempfile::tempdir().expect("profile root");
     let default_profile = saved_default
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&default_profile).expect("create the Router-owned Claude profile");
     std::fs::write(
         default_profile.join("settings.json"),
@@ -307,7 +307,7 @@ fn a_saved_model_choice_is_never_overridden_by_a_router_pin() {
     let unsaved = tempfile::tempdir().expect("profile root");
     let other = unsaved
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&other).expect("create the Router-owned Claude profile");
     std::fs::write(other.join("settings.json"), br#"{"verbose":true}"#)
         .expect("seed a profile with no model");
@@ -330,7 +330,7 @@ fn an_unavailable_saved_native_claude_model_is_rejected_locally() {
     let profiles = tempfile::tempdir().expect("profile root");
     let profile = profiles
         .path()
-        .join("link-assistant-router/clients/claude/home/.claude");
+        .join("link-assistant-router/clients/claude/home");
     std::fs::create_dir_all(&profile).expect("create Router-owned Claude profile");
     std::fs::write(
         profile.join("settings.json"),

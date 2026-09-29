@@ -538,7 +538,6 @@ impl TemporaryClient {
                             return None;
                         }
                         claude_saved_model_selection(
-                            &manager,
                             directory.path(),
                             extends_user_configuration(
                                 client,

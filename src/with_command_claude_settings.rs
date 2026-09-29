@@ -10,7 +10,7 @@ use std::process::Command;
 use serde_json::{Value, json};
 
 use super::AnyError;
-use crate::clients::{ClientKind, ClientManager, RouterModel};
+use crate::clients::{ClientKind, RouterModel};
 
 pub(super) struct ClaudeModelSelection {
     pub model: String,
@@ -206,26 +206,24 @@ fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
 ///
 /// The profile consulted is the one this launch actually hands the client — the
 /// Router-owned one by default, the user's own under `--extend-global-config`.
+/// The Router-owned profile is `CLAUDE_CONFIG_DIR` itself, so Claude keeps its
+/// user settings, and a `/model` choice, directly in it. Reading the
+/// `.claude/settings.json` a `$HOME`-rooted layout would use saw no choice at
+/// all: the pin overrode it, and a choice the catalog no longer authorizes was
+/// never refused (issue #630).
 pub(super) fn claude_saved_model_selection(
-    manager: &ClientManager,
     root: &Path,
     extends_user_configuration: bool,
     user_settings: Option<&Path>,
 ) -> Option<ClaudeModelSelection> {
-    // Under `--extend-global-config` the client reads the user's real profile,
-    // which this manager is not rooted at. The caller resolved the file Claude
-    // will actually open from its own environment, so nothing here reads the
-    // process environment and a test cannot inherit a real profile (#613).
+    // Under `--extend-global-config` the client reads the user's real profile.
+    // The caller resolved the file Claude will actually open from its own
+    // environment, so nothing here reads the process environment and a test
+    // cannot inherit a real profile (#613).
     let settings = if extends_user_configuration {
         user_settings?.to_path_buf()
     } else {
-        debug_assert!(
-            manager
-                .config_path(ClientKind::ClaudeCode)
-                .starts_with(root),
-            "the isolated manager must be rooted at this run's profile"
-        );
-        manager.config_path(ClientKind::ClaudeCode)
+        root.join("settings.json")
     };
     let saved = fs::read_to_string(settings).ok()?;
     // A profile Claude has not written yet, or one hand-edited into invalid

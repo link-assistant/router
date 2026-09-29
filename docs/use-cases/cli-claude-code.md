@@ -54,7 +54,11 @@ and names a model the token cannot reach (issue #630). An inherited family
 value is kept only when it names an authorized row. With Anthropic in the
 catalog the native family rows stay, so the family variables are left alone.
 A model saved through `/model` remains the next launch's authoritative
-selection when it is still authorized.
+selection when it is still authorized. Claude saves it in `settings.json`
+directly inside the Router-owned profile (that directory is its
+`CLAUDE_CONFIG_DIR`), and Router reads that same file: a choice the catalog no
+longer authorizes, for example after the Anthropic credential was removed, is
+refused before launch with the `/model` hint instead of being replaced.
 Code 2.1.255 or newer is required for current gateway alias resolution. There
 is no upper version limit: 2.1.265 is the pinned hermetic real-client baseline,
 not a maximum, and the same capture also runs against a newer release (2.1.284
