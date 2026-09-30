@@ -82,6 +82,12 @@ fn the_client_binding_is_inferred_from_the_request_then_the_payload() {
     let codex = synthetic_claims("at-garbage", &HeaderMap::new());
     assert_eq!(codex.client_kind.as_deref(), Some("codex"));
 
+    // The carrier outranks the `at-` prefix: Gemini's header means Gemini.
+    let mut gemini = HeaderMap::new();
+    gemini.insert("x-goog-api-key", "at-garbage".parse().unwrap());
+    let gemini = synthetic_claims("at-garbage", &gemini);
+    assert_eq!(gemini.client_kind.as_deref(), Some("gemini"));
+
     let manager = crate::token::TokenManager::new("emergency-secret");
     let (token, _) = manager
         .issue_with_id(&crate::token::IssueRequest {

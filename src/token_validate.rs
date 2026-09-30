@@ -80,13 +80,17 @@ impl TokenManager {
         headers: &HeaderMap,
     ) -> Result<TokenClaims, TokenError> {
         let verdict = self.validate_token(token);
+        let count = crate::auth_diagnostics::first_outcome_in_request();
         if self.emergency.is_active() {
             let bypassed = match &verdict {
                 Ok(_) => "none",
                 Err(error) => error.reason_code(),
             };
-            self.emergency.record_bypass(bypassed);
             let claims = crate::emergency_auth::synthetic_claims(token, headers);
+            if !count {
+                return Ok(claims);
+            }
+            self.emergency.record_bypass(bypassed);
             tracing::warn!(
                 bypassed,
                 fingerprint = %crate::emergency_auth::token_fingerprint(token),
@@ -95,7 +99,11 @@ impl TokenManager {
             );
             return Ok(claims);
         }
-        verdict.inspect_err(|error| self.diagnostics.record_error(error, Some(token)))
+        verdict.inspect_err(|error| {
+            if count {
+                self.diagnostics.record_error(error, Some(token));
+            }
+        })
     }
 
     /// Live state of the explicit emergency any-token mode.

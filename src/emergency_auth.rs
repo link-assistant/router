@@ -87,6 +87,29 @@ impl Default for EmergencyAuthConfig {
 }
 
 impl EmergencyAuthConfig {
+    /// Read the switches from the environment, for the legacy
+    /// [`crate::config::Config::from_env`] path. Unparsable values keep the
+    /// mode off rather than guessing.
+    #[must_use]
+    pub fn from_env() -> Self {
+        let truthy = |name: &str| {
+            std::env::var(name).is_ok_and(|value| {
+                matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                )
+            })
+        };
+        Self {
+            enabled: truthy(ENV),
+            allow_non_loopback: truthy(ALLOW_NON_LOOPBACK_ENV),
+            duration_minutes: std::env::var(DURATION_ENV)
+                .ok()
+                .and_then(|value| value.trim().parse().ok())
+                .unwrap_or(DEFAULT_DURATION_MINUTES),
+        }
+    }
+
     /// Refuse a configuration that would silently expose the mode.
     ///
     /// # Errors
@@ -149,6 +172,25 @@ impl EmergencyAuth {
         until
     }
 
+    /// Apply a checked start-up configuration: when enabled, turn the mode on
+    /// and log a warning that names every consequence. Returns the lapse time.
+    pub fn start(&self, config: &EmergencyAuthConfig) -> Option<i64> {
+        if !config.enabled {
+            return None;
+        }
+        let until = self.enable_for_minutes(config.duration_minutes);
+        let lapses = chrono::DateTime::from_timestamp(until, 0)
+            .map_or_else(|| until.to_string(), |time| time.to_rfc3339());
+        tracing::warn!(
+            "EMERGENCY ANY-TOKEN MODE IS ON until {lapses}: client routes accept any non-empty \
+             Router token without signature, expiry, revocation, record, budget or model-policy \
+             checks. Management routes keep normal admin authentication and no token record is \
+             modified. Turn it off with POST /api/management/emergency-auth/disable or restart \
+             without {FLAG}."
+        );
+        Some(until)
+    }
+
     /// Turn the mode off at once. Returns whether it was on.
     pub fn disable(&self) -> bool {
         let previous = self.active_until.swap(0, Ordering::SeqCst);
@@ -195,15 +237,17 @@ impl EmergencyAuth {
     /// Prometheus lines for the mode.
     #[must_use]
     pub fn render_prometheus(&self) -> String {
+        use std::fmt::Write as _;
         let status = self.status();
         let mut body = String::from(
             "# HELP link_assistant_emergency_auth_active 1 while the emergency any-token mode is on.\n\
              # TYPE link_assistant_emergency_auth_active gauge\n",
         );
-        body.push_str(&format!(
-            "link_assistant_emergency_auth_active {}\n",
+        let _ = writeln!(
+            body,
+            "link_assistant_emergency_auth_active {}",
             u8::from(status.active)
-        ));
+        );
         body.push_str(
             "# HELP link_assistant_emergency_auth_bypassed_total Requests admitted by the emergency any-token mode, by the check they bypassed.\n\
              # TYPE link_assistant_emergency_auth_bypassed_total counter\n",
@@ -212,9 +256,10 @@ impl EmergencyAuth {
             body.push_str("link_assistant_emergency_auth_bypassed_total 0\n");
         }
         for (reason, count) in &status.bypassed_by_reason {
-            body.push_str(&format!(
-                "link_assistant_emergency_auth_bypassed_total{{reason=\"{reason}\"}} {count}\n"
-            ));
+            let _ = writeln!(
+                body,
+                "link_assistant_emergency_auth_bypassed_total{{reason=\"{reason}\"}} {count}"
+            );
         }
         body
     }
@@ -307,7 +352,7 @@ fn infer_client(token: &str, headers: &HeaderMap) -> Option<ClientKind> {
     let agent = agent.as_deref().unwrap_or_default();
     if agent.starts_with("claude") {
         Some(ClientKind::ClaudeCode)
-    } else if agent.starts_with("codex") || token.starts_with(crate::token::CODEX_TOKEN_PREFIX) {
+    } else if agent.starts_with("codex") {
         Some(ClientKind::Codex)
     } else if agent.starts_with("opencode/") {
         Some(ClientKind::Opencode)
@@ -317,6 +362,11 @@ fn infer_client(token: &str, headers: &HeaderMap) -> Option<ClientKind> {
         Some(ClientKind::GeminiCli)
     } else if header("x-stainless-package-version").is_some() {
         Some(ClientKind::QwenCode)
+    } else if token.starts_with(crate::token::CODEX_TOKEN_PREFIX) {
+        // The `at-` prefix is only a fallback: the carrier and user agent say
+        // which client actually sent it, so an `at-` token presented to the
+        // Gemini surface is still a Gemini request.
+        Some(ClientKind::Codex)
     } else {
         None
     }

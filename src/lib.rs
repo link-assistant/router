@@ -66,6 +66,7 @@ pub mod deployment_preservation;
 pub mod doctor;
 pub mod durable_file;
 pub mod emergency_auth;
+pub mod emergency_auth_api;
 mod encoded_request_body;
 pub mod entrypoint;
 pub mod env_paths;

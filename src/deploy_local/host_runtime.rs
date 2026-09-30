@@ -129,6 +129,12 @@ impl HostRuntime for System {
             .stdin(Stdio::null())
             .stdout(log)
             .stderr(error_log);
+        // The deployed server inherits this shell. An emergency any-token
+        // switch exported for a local incident must not ride along into a
+        // deployment (issue #645): it is enabled only by an explicit flag.
+        for name in link_assistant_router::emergency_auth::ENV_VARS {
+            command.env_remove(name);
+        }
         if let Some(home) = launch.claude_home {
             command
                 .env("CLAUDE_CODE_HOME", home)

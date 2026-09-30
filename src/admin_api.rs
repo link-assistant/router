@@ -172,6 +172,7 @@ pub async fn admin_summary(State(state): State<AppState>) -> impl IntoResponse {
             "subscription": subscription,
             "login_api_enabled": state.login_manager.is_enabled(),
             "admin": admin_status,
+            "emergency_auth": state.token_manager.emergency().status(),
         })),
     )
         .into_response()

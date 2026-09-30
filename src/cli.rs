@@ -30,6 +30,7 @@ mod auth_ops;
 mod client_ops;
 mod configure;
 mod deploy_args;
+mod emergency_args;
 mod log_ops;
 mod model_ops;
 mod store_ops;
@@ -43,6 +44,7 @@ pub use self::client_ops::{
 };
 pub use self::configure::ConfigureArgs;
 pub use self::deploy_args::{ClaudeCredentials, DeployArgs, DeployMode, UsageArgs};
+pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
 pub use self::model_ops::ModelOp;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
@@ -574,6 +576,10 @@ pub struct Cli {
     )]
     pub allow_anonymous_admin: bool,
 
+    /// Emergency any-token mode switches (issue #645).
+    #[command(flatten)]
+    pub emergency: EmergencyArgs,
+
     /// Telegram Bot API token. Unset keeps the Telegram admin channel off;
     /// setting it starts an outbound long-polling bot that accepts admin
     /// commands in private chats only.
@@ -932,6 +938,7 @@ impl Cli {
                 self.admin_claim_ttl_secs,
             )?,
             allow_anonymous_admin: self.allow_anonymous_admin,
+            emergency_auth: self.emergency.config(),
             chat_admin: crate::config::chat_admin_config(
                 self.telegram_bot_token.clone(),
                 self.vk_bot_token.clone(),

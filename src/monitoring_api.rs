@@ -33,6 +33,8 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
         gauges.push(("z.ai", healthy));
     }
     body.push_str(&crate::metrics::render_subscription_health(&gauges));
+    body.push_str(&state.token_manager.diagnostics().render_prometheus());
+    body.push_str(&state.token_manager.emergency().render_prometheus());
     (
         StatusCode::OK,
         [("content-type", "text/plain; version=0.0.4")],

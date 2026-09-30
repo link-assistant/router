@@ -311,6 +311,21 @@ async fn run_server(
     request_log_max_bytes: u64,
     request_log_max_total_bytes: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // Refuse an exposed emergency any-token mode before anything is bound
+    // (issue #645).
+    let emergency_listeners: Vec<std::net::SocketAddr> = if config.listeners.is_empty() {
+        vec![config.listen_addr]
+    } else {
+        config
+            .listeners
+            .iter()
+            .map(|listener| listener.address)
+            .collect()
+    };
+    config
+        .emergency_auth
+        .check(&emergency_listeners)
+        .map_err(|error| -> AnyError { error.into() })?;
     tracing::info!("Upstream: {}", config.upstream_base_url);
     tracing::info!("Upstream provider: {:?}", config.upstream_provider);
     let (subscription_provider, subscription_home) = config.subscription_pool();
@@ -341,6 +356,7 @@ async fn run_server(
         Ok(cleared) => tracing::info!("released {cleared} stale token spend reservation(s)"),
         Err(error) => tracing::warn!("failed to release stale token reservations: {error}"),
     }
+    token_manager.emergency().start(&config.emergency_auth);
     announce_admin_access(&config, &token_manager);
     let oauth_provider = OAuthProvider::new(&config.claude_code_home);
     let metrics = Arc::new(Metrics::default());

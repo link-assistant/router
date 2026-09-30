@@ -207,6 +207,8 @@ async fn every_management_read_endpoint_requires_an_administrator() {
         "/api/management/accounts",
         "/api/management/metrics",
         "/api/management/health/subscriptions",
+        "/api/management/auth/diagnostics",
+        "/api/management/emergency-auth",
     ] {
         assert_eq!(
             status_of(proxy_router(state.clone(), dir.path()), path, None).await,

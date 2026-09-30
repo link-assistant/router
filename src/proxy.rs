@@ -143,8 +143,19 @@ fn is_operator_subscription_header(name: &str) -> bool {
 /// [`crate::subscription_health::subscription_health`] and by the
 /// `link_assistant_subscription_healthy` gauge on `/metrics` (issue #318).
 #[allow(clippy::unused_async)]
-pub async fn health() -> impl IntoResponse {
-    (StatusCode::OK, "ok")
+///
+/// The body stays a bare `ok` for every existing probe; while the emergency
+/// any-token mode is on, a warning header says so (issue #645).
+pub async fn health(State(state): State<AppState>) -> Response {
+    let mut response = (StatusCode::OK, "ok").into_response();
+    if let Some(value) = crate::emergency_auth_api::health_header(&state)
+        .and_then(|value| axum::http::HeaderValue::from_str(&value).ok())
+    {
+        response
+            .headers_mut()
+            .insert(crate::emergency_auth::HEALTH_HEADER, value);
+    }
+    response
 }
 
 /// Decide whether a request may touch the administrative endpoints.
@@ -380,6 +391,10 @@ pub(crate) fn authorize_model_for_claims(
     if policy.permits(requested) {
         Ok(policy)
     } else {
+        state
+            .token_manager
+            .diagnostics()
+            .record(crate::auth_diagnostics::reason::MODEL_POLICY, None);
         let error = crate::model_contract::ModelAccessError::new(requested, &policy);
         Err(crate::api_error::PresentedError {
             status: StatusCode::FORBIDDEN,

@@ -14,6 +14,7 @@
 //! is unchanged; the detail is served only on admin-protected endpoints.
 
 use std::collections::{BTreeMap, VecDeque};
+use std::fmt::Write as _;
 use std::sync::Mutex;
 
 use crate::token::TokenError;
@@ -158,12 +159,40 @@ impl AuthDiagnostics {
             body.push_str("link_assistant_auth_failures_total 0\n");
         }
         for (reason, count) in &snapshot.failures_by_reason {
-            body.push_str(&format!(
-                "link_assistant_auth_failures_total{{reason=\"{reason}\"}} {count}\n"
-            ));
+            let _ = writeln!(
+                body,
+                "link_assistant_auth_failures_total{{reason=\"{reason}\"}} {count}"
+            );
         }
         body
     }
+}
+
+tokio::task_local! {
+    /// Set once the current request's authentication outcome was counted.
+    static OUTCOME_COUNTED: std::cell::Cell<bool>;
+}
+
+/// Run one HTTP request with its own "outcome counted" flag.
+///
+/// Some handlers authenticate the same credential more than once (the
+/// aggregate catalog asks every provider in turn). Without a request scope a
+/// single request was counted once per call, so the bypass and failure
+/// counters overstated traffic threefold.
+pub async fn scope_request<F: std::future::Future>(request: F) -> F::Output {
+    OUTCOME_COUNTED
+        .scope(std::cell::Cell::new(false), request)
+        .await
+}
+
+/// Whether this is the first authentication outcome of the current request.
+///
+/// Outside a request scope (CLI, direct handler tests) every outcome counts.
+#[must_use]
+pub fn first_outcome_in_request() -> bool {
+    OUTCOME_COUNTED
+        .try_with(|counted| !counted.replace(true))
+        .unwrap_or(true)
 }
 
 /// The `sub` of a JWT payload, read without verifying the signature. Only a

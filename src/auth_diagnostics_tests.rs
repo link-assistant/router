@@ -55,3 +55,23 @@ fn the_token_id_is_read_only_when_it_is_a_uuid() {
     assert_eq!(unverified_subject(&token).as_deref(), Some(id.as_str()));
     assert_eq!(unverified_subject("la_sk_not.a.jwt"), None);
 }
+
+#[tokio::test]
+async fn one_request_counts_its_authentication_outcome_once() {
+    assert!(
+        first_outcome_in_request(),
+        "outside a request every call counts"
+    );
+    assert!(first_outcome_in_request());
+    let counted = scope_request(async {
+        [
+            first_outcome_in_request(),
+            first_outcome_in_request(),
+            first_outcome_in_request(),
+        ]
+    })
+    .await;
+    assert_eq!(counted, [true, false, false]);
+    let next = scope_request(async { first_outcome_in_request() }).await;
+    assert!(next, "each request starts uncounted");
+}

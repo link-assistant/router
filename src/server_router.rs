@@ -50,7 +50,18 @@ pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerK
     if listener == ListenerKind::GitHubAdapter {
         app = app.merge(github_adapter_routes(state.clone()));
     }
-    app.fallback(not_found).with_state(state)
+    app.fallback(not_found)
+        .layer(axum::middleware::from_fn(scope_auth_outcomes))
+        .with_state(state)
+}
+
+/// Count each request's authentication outcome once, however many handlers
+/// on its path re-authenticate the same credential (issue #645).
+async fn scope_auth_outcomes(
+    request: axum::extract::Request,
+    next: Next,
+) -> axum::response::Response {
+    crate::auth_diagnostics::scope_request(next.run(request)).await
 }
 
 fn neutral_routes() -> Router<AppState> {
@@ -119,6 +130,18 @@ pub(crate) fn management_routes(
         .route(
             route_template(RouteId::CredentialStatus),
             get(proxy::credential_status_endpoint),
+        )
+        .route(
+            route_template(RouteId::AuthDiagnostics),
+            get(crate::emergency_auth_api::auth_diagnostics),
+        )
+        .route(
+            route_template(RouteId::EmergencyAuthStatus),
+            get(crate::emergency_auth_api::emergency_status),
+        )
+        .route(
+            route_template(RouteId::EmergencyAuthDisable),
+            post(crate::emergency_auth_api::emergency_disable),
         );
 
     if login_enabled {
