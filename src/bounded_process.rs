@@ -1,7 +1,7 @@
 //! Deadlines and process ownership for diagnostic commands.
 
 use std::io::{Read, Result};
-use std::process::{Command, Output, Stdio};
+use std::process::{Command, ExitStatus, Output, Stdio};
 use std::time::{Duration, Instant};
 
 #[cfg(not(windows))]
@@ -10,6 +10,16 @@ struct Owned(std::process::Child);
 struct Owned(Box<dyn process_wrap::std::ChildWrapper>);
 
 impl Owned {
+    fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
+        #[cfg(not(windows))]
+        return self.0.try_wait();
+        #[cfg(windows)]
+        // Keep the job for termination, but poll its leader directly. The
+        // wrapper's polling consumes completion-port notifications that a
+        // subsequent job wait may require, even after the leader has exited.
+        self.0.inner_mut().try_wait()
+    }
+
     fn spawn(command: &mut Command) -> Result<Self> {
         #[cfg(not(windows))]
         return command.spawn().map(Self);
@@ -48,8 +58,18 @@ impl Drop for Owned {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status();
-        let _ = self.0.kill();
-        let _ = self.0.wait();
+        #[cfg(not(windows))]
+        {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+        #[cfg(windows)]
+        {
+            // Terminate the whole job, then reap the leader without waiting
+            // indefinitely for a possibly already consumed job notification.
+            let _ = self.0.start_kill();
+            let _ = self.0.inner_mut().wait();
+        }
     }
 }
 
@@ -82,7 +102,7 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
     let stderr = std::thread::spawn(move || drain(stderr));
     let end = Instant::now() + deadline;
     let status = loop {
-        if let Some(status) = child.0.try_wait()? {
+        if let Some(status) = child.try_wait()? {
             break Some(status);
         }
         if Instant::now() >= end {
@@ -110,6 +130,22 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg(windows)]
+    fn windows_fast_exit_retains_status_and_output_without_a_second_job_wait() {
+        let start = Instant::now();
+        for _ in 0..8 {
+            let result = output(
+                Command::new("cmd.exe").args(["/D", "/C", "echo complete & exit /B 17"]),
+                Duration::from_secs(1),
+            )
+            .unwrap();
+            assert_eq!(result.status.code(), Some(17));
+            assert!(String::from_utf8_lossy(&result.stdout).contains("complete"));
+        }
+        assert!(start.elapsed() < Duration::from_secs(10));
+    }
 
     #[test]
     #[cfg(windows)]
