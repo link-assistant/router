@@ -245,3 +245,51 @@ caught by a human running a real client by hand:
 Recorded replay (issue #566) covers some of the same ground without credentials,
 and is the cheaper regression net once a recording exists; it does not replace
 tier 4, because a recording cannot notice that the vendor changed its catalog.
+# Shared real-client preparation and safety
+
+Use the Router-owned entry point for offline real-client verification:
+
+```sh
+ROUTER_REAL_CLIENT_TESTS=1 rust-script scripts/verify-contracts.rs --area real-clients
+rust-script scripts/verify-contracts.rs --prepare-clients --client codex
+```
+
+Preparation applies credential-store safety before vendor execution, then
+discovers selected Claude, Codex and OpenCode versions in a temporary cleared
+environment before Cargo builds fixtures. Expected/observed values and
+preparation status are written to the verification report. Missing clients or
+an unavailable safe boundary are not proven; discovery errors and mismatched
+expectations fail preparation separately from protocol compatibility.
+Preparation-only and client-filtered runs cannot establish complete parity.
+
+Explicit caller/CI expectations are retained and checked using
+`ROUTER_REAL_CLIENT_CLAUDE_VERSION`, `ROUTER_REAL_CLIENT_CODEX_VERSION` and
+`ROUTER_REAL_CLIENT_OPENCODE_VERSION`. These are compile-time `option_env!`
+inputs; export them before Cargo, not after a fixture binary is built. The
+direct-Cargo manual fallback uses the documented baseline versions when no
+override is supplied. The shared entry point discovers the installed version
+instead of downgrading clients. Pinned and newer-release CI jobs use it too.
+
+Native macOS vendor probes are refused before version, doctor or TUI because
+temporary HOME and proxy settings do not isolate the OS Keychain. No
+environment flag bypasses this refusal. Use disposable Linux verification;
+a future disposable macOS account/VM verifier must establish OS isolation,
+unchanged keychain default/search list and no GUI prompt. The dialog's original
+responsible CLI remains unproven. Unix diagnostic/PTY cancellation terminates
+owned process groups, including descendants; this is not Windows cleanup
+proof.
+
+`anthropic-mock-contracts` proves mocked protocol contracts.
+`anthropic-entitlements` separately runs live subscription usage and real
+mixed-provider coverage. The mixed test needs
+`ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON`, `ROUTER_LIVE_MIXED_URL`,
+`ROUTER_LIVE_MIXED_TOKEN` and `ROUTER_LIVE_MIXED_INFERENCE=1` in a safe
+environment. Supply an independently provisioned endpoint and bound Claude
+token; the verifier never copies OAuth or changes a primary deployment.
+The inference flag explicitly enables potentially paid requests. Missing
+prerequisites emit skips and keep live status not proven and parity false.
+Only catalog union, actual picker entries, exact native response identity and
+a successful response from each provider can establish that mixed live claim.
+
+See [the complete requirement matrix](plans/issue-642.md) for the distinction
+between local/mock evidence and outstanding acceptance runs.

@@ -10,7 +10,9 @@ const PRIVACY_ENVIRONMENT: [&str; 6] = [
 ];
 
 fn doctor_output(home: &Path, environment: &[(&str, &str)]) -> String {
+    link_assistant_router::verification_client::safety().expect("safe doctor boundary");
     let mut command = Command::new(CLAUDE.executable);
+    link_assistant_router::verification_client::environment(&mut command, home);
     command
         .arg("doctor")
         .env("HOME", home)
@@ -28,7 +30,9 @@ fn doctor_output(home: &Path, environment: &[(&str, &str)]) -> String {
     for (key, value) in environment {
         command.env(key, value);
     }
-    let output = command.output().expect("run Claude doctor offline");
+    let output =
+        link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(30))
+            .expect("bounded Claude doctor offline");
     assert!(
         output.status.success(),
         "Claude doctor failed; stdout: {}; stderr: {}",

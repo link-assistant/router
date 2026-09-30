@@ -25,8 +25,20 @@ fn deploy(
     flag: Option<ClaudeCredentials>,
     home: &Path,
 ) -> (ExitCode, Option<ClaudeCredentials>) {
+    deploy_accepting(runner, root, image, flag, home, false)
+}
+
+fn deploy_accepting(
+    runner: &FakeRunner,
+    root: &Path,
+    image: &str,
+    flag: Option<ClaudeCredentials>,
+    home: &Path,
+    accept_loss: bool,
+) -> (ExitCode, Option<ClaudeCredentials>) {
     let mut args = deploy_args();
     args.claude_credentials = flag;
+    args.accept_access_loss = accept_loss;
     let asked = std::cell::Cell::new(None);
     let code = run_assessed(
         &args,
@@ -151,12 +163,13 @@ fn switching_mode_replaces_the_backend_instead_of_claiming_convergence() {
         Some("/home/operator/.claude")
     );
 
-    let (code, _) = deploy(
+    let (code, _) = deploy_accepting(
         &runner,
         root.path(),
         "router:1.0.0",
         Some(ClaudeCredentials::Isolated),
         &home,
+        true,
     );
     assert_eq!(code, ExitCode::SUCCESS);
     assert_eq!(backend_launches(&runner).len(), 3);

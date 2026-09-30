@@ -446,9 +446,15 @@ fn leaving_a_host_deployment_without_containers() {
     assert_eq!(code, ExitCode::SUCCESS);
     assert_eq!(host.world().processes.len(), 1);
 
-    // The host Router stops, then the container deployment is created.
+    // A new container cannot claim the host's Keychain access. Refuse first.
     let code = run(&runner, &host, root.path(), |args| {
         args.mode = Some(DeployMode::Container);
+    });
+    assert_ne!(code, ExitCode::SUCCESS);
+    assert_eq!(host.world().processes.len(), 1);
+    let code = run(&runner, &host, root.path(), |args| {
+        args.mode = Some(DeployMode::Container);
+        args.accept_access_loss = true;
     });
     assert_eq!(code, ExitCode::SUCCESS);
     assert!(host.world().processes.is_empty());

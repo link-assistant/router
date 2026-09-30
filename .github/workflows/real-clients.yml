@@ -37,6 +37,9 @@ jobs:
         with:
           toolchain: 1.98.1
 
+      - name: Install Router verification runner
+        run: cargo install rust-script --version 0.36.0 --locked
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -52,16 +55,14 @@ jobs:
             @google/gemini-cli@0.59.0 \
             @qwen-code/qwen-code@0.23.1 \
             opencode-ai@1.18.29
-          claude --version | grep -F '2.1.265'
-          codex --version | grep -F '0.154.0'
-          gemini --version | grep -F '0.59.0'
-          qwen --version | grep -F '0.23.1'
-          opencode --version | grep -Fx '1.18.29'
 
       - name: Capture native requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1
+          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
+          ROUTER_REAL_CLIENT_CODEX_VERSION: '0.154.0'
+          ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.18.29'
+        run: rust-script scripts/verify-contracts.rs --area real-clients
 
       # The credentialed tier is NOT run here. This workflow triggers on
       # `pull_request`, where a fork has no secrets, so a live tier attached to
@@ -96,6 +97,9 @@ jobs:
         with:
           toolchain: 1.98.1
 
+      - name: Install Router verification runner
+        run: cargo install rust-script --version 0.36.0 --locked
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -109,13 +113,12 @@ jobs:
         run: |
           version="$(npm view "@anthropic-ai/claude-code@${CLAUDE_TAG}" version)"
           npm install --global "@anthropic-ai/claude-code@${version}"
-          claude --version | grep -F "${version}"
           echo "ROUTER_REAL_CLIENT_CLAUDE_VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Capture native Claude requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1 claude
+        run: rust-script scripts/verify-contracts.rs --area real-clients --client claude
 
   # Codex 0.157 made TUI startup depend on workspace discovery through
   # `wham/accounts/check` (issue #612), which the pinned 0.154.0 capture never
@@ -139,6 +142,9 @@ jobs:
         with:
           toolchain: 1.98.1
 
+      - name: Install Router verification runner
+        run: cargo install rust-script --version 0.36.0 --locked
+
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -152,10 +158,9 @@ jobs:
         run: |
           version="$(npm view "@openai/codex@${CODEX_TAG}" version)"
           npm install --global "@openai/codex@${version}"
-          codex --version | grep -F "${version}"
           echo "ROUTER_REAL_CLIENT_CODEX_VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Capture native Codex requests against the offline mock
         env:
           ROUTER_REAL_CLIENT_TESTS: '1'
-        run: cargo test --locked --test real_clients_test -- --nocapture --test-threads=1 codex
+        run: rust-script scripts/verify-contracts.rs --area real-clients --client codex

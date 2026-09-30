@@ -141,6 +141,15 @@ pub fn opt_in(tier: Tier, variable: &str) -> bool {
     if !enabled {
         unavailable(tier, &current_test(), &format!("{variable}=1 is not set"));
     }
+    if enabled
+        && (variable == "ROUTER_REAL_CLIENT_TESTS"
+            || variable == "ROUTER_HOST_CLI_TESTS"
+            || variable == "ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST")
+        && let Err(reason) = link_assistant_router::verification_client::safety()
+    {
+        unavailable(tier, &current_test(), reason);
+        return false;
+    }
     enabled
 }
 

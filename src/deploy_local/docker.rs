@@ -31,7 +31,19 @@ impl CommandRunner for ProcessRunner {
     ) -> Result<CommandOutput, String> {
         let mut command = Command::new("docker");
         command.args(arguments).envs(environment.iter().copied());
-        let output = command.output().map_err(|error| match error.kind() {
+        let seconds = if arguments
+            .first()
+            .is_some_and(|arg| arg == "build" || arg == "pull")
+        {
+            900
+        } else {
+            30
+        };
+        let output = link_assistant_router::bounded_process::output(
+            &mut command,
+            std::time::Duration::from_secs(seconds),
+        )
+        .map_err(|error| match error.kind() {
             std::io::ErrorKind::NotFound => "Docker is not installed".to_string(),
             _ => error.to_string(),
         })?;
@@ -72,7 +84,7 @@ fn compact(bytes: &[u8]) -> String {
 }
 
 impl Docker {
-    fn command(
+    pub(super) fn command(
         &self,
         arguments: &[String],
         environment: &[(&str, &str)],
@@ -131,7 +143,7 @@ impl Docker {
         ])
     }
 
-    fn mount_source(&self, name: &str, destination: &str) -> Option<String> {
+    pub(super) fn mount_source(&self, name: &str, destination: &str) -> Option<String> {
         self.output(&[
             "inspect".into(),
             "--format".into(),
@@ -274,7 +286,7 @@ impl Docker {
 
     pub(super) fn health(&self, from: &str, origin: &str) -> bool {
         let script = format!(
-            "const r=await fetch({origin:?}+'/api/health');process.exit(r.status===200?0:1)"
+            "const r=await fetch({origin:?}+'/api/health',{{signal:AbortSignal.timeout(5000)}});process.exit(r.status===200?0:1)"
         );
         self.exec(from, &["bun", "-e", &script]).is_ok()
     }

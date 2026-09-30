@@ -40,7 +40,21 @@ use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 use std::process::exit;
+
+/// A recovery of an existing release commit keeps the same version identity.
+fn recovery_skip_bump(has_fragments: bool, tagged_head: bool) -> Result<bool, &'static str> {
+    if tagged_head {
+        Ok(true)
+    } else if has_fragments {
+        Ok(false)
+    } else {
+        Err(
+            "main has no pending release fragment and HEAD is not the current release tag; refusing to publish changed source under an existing version",
+        )
+    }
+}
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -249,6 +263,34 @@ fn main() {
         .map(|v| v == "true")
         .unwrap_or(false);
 
+    if env::var("RECOVER_DELIVERY").is_ok_and(|value| value == "true") {
+        let version = get_current_version(&cargo_toml).unwrap_or_else(|error| {
+            eprintln!("{error}");
+            exit(1)
+        });
+        let head = Command::new("git").args(["rev-parse", "HEAD"]).output();
+        let tag = Command::new("git")
+            .args(["rev-parse", &format!("v{version}^{{commit}}")])
+            .output();
+        let tagged_head = match (head, tag) {
+            (Ok(head), Ok(tag)) => {
+                head.status.success() && tag.status.success() && head.stdout == tag.stdout
+            }
+            _ => false,
+        };
+        match recovery_skip_bump(has_fragments, tagged_head) {
+            Ok(skip) => {
+                set_output("should_release", "true");
+                set_output("skip_bump", if skip { "true" } else { "false" });
+                return;
+            }
+            Err(reason) => {
+                eprintln!("Error: {reason}");
+                exit(1);
+            }
+        }
+    }
+
     if !has_fragments {
         // No fragments - check if current version is published on crates.io
         let crate_name = match get_crate_name(&cargo_toml) {
@@ -308,5 +350,17 @@ fn main() {
         println!("Found changelog fragments, proceeding with release");
         set_output("should_release", "true");
         set_output("skip_bump", "false");
+    }
+}
+
+#[cfg(test)]
+mod recovery_tests {
+    use super::*;
+    #[test]
+    fn recovery_preserves_partial_identity_and_requires_a_new_trigger_for_changed_source() {
+        assert_eq!(recovery_skip_bump(false, true), Ok(true));
+        assert_eq!(recovery_skip_bump(true, true), Ok(true));
+        assert_eq!(recovery_skip_bump(true, false), Ok(false));
+        assert!(recovery_skip_bump(false, false).is_err());
     }
 }

@@ -30,13 +30,49 @@ impl Coordinator<'_> {
         let _lock = self.acquire_lock()?;
         let probe = plan.secret == SecretMatch::Matches;
         let serving = plan.from.is_some() || plan.record_serving;
+        let records: Vec<link_assistant_router::storage::TokenRecord> = if serving {
+            let rendered = if let Some(active) = &plan.from {
+                self.docker.token_inventory(&active.backend)?
+            } else {
+                runtime.token_inventory(&plan.executable, &self.root.join("data"))?
+            };
+            serde_json::from_str::<Vec<link_assistant_router::storage::TokenRecord>>(&rendered)
+                .map_err(|_| "old token inventory is invalid")?
+                .into_iter()
+                .filter(|record| {
+                    link_assistant_router::deployment_preservation::usable(
+                        record,
+                        chrono::Utc::now().timestamp(),
+                    )
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+        if records.len() > 512 {
+            return Err(
+                "issued-token catalog inventory exceeds bounded verification budget".into(),
+            );
+        }
+        let previous = if let Some(active) = &plan.from {
+            self.preservation_catalogs(&active.backend, &records)?
+        } else if let Some(record) = plan.record.as_ref().filter(|_| plan.record_serving) {
+            host_catalogs(self, runtime, record.port, &records)?
+        } else {
+            Vec::new()
+        };
         if serving {
             // Nothing changes until a host Router with this data and secret
             // has proven it accepts the deployment's tokens.
             let port = runtime.free_port()?;
             let log = self.state.directory().join("host-candidate.log");
             let pid = self.launch(runtime, &plan.executable, port, &log)?;
-            let validated = self.validate_host(runtime, plan, pid, port, probe);
+            let validated = self
+                .validate_host(runtime, plan, pid, port, probe)
+                .and_then(|()| {
+                    let candidate = host_catalogs(self, runtime, port, &records)?;
+                    link_assistant_router::deployment_preservation::compare(&previous, &candidate)
+                });
             let stopped = runtime.terminate(pid);
             validated.map_err(|error| {
                 format!(
@@ -103,12 +139,21 @@ impl Coordinator<'_> {
         port: u16,
         log: &Path,
     ) -> Result<u32, String> {
+        let source = self
+            .state
+            .active()?
+            .and_then(|active| self.docker.mount_source(&active.backend, "/data/claude"))
+            .map(std::path::PathBuf::from);
+        // A file-backed source remains the same directory and lock owner.
+        // Empty isolated sources permit the host's additional native login.
+        let source = source.filter(|path| path.join(".credentials.json").is_file());
         runtime.spawn(&Launch {
             executable,
             port,
             data_dir: &self.root.join("data"),
             token_secret: self.token_secret,
             log,
+            claude_home: source.as_deref(),
         })
     }
 
@@ -258,13 +303,48 @@ impl Coordinator<'_> {
     ) -> Result<(), String> {
         let _lock = self.acquire_lock()?;
         let Some(backend) = &record.previous_backend else {
+            if serving && !self.accept_access_loss {
+                return Err("host deployment has no retained container candidate; refusing to stop it without an access-preserving candidate".into());
+            }
             if serving {
+                println!(
+                    "{}",
+                    serde_json::json!({"schema":"link-assistant-router/preservation/v1","status":"loss-accepted","reason":"host credential-store access cannot be proven in a new container","data_restore_proven":false})
+                );
                 runtime.terminate(record.pid)?;
             }
             return self.state.clear_host();
         };
+        let records = if serving {
+            let rendered =
+                runtime.token_inventory(Path::new(&record.executable), &self.root.join("data"))?;
+            serde_json::from_str::<Vec<link_assistant_router::storage::TokenRecord>>(&rendered)
+                .map_err(|_| "host token inventory is invalid")?
+                .into_iter()
+                .filter(|record| {
+                    link_assistant_router::deployment_preservation::usable(
+                        record,
+                        chrono::Utc::now().timestamp(),
+                    )
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        if records.len() > 512 {
+            return Err(
+                "issued-token catalog inventory exceeds bounded verification budget".into(),
+            );
+        }
+        let previous = host_catalogs(self, runtime, record.port, &records)?;
         self.docker.start(backend)?;
         self.wait_healthy(backend, "http://127.0.0.1:8080")?;
+        let candidate = self.preservation_catalogs(backend, &records)?;
+        link_assistant_router::deployment_preservation::compare(&previous, &candidate).map_err(
+            |error| {
+                format!("container rollback candidate loses access: {error}; host remains serving")
+            },
+        )?;
         if serving {
             runtime.terminate(record.pid)?;
         }
@@ -296,4 +376,27 @@ impl Coordinator<'_> {
             ..record.clone()
         })
     }
+}
+
+fn host_catalogs(
+    coordinator: &Coordinator<'_>,
+    runtime: &dyn HostRuntime,
+    port: u16,
+    records: &[link_assistant_router::storage::TokenRecord],
+) -> Result<Vec<link_assistant_router::deployment_preservation::Catalog>, String> {
+    records
+        .iter()
+        .map(|record| {
+            let token = link_assistant_router::deployment_preservation::probe_token(
+                record,
+                coordinator.token_secret,
+            )?;
+            let models = runtime.catalog(port, &token)?;
+            Ok(link_assistant_router::deployment_preservation::Catalog {
+                token_id: record.id.clone(),
+                client_kind: record.client_kind.clone().expect("usable binding"),
+                models,
+            })
+        })
+        .collect()
 }

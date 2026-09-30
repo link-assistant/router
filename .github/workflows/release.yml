@@ -16,6 +16,7 @@ on:
         options:
           - instant
           - changelog-pr
+          - recover
       bump_type:
         description: 'Version bump type'
         required: true
@@ -289,6 +290,9 @@ jobs:
           rust-script --test scripts/check-release-provenance.rs
           rust-script --test scripts/check-terminology.rs
           rust-script --test scripts/create-github-release.rs
+          rust-script --test scripts/check-delivery.rs
+          rust-script --test scripts/upload-release-assets.rs
+          rust-script --test scripts/check-release-needed.rs
           rust-script scripts/check-release-workflow.rs
 
   # === DEPENDENCY AUDIT ===
@@ -615,7 +619,7 @@ jobs:
     # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
     if: |
       always() && !cancelled() &&
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'recover')) &&
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
@@ -647,6 +651,7 @@ jobs:
         id: check
         env:
           HAS_FRAGMENTS: ${{ steps.bump_type.outputs.has_fragments }}
+          RECOVER_DELIVERY: ${{ github.event.inputs.release_mode == 'recover' }}
         run: rust-script scripts/check-release-needed.rs
 
       - name: Collect changelog and bump version
@@ -949,14 +954,29 @@ jobs:
             ghcr_runtime+=("ghcr.io/${{ github.repository }}@sha256:$hash")
             dockerhub_runtime+=("${{ env.DOCKERHUB_IMAGE }}@sha256:$hash")
           done
-          docker buildx imagetools create \
-            -t "ghcr.io/${{ github.repository }}:latest" \
-            -t "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
-            "${ghcr_runtime[@]}"
-          docker buildx imagetools create \
-            -t "${{ env.DOCKERHUB_IMAGE }}:latest" \
-            -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
-            "${dockerhub_runtime[@]}"
+          publish_manifest() {
+            registry="$1"
+            shift
+            reference="${registry}:${RELEASE_VERSION}"
+            if docker buildx imagetools inspect "$reference" --format '{{json .Manifest}}' > /tmp/existing-manifest.json 2>/tmp/manifest-error.log; then
+              rust-script scripts/check-release-provenance.rs \
+                --release-version "$RELEASE_VERSION" --expected-commit "$RELEASE_COMMIT" \
+                --repository "${{ github.repository }}" --image "$reference"
+              digest="$(jq -er '.digest | select(startswith("sha256:"))' /tmp/existing-manifest.json)"
+              # Retain the immutable version identity. Only latest is movable.
+              docker buildx imagetools create -t "${registry}:latest" "${registry}@${digest}"
+            else
+              # A network/auth failure cannot authorize replacing a version.
+              grep -Eqi 'manifest unknown|not found' /tmp/manifest-error.log || {
+                cat /tmp/manifest-error.log >&2
+                return 1
+              }
+              docker buildx imagetools create \
+                -t "${registry}:latest" -t "$reference" "$@"
+            fi
+          }
+          publish_manifest "ghcr.io/${{ github.repository }}" "${ghcr_runtime[@]}"
+          publish_manifest "${{ env.DOCKERHUB_IMAGE }}" "${dockerhub_runtime[@]}"
 
       - name: Verify GHCR package is publicly pullable
         env:
@@ -1168,7 +1188,7 @@ jobs:
       - name: Upload assets to the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v${RELEASE_VERSION}" dist/* --clobber
+        run: rust-script scripts/upload-release-assets.rs
 
       - name: Verify attestations and release asset identity
         shell: bash

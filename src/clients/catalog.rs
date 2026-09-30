@@ -282,6 +282,16 @@ pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> 
     {
         return None;
     }
+    // Prefer the flagship only when this token's live healthy catalog offers
+    // it. Newer Flash release dates do not change a fresh profile's default.
+    // A withdrawn/unhealthy flagship is absent here, so the deterministic
+    // provider-recency fallback below remains available (#634).
+    if let Some(flagship) = catalog
+        .iter()
+        .find(|model| model.owned_by == super::ZAI_MODEL_OWNER && model.id == "glm-5.3")
+    {
+        return Some(flagship.id.clone());
+    }
     // Catalog order is the provider's listing, not a ranking. Taking the first
     // entry pinned whichever model the vendor happened to list first — in
     // practice the *oldest* of ten, while the picker's last row was the newest

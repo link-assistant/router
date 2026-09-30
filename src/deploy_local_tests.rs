@@ -10,6 +10,9 @@ use super::{
     Coordinator, Existing, LABEL_KEY, LEGACY, NETWORK, RELAY, SPEC_VERSION, run_with_docker,
 };
 
+#[path = "deploy_local_preservation_tests.rs"]
+mod preservation_tests;
+
 #[path = "deploy_local_claude_tests.rs"]
 mod claude_tests;
 #[path = "deploy_local_failure_tests.rs"]
@@ -51,6 +54,9 @@ struct World {
     /// Replaces the candidate's verdict on a token probe.
     probe_status: Option<u16>,
     probes: usize,
+    catalog_models: Vec<String>,
+    candidate_catalog_models: Option<Vec<String>>,
+    catalog_baseline_container: Option<String>,
 }
 
 const DEFAULT_SECRET: &str = "integration-test-signing-secret";
@@ -73,6 +79,9 @@ impl Default for World {
             secrets: HashMap::new(),
             probe_status: None,
             probes: 0,
+            catalog_models: vec!["anthropic/claude-sonnet".into(), "z.ai/glm-5.3".into()],
+            candidate_catalog_models: None,
+            catalog_baseline_container: None,
         }
     }
 }
@@ -396,6 +405,24 @@ fn exec(
     arguments: &[String],
     environment: &[(&str, &str)],
 ) -> Result<CommandOutput, String> {
+    if environment
+        .iter()
+        .any(|(key, _)| *key == "ROUTER_PRESERVATION_TOKEN")
+    {
+        let candidate = arguments.iter().any(|arg| {
+            arg.starts_with("router-deploy-backend-")
+                && world.catalog_baseline_container.as_ref() != Some(arg)
+        });
+        let models = if candidate {
+            world
+                .candidate_catalog_models
+                .as_ref()
+                .unwrap_or(&world.catalog_models)
+        } else {
+            &world.catalog_models
+        };
+        return FakeRunner::ok(serde_json::to_string(models).unwrap());
+    }
     if let Some((_, token)) = environment
         .iter()
         .find(|(key, _)| *key == super::secret::PROBE_ENV)
@@ -481,17 +508,21 @@ fn coordinator<'a>(
         port,
         token_secret: "integration-test-signing-secret",
         force,
+        accept_access_loss: false,
         claude: super::Provision::Isolated,
     }
 }
 
-fn deploy_args() -> DeployArgs {
+pub(super) fn deploy_args() -> DeployArgs {
     DeployArgs {
+        staging: None,
+        verify: false,
         server: None,
         status: false,
         down: false,
         yes: false,
         force_update: false,
+        accept_access_loss: false,
         port: 8080,
         public_port: None,
         image: None,
@@ -514,7 +545,16 @@ fn managed_container(root: &Path, image: &str, image_id: &str) -> Container {
             (format!("{LABEL_KEY}.spec"), SPEC_VERSION.to_string()),
             (format!("{LABEL_KEY}.image-ref"), image.to_string()),
         ]),
-        mounts: HashMap::new(),
+        mounts: HashMap::from([
+            (
+                "/data/claude".into(),
+                root.join("credentials").display().to_string(),
+            ),
+            (
+                "/data/router".into(),
+                root.join("data").display().to_string(),
+            ),
+        ]),
     }
 }
 

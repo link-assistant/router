@@ -259,11 +259,14 @@ mod tests {
 
     fn args() -> DeployArgs {
         DeployArgs {
+            staging: None,
+            verify: false,
             server: Some("deploy@example.test".into()),
             status: false,
             down: false,
             yes: false,
             force_update: false,
+            accept_access_loss: false,
             port: 8080,
             public_port: None,
             image: None,

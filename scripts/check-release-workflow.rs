@@ -39,7 +39,7 @@ fn main() {
         "subject-path: dist/*",
         "provenance: mode=max",
         "sbom: true",
-        "gh release upload",
+        "rust-script scripts/upload-release-assets.rs",
         "gh attestation verify",
         "Verify tag and package version",
         "gh release view \"v${RELEASE_VERSION}\"",

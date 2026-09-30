@@ -470,8 +470,8 @@ fn the_gateway_model_is_the_providers_current_model_not_its_first_listed() {
         .collect();
     assert_eq!(
         claude_gateway_model(&catalog, None).as_deref(),
-        Some("glm-5.3-flash"),
-        "the newest advertised model must be the pin, not the first listed"
+        Some("glm-5.3"),
+        "a fresh z.ai profile prefers the authorized flagship over a newer Flash row"
     );
 
     // Position must not decide it: the same catalog shuffled resolves the same.
@@ -479,13 +479,13 @@ fn the_gateway_model_is_the_providers_current_model_not_its_first_listed() {
     shuffled.reverse();
     assert_eq!(
         claude_gateway_model(&shuffled, None).as_deref(),
-        Some("glm-5.3-flash"),
+        Some("glm-5.3"),
         "reversing the catalog must not change the resolved model"
     );
     shuffled.rotate_left(4);
     assert_eq!(
         claude_gateway_model(&shuffled, None).as_deref(),
-        Some("glm-5.3-flash"),
+        Some("glm-5.3"),
         "rotating the catalog must not change the resolved model"
     );
 

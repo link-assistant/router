@@ -799,6 +799,17 @@ impl ClientManager {
         let root = document.as_object_mut().ok_or_else(|| {
             ClientError::message(format!("{} must contain a JSON object", path.display()))
         })?;
+        let saved_model = root
+            .get("model")
+            .and_then(Value::as_str)
+            .map(str::to_string);
+        if let Some(saved) = &saved_model
+            && !catalog::model_is_authorized(ClientKind::ClaudeCode, models, saved)
+        {
+            return Err(ClientError::message(
+                "the saved Claude model is no longer authorized; choose an advertised model explicitly",
+            ));
+        }
         let env = root.entry("env").or_insert_with(|| json!({}));
         let env = env.as_object_mut().ok_or_else(|| {
             ClientError::message(format!("{}.env must be a JSON object", path.display()))
@@ -837,6 +848,20 @@ impl ClientManager {
             .map(str::to_string)
             .filter(|previous| previous != base_url);
         env.insert(CLAUDE_BASE_ENV.into(), Value::String(base_url.into()));
+        // Only replace a model value the ownership marker still identifies as
+        // ours. A /model selection or an edited environment belongs to the user.
+        let user_model_keys: Vec<_> = CLAUDE_MODEL_ENV
+            .into_iter()
+            .filter(|key| {
+                env.get(*key).is_some_and(|value| {
+                    !existing_marker.as_ref().is_some_and(|(_, _, entries)| {
+                        entries.iter().any(|(recorded, managed, _)| {
+                            recorded == key && matches!(managed, Some(previous) if value.as_str() == Some(previous.as_str()))
+                        })
+                    })
+                })
+            })
+            .collect();
         let mut managed_gateway_env = Vec::new();
         let mut manage = |key: &str, managed: Option<&str>| {
             let previous = existing_marker
@@ -860,11 +885,14 @@ impl ClientManager {
         manage("ANTHROPIC_API_KEY", None);
         let gateway_model = claude_gateway_model(models, None);
         for key in CLAUDE_MODEL_ENV {
+            if user_model_keys.contains(&key) {
+                continue;
+            }
             let managed = CLAUDE_GATEWAY_TARGET_ENV
                 .contains(&key)
                 .then_some(gateway_model.as_deref())
                 .flatten();
-            manage(key, managed);
+            manage(key, if saved_model.is_some() { None } else { managed });
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
