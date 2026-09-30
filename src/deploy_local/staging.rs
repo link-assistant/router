@@ -81,22 +81,32 @@ fn objects(docker: &Docker, owner: &str) -> Result<Vec<String>, String> {
         .collect())
 }
 
-fn free_disk(root: &Path) -> Result<(), String> {
+fn free_disk(root: &Path) -> Result<u64, String> {
     #[cfg(not(windows))]
     let mut command = Command::new("df");
     #[cfg(not(windows))]
     command.args(["-Pk"]).arg(root);
     #[cfg(windows)]
     let mut command = {
+        // Canonical Windows paths use a verbatim prefix. Resolve the volume
+        // directly instead of asking Get-Item to interpret that namespace.
+        use std::path::{Component, Prefix};
+        let Some(Component::Prefix(prefix)) = root.components().next() else {
+            return Err("staging disk volume is unverifiable".into());
+        };
+        let letter = match prefix.kind() {
+            Prefix::Disk(letter) | Prefix::VerbatimDisk(letter) => letter,
+            _ => return Err("staging disk volume is unverifiable".into()),
+        };
         let mut command = Command::new("powershell");
         command
             .args([
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                "[UInt64](Get-Item -LiteralPath $env:ROUTER_STAGE_ROOT).PSDrive.Free",
+                "[UInt64](Get-PSDrive -Name $env:ROUTER_STAGE_DRIVE -PSProvider FileSystem -ErrorAction Stop).Free",
             ])
-            .env("ROUTER_STAGE_ROOT", root);
+            .env("ROUTER_STAGE_DRIVE", char::from(letter).to_string());
         command
     };
     let output =
@@ -114,10 +124,17 @@ fn free_disk(root: &Path) -> Result<(), String> {
         .parse::<u64>()
         .ok()
         .map(|bytes| bytes / 1024);
-    if !output.status.success() || free.is_none_or(|available| available < 1024 * 1024) {
-        return Err("staging requires at least 1 GiB free disk; disk availability was insufficient or unverifiable".into());
+    if std::env::var_os("ROUTER_DEPLOY_TRACE").as_deref() == Some(std::ffi::OsStr::new("1")) {
+        eprintln!(
+            "staging disk probe: status={}, available_kib={free:?}, stdout_bytes={}",
+            output.status,
+            output.stdout.len()
+        );
     }
-    Ok(())
+    if !output.status.success() {
+        return Err("staging disk probe failed; capacity is unverifiable".into());
+    }
+    free.ok_or_else(|| "staging disk probe returned invalid capacity".into())
 }
 
 fn arguments(name: &str, owner: &str, root: &Path, image: &str, port: u16) -> Vec<String> {
@@ -227,6 +244,16 @@ fn execute(
     requested_root: &Path,
     image: &str,
     docker: &Docker,
+) -> Result<Value, String> {
+    execute_with_disk(args, requested_root, image, docker, free_disk)
+}
+
+fn execute_with_disk(
+    args: &DeployArgs,
+    requested_root: &Path,
+    image: &str,
+    docker: &Docker,
+    available_disk: impl Fn(&Path) -> Result<u64, String>,
 ) -> Result<Value, String> {
     let name = namespace(args.staging.as_deref().expect("staging dispatch"))?;
     link_assistant_router::deploy::immutable_ref(image)?;
@@ -340,7 +367,9 @@ fn execute(
         );
     }
     if present.is_empty() && !read_only {
-        free_disk(&root)?;
+        if available_disk(&root)? < 1024 * 1024 {
+            return Err("staging requires at least 1 GiB free disk".into());
+        }
         let listeners = docker.listeners_on(args.port)?;
         if !listeners.is_empty() || TcpListener::bind(("127.0.0.1", args.port)).is_err() {
             return Err("staging port has an active listener; choose a separate --port".into());
@@ -471,6 +500,14 @@ pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn canonical_disk_probe_returns_capacity_without_requiring_spare_space() {
+        let root = tempfile::tempdir().unwrap();
+        let canonical = root.path().canonicalize().unwrap();
+        let result = free_disk(&canonical);
+        assert!(result.is_ok(), "{result:?}");
+    }
+
     #[test]
     fn namespaces_cannot_name_primary_or_escape_their_root() {
         assert_eq!(namespace("review-643").unwrap(), "router-stage-review-643");

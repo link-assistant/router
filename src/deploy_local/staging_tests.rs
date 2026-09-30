@@ -97,6 +97,39 @@ fn args() -> DeployArgs {
         .expect("available fixture port");
     args
 }
+
+fn execute(args: &DeployArgs, root: &Path, image: &str, docker: &Docker) -> Result<Value, String> {
+    // Resource fixtures must not depend on space occupied by CI compilation.
+    execute_with_disk(args, root, image, docker, |_| Ok(2 * 1024 * 1024))
+}
+
+#[test]
+fn insufficient_or_unverifiable_capacity_refuses_before_candidate_resources() {
+    for capacity in [Ok(1024 * 1024 - 1), Err("capacity unavailable".into())] {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("stage");
+        let runner = Runner::default();
+        let docker = Docker::with_runner(runner.clone());
+        let error = execute_with_disk(&args(), &root, "router:1.2.3", &docker, |_| {
+            capacity.clone()
+        })
+        .unwrap_err();
+        assert!(
+            error.contains("disk") || error.contains("capacity"),
+            "{error}"
+        );
+        assert!(!root.join("data").exists());
+        let state = runner.0.lock().unwrap();
+        assert!(!state.network && !state.container);
+        assert!(
+            state
+                .commands
+                .iter()
+                .all(|args| args[0] == "info" || args[0] == "ps")
+        );
+        drop(state);
+    }
+}
 #[test]
 fn creation_status_and_cleanup_touch_only_journal_owned_resources() {
     let parent = tempfile::tempdir().unwrap();

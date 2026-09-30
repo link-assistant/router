@@ -458,7 +458,10 @@ jobs:
 
       - name: Run Windows library and binary tests
         if: runner.os == 'Windows'
-        run: cargo test --locked --all-features --verbose --lib --bins -- --test-threads=1
+        env:
+          ROUTER_DEPLOY_TRACE: '1'
+          RUST_BACKTRACE: '1'
+        run: cargo test --locked --all-features --verbose --lib --bins -- --test-threads=1 --nocapture
 
       - name: Run Windows integration tests with bounded targets
         if: runner.os == 'Windows'
