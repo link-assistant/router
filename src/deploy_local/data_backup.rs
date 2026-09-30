@@ -134,11 +134,19 @@ fn copy_tree(
             )?;
         }
     } else if metadata.is_file() {
+        // Keep manifest paths portable, including when Windows traversal uses
+        // backslashes. Refuse names that cannot be represented without loss.
+        let key = relative
+            .iter()
+            .map(|part| {
+                part.to_str()
+                    .ok_or_else(|| invalid("checkpoint path is not valid Unicode"))
+            })
+            .collect::<io::Result<Vec<_>>>()?
+            .join("/");
         let bytes = read_bounded(source, remaining)?;
         write(&destination.join(relative), &bytes)?;
-        manifest
-            .files
-            .insert(relative.to_string_lossy().into_owned(), hex(&bytes));
+        manifest.files.insert(key, hex(&bytes));
     } else {
         return Err(invalid("checkpoint refuses a special file"));
     }

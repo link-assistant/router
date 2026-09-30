@@ -32,8 +32,16 @@ reproduction in restore-temp-alias.py. Black-box CLI tests additionally caught t
 documented staging --json flag missing from the parser. Coverage improvements use
 ownership, preservation and CLI refusal tests; the existing coverage gate remains.
 
+The fb7eb6b CI run passed Ubuntu/macOS, all real-client jobs and the unchanged
+coverage gate (85.427764%, within its existing tolerance of 85.433542%). Windows
+passed both bounded process tests and all 1,787 library tests, then reproduced
+native backslashes in a checkpoint manifest at windows-36730039100.log:5554.
+Checkpoint keys now use slash-separated components; a native nested-path
+capture/restore regression verifies the schema on each platform. The full
+65-requirement alternatives/implementation/evidence matrix is committed with it.
+
 Completion conditions for steps 14–16: merge any new default-branch commits,
-review the final PR diff and requirements, commit the measured coverage ratchet,
+review the final PR diff and requirements, preserve the coverage ratchet,
 verify every available check against the final pushed SHA and timestamp, update
 the PR's validation and evidence limits, and mark PR 643 ready with a clean tree.
 Live acceptance prerequisites remain documented in docs/plans/issue-642.md; an

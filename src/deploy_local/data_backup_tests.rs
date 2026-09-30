@@ -116,6 +116,26 @@ fn replacement_with_an_empty_inventory_cannot_revive_a_text_projection() {
 }
 
 #[test]
+fn nested_checkpoint_paths_use_portable_manifest_keys_and_restore() {
+    let root = root();
+    let relative = Path::new("requests").join("one").join("requests.lino");
+    let snapshot = capture(root.path(), &[], "secret").unwrap();
+    let manifest: Manifest =
+        serde_json::from_slice(&fs::read(snapshot.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(
+        manifest.files.get("requests/one/requests.lino"),
+        Some(&hex(b"old history"))
+    );
+    assert!(manifest.files.keys().all(|key| !key.contains('\\')));
+    fs::remove_file(root.path().join("data").join(&relative)).unwrap();
+    restore(root.path(), &snapshot, "secret", false).unwrap();
+    assert_eq!(
+        fs::read(root.path().join("data").join(relative)).unwrap(),
+        b"old history"
+    );
+}
+
+#[test]
 fn unsafe_manifest_paths_and_missing_tokens_refuse_before_writes() {
     let root = root();
     let snapshot = capture(root.path(), &[record("one")], "secret").unwrap();
