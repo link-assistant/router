@@ -93,7 +93,7 @@ fn a_store_binding_that_disagrees_with_the_signed_claim_fails_closed() {
 
     assert!(matches!(
         manager.validate_token(&token),
-        Err(TokenError::Invalid(message)) if message.contains("binding")
+        Err(TokenError::BindingMismatch)
     ));
 }
 

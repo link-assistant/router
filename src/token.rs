@@ -36,7 +36,7 @@ pub fn codex_token_alias(token: &str) -> Option<String> {
         .map(|jwt| format!("{CODEX_TOKEN_PREFIX}{jwt}"))
 }
 
-fn token_jwt(token: &str) -> Option<&str> {
+pub(crate) fn token_jwt(token: &str) -> Option<&str> {
     token
         .strip_prefix(TOKEN_PREFIX)
         .or_else(|| token.strip_prefix(CODEX_TOKEN_PREFIX))
@@ -261,6 +261,9 @@ impl IssueRequest<'_> {
 pub struct TokenManager {
     secret: String,
     store: Arc<dyn TokenStore>,
+    /// Shared by every clone, so a disable reaches all requests at once.
+    emergency: Arc<crate::emergency_auth::EmergencyAuth>,
+    diagnostics: Arc<crate::auth_diagnostics::AuthDiagnostics>,
 }
 
 impl TokenManager {
@@ -276,6 +279,8 @@ impl TokenManager {
         Self {
             secret: secret.to_string(),
             store,
+            emergency: Arc::default(),
+            diagnostics: Arc::default(),
         }
     }
 
@@ -530,37 +535,46 @@ impl TokenManager {
         token_id: &str,
         reserve: u64,
     ) -> Result<(), TokenError> {
-        match self
-            .store
-            .try_admit_request_reserving(token_id, Utc::now().timestamp(), reserve)
-        {
-            Ok(RequestAdmission::Admitted) => Ok(()),
-            // The counts are in the record the store just compared against,
-            // so the rejection can say how far over the bound the caller is
-            // rather than only that they are (issue #355).
-            Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded(
-                self.budget_facts(token_id, |record| {
-                    record.max_requests.map(|limit| BudgetFacts {
-                        used: record.used_requests,
-                        limit,
-                    })
-                }),
-            )),
-            Ok(RequestAdmission::TokenLimitExceeded) => Err(TokenError::TokenLimitExceeded(
-                self.budget_facts(token_id, |record| {
-                    record.max_tokens.map(|limit| BudgetFacts {
-                        used: record.used_tokens,
-                        limit,
-                    })
-                }),
-            )),
-            Ok(RequestAdmission::RateLimitExceeded) => Err(TokenError::RateLimitExceeded),
-            Err(e) => Err(TokenError::Storage(e.to_string())),
+        // An emergency-bypassed request has no record and must change none.
+        if crate::emergency_auth::is_synthetic_id(token_id) {
+            return Ok(());
         }
+        let verdict =
+            match self
+                .store
+                .try_admit_request_reserving(token_id, Utc::now().timestamp(), reserve)
+            {
+                Ok(RequestAdmission::Admitted) => Ok(()),
+                // The counts are in the record the store just compared against,
+                // so the rejection can say how far over the bound the caller is
+                // rather than only that they are (issue #355).
+                Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded(
+                    self.budget_facts(token_id, |record| {
+                        record.max_requests.map(|limit| BudgetFacts {
+                            used: record.used_requests,
+                            limit,
+                        })
+                    }),
+                )),
+                Ok(RequestAdmission::TokenLimitExceeded) => Err(TokenError::TokenLimitExceeded(
+                    self.budget_facts(token_id, |record| {
+                        record.max_tokens.map(|limit| BudgetFacts {
+                            used: record.used_tokens,
+                            limit,
+                        })
+                    }),
+                )),
+                Ok(RequestAdmission::RateLimitExceeded) => Err(TokenError::RateLimitExceeded),
+                Err(e) => Err(TokenError::Storage(e.to_string())),
+            };
+        verdict.inspect_err(|error| self.diagnostics.record_error(error, None))
     }
 
     /// Persist actual input plus output tokens reported by an upstream response.
     pub fn record_token_usage(&self, token_id: &str, tokens: u64) -> Result<(), TokenError> {
+        if crate::emergency_auth::is_synthetic_id(token_id) {
+            return Ok(());
+        }
         self.store
             .record_token_usage(token_id, tokens)
             .map_err(|error| TokenError::Storage(error.to_string()))
@@ -573,6 +587,9 @@ impl TokenManager {
         reserved: u64,
         actual: u64,
     ) -> Result<(), TokenError> {
+        if crate::emergency_auth::is_synthetic_id(token_id) {
+            return Ok(());
+        }
         self.store
             .settle_token_usage(token_id, reserved, actual)
             .map_err(|error| TokenError::Storage(error.to_string()))
@@ -594,6 +611,10 @@ impl TokenManager {
     }
 
     pub fn model_policy_for(&self, token_id: &str) -> Result<ModelAccessPolicy, TokenError> {
+        // Bypassed requests carry no per-token model pin (issue #645).
+        if crate::emergency_auth::is_synthetic_id(token_id) {
+            return Ok(ModelAccessPolicy::default());
+        }
         self.store
             .get(token_id)
             .map_err(|error| TokenError::Storage(error.to_string()))?
@@ -614,65 +635,6 @@ impl TokenManager {
         } else {
             Err(ModelAccessError::new(requested, &policy))
         }
-    }
-
-    /// Validate a custom token string.
-    ///
-    /// Strips either Router carrier prefix, decodes the same JWT, checks
-    /// expiration and revocation status, and returns the claims if valid.
-    pub fn validate_token(&self, token: &str) -> Result<TokenClaims, TokenError> {
-        if crate::token_secret::is_placeholder(&self.secret) {
-            return Err(TokenError::Invalid(crate::token_secret::refusal()));
-        }
-        let jwt = token_jwt(token).ok_or(TokenError::InvalidPrefix)?;
-
-        let token_data = decode::<TokenClaims>(
-            jwt,
-            &DecodingKey::from_secret(self.secret.as_bytes()),
-            &Validation::default(),
-        )
-        .or_else(|e| match e.kind() {
-            // The decoder enforces the `exp` the token was signed with, which
-            // a sliding token outgrows: the store holds the extended expiry,
-            // and the signature says nothing about it. So a stale signature
-            // is re-checked against the record before it is a rejection
-            // (issue #354).
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => self
-                .decode_ignoring_expiry(jwt)
-                .filter(|data| self.expiry_slid_past(&data.claims.sub))
-                .ok_or_else(|| {
-                    // The decoder knows only that the signature is stale; the
-                    // record knows when it was issued and when it lapsed
-                    // (issue #355).
-                    TokenError::Expired(self.expiry_facts(jwt))
-                }),
-            _ => Err(TokenError::Invalid(e.to_string())),
-        })?;
-
-        let stored = self
-            .store
-            .get(&token_data.claims.sub)
-            .map_err(|e| TokenError::Storage(e.to_string()))?;
-        if let Some(record) = stored {
-            if record.revoked {
-                return Err(TokenError::Revoked);
-            }
-            if record.client_kind != token_data.claims.client_kind
-                || record.principal_id != token_data.claims.principal_id
-            {
-                return Err(TokenError::Invalid(
-                    "signed client binding does not match the durable token record".to_string(),
-                ));
-            }
-        } else if token_data.claims.client_kind.is_some()
-            || token_data.claims.principal_id.is_some()
-        {
-            return Err(TokenError::Invalid(
-                "bound client token has no durable token record".to_string(),
-            ));
-        }
-
-        Ok(token_data.claims)
     }
 
     /// Read the counts behind a spent budget from the record itself.
@@ -982,6 +944,9 @@ pub use constant_time::constant_time_eq;
 #[path = "token_run_lease.rs"]
 mod run_lease;
 pub use run_lease::RUN_LEASE_TTL_SECONDS;
+
+#[path = "token_validate.rs"]
+mod validate;
 
 #[path = "token_error.rs"]
 mod error;

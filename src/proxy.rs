@@ -246,6 +246,18 @@ pub(crate) fn extract_client_token(headers: &HeaderMap) -> Option<&str> {
     })
 }
 
+/// Whether `token` satisfies a Codex route's `at-` carrier requirement.
+///
+/// The explicit emergency mode accepts any token in any spelling, so a Codex
+/// session holding an `la_sk_` or foreign token is not refused by a
+/// route-specific carrier check the mode would otherwise hide (issue #645).
+pub(crate) fn codex_carrier_accepted(state: &AppState, token: Option<&str>) -> bool {
+    token.is_some_and(|token| {
+        token.starts_with(crate::token::CODEX_TOKEN_PREFIX)
+            || state.token_manager.emergency().is_active()
+    })
+}
+
 /// Why a caller credential was refused, before it is rendered in any dialect.
 ///
 /// Kept separate from the rendered response so the same verdict can be
@@ -278,6 +290,11 @@ pub(crate) fn authenticate_client_error(
 ) -> Result<crate::token::TokenClaims, ClientAuthError> {
     let Some(token) = extract_client_token(headers) else {
         state.logger.debug(|| "Missing client credential");
+        // Even the emergency any-token mode requires *a* token (issue #645).
+        state
+            .token_manager
+            .diagnostics()
+            .record(crate::auth_diagnostics::reason::MISSING_CREDENTIAL, None);
         return Err(ClientAuthError {
             status: StatusCode::UNAUTHORIZED,
             message: CREDENTIAL_CARRIER_HINT.to_string(),
@@ -292,20 +309,23 @@ pub(crate) fn authenticate_client_error(
     if is_admin_credential(state, token) {
         return Ok(admin_credential_claims(token));
     }
-    state.token_manager.validate_token(token).map_err(|error| {
-        let status = if matches!(error, crate::token::TokenError::Revoked) {
-            StatusCode::FORBIDDEN
-        } else {
-            StatusCode::UNAUTHORIZED
-        };
-        state
-            .logger
-            .debug(|| format!("Token validation failed: {error}"));
-        ClientAuthError {
-            status,
-            message: error.client_message().to_string(),
-        }
-    })
+    state
+        .token_manager
+        .authenticate_incoming(token, headers)
+        .map_err(|error| {
+            let status = if matches!(error, crate::token::TokenError::Revoked) {
+                StatusCode::FORBIDDEN
+            } else {
+                StatusCode::UNAUTHORIZED
+            };
+            state
+                .logger
+                .debug(|| format!("Token validation failed: {error}"));
+            ClientAuthError {
+                status,
+                message: error.client_message().to_string(),
+            }
+        })
 }
 
 /// Validate the caller credential without exposing token parser internals.

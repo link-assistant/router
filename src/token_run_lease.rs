@@ -24,6 +24,13 @@ impl TokenManager {
     /// Extend an existing lease; an authenticated wrapper may recover after a
     /// server outage, but a legacy record with no lease is never promoted.
     pub fn renew_run_lease(&self, token_id: &str) -> Result<i64, TokenError> {
+        // An emergency-bypassed wrapper keeps its heartbeat answered without
+        // any record being created or extended (issue #645).
+        if crate::emergency_auth::is_synthetic_id(token_id) {
+            return Ok(chrono::Utc::now()
+                .timestamp()
+                .saturating_add(RUN_LEASE_TTL_SECONDS));
+        }
         self.store
             .renew_run_lease(
                 token_id,
