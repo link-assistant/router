@@ -102,7 +102,7 @@ const AREAS: &[Area] = &[
     },
     Area {
         name: "real-clients",
-        covers: "every supported wrapper (Claude Code, Codex, Gemini, Qwen, OpenCode) launched as its real vendor binary against a loopback Router, and the host CLI lifecycle",
+        covers: "Claude Code, Codex and OpenCode real binaries against a loopback Router, plus the separately gated host CLI lifecycle",
         enable: "ROUTER_REAL_CLIENT_TESTS=1 with the vendor CLIs on PATH; ROUTER_HOST_CLI_TESTS=1 with ROUTER_HOST_CLI_URL and ROUTER_HOST_CLI_TOKEN",
         runs: &[Run {
             targets: &["real_clients_test", "host_client_lifecycle_test"],

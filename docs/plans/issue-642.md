@@ -19,7 +19,7 @@ Options: retain provider creation-time ranking, introduce a fixed CLI pin, or ad
 
 An inference failure after discovery is surfaced for that exact model; Router does not silently change an explicit/saved selection or retry a possibly billable request under another model. The operator can refresh discovery after the provider becomes unhealthy or explicitly select another advertised row. This is the defined fallback boundary, not evidence that every model-level outage is already reflected in source health.
 
-Verification: selector reproduction in `experiments/issue-642/catalog-default.py`, setup regressions in `claude_default_test`, existing saved/explicit/changed-catalog/default/subagent real-client scenarios and exact flagship assertion in `real_clients/claude_selector`. Paid live response behavior and a real preferred-model outage still require protected live credentials; the report must not mark those proven by offline fixtures.
+Verification: selector reproduction in `experiments/issue-642/catalog-default.py`, setup regressions in `claude_default_test`, existing saved/explicit/changed-catalog/default/subagent real-client scenarios and exact flagship assertion in `real_clients/claude_selector`. The real-client regression also covers saved FlashX, an explicit flagship, an injected preferred-model HTTP failure and catalog-withdrawal fallback, requiring exact outbound IDs and successful native results. Paid live response behavior and a real preferred-model outage still require protected live credentials; the report must not mark those proven by offline fixtures.
 
 ## 635: independent staging and bounded control
 

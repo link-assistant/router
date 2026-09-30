@@ -803,8 +803,23 @@ impl ClientManager {
             .get("model")
             .and_then(Value::as_str)
             .map(str::to_string);
+        let has_anthropic = usable_models(ClientKind::ClaudeCode, models)
+            .iter()
+            .any(|model| model.owned_by == ANTHROPIC_MODEL_OWNER);
+        let semantic_default = saved_model
+            .as_deref()
+            .is_some_and(|saved| saved.trim().eq_ignore_ascii_case("default"));
         if let Some(saved) = &saved_model
-            && !catalog::model_is_authorized(ClientKind::ClaudeCode, models, saved)
+            && !semantic_default
+            && !catalog::model_is_authorized(ClientKind::ClaudeCode, models, saved.trim())
+            && !(has_anthropic
+                && ["opus", "sonnet", "haiku"].iter().any(|family| {
+                    saved
+                        .trim()
+                        .split('[')
+                        .next()
+                        .is_some_and(|base| base.eq_ignore_ascii_case(family))
+                }))
         {
             return Err(ClientError::message(
                 "the saved Claude model is no longer authorized; choose an advertised model explicitly",
@@ -892,7 +907,14 @@ impl ClientManager {
                 .contains(&key)
                 .then_some(gateway_model.as_deref())
                 .flatten();
-            manage(key, if saved_model.is_some() { None } else { managed });
+            manage(
+                key,
+                if saved_model.is_some() && !semantic_default {
+                    None
+                } else {
+                    managed
+                },
+            );
         }
         let rendered = format!("{}\n", serde_json::to_string_pretty(&document)?);
         let result = write_if_changed(&path, &source, &rendered)?;
@@ -907,6 +929,7 @@ impl ClientManager {
             base_url,
             previous.as_deref(),
             &managed_gateway_env,
+            &user_model_keys,
         )?;
         Ok(result)
     }

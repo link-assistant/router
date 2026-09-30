@@ -1,7 +1,7 @@
 #!/bin/sh
 # Target half of `router deploy --server`. It is embedded in the binary and is
 # sent on stdin, so the target needs no installed Router agent. Its host-side
-# dependencies are POSIX sh/core utilities, util-linux flock, base64, Docker,
+# dependencies are POSIX sh/core utilities, util-linux flock, GNU timeout, base64, Docker,
 # and git for the default release-tag build.
 
 set -eu

@@ -8,10 +8,12 @@ source = Path('src/clients/catalog.rs').read_text()
 start = source.index('pub fn claude_gateway_model(')
 end = source.index('\n/// Every model', start)
 function = source[start:end]
+preference = next(line for line in source.splitlines()
+                  if line.startswith('const FRESH_ZAI_PREFERRED_MODEL:'))
 code = '''mod selection {
 #[derive(Clone)]
 pub struct RouterModel {pub id:String,pub owned_by:String,pub provider_created_at:Option<i64>}
-'''+function+'''
+'''+preference+'\n'+function+'''
 }
 const ZAI_MODEL_OWNER: &str = "z.ai";
 const ANTHROPIC_MODEL_OWNER: &str = "anthropic";

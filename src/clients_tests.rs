@@ -250,8 +250,9 @@ fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
     for key in CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
     }
+    // Explicit user model values retain precedence over Router's fresh default.
+    assert_eq!(settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "user-opus");
     for key in [
-        "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
     ] {
@@ -315,6 +316,7 @@ fn claude_setup_migrates_only_router_owned_legacy_nonessential_traffic() {
                 Some("0".into()),
                 previous.map(str::to_string),
             )],
+            &[],
         )
         .unwrap();
 

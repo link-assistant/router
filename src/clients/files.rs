@@ -195,6 +195,7 @@ pub(super) fn write_claude_marker(
     base_url: &str,
     previous: Option<&str>,
     gateway_env: &ClaudeEnvOwnership,
+    user_model_keys: &[&str],
 ) -> Result<(), ClientError> {
     let gateway_env = gateway_env
         .iter()
@@ -211,6 +212,7 @@ pub(super) fn write_claude_marker(
             "anthropic_base_url": base_url,
             "previous_anthropic_base_url": previous,
             "gateway_env": gateway_env,
+            "user_model_keys": user_model_keys,
         }))?
     );
     if read_or_empty(path)? != rendered {
@@ -266,6 +268,34 @@ pub(super) fn claude_marker(
         })
         .collect();
     Ok(Some((managed, previous, gateway_env)))
+}
+
+/// Model overrides deliberately left under user ownership. Missing fields are
+/// legacy markers; malformed or unknown keys must not hide a damaged marker.
+pub(super) fn claude_user_model_keys(path: &Path) -> Result<Vec<String>, ClientError> {
+    let source = read_or_empty(path)?;
+    if source.trim().is_empty() {
+        return Ok(Vec::new());
+    }
+    let marker: Value = serde_json::from_str(&source)?;
+    let Some(keys) = marker.get("user_model_keys") else {
+        return Ok(Vec::new());
+    };
+    let keys = keys
+        .as_array()
+        .ok_or_else(|| ClientError::message("invalid user model ownership"))?;
+    let mut result = Vec::new();
+    for key in keys {
+        let key = key
+            .as_str()
+            .filter(|key| super::CLAUDE_MODEL_ENV.contains(key))
+            .ok_or_else(|| ClientError::message("invalid user model ownership"))?;
+        if result.iter().any(|existing| existing == key) {
+            return Err(ClientError::message("duplicate user model ownership"));
+        }
+        result.push(key.to_string());
+    }
+    Ok(result)
 }
 
 pub(super) fn write_codex_marker(

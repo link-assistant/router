@@ -147,10 +147,7 @@ fn current_codex_tui_starts_on_a_zai_only_catalog_without_reasoning_metadata() {
     );
     let home = seeded_home();
     let router = MockRouter::start_with_models(CODEX, zai_models());
-    link_assistant_router::verification_client::safety().expect("safe TUI boundary");
-    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
-    command.env_clear();
-    command.env("PATH", std::env::var_os("PATH").unwrap_or_default());
+    let mut command = wrapper::isolated_pty_command();
     command.args([
         "--server",
         &router.origin,

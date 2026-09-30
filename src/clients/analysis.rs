@@ -257,8 +257,9 @@ fn marker_valid(
         return false;
     }
     let valid = match client {
-        ClientKind::ClaudeCode => super::claude_marker(path).map(|marker| {
-            marker.is_some_and(|(managed, _, entries)| {
+        ClientKind::ClaudeCode => super::claude_marker(path).and_then(|marker| {
+            let user_keys = super::files::claude_user_model_keys(path)?;
+            Ok(marker.is_some_and(|(managed, _, entries)| {
                 let fixed = [
                     ("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Some("1")),
                     ("ANTHROPIC_AUTH_TOKEN", None),
@@ -272,27 +273,32 @@ fn marker_valid(
                 });
                 let model_target = entries
                     .iter()
-                    .find(|(key, _, _)| key == super::CLAUDE_GATEWAY_TARGET_ENV[0])
-                    .map(|(_, managed, _)| managed.as_deref());
-                let models = model_target.is_some_and(|target| {
-                    target.is_none_or(|model| !model.is_empty())
-                        && super::CLAUDE_GATEWAY_TARGET_ENV.iter().all(|key| {
-                            entries
+                    .find(|(key, _, _)| super::CLAUDE_GATEWAY_TARGET_ENV.contains(&key.as_str()))
+                    .and_then(|(_, managed, _)| managed.as_deref());
+                let models = model_target.is_none_or(|model| !model.is_empty())
+                    && super::CLAUDE_MODEL_ENV.iter().all(|key| {
+                        let owned = entries.iter().any(|(actual, _, _)| actual == key);
+                        let user = user_keys.iter().any(|actual| actual == key);
+                        owned != user
+                    })
+                    && super::CLAUDE_GATEWAY_TARGET_ENV.iter().all(|key| {
+                        user_keys.iter().any(|user| user == key)
+                            || entries
                                 .iter()
                                 .find(|(actual, _, _)| actual == key)
                                 .map(|(_, managed, _)| managed.as_deref())
-                                == Some(target)
-                        })
-                        && super::CLAUDE_MODEL_ENV
-                            .iter()
-                            .filter(|key| !super::CLAUDE_GATEWAY_TARGET_ENV.contains(key))
-                            .all(|key| {
-                                entries
+                                == Some(model_target)
+                    })
+                    && super::CLAUDE_MODEL_ENV
+                        .iter()
+                        .filter(|key| !super::CLAUDE_GATEWAY_TARGET_ENV.contains(key))
+                        .all(|key| {
+                            user_keys.iter().any(|user| user == key)
+                                || entries
                                     .iter()
                                     .find(|(actual, _, _)| actual == key)
                                     .is_some_and(|(_, managed, _)| managed.is_none())
-                            })
-                });
+                        });
                 let legacy_disable_absent = entries
                     .iter()
                     .all(|(key, _, _)| key != "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC");
@@ -300,7 +306,7 @@ fn marker_valid(
                     && fixed
                     && models
                     && legacy_disable_absent
-            })
+            }))
         }),
         ClientKind::Codex => super::read_codex_marker(path).map(|_| true),
         ClientKind::Opencode | ClientKind::Agent | ClientKind::QwenCode => read_or_empty(path)
@@ -374,6 +380,11 @@ fn critical_conflicts(
         .and_then(|path| super::claude_marker(path).ok().flatten())
         .map(|(_, _, entries)| entries)
         .unwrap_or_default();
+    let claude_user_keys = manager
+        .ownership_marker_path(client)
+        .filter(|_| client == ClientKind::ClaudeCode)
+        .and_then(|path| super::files::claude_user_model_keys(&path).ok())
+        .unwrap_or_default();
     if client == ClientKind::ClaudeCode {
         let environment = manager.environment_path(client);
         for (key, expected) in [("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")] {
@@ -442,6 +453,7 @@ fn critical_conflicts(
             config_path,
             expected_endpoint,
             &claude_marker_entries,
+            &claude_user_keys,
             conflicts,
         ),
         ClientKind::Codex => codex_conflicts(config_path, expected_endpoint, conflicts),
@@ -474,6 +486,7 @@ fn claude_conflicts(
     path: &Path,
     expected: Option<&str>,
     marker_entries: &super::files::ClaudeEnvOwnership,
+    user_model_keys: &[String],
     conflicts: &mut Vec<String>,
 ) {
     let Ok(source) = read_or_empty(path) else {
@@ -501,6 +514,9 @@ fn claude_conflicts(
         }
     }
     for key in super::CLAUDE_MODEL_ENV {
+        if user_model_keys.iter().any(|user| user == key) {
+            continue;
+        }
         let wanted = marker_entries
             .iter()
             .find(|(actual, _, _)| actual == key)

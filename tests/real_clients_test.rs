@@ -28,7 +28,7 @@ use serde_json::{Value, json};
 #[path = "real_clients/anthropic_mock.rs"]
 mod anthropic_mock;
 mod common;
-use anthropic_mock::{THINKING_TRACE, anthropic_answer};
+use anthropic_mock::THINKING_TRACE;
 
 /// The pinned 2.1.265 baseline, or the newer release CI installs to prove
 /// that Router does not depend on the baseline being the newest client
@@ -487,7 +487,7 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
                 let model = Some(request.json_body())
                     .and_then(|body| body["model"].as_str().map(str::to_string))
                     .unwrap_or_else(|| case.model.to_string());
-                anthropic_answer(&model, &request.body)
+                anthropic_mock::catalog_answer(&model, &request.body, models)
             }
             "codex" => {
                 let model = Some(request.json_body())
@@ -846,8 +846,7 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
     .expect("seed Codex settings");
 
     let router = MockRouter::start(CODEX);
-    link_assistant_router::verification_client::safety().expect("safe TUI boundary");
-    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    let mut command = wrapper::isolated_pty_command();
     command.args([
         "--server",
         &router.origin,

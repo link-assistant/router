@@ -345,6 +345,12 @@ fn production_sources_contain_no_hardcoded_vendor_catalogs() {
         let catalog_candidates = production
             .lines()
             .filter(|line| !line.trim_start().starts_with("behaves_as:"))
+            // #634 permits one preference among live authorized rows. It is
+            // never a catalog seed; absent/mixed/explicit cases are tested.
+            .filter(|line| {
+                !(path.ends_with("clients/catalog.rs")
+                    && line.trim() == "const FRESH_ZAI_PREFERRED_MODEL: &str = \"glm-5.3\";")
+            })
             .collect::<Vec<_>>()
             .join("\n");
         if let Some(matched) = concrete_vendor_model(&catalog_candidates) {

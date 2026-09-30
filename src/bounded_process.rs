@@ -75,7 +75,7 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
     })
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
 

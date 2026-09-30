@@ -1,5 +1,13 @@
 use super::*;
 
+pub fn isolated_pty_command() -> CommandBuilder {
+    link_assistant_router::verification_client::safety().expect("safe TUI boundary");
+    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    command.env_clear();
+    command.env("PATH", std::env::var_os("PATH").unwrap_or_default());
+    command
+}
+
 pub fn version_output(case: ClientCase, home: &Path) -> Output {
     link_assistant_router::verification_client::safety().expect("safe version boundary");
     let mut command = Command::new(case.executable);

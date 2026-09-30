@@ -6,9 +6,10 @@
 //! appears in argv. The router is reached at `ROUTER_HOST_CLI_URL`, which the
 //! release job points at an SSH-forwarded localhost port of a remote router.
 
-use std::io::Write as _;
+use std::io::{Seek as _, Write as _};
 use std::path::Path;
 use std::process::{Command, Output, Stdio};
+use std::time::Duration;
 
 mod common;
 
@@ -40,7 +41,9 @@ fn command_exists(command: &str) -> bool {
 
 /// Run the router CLI with the token supplied on standard input only.
 fn router(home: &Path, arguments: &[&str], stdin_token: Option<&str>) -> Output {
+    link_assistant_router::verification_client::safety().expect("safe host lifecycle boundary");
     let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+    link_assistant_router::verification_client::environment(&mut command, home);
     command
         .args(arguments)
         .env("TOKEN_SECRET", "host-cli-lifecycle-secret")
@@ -56,23 +59,21 @@ fn router(home: &Path, arguments: &[&str], stdin_token: Option<&str>) -> Output 
         .env_remove("CURSOR_CONFIG_DIR")
         .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
         .env_remove("LINK_ASSISTANT_TOKEN")
-        .stdin(if stdin_token.is_some() {
-            Stdio::piped()
-        } else {
-            Stdio::null()
-        })
+        .env("NO_PROXY", "*")
+        .env("no_proxy", "*")
+        .stdin(stdin_token.map_or_else(Stdio::null, token_input))
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-    let mut child = command.spawn().expect("spawn router CLI");
-    if let Some(token) = stdin_token {
-        child
-            .stdin
-            .as_mut()
-            .expect("piped stdin")
-            .write_all(format!("{token}\n").as_bytes())
-            .expect("write token to stdin");
-    }
-    child.wait_with_output().expect("collect router CLI output")
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(60))
+        .expect("bounded router CLI lifecycle")
+}
+
+fn token_input(token: &str) -> Stdio {
+    // An unnamed private file closes stdin without blocking pipe collection.
+    let mut input = tempfile::tempfile().expect("private token input");
+    writeln!(input, "{token}").expect("write token input");
+    input.rewind().expect("rewind token input");
+    input.into()
 }
 
 fn text(output: &Output) -> String {
@@ -208,7 +209,10 @@ fn client_command(client: &str) -> &'static str {
 /// Launch the client through the temporary wrapper, which is the documented
 /// way to run a client without touching permanent configuration.
 fn launch_client(home: &Path, client: &str, base_url: &str, token: &str) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    link_assistant_router::verification_client::safety().expect("safe host client boundary");
+    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    link_assistant_router::verification_client::environment(&mut command, home);
+    command
         .args([
             "--server",
             base_url,
@@ -220,18 +224,11 @@ fn launch_client(home: &Path, client: &str, base_url: &str, token: &str) -> Outp
         .current_dir(home)
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
-        .stdin(Stdio::piped())
+        .env("NO_PROXY", "*")
+        .env("no_proxy", "*")
+        .stdin(token_input(token))
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("spawn with-router");
-    child
-        .stdin
-        .as_mut()
-        .expect("piped stdin")
-        .write_all(format!("{token}\n").as_bytes())
-        .expect("write token to stdin");
-    child
-        .wait_with_output()
-        .expect("collect with-router output")
+        .stderr(Stdio::piped());
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(120))
+        .expect("bounded host client lifecycle")
 }
