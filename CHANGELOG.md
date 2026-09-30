@@ -199,6 +199,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.15.0] - 2026-09-30
+
+### Added
+- `router deploy` labels each backend with a keyed fingerprint of its `TOKEN_SECRET`, and `router deploy --status` reports `token_secret=matches|changed|unknown` without printing the secret (#625).
+- Every update shows the candidate a short-lived token signed with the running deployment's secret before cutover; a candidate that rejects it is rolled back and the old backend keeps serving (#625).
+
+### Fixed
+- A deploy with a different `TOKEN_SECRET` is no longer reported as "already converged", and an image update with a mistaken secret no longer replaces the backend and breaks every issued client token. Both are refused before any mutation. `--force-update` with the saved secret recovers a stranded deployment on the same image, with no manual container removal (#625).
+
+### Fixed
+- On a z.ai-only catalog, Claude Code's `Default (recommended)` row no longer describes an unauthorized Opus. `router with claude` pins `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and `ANTHROPIC_DEFAULT_HAIKU_MODEL` to the newest authorized GLM model, keeps an inherited family value only when it names an authorized row, and leaves the native family rows alone when Anthropic is in the catalog (#630).
+
+### Fixed
+- `router with codex` launches on a z.ai-only catalog whose rows carry no reasoning metadata. Such a row is listed with no supported-effort list and the user's configured reasoning effort as its default, so Codex keeps that effort at startup and on `/model` switches and Router invents no capability facts. Only self-contradictory metadata still omits a row, and an explicitly selected row with contradictory metadata is refused by name (#628).
+
+### Added
+- A real Codex fixture with a z.ai-only catalog that lacks reasoning metadata, covering `--version`, explicit model selection, interactive startup, and an inference whose captured request proves the exact model and configured effort Codex sent (#628).
+
+### Fixed
+- `router deploy --status` no longer exits 1 when the relay and backend are running without a durable active record. It prints read-only diagnostics: the record's condition, the relay pointer, any pending transaction, every owned container with its role, image, launch specification, port and Claude credential source, the connection count and the run inventory. It then gives a recovery plan. The next `router deploy` adopts a proven topology under the update lock, keeps a corrupt record aside, and changes no container, so streams and issued tokens survive (#631).
+
+### Fixed
+- A local deploy update no longer leaves the relay on the previous Router image. Once the old backend drains and the relay is idle, the relay is replaced by one on the active image and the path through it is verified. Exactly one container publishes the listener, and a failed replacement restores the previous relay. A relay that stays busy is reported as `relay_rotation=deferred` unless `--force-update` is given. `router deploy --status` prints `backend_image`, `relay_image` and `version_skew`, and an ordinary rerun converges a deployment that v1.14.3 left mixed (#627).
+
+### Added
+- `router deploy --mode host` moves a local deployment to this Router binary on the host, so a macOS Keychain Claude Code login is read in place and never copied. It keeps the deployment's token store, `TOKEN_SECRET`, request logs, provider configuration and the single `127.0.0.1:<port>` endpoint. `--mode host --status` prints a read-only plan with every blocker. The move refuses before any change when live runs, open connections, a different secret, a busy port or foreign-owned data would get in the way. A host candidate must accept a token signed with the deployment's secret before the relay stops, and a failed start restarts the relay. `router deploy --mode container` restores the retained containers, and `--down --yes` stops the host Router (#626).
+
+### Fixed
+- The `--claude-credentials share` refusal for a Keychain login now names `router deploy --mode host` instead of leaving the deployment without Anthropic models (#626).
+
+### Added
+- `rust-script scripts/verify-contracts.rs` runs Router's own tests for the contracts downstream projects depend on: token-authorized catalogs, real-client wrappers, z.ai-only and Anthropic entitlements, request logs, backup/reset/restore and rolling updates. It writes one `link-assistant-router/verification/v1` JSON result with each area's status and skipped tests. `parity` is true only when nothing failed or skipped, and `--require-parity` exits nonzero otherwise (#629).
+
+### Fixed
+- Real-client, host-CLI, Lefine and billed z.ai probe tests no longer return early without a word when their switch or key is absent. They announce and count the skip like every other tier (#629).
+
+### Fixed
+- `router with claude` now reads a `/model` choice from the `settings.json` Claude actually uses in the Router-owned profile (`CLAUDE_CONFIG_DIR` itself), not from a `.claude/settings.json` below it. Previously Router never saw the choice: it pinned `ANTHROPIC_MODEL` over it, and a choice the catalog no longer authorized was silently replaced instead of refused before launch (#630).
+
+### Added
+- Namespaced local staging deployments with private state, bounded diagnostics, resource limits and ownership-restricted cleanup.
+- Bounded non-OAuth deployment checkpoints and offline additive or explicit replacement restore, retaining a pre-restore checkpoint.
+- Separate live mixed-provider entitlement verification and pre-compilation version preparation for Claude Code, Codex and OpenCode.
+- Read-only merged-source delivery reports and explicit recovery of partial releases without overwriting existing publication identities.
+
+### Fixed
+- Prefer an authorized GLM-5.3 for fresh z.ai-only Claude profiles while preserving saved and explicit model choices.
+- Replace copied system executables in active-profile tests with a portable fixture and report early process exits.
+- Refuse native macOS vendor verification before version, doctor or TUI calls when credential-store isolation is unavailable; terminate owned Unix process groups and Windows diagnostic jobs on cancellation.
+- Prevent empty replacement token restores from reviving stale text-store records.
+- Validate credential sources, existing signed client tokens and each token's provider catalog before local, remote and host migration cutover. Report explicit access-loss overrides separately from connection force.
+
+### Added
+- `router tokens import` restores token records missing after a rollback, data-root switch or restore from another data root, deployment root, deploy checkpoint or token file. It is additive by default, reports conflicts field by field, and `--replace` is explicit and backed up. It never revives a revoked record or lowers recorded usage (#644).
+- Protected `GET /api/management/auth/diagnostics` and `link_assistant_auth_failures_total{reason}` separate missing records, signature, expiry, revocation, binding, budget, model-policy and unsupported run-lease failures without token values (#644).
+- Explicit, bounded, loopback-by-default emergency any-token mode (`--emergency-accept-any-token`). Admin status and disable endpoints, a doctor warning, a response header, metrics and fingerprint-only logs cover it. It is never persisted and leaves the token store untouched (#645).
+
+### Fixed
+- A wrapper against a server without the run-lease endpoint reports it as unsupported rather than as an authentication failure (#644).
+
 ## [1.14.3] - 2026-09-29
 
 ### Fixed
