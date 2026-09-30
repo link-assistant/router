@@ -16,6 +16,7 @@ on:
         options:
           - instant
           - changelog-pr
+          - recover
       bump_type:
         description: 'Version bump type'
         required: true
@@ -278,6 +279,9 @@ jobs:
       - name: Test contract verification command
         run: rust-script --test scripts/verify-contracts.rs
 
+      - name: Test bounded remote data checkpoint payload
+        run: python3 experiments/issue-642/remote-checkpoint.py
+
       - name: Test release automation
         run: |
           rust-script --test scripts/version-and-commit.rs
@@ -289,6 +293,9 @@ jobs:
           rust-script --test scripts/check-release-provenance.rs
           rust-script --test scripts/check-terminology.rs
           rust-script --test scripts/create-github-release.rs
+          rust-script --test scripts/check-delivery.rs
+          rust-script --test scripts/upload-release-assets.rs
+          rust-script --test scripts/check-release-needed.rs
           rust-script scripts/check-release-workflow.rs
 
   # === DEPENDENCY AUDIT ===
@@ -425,13 +432,36 @@ jobs:
             cargo test --locked --all-features --test clients_active_profile_test -- --test-threads=1
           done
 
+      - name: Verify restore through a system temporary-directory alias
+        if: runner.os != 'Windows'
+        run: python3 experiments/issue-642/restore-temp-alias.py --cargo
+
       - name: Compile Windows tests
         if: runner.os == 'Windows'
         run: cargo test --locked --all-features --verbose --no-run
 
+      - name: Verify Windows process ownership with a bounded runner
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $arguments = @(
+            'test', '--locked', '--all-features', '--verbose',
+            '--lib', 'bounded_process::tests', '--', '--test-threads=1', '--nocapture'
+          )
+          $process = Start-Process -FilePath cargo -ArgumentList $arguments -NoNewWindow -PassThru
+          if (-not $process.WaitForExit(180000)) {
+            taskkill /PID $process.Id /T /F
+            throw 'Windows process ownership tests exceeded 180 seconds'
+          }
+          exit $process.ExitCode
+
       - name: Run Windows library and binary tests
         if: runner.os == 'Windows'
-        run: cargo test --locked --all-features --verbose --lib --bins -- --test-threads=1
+        env:
+          ROUTER_DEPLOY_TRACE: '1'
+          RUST_BACKTRACE: '1'
+        run: cargo test --locked --all-features --verbose --lib --bins -- --test-threads=1 --nocapture
 
       - name: Run Windows integration tests with bounded targets
         if: runner.os == 'Windows'
@@ -448,7 +478,7 @@ jobs:
             )
             $process = Start-Process -FilePath cargo -ArgumentList $arguments -NoNewWindow -PassThru
             if (-not $process.WaitForExit(180000)) {
-              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              taskkill /PID $process.Id /T /F
               Write-Host '::endgroup::'
               throw "Windows integration target $target exceeded 180 seconds"
             }
@@ -548,11 +578,14 @@ jobs:
           fi
 
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rust-lcov
-          path: lcov.info
-          if-no-files-found: error
+          path: |
+            lcov.info
+            coverage-summary.json
+          if-no-files-found: warn
 
   # === BUILD ===
   # Build package - only runs if lint and test pass
@@ -615,7 +648,7 @@ jobs:
     # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
     if: |
       always() && !cancelled() &&
-      github.event_name == 'push' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'recover')) &&
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
@@ -647,6 +680,7 @@ jobs:
         id: check
         env:
           HAS_FRAGMENTS: ${{ steps.bump_type.outputs.has_fragments }}
+          RECOVER_DELIVERY: ${{ github.event.inputs.release_mode == 'recover' }}
         run: rust-script scripts/check-release-needed.rs
 
       - name: Collect changelog and bump version
@@ -949,14 +983,29 @@ jobs:
             ghcr_runtime+=("ghcr.io/${{ github.repository }}@sha256:$hash")
             dockerhub_runtime+=("${{ env.DOCKERHUB_IMAGE }}@sha256:$hash")
           done
-          docker buildx imagetools create \
-            -t "ghcr.io/${{ github.repository }}:latest" \
-            -t "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
-            "${ghcr_runtime[@]}"
-          docker buildx imagetools create \
-            -t "${{ env.DOCKERHUB_IMAGE }}:latest" \
-            -t "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
-            "${dockerhub_runtime[@]}"
+          publish_manifest() {
+            registry="$1"
+            shift
+            reference="${registry}:${RELEASE_VERSION}"
+            if docker buildx imagetools inspect "$reference" --format '{{json .Manifest}}' > /tmp/existing-manifest.json 2>/tmp/manifest-error.log; then
+              rust-script scripts/check-release-provenance.rs \
+                --release-version "$RELEASE_VERSION" --expected-commit "$RELEASE_COMMIT" \
+                --repository "${{ github.repository }}" --image "$reference"
+              digest="$(jq -er '.digest | select(startswith("sha256:"))' /tmp/existing-manifest.json)"
+              # Retain the immutable version identity. Only latest is movable.
+              docker buildx imagetools create -t "${registry}:latest" "${registry}@${digest}"
+            else
+              # A network/auth failure cannot authorize replacing a version.
+              grep -Eqi 'manifest unknown|not found' /tmp/manifest-error.log || {
+                cat /tmp/manifest-error.log >&2
+                return 1
+              }
+              docker buildx imagetools create \
+                -t "${registry}:latest" -t "$reference" "$@"
+            fi
+          }
+          publish_manifest "ghcr.io/${{ github.repository }}" "${ghcr_runtime[@]}"
+          publish_manifest "${{ env.DOCKERHUB_IMAGE }}" "${dockerhub_runtime[@]}"
 
       - name: Verify GHCR package is publicly pullable
         env:
@@ -1168,7 +1217,7 @@ jobs:
       - name: Upload assets to the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v${RELEASE_VERSION}" dist/* --clobber
+        run: rust-script scripts/upload-release-assets.rs
 
       - name: Verify attestations and release asset identity
         shell: bash

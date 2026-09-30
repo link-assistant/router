@@ -62,7 +62,9 @@ impl Drop for ExternalTrafficGuard {
 
 fn run_split_auth_capture(home: &Path, router: &MockRouter, external_proxy: &str) -> Output {
     let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    link_assistant_router::verification_client::safety().expect("safe split-auth boundary");
     let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    link_assistant_router::verification_client::environment(&mut command, home);
     command.args([
         "--server",
         &router.origin,
@@ -75,7 +77,7 @@ fn run_split_auth_capture(home: &Path, router: &MockRouter, external_proxy: &str
         CLAUDE.client,
         PROMPT,
     ]);
-    let mut child = command
+    command
         .current_dir(working_directory)
         .env("HOME", home)
         .env("XDG_CONFIG_HOME", home.join(".config"))
@@ -89,24 +91,9 @@ fn run_split_auth_capture(home: &Path, router: &MockRouter, external_proxy: &str
         .env("ALL_PROXY", external_proxy)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("launch Claude split-auth capture");
-    let status = child
-        .wait_timeout(Duration::from_secs(60))
-        .expect("wait for Claude split-auth capture");
-    if status.is_none() {
-        child.kill().expect("stop timed-out Claude capture");
-        let output = child.wait_with_output().expect("collect timed-out output");
-        panic!(
-            "Claude split-auth capture did not finish; stdout: {}; stderr: {}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-    child
-        .wait_with_output()
-        .expect("collect Claude split-auth output")
+        .stderr(Stdio::piped());
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(60))
+        .expect("bounded Claude split-auth capture")
 }
 
 pub fn assert_split_auth_boundary(home: &Path, router: &MockRouter) {
@@ -237,7 +224,7 @@ fn has_verified_profile(id: &str) -> bool {
     id.starts_with("future-glm")
 }
 
-fn catalog_model(id: &str, owner: &str) -> Value {
+pub fn catalog_model(id: &str, owner: &str) -> Value {
     let mut model = json!({
         "id": id, "type": "model", "display_name": id,
         "created_at": "2026-09-05T00:00:00Z", "owned_by": owner
@@ -257,7 +244,7 @@ fn catalog_model(id: &str, owner: &str) -> Value {
     model
 }
 
-fn seed_home(home: &Path, working_directory: &Path) {
+pub fn seed_home(home: &Path, working_directory: &Path) {
     std::fs::create_dir_all(home).expect("create synthetic Claude profile");
     let mut projects = serde_json::Map::new();
     projects.insert(
@@ -286,7 +273,7 @@ fn selector_transcript(
     let working_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
     let profile = home.join(".config/link-assistant-router/clients/claude/home");
     seed_home(&profile, working_directory);
-    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    let mut command = wrapper::isolated_pty_command();
     command.args([
         "--server",
         &router.origin,
@@ -508,6 +495,16 @@ fn assert_scenario(models: &[(&str, &str)], visible: &[&str], verify_reset: bool
             let body: Value =
                 serde_json::from_slice(&request.body).expect("Claude Default-row JSON");
             let model = body["model"].as_str().expect("exact Default-row model");
+            if models
+                .iter()
+                .any(|(id, owner)| *id == "glm-5.3" && *owner == "z.ai")
+            {
+                assert_eq!(
+                    model, "glm-5.3",
+                    "a fresh authorized z.ai Default row must send the flagship ID"
+                );
+            }
+
             assert!(
                 models.iter().any(|(advertised, _)| *advertised == model),
                 "the Default row sent the unadvertised model {model}"

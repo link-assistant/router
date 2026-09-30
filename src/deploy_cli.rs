@@ -67,6 +67,22 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
     if args.server.is_some() {
         return crate::deploy_remote::run(args, &config.token_secret);
     }
+    if args.staging.is_some() {
+        let root = args.root.as_deref().map_or_else(
+            || {
+                config
+                    .data_dir
+                    .join("staging")
+                    .join(args.staging.as_deref().expect("namespace"))
+            },
+            PathBuf::from,
+        );
+        return crate::deploy_local::staging::run(
+            args,
+            &root,
+            &args.image.clone().unwrap_or_else(default_image),
+        );
+    }
     if let Some(refusal) = secret_refusal(&config.token_secret, args.down || args.status) {
         eprintln!("{refusal}");
         return ExitCode::from(2);
@@ -89,11 +105,17 @@ mod tests {
 
     fn args() -> DeployArgs {
         DeployArgs {
+            restore_state: None,
+            replace_state: false,
+            staging: None,
+            verify: false,
+            json: false,
             server: None,
             status: false,
             down: false,
             yes: false,
             force_update: false,
+            accept_access_loss: false,
             port: link_assistant_router::deploy::DEFAULT_PORT,
             public_port: None,
             image: None,

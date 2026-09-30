@@ -24,12 +24,11 @@ use base64::Engine as _;
 use link_assistant_router::login_pty::{Key, PtySession};
 use portable_pty::CommandBuilder;
 use serde_json::{Value, json};
-use wait_timeout::ChildExt as _;
 
 #[path = "real_clients/anthropic_mock.rs"]
 mod anthropic_mock;
 mod common;
-use anthropic_mock::{THINKING_TRACE, anthropic_answer};
+use anthropic_mock::THINKING_TRACE;
 
 /// The pinned 2.1.265 baseline, or the newer release CI installs to prove
 /// that Router does not depend on the baseline being the newest client
@@ -44,7 +43,10 @@ const CODEX_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_CODEX_VERSION"
     Some(version) => version,
     None => "0.154.0",
 };
-const OPENCODE_VERSION: &str = "1.18.29";
+const OPENCODE_VERSION: &str = match option_env!("ROUTER_REAL_CLIENT_OPENCODE_VERSION") {
+    Some(version) => version,
+    None => "1.18.29",
+};
 const PROMPT: &str = "Reply with exactly ROUTER_CAPTURE_OK";
 const SUBAGENT_PROMPT: &str = "Use the Agent tool once, then reply ROUTER_CAPTURE_OK.";
 const ANSWER: &str = "ROUTER_CAPTURE_OK";
@@ -485,7 +487,7 @@ fn mock_response(case: ClientCase, models: &[Value], request: &CapturedRequest) 
                 let model = Some(request.json_body())
                     .and_then(|body| body["model"].as_str().map(str::to_string))
                     .unwrap_or_else(|| case.model.to_string());
-                anthropic_answer(&model, &request.body)
+                anthropic_mock::catalog_answer(&model, &request.body, models)
             }
             "codex" => {
                 let model = Some(request.json_body())
@@ -804,6 +806,8 @@ fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
     assert_real_client_capture(CLAUDE);
 }
 
+#[path = "real_clients/claude_default.rs"]
+mod claude_default;
 #[path = "real_clients/claude_selector.rs"]
 mod claude_selector;
 
@@ -844,7 +848,7 @@ fn current_codex_tui_model_selector_preserves_reasoning_effort() {
     .expect("seed Codex settings");
 
     let router = MockRouter::start(CODEX);
-    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    let mut command = wrapper::isolated_pty_command();
     command.args([
         "--server",
         &router.origin,

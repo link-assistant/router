@@ -28,12 +28,20 @@
 //! ```cargo
 //! [dependencies]
 //! serde_json = "1"
+//! tempfile = "3"
+//! [target.'cfg(windows)'.dependencies]
+//! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::{Command, exit};
+
+#[path = "../src/bounded_process.rs"]
+mod bounded_process;
+#[path = "../src/verification_client.rs"]
+mod verification_client;
 
 const SCHEMA: &str = "link-assistant-router/verification/v1";
 /// The variable `tests/common/tiers.rs` appends each skip to, as JSON lines.
@@ -96,7 +104,7 @@ const AREAS: &[Area] = &[
     },
     Area {
         name: "real-clients",
-        covers: "every supported wrapper (Claude Code, Codex, Gemini, Qwen, OpenCode) launched as its real vendor binary against a loopback Router, and the host CLI lifecycle",
+        covers: "Claude Code, Codex and OpenCode real binaries against a loopback Router, plus the separately gated host CLI lifecycle",
         enable: "ROUTER_REAL_CLIENT_TESTS=1 with the vendor CLIs on PATH; ROUTER_HOST_CLI_TESTS=1 with ROUTER_HOST_CLI_URL and ROUTER_HOST_CLI_TOKEN",
         runs: &[Run {
             targets: &["real_clients_test", "host_client_lifecycle_test"],
@@ -120,9 +128,9 @@ const AREAS: &[Area] = &[
         ],
     },
     Area {
-        name: "anthropic-entitlements",
+        name: "anthropic-mock-contracts",
         covers: "Anthropic-enabled and mixed entitlements: native Anthropic surfaces, cross-vendor translation, Claude picker rows",
-        enable: "ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON for the live usage source",
+        enable: "nothing; mocked protocol and authorization contracts only",
         runs: &[
             tests(&[
                 "router_e2e_test",
@@ -131,6 +139,17 @@ const AREAS: &[Area] = &[
             ]),
             unit(&["--lib"], "with_command"),
         ],
+    },
+    Area {
+        name: "anthropic-entitlements",
+        covers: "live personal Anthropic and z.ai union catalog, actual Claude picker, exact model identities and successful real responses through a single-owner serving Router",
+        enable: "ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON, ROUTER_LIVE_MIXED_URL, ROUTER_LIVE_MIXED_TOKEN and ROUTER_LIVE_MIXED_INFERENCE=1; a safe OS boundary and installed Claude",
+        runs: &[Run {
+            targets: &["mixed_entitlements_live_test", "subscription_usage_live_test"],
+            unit: &[],
+            filter: None,
+            serial: true,
+        }],
     },
     Area {
         name: "request-logs",
@@ -175,6 +194,14 @@ const AREAS: &[Area] = &[
                 serial: true,
             },
         ],
+    },
+    Area {
+        name: "staging",
+        covers: "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog",
+        enable: "ROUTER_STAGING_LIVE_TESTS=1, ROUTER_STAGING_DISPOSABLE_HOST=1, ROUTER_STAGING_ZAI_API_KEY, ROUTER_DEPLOY_TEST_IMAGE and installed Claude; static key only, no copied OAuth",
+        runs: &[Run {
+            targets: &["staging_live_test"], unit: &[], filter: None, serial: true,
+        }],
     },
 ];
 
@@ -253,19 +280,33 @@ fn cargo_args(run: &Run) -> Vec<String> {
     args
 }
 
-fn verify(area: &Area, directory: &Path) -> Value {
+fn verify(
+    area: &Area,
+    directory: &Path,
+    variables: &[(String, String)],
+    client_filter: Option<&str>,
+) -> Value {
     let skip_log = directory.join(format!("{}.skips", area.name));
     let _ = std::fs::remove_file(&skip_log);
     let mut output = String::new();
     let mut succeeded = true;
     let mut commands = Vec::new();
     for run in area.runs {
-        let args = cargo_args(run);
+        let mut args = cargo_args(run);
+        if let Some(filter) = client_filter.filter(|_| area.name == "real-clients") {
+            args.insert(
+                args.iter()
+                    .position(|arg| arg == "--")
+                    .expect("test separator"),
+                filter.to_string(),
+            );
+        }
         commands.push(format!("cargo {}", args.join(" ")));
         eprintln!("verify {}: cargo {}", area.name, args.join(" "));
         match Command::new("cargo")
             .args(&args)
             .env(SKIP_LOG, &skip_log)
+            .envs(variables.iter().map(|(key, value)| (key, value)))
             .output()
         {
             Ok(result) => {
@@ -334,16 +375,24 @@ fn router_version() -> Option<String> {
         .map(|version| version.trim_matches('"').to_string())
 }
 
+fn needs_client_preparation(area: &str) -> bool {
+    matches!(area, "real-clients" | "anthropic-entitlements" | "zai-only-entitlements" | "staging")
+}
+
 fn main() {
     let mut selected = Vec::new();
     let mut output = PathBuf::from("target/verification/result.json");
     let mut require_parity = false;
+    let mut client_filter = None;
+    let mut prepare_only = false;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--area" => selected.push(args.next().unwrap_or_else(|| usage())),
             "--output" => output = PathBuf::from(args.next().unwrap_or_else(|| usage())),
             "--require-parity" => require_parity = true,
+            "--client" => client_filter = Some(args.next().unwrap_or_else(|| usage())),
+            "--prepare-clients" => prepare_only = true,
             "--list" => {
                 for area in AREAS {
                     println!("{}\t{}", area.name, area.covers);
@@ -369,13 +418,53 @@ fn main() {
     }
     let directory = directory.canonicalize().unwrap_or(directory);
 
+    let needs_clients = prepare_only || selected.is_empty()
+        || selected.iter().any(|name| needs_client_preparation(name));
+    let clients: Vec<&str> = if client_filter.is_some() || prepare_only || selected.is_empty()
+        || selected.iter().any(|name| name == "real-clients") {
+        client_filter.as_deref().into_iter().collect()
+    } else if selected.iter().any(|name| name == "zai-only-entitlements") {
+        vec!["claude", "codex"]
+    } else { vec!["claude"] };
+    if let Some(client) = &client_filter {
+        if !verification_client::CLIENTS
+            .iter()
+            .any(|(name, _)| name == client)
+        {
+            usage();
+        }
+    }
+    let (preparation, variables) = if needs_clients {
+        verification_client::prepare(&clients)
+    } else {
+        (Vec::new(), Vec::new())
+    };
+    let preparation_failed = preparation.iter().any(|item| item["status"] == "failed");
+    let preparation_unproven = preparation
+        .iter()
+        .any(|item| item["status"] == "not-proven");
+    // Persist discovery even when compilation is refused or preparation fails.
+    std::fs::write(
+        directory.join("clients.json"),
+        serde_json::to_string_pretty(&preparation).expect("JSON"),
+    )
+    .expect("write client preparation");
     let areas: Vec<Value> = AREAS
         .iter()
         .filter(|area| selected.is_empty() || selected.iter().any(|name| name == area.name))
-        .map(|area| verify(area, &directory))
+        .filter(|_| !prepare_only)
+        .map(|area| {
+            if needs_client_preparation(area.name) && (preparation_failed || preparation_unproven) {
+                json!({"name":area.name,"status":if preparation_failed {"failed"} else {"not-proven"},"skipped":[],"reason":"client preparation did not complete; no vendor probes or Cargo test compilation attempted"})
+            } else { verify(area, &directory, &variables, client_filter.as_deref()) }
+        })
         .collect();
-    let failed = areas.iter().any(|area| area["status"] == "failed");
-    let parity = selected.is_empty() && areas.iter().all(|area| area["status"] == "proven");
+    let failed = preparation_failed || areas.iter().any(|area| area["status"] == "failed");
+    let parity = !prepare_only
+        && !preparation_unproven
+        && client_filter.is_none()
+        && selected.is_empty()
+        && areas.iter().all(|area| area["status"] == "proven");
     let skipped: usize = areas
         .iter()
         .map(|area| area["skipped"].as_array().map_or(0, Vec::len))
@@ -387,11 +476,12 @@ fn main() {
         "generated_at_unix": std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |elapsed| elapsed.as_secs()),
-        "complete": selected.is_empty(),
+        "complete": !prepare_only && selected.is_empty() && client_filter.is_none(),
         "parity": parity,
         "failed": failed,
         "skipped": skipped,
         "areas": areas,
+        "client_preparation": preparation,
     });
     let rendered = serde_json::to_string_pretty(&result).expect("a JSON value renders");
     if let Err(error) = std::fs::write(&output, format!("{rendered}\n")) {
@@ -487,11 +577,19 @@ not json
 
     #[test]
     fn serial_runs_pass_one_thread() {
-        let args = cargo_args(&AREAS[AREAS.len() - 1].runs[1]);
+        let args = cargo_args(&AREAS.iter().find(|area| area.name == "rolling-updates").unwrap().runs[1]);
         assert!(args.ends_with(&["--nocapture".to_string(), "--test-threads=1".to_string()]));
         assert_eq!(
             cargo_args(&unit(&["--bin", "router"], "deploy_local")),
-            ["test", "--locked", "--bin", "router", "deploy_local", "--", "--nocapture"]
+            [
+                "test",
+                "--locked",
+                "--bin",
+                "router",
+                "deploy_local",
+                "--",
+                "--nocapture"
+            ]
         );
     }
 }

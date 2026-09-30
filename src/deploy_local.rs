@@ -9,13 +9,16 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 
 mod claude_share;
+mod data_backup;
 mod diagnose;
 mod docker;
 mod host;
 mod host_runtime;
 mod inventory;
+mod preservation;
 mod relay_rotation;
 mod secret;
+pub mod staging;
 mod state;
 #[cfg(test)]
 #[path = "deploy_local_tests.rs"]
@@ -52,6 +55,7 @@ struct Coordinator<'a> {
     port: u16,
     token_secret: &'a str,
     force: bool,
+    accept_access_loss: bool,
     claude: Provision,
 }
 
@@ -361,8 +365,8 @@ impl Coordinator<'_> {
             .map_err(|error| {
                 format!("could not open deployment lock {}: {error}", path.display())
             })?;
-        file.lock()
-            .map_err(|error| format!("could not acquire deployment lock: {error}"))?;
+        file.try_lock()
+            .map_err(|error| format!("pending lifecycle operation owns the deployment lock; no recovery or mutation attempted: {error}"))?;
         Ok(file)
     }
 
@@ -612,6 +616,7 @@ impl Coordinator<'_> {
     }
 
     fn deploy(&self, existing: &Existing) -> Result<(), String> {
+        let baseline = self.preservation_baseline(existing)?;
         let image_id = self.docker.ensure_image(self.image, self.build)?;
         self.docker.create_network(self.root)?;
         let candidate = format!(
@@ -657,6 +662,12 @@ impl Coordinator<'_> {
         if let Err(error) = self.wait_healthy(&candidate, "http://127.0.0.1:8080") {
             self.rollback(&transaction)?;
             return Err(error);
+        }
+        if let Err(error) = self.preservation_candidate(&candidate, &baseline) {
+            self.rollback(&transaction)?;
+            return Err(format!(
+                "access preservation refused before cutover: {error}; previous deployment retained"
+            ));
         }
         self.ensure_deploy_token(&candidate);
         println!("candidate_backend={candidate} verified=true");
@@ -805,8 +816,12 @@ fn run_assessed(
         port: args.port,
         token_secret,
         force: args.force_update,
+        accept_access_loss: args.accept_access_loss,
         claude: Provision::Isolated,
     };
+    if let Some(snapshot) = &args.restore_state {
+        return result_code(coordinator.restore_state(snapshot, args.replace_state, host));
+    }
     if let Some(code) = host::dispatch(&coordinator, args, host) {
         return code;
     }

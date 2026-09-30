@@ -17,6 +17,8 @@ pub(super) struct Launch<'a> {
     /// Passed through the environment only, never argv.
     pub token_secret: &'a str,
     pub log: &'a Path,
+    /// Original file credential source, when a container used a live file.
+    pub claude_home: Option<&'a Path>,
 }
 
 /// Where the host login lives; presence only, never its bytes.
@@ -52,6 +54,45 @@ pub(super) trait HostRuntime {
     fn claude_login(&self) -> ClaudeLogin;
     /// `router tokens list --json` over the host's view of the data.
     fn token_inventory(&self, executable: &Path, data_dir: &Path) -> Result<String, String>;
+    /// Read a bound token's model set without issuing tokens or copying OAuth.
+    fn catalog(
+        &self,
+        port: u16,
+        bearer: &str,
+    ) -> Result<std::collections::BTreeSet<String>, String> {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|_| "catalog runtime unavailable")?;
+        runtime.block_on(async {
+            let client = reqwest::Client::builder()
+                .no_proxy()
+                .timeout(Duration::from_secs(10))
+                .build()
+                .map_err(|_| "catalog client unavailable")?;
+            let response = client
+                .get(format!("http://127.0.0.1:{port}/api/models"))
+                .bearer_auth(bearer)
+                .send()
+                .await
+                .map_err(|_| "issued-token catalog request failed")?;
+            if !response.status().is_success() {
+                return Err("issued-token catalog was rejected".into());
+            }
+            let body: serde_json::Value =
+                response.json().await.map_err(|_| "catalog JSON invalid")?;
+            let rows = body["data"].as_array().ok_or("catalog models absent")?;
+            rows.iter()
+                .map(|row| {
+                    let id = row["id"].as_str().ok_or("catalog model ID absent")?;
+                    Ok(format!(
+                        "{}/{id}",
+                        row["owned_by"].as_str().unwrap_or_default()
+                    ))
+                })
+                .collect()
+        })
+    }
 }
 
 /// The real host: processes, loopback HTTP and the platform secret store.
@@ -88,6 +129,11 @@ impl HostRuntime for System {
             .stdin(Stdio::null())
             .stdout(log)
             .stderr(error_log);
+        if let Some(home) = launch.claude_home {
+            command
+                .env("CLAUDE_CODE_HOME", home)
+                .env("CLAUDE_CONFIG_DIR", home);
+        }
         detach(&mut command);
         let child = command.spawn().map_err(|error| {
             format!(

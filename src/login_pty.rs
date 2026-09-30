@@ -311,6 +311,16 @@ impl PtySession {
     /// Terminate the child. Safe to call more than once.
     pub fn kill(&self) {
         if let Ok(mut guard) = self.child.lock() {
+            // portable-pty starts a dedicated Unix session (setsid). Killing
+            // only its leader leaves wrapper/vendor grandchildren alive.
+            #[cfg(unix)]
+            if let Some(pid) = guard.process_id() {
+                let _ = std::process::Command::new("/bin/kill")
+                    .args(["-KILL", "--", &format!("-{pid}")])
+                    .stdout(std::process::Stdio::null())
+                    .stderr(std::process::Stdio::null())
+                    .status();
+            }
             let _ = guard.kill();
             let _ = guard.wait();
         }

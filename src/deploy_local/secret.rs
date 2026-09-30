@@ -21,7 +21,7 @@ pub(super) const LABEL_SUFFIX: &str = "token-secret";
 /// The variable carrying the probe token into `docker exec`, by name only.
 pub(super) const PROBE_ENV: &str = "ROUTER_DEPLOY_PROBE_TOKEN";
 const FINGERPRINT_CONTEXT: &[u8] = b"link-assistant-router/deploy/token-secret-fingerprint/v1";
-const PROBE_SCRIPT: &str = "const r=await fetch('http://127.0.0.1:8080/api/models',{headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
+const PROBE_SCRIPT: &str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
 
 fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
     let signature =

@@ -8,6 +8,23 @@ use clap::{Args, ValueEnum};
 /// What a `router deploy` run should do.
 #[derive(Debug, Args)]
 pub struct DeployArgs {
+    /// Restore a non-OAuth data checkpoint to a stopped local deployment.
+    /// Existing records/files take precedence unless --replace-state is set.
+    #[arg(long, value_name = "DIR", requires = "yes", conflicts_with_all = ["server", "staging", "mode", "status", "down", "force_update", "accept_access_loss", "claude_credentials", "build"])]
+    pub restore_state: Option<std::path::PathBuf>,
+    /// Replace covered data with the checkpoint after retaining a new backup.
+    #[arg(long, requires = "restore_state")]
+    pub replace_state: bool,
+    /// Create or inspect an isolated local candidate namespace. Never shares
+    /// primary data, OAuth ownership, tokens, ports or selected client profiles.
+    #[arg(long, value_name = "NAME", conflicts_with_all = ["server", "mode", "claude_credentials", "force_update"])]
+    pub staging: Option<String>,
+    /// Read-only machine-readable staging verification (no paid probes).
+    #[arg(long, requires = "staging", conflicts_with_all = ["down", "status"])]
+    pub verify: bool,
+    /// Machine-readable staging result.
+    #[arg(long, requires = "staging")]
+    pub json: bool,
     /// SSH destination on which to converge the deployment.
     ///
     /// The destination uses OpenSSH's ordinary `user@host`/config-alias
@@ -41,6 +58,10 @@ pub struct DeployArgs {
         conflicts_with_all = ["server", "status", "down"],
     )]
     pub force_update: bool,
+    /// Explicitly accept provider/catalog loss reported by candidate validation.
+    /// Connection interruption permission alone does not authorize access loss.
+    #[arg(long, conflicts_with_all = ["server", "staging", "status", "down"])]
+    pub accept_access_loss: bool,
     /// Published host port.
     #[arg(long, default_value_t = crate::deploy::DEFAULT_PORT)]
     pub port: u16,

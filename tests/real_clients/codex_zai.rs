@@ -147,7 +147,7 @@ fn current_codex_tui_starts_on_a_zai_only_catalog_without_reasoning_metadata() {
     );
     let home = seeded_home();
     let router = MockRouter::start_with_models(CODEX, zai_models());
-    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    let mut command = wrapper::isolated_pty_command();
     command.args([
         "--server",
         &router.origin,

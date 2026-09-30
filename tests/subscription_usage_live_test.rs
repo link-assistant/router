@@ -25,7 +25,6 @@ use std::path::Path;
 use std::process::{Command, Output, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
-use wait_timeout::ChildExt as _;
 
 const LIVE_TEST_SECRET: &str = "real-usage-smoke-router-secret";
 
@@ -118,12 +117,14 @@ fn install_zai(state: &AppState, api_key: String) {
 }
 
 fn run_live_claude_context_attempt(home: &Path, origin: &str, token: &str, model: &str) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_with-router"))
+    link_assistant_router::verification_client::safety().expect("safe live client boundary");
+    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    link_assistant_router::verification_client::environment(&mut command, home);
+    command
+        .env("LINK_ASSISTANT_ROUTER_TOKEN", token)
         .args([
             "--server",
             origin,
-            "--token",
-            token,
             "--model",
             model,
             "--non-interactive",
@@ -155,22 +156,9 @@ fn run_live_claude_context_attempt(home: &Path, origin: &str, token: &str, model
         .env("ALL_PROXY", "http://127.0.0.1:9")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("attempt to launch the current Claude Code through Router");
-    if child
-        .wait_timeout(Duration::from_secs(120))
-        .expect("wait for live Claude context probe")
-        .is_none()
-    {
-        child
-            .kill()
-            .expect("stop timed-out live Claude context probe");
-        panic!("the live Claude context probe did not finish within 120s");
-    }
-    child
-        .wait_with_output()
-        .expect("collect live Claude context output")
+        .stderr(Stdio::piped());
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(120))
+        .expect("bounded live Claude context output")
 }
 
 fn reported_claude_model_limit(output: &Output) -> Option<u64> {
@@ -641,19 +629,14 @@ async fn current_claude_serves_each_live_glm_model_with_only_verified_metadata()
     ) {
         return;
     }
-    let version = Command::new("claude")
-        .arg("--version")
-        .stdin(Stdio::null())
-        .output()
-        .expect("ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST requires claude on PATH");
+    let (preparation, _) = link_assistant_router::verification_client::prepare(&["claude"]);
     assert!(
-        version.status.success(),
-        "the installed Claude Code could not report its version: {}",
-        String::from_utf8_lossy(&version.stderr)
+        preparation[0]["status"] == "prepared",
+        "safe installed Claude version preparation failed"
     );
     eprintln!(
         "RUN: probing exact GLM context with {}",
-        String::from_utf8_lossy(&version.stdout).trim()
+        preparation[0]["observed"]
     );
 
     let root = tempfile::tempdir().expect("live z.ai Claude context data dir");

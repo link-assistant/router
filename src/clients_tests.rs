@@ -250,8 +250,9 @@ fn claude_setup_maps_zai_only_main_and_subagent_without_fake_families() {
     for key in CLAUDE_GATEWAY_TARGET_ENV {
         assert_eq!(settings["env"][key], "future-saffron-2099", "{key}");
     }
+    // Explicit user model values retain precedence over Router's fresh default.
+    assert_eq!(settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "user-opus");
     for key in [
-        "ANTHROPIC_DEFAULT_OPUS_MODEL",
         "ANTHROPIC_DEFAULT_SONNET_MODEL",
         "ANTHROPIC_DEFAULT_HAIKU_MODEL",
     ] {
@@ -315,6 +316,7 @@ fn claude_setup_migrates_only_router_owned_legacy_nonessential_traffic() {
                 Some("0".into()),
                 previous.map(str::to_string),
             )],
+            &[],
         )
         .unwrap();
 
@@ -470,8 +472,8 @@ fn the_gateway_model_is_the_providers_current_model_not_its_first_listed() {
         .collect();
     assert_eq!(
         claude_gateway_model(&catalog, None).as_deref(),
-        Some("glm-5.3-flash"),
-        "the newest advertised model must be the pin, not the first listed"
+        Some("glm-5.3"),
+        "a fresh z.ai profile prefers the authorized flagship over a newer Flash row"
     );
 
     // Position must not decide it: the same catalog shuffled resolves the same.
@@ -479,13 +481,13 @@ fn the_gateway_model_is_the_providers_current_model_not_its_first_listed() {
     shuffled.reverse();
     assert_eq!(
         claude_gateway_model(&shuffled, None).as_deref(),
-        Some("glm-5.3-flash"),
+        Some("glm-5.3"),
         "reversing the catalog must not change the resolved model"
     );
     shuffled.rotate_left(4);
     assert_eq!(
         claude_gateway_model(&shuffled, None).as_deref(),
-        Some("glm-5.3-flash"),
+        Some("glm-5.3"),
         "rotating the catalog must not change the resolved model"
     );
 

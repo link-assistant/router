@@ -2,6 +2,20 @@ use super::*;
 
 pub const THINKING_TRACE: &str = "ROUTER_CAPTURE_THINKING_TRACE";
 
+pub fn catalog_answer(model: &str, body: &[u8], catalog: &[Value]) -> Vec<u8> {
+    if catalog
+        .iter()
+        .any(|row| row["id"] == model && row["fixture_fail_inference"] == true)
+    {
+        return http_response(
+            "400 Bad Request",
+            "application/json",
+            r#"{"type":"error","error":{"type":"invalid_request_error","message":"fixture preferred model unavailable"}}"#,
+        );
+    }
+    anthropic_answer(model, body)
+}
+
 pub fn anthropic_answer(model: &str, request_body: &[u8]) -> Vec<u8> {
     let request = serde_json::from_slice::<Value>(request_body).unwrap_or(Value::Null);
     let rendered = request.to_string();

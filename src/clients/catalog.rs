@@ -258,6 +258,8 @@ pub fn select_model(client: ClientKind, catalog: &[RouterModel]) -> Option<&str>
     catalog.first().map(|model| model.id.as_str())
 }
 
+const FRESH_ZAI_PREFERRED_MODEL: &str = "glm-5.3";
+
 /// Dynamic Claude Code main/subagent target for a z.ai-backed catalog.
 ///
 /// Native Anthropic discovery remains in charge whenever the live catalog has
@@ -281,6 +283,15 @@ pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> 
         .any(|model| model.owned_by == super::ANTHROPIC_MODEL_OWNER)
     {
         return None;
+    }
+    // Prefer the flagship only when this token's live healthy catalog offers
+    // it. Newer Flash release dates do not change a fresh profile's default.
+    // A withdrawn/unhealthy flagship is absent here, so the deterministic
+    // provider-recency fallback below remains available (#634).
+    if let Some(flagship) = catalog.iter().find(|model| {
+        model.owned_by == super::ZAI_MODEL_OWNER && model.id == FRESH_ZAI_PREFERRED_MODEL
+    }) {
+        return Some(flagship.id.clone());
     }
     // Catalog order is the provider's listing, not a ranking. Taking the first
     // entry pinned whichever model the vendor happened to list first — in

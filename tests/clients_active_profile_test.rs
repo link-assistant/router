@@ -15,42 +15,26 @@ use std::path::Path;
 use std::process::{Child, Command};
 use std::time::{Duration, Instant};
 
-/// A long-running process whose name is `name`, launched with only `env`.
-///
-/// macOS names a process after the file it executed, so a copy of `sleep`
-/// works there. Linux takes the name from the script path instead, which
-/// keeps working where `sleep` is a multi-call binary that dispatches on it.
-/// The binary is written once: macOS kills a process whose executable was
-/// just rewritten in place.
-///
-/// The copy is re-signed ad hoc on macOS. It would otherwise still be Apple's
-/// platform binary, whose environment macOS withholds while System Integrity
-/// Protection is on, so the same test would take a different path on a
-/// developer's Mac than on CI (#619). It runs for an hour, not for seconds: a
-/// fixture that exits in the middle of a loaded full run makes a correct
-/// "nothing is running" answer look like a failure to block.
+/// Compile an ordinary executable under the client's real process name.
+/// Apple's protected binaries cannot safely be copied/re-signed on every Mac
+/// (#636). This fixture has no vendor code, credential-store access or children.
+/// Write once so no running executable is rewritten.
 fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running {
-    use std::os::unix::fs::PermissionsExt as _;
-
     fs::create_dir_all(directory).unwrap();
     let binary = directory.join(name);
     if !binary.exists() {
-        if cfg!(target_os = "linux") {
-            fs::write(
-                &binary,
-                "#!/bin/sh\n[ \"$1\" = --version ] && exit 1\nwhile :; do sleep 1; done\n",
-            )
-            .unwrap();
-        } else {
-            fs::copy("/bin/sleep", &binary).unwrap();
-        }
-        fs::set_permissions(&binary, fs::Permissions::from_mode(0o755)).unwrap();
-        if cfg!(target_os = "macos") {
-            let _ = Command::new("codesign")
-                .args(["--force", "--sign", "-"])
-                .arg(&binary)
-                .output();
-        }
+        let built = Command::new("rustc")
+            .args(["--edition=2024", "--crate-name", "idle_client"])
+            .arg(Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/process/idle.rs"))
+            .arg("-o")
+            .arg(&binary)
+            .output()
+            .expect("compile portable client fixture");
+        assert!(
+            built.status.success(),
+            "{}",
+            String::from_utf8_lossy(&built.stderr)
+        );
     }
     let mut command = Command::new(&binary);
     command.arg("3600").env_clear().env("PATH", "/usr/bin:/bin");
@@ -58,20 +42,40 @@ fn spawn_client(directory: &Path, name: &str, env: &[(&str, &Path)]) -> Running 
         command.env(key, value);
     }
     // Owned by the guard at once, so a panic below still reaps it.
-    let child = Running(spawn_retrying_busy(&mut command));
+    let mut child = Running(spawn_retrying_busy(&mut command));
+    wait_visible(&mut child, name).unwrap_or_else(|error| panic!("{error}"));
+    child
+}
+
+fn wait_visible(child: &mut Running, name: &str) -> Result<(), String> {
     let pid = child.0.id().to_string();
     let deadline = Instant::now() + Duration::from_secs(10);
     while Instant::now() < deadline {
+        if let Some(status) = child.0.try_wait().unwrap() {
+            return Err(format!(
+                "{name} fixture exited ({status}) before pgrep; {}",
+                child.describe()
+            ));
+        }
         let listed = Command::new("pgrep").args(["-x", name]).output().unwrap();
         if String::from_utf8_lossy(&listed.stdout)
             .lines()
             .any(|line| line.trim() == pid)
         {
-            return child;
+            let shown = child.describe();
+            // The profile detection needs the environment, not only the name.
+            assert!(
+                shown.contains("HOME="),
+                "fixture environment is hidden: {shown}"
+            );
+            return Ok(());
         }
         std::thread::sleep(Duration::from_millis(50));
     }
-    panic!("{name} process {pid} never became visible to pgrep");
+    Err(format!(
+        "{name} process {pid} never became visible to pgrep; {}",
+        child.describe()
+    ))
 }
 
 /// Another test thread may fork while this one still holds the new script
@@ -104,8 +108,13 @@ impl Running {
 
     /// The fixture as `ps -E` shows it, for a failure message.
     fn describe(&self) -> String {
-        let shown = Command::new("ps")
-            .args(["-E", "-ww", "-o", "stat=", "-o", "command=", "-p"])
+        let mut command = Command::new("ps");
+        #[cfg(target_os = "macos")]
+        command.args(["-E", "-ww"]);
+        #[cfg(not(target_os = "macos"))]
+        command.args(["eww"]);
+        let shown = command
+            .args(["-o", "stat=", "-o", "command=", "-p"])
             .arg(self.0.id().to_string())
             .output()
             .unwrap();
@@ -272,5 +281,22 @@ fn a_client_writing_the_fixture_still_blocks_it() {
                 .to_string_lossy()
                 .len()
                 == 32)
+    );
+}
+
+#[test]
+fn an_exited_fixture_reports_its_status_without_waiting_for_pgrep() {
+    let mut child = Running(
+        Command::new("/bin/sh")
+            .args(["-c", "exit 17"])
+            .spawn()
+            .unwrap(),
+    );
+    let started = Instant::now();
+    let error = wait_visible(&mut child, "router-no-such-process").unwrap_err();
+    assert!(started.elapsed() < Duration::from_secs(2), "{error}");
+    assert!(
+        error.contains("17") && error.contains("ps sees it"),
+        "{error}"
     );
 }

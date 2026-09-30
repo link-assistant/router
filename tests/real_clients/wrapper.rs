@@ -1,13 +1,19 @@
 use super::*;
 
+pub fn isolated_pty_command() -> CommandBuilder {
+    link_assistant_router::verification_client::safety().expect("safe TUI boundary");
+    let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));
+    command.env_clear();
+    command.env("PATH", std::env::var_os("PATH").unwrap_or_default());
+    command
+}
+
 pub fn version_output(case: ClientCase, home: &Path) -> Output {
-    Command::new(case.executable)
-        .arg("--version")
-        .env("HOME", home)
-        .env("XDG_CONFIG_HOME", home.join(".config"))
-        .env("CODEX_HOME", home.join(".codex"))
-        .stdin(Stdio::null())
-        .output()
+    link_assistant_router::verification_client::safety().expect("safe version boundary");
+    let mut command = Command::new(case.executable);
+    link_assistant_router::verification_client::environment(&mut command, home);
+    command.arg("--version");
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(15))
         .unwrap_or_else(|error| panic!("launch {} --version: {error}", case.executable))
 }
 
@@ -31,7 +37,9 @@ pub fn run_wrapper_with_options_and_env(
     forwarded: &[&str],
     environment: &[(&str, &str)],
 ) -> Output {
+    link_assistant_router::verification_client::safety().expect("safe wrapper boundary");
     let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    link_assistant_router::verification_client::environment(&mut command, home);
     command.args(["--server", server, "--token", "offline-admin"]);
     if let Some(model) = model {
         command.args(["--model", model]);
@@ -69,23 +77,6 @@ pub fn run_wrapper_with_options_and_env(
     for (key, value) in environment {
         command.env(key, value);
     }
-    let mut child = command
-        .spawn()
-        .expect("launch with-router real-client capture tier");
-    let status = child
-        .wait_timeout(Duration::from_secs(60))
-        .expect("wait for real client");
-    if status.is_none() {
-        child.kill().expect("stop timed-out real client");
-        let output = child.wait_with_output().expect("collect timed-out output");
-        panic!(
-            "{} did not finish against the offline mock; stdout: {}; stderr: {}",
-            case.client,
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-    }
-    child
-        .wait_with_output()
-        .expect("collect real-client output")
+    link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(60))
+        .expect("bounded real-client capture")
 }

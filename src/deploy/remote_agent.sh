@@ -1,11 +1,22 @@
 #!/bin/sh
 # Target half of `router deploy --server`. It is embedded in the binary and is
 # sent on stdin, so the target needs no installed Router agent. Its host-side
-# dependencies are POSIX sh/core utilities, util-linux flock, base64, Docker,
+# dependencies are POSIX sh/core utilities, util-linux flock, GNU timeout, base64, Docker,
 # and git for the default release-tag build.
 
 set -eu
 umask 077
+
+# Own a finite Docker process group. Never recover or restart the daemon.
+command -v timeout >/dev/null 2>&1 || {
+    echo 'error: GNU timeout is required for bounded deployment diagnostics' >&2
+    exit 1
+}
+docker() {
+    budget=30
+    case "$1" in build|pull) budget=900;; esac
+    command timeout --kill-after=5s "${budget}s" docker "$@"
+}
 
 MODE=$1
 COOKIE=$2
@@ -405,38 +416,27 @@ EOF
 
 recover_transaction
 
-copy_holding() {
+share_holding() {
     provider=$1
     source=$2
-    destination=$RELEASE/home/$3
+    directory=$3
     shift 3
-    # Router's durable credential reader creates an adjacent transaction lock
-    # before it can conclude that every recognized file is absent. Keep an
-    # empty, writable provider home for a legitimate withdrawal.
-    mkdir -p "$destination"
     present=0
     for filename in "$@"; do
         if [ -f "$source/$filename" ]; then present=1; fi
     done
     if [ "$present" -eq 0 ]; then
+        mkdir -p "$RELEASE/home/$directory"
         printf '%s\twithdrawn\t%s\t-\n' "$provider" "$source" >> "$HOLDINGS"
-        echo "credential: $provider is not configured on the target"
         return 0
     fi
-    for filename in "$@"; do
-        [ -f "$source/$filename" ] || continue
-        if ! cp -p "$source/$filename" "$destination/$filename"; then
-            echo "error: could not copy target $provider credential $filename" >&2
-            exit 1
-        fi
-        if ! cmp -s "$source/$filename" "$destination/$filename"; then
-            echo "error: target $provider credential copy did not verify" >&2
-            exit 1
-        fi
-    done
-    digest=$(tar -C "$destination" -cf - . | sha256sum | awk '{print $1}')
-    printf '%s\tpresent\t%s\t%s\n' "$provider" "$source" "$digest" >> "$HOLDINGS"
-    echo "credential: carried $provider from the target"
+    [ -d "$source" ] && [ -r "$source" ] && [ -w "$source" ] || {
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"live credential directory is not readable and writable; refresh ownership cannot be preserved"}' >&2
+        exit 1
+    }
+    # Bind the whole original directory, including its durable refresh lock.
+    # Individual file mounts break on atomic rename; snapshots fork OAuth.
+    printf '%s\tpresent\t%s\tshared-original-directory\n' "$provider" "$source" >> "$HOLDINGS"
 }
 
 HOLDINGS=$RELEASE/credential-holdings.unsigned
@@ -445,10 +445,10 @@ claude_home=${CLAUDE_CODE_HOME:-"$HOME/.claude"}
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
 gemini_home=${GEMINI_HOME:-"${GEMINI_CLI_HOME:-$HOME}/.gemini"}
 qwen_home=${QWEN_HOME:-"$HOME/.qwen"}
-copy_holding claude "$claude_home" .claude .credentials.json credentials.json auth.json oauth.json config.json
-copy_holding codex "$codex_home" .codex auth.json
-copy_holding gemini "$gemini_home" .gemini oauth_creds.json
-copy_holding qwen "$qwen_home" .qwen oauth_creds.json
+share_holding claude "$claude_home" .claude .credentials.json credentials.json auth.json oauth.json config.json
+share_holding codex "$codex_home" .codex auth.json
+share_holding gemini "$gemini_home" .gemini oauth_creds.json
+share_holding qwen "$qwen_home" .qwen oauth_creds.json
 write_signed "$RELEASE/credential-holdings" < "$HOLDINGS"
 rm -f "$HOLDINGS"
 
@@ -464,12 +464,82 @@ if [ -r "$STATE/active" ] && verify_signed "$STATE/active"; then
     old_container=$recorded_old
 fi
 
-if [ -n "$old_root" ] && [ -d "$old_root/data" ]; then
-    cp -a "$old_root/data/." "$RELEASE/data/"
+if [ -n "$old_root" ] && [ -r "$old_root/credential-holdings" ]; then
+    # Previous versions refreshed a private snapshot. Neither the host copy
+    # nor the snapshot can be chosen as current authority without evidence.
+    if ! grep -q 'shared-original-directory' "$old_root/credential-holdings" &&
+        grep -q 'present' "$old_root/credential-holdings"; then
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"legacy remote OAuth snapshot has an unproven refresh owner; no credentials copied and no cutover attempted"}' >&2
+        exit 1
+    fi
+fi
+if [ -n "$old_root" ] && [ -r "$old_root/credential-holdings" ]; then
+    verify_signed "$old_root/credential-holdings" || {
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"credential-source journal integrity cannot be established"}' >&2
+        exit 1
+    }
+    for provider in claude codex gemini qwen; do
+        previous_source=$(awk -F '\t' -v p="$provider" '$1==p && $2=="present" {print $3; exit}' "$old_root/credential-holdings")
+        case "$provider" in claude) source=$claude_home;; codex) source=$codex_home;; gemini) source=$gemini_home;; qwen) source=$qwen_home;; esac
+        if [ -n "$previous_source" ] && [ "$previous_source" != "$source" ]; then
+            echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"live credential directory changed; source connection would be lost"}' >&2
+            exit 1
+        fi
+    done
+fi
+preservation_catalogs() {
+    docker exec "$1" bun -e '
+const {spawnSync}=require("node:child_process");const {createHmac}=require("node:crypto");
+const inventory=spawnSync("router",["tokens","list","--json"],{encoding:"utf8",timeout:15000});
+if(inventory.status!==0)throw Error("issued-token inventory unavailable");
+const now=Math.floor(Date.now()/1000);const records=JSON.parse(inventory.stdout).filter(t=>!t.revoked&&t.expires_at>now&&t.client_kind&&t.principal_id);
+if(records.length>512)throw Error("issued-token inventory exceeds bounded verification budget");const catalogs=[];
+for(const t of records){const claims={sub:t.id,iat:t.issued_at,exp:t.expires_at,label:t.label,scope:t.scope||"",github_repos:t.github_repos||[],client_kind:t.client_kind,principal_id:t.principal_id};
+const header=Buffer.from(JSON.stringify({alg:"HS256",typ:"JWT"})).toString("base64url");const body=Buffer.from(JSON.stringify(claims)).toString("base64url");const payload=header+"."+body;
+const token="la_sk_"+payload+"."+createHmac("sha256",process.env.TOKEN_SECRET).update(payload).digest("base64url");
+const response=await fetch("http://127.0.0.1:8080/api/models",{signal:AbortSignal.timeout(5000),headers:{authorization:"Bearer "+token}});
+if(response.status!==200)throw Error("issued-token catalog unavailable: "+t.id);
+const catalog=await response.json();if(!Array.isArray(catalog.data))throw Error("model catalog invalid");
+catalogs.push({token_id:t.id,client_kind:t.client_kind,models:catalog.data.map(m=>String(m.owned_by||"")+"/"+m.id).sort()});}
+console.log(JSON.stringify(catalogs));' 2>/dev/null
+}
+if [ -n "$old_container" ]; then
+    ROUTER_EXPECTED_SECRET=$TOKEN_SECRET
+    export ROUTER_EXPECTED_SECRET
+    if ! docker exec -e ROUTER_EXPECTED_SECRET "$old_container" bun -e 'const {createHmac}=require("node:crypto");const f=s=>createHmac("sha256",s).update("router-preservation-secret-v1").digest("hex");process.exit(f(process.env.TOKEN_SECRET)===f(process.env.ROUTER_EXPECTED_SECRET)?0:2)' >/dev/null 2>&1; then
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"signing secret continuity failed; old tokens would be rejected"}' >&2
+        exit 1
+    fi
+    unset ROUTER_EXPECTED_SECRET
+    if ! preservation_catalogs "$old_container" > "$RELEASE/preservation-before.json"; then
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"old token-authorized catalog cannot be established; no candidate or cutover attempted"}' >&2
+        exit 1
+    fi
+    # Export recoverable data before even preparing the candidate. OAuth homes
+    # remain on their original owner and are deliberately outside this scope.
+    if ! docker exec -i "$old_container" bun - <<'JS_CHECKPOINT'
+@@DATA_CHECKPOINT@@
+JS_CHECKPOINT
+    then
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"recoverable non-OAuth data checkpoint failed; no candidate or cutover attempted"}' >&2
+        exit 1
+    fi
 else
+    printf '[]\n' > "$RELEASE/preservation-before.json"
+fi
+SHARED_DATA=$ROOT/data
+if [ -n "$old_root" ] && [ -d "$old_root/data" ] && [ ! -L "$old_root/data" ] && [ ! -e "$SHARED_DATA" ]; then
+    # Same-filesystem rename keeps the mounted directory inode and live data.
+    mv "$old_root/data" "$SHARED_DATA"
+    ln -s "$SHARED_DATA" "$old_root/data"
+fi
+mkdir -p "$SHARED_DATA"
+rmdir "$RELEASE/data"
+ln -s "$SHARED_DATA" "$RELEASE/data"
+if [ -z "$old_root" ]; then
     parent_data=${XDG_DATA_HOME:-"$HOME/.local/share"}/link-assistant-router
     if [ -f "$parent_data/providers.lenv" ]; then
-        cp -p "$parent_data/providers.lenv" "$RELEASE/data/providers.lenv"
+        cp -p "$parent_data/providers.lenv" "$SHARED_DATA/providers.lenv"
     fi
 fi
 
@@ -519,12 +589,25 @@ candidate_image=$image_id
 source_revision=$source_revision
 EOF
 
+set --
+for provider in claude codex gemini qwen; do
+    case "$provider" in
+        claude) source=$claude_home; directory=.claude;;
+        codex) source=$codex_home; directory=.codex;;
+        gemini) source=$gemini_home; directory=.gemini;;
+        qwen) source=$qwen_home; directory=.qwen;;
+    esac
+    if [ -d "$source" ]; then
+        set -- "$@" -v "$source:/data/home/$directory"
+    fi
+done
+
 docker run -d --name "$CANDIDATE" --network "$NETWORK" --restart unless-stopped \
     --user "$SELF_UID:$SELF_GID" \
     --label "$OWNER_LABEL=1" --label "$OWNER_LABEL.root=$ROOT" \
     --label "$OWNER_LABEL.cookie=$COOKIE" \
     -p 127.0.0.1::8080 \
-    -v "$RELEASE/home:/data/home" -v "$RELEASE/data:/data/router" \
+    -v "$RELEASE/home:/data/home" -v "$SHARED_DATA:/data/router" "$@" \
     -e TOKEN_SECRET -e DATA_DIR=/data/router -e STORAGE_POLICY=text \
     -e HOME=/data/home -e CLAUDE_CODE_HOME=/data/home/.claude \
     ${PUBLIC_PORT:+-p 127.0.0.1::8443} \
@@ -571,7 +654,7 @@ ready=0
 attempt=0
 while [ "$attempt" -lt 300 ]; do
     if docker exec "$CANDIDATE" bun -e \
-        'const r=await fetch("http://127.0.0.1:8080/api/health");process.exit(r.status===200?0:1)' \
+        'const r=await fetch("http://127.0.0.1:8080/api/health",{signal:AbortSignal.timeout(5000)});process.exit(r.status===200?0:1)' \
         >/dev/null 2>&1; then
         ready=1
         break
@@ -580,6 +663,22 @@ while [ "$attempt" -lt 300 ]; do
     sleep 1
 done
 [ "$ready" -eq 1 ] || { echo "error: candidate did not become healthy" >&2; exit 1; }
+
+if ! preservation_catalogs "$CANDIDATE" > "$RELEASE/preservation-after.json"; then
+    echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"candidate issued-token catalog unavailable; old backend retained"}' >&2
+    exit 1
+fi
+PRESERVATION_BEFORE=$(cat "$RELEASE/preservation-before.json")
+PRESERVATION_AFTER=$(cat "$RELEASE/preservation-after.json")
+export PRESERVATION_BEFORE PRESERVATION_AFTER
+if ! docker exec -e PRESERVATION_BEFORE -e PRESERVATION_AFTER "$CANDIDATE" bun -e '
+const old=JSON.parse(process.env.PRESERVATION_BEFORE),candidate=JSON.parse(process.env.PRESERVATION_AFTER);
+for(const row of old){const next=candidate.find(n=>n.token_id===row.token_id&&n.client_kind===row.client_kind);if(!next||row.models.some(m=>!next.models.includes(m)))process.exit(2);}
+console.log(JSON.stringify({schema:"link-assistant-router/preservation/v1",status:"candidate-checked",issued_bound_tokens:old.length,credentials_copied:false,data_restore_proven:false}));'; then
+    echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"previously authorized token/provider models disappeared; old backend retained"}' >&2
+    exit 1
+fi
+unset PRESERVATION_BEFORE PRESERVATION_AFTER
 
 ADMIN=$(docker exec "$CANDIDATE" router tokens issue --admin --ttl-hours 1 \
     --label deploy-verification | grep -o 'la_sk_[A-Za-z0-9._-]*' | sed -n '1p')
@@ -621,12 +720,13 @@ async function call(base, path, options={}) {
         response.on("data", chunk => chunks.push(chunk));
         response.on("end", () => resolve({status:response.statusCode, text:Buffer.concat(chunks).toString()}));
       });
+      request.setTimeout(15000, () => request.destroy(new Error("verification HTTP deadline exceeded")));
       request.on("error", reject);
       if (options.body) request.write(options.body);
       request.end();
     });
   }
-  const response = await fetch(base + path, options);
+  const response = await fetch(base + path, {...options,signal:AbortSignal.timeout(15000)});
   const text = await response.text();
   return {status:response.status, text};
 }
