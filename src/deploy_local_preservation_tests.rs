@@ -31,6 +31,62 @@ fn a_healthy_zai_candidate_cannot_hide_lost_anthropic_authority() {
 }
 
 #[test]
+fn unavailable_old_catalog_refuses_before_preparation_without_cutover() {
+    let root = tempfile::tempdir().unwrap();
+    let runner = installed(root.path());
+    let update = coordinator(runner.clone(), root.path(), "router:2", 9090, false);
+    let before = update.state.active().unwrap().unwrap();
+    runner.0.lock().unwrap().catalog_error = Some("private-provider-error la_sk_private".into());
+    runner.0.lock().unwrap().commands.clear();
+    let error = update.deploy(&update.existing().unwrap()).unwrap_err();
+    assert!(
+        error.contains("token-authorized catalog unavailable"),
+        "{error}"
+    );
+    assert!(!error.contains(super::DEFAULT_SECRET));
+    assert!(!error.contains("la_sk_private"));
+    let world = runner.0.lock().unwrap();
+    assert!(world.containers[&before.backend].running);
+    assert!(
+        !world
+            .commands
+            .iter()
+            .any(|args| matches!(args[0].as_str(), "pull" | "build" | "run" | "stop" | "rm"))
+    );
+    drop(world);
+}
+
+#[test]
+fn oversized_bound_token_inventory_refuses_without_candidate_work() {
+    let root = tempfile::tempdir().unwrap();
+    let runner = installed(root.path());
+    let mut records = Vec::new();
+    for id in 0..513 {
+        records.push(serde_json::json!({"id":format!("client-{id}"),"label":"private","issued_at":1,"expires_at":4_102_444_800_i64,"revoked":false,"client_kind":"claude","principal_id":"primary"}));
+    }
+    {
+        let mut world = runner.0.lock().unwrap();
+        world.token_inventory = serde_json::to_string(&records).unwrap();
+        world.commands.clear();
+    }
+    let update = coordinator(runner.clone(), root.path(), "router:2", 9090, false);
+    assert!(
+        update
+            .deploy(&update.existing().unwrap())
+            .unwrap_err()
+            .contains("512-token")
+    );
+    let world = runner.0.lock().unwrap();
+    assert!(
+        !world
+            .commands
+            .iter()
+            .any(|args| matches!(args[0].as_str(), "pull" | "build" | "run" | "stop" | "rm"))
+    );
+    drop(world);
+}
+
+#[test]
 fn changed_credential_sources_are_refused_before_candidate_preparation() {
     let root = tempfile::tempdir().unwrap();
     let runner = installed(root.path());

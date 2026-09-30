@@ -60,7 +60,7 @@ This acceptance can spend provider quota. A failed cleanup retains the private
 owned journal for targeted cleanup instead of losing ownership evidence.
 
 For updates of an existing deployment, source and per-token provider-union
-checks run before cutover. `--force` acknowledges connection interruption;
+checks run before cutover. `--force-update` acknowledges connection interruption;
 it does not authorize provider loss. `--accept-access-loss` is an explicit,
 separate authorization that is reported in JSON. Remote upgrade preserves
 original provider directories and durable state, refuses legacy OAuth

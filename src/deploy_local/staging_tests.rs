@@ -185,3 +185,117 @@ fn stalled_control_and_healthy_http_are_distinct_and_status_is_read_only() {
     assert_eq!(report["port_ownership"], "not-proven");
     assert_eq!(report["parity"], false);
 }
+
+#[test]
+fn absent_status_and_foreign_data_never_adopt_or_create_resources() {
+    let parent = tempfile::tempdir().unwrap();
+    let root = parent.path().join("stage");
+    let runner = Runner::default();
+    let docker = Docker::with_runner(runner.clone());
+    let mut args = args();
+    args.status = true;
+    assert_eq!(
+        execute(&args, &root, "router:1.2.3", &docker).unwrap()["status"],
+        "absent"
+    );
+    assert!(!root.exists());
+    args.status = false;
+    fs::create_dir(&root).unwrap();
+    fs::write(root.join("primary-project"), b"retain").unwrap();
+    assert!(
+        execute(&args, &root, "router:1.2.3", &docker)
+            .unwrap_err()
+            .contains("pre-existing")
+    );
+    assert_eq!(fs::read(root.join("primary-project")).unwrap(), b"retain");
+    assert!(!root.join(MARKER).exists());
+    assert!(runner.0.lock().unwrap().commands.is_empty());
+}
+
+#[test]
+fn journal_drift_and_foreign_network_refuse_before_candidate_mutation() {
+    let parent = tempfile::tempdir().unwrap();
+    let root = parent.path().join("stage");
+    let runner = Runner::default();
+    let docker = Docker::with_runner(runner.clone());
+    let args = args();
+    execute(&args, &root, "router:1.2.3", &docker).unwrap();
+    let journal = fs::read(root.join(MARKER)).unwrap();
+    let mut changed: Value = serde_json::from_slice(&journal).unwrap();
+    changed["root"] = json!(parent.path().join("primary"));
+    fs::write(root.join(MARKER), changed.to_string()).unwrap();
+    runner.0.lock().unwrap().commands.clear();
+    assert!(
+        execute(&args, &root, "router:1.2.3", &docker)
+            .unwrap_err()
+            .contains("identity/root")
+    );
+    assert!(runner.0.lock().unwrap().commands.is_empty());
+    fs::write(root.join(MARKER), journal).unwrap();
+    assert!(
+        execute(&args, &root, "router:2.0.0", &docker)
+            .unwrap_err()
+            .contains("image/port")
+    );
+    {
+        let mut state = runner.0.lock().unwrap();
+        state.container = false;
+        state.owner = "foreign-owner".into();
+    }
+    assert!(
+        execute(&args, &root, "router:1.2.3", &docker)
+            .unwrap_err()
+            .contains("unowned resource")
+    );
+    let state = runner.0.lock().unwrap();
+    assert!(state.network);
+    assert!(
+        !state
+            .commands
+            .iter()
+            .any(|args| matches!(args[0].as_str(), "run" | "rm"))
+    );
+    drop(state);
+}
+
+#[test]
+fn cleanup_refuses_unexpected_container_names_and_foreign_network_owners() {
+    let parent = tempfile::tempdir().unwrap();
+    let root = parent.path().join("stage");
+    let runner = Runner::default();
+    let docker = Docker::with_runner(runner.clone());
+    let mut args = args();
+    execute(&args, &root, "router:1.2.3", &docker).unwrap();
+    {
+        let mut state = runner.0.lock().unwrap();
+        state.name = super::super::RELAY.into();
+        state.commands.clear();
+    }
+    args.down = true;
+    assert!(
+        execute(&args, &root, "router:1.2.3", &docker)
+            .unwrap_err()
+            .contains("unexpected staging resource")
+    );
+    {
+        let mut state = runner.0.lock().unwrap();
+        assert!(state.container);
+        state.container = false;
+        state.name = "router-stage-fixture".into();
+        state.owner = "foreign-owner".into();
+    }
+    assert!(
+        execute(&args, &root, "router:1.2.3", &docker)
+            .unwrap_err()
+            .contains("network cleanup ownership")
+    );
+    let state = runner.0.lock().unwrap();
+    assert!(state.network);
+    assert!(
+        !state
+            .commands
+            .iter()
+            .any(|args| args[0] == "rm" || (args[0] == "network" && args[1] == "rm"))
+    );
+    drop(state);
+}

@@ -57,6 +57,7 @@ struct World {
     catalog_models: Vec<String>,
     candidate_catalog_models: Option<Vec<String>>,
     catalog_baseline_container: Option<String>,
+    catalog_error: Option<String>,
 }
 
 const DEFAULT_SECRET: &str = "integration-test-signing-secret";
@@ -82,6 +83,7 @@ impl Default for World {
             catalog_models: vec!["anthropic/claude-sonnet".into(), "z.ai/glm-5.3".into()],
             candidate_catalog_models: None,
             catalog_baseline_container: None,
+            catalog_error: None,
         }
     }
 }
@@ -409,6 +411,9 @@ fn exec(
         .iter()
         .any(|(key, _)| *key == "ROUTER_PRESERVATION_TOKEN")
     {
+        if let Some(error) = &world.catalog_error {
+            return Ok(FakeRunner::output(false, Vec::new(), error.as_bytes()));
+        }
         let candidate = arguments.iter().any(|arg| {
             arg.starts_with("router-deploy-backend-")
                 && world.catalog_baseline_container.as_ref() != Some(arg)
@@ -519,6 +524,7 @@ pub(super) fn deploy_args() -> DeployArgs {
         replace_state: false,
         staging: None,
         verify: false,
+        json: false,
         server: None,
         status: false,
         down: false,

@@ -22,6 +22,9 @@ pub struct DeployArgs {
     /// Read-only machine-readable staging verification (no paid probes).
     #[arg(long, requires = "staging", conflicts_with_all = ["down", "status"])]
     pub verify: bool,
+    /// Machine-readable staging result.
+    #[arg(long, requires = "staging")]
+    pub json: bool,
     /// SSH destination on which to converge the deployment.
     ///
     /// The destination uses OpenSSH's ordinary `user@host`/config-alias

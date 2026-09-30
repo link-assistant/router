@@ -268,6 +268,7 @@ mod tests {
             replace_state: false,
             staging: None,
             verify: false,
+            json: false,
             server: Some("deploy@example.test".into()),
             status: false,
             down: false,

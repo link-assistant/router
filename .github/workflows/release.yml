@@ -432,6 +432,10 @@ jobs:
             cargo test --locked --all-features --test clients_active_profile_test -- --test-threads=1
           done
 
+      - name: Verify restore through a system temporary-directory alias
+        if: runner.os != 'Windows'
+        run: python3 experiments/issue-642/restore-temp-alias.py --cargo
+
       - name: Compile Windows tests
         if: runner.os == 'Windows'
         run: cargo test --locked --all-features --verbose --no-run

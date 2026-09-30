@@ -17,13 +17,24 @@
 15. List recent CI timestamps/SHAs, download non-passing logs to ci-logs, diagnose actual errors, fix and revalidate. Read logs in chunks <=1500 lines.
 16. Review gh pr diff and requirements consistency; ensure no requested features removed and clean tree; wait for all background work and required CI; mark PR 643 ready.
 
-Progress: steps 1–12 are implemented across production code, reusable verification,
-CI and documentation. Two atomic commits are already pushed. The final review
-added bounded non-OAuth checkpoints/offline restore and the protected full staging
-acceptance command. Step 13 is running all 79 integration targets, binary tests,
-strict Clippy, docs and script checks; full library testing runs in CI because
-local compilation exceeded the 3 GiB memory cap. The pinned actual-client offline
-suite passes all 13 tests. Previous macOS CI completed its full suite and ten
-active-profile repetitions. Previous Windows disk inspection, pinned Claude
-auxiliary-request assertion and coverage failures have been investigated with
-preserved logs. Steps 14–16 require the final commit's CI and coverage ratchet.
+Implementation and evidence: steps 1–12 cover production code, reusable
+verification, CI and documentation. Useful atomic commits preserve the model,
+process-safety, deployment-checkpoint and staging-acceptance changes. Local checks
+include all 80 integration targets (614 tests), router binary tests, strict Clippy,
+docs and script checks, plus all 13 pinned actual-client offline tests. Full
+library testing runs in CI because local compilation exceeded the 3 GiB memory
+cap. macOS CI completed the full library suite and ten active-profile repetitions.
+
+Investigated CI failures have preserved logs under ci-logs: Windows free-space
+inspection, pinned Claude auxiliary requests, coverage changes, and macOS restore
+through the system temporary-directory alias. The latter now has a finite
+reproduction in restore-temp-alias.py. Black-box CLI tests additionally caught the
+documented staging --json flag missing from the parser. Coverage improvements use
+ownership, preservation and CLI refusal tests; the existing coverage gate remains.
+
+Completion conditions for steps 14–16: merge any new default-branch commits,
+review the final PR diff and requirements, commit the measured coverage ratchet,
+verify every available check against the final pushed SHA and timestamp, update
+the PR's validation and evidence limits, and mark PR 643 ready with a clean tree.
+Live acceptance prerequisites remain documented in docs/plans/issue-642.md; an
+offline or skipped test must never upgrade those claims to proven.

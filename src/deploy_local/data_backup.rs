@@ -296,8 +296,11 @@ pub(super) fn restore(root: &Path, snapshot: &Path, secret: &str, replace: bool)
     for record in records {
         merged.entry(record.id.clone()).or_insert(record);
     }
-    let prepared = tempfile::tempdir()?;
-    let store = build_token_store(StoragePolicy::Both, prepared.path())
+    let prepared_directory = tempfile::tempdir()?;
+    // macOS's system temporary path can traverse /var -> /private/var. Resolve
+    // our newly owned workspace; continue rejecting links in checkpoint data.
+    let prepared = prepared_directory.path().canonicalize()?;
+    let store = build_token_store(StoragePolicy::Both, &prepared)
         .map_err(|_| invalid("cannot prepare token restore"))?;
     for record in merged.into_values() {
         store
@@ -307,7 +310,7 @@ pub(super) fn restore(root: &Path, snapshot: &Path, secret: &str, replace: bool)
     drop(store);
     // An empty text store is lazy: without replacing its projection, Both
     // would import old text records into the restored empty binary store.
-    let projection = prepared.path().join("tokens.lino");
+    let projection = prepared.join("tokens.lino");
     if !projection.exists() {
         write(&projection, b"")?;
     }
@@ -317,7 +320,7 @@ pub(super) fn restore(root: &Path, snapshot: &Path, secret: &str, replace: bool)
         }
     }
     for name in ["tokens.lino", "tokens.bin"] {
-        let path = prepared.path().join(name);
+        let path = prepared.join(name);
         if path.exists() {
             write(&data.join(name), &read_bounded(&path, &mut remaining)?)?;
         }

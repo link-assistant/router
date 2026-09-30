@@ -3,6 +3,8 @@
 //! ```cargo
 //! [dependencies]
 //! serde_json = "1"
+//! [target.'cfg(windows)'.dependencies]
+//! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
 #[path = "../src/bounded_process.rs"]

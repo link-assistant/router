@@ -109,6 +109,7 @@ mod tests {
             replace_state: false,
             staging: None,
             verify: false,
+            json: false,
             server: None,
             status: false,
             down: false,
