@@ -924,6 +924,24 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             json,
             ..
         } => recover_admin_cli::run(&mgr, *revoke_others, *ttl_hours, label, *json),
+        TokenOp::Import {
+            from,
+            ids,
+            replace,
+            dry_run,
+            json,
+            ..
+        } => link_assistant_router::token_import::run_cli(
+            mgr.store().as_ref(),
+            &config.data_dir,
+            &link_assistant_router::token_import::ImportCommand {
+                from,
+                ids,
+                replace: *replace,
+                dry_run: *dry_run,
+                json: *json,
+            },
+        ),
         TokenOp::Show { id, .. } => match mgr.list_tokens() {
             Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
                 || {

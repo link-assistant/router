@@ -28,6 +28,12 @@ pub async fn run(server: &ResolvedServer, op: &TokenOp) -> ExitCode {
         eprintln!("error: {}", crate::admin_recovery::refusal(server));
         return ExitCode::from(2);
     }
+    // Import reads another root's files on this machine and writes the store
+    // directly; like recovery it has no HTTP form (issue #644).
+    if matches!(op, TokenOp::Import { .. }) {
+        eprintln!("error: {}", crate::token_import::refusal(server));
+        return ExitCode::from(2);
+    }
     match execute(server, op).await {
         Ok(code) => code,
         Err(error) => {
@@ -129,7 +135,7 @@ pub fn call_for(op: &TokenOp) -> Call {
         // Recovery has no remote form: it proves local ownership of a store,
         // which is not a thing an HTTP request can demonstrate. `run` refuses
         // before reaching this, and no route exists to name here (issue #573).
-        TokenOp::RecoverAdmin { .. } => Call {
+        TokenOp::RecoverAdmin { .. } | TokenOp::Import { .. } => Call {
             method: "POST",
             path: "",
             body: None,
@@ -165,7 +171,9 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
         }
         TokenOp::Show { id, .. } => Ok(show_one(&records_in(&answer), id)),
         // Unreachable: `run` returns for `RecoverAdmin` before `execute`.
-        TokenOp::RecoverAdmin { .. } => Err("recovery has no remote form".to_string()),
+        TokenOp::RecoverAdmin { .. } | TokenOp::Import { .. } => {
+            Err("this operation has no remote form".to_string())
+        }
     }
 }
 

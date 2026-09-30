@@ -142,6 +142,7 @@ pub mod tls_cli;
 pub mod token;
 pub mod token_admin;
 mod token_http;
+pub mod token_import;
 pub mod token_report;
 pub mod token_reservation;
 pub mod token_secret;

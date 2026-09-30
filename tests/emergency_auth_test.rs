@@ -606,6 +606,58 @@ async fn diagnostics_distinguish_each_failure_without_token_values() {
     }
 }
 
+/// The repair for issue #644: importing the one missing record from the root
+/// that issued it brings the live session back — on the running router, with
+/// no restart, no rotation and no secret change — and keeps it after one.
+#[tokio::test]
+async fn importing_the_missing_record_restores_a_rolled_back_token_live_and_after_restart() {
+    use link_assistant_router::token_import::{ImportMode, ImportOptions, import, read_source};
+    let serving = Harness::new();
+    let existing = serving.issue_bound();
+    let before = serving.manager.list_tokens().expect("list");
+    let issued_elsewhere = Harness::new();
+    let token = issued_elsewhere.issue_bound();
+    let carrier = || Some(("x-goog-api-key", token.clone()));
+    assert_eq!(
+        client_status(&serving.app, carrier()).await,
+        StatusCode::UNAUTHORIZED
+    );
+
+    let source = read_source(issued_elsewhere.dir.path()).expect("read source root");
+    let options = ImportOptions {
+        mode: ImportMode::MergeMissing,
+        dry_run: false,
+        ids: &[],
+        backup_directory: None,
+    };
+    let report = import(serving.manager.store().as_ref(), source, options).expect("import");
+    assert_eq!(report.added.len(), 1);
+
+    assert_eq!(client_status(&serving.app, carrier()).await, StatusCode::OK);
+    assert_eq!(
+        client_status(&serving.restart(), carrier()).await,
+        StatusCode::OK
+    );
+    let existing_carrier = Some(("x-goog-api-key", existing));
+    assert_eq!(
+        client_status(&serving.app, existing_carrier).await,
+        StatusCode::OK
+    );
+    let after = serving.manager.list_tokens().expect("list");
+    for record in &before {
+        assert!(
+            after.contains(record),
+            "{} was altered by the import",
+            record.id
+        );
+    }
+    let imported = issued_elsewhere.manager.list_tokens().expect("list");
+    assert!(
+        after.contains(&imported[0]),
+        "the imported record lost fields"
+    );
+}
+
 #[test]
 fn the_cli_keeps_the_mode_off_unless_asked_and_parses_the_explicit_flags() {
     let defaults = Cli::try_parse_from(["router", "--token-secret", SECRET])
