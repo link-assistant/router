@@ -15,6 +15,7 @@ pub struct EmergencyArgs {
     #[arg(
         long,
         env = "EMERGENCY_ACCEPT_ANY_TOKEN",
+        hide_env_values = true,
         num_args = 0..=1,
         default_value_t = false,
         default_missing_value = "true",

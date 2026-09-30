@@ -69,3 +69,4 @@ sweep.timestamp
 # `nix build` symlinks its output here.
 /result
 /result-*
+ci-logs/
