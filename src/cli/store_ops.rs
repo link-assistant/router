@@ -155,6 +155,40 @@ pub enum TokenOp {
         #[command(flatten)]
         target: AuthTarget,
     },
+    /// Copy token records from another data root, deployment root, deploy
+    /// checkpoint or token file into this store (issue #644).
+    ///
+    /// A rollback or data-root switch can leave a live token whose signature
+    /// verifies but whose durable record is absent, so the router answers 401
+    /// to a session that did nothing wrong. This brings the exact record back
+    /// — same id, binding, scope, expiry, lease, budgets, usage and model
+    /// policy — without rotating anything or touching the signing secret.
+    ///
+    /// By default only missing records are added and every existing record is
+    /// left exactly as it is; records that differ are reported field by field.
+    /// `--replace` overwrites those too, after saving the current records to
+    /// `token-import-backups/`, and even then never revives a revoked record
+    /// or lowers recorded usage. Local only: it needs the store itself.
+    Import {
+        /// Source: a data directory (`tokens.lino`/`tokens.bin`), a deployment
+        /// root with `data/`, a checkpoint with `tokens.json`, or one file.
+        #[arg(long, value_name = "PATH")]
+        from: PathBuf,
+        /// Import only this token id (repeatable).
+        #[arg(long = "id", value_name = "ID")]
+        ids: Vec<String>,
+        /// Overwrite records that differ, after backing up the current ones.
+        #[arg(long)]
+        replace: bool,
+        /// Report what would change without writing anything.
+        #[arg(long)]
+        dry_run: bool,
+        /// Emit the report as JSON.
+        #[arg(long)]
+        json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]

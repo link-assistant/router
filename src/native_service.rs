@@ -121,8 +121,10 @@ async fn forward(state: AppState, request: Request, service: Service) -> Respons
         Err(error) => return error.render(route.dialect),
     };
     if service == Service::CodexBackend {
-        let supported = crate::proxy::extract_client_token(&headers)
-            .is_some_and(|token| token.starts_with(crate::token::CODEX_TOKEN_PREFIX));
+        let supported = crate::proxy::codex_carrier_accepted(
+            &state,
+            crate::proxy::extract_client_token(&headers),
+        );
         if !supported {
             return error(
                 StatusCode::UNAUTHORIZED,

@@ -717,15 +717,21 @@ pub async fn log_http_exchange(
     let (mut parts, body) = request.into_parts();
     let identity = crate::proxy::extract_client_token(&parts.headers)
         .and_then(|token| {
-            state
-                .token_manager
-                .validate_token(token)
-                .ok()
-                .map(|claims| LogIdentity {
-                    hash: token_log_key(token),
-                    id: Some(claims.sub),
-                    label: Some(claims.label),
-                })
+            // A bypassed request is logged under the synthetic
+            // `emergency-bypass` identity it is served with (issue #645).
+            let claims = if state.token_manager.emergency().is_active() {
+                Some(crate::emergency_auth::synthetic_claims(
+                    token,
+                    &parts.headers,
+                ))
+            } else {
+                state.token_manager.validate_token(token).ok()
+            };
+            claims.map(|claims| LogIdentity {
+                hash: token_log_key(token),
+                id: Some(claims.sub),
+                label: Some(claims.label),
+            })
         })
         .unwrap_or_else(LogIdentity::unauthenticated);
     // Kept before `identity` is moved. The label is operator-supplied, already

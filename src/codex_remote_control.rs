@@ -408,7 +408,7 @@ async fn primary_request(state: AppState, request: Request, operation: Operation
     let Some(primary) = bearer(&headers) else {
         return authentication_error("Codex remote control requires Router authentication");
     };
-    if !primary.starts_with(crate::token::CODEX_TOKEN_PREFIX) {
+    if !crate::proxy::codex_carrier_accepted(&state, Some(primary)) {
         return authentication_error(
             "Codex remote-control enrollment requires the paired Router-issued at- token",
         );

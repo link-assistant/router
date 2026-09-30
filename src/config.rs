@@ -279,6 +279,9 @@ pub struct Config {
     /// unauthenticated callers. Off by default: a deployment with no admin
     /// credential configured mints a bootstrap one at startup instead.
     pub allow_anonymous_admin: bool,
+    /// Explicit, bounded emergency any-token mode (issue #645). Off unless
+    /// `--emergency-accept-any-token` is given.
+    pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login API settings (`/api/management/login`).
@@ -572,6 +575,7 @@ impl Config {
             proxied_client_overrides,
             admin_key,
             allow_anonymous_admin,
+            emergency_auth: crate::emergency_auth::EmergencyAuthConfig::from_env(),
             mpp,
             login,
             admin_ui,
@@ -685,6 +689,7 @@ impl Config {
                 .map_err(ConfigError::InvalidProxiedClientPolicy)?,
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
+            emergency_auth: args.emergency_auth,
             mpp: args.mpp,
             login: crate::login::LoginConfig {
                 claude_code_home: PathBuf::from(args.claude_code_home),
@@ -762,6 +767,7 @@ pub struct BuildArgs<'a> {
     pub proxied_client_overrides: Vec<String>,
     pub admin_key: Option<String>,
     pub allow_anonymous_admin: bool,
+    pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login settings. `claude_code_home` is overwritten by
     /// [`Config::build`] so the login flow always writes where the router reads.

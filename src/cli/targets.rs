@@ -18,7 +18,8 @@ impl TokenOp {
             | Self::Revoke { target, .. }
             | Self::Expire { target, .. }
             | Self::Show { target, .. }
-            | Self::RecoverAdmin { target, .. } => target,
+            | Self::RecoverAdmin { target, .. }
+            | Self::Import { target, .. } => target,
         }
     }
 }

@@ -17,8 +17,19 @@ pub enum TokenError {
     Revoked,
     /// No stored token has the requested subject ID.
     NotFound(String),
-    /// Token is otherwise invalid.
+    /// Token is otherwise invalid (malformed, unparsable claims, ...).
     Invalid(String),
+    /// The JWT is well formed but its signature does not verify with this
+    /// deployment's issuer secret: it was minted by another deployment, or
+    /// the secret changed (issue #644).
+    SignatureInvalid,
+    /// No usable issuer secret is configured, so nothing can be verified.
+    IssuerSecretUnset,
+    /// A client-bound token whose durable record is absent from this store,
+    /// typically after a rollback or a data-root switch (issue #644).
+    MissingRecord,
+    /// The signed client binding disagrees with the durable record.
+    BindingMismatch,
     /// Token is valid but lacks the privilege scope the operation requires.
     InsufficientScope,
     /// Token has reached its per-token request budget (`max_requests`).
@@ -93,6 +104,21 @@ impl std::fmt::Display for TokenError {
             Self::Revoked => write!(f, "Token has been revoked"),
             Self::NotFound(id) => write!(f, "Token not found: {id}"),
             Self::Invalid(msg) => write!(f, "Invalid token: {msg}"),
+            Self::SignatureInvalid => write!(
+                f,
+                "Invalid token: signature does not verify with this deployment's issuer secret"
+            ),
+            Self::IssuerSecretUnset => {
+                write!(f, "Invalid token: {}", crate::token_secret::refusal())
+            }
+            Self::MissingRecord => write!(
+                f,
+                "Invalid token: bound client token has no durable token record"
+            ),
+            Self::BindingMismatch => write!(
+                f,
+                "Invalid token: signed client binding does not match the durable token record"
+            ),
             Self::InsufficientScope => {
                 write!(f, "Token does not carry the '{ADMIN_SCOPE}' scope")
             }
@@ -123,7 +149,14 @@ impl TokenError {
     pub fn client_message(&self) -> std::borrow::Cow<'static, str> {
         use std::borrow::Cow;
         match self {
-            Self::InvalidPrefix | Self::Invalid(_) => Cow::Borrowed("invalid token"),
+            // Every verification failure reads the same to the caller; the
+            // distinction is served on the protected diagnostics endpoint.
+            Self::InvalidPrefix
+            | Self::Invalid(_)
+            | Self::SignatureInvalid
+            | Self::IssuerSecretUnset
+            | Self::MissingRecord
+            | Self::BindingMismatch => Cow::Borrowed("invalid token"),
             // Names the router and the flag, because the client renders its
             // own advice otherwise: a Claude Code session whose per-run token
             // expired mid-work was told `Please run /login`, which points at

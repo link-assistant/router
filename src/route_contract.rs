@@ -207,6 +207,21 @@ const ROUTES: &[RouteSpec] = &[
         "/api/management/auth/status",
     ),
     management(
+        RouteId::AuthDiagnostics,
+        RouteMethod::Get,
+        "/api/management/auth/diagnostics",
+    ),
+    management(
+        RouteId::EmergencyAuthStatus,
+        RouteMethod::Get,
+        "/api/management/emergency-auth",
+    ),
+    management(
+        RouteId::EmergencyAuthDisable,
+        RouteMethod::Post,
+        "/api/management/emergency-auth/disable",
+    ),
+    management(
         RouteId::SubscriptionHealth,
         RouteMethod::Get,
         "/api/management/health/subscriptions",

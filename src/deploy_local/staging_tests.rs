@@ -207,6 +207,16 @@ fn stalled_control_and_healthy_http_are_distinct_and_status_is_read_only() {
     let listener = TcpListener::bind(("127.0.0.1", args.port)).unwrap();
     let server = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().unwrap();
+        // Read the probe's request before answering: closing a socket with
+        // unread input resets the connection on Windows, and the reset can
+        // reach the probe before the 200 it was sent.
+        let mut request = Vec::new();
+        let mut byte = [0; 1];
+        while !request.ends_with(b"\r\n\r\n")
+            && std::io::Read::read(&mut stream, &mut byte).unwrap_or(0) == 1
+        {
+            request.push(byte[0]);
+        }
         std::io::Write::write_all(&mut stream, b"HTTP/1.0 200 OK\r\nContent-Length: 0\r\n\r\n")
             .unwrap();
     });

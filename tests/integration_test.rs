@@ -402,6 +402,7 @@ mod config_verbose_tests {
             proxied_client_overrides: vec![],
             admin_key: None,
             allow_anonymous_admin: false,
+            emergency_auth: link_assistant_router::emergency_auth::EmergencyAuthConfig::default(),
             mpp: link_assistant_router::config::default_mpp_config(),
             login: link_assistant_router::login::LoginConfig::default(),
             admin_ui: link_assistant_router::admin::AdminUiConfig::default(),

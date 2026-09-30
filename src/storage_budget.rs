@@ -111,7 +111,8 @@ pub(super) const fn settle_token_usage(
     }
 }
 
-pub(super) fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
+/// Fold `other` into `current` so neither revocation nor recorded spend is lost.
+pub fn merge_safer_record(current: &mut TokenRecord, other: &TokenRecord) {
     current.revoked |= other.revoked;
     current.used_requests = current.used_requests.max(other.used_requests);
     current.used_tokens = current.used_tokens.max(other.used_tokens);

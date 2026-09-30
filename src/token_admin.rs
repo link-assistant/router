@@ -221,11 +221,17 @@ pub async fn renew_run_lease(
             "api_error",
             "could not persist the run lease",
         ),
-        Err(_) => error_response(
-            StatusCode::CONFLICT,
-            "invalid_request_error",
-            "this credential has no renewable live run lease",
-        ),
+        Err(_) => {
+            state
+                .token_manager
+                .diagnostics()
+                .record(crate::auth_diagnostics::reason::RUN_LEASE_UNRENEWABLE, None);
+            error_response(
+                StatusCode::CONFLICT,
+                "invalid_request_error",
+                "this credential has no renewable live run lease",
+            )
+        }
     }
 }
 

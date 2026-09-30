@@ -99,6 +99,15 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
             "closed (admin key or admin-scoped token required)"
         }
     );
+    if config.emergency_auth.enabled {
+        println!(
+            "emergency_auth         : WARNING ON for {} min (--emergency-accept-any-token): \
+             client routes accept any non-empty Router token; management routes stay closed",
+            config.emergency_auth.duration_minutes
+        );
+    } else {
+        println!("emergency_auth         : off");
+    }
     println!(
         "telegram_admin_bot     : {}",
         if config.chat_admin.telegram_enabled() {

@@ -786,6 +786,8 @@ method-specific verifier is configured.
 | `/api/management/usage` | GET | Admin-only JSON snapshot, including per-token and per-account counters |
 | `/api/management/accounts` | GET | Admin-only multi-account health: cooldowns, last error, used count, configured limit, and remaining requests |
 | `/api/management/auth/status` | GET | Admin-only provider acceptance for every configured subscription credential; uses non-inference catalog probes |
+| `/api/management/auth/diagnostics` | GET | Admin-only Router token authentication failures by reason (`missing_record`, `signature_invalid`, `expired`, `revoked`, ...) without token values |
+| `/api/management/emergency-auth` | GET | Admin-only state of the emergency any-token mode; `POST .../disable` ends it. See [docs/security/emergency-auth.md](docs/security/emergency-auth.md) |
 
 `/api/management/metrics` deliberately contains no token ids, labels, or account names. The `link_assistant_subscription_healthy`
 gauge is labelled by vendor name only, never by account, and answers `0` for a
@@ -1523,6 +1525,9 @@ router tokens revoke <id>
 router tokens expire <id>
 router tokens rotate <id> --ttl-hours 168
 router tokens show <id>
+# After a rollback or data-root switch, bring back records this store lacks
+# (additive; --dry-run, --id, --replace). See docs/token-recovery.md:
+router tokens import --local --from /srv/previous-router
 
 # Inspect configured accounts:
 router accounts list

@@ -41,9 +41,7 @@ async fn codex_identity<'a>(
     claims: &'a crate::token::TokenClaims,
     endpoint: &str,
 ) -> Result<(&'a str, crate::accounts::SelectedSubscriptionAccount), Response> {
-    if crate::proxy::extract_client_token(headers)
-        .is_none_or(|token| !token.starts_with(crate::token::CODEX_TOKEN_PREFIX))
-    {
+    if !crate::proxy::codex_carrier_accepted(state, crate::proxy::extract_client_token(headers)) {
         return Err(error(
             StatusCode::UNAUTHORIZED,
             "authentication_error",

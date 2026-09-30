@@ -569,13 +569,15 @@ pub(crate) fn count_tokens_claims(
             crate::proxy::CREDENTIAL_CARRIER_HINT.as_bytes(),
         )));
     };
-    token_manager.validate_token(token).map_err(|e| {
-        let status = match &e {
-            crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
-            _ => StatusCode::UNAUTHORIZED,
-        };
-        Box::new(anthropic_error(status, e.client_message().as_bytes()))
-    })
+    token_manager
+        .authenticate_incoming(token, headers)
+        .map_err(|e| {
+            let status = match &e {
+                crate::token::TokenError::Revoked => StatusCode::FORBIDDEN,
+                _ => StatusCode::UNAUTHORIZED,
+            };
+            Box::new(anthropic_error(status, e.client_message().as_bytes()))
+        })
 }
 
 /// Serve `POST /v1/messages` from a non-Anthropic upstream.

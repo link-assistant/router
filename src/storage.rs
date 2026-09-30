@@ -588,10 +588,8 @@ impl TokenStore for TextTokenStore {
 
 #[path = "storage_budget.rs"]
 mod budget;
-use budget::{
-    add_token_usage, admit_request_reserving, consume_request, merge_safer_record,
-    settle_token_usage,
-};
+pub use budget::merge_safer_record;
+use budget::{add_token_usage, admit_request_reserving, consume_request, settle_token_usage};
 
 fn compact_ephemeral_records(records: &mut HashMap<String, TokenRecord>, now: i64) {
     records.retain(|_, record| !record.ephemeral || (!record.revoked && record.expires_at > now));
