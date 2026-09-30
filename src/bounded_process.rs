@@ -1,10 +1,43 @@
 //! Deadlines and process ownership for diagnostic commands.
 
 use std::io::{Read, Result};
-use std::process::{Child, Command, Output, Stdio};
+use std::process::{Command, Output, Stdio};
 use std::time::{Duration, Instant};
 
-struct Owned(Child);
+#[cfg(not(windows))]
+struct Owned(std::process::Child);
+#[cfg(windows)]
+struct Owned(Box<dyn process_wrap::std::ChildWrapper>);
+
+impl Owned {
+    fn spawn(command: &mut Command) -> Result<Self> {
+        #[cfg(not(windows))]
+        return command.spawn().map(Self);
+        #[cfg(windows)]
+        {
+            use process_wrap::std::{CommandWrap, JobObject};
+            let mut wrapped = CommandWrap::from(std::mem::replace(command, Command::new("")));
+            let child = wrapped.wrap(JobObject).spawn();
+            *command = wrapped.into_command();
+            child.map(Self)
+        }
+    }
+
+    #[cfg(not(windows))]
+    const fn pipes(&mut self) -> (std::process::ChildStdout, std::process::ChildStderr) {
+        (
+            self.0.stdout.take().expect("piped stdout"),
+            self.0.stderr.take().expect("piped stderr"),
+        )
+    }
+    #[cfg(windows)]
+    fn pipes(&mut self) -> (std::process::ChildStdout, std::process::ChildStderr) {
+        (
+            self.0.stdout().take().expect("piped stdout"),
+            self.0.stderr().take().expect("piped stderr"),
+        )
+    }
+}
 
 impl Drop for Owned {
     fn drop(&mut self) {
@@ -35,7 +68,7 @@ fn drain(mut reader: impl Read) -> Result<Vec<u8>> {
 }
 
 /// Run a diagnostic with a deadline, draining both pipes concurrently.
-/// On Unix, terminate the owned process group on success, failure or unwinding.
+/// Terminate the owned Unix process group or Windows job on every exit path.
 pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
     #[cfg(unix)]
     {
@@ -43,9 +76,8 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
         command.process_group(0);
     }
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut child = Owned(command.spawn()?);
-    let stdout = child.0.stdout.take().expect("piped stdout");
-    let stderr = child.0.stderr.take().expect("piped stderr");
+    let mut child = Owned::spawn(command)?;
+    let (stdout, stderr) = child.pipes();
     let stdout = std::thread::spawn(move || drain(stdout));
     let stderr = std::thread::spawn(move || drain(stderr));
     let end = Instant::now() + deadline;
@@ -75,9 +107,27 @@ pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
     })
 }
 
-#[cfg(all(test, unix))]
+#[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[cfg(windows)]
+    fn windows_job_terminates_a_descendant_holding_the_pipes() {
+        let start = Instant::now();
+        let error = output(
+            Command::new("powershell.exe").args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "& cmd.exe /D /S /C 'ping -n 31 127.0.0.1 >nul'",
+            ]),
+            Duration::from_secs(2),
+        )
+        .unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::TimedOut);
+        assert!(start.elapsed() < Duration::from_secs(6));
+    }
 
     #[test]
     #[cfg(unix)]

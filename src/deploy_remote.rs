@@ -12,7 +12,12 @@ use std::process::{Command, ExitCode, Stdio};
 use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
 
-const AGENT: &str = include_str!("deploy/remote_agent.sh");
+static AGENT: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    include_str!("deploy/remote_agent.sh").replace(
+        "@@DATA_CHECKPOINT@@",
+        include_str!("deploy/data_checkpoint.js"),
+    )
+});
 const AGENT_LEASE_EXIT: i32 = 73;
 const TRANSPORT_EXIT: u8 = 10;
 const LEASE_EXIT: u8 = 11;
@@ -259,6 +264,8 @@ mod tests {
 
     fn args() -> DeployArgs {
         DeployArgs {
+            restore_state: None,
+            replace_state: false,
             staging: None,
             verify: false,
             server: Some("deploy@example.test".into()),

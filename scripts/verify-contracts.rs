@@ -29,6 +29,8 @@
 //! [dependencies]
 //! serde_json = "1"
 //! tempfile = "3"
+//! [target.'cfg(windows)'.dependencies]
+//! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
 
 use serde_json::{Value, json};
@@ -192,6 +194,14 @@ const AREAS: &[Area] = &[
                 serial: true,
             },
         ],
+    },
+    Area {
+        name: "staging",
+        covers: "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog",
+        enable: "ROUTER_STAGING_LIVE_TESTS=1, ROUTER_STAGING_DISPOSABLE_HOST=1, ROUTER_STAGING_ZAI_API_KEY, ROUTER_DEPLOY_TEST_IMAGE and installed Claude; static key only, no copied OAuth",
+        runs: &[Run {
+            targets: &["staging_live_test"], unit: &[], filter: None, serial: true,
+        }],
     },
 ];
 
@@ -365,6 +375,10 @@ fn router_version() -> Option<String> {
         .map(|version| version.trim_matches('"').to_string())
 }
 
+fn needs_client_preparation(area: &str) -> bool {
+    matches!(area, "real-clients" | "anthropic-entitlements" | "zai-only-entitlements" | "staging")
+}
+
 fn main() {
     let mut selected = Vec::new();
     let mut output = PathBuf::from("target/verification/result.json");
@@ -404,9 +418,14 @@ fn main() {
     }
     let directory = directory.canonicalize().unwrap_or(directory);
 
-    let needs_clients =
-        prepare_only || selected.is_empty() || selected.iter().any(|name| name == "real-clients");
-    let clients: Vec<&str> = client_filter.as_deref().into_iter().collect();
+    let needs_clients = prepare_only || selected.is_empty()
+        || selected.iter().any(|name| needs_client_preparation(name));
+    let clients: Vec<&str> = if client_filter.is_some() || prepare_only || selected.is_empty()
+        || selected.iter().any(|name| name == "real-clients") {
+        client_filter.as_deref().into_iter().collect()
+    } else if selected.iter().any(|name| name == "zai-only-entitlements") {
+        vec!["claude", "codex"]
+    } else { vec!["claude"] };
     if let Some(client) = &client_filter {
         if !verification_client::CLIENTS
             .iter()
@@ -435,7 +454,7 @@ fn main() {
         .filter(|area| selected.is_empty() || selected.iter().any(|name| name == area.name))
         .filter(|_| !prepare_only)
         .map(|area| {
-            if area.name == "real-clients" && (preparation_failed || preparation_unproven) {
+            if needs_client_preparation(area.name) && (preparation_failed || preparation_unproven) {
                 json!({"name":area.name,"status":if preparation_failed {"failed"} else {"not-proven"},"skipped":[],"reason":"client preparation did not complete; no vendor probes or Cargo test compilation attempted"})
             } else { verify(area, &directory, &variables, client_filter.as_deref()) }
         })
@@ -558,7 +577,7 @@ not json
 
     #[test]
     fn serial_runs_pass_one_thread() {
-        let args = cargo_args(&AREAS[AREAS.len() - 1].runs[1]);
+        let args = cargo_args(&AREAS.iter().find(|area| area.name == "rolling-updates").unwrap().runs[1]);
         assert!(args.ends_with(&["--nocapture".to_string(), "--test-threads=1".to_string()]));
         assert_eq!(
             cargo_args(&unit(&["--bin", "router"], "deploy_local")),

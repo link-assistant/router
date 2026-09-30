@@ -14,6 +14,15 @@ use serde_json::{Value, json};
 const LABEL: &str = "com.link-assistant.router.staging";
 const MARKER: &str = "staging.json";
 
+struct OperationLock(std::fs::File);
+impl Drop for OperationLock {
+    fn drop(&mut self) {
+        // Explicit unlock also releases a descriptor briefly inherited by an
+        // unrelated fork before exec. All owned diagnostic work is awaited.
+        let _ = self.0.unlock();
+    }
+}
+
 fn namespace(name: &str) -> Result<String, String> {
     if name.is_empty()
         || name.len() > 40
@@ -73,16 +82,38 @@ fn objects(docker: &Docker, owner: &str) -> Result<Vec<String>, String> {
 }
 
 fn free_disk(root: &Path) -> Result<(), String> {
+    #[cfg(not(windows))]
     let mut command = Command::new("df");
+    #[cfg(not(windows))]
     command.args(["-Pk"]).arg(root);
+    #[cfg(windows)]
+    let mut command = {
+        let mut command = Command::new("powershell");
+        command
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "[UInt64](Get-Item -LiteralPath $env:ROUTER_STAGE_ROOT).PSDrive.Free",
+            ])
+            .env("ROUTER_STAGE_ROOT", root);
+        command
+    };
     let output =
         link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(5))
             .map_err(|error| error.to_string())?;
+    #[cfg(not(windows))]
     let free = String::from_utf8_lossy(&output.stdout)
         .lines()
         .nth(1)
         .and_then(|line| line.split_whitespace().nth(3))
         .and_then(|value| value.parse::<u64>().ok());
+    #[cfg(windows)]
+    let free = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse::<u64>()
+        .ok()
+        .map(|bytes| bytes / 1024);
     if !output.status.success() || free.is_none_or(|available| available < 1024 * 1024) {
         return Err("staging requires at least 1 GiB free disk; disk availability was insufficient or unverifiable".into());
     }
@@ -267,7 +298,7 @@ fn execute(
             .map_err(|error| error.to_string())?;
         file.try_lock()
             .map_err(|_| "pending staging lifecycle operation; no recovery attempted")?;
-        Some(file)
+        Some(OperationLock(file))
     };
     // Check serving and management separately. Never attempt Desktop recovery.
     let control = docker.available();

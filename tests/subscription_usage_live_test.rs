@@ -629,26 +629,14 @@ async fn current_claude_serves_each_live_glm_model_with_only_verified_metadata()
     ) {
         return;
     }
-    let version_home = tempfile::tempdir().expect("isolated version home");
-    let mut version_command = Command::new("claude");
-    link_assistant_router::verification_client::environment(
-        &mut version_command,
-        version_home.path(),
-    );
-    version_command.arg("--version");
-    let version = link_assistant_router::bounded_process::output(
-        &mut version_command,
-        Duration::from_secs(15),
-    )
-    .expect("bounded safe Claude version discovery");
+    let (preparation, _) = link_assistant_router::verification_client::prepare(&["claude"]);
     assert!(
-        version.status.success(),
-        "the installed Claude Code could not report its version: {}",
-        String::from_utf8_lossy(&version.stderr)
+        preparation[0]["status"] == "prepared",
+        "safe installed Claude version preparation failed"
     );
     eprintln!(
         "RUN: probing exact GLM context with {}",
-        String::from_utf8_lossy(&version.stdout).trim()
+        preparation[0]["observed"]
     );
 
     let root = tempfile::tempdir().expect("live z.ai Claude context data dir");

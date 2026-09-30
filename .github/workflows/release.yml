@@ -279,6 +279,9 @@ jobs:
       - name: Test contract verification command
         run: rust-script --test scripts/verify-contracts.rs
 
+      - name: Test bounded remote data checkpoint payload
+        run: python3 experiments/issue-642/remote-checkpoint.py
+
       - name: Test release automation
         run: |
           rust-script --test scripts/version-and-commit.rs
@@ -552,11 +555,14 @@ jobs:
           fi
 
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: rust-lcov
-          path: lcov.info
-          if-no-files-found: error
+          path: |
+            lcov.info
+            coverage-summary.json
+          if-no-files-found: warn
 
   # === BUILD ===
   # Build package - only runs if lint and test pass

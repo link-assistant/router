@@ -806,6 +806,8 @@ fn current_claude_code_reaches_the_native_anthropic_surface_offline() {
     assert_real_client_capture(CLAUDE);
 }
 
+#[path = "real_clients/claude_default.rs"]
+mod claude_default;
 #[path = "real_clients/claude_selector.rs"]
 mod claude_selector;
 

@@ -65,23 +65,39 @@ pub const CLIENTS: &[(&str, &str)] = &[
 /// but a pin mismatch is a preparation failure, never a compatibility result.
 #[must_use]
 pub fn prepare(clients: &[&str]) -> (Vec<Value>, Vec<(String, String)>) {
+    prepare_using(
+        clients,
+        |variable| std::env::var(variable).ok(),
+        |client| {
+            if let Err(reason) = safety() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::PermissionDenied,
+                    reason,
+                ));
+            }
+            tempfile::tempdir().and_then(|home| {
+                let mut command = Command::new(client);
+                environment(&mut command, home.path());
+                command.arg("--version");
+                crate::bounded_process::output(&mut command, Duration::from_secs(15))
+            })
+        },
+    )
+}
+
+fn prepare_using(
+    clients: &[&str],
+    expected_version: impl Fn(&str) -> Option<String>,
+    discover: impl Fn(&str) -> std::io::Result<std::process::Output>,
+) -> (Vec<Value>, Vec<(String, String)>) {
     let mut report = Vec::new();
     let mut variables = Vec::new();
     for &(client, variable) in CLIENTS {
         if !clients.is_empty() && !clients.contains(&client) {
             continue;
         }
-        let expected = std::env::var(variable).ok();
-        if let Err(reason) = safety() {
-            report.push(json!({"client":client,"expected":expected,"observed":null,"status":"not-proven","reason":reason}));
-            continue;
-        }
-        let result = tempfile::tempdir().and_then(|home| {
-            let mut command = Command::new(client);
-            environment(&mut command, home.path());
-            command.arg("--version");
-            crate::bounded_process::output(&mut command, Duration::from_secs(15))
-        });
+        let expected = expected_version(variable);
+        let result = discover(client);
         let observed = result
             .as_ref()
             .ok()
@@ -94,6 +110,10 @@ pub fn prepare(clients: &[&str]) -> (Vec<Value>, Vec<(String, String)>) {
                 ))
             });
         let (status, reason) = match (&result, &observed, &expected) {
+            (Err(error), _, _) if error.kind() == std::io::ErrorKind::PermissionDenied => (
+                "not-proven",
+                "safe OS credential-store boundary unavailable; vendor launch refused",
+            ),
             (Err(error), _, _) if error.kind() == std::io::ErrorKind::NotFound => {
                 ("not-proven", "client is not installed")
             }
@@ -143,5 +163,67 @@ mod tests {
         );
         assert_eq!(parse_version("1.19.1\n"), Some("1.19.1".into()));
         assert_eq!(parse_version("unknown 1.2"), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn preparation_reports_missing_invalid_mismatched_and_refused_clients() {
+        use std::os::unix::process::ExitStatusExt as _;
+        let output = |version: &str, status| std::process::Output {
+            status: std::process::ExitStatus::from_raw(status),
+            stdout: version.as_bytes().to_vec(),
+            stderr: Vec::new(),
+        };
+        let (report, variables) =
+            prepare_using(&["codex"], |_| None, |_| Ok(output("codex-cli 0.158.0", 0)));
+        assert_eq!(report.len(), 1);
+        assert_eq!(report[0]["status"], "prepared");
+        assert_eq!(
+            variables,
+            [("ROUTER_REAL_CLIENT_CODEX_VERSION".into(), "0.158.0".into())]
+        );
+        let (report, variables) = prepare_using(
+            &["codex"],
+            |_| Some("0.154.0".into()),
+            |_| Ok(output("0.158.0", 0)),
+        );
+        assert_eq!(report[0]["status"], "failed");
+        assert!(variables.is_empty());
+        for (version, status) in [("", 0), ("unknown", 0), ("0.158.0", 256)] {
+            let (report, variables) =
+                prepare_using(&["claude"], |_| None, |_| Ok(output(version, status)));
+            assert_eq!(report[0]["status"], "failed");
+            assert!(variables.is_empty());
+        }
+        for (kind, status) in [
+            (std::io::ErrorKind::NotFound, "not-proven"),
+            (std::io::ErrorKind::PermissionDenied, "not-proven"),
+            (std::io::ErrorKind::TimedOut, "failed"),
+        ] {
+            let (report, variables) =
+                prepare_using(&[], |_| None, |_| Err(std::io::Error::from(kind)));
+            assert_eq!(report.len(), 3);
+            assert!(report.iter().all(|row| row["status"] == status));
+            assert!(variables.is_empty());
+        }
+    }
+
+    #[test]
+    fn private_environment_clears_inherited_profile_and_credential_variables() {
+        let mut command = Command::new("fixture");
+        command
+            .env("ANTHROPIC_API_KEY", "inherited-secret")
+            .env("CODEX_HOME", "/original");
+        environment(&mut command, Path::new("/private/fixture"));
+        let values: std::collections::BTreeMap<_, _> = command.get_envs().collect();
+        assert!(!values.contains_key(std::ffi::OsStr::new("ANTHROPIC_API_KEY")));
+        assert_eq!(
+            values[std::ffi::OsStr::new("CODEX_HOME")].unwrap(),
+            Path::new("/private/fixture/.codex")
+        );
+        assert_eq!(
+            values[std::ffi::OsStr::new("HTTPS_PROXY")].unwrap(),
+            "http://127.0.0.1:9"
+        );
     }
 }

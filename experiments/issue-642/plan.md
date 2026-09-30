@@ -16,3 +16,14 @@
 14. Fetch/merge current main without rewriting history; push only prepared branch; update PR 643 with reproduction, tests, limitations and one Fixes keyword for each of 634-642.
 15. List recent CI timestamps/SHAs, download non-passing logs to ci-logs, diagnose actual errors, fix and revalidate. Read logs in chunks <=1500 lines.
 16. Review gh pr diff and requirements consistency; ensure no requested features removed and clean tree; wait for all background work and required CI; mark PR 643 ready.
+
+Progress: steps 1–12 are implemented across production code, reusable verification,
+CI and documentation. Two atomic commits are already pushed. The final review
+added bounded non-OAuth checkpoints/offline restore and the protected full staging
+acceptance command. Step 13 is running all 79 integration targets, binary tests,
+strict Clippy, docs and script checks; full library testing runs in CI because
+local compilation exceeded the 3 GiB memory cap. The pinned actual-client offline
+suite passes all 13 tests. Previous macOS CI completed its full suite and ten
+active-profile repetitions. Previous Windows disk inspection, pinned Claude
+auxiliary-request assertion and coverage failures have been investigated with
+preserved logs. Steps 14–16 require the final commit's CI and coverage ratchet.

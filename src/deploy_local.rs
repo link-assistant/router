@@ -9,6 +9,7 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 
 mod claude_share;
+mod data_backup;
 mod diagnose;
 mod docker;
 mod host;
@@ -818,6 +819,9 @@ fn run_assessed(
         accept_access_loss: args.accept_access_loss,
         claude: Provision::Isolated,
     };
+    if let Some(snapshot) = &args.restore_state {
+        return result_code(coordinator.restore_state(snapshot, args.replace_state, host));
+    }
     if let Some(code) = host::dispatch(&coordinator, args, host) {
         return code;
     }

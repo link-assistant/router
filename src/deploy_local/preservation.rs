@@ -43,6 +43,18 @@ impl Coordinator<'_> {
     pub(super) fn preservation_baseline(&self, existing: &Existing) -> Result<Baseline, String> {
         let backend = match existing {
             Existing::Absent => {
+                let data = self.root.join("data");
+                if std::fs::read_dir(&data).is_ok_and(|mut entries| entries.next().is_some()) {
+                    let store = link_assistant_router::storage::build_token_store_read_only(
+                        link_assistant_router::config::StoragePolicy::Both,
+                        &data,
+                    )
+                    .map_err(|_| "preexisting token store cannot be read")?;
+                    let records = store
+                        .list()
+                        .map_err(|_| "preexisting token inventory unavailable")?;
+                    self.preservation_checkpoint(&records)?;
+                }
                 return Ok(Baseline {
                     records: Vec::new(),
                     catalogs: Vec::new(),
@@ -72,12 +84,13 @@ impl Coordinator<'_> {
                 self.preservation_failure(&format!("credential/data source differs or is unavailable at {destination}; preserving bytes elsewhere does not preserve the source connection"))?;
             }
         }
-        let records: Vec<TokenRecord> =
+        let all_records: Vec<TokenRecord> =
             serde_json::from_str(&self.docker.token_inventory(backend)?)
                 .map_err(|_| "previous issued-token inventory is invalid")?;
-        let records: Vec<_> = records
-            .into_iter()
+        let records: Vec<_> = all_records
+            .iter()
             .filter(|record| usable(record, chrono::Utc::now().timestamp()))
+            .cloned()
             .collect();
         if records.len() > 512 {
             return Err(
@@ -92,11 +105,38 @@ impl Coordinator<'_> {
                 Vec::new()
             }
         };
+        let source_secret = self.docker.env_value(backend, "TOKEN_SECRET")
+            .ok_or("previous signing-secret identity unavailable for data checkpoint; no candidate started")?;
+        let checkpoint = self.preservation_checkpoint_using(&all_records, &source_secret)?;
         println!(
             "{}",
-            json!({"schema":"link-assistant-router/preservation/v1","status":"baseline","catalogs":catalogs,"credential_source":"shared-original-directory","credentials_copied":false,"profiles_projects_sessions":"outside deployment mutation scope","rollback_scope":"previous backend and relay; shared mutable data is not a snapshot"})
+            json!({"schema":"link-assistant-router/preservation/v1","status":"baseline","catalogs":catalogs,"checkpoint":checkpoint,"checkpoint_scope":"logical token state, encrypted static provider configuration and registered request/project/session files; individual-file/export boundaries","credential_source":"shared-original-directory","credentials_copied":false,"profiles_projects_sessions":"external client homes remain outside deployment mutation scope","rollback_scope":"previous backend and relay; offline additive/replacement checkpoint restore; OAuth is never replayed"})
         );
         Ok(Baseline { records, catalogs })
+    }
+
+    pub(super) fn preservation_checkpoint(
+        &self,
+        records: &[TokenRecord],
+    ) -> Result<Option<std::path::PathBuf>, String> {
+        self.preservation_checkpoint_using(records, self.token_secret)
+    }
+
+    pub(super) fn preservation_checkpoint_using(
+        &self,
+        records: &[TokenRecord],
+        source_secret: &str,
+    ) -> Result<Option<std::path::PathBuf>, String> {
+        super::data_backup::capture(self.root, records, source_secret).map_or_else(|_| {
+            println!("{}", json!({"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"recoverable non-OAuth data checkpoint failed; no candidate started","oauth_copied":false}));
+            Err("recoverable non-OAuth data checkpoint failed; provider access-loss permission does not authorize losing state".into())
+        }, |path| {
+            println!(
+                "{}",
+                json!({"schema":"link-assistant-router/preservation/v1","status":"data-checkpoint","checkpoint":path,"oauth_copied":false,"global_atomic_snapshot":false})
+            );
+            Ok(Some(path))
+        })
     }
 
     pub(super) fn preservation_catalogs(

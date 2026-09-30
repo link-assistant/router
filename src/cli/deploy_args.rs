@@ -8,6 +8,13 @@ use clap::{Args, ValueEnum};
 /// What a `router deploy` run should do.
 #[derive(Debug, Args)]
 pub struct DeployArgs {
+    /// Restore a non-OAuth data checkpoint to a stopped local deployment.
+    /// Existing records/files take precedence unless --replace-state is set.
+    #[arg(long, value_name = "DIR", requires = "yes", conflicts_with_all = ["server", "staging", "mode", "status", "down", "force_update", "accept_access_loss", "claude_credentials", "build"])]
+    pub restore_state: Option<std::path::PathBuf>,
+    /// Replace covered data with the checkpoint after retaining a new backup.
+    #[arg(long, requires = "restore_state")]
+    pub replace_state: bool,
     /// Create or inspect an isolated local candidate namespace. Never shares
     /// primary data, OAuth ownership, tokens, ports or selected client profiles.
     #[arg(long, value_name = "NAME", conflicts_with_all = ["server", "mode", "claude_credentials", "force_update"])]

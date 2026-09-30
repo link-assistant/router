@@ -48,12 +48,27 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
+      - name: Install Router verification runner
+        run: cargo install rust-script --version 0.36.0 --locked
+
       # The same pinned client the reviewed capture range covers, so a live
       # result is attributable to a known client version.
       - name: Install the pinned real client
         run: |
           npm install --global @anthropic-ai/claude-code@2.1.265
-          claude --version | grep -F '2.1.265'
+
+      - name: Prepare the installed client before Cargo
+        env:
+          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
+        run: |
+          rust-script scripts/verify-contracts.rs --prepare-clients --client claude
+          python3 - <<'PY'
+          import json, os
+          clients = json.load(open('target/verification/clients.json'))
+          assert len(clients) == 1 and clients[0]['status'] == 'prepared'
+          with open(os.environ['GITHUB_ENV'], 'a') as environment:
+              environment.write('ROUTER_REAL_CLIENT_CLAUDE_VERSION=' + clients[0]['observed'] + '\n')
+          PY
 
       # `--nocapture` is what surfaces the per-test RUN/SKIP lines: without it
       # cargo hides passing output and a skipped tier becomes invisible again,

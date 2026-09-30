@@ -30,7 +30,7 @@ impl Coordinator<'_> {
         let _lock = self.acquire_lock()?;
         let probe = plan.secret == SecretMatch::Matches;
         let serving = plan.from.is_some() || plan.record_serving;
-        let records: Vec<link_assistant_router::storage::TokenRecord> = if serving {
+        let all_records: Vec<link_assistant_router::storage::TokenRecord> = if serving {
             let rendered = if let Some(active) = &plan.from {
                 self.docker.token_inventory(&active.backend)?
             } else {
@@ -38,17 +38,26 @@ impl Coordinator<'_> {
             };
             serde_json::from_str::<Vec<link_assistant_router::storage::TokenRecord>>(&rendered)
                 .map_err(|_| "old token inventory is invalid")?
-                .into_iter()
-                .filter(|record| {
-                    link_assistant_router::deployment_preservation::usable(
-                        record,
-                        chrono::Utc::now().timestamp(),
-                    )
-                })
-                .collect()
         } else {
-            Vec::new()
+            let store = link_assistant_router::storage::build_token_store_read_only(
+                link_assistant_router::config::StoragePolicy::Both,
+                &self.root.join("data"),
+            )
+            .map_err(|_| "preexisting token store cannot be read")?;
+            store
+                .list()
+                .map_err(|_| "preexisting token inventory unavailable")?
         };
+        let records: Vec<_> = all_records
+            .iter()
+            .filter(|record| {
+                link_assistant_router::deployment_preservation::usable(
+                    record,
+                    chrono::Utc::now().timestamp(),
+                )
+            })
+            .cloned()
+            .collect();
         if records.len() > 512 {
             return Err(
                 "issued-token catalog inventory exceeds bounded verification budget".into(),
@@ -61,6 +70,18 @@ impl Coordinator<'_> {
         } else {
             Vec::new()
         };
+        if let Some(active) = &plan.from {
+            let source_secret = self
+                .docker
+                .env_value(&active.backend, "TOKEN_SECRET")
+                .ok_or("previous signing-secret identity unavailable for data checkpoint")?;
+            self.preservation_checkpoint_using(&all_records, &source_secret)?;
+        } else {
+            if plan.record_serving && plan.secret != SecretMatch::Matches {
+                return Err("previous host signing-secret identity unavailable for a recoverable data checkpoint; no candidate started".into());
+            }
+            self.preservation_checkpoint(&all_records)?;
+        }
         if serving {
             // Nothing changes until a host Router with this data and secret
             // has proven it accepts the deployment's tokens.

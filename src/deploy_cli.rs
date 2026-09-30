@@ -105,6 +105,8 @@ mod tests {
 
     fn args() -> DeployArgs {
         DeployArgs {
+            restore_state: None,
+            replace_state: false,
             staging: None,
             verify: false,
             server: None,

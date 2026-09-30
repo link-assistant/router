@@ -515,6 +515,15 @@ if [ -n "$old_container" ]; then
         echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"old token-authorized catalog cannot be established; no candidate or cutover attempted"}' >&2
         exit 1
     fi
+    # Export recoverable data before even preparing the candidate. OAuth homes
+    # remain on their original owner and are deliberately outside this scope.
+    if ! docker exec -i "$old_container" bun - <<'JS_CHECKPOINT'
+@@DATA_CHECKPOINT@@
+JS_CHECKPOINT
+    then
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"recoverable non-OAuth data checkpoint failed; no candidate or cutover attempted"}' >&2
+        exit 1
+    fi
 else
     printf '[]\n' > "$RELEASE/preservation-before.json"
 fi
