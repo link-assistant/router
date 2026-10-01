@@ -22,7 +22,9 @@ struct Tool {
     name: &'static str,
     /// Any of these in a non-comment line means the job runs the tool.
     uses: &'static [&'static str],
-    /// Any of these in an earlier non-comment line installs it.
+    /// Any of these in an earlier non-comment line installs it. A `tool:`
+    /// input naming the tool (taiki-e/install-action, possibly in a
+    /// comma-separated list) counts as an install too.
     installs: &'static [&'static str],
 }
 
@@ -30,7 +32,7 @@ const TOOLS: &[Tool] = &[
     Tool {
         name: "rust-script",
         uses: &["rust-script "],
-        installs: &["cargo install rust-script", "tool: rust-script"],
+        installs: &["cargo install rust-script", "install-rust-script.sh"],
     },
     Tool {
         name: "cargo-cyclonedx",
@@ -45,7 +47,7 @@ const TOOLS: &[Tool] = &[
     Tool {
         name: "cargo-llvm-cov",
         uses: &["cargo llvm-cov"],
-        installs: &["cargo install cargo-llvm-cov", "tool: cargo-llvm-cov"],
+        installs: &["cargo install cargo-llvm-cov"],
     },
     Tool {
         name: "sccache",
@@ -97,7 +99,14 @@ fn is_comment(line: &str) -> bool {
 fn missing_installs(job: &Job) -> Vec<String> {
     let mut problems = Vec::new();
     for tool in TOOLS {
-        let installs_on = |line: &str| tool.installs.iter().any(|marker| line.contains(marker));
+        let installs_on = |line: &str| {
+            tool.installs.iter().any(|marker| line.contains(marker))
+                || line.trim_start().strip_prefix("tool:").is_some_and(|tools| {
+                    tools
+                        .split(',')
+                        .any(|item| item.trim().split('@').next() == Some(tool.name))
+                })
+        };
         let first_install = job
             .lines
             .iter()
@@ -254,6 +263,16 @@ jobs:
         let problems = missing_installs(&jobs(workflow)[0]);
         assert_eq!(problems.len(), 1, "{problems:?}");
         assert!(problems[0].contains("runs sccache"));
+    }
+
+    #[test]
+    fn install_action_tool_lists_and_the_template_helper_count_as_installs() {
+        let workflow = "jobs:\n  audit:\n    steps:\n      - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b\n        with:\n          tool: cargo-llvm-cov, cargo-audit@0.22.2\n      - run: ./scripts/install-rust-script.sh\n      - run: cargo audit --deny warnings\n      - run: rust-script scripts/check.rs\n  other:\n    steps:\n      - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b\n        with:\n          tool: cargo-audit-extra\n      - run: cargo audit\n";
+        let jobs = jobs(workflow);
+        assert!(missing_installs(&jobs[0]).is_empty());
+        let problems = missing_installs(&jobs[1]);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("runs cargo-audit"));
     }
 
     #[test]
