@@ -174,7 +174,8 @@ fn release_workflow_publishes_one_native_image_per_architecture() {
         "Docker image variants should be separate matrix jobs"
     );
     assert!(
-        workflow.contains("runner: ubuntu-24.04\n") && workflow.contains("runner: ubuntu-24.04-arm"),
+        workflow.contains("runner: ubuntu-24.04\n")
+            && workflow.contains("runner: ubuntu-24.04-arm"),
         "native architecture builds should run concurrently as matrix jobs"
     );
     assert_eq!(
@@ -373,8 +374,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
         "checksums must be digested from inside dist/ so consumers see flat names"
     );
     assert!(
-        release.contains("verify-macos-client-lifecycle:")
-            && release.contains("runs-on: macos-26"),
+        release.contains("verify-macos-client-lifecycle:") && release.contains("runs-on: macos-26"),
         "the release must exercise the client lifecycle on macOS"
     );
     assert!(
