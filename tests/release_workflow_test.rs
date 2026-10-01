@@ -506,8 +506,7 @@ fn lockfile_package_version_handles_windows_line_endings() {
 
 #[test]
 fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
-        .expect("release workflow should be readable");
+    let workflow = read_lf(".github/workflows/release.yml");
 
     let mapping =
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}";

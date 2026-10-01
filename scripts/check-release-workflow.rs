@@ -234,8 +234,12 @@ fn main() {
 
     // A workflow-level secret reaches every job, pull request tests included;
     // only the publish steps may see the token (issue #648).
-    let global_env = workflow.split_once("\njobs:\n").map_or("", |(head, _)| head);
-    if global_env.contains("CARGO_REGISTRY_TOKEN:") {
+    // Line-based so a CRLF checkout parses the same.
+    if workflow
+        .lines()
+        .take_while(|line| line.trim_end() != "jobs:")
+        .any(|line| line.contains("CARGO_REGISTRY_TOKEN:"))
+    {
         failures.push("CARGO_REGISTRY_TOKEN must be step-scoped, not workflow-level".to_string());
     }
 
