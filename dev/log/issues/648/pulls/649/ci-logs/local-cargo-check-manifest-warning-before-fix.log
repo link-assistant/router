@@ -1,0 +1,6 @@
+warning: Cargo.toml: file `/tmp/gh-issue-solver-1790887681520/src/main.rs` found to be present in multiple build targets:
+  * `bin` target `link-assistant-router`
+  * `bin` target `router`
+warning: `link-assistant-router` (manifest) generated 1 warning
+    Checking link-assistant-router v1.15.0 (/tmp/gh-issue-solver-1790887681520)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.98s

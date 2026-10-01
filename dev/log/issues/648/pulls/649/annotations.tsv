@@ -1,0 +1,48 @@
+Detect Changes	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Tunnel Image Smoke Test	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Dependency Audit	notice	.github:49	72% - 474 hits, 184 misses, 0 errors
+Dependency Audit	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Lint and Format Check	notice	.github:48	95% - 122 hits, 6 misses, 0 errors
+Lint and Format Check	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Test Coverage	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Test (macos-latest)	notice	.github:40	0% - 0 hits, 1 miss, 0 errors
+Test (windows-latest)	notice	.github:34	0% - 0 hits, 0 misses, 0 errors
+Test (ubuntu-latest)	notice	.github:41	99% - 297 hits, 2 misses, 0 errors
+Test (ubuntu-latest)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Build Package	notice	.github:40	0% - 0 hits, 1 miss, 0 errors
+Build Package	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Auto Release	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Create GitHub Release	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Build Docker Image (runtime / amd64)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Publish attested binaries (linux-arm64)	failure	.github:21	Process completed with exit code 127.
+Publish attested binaries (darwin-arm64)	failure	.github:21	Process completed with exit code 127.
+Publish attested binaries (darwin-arm64)	notice	.github:1	Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.
+Publish attested binaries (darwin-amd64)	failure	.github:21	Process completed with exit code 127.
+Publish attested binaries (darwin-amd64)	notice	.github:1	Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.
+Publish attested binaries (linux-amd64)	failure	.github:21	Process completed with exit code 127.
+Publish attested binaries (linux-amd64)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Publish Multi-Platform Docker Manifests	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+delivery	failure	.github:27	Process completed with exit code 1.
+delivery	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Latest Release Matches Its Tag Commit	failure	.github:16	Process completed with exit code 1.
+Latest Release Matches Its Tag Commit	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Every Tag Has a GitHub Release	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Claude Code, Codex, Gemini, Qwen, and OpenCode	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Codex 0.158.0 (newer than baseline)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Claude Code 2.1.284 (newer than baseline)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Codex latest (newer than baseline)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Claude Code latest (newer than baseline)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Tunnel Image Smoke Test	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Detect Changes	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Dependency Audit	notice	.github:49	36% - 240 hits, 418 misses, 0 errors
+Dependency Audit	warning	.github:3	You've hit a rate limit, your rate limit will reset in 14 seconds
+Dependency Audit	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Lint and Format Check	notice	.github:50	18% - 168 hits, 763 misses, 0 errors
+Lint and Format Check	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Test (ubuntu-latest)	notice	.github:47	39% - 304 hits, 469 misses, 0 errors
+Test (ubuntu-latest)	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Test (windows-latest)	notice	.github:34	0% - 0 hits, 0 misses, 0 errors
+Test (windows-latest)	failure	.github:4916	Process completed with exit code 1.
+Test (macos-latest)	notice	.github:45	0% - 0 hits, 768 misses, 0 errors
+Test (macos-latest)	notice	.github:1	Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.
+Test Coverage	notice	.github:1	"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"

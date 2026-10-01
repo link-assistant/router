@@ -1,0 +1,10 @@
+# rust template e7d4a5b, changelog job's 'Install rust-script' step removed (release.yml:185-187)
+## template's own test:
+test ci_cd::workflow_release::rust_script_is_installed_through_the_retrying_locked_helper ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 236 filtered out; finished in 0.00s
+## router scripts/check-workflow-tools.rs on the same tree:
+Error: .github/workflows/release.yml: job `changelog` runs rust-script on line 188 but never installs it: run: rust-script scripts/check-changelog-fragment.rs
+exit=1
+## router guard on the pristine template:
+every one of 34 jobs in 5 workflows installs the tools it runs
+exit=0
