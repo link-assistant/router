@@ -70,6 +70,10 @@ cargo check --all-targets 2>&1 | grep 'multiple build targets'
 - `cargo test --all-features --test release_workflow_test --test release_docker_test --bins`: all passed, with the token and runner-label assertions updated
 - The full suite runs in this PR's CI matrix (`ubuntu-24.04`, `macos-26`, `windows-latest`). Locally, the 11 GB sandbox cannot compile the library's unit-test crate (rustc is SIGKILLed; log kept).
 
+- CI on this PR first caught two regressions from my own changes, both now fixed:
+  - **Coverage fell 85.46% → 83.69%** (run 36929710887). A relative `include!("../main.rs")` recorded the module tree as `src/bin/../*.rs`, and llvm-cov counted those 26 files twice. The absolute `CARGO_MANIFEST_DIR` include records the same paths as `router`. `experiments/include-coverage-paths/run.sh` reproduces both variants with cargo-llvm-cov 0.9.1, and the rebuilt binary contains no `src/bin/../` paths.
+  - **Windows test panic.** A new assertion split `release.yml` on `"\njobs:\n"` without the test file's `read_lf` helper, and the Windows checkout is CRLF.
+
 ## After merge: recovering v1.15.0
 
 A branch cannot repair a published release. The `bump: patch` changelog fragment releases v1.15.1 with all platform archives. Alternatively, run the recovery that the delivery check already prints:
