@@ -229,8 +229,17 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - name: Verify Cargo.lock is current
-        run: cargo check --locked --all-targets --all-features
+      # Manifest warnings are not rustc lints, so RUSTFLAGS=-Dwarnings never
+      # fails them: "found to be present in multiple build targets" printed on
+      # every build since 2026-08-19 (#223) with a green check (issue #648).
+      - name: Verify Cargo.lock is current and the manifest is warning-free
+        run: |
+          set -o pipefail
+          cargo check --locked --all-targets --all-features 2>&1 | tee /tmp/cargo-check.log
+          if grep -E '^warning' /tmp/cargo-check.log; then
+            echo "::error::cargo reported warnings; fix them rather than letting them scroll past"
+            exit 1
+          fi
 
       - name: Run Clippy
         run: cargo clippy --locked --all-targets --all-features

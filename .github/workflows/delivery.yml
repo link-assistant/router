@@ -7,6 +7,11 @@ permissions:
   contents: read
   actions: read
   packages: read
+# Hourly runs must not overlap: a slow artifact verification would otherwise
+# race the next run and report the same delivery twice (issue #648).
+concurrency:
+  group: merged-source-delivery
+  cancel-in-progress: false
 jobs:
   delivery:
     runs-on: ubuntu-24.04
@@ -26,7 +31,12 @@ jobs:
         run: rust-script scripts/check-delivery.rs --verify-artifacts
       - name: Save delivery state and explicit recovery command
         if: always()
-        run: cat target/verification/delivery.json >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          if [ -f target/verification/delivery.json ]; then
+            cat target/verification/delivery.json >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::check-delivery.rs stopped before recording a delivery state; see the step above"
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
