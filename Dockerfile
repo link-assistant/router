@@ -17,6 +17,7 @@ RUN mkdir -p src/bin && \
     echo "pub const VERSION: &str = \"0.0.0\";" > src/lib.rs && \
     echo "fn main() {}" > src/main.rs && \
     echo "fn main() {}" > src/bin/with-router.rs && \
+    echo "fn main() {}" > src/bin/link-assistant-router.rs && \
     cargo build --release --locked && \
     rm -rf src
 
@@ -32,7 +33,7 @@ COPY docs/provider-evidence/anthropic-adaptive-thinking.json docs/provider-evide
 COPY src/ src/
 
 # Touch files to invalidate cache for source changes
-RUN touch src/lib.rs src/main.rs && \
+RUN touch src/lib.rs src/main.rs src/bin/link-assistant-router.rs && \
     cargo build --release --locked
 
 # Runtime base
@@ -56,8 +57,9 @@ COPY --from=builder /app/target/release/with-router /usr/local/bin/with-router
 # `cargo install` puts on a workstation's PATH. Without it here, a runbook step
 # copied from the docs fails inside the container with "executable file not
 # found" (issue #243). A symlink rather than a second copy: the two Cargo bin
-# targets build the same `src/main.rs`, so shipping both would add ~15 MB of
-# identical bytes to the image.
+# targets build the same entry point (`src/bin/link-assistant-router.rs`
+# includes `src/main.rs`), so shipping both would add ~15 MB of identical bytes
+# to the image.
 RUN ln -s link-assistant-router /usr/local/bin/router
 
 # Default environment

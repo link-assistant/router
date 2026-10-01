@@ -80,7 +80,7 @@ fn release_workflow_publishes_and_verifies_multi_platform_images() {
     );
     for snippet in [
         "platform: linux/amd64",
-        "runner: ubuntu-latest",
+        "runner: ubuntu-24.04",
         "platform: linux/arm64",
         "runner: ubuntu-24.04-arm",
         "runs-on: ${{ matrix.runner }}",

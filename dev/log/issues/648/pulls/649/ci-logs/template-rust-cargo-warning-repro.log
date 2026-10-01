@@ -1,0 +1,3 @@
+warning: Cargo.toml: file `/tmp/tpl-w/src/main.rs` found to be present in multiple build targets:
+warning: `example-sum-package-name` (manifest) generated 1 warning
+exit=0

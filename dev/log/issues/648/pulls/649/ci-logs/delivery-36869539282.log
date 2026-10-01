@@ -1,0 +1,1153 @@
+delivery	UNKNOWN STEP	﻿2026-10-01T13:33:26.8426158Z Current runner version: '2.337.0'
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8450061Z ##[group]Runner Image Provisioner
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8450932Z Hosted Compute Agent
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8451677Z Version: 20260901.588
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8452319Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8453025Z Build Date: 2026-09-01T19:56:44Z
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8453781Z Worker ID: {ed992d07-eab2-4803-9d94-cdcdbf0bbcd1}
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8454541Z Azure Region: westus3
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8455144Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8457044Z ##[group]Operating System
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8457746Z Ubuntu
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8458434Z 24.04.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8459041Z LTS
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8459688Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8460294Z ##[group]Runner Image
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8460889Z Image: ubuntu-24.04
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8461511Z Version: 20260927.320.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8462878Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8464495Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8465459Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8467037Z ##[group]GITHUB_TOKEN Permissions
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8469309Z Actions: read
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8469984Z Contents: read
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8470931Z Metadata: read
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8471501Z Packages: read
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8472163Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8474241Z Secret source: Actions
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8475242Z Cache mode: write
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8476235Z Prepare workflow directory
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8819305Z Prepare all required actions
+delivery	UNKNOWN STEP	2026-10-01T13:33:26.8866957Z Getting action download info
+delivery	UNKNOWN STEP	2026-10-01T13:33:27.2649104Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+delivery	UNKNOWN STEP	2026-10-01T13:33:27.3665214Z Download action repository 'dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87' (SHA:6bed0761d98439e5a578e2877258200ad565ba87)
+delivery	UNKNOWN STEP	2026-10-01T13:33:27.6219633Z Download action repository 'docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003' (SHA:594f3bf4285d9ea8dc53c9a0c9c4092420091003)
+delivery	UNKNOWN STEP	2026-10-01T13:33:28.5810265Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+delivery	UNKNOWN STEP	2026-10-01T13:33:28.9597195Z Complete job name: delivery
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0497566Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0499300Z with:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0500062Z   fetch-depth: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0500926Z   repository: link-assistant/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0509726Z   token: ***
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0510537Z   ssh-strict: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0511355Z   ssh-user: git
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0512380Z   persist-credentials: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0513487Z   clean: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0514497Z   sparse-checkout-cone-mode: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0515510Z   fetch-tags: false
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0516518Z   show-progress: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0517372Z   lfs: false
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0518156Z   submodules: false
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0519010Z   set-safe-directory: true
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0519967Z   allow-unsafe-pr-checkout: false
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.0521268Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1582129Z Syncing repository: link-assistant/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1586599Z ##[group]Getting Git version info
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1588782Z Working directory is '/home/runner/work/router/router'
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1591900Z [command]/usr/bin/git version
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1687077Z git version 2.55.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1713537Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1725535Z Temporarily overriding HOME='/home/runner/work/_temp/3d2daf25-b1fa-4362-b45c-137d213a44ac' before making global git config changes
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1730806Z Adding repository directory to the temporary git global config as a safe directory
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1734865Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1782310Z Deleting the contents of '/home/runner/work/router/router'
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1786931Z ##[group]Determining repository object format
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1790167Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1792841Z ##[group]Initializing the repository
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1795339Z [command]/usr/bin/git init /home/runner/work/router/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1893006Z hint: Using 'master' as the name for the initial branch. This default branch name
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1896806Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1899915Z hint: to use in all of your new repositories, which will suppress this warning,
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1902342Z hint: call:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1903553Z hint:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1905051Z hint: 	git config --global init.defaultBranch <name>
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1907211Z hint:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1909106Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1912161Z hint: 'development'. The just-created branch can be renamed via this command:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1914586Z hint:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1916013Z hint: 	git branch -m <name>
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1917619Z hint:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1919617Z hint: Disable this message with "git config set advice.defaultBranchName false"
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1922848Z Initialized empty Git repository in /home/runner/work/router/router/.git/
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1928151Z [command]/usr/bin/git remote add origin https://github.com/link-assistant/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1995942Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.1998672Z ##[group]Disabling automatic garbage collection
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2000676Z [command]/usr/bin/git config --local gc.auto 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2036364Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2038760Z ##[group]Setting up auth
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2040370Z Removing SSH command configuration
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2043525Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2083623Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2424688Z Removing HTTP extra header
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2432472Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2472728Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2738826Z Removing includeIf entries pointing to credentials config files
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2742714Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.2786442Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3054441Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3172517Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git.path /home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3212636Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/router/router/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3268066Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3325880Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3351851Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3354289Z ##[group]Fetching the repository
+delivery	UNKNOWN STEP	2026-10-01T13:33:29.3358911Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3598039Z From https://github.com/link-assistant/router
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3601720Z  * [new branch]      chore/update-all-dependencies -> origin/chore/update-all-dependencies
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3603808Z  * [new branch]      dependabot/cargo/reviewed-rust-dependencies-7d182486bb -> origin/dependabot/cargo/reviewed-rust-dependencies-7d182486bb
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3606355Z  * [new branch]      dependabot/cargo/reviewed-rust-dependencies-cab6cdcf40 -> origin/dependabot/cargo/reviewed-rust-dependencies-cab6cdcf40
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3608592Z  * [new branch]      dependabot/cargo/reviewed-rust-dependencies-e46219c303 -> origin/dependabot/cargo/reviewed-rust-dependencies-e46219c303
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3610814Z  * [new branch]      dependabot/cargo/reviewed-rust-dependencies-f879a7b7ff -> origin/dependabot/cargo/reviewed-rust-dependencies-f879a7b7ff
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3612664Z  * [new branch]      dependabot/docker/debian-a99cfc5 -> origin/dependabot/docker/debian-a99cfc5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3614305Z  * [new branch]      dependabot/docker/debian-d7e1218 -> origin/dependabot/docker/debian-d7e1218
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3616418Z  * [new branch]      dependabot/docker/docker/tunnel/alpine-294b683 -> origin/dependabot/docker/docker/tunnel/alpine-294b683
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3618518Z  * [new branch]      dependabot/docker/docker/tunnel/alpine-5b02b42 -> origin/dependabot/docker/docker/tunnel/alpine-5b02b42
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3620169Z  * [new branch]      dependabot/docker/oven/bun-5ff6093 -> origin/dependabot/docker/oven/bun-5ff6093
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3621648Z  * [new branch]      dependabot/docker/oven/bun-9e123d5 -> origin/dependabot/docker/oven/bun-9e123d5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3623187Z  * [new branch]      dependabot/docker/rust-1.98.0-slim-trixie -> origin/dependabot/docker/rust-1.98.0-slim-trixie
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3624798Z  * [new branch]      dependabot/docker/rust-1.98.1-slim-trixie -> origin/dependabot/docker/rust-1.98.1-slim-trixie
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3712414Z  * [new branch]      dependabot/docker/rust-f47a8de -> origin/dependabot/docker/rust-f47a8de
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3714514Z  * [new branch]      dependabot/github_actions/reviewed-actions-f9bc4c28c5 -> origin/dependabot/github_actions/reviewed-actions-f9bc4c28c5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3716882Z  * [new branch]      dependabot/npm_and_yarn/ui/reviewed-ui-dependencies-9580d84d75 -> origin/dependabot/npm_and_yarn/ui/reviewed-ui-dependencies-9580d84d75
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3718532Z  * [new branch]      dependabot/npm_and_yarn/ui/reviewed-ui-dependencies-b270d68e23 -> origin/dependabot/npm_and_yarn/ui/reviewed-ui-dependencies-b270d68e23
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3720213Z  * [new branch]      feat/issues-570-574-20260914 -> origin/feat/issues-570-574-20260914
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3721233Z  * [new branch]      fix/all-open-issues     -> origin/fix/all-open-issues
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3722158Z  * [new branch]      fix/all-open-issues-20260904 -> origin/fix/all-open-issues-20260904
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3732300Z  * [new branch]      fix/all-open-issues-20260904-v2 -> origin/fix/all-open-issues-20260904-v2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3733373Z  * [new branch]      fix/all-open-issues-20260905 -> origin/fix/all-open-issues-20260905
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3734536Z  * [new branch]      fix/auth-import-explicit-source -> origin/fix/auth-import-explicit-source
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3735968Z  * [new branch]      fix/backfill-latest-marker -> origin/fix/backfill-latest-marker
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3737277Z  * [new branch]      fix/backfill-orphaned-releases -> origin/fix/backfill-orphaned-releases
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3738311Z  * [new branch]      fix/coverage-baseline-552 -> origin/fix/coverage-baseline-552
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3739549Z  * [new branch]      fix/deploy-pull-and-secret-20260914 -> origin/fix/deploy-pull-and-secret-20260914
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3741220Z  * [new branch]      fix/duplicate-links-corrupt-store -> origin/fix/duplicate-links-corrupt-store
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3742570Z  * [new branch]      fix/issue-285-ci-final2 -> origin/fix/issue-285-ci-final2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3743812Z  * [new branch]      fix/issue-285-explicit-import-source-v2 -> origin/fix/issue-285-explicit-import-source-v2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3745227Z  * [new branch]      fix/issue-285-explicit-import-source-v3 -> origin/fix/issue-285-explicit-import-source-v3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3746877Z  * [new branch]      fix/issue-285-explicit-source-clean -> origin/fix/issue-285-explicit-source-clean
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3747842Z  * [new branch]      fix/issue-285-final     -> origin/fix/issue-285-final
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3748413Z  * [new branch]      fix/issue-291-import-target -> origin/fix/issue-291-import-target
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3749107Z  * [new branch]      fix/issue-295-297-with-and-configure -> origin/fix/issue-295-297-with-and-configure
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3749809Z  * [new branch]      fix/issue-336-request-log -> origin/fix/issue-336-request-log
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3750439Z  * [new branch]      fix/issue-337-fragment-cleanup -> origin/fix/issue-337-fragment-cleanup
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3751244Z  * [new branch]      fix/issue-346-lino-extension -> origin/fix/issue-346-lino-extension
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3752705Z  * [new branch]      fix/issue-346-request-log-format-decision -> origin/fix/issue-346-request-log-format-decision
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3754121Z  * [new branch]      fix/issue-350-links-notation-dialect -> origin/fix/issue-350-links-notation-dialect
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3755326Z  * [new branch]      fix/issue-351-read-only-token-list -> origin/fix/issue-351-read-only-token-list
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3756853Z  * [new branch]      fix/issue-357-persistent-store -> origin/fix/issue-357-persistent-store
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3758157Z  * [new branch]      fix/issue-374-restore-mapped-capacity -> origin/fix/issue-374-restore-mapped-capacity
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3759470Z  * [new branch]      fix/issue-411-doc-alias-contract -> origin/fix/issue-411-doc-alias-contract
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3760708Z  * [new branch]      fix/issue-520-split-auth-20260907 -> origin/fix/issue-520-split-auth-20260907
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3762075Z  * [new branch]      fix/issue-541-zai-codex-catalog-20260907 -> origin/fix/issue-541-zai-codex-catalog-20260907
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3763759Z  * [new branch]      fix/issue-543-serde-defaults-20260908 -> origin/fix/issue-543-serde-defaults-20260908
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3765499Z  * [new branch]      fix/issue-546-zai-thinking-profile-20260909 -> origin/fix/issue-546-zai-thinking-profile-20260909
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3767406Z  * [new branch]      fix/issue-548-codex-alias-identity-20260908 -> origin/fix/issue-548-codex-alias-identity-20260908
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3768968Z  * [new branch]      fix/issue-551-claude-monitor-privacy -> origin/fix/issue-551-claude-monitor-privacy
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3770387Z  * [new branch]      fix/issue-554-zai-nonstream-thinking -> origin/fix/issue-554-zai-nonstream-thinking
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3771898Z  * [new branch]      fix/issue-565-automode-identity-20260914 -> origin/fix/issue-565-automode-identity-20260914
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3773195Z  * [new branch]      fix/issues-308-328-332  -> origin/fix/issues-308-328-332
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3774199Z  * [new branch]      fix/issues-333-334-336  -> origin/fix/issues-333-334-336
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3775192Z  * [new branch]      fix/issues-340-341      -> origin/fix/issues-340-341
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3776395Z  * [new branch]      fix/issues-354-357      -> origin/fix/issues-354-357
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3777444Z  * [new branch]      fix/issues-354-357-and-deps -> origin/fix/issues-354-357-and-deps
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3778453Z  * [new branch]      fix/issues-376-380      -> origin/fix/issues-376-380
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3779012Z  * [new branch]      fix/issues-382-384      -> origin/fix/issues-382-384
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3779528Z  * [new branch]      fix/issues-385-387      -> origin/fix/issues-385-387
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3781225Z  * [new branch]      fix/issues-545-546-bind-claude-capabilities-20260908 -> origin/fix/issues-545-546-bind-claude-capabilities-20260908
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3782089Z  * [new branch]      fix/issues-557-558      -> origin/fix/issues-557-558
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3782871Z  * [new branch]      fix/issues-560-561-20260910 -> origin/fix/issues-560-561-20260910
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3783745Z  * [new branch]      fix/issues-563-565-566-567-20260913 -> origin/fix/issues-563-565-566-567-20260913
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3784941Z  * [new branch]      fix/links-network-terminology -> origin/fix/links-network-terminology
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3786420Z  * [new branch]      fix/login-flow-test-flake -> origin/fix/login-flow-test-flake
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3787591Z  * [new branch]      fix/open-issues-192-390-391-393 -> origin/fix/open-issues-192-390-391-393
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3789044Z  * [new branch]      fix/open-issues-192-393 -> origin/fix/open-issues-192-393
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3790159Z  * [new branch]      fix/public-surface-privacy -> origin/fix/public-surface-privacy
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3791363Z  * [new branch]      fix/release-body-size-limit -> origin/fix/release-body-size-limit
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3792467Z  * [new branch]      fix/release-ci-20260904 -> origin/fix/release-ci-20260904
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3793623Z  * [new branch]      fix/socket-test-diagnostics -> origin/fix/socket-test-diagnostics
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3794826Z  * [new branch]      fix/stage-fragment-deletions -> origin/fix/stage-fragment-deletions
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3796538Z  * [new branch]      fix/test-port-allocation-race -> origin/fix/test-port-allocation-race
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3797984Z  * [new branch]      issue-1-1bf9ef21c1ac    -> origin/issue-1-1bf9ef21c1ac
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3799021Z  * [new branch]      issue-100-dba0bf9a4973  -> origin/issue-100-dba0bf9a4973
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3799982Z  * [new branch]      issue-102-0e736e883951  -> origin/issue-102-0e736e883951
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3800962Z  * [new branch]      issue-104-1284ecf6cd3e  -> origin/issue-104-1284ecf6cd3e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3801821Z  * [new branch]      issue-105-cdb3c0de6b44  -> origin/issue-105-cdb3c0de6b44
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3802440Z  * [new branch]      issue-108-a18689e74c37  -> origin/issue-108-a18689e74c37
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3802990Z  * [new branch]      issue-109-f8c988b35e34  -> origin/issue-109-f8c988b35e34
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3803913Z  * [new branch]      issue-11-0f880923289a   -> origin/issue-11-0f880923289a
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3805086Z  * [new branch]      issue-112-dcf3a4c1f37c  -> origin/issue-112-dcf3a4c1f37c
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3806363Z  * [new branch]      issue-113-1110124f8fe4  -> origin/issue-113-1110124f8fe4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3807349Z  * [new branch]      issue-116-23f22ee79006  -> origin/issue-116-23f22ee79006
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3808401Z  * [new branch]      issue-118-f22842a1cf41  -> origin/issue-118-f22842a1cf41
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3809426Z  * [new branch]      issue-120-2cbee18ae165  -> origin/issue-120-2cbee18ae165
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3810380Z  * [new branch]      issue-122-8744d24bb30e  -> origin/issue-122-8744d24bb30e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3811369Z  * [new branch]      issue-123-5ce8de8509b4  -> origin/issue-123-5ce8de8509b4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3812641Z  * [new branch]      issue-124-eb9ceb3cb53f  -> origin/issue-124-eb9ceb3cb53f
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3813295Z  * [new branch]      issue-128-36dd99b62733  -> origin/issue-128-36dd99b62733
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3813877Z  * [new branch]      issue-13-2606f9974b11   -> origin/issue-13-2606f9974b11
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3814432Z  * [new branch]      issue-130-e37eacafa11a  -> origin/issue-130-e37eacafa11a
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3814984Z  * [new branch]      issue-131-26c977c11df6  -> origin/issue-131-26c977c11df6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3815788Z  * [new branch]      issue-132-2f177ee0cbd8  -> origin/issue-132-2f177ee0cbd8
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3816428Z  * [new branch]      issue-133-17788d217579  -> origin/issue-133-17788d217579
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3816971Z  * [new branch]      issue-133-9d3a7e5e4cc9  -> origin/issue-133-9d3a7e5e4cc9
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3817874Z  * [new branch]      issue-134-c7f8700e9e78  -> origin/issue-134-c7f8700e9e78
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3818417Z  * [new branch]      issue-135-ce7088043612  -> origin/issue-135-ce7088043612
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3818947Z  * [new branch]      issue-142-0621d4ec1020  -> origin/issue-142-0621d4ec1020
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3819488Z  * [new branch]      issue-143-5b0ea61bdeaf  -> origin/issue-143-5b0ea61bdeaf
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3820027Z  * [new branch]      issue-144-561edd8d8533  -> origin/issue-144-561edd8d8533
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3820556Z  * [new branch]      issue-145-3ecb8cc850af  -> origin/issue-145-3ecb8cc850af
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3821088Z  * [new branch]      issue-147-c6b90f82ea1f  -> origin/issue-147-c6b90f82ea1f
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3821647Z  * [new branch]      issue-148-3cd968519599  -> origin/issue-148-3cd968519599
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3822479Z  * [new branch]      issue-149-a865ab1e4e9e  -> origin/issue-149-a865ab1e4e9e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3823032Z  * [new branch]      issue-15-8f76cb08364a   -> origin/issue-15-8f76cb08364a
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3823560Z  * [new branch]      issue-150-3af62c0b7aa3  -> origin/issue-150-3af62c0b7aa3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3824085Z  * [new branch]      issue-151-68c0c68f8036  -> origin/issue-151-68c0c68f8036
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3824626Z  * [new branch]      issue-17-eb0edbddcdb5   -> origin/issue-17-eb0edbddcdb5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3825163Z  * [new branch]      issue-18-aafa1060453e   -> origin/issue-18-aafa1060453e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3826026Z  * [new branch]      issue-184-29444c5d9f92  -> origin/issue-184-29444c5d9f92
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3826588Z  * [new branch]      issue-186-e956e1222360  -> origin/issue-186-e956e1222360
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3827120Z  * [new branch]      issue-187-fa8abda3a835  -> origin/issue-187-fa8abda3a835
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3827654Z  * [new branch]      issue-188-4a82fc1c3124  -> origin/issue-188-4a82fc1c3124
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3828180Z  * [new branch]      issue-189-11afc2c5b939  -> origin/issue-189-11afc2c5b939
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3828711Z  * [new branch]      issue-190-247187104443  -> origin/issue-190-247187104443
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3829400Z  * [new branch]      issue-191-d6d0ee077991  -> origin/issue-191-d6d0ee077991
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3829936Z  * [new branch]      issue-192-195-combined  -> origin/issue-192-195-combined
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3830720Z  * [new branch]      issue-203-refresh-classification -> origin/issue-203-refresh-classification
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3831407Z  * [new branch]      issue-205-reactive-refresh -> origin/issue-205-reactive-refresh
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3831980Z  * [new branch]      issue-21-4e3dd79ebb0a   -> origin/issue-21-4e3dd79ebb0a
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3832511Z  * [new branch]      issue-23-c4c21ed11eba   -> origin/issue-23-c4c21ed11eba
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3833160Z  * [new branch]      issue-239-5b581e39d2a4  -> origin/issue-239-5b581e39d2a4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3834104Z  * [new branch]      issue-25-cee894a7a764   -> origin/issue-25-cee894a7a764
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3835164Z  * [new branch]      issue-27-1c4f5add71b6   -> origin/issue-27-1c4f5add71b6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3836468Z  * [new branch]      issue-29-cd7359ee3891   -> origin/issue-29-cd7359ee3891
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3837129Z  * [new branch]      issue-3-105675fe4cc7    -> origin/issue-3-105675fe4cc7
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3837662Z  * [new branch]      issue-31-3689e5f485aa   -> origin/issue-31-3689e5f485aa
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3838203Z  * [new branch]      issue-33-11cc347ca557   -> origin/issue-33-11cc347ca557
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3838718Z  * [new branch]      issue-35-62a0d9107370   -> origin/issue-35-62a0d9107370
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3839229Z  * [new branch]      issue-37-69d3f0803294   -> origin/issue-37-69d3f0803294
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3839753Z  * [new branch]      issue-372-047611a7438f  -> origin/issue-372-047611a7438f
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3840277Z  * [new branch]      issue-42-d7c61ae8a6dd   -> origin/issue-42-d7c61ae8a6dd
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3840798Z  * [new branch]      issue-45-6e66b2c1c4f3   -> origin/issue-45-6e66b2c1c4f3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3841699Z  * [new branch]      issue-47-0560ebdac190   -> origin/issue-47-0560ebdac190
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3842221Z  * [new branch]      issue-48-1455108618b7   -> origin/issue-48-1455108618b7
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3842729Z  * [new branch]      issue-49-12994bb7a470   -> origin/issue-49-12994bb7a470
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3843256Z  * [new branch]      issue-5-5a51161efdc8    -> origin/issue-5-5a51161efdc8
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3843780Z  * [new branch]      issue-50-e84c64dc1eb6   -> origin/issue-50-e84c64dc1eb6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3844306Z  * [new branch]      issue-51-837203bbb627   -> origin/issue-51-837203bbb627
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3844829Z  * [new branch]      issue-52-fbd1f6c47f72   -> origin/issue-52-fbd1f6c47f72
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3845350Z  * [new branch]      issue-538-fe04802c37dc  -> origin/issue-538-fe04802c37dc
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3846227Z  * [new branch]      issue-579-2308c7615265  -> origin/issue-579-2308c7615265
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3847019Z  * [new branch]      issue-581-7c864e1d91a3  -> origin/issue-581-7c864e1d91a3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3847832Z  * [new branch]      issue-583-e8f65ccc5fa8  -> origin/issue-583-e8f65ccc5fa8
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3848368Z  * [new branch]      issue-585-88808d36c7c4  -> origin/issue-585-88808d36c7c4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3848894Z  * [new branch]      issue-59-600dc604ed7e   -> origin/issue-59-600dc604ed7e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3849713Z  * [new branch]      issue-596-fb5cad6bd2da  -> origin/issue-596-fb5cad6bd2da
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3850809Z  * [new branch]      issue-598-ea626deddcb2  -> origin/issue-598-ea626deddcb2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3851902Z  * [new branch]      issue-607-b01e01983b7c  -> origin/issue-607-b01e01983b7c
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3853024Z  * [new branch]      issue-609-01d564fa52b7  -> origin/issue-609-01d564fa52b7
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3854113Z  * [new branch]      issue-61-e7b1b605fa50   -> origin/issue-61-e7b1b605fa50
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3855143Z  * [new branch]      issue-615-c8958410f017  -> origin/issue-615-c8958410f017
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3856515Z  * [new branch]      issue-623-85e567dfdb93  -> origin/issue-623-85e567dfdb93
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3857561Z  * [new branch]      issue-63-558dde67dcc7   -> origin/issue-63-558dde67dcc7
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3858637Z  * [new branch]      issue-632-447e9383539e  -> origin/issue-632-447e9383539e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3860038Z  * [new branch]      issue-642-caa846709c6f  -> origin/issue-642-caa846709c6f
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3861210Z  * [new branch]      issue-646-a1116a34e8c6  -> origin/issue-646-a1116a34e8c6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3862381Z  * [new branch]      issue-65-24a81d950668   -> origin/issue-65-24a81d950668
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3863456Z  * [new branch]      issue-67-bf061f2d3e82   -> origin/issue-67-bf061f2d3e82
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3864444Z  * [new branch]      issue-69-c19c2eac4c50   -> origin/issue-69-c19c2eac4c50
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3865369Z  * [new branch]      issue-7-080001720a10    -> origin/issue-7-080001720a10
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3866675Z  * [new branch]      issue-70-ea51215cf0ef   -> origin/issue-70-ea51215cf0ef
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3867650Z  * [new branch]      issue-71-fee363b3db8a   -> origin/issue-71-fee363b3db8a
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3868580Z  * [new branch]      issue-72-b346370d6b72   -> origin/issue-72-b346370d6b72
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3869484Z  * [new branch]      issue-77-0415d65a3786   -> origin/issue-77-0415d65a3786
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3870406Z  * [new branch]      issue-78-0ff7a0d97703   -> origin/issue-78-0ff7a0d97703
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3871340Z  * [new branch]      issue-81-347231a9479c   -> origin/issue-81-347231a9479c
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3872584Z  * [new branch]      issue-83-f06c7bb43bd2   -> origin/issue-83-f06c7bb43bd2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3873145Z  * [new branch]      issue-85-4cee77a6357b   -> origin/issue-85-4cee77a6357b
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3873693Z  * [new branch]      issue-87-48a5a39e18d7   -> origin/issue-87-48a5a39e18d7
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3874230Z  * [new branch]      issue-87-4e9d84497e8d   -> origin/issue-87-4e9d84497e8d
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3874762Z  * [new branch]      issue-9-d545a925a750    -> origin/issue-9-d545a925a750
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3875794Z  * [new branch]      issue-90-1a19c3b4dc48   -> origin/issue-90-1a19c3b4dc48
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3876571Z  * [new branch]      issue-91-ced77c4ada00   -> origin/issue-91-ced77c4ada00
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3877117Z  * [new branch]      issue-92-ec4e16dd2db9   -> origin/issue-92-ec4e16dd2db9
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3877653Z  * [new branch]      issue-93-0745b3b1497e   -> origin/issue-93-0745b3b1497e
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3878169Z  * [new branch]      issue-94-596a960acaa9   -> origin/issue-94-596a960acaa9
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3878656Z  * [new branch]      main                    -> origin/main
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3879066Z  * [new tag]         v0.10.0                 -> v0.10.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3879453Z  * [new tag]         v0.100.0                -> v0.100.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3879840Z  * [new tag]         v0.101.0                -> v0.101.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3880221Z  * [new tag]         v0.102.0                -> v0.102.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3880607Z  * [new tag]         v0.103.0                -> v0.103.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3880986Z  * [new tag]         v0.104.0                -> v0.104.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3881460Z  * [new tag]         v0.105.0                -> v0.105.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3881969Z  * [new tag]         v0.106.0                -> v0.106.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3882390Z  * [new tag]         v0.107.0                -> v0.107.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3882776Z  * [new tag]         v0.108.0                -> v0.108.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3883387Z  * [new tag]         v0.109.0                -> v0.109.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3884094Z  * [new tag]         v0.11.0                 -> v0.11.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3884926Z  * [new tag]         v0.110.0                -> v0.110.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3885801Z  * [new tag]         v0.111.0                -> v0.111.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3886228Z  * [new tag]         v0.112.0                -> v0.112.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3886772Z  * [new tag]         v0.113.0                -> v0.113.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3887195Z  * [new tag]         v0.114.0                -> v0.114.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3887574Z  * [new tag]         v0.115.0                -> v0.115.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3887952Z  * [new tag]         v0.116.0                -> v0.116.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3888331Z  * [new tag]         v0.117.0                -> v0.117.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3888885Z  * [new tag]         v0.118.0                -> v0.118.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3889281Z  * [new tag]         v0.119.0                -> v0.119.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3889662Z  * [new tag]         v0.12.0                 -> v0.12.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3890037Z  * [new tag]         v0.120.0                -> v0.120.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3890407Z  * [new tag]         v0.121.0                -> v0.121.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3890778Z  * [new tag]         v0.122.0                -> v0.122.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3891147Z  * [new tag]         v0.123.0                -> v0.123.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3891681Z  * [new tag]         v0.123.1                -> v0.123.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3892085Z  * [new tag]         v0.123.2                -> v0.123.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3892469Z  * [new tag]         v0.123.3                -> v0.123.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3892843Z  * [new tag]         v0.123.4                -> v0.123.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3893215Z  * [new tag]         v0.123.5                -> v0.123.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3893585Z  * [new tag]         v0.123.6                -> v0.123.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3893956Z  * [new tag]         v0.124.0                -> v0.124.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3894329Z  * [new tag]         v0.124.1                -> v0.124.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3894703Z  * [new tag]         v0.124.2                -> v0.124.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3895078Z  * [new tag]         v0.124.3                -> v0.124.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3895448Z  * [new tag]         v0.124.4                -> v0.124.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3896080Z  * [new tag]         v0.125.0                -> v0.125.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3896622Z  * [new tag]         v0.125.1                -> v0.125.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3897181Z  * [new tag]         v0.125.2                -> v0.125.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3897566Z  * [new tag]         v0.125.3                -> v0.125.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3897940Z  * [new tag]         v0.125.4                -> v0.125.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3898317Z  * [new tag]         v0.13.0                 -> v0.13.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3898709Z  * [new tag]         v0.14.0                 -> v0.14.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3899093Z  * [new tag]         v0.15.0                 -> v0.15.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3899600Z  * [new tag]         v0.16.0                 -> v0.16.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3899971Z  * [new tag]         v0.17.0                 -> v0.17.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3900400Z  * [new tag]         v0.18.0                 -> v0.18.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3900884Z  * [new tag]         v0.19.0                 -> v0.19.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3901259Z  * [new tag]         v0.20.0                 -> v0.20.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3901625Z  * [new tag]         v0.21.0                 -> v0.21.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3902004Z  * [new tag]         v0.22.0                 -> v0.22.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3902371Z  * [new tag]         v0.23.0                 -> v0.23.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3902736Z  * [new tag]         v0.24.0                 -> v0.24.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3903208Z  * [new tag]         v0.25.0                 -> v0.25.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3903583Z  * [new tag]         v0.26.0                 -> v0.26.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3903948Z  * [new tag]         v0.27.0                 -> v0.27.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3904313Z  * [new tag]         v0.28.0                 -> v0.28.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3904729Z  * [new tag]         v0.29.0                 -> v0.29.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3905213Z  * [new tag]         v0.3.0                  -> v0.3.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3905872Z  * [new tag]         v0.30.0                 -> v0.30.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3906392Z  * [new tag]         v0.31.0                 -> v0.31.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3906773Z  * [new tag]         v0.32.0                 -> v0.32.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3907156Z  * [new tag]         v0.33.0                 -> v0.33.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3907531Z  * [new tag]         v0.34.0                 -> v0.34.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3907904Z  * [new tag]         v0.35.0                 -> v0.35.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3908271Z  * [new tag]         v0.36.0                 -> v0.36.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3908784Z  * [new tag]         v0.37.0                 -> v0.37.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3909162Z  * [new tag]         v0.38.0                 -> v0.38.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3909531Z  * [new tag]         v0.39.0                 -> v0.39.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3909898Z  * [new tag]         v0.4.0                  -> v0.4.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3910448Z  * [new tag]         v0.40.0                 -> v0.40.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3910832Z  * [new tag]         v0.41.0                 -> v0.41.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3911201Z  * [new tag]         v0.42.0                 -> v0.42.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3911565Z  * [new tag]         v0.43.0                 -> v0.43.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3911940Z  * [new tag]         v0.44.0                 -> v0.44.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3912310Z  * [new tag]         v0.45.0                 -> v0.45.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3912681Z  * [new tag]         v0.46.0                 -> v0.46.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3913050Z  * [new tag]         v0.47.0                 -> v0.47.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3913421Z  * [new tag]         v0.48.0                 -> v0.48.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3913791Z  * [new tag]         v0.49.0                 -> v0.49.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3914171Z  * [new tag]         v0.5.0                  -> v0.5.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3914545Z  * [new tag]         v0.50.0                 -> v0.50.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3914912Z  * [new tag]         v0.51.0                 -> v0.51.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3915279Z  * [new tag]         v0.52.0                 -> v0.52.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3916025Z  * [new tag]         v0.53.0                 -> v0.53.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3916435Z  * [new tag]         v0.54.0                 -> v0.54.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3917024Z  * [new tag]         v0.55.0                 -> v0.55.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3917414Z  * [new tag]         v0.56.0                 -> v0.56.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3917797Z  * [new tag]         v0.57.0                 -> v0.57.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3918174Z  * [new tag]         v0.58.0                 -> v0.58.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3918545Z  * [new tag]         v0.59.0                 -> v0.59.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3919050Z  * [new tag]         v0.6.0                  -> v0.6.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3919421Z  * [new tag]         v0.60.0                 -> v0.60.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3919785Z  * [new tag]         v0.61.0                 -> v0.61.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3920317Z  * [new tag]         v0.62.0                 -> v0.62.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3920700Z  * [new tag]         v0.63.0                 -> v0.63.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3921070Z  * [new tag]         v0.64.0                 -> v0.64.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3921448Z  * [new tag]         v0.65.0                 -> v0.65.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3921823Z  * [new tag]         v0.66.0                 -> v0.66.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3922185Z  * [new tag]         v0.67.0                 -> v0.67.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3922554Z  * [new tag]         v0.68.0                 -> v0.68.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3922932Z  * [new tag]         v0.69.0                 -> v0.69.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3923311Z  * [new tag]         v0.7.0                  -> v0.7.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3923684Z  * [new tag]         v0.70.0                 -> v0.70.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3924048Z  * [new tag]         v0.71.0                 -> v0.71.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3924413Z  * [new tag]         v0.72.0                 -> v0.72.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3924784Z  * [new tag]         v0.73.0                 -> v0.73.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3925305Z  * [new tag]         v0.74.0                 -> v0.74.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3925919Z  * [new tag]         v0.75.0                 -> v0.75.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3926296Z  * [new tag]         v0.76.0                 -> v0.76.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3926673Z  * [new tag]         v0.77.0                 -> v0.77.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3927043Z  * [new tag]         v0.78.0                 -> v0.78.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3927404Z  * [new tag]         v0.79.0                 -> v0.79.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3927774Z  * [new tag]         v0.8.0                  -> v0.8.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3928290Z  * [new tag]         v0.80.0                 -> v0.80.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3928675Z  * [new tag]         v0.81.0                 -> v0.81.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3929040Z  * [new tag]         v0.82.0                 -> v0.82.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3929405Z  * [new tag]         v0.83.0                 -> v0.83.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3929770Z  * [new tag]         v0.84.0                 -> v0.84.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3930130Z  * [new tag]         v0.85.0                 -> v0.85.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3930667Z  * [new tag]         v0.86.0                 -> v0.86.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3931037Z  * [new tag]         v0.87.0                 -> v0.87.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3931406Z  * [new tag]         v0.88.0                 -> v0.88.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3931767Z  * [new tag]         v0.89.0                 -> v0.89.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3932138Z  * [new tag]         v0.9.0                  -> v0.9.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3932509Z  * [new tag]         v0.90.0                 -> v0.90.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3932884Z  * [new tag]         v0.91.0                 -> v0.91.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3933251Z  * [new tag]         v0.92.0                 -> v0.92.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3933618Z  * [new tag]         v0.93.0                 -> v0.93.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3933979Z  * [new tag]         v0.94.0                 -> v0.94.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3934337Z  * [new tag]         v0.95.0                 -> v0.95.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3934696Z  * [new tag]         v0.96.0                 -> v0.96.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3935058Z  * [new tag]         v0.97.0                 -> v0.97.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3935785Z  * [new tag]         v0.98.0                 -> v0.98.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3936358Z  * [new tag]         v0.99.0                 -> v0.99.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3936736Z  * [new tag]         v1.0.0                  -> v1.0.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3937113Z  * [new tag]         v1.0.1                  -> v1.0.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3937488Z  * [new tag]         v1.0.2                  -> v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3937860Z  * [new tag]         v1.1.0                  -> v1.1.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3938224Z  * [new tag]         v1.1.1                  -> v1.1.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3938594Z  * [new tag]         v1.10.0                 -> v1.10.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3938959Z  * [new tag]         v1.10.1                 -> v1.10.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3939335Z  * [new tag]         v1.11.0                 -> v1.11.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3939701Z  * [new tag]         v1.11.1                 -> v1.11.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3940068Z  * [new tag]         v1.11.2                 -> v1.11.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3940432Z  * [new tag]         v1.11.3                 -> v1.11.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3940966Z  * [new tag]         v1.12.0                 -> v1.12.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3941337Z  * [new tag]         v1.13.0                 -> v1.13.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3941702Z  * [new tag]         v1.14.0                 -> v1.14.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3942065Z  * [new tag]         v1.14.1                 -> v1.14.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3942439Z  * [new tag]         v1.14.2                 -> v1.14.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3942812Z  * [new tag]         v1.14.3                 -> v1.14.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3943187Z  * [new tag]         v1.15.0                 -> v1.15.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3943554Z  * [new tag]         v1.2.0                  -> v1.2.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3943922Z  * [new tag]         v1.2.1                  -> v1.2.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3944285Z  * [new tag]         v1.3.0                  -> v1.3.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3944650Z  * [new tag]         v1.3.1                  -> v1.3.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3945010Z  * [new tag]         v1.3.2                  -> v1.3.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3945376Z  * [new tag]         v1.4.0                  -> v1.4.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3946053Z  * [new tag]         v1.4.1                  -> v1.4.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3946450Z  * [new tag]         v1.4.2                  -> v1.4.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3946821Z  * [new tag]         v1.4.3                  -> v1.4.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3947185Z  * [new tag]         v1.4.4                  -> v1.4.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3947695Z  * [new tag]         v1.4.5                  -> v1.4.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3948075Z  * [new tag]         v1.4.6                  -> v1.4.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3948446Z  * [new tag]         v1.5.0                  -> v1.5.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3948809Z  * [new tag]         v1.6.0                  -> v1.6.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3949173Z  * [new tag]         v1.7.0                  -> v1.7.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3949539Z  * [new tag]         v1.8.0                  -> v1.8.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3949910Z  * [new tag]         v1.9.0                  -> v1.9.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3951072Z [command]/usr/bin/git branch --list --remote origin/main
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3951625Z   origin/main
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3952330Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3952729Z 7804433a9a62f535163c88d7394c89ff95d1f687
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3953569Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3954022Z ##[group]Determining the checkout info
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3954495Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3954794Z [command]/usr/bin/git sparse-checkout disable
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3955921Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3957157Z ##[group]Checking out the ref
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.3957650Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.5856813Z Switched to a new branch 'main'
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.5858048Z branch 'main' set up to track 'origin/main'.
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.5872370Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.5930853Z [command]/usr/bin/git log -1 --format=%H
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.5963377Z 7804433a9a62f535163c88d7394c89ff95d1f687
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6308618Z ##[group]Run dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6309040Z with:
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6309239Z   toolchain: 1.98.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6309450Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6377287Z ##[start-action display=Parse toolchain version;id=__dtolnay_rust-toolchain.parse]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6432636Z ##[group]Run if [[ -z $toolchain ]]; then
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6433021Z ^[[36;1mif [[ -z $toolchain ]]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6433569Z ^[[36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6434143Z ^[[36;1m  echo "'toolchain' is a required input" >&2^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6434448Z ^[[36;1m  exit 1^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6434787Z ^[[36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6435207Z ^[[36;1m  if [[ Linux == macOS ]]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6435995Z ^[[36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6436517Z ^[[36;1m  else^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6436925Z ^[[36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6437384Z ^[[36;1m  fi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6437682Z ^[[36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6438221Z ^[[36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6438686Z ^[[36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6439209Z ^[[36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6439702Z ^[[36;1melse^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6439941Z ^[[36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6440250Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6687846Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6688307Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6688551Z   toolchain: 1.98.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6688819Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6829233Z ##[end-action id=__dtolnay_rust-toolchain.parse;outcome=success;conclusion=success;duration_ms=45]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6841558Z ##[start-action display=Construct rustup command line;id=__dtolnay_rust-toolchain.flags]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6869000Z ##[group]Run echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6869652Z ^[[36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6870284Z ^[[36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6870779Z ^[[36;1mecho "downgrade=" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6931680Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6932036Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6932221Z   targets: 
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6932411Z   components: 
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.6932610Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7051206Z ##[end-action id=__dtolnay_rust-toolchain.flags;outcome=success;conclusion=success;duration_ms=20]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7053398Z ##[start-action display=Set $CARGO_HOME;id=__dtolnay_rust-toolchain.__run]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7074043Z ##[group]Run echo CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7074517Z ^[[36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7138010Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7138366Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7228688Z ##[end-action id=__dtolnay_rust-toolchain.__run;outcome=success;conclusion=success;duration_ms=17]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7230887Z ##[start-action display=Install rustup if needed;id=__dtolnay_rust-toolchain.__run_2]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7256837Z ##[group]Run if ! command -v rustup &>/dev/null; then
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7257241Z ^[[36;1mif ! command -v rustup &>/dev/null; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7258013Z ^[[36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7258747Z ^[[36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7259039Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7320900Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7321255Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7321463Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7321710Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7410213Z ##[end-action id=__dtolnay_rust-toolchain.__run_2;outcome=success;conclusion=success;duration_ms=17]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7412441Z ##[start-action display=Install rustup if needed on windows;id=__dtolnay_rust-toolchain.__run_3]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7419157Z ##[end-action id=__dtolnay_rust-toolchain.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7430060Z ##[start-action display=rustup toolchain install 1.98.1;id=__dtolnay_rust-toolchain.__run_4]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7450249Z ##[group]Run rustup toolchain install 1.98.1 --profile minimal --no-self-update
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7450808Z ^[[36;1mrustup toolchain install 1.98.1 --profile minimal --no-self-update^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7512889Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7513235Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7513442Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7513706Z   RUSTUP_PERMIT_COPY_RENAME: 1
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7513945Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:32.7910180Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+delivery	UNKNOWN STEP	2026-10-01T13:33:33.0423727Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+delivery	UNKNOWN STEP	2026-10-01T13:33:33.0424716Z info: downloading 3 components
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4247277Z 
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4318531Z   1.98.1-x86_64-unknown-linux-gnu installed - rustc 1.98.1 (48a229cea 2026-09-01)
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4319046Z 
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4368976Z ##[end-action id=__dtolnay_rust-toolchain.__run_4;outcome=success;conclusion=success;duration_ms=7693]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4376116Z ##[start-action display=rustup default 1.98.1;id=__dtolnay_rust-toolchain.__run_5]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4394218Z ##[group]Run rustup default 1.98.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4394507Z ^[[36;1mrustup default 1.98.1^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4456967Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4457316Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4457528Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4457788Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4576829Z info: using existing install for 1.98.1-x86_64-unknown-linux-gnu
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4582959Z info: default toolchain set to 1.98.1-x86_64-unknown-linux-gnu
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4583557Z 
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4648701Z   1.98.1-x86_64-unknown-linux-gnu unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4649311Z 
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4664938Z ##[end-action id=__dtolnay_rust-toolchain.__run_5;outcome=success;conclusion=success;duration_ms=28]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4668212Z ##[start-action display=Create cachekey;id=__dtolnay_rust-toolchain.rustc-version]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4687426Z ##[group]Run DATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4688235Z ^[[36;1mDATE=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4688872Z ^[[36;1mHASH=$(rustc +1.98.1 --version --verbose | sed -ne 's/^commit-hash: //p')^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4689363Z ^[[36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4748620Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4748997Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4749217Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.4749806Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5084182Z ##[end-action id=__dtolnay_rust-toolchain.rustc-version;outcome=success;conclusion=success;duration_ms=41]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5087125Z ##[start-action display=Disable incremental compilation;id=__dtolnay_rust-toolchain.__run_6]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5104158Z ##[group]Run if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5104539Z ^[[36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5104866Z ^[[36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5105146Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5167771Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5168116Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5168322Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5168577Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5249325Z ##[end-action id=__dtolnay_rust-toolchain.__run_6;outcome=success;conclusion=success;duration_ms=16]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5251581Z ##[start-action display=Enable colors in Cargo output;id=__dtolnay_rust-toolchain.__run_7]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5267956Z ##[group]Run if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5268321Z ^[[36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5268656Z ^[[36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5268964Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5323867Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5324226Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5324435Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5324707Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5324932Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5404897Z ##[end-action id=__dtolnay_rust-toolchain.__run_7;outcome=success;conclusion=success;duration_ms=15]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5407289Z ##[start-action display=Enable Cargo sparse registry;id=__dtolnay_rust-toolchain.__run_8]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5424048Z ##[group]Run # implemented in 1.66, stabilized in 1.68, made default in 1.70
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5424579Z ^[[36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5425300Z ^[[36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5426316Z ^[[36;1m  if rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[89]\.'; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5426886Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5427429Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5427913Z ^[[36;1m  elif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.6[67]\.'; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5428464Z ^[[36;1m    touch "/home/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5428973Z ^[[36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5429314Z ^[[36;1m  fi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5429507Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5484014Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5484372Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5484581Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5484841Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5485079Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5485306Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5792462Z ##[end-action id=__dtolnay_rust-toolchain.__run_8;outcome=success;conclusion=success;duration_ms=38]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5795175Z ##[start-action display=Work around spurious network errors in curl 8.0;id=__dtolnay_rust-toolchain.__run_9]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5813856Z ##[group]Run # https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5814624Z ^[[36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5815239Z ^[[36;1mif rustc +1.98.1 --version --verbose | grep -q '^release: 1\.7[01]\.'; then^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5816339Z ^[[36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5816687Z ^[[36;1mfi^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5878464Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5878809Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5879011Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5879265Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5879487Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.5879714Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6076130Z ##[end-action id=__dtolnay_rust-toolchain.__run_9;outcome=success;conclusion=success;duration_ms=27]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6081166Z ##[start-action display=rustc +1.98.1 --version --verbose;id=__dtolnay_rust-toolchain.__run_10]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6157320Z ##[group]Run rustc +1.98.1 --version --verbose
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6157669Z ^[[36;1mrustc +1.98.1 --version --verbose^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6219785Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6220140Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6220357Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6220640Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6220873Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6221108Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6400796Z rustc 1.98.1 (48a229cea 2026-09-01)
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6401762Z binary: rustc
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6402867Z commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6403716Z commit-date: 2026-09-01
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6404399Z host: x86_64-unknown-linux-gnu
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6405155Z release: 1.98.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6406038Z LLVM version: 22.1.8
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6420022Z ##[end-action id=__dtolnay_rust-toolchain.__run_10;outcome=success;conclusion=success;duration_ms=33]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6476136Z ##[group]Run cargo install rust-script --version 0.36.0 --locked
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6476664Z ^[[36;1mcargo install rust-script --version 0.36.0 --locked^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6537158Z shell: /usr/bin/bash -e {0}
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6537421Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6537628Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6537907Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6538135Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6538363Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.6836204Z ^[[1m^[[92m    Updating^[[0m crates.io index
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.7449011Z ^[[1m^[[92m Downloading^[[0m crates ...
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.7769873Z ^[[1m^[[92m  Downloaded^[[0m rust-script v0.36.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.8191812Z ^[[1m^[[92m  Installing^[[0m rust-script v0.36.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:40.8208047Z ^[[1m^[[92m    Updating^[[0m crates.io index
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1002411Z ^[[1m^[[92m    Updating^[[0m crates.io index
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1757428Z ^[[1m^[[92m Downloading^[[0m crates ...
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1902256Z ^[[1m^[[92m  Downloaded^[[0m anstyle-query v1.1.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1917550Z ^[[1m^[[92m  Downloaded^[[0m cfg-if v1.0.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1931278Z ^[[1m^[[92m  Downloaded^[[0m clap_lex v0.7.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1942565Z ^[[1m^[[92m  Downloaded^[[0m cpufeatures v0.2.17
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1959169Z ^[[1m^[[92m  Downloaded^[[0m anstream v0.6.20
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.1978371Z ^[[1m^[[92m  Downloaded^[[0m colorchoice v1.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2006816Z ^[[1m^[[92m  Downloaded^[[0m shell-words v1.1.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2007694Z ^[[1m^[[92m  Downloaded^[[0m block-buffer v0.10.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2011009Z ^[[1m^[[92m  Downloaded^[[0m crypto-common v0.1.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2022910Z ^[[1m^[[92m  Downloaded^[[0m fastrand v2.3.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2042140Z ^[[1m^[[92m  Downloaded^[[0m version_check v0.9.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2059088Z ^[[1m^[[92m  Downloaded^[[0m dirs v6.0.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2074043Z ^[[1m^[[92m  Downloaded^[[0m is_terminal_polyfill v1.70.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2085338Z ^[[1m^[[92m  Downloaded^[[0m anstyle v1.0.11
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2104962Z ^[[1m^[[92m  Downloaded^[[0m anstyle-parse v0.2.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2128136Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.9.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2173485Z ^[[1m^[[92m  Downloaded^[[0m toml_writer v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2187018Z ^[[1m^[[92m  Downloaded^[[0m clap v4.5.45
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2282803Z ^[[1m^[[92m  Downloaded^[[0m env_logger v0.11.8
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2308178Z ^[[1m^[[92m  Downloaded^[[0m unicase v2.8.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2321806Z ^[[1m^[[92m  Downloaded^[[0m toml v0.9.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2362573Z ^[[1m^[[92m  Downloaded^[[0m aho-corasick v1.1.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2414041Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.7.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2469021Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark v0.13.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2519339Z ^[[1m^[[92m  Downloaded^[[0m clap_builder v4.5.44
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2582206Z ^[[1m^[[92m  Downloaded^[[0m env_filter v0.1.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2595460Z ^[[1m^[[92m  Downloaded^[[0m equivalent v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2605290Z ^[[1m^[[92m  Downloaded^[[0m generic-array v0.14.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2619666Z ^[[1m^[[92m  Downloaded^[[0m dirs-sys v0.5.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2630981Z ^[[1m^[[92m  Downloaded^[[0m pulldown-cmark-escape v0.11.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2640862Z ^[[1m^[[92m  Downloaded^[[0m strsim v0.11.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2654174Z ^[[1m^[[92m  Downloaded^[[0m tempfile v3.20.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2682675Z ^[[1m^[[92m  Downloaded^[[0m digest v0.10.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2701514Z ^[[1m^[[92m  Downloaded^[[0m serde_spanned v1.0.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2712892Z ^[[1m^[[92m  Downloaded^[[0m typenum v1.18.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2744643Z ^[[1m^[[92m  Downloaded^[[0m option-ext v0.2.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2753010Z ^[[1m^[[92m  Downloaded^[[0m errno v0.3.13
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2768371Z ^[[1m^[[92m  Downloaded^[[0m getrandom v0.3.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2801641Z ^[[1m^[[92m  Downloaded^[[0m getopts v0.2.23
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2817159Z ^[[1m^[[92m  Downloaded^[[0m log v0.4.27
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2839572Z ^[[1m^[[92m  Downloaded^[[0m utf8parse v0.2.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2849131Z ^[[1m^[[92m  Downloaded^[[0m toml_datetime v0.7.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2861635Z ^[[1m^[[92m  Downloaded^[[0m sha1 v0.10.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2878017Z ^[[1m^[[92m  Downloaded^[[0m toml_parser v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2900702Z ^[[1m^[[92m  Downloaded^[[0m once_cell v1.21.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2926029Z ^[[1m^[[92m  Downloaded^[[0m indexmap v2.10.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2966779Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.219
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.2996812Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.15.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3045999Z ^[[1m^[[92m  Downloaded^[[0m regex-automata v0.4.9
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3194865Z ^[[1m^[[92m  Downloaded^[[0m winnow v0.7.12
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3286199Z ^[[1m^[[92m  Downloaded^[[0m regex v1.11.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3425902Z ^[[1m^[[92m  Downloaded^[[0m unicode-width v0.2.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3479692Z ^[[1m^[[92m  Downloaded^[[0m regex-syntax v0.8.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3546372Z ^[[1m^[[92m  Downloaded^[[0m rustix v1.0.8
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.3825566Z ^[[1m^[[92m  Downloaded^[[0m libc v0.2.175
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4099915Z ^[[1m^[[92m  Downloaded^[[0m jiff v0.2.15
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4247900Z ^[[1m^[[92m  Downloaded^[[0m linux-raw-sys v0.9.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4946669Z ^[[1m^[[92m   Compiling^[[0m typenum v1.18.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4947811Z ^[[1m^[[92m   Compiling^[[0m version_check v0.9.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4949266Z ^[[1m^[[92m   Compiling^[[0m libc v0.2.175
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.4949823Z ^[[1m^[[92m   Compiling^[[0m memchr v2.7.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.7107276Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.219
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.7128317Z ^[[1m^[[92m   Compiling^[[0m generic-array v0.14.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.8048465Z ^[[1m^[[92m   Compiling^[[0m utf8parse v0.2.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.8451861Z ^[[1m^[[92m   Compiling^[[0m anstyle-parse v0.2.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:41.9682450Z ^[[1m^[[92m   Compiling^[[0m regex-syntax v0.8.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.3477035Z ^[[1m^[[92m   Compiling^[[0m aho-corasick v1.1.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.4513538Z ^[[1m^[[92m   Compiling^[[0m anstyle v1.0.11
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.6177161Z ^[[1m^[[92m   Compiling^[[0m is_terminal_polyfill v1.70.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.6482949Z ^[[1m^[[92m   Compiling^[[0m colorchoice v1.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.6882177Z ^[[1m^[[92m   Compiling^[[0m anstyle-query v1.1.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:42.7267366Z ^[[1m^[[92m   Compiling^[[0m anstream v0.6.20
+delivery	UNKNOWN STEP	2026-10-01T13:33:43.0197085Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.9.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:43.2466803Z ^[[1m^[[92m   Compiling^[[0m rustix v1.0.8
+delivery	UNKNOWN STEP	2026-10-01T13:33:43.4827654Z ^[[1m^[[92m   Compiling^[[0m getrandom v0.3.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:43.7504421Z ^[[1m^[[92m   Compiling^[[0m cfg-if v1.0.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:43.8387063Z ^[[1m^[[92m   Compiling^[[0m regex-automata v0.4.9
+delivery	UNKNOWN STEP	2026-10-01T13:33:45.7087091Z ^[[1m^[[92m   Compiling^[[0m crypto-common v0.1.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:45.7657265Z ^[[1m^[[92m   Compiling^[[0m block-buffer v0.10.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:45.8417031Z ^[[1m^[[92m   Compiling^[[0m log v0.4.27
+delivery	UNKNOWN STEP	2026-10-01T13:33:45.9867413Z ^[[1m^[[92m   Compiling^[[0m strsim v0.11.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.0278526Z ^[[1m^[[92m   Compiling^[[0m option-ext v0.2.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.0597308Z ^[[1m^[[92m   Compiling^[[0m winnow v0.7.12
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.2671878Z ^[[1m^[[92m   Compiling^[[0m clap_lex v0.7.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.4697043Z ^[[1m^[[92m   Compiling^[[0m regex v1.11.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.4877088Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark v0.13.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.5557331Z ^[[1m^[[92m   Compiling^[[0m unicode-width v0.2.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:46.7586995Z ^[[1m^[[92m   Compiling^[[0m linux-raw-sys v0.9.4
+delivery	UNKNOWN STEP	2026-10-01T13:33:47.2866911Z ^[[1m^[[92m   Compiling^[[0m env_filter v0.1.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:47.8087082Z ^[[1m^[[92m   Compiling^[[0m toml_parser v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:47.9282233Z ^[[1m^[[92m   Compiling^[[0m getopts v0.2.23
+delivery	UNKNOWN STEP	2026-10-01T13:33:48.5637144Z ^[[1m^[[92m   Compiling^[[0m clap_builder v4.5.44
+delivery	UNKNOWN STEP	2026-10-01T13:33:48.7716729Z ^[[1m^[[92m   Compiling^[[0m dirs-sys v0.5.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.0416972Z ^[[1m^[[92m   Compiling^[[0m serde_spanned v1.0.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.1137829Z ^[[1m^[[92m   Compiling^[[0m toml_datetime v0.7.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.2047158Z ^[[1m^[[92m   Compiling^[[0m digest v0.10.7
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.4117230Z ^[[1m^[[92m   Compiling^[[0m toml_writer v1.0.2
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.4707279Z ^[[1m^[[92m   Compiling^[[0m jiff v0.2.15
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.5847411Z ^[[1m^[[92m   Compiling^[[0m fastrand v2.3.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.7636794Z ^[[1m^[[92m   Compiling^[[0m unicase v2.8.1
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.9137505Z ^[[1m^[[92m   Compiling^[[0m cpufeatures v0.2.17
+delivery	UNKNOWN STEP	2026-10-01T13:33:49.9416937Z ^[[1m^[[92m   Compiling^[[0m once_cell v1.21.3
+delivery	UNKNOWN STEP	2026-10-01T13:33:50.0924825Z ^[[1m^[[92m   Compiling^[[0m pulldown-cmark-escape v0.11.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:50.4507342Z ^[[1m^[[92m   Compiling^[[0m tempfile v3.20.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:50.9736902Z ^[[1m^[[92m   Compiling^[[0m clap v4.5.45
+delivery	UNKNOWN STEP	2026-10-01T13:33:51.0067646Z ^[[1m^[[92m   Compiling^[[0m sha1 v0.10.6
+delivery	UNKNOWN STEP	2026-10-01T13:33:51.2237283Z ^[[1m^[[92m   Compiling^[[0m toml v0.9.5
+delivery	UNKNOWN STEP	2026-10-01T13:33:53.0587325Z ^[[1m^[[92m   Compiling^[[0m dirs v6.0.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:53.1347742Z ^[[1m^[[92m   Compiling^[[0m shell-words v1.1.0
+delivery	UNKNOWN STEP	2026-10-01T13:33:53.4467963Z ^[[1m^[[92m   Compiling^[[0m env_logger v0.11.8
+delivery	UNKNOWN STEP	2026-10-01T13:33:54.7099744Z ^[[1m^[[92m   Compiling^[[0m rust-script v0.36.0
+delivery	UNKNOWN STEP	2026-10-01T13:34:13.9854344Z ^[[1m^[[92m    Finished^[[0m `release` profile [optimized] target(s) in 33.31s
+delivery	UNKNOWN STEP	2026-10-01T13:34:13.9907119Z ^[[1m^[[92m  Installing^[[0m /home/runner/.cargo/bin/rust-script
+delivery	UNKNOWN STEP	2026-10-01T13:34:13.9910117Z ^[[1m^[[92m   Installed^[[0m package `rust-script v0.36.0` (executable `rust-script`)
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0432371Z ##[group]Run docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0432795Z with:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0433012Z   driver: docker-container
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0433240Z   use: true
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0433428Z   keep-state: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0433638Z   cache-binary: true
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0433842Z   cleanup: true
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0434026Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0434219Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0434466Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0434681Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.0434897Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.2327118Z ##[group]Docker info
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.2353091Z [command]/usr/bin/docker version
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3308495Z Client: Docker Engine - Community
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3309032Z  Version:           28.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3309442Z  API version:       1.48
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3309838Z  Go version:        go1.23.7
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3310302Z  Git commit:        b8034c0
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3310723Z  Built:             Tue Mar 25 15:07:16 2025
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3311193Z  OS/Arch:           linux/amd64
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3311951Z  Context:           default
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3312200Z 
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3312375Z Server: Docker Engine - Community
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3312779Z  Engine:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3313087Z   Version:          28.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3313510Z   API version:      1.48 (minimum version 1.24)
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3314008Z   Go version:       go1.23.7
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3314439Z   Git commit:       6430e49
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3314843Z   Built:            Tue Mar 25 15:07:16 2025
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3315294Z   OS/Arch:          linux/amd64
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3315929Z   Experimental:     false
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3316297Z  containerd:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3316615Z   Version:          v2.3.6
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3317067Z   GitCommit:        ee2735368117d2eb259779949d5e75cdafec9761
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3317564Z  runc:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3317876Z   Version:          1.5.1
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3318256Z   GitCommit:        v1.5.1-0-g8f2685a4
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3318673Z  docker-init:
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3318992Z   Version:          0.19.0
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3319358Z   GitCommit:        de40ad0
+delivery	UNKNOWN STEP	2026-10-01T13:34:14.3367824Z [command]/usr/bin/docker info
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2578917Z Client: Docker Engine - Community
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2579449Z  Version:    28.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2579844Z  Context:    default
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2580246Z  Debug Mode: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2580649Z  Plugins:
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2581039Z   buildx: Docker Buildx (Docker Inc.)
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2581490Z     Version:  v0.37.1
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2581983Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2582551Z   compose: Docker Compose (Docker Inc.)
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2582940Z     Version:  v2.38.2
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2583276Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2583548Z 
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2583657Z Server:
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2583885Z  Containers: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2584110Z   Running: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2584331Z   Paused: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2584556Z   Stopped: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2584766Z  Images: 6
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2584977Z  Server Version: 28.0.4
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2585228Z  Storage Driver: overlay2
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2585491Z   Backing Filesystem: extfs
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2586148Z   Supports d_type: true
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2586536Z   Using metacopy: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2586926Z   Native Overlay Diff: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2587321Z   userxattr: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2587657Z  Logging Driver: json-file
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2588043Z  Cgroup Driver: systemd
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2588394Z  Cgroup Version: 2
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2588716Z  Plugins:
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2589021Z   Volume: local
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2589412Z   Network: bridge host ipvlan macvlan null overlay
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2590478Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2591130Z  Swarm: inactive
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2591503Z  Runtimes: io.containerd.runc.v2 runc
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2591942Z  Default Runtime: runc
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2592312Z  Init Binary: docker-init
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2592805Z  containerd version: ee2735368117d2eb259779949d5e75cdafec9761
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2593380Z  runc version: v1.5.1-0-g8f2685a4
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2593808Z  init version: de40ad0
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2594166Z  Security Options:
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2594492Z   apparmor
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2594791Z   seccomp
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2595094Z    Profile: builtin
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2595435Z   cgroupns
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2596014Z  Kernel Version: 6.17.0-1022-azure
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2596499Z  Operating System: Ubuntu 24.04.5 LTS
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2596957Z  OSType: linux
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2597309Z  Architecture: x86_64
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2597668Z  CPUs: 4
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2597986Z  Total Memory: 15.61GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2598366Z  Name: runnervm8df0l
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2598761Z  ID: 96bc9d58-7015-4b4a-8357-8e592f0b19b5
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2599235Z  Docker Root Dir: /var/lib/docker
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2599648Z  Debug Mode: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2600264Z  Username: githubactions
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2600543Z  Experimental: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2600760Z  Insecure Registries:
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2604623Z   ::1/128
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2604997Z   127.0.0.0/8
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2605223Z  Live Restore Enabled: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2605455Z 
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.2606998Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.4120684Z ##[group]Buildx version
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.4145431Z [command]/usr/bin/docker buildx version
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.4893237Z github.com/docker/buildx v0.37.1 0b265a9f62db554fa9aba6dd19e1bd5704bc7d8a
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.4926094Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5104150Z ##[group]Inspecting default docker context
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5252965Z [
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5253180Z   {
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5253371Z     "Name": "default",
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5253659Z     "Metadata": {},
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5253906Z     "Endpoints": {
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5254108Z       "docker": {
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5254369Z         "Host": "unix:///var/run/docker.sock",
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5254685Z         "SkipTLSVerify": false
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5254919Z       }
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5255099Z     },
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5255289Z     "TLSMaterial": {},
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5255748Z     "Storage": {
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5256135Z       "MetadataPath": "<IN MEMORY>",
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5256603Z       "TLSPath": "<IN MEMORY>"
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5256976Z     }
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5257182Z   }
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5257350Z ]
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5257793Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5863482Z ##[group]Pulling BuildKit image(s)
+delivery	UNKNOWN STEP	2026-10-01T13:34:18.5894472Z [command]/usr/bin/docker pull moby/buildkit:buildx-stable-1
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.3754733Z buildx-stable-1: Pulling from moby/buildkit
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5947344Z d0c1d894c237: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5948183Z 7e798cef5121: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5948648Z 98c91a1a17d1: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5949107Z c8f0d8a79114: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5949448Z efab3150af2c: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5949898Z 19ed272c7ade: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5950187Z 1d8ab3a073db: Pulling fs layer
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5950462Z c8f0d8a79114: Waiting
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5950779Z efab3150af2c: Waiting
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5951188Z 19ed272c7ade: Waiting
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.5951521Z 1d8ab3a073db: Waiting
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.7753432Z 98c91a1a17d1: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.7948257Z d0c1d894c237: Verifying Checksum
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.7949172Z d0c1d894c237: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.8276483Z 7e798cef5121: Verifying Checksum
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.8277286Z 7e798cef5121: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.9103787Z d0c1d894c237: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:19.9420180Z c8f0d8a79114: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.0056699Z 19ed272c7ade: Verifying Checksum
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.0057486Z 19ed272c7ade: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.1110427Z 1d8ab3a073db: Verifying Checksum
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.1110902Z 1d8ab3a073db: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.3619421Z efab3150af2c: Verifying Checksum
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.3619765Z efab3150af2c: Download complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.7993031Z 7e798cef5121: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.8108307Z 98c91a1a17d1: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:20.8199179Z c8f0d8a79114: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9071867Z efab3150af2c: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9189058Z 19ed272c7ade: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9284404Z 1d8ab3a073db: Pull complete
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9317714Z Digest: sha256:cec9f139f45e93c5c69c60f8b07cfad9f43f4ef6b6a6cd917527fea5ff2e3dea
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9328002Z Status: Downloaded newer image for moby/buildkit:buildx-stable-1
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9336195Z docker.io/moby/buildkit:buildx-stable-1
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9353206Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9353656Z ##[group]Creating a new builder instance
+delivery	UNKNOWN STEP	2026-10-01T13:34:21.9942850Z [command]/usr/bin/docker buildx create --name builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4 --driver docker-container --buildkitd-flags --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host --use
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.0954860Z builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.0989739Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.0990430Z ##[group]Booting builder
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.1042741Z [command]/usr/bin/docker buildx inspect --bootstrap --builder builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.1646099Z #1 [internal] booting buildkit
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.3149394Z #1 pulling image moby/buildkit:buildx-stable-1
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.7541406Z #1 pulling image moby/buildkit:buildx-stable-1 0.6s done
+delivery	UNKNOWN STEP	2026-10-01T13:34:22.9057166Z #1 creating container buildx_buildkit_builder-ff06d48e-f36f-466d-a544-d4e9d27aaea40
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.0625088Z #1 creating container buildx_buildkit_builder-ff06d48e-f36f-466d-a544-d4e9d27aaea40 0.3s done
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1036254Z #1 DONE 0.9s
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1431832Z Name:          builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1432461Z Driver:        docker-container
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1432912Z Last Activity: 2026-10-01 13:34:22 +0000 UTC
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1433227Z 
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1433792Z Nodes:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1434365Z Name:                  builder-ff06d48e-f36f-466d-a544-d4e9d27aaea40
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1435160Z Endpoint:              unix:///var/run/docker.sock
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1436058Z Status:                running
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1437157Z BuildKit daemon flags: --allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1438344Z BuildKit version:      v0.33.1
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1438834Z Platforms:             linux/amd64, linux/amd64/v2, linux/amd64/v3, linux/386
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1439262Z Labels:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1439577Z  org.mobyproject.buildkit.worker.executor:         oci
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1454078Z  org.mobyproject.buildkit.worker.hostname:         0625cdbd957d
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1454872Z  org.mobyproject.buildkit.worker.network:          host
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1455829Z  org.mobyproject.buildkit.worker.oci.process-mode: sandbox
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1456584Z  org.mobyproject.buildkit.worker.selinux.enabled:  false
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1457317Z  org.mobyproject.buildkit.worker.snapshotter:      overlayfs
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1457930Z GC Policy rule#0:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1458318Z  All:            false
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1458932Z  Filters:        type==source.local type==exec.cachemount type==source.git.checkout
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1459661Z  Keep Duration:  48h0m0s
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1460094Z  Max Used Space: 488.3MiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1460518Z GC Policy rule#1:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1460905Z  All:            false
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1461319Z  Keep Duration:  1440h0m0s
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1461756Z  Reserved Space: 9.313GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1462184Z  Max Used Space: 93.13GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1462889Z  Min Free Space: 27.01GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1463318Z GC Policy rule#2:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1463688Z  All:            false
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1464121Z  Reserved Space: 9.313GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1464554Z  Max Used Space: 93.13GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1464978Z  Min Free Space: 27.01GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1465386Z GC Policy rule#3:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1465977Z  All:            true
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1466393Z  Reserved Space: 9.313GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1466829Z  Max Used Space: 93.13GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1467251Z  Min Free Space: 27.01GiB
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.1500755Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2518792Z ##[group]Inspect builder
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2520684Z {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2521115Z   "nodes": [
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2521472Z     {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2521898Z       "name": "builder-ff06d48e-f36f-466d-a544-d4e9d27aaea40",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2522412Z       "endpoint": "unix:///var/run/docker.sock",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2522895Z       "status": "running",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2523856Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2524657Z       "buildkit": "v0.33.1",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2526370Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2527076Z       "features": {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2527657Z         "Automatically load images to the Docker Engine image store": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2528241Z         "Cache export": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2528645Z         "Direct push": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2529027Z         "Docker exporter": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2529431Z         "Multi-platform build": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2529867Z         "OCI exporter": true
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2530266Z       },
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2530608Z       "labels": {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2531016Z         "org.mobyproject.buildkit.worker.executor": "oci",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2531570Z         "org.mobyproject.buildkit.worker.hostname": "0625cdbd957d",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2532112Z         "org.mobyproject.buildkit.worker.network": "host",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2532670Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2533295Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2533916Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2534393Z       },
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2534738Z       "gcPolicy": [
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2535118Z         {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2535490Z           "all": false,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2536097Z           "filter": [
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2536631Z             "type==source.local type==exec.cachemount type==source.git.checkout"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2537166Z           ],
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2537556Z           "keepDuration": "48h0m0s",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2537996Z           "maxUsedSpace": "488.3MiB"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2538400Z         },
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2538760Z         {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2539110Z           "all": false,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2539486Z           "keepDuration": "1440h0m0s",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2539910Z           "reservedSpace": "9.313GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2540318Z           "maxUsedSpace": "93.13GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2540766Z           "minFreeSpace": "27.01GiB"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2541225Z         },
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2541596Z         {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2541942Z           "all": false,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2542343Z           "reservedSpace": "9.313GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2542788Z           "maxUsedSpace": "93.13GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2543196Z           "minFreeSpace": "27.01GiB"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2543596Z         },
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2543932Z         {
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2544298Z           "all": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2544681Z           "reservedSpace": "9.313GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2545120Z           "maxUsedSpace": "93.13GiB",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2546204Z           "minFreeSpace": "27.01GiB"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2546694Z         }
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2547046Z       ]
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2547385Z     }
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2547938Z   ],
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2548393Z   "name": "builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2548977Z   "driver": "docker-container",
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2549474Z   "lastActivity": "2026-10-01T13:34:22.000Z"
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2549964Z }
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2550512Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2550924Z ##[group]BuildKit version
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2551278Z builder-ff06d48e-f36f-466d-a544-d4e9d27aaea40: v0.33.1
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2551871Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2656590Z ##[group]Run rust-script scripts/check-delivery.rs --verify-artifacts
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2657157Z ^[[36;1mrust-script scripts/check-delivery.rs --verify-artifacts^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2720251Z shell: /usr/bin/bash -e {0}
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2720509Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2720712Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2720976Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2721206Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2723912Z   GH_TOKEN: ***
+delivery	UNKNOWN STEP	2026-10-01T13:34:23.2724126Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2616073Z {
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2617004Z   "artifact_error": "required platform artifact missing: link-assistant-router-1.15.0-linux-amd64.tar.gz",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2617942Z   "artifacts_verified": false,
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2618265Z   "asset_digests": null,
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2618560Z   "image_digest": null,
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2618847Z   "mutation_performed": false,
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2619632Z   "reason": "release identity exists but complete artifact provenance is not verified",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2620973Z   "recovery": "gh workflow run release.yml --repo link-assistant/router --ref main -f release_mode=recover",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2621857Z   "release_contains_source": true,
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2622413Z   "release_revision": "7804433a9a62f535163c88d7394c89ff95d1f687",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2622901Z   "runs": [],
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2623200Z   "schema": "link-assistant-router/delivery/v1",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2623669Z   "source_revision": "7804433a9a62f535163c88d7394c89ff95d1f687",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2624126Z   "state": "partial-publication",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2624446Z   "version": "1.15.0",
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2624730Z   "workflow_state": "active"
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2625025Z }
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2635734Z ##[error]Process completed with exit code 1.
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2682569Z ##[group]Run cat target/verification/delivery.json >> "$GITHUB_STEP_SUMMARY"
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2683133Z ^[[36;1mcat target/verification/delivery.json >> "$GITHUB_STEP_SUMMARY"^[[0m
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2745062Z shell: /usr/bin/bash -e {0}
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2745310Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2745671Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2745937Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2746163Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2746386Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2886068Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2886504Z with:
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2886701Z   name: delivery-state
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2886949Z   path: target/verification/delivery.json
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2887236Z   if-no-files-found: warn
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2887468Z   compression-level: 6
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2887693Z   overwrite: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2887908Z   include-hidden-files: false
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2888140Z   archive: true
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2888330Z env:
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2888527Z   CARGO_HOME: /home/runner/.cargo
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2888772Z   CARGO_INCREMENTAL: 0
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2888983Z   CARGO_TERM_COLOR: always
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.2889199Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.4257424Z With the provided path, there will be 1 file uploaded
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.4260662Z Artifact name is valid!
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.4269725Z Root directory input is valid!
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.7732236Z Uploading artifact: delivery-state.zip
+delivery	UNKNOWN STEP	2026-10-01T13:34:30.7775214Z Beginning upload of artifact content to blob storage
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.0351033Z Uploaded bytes 512
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.0983933Z Finished uploading artifact content to blob storage!
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.0985291Z SHA256 digest of uploaded artifact is 69e2cba77c68e47795e0c3487dbea95f1abb0c12a2eda251262bf412d125e6a5
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.0986884Z Finalizing artifact upload
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.4989059Z Artifact delivery-state successfully finalized. Artifact ID 11166826777
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.4990296Z Artifact delivery-state has been successfully uploaded! Final size is 512 bytes. Artifact ID is 11166826777
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.4993185Z Artifact download URL: https://github.com/link-assistant/router/actions/runs/36869539282/artifacts/11166826777
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.5146120Z Post job cleanup.
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.6916886Z ##[group]Removing builder
+delivery	UNKNOWN STEP	2026-10-01T13:34:31.8013365Z [command]/usr/bin/docker buildx rm builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0154590Z builder-ff06d48e-f36f-466d-a544-d4e9d27aaea4 removed
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0196428Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0199826Z ##[group]Cleaning up certificates
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0200829Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0201647Z ##[group]Post cache
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0202534Z State not set
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0203367Z ##[endgroup]
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.0410948Z Post job cleanup.
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1259435Z [command]/usr/bin/git version
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1304793Z git version 2.55.0
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1344959Z Temporarily overriding HOME='/home/runner/work/_temp/8a8ba122-86a1-411d-a1e1-ceb4121dae1a' before making global git config changes
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1346595Z Adding repository directory to the temporary git global config as a safe directory
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1360335Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/router/router
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1393516Z Removing SSH command configuration
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1400412Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1435451Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1673780Z Removing HTTP extra header
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1679514Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1718657Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.1999677Z Removing includeIf entries pointing to credentials config files
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2007593Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2049339Z includeif.gitdir:/home/runner/work/router/router/.git.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2050389Z includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2051083Z includeif.gitdir:/github/workspace/.git.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2051676Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2060075Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2085539Z /home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2096716Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-25a645fd\-ca0d\-40b8\-b47f\-31a8c4760558\.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2139380Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2169796Z /home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2178335Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/router/router/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-25a645fd\-ca0d\-40b8\-b47f\-31a8c4760558\.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2218572Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2250200Z /github/runner_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2267551Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-25a645fd\-ca0d\-40b8\-b47f\-31a8c4760558\.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2297725Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2324013Z /github/runner_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2334617Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-25a645fd\-ca0d\-40b8\-b47f\-31a8c4760558\.config
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2371553Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2592104Z Removing credentials config '/home/runner/work/_temp/git-credentials-25a645fd-ca0d-40b8-b47f-31a8c4760558.config'
+delivery	UNKNOWN STEP	2026-10-01T13:34:32.2753303Z Cleaning up orphan processes

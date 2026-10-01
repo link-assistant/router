@@ -1,0 +1,22 @@
+# Issue #648: which source path does rustc record for modules reached through
+# `include!`? llvm-cov merges coverage per recorded path, so two bins that
+# record `src/a.rs` and `src/bin/../a.rs` count the same lines twice.
+[package]
+name = "include-coverage-paths"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "canonical"
+path = "src/main.rs"
+
+[[bin]]
+name = "relative"
+path = "src/bin/relative.rs"
+
+[[bin]]
+name = "manifest"
+path = "src/bin/manifest.rs"

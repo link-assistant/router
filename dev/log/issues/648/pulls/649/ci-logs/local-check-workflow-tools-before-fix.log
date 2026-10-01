@@ -1,0 +1,1 @@
+Error: .github/workflows/release.yml: job `publish-release-artifacts` runs rust-script on line 1220 but never installs it: run: rust-script scripts/upload-release-assets.rs

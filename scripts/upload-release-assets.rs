@@ -22,7 +22,12 @@ fn run(command: &mut Command) -> Result<Vec<u8>, String> {
     let output = bounded_process::output(command, Duration::from_secs(120))
         .map_err(|error| error.to_string())?;
     if !output.status.success() {
-        return Err("release asset operation failed; existing bytes were not overwritten".into());
+        // gh's own stderr names the cause (auth, missing release, rate limit).
+        return Err(format!(
+            "release asset operation failed ({}); existing bytes were not overwritten: {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
     }
     Ok(output.stdout)
 }

@@ -1,16 +1,19 @@
-//! Link.Assistant.Router binary entry point.
-//!
-//! Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
-//!
-//! 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
-//! 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
-//!    `auth`, `usage`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
-//!    binding a port. Those that read or change router state act on the router
-//!    this machine is pointed at, which may be a remote deployment (issue
-//!    #294); `configure`, `clients` and `auth --local` act here.
-//!
-//! Shared services are constructed together so the CLI subcommands operate on the
-//! exact same backing state the HTTP server would.
+// Link.Assistant.Router binary entry point, shared by the `router` and
+// `link-assistant-router` targets. Plain comments rather than `//!`: the second
+// target is `src/bin/link-assistant-router.rs`, which `include!`s this file, and
+// an included file cannot carry inner attributes (issue #648).
+//
+// Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
+//
+// 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
+// 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
+//    `auth`, `usage`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
+//    binding a port. Those that read or change router state act on the router
+//    this machine is pointed at, which may be a remote deployment (issue
+//    #294); `configure`, `clients` and `auth --local` act here.
+//
+// Shared services are constructed together so the CLI subcommands operate on the
+// exact same backing state the HTTP server would.
 
 use std::process::ExitCode;
 use std::sync::Arc;

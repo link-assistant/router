@@ -1,0 +1,52 @@
+110054627643	Detect Changes
+110054627852	Tunnel Image Smoke Test
+110054630121	Version Modification Check
+110054630550	Create Changelog PR
+110054972670	Dependency Audit
+110054972809	Lint and Format Check
+110054973760	Test Coverage
+110054974001	Test (macos-latest)
+110054974080	Test (windows-latest)
+110054974323	Test (ubuntu-latest)
+110054975183	Changelog Fragment Check
+110060092347	Build Package
+110062097946	Auto Release
+110062100221	Instant Release
+110066095692	Create GitHub Release
+110066535816	Build Docker Image (runtime / arm64)
+110066535894	Build Docker Image (runtime / amd64)
+110066536087	Publish attested binaries (linux-arm64)
+110066536164	Publish attested binaries (darwin-arm64)
+110066536171	Publish attested binaries (darwin-amd64)
+110066536279	Publish attested binaries (linux-amd64)
+110069933136	Publish Multi-Platform Docker Manifests
+110071476020	Verify published release provenance
+110071476957	Verify macOS client lifecycle
+110549044878	delivery
+110389217584	Latest Release Matches Its Tag Commit
+110389218011	Every Tag Has a GitHub Release
+110340661718	Claude Code, Codex, Gemini, Qwen, and OpenCode
+110340662045	Codex 0.158.0 (newer than baseline)
+110340662057	Claude Code 2.1.284 (newer than baseline)
+110340662127	Codex latest (newer than baseline)
+110340662160	Claude Code latest (newer than baseline)
+109956239728	Tunnel Image Smoke Test
+109956240179	Detect Changes
+109956242067	Create Changelog PR
+109956242621	Version Modification Check
+109956635223	Dependency Audit
+109956635291	Lint and Format Check
+109956636594	Test (ubuntu-latest)
+109956636664	Test (windows-latest)
+109956636709	Test (macos-latest)
+109956637089	Test Coverage
+109956637926	Changelog Fragment Check
+109961745033	Build Package
+109961746056	Instant Release
+109961746173	Auto Release
+109961747110	Create GitHub Release
+109961747916	Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})
+109961747921	Publish attested binaries (${{ matrix.os }}-${{ matrix.arch }})
+109961748629	Publish Multi-Platform Docker Manifests
+109961749518	Verify macOS client lifecycle
+109961749891	Verify published release provenance
