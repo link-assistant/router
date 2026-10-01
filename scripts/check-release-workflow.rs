@@ -224,12 +224,55 @@ fn main() {
     if count_occurrences(
         &workflow,
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
-    ) < 3
+    ) != 2
     {
         failures.push(
-            "workflow must map both CARGO_REGISTRY_TOKEN and CARGO_TOKEN secrets to Cargo's native CARGO_REGISTRY_TOKEN env var"
+            "both publish steps must map CARGO_REGISTRY_TOKEN and CARGO_TOKEN secrets to Cargo's native CARGO_REGISTRY_TOKEN env var"
                 .to_string(),
         );
+    }
+
+    // A workflow-level secret reaches every job, pull request tests included;
+    // only the publish steps may see the token (issue #648).
+    let global_env = workflow.split_once("\njobs:\n").map_or("", |(head, _)| head);
+    if global_env.contains("CARGO_REGISTRY_TOKEN:") {
+        failures.push("CARGO_REGISTRY_TOKEN must be step-scoped, not workflow-level".to_string());
+    }
+
+    // Dispatch inputs are attacker-shaped text; expanding them inside a shell
+    // script lets a quote end the argument. Pass them through `env:` instead.
+    for line in workflow.lines().filter(|line| line.trim_start().starts_with("run:")) {
+        if line.contains("${{ github.event.inputs.") || line.contains("${{ inputs.") {
+            failures.push(format!(
+                "pass workflow inputs to run: through env, not ${{{{ }}}} expansion: {}",
+                line.trim()
+            ));
+        }
+    }
+
+    // `always()` alone starts a job even after the run is cancelled. Step-level
+    // `if: always()` stays allowed: it uploads diagnostics from a failed job.
+    for line in workflow.lines() {
+        let job_condition = line.starts_with("    if:") || line.starts_with("      always()");
+        if job_condition && line.contains("always()") && !line.contains("!cancelled()") {
+            failures.push(format!(
+                "always() conditions must also require !cancelled(): {}",
+                line.trim()
+            ));
+        }
+    }
+
+    // Mutable runner aliases switch OS versions without a diff here: in
+    // September 2026 every ubuntu-latest job announced the move to Ubuntu 26.
+    for (path, text) in all_workflows() {
+        for line in text.lines().filter(|line| !line.trim_start().starts_with('#')) {
+            if line.contains("ubuntu-latest") || line.contains("macos-latest") {
+                failures.push(format!(
+                    "{path}: pin the runner OS version instead of a -latest alias: {}",
+                    line.trim()
+                ));
+            }
+        }
     }
 
     if count_occurrences(
@@ -260,6 +303,20 @@ fn main() {
         }
         exit(1);
     }
+}
+
+fn all_workflows() -> Vec<(String, String)> {
+    let mut workflows: Vec<_> = fs::read_dir(".github/workflows")
+        .expect("failed to read .github/workflows")
+        .map(|entry| entry.expect("workflow entry").path())
+        .filter(|path| path.extension().is_some_and(|extension| extension == "yml"))
+        .map(|path| {
+            let text = fs::read_to_string(&path).expect("failed to read workflow");
+            (path.display().to_string(), text)
+        })
+        .collect();
+    workflows.sort();
+    workflows
 }
 
 fn count_occurrences(haystack: &str, needle: &str) -> usize {

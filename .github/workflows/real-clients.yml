@@ -27,7 +27,7 @@ env:
 jobs:
   real-client-capture:
     name: Claude Code, Codex, Gemini, Qwen, and OpenCode
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -88,7 +88,7 @@ jobs:
   # operation that changed, rather than being hidden behind a version gate.
   claude-newer-release:
     name: Claude Code ${{ matrix.claude }} (newer than baseline)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -142,7 +142,7 @@ jobs:
   # a newer release so bootstrap drift fails at the operation that changed.
   codex-newer-release:
     name: Codex ${{ matrix.codex }} (newer than baseline)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false

@@ -174,7 +174,7 @@ fn release_workflow_publishes_one_native_image_per_architecture() {
         "Docker image variants should be separate matrix jobs"
     );
     assert!(
-        workflow.contains("runner: ubuntu-latest") && workflow.contains("runner: ubuntu-24.04-arm"),
+        workflow.contains("runner: ubuntu-24.04\n") && workflow.contains("runner: ubuntu-24.04-arm"),
         "native architecture builds should run concurrently as matrix jobs"
     );
     assert_eq!(
@@ -374,7 +374,7 @@ fn release_workflows_pin_actions_tools_and_artifact_identity() {
     );
     assert!(
         release.contains("verify-macos-client-lifecycle:")
-            && release.contains("runs-on: macos-latest"),
+            && release.contains("runs-on: macos-26"),
         "the release must exercise the client lifecycle on macOS"
     );
     assert!(
@@ -436,7 +436,7 @@ fn release_workflow_enforces_single_platform_coverage() {
         .expect("coverage must run alongside tests before the build job")
         .0;
 
-    assert!(coverage.contains("runs-on: ubuntu-latest"));
+    assert!(coverage.contains("runs-on: ubuntu-24.04"));
     assert!(
         !coverage.contains("matrix."),
         "instrumented coverage should run on exactly one platform"
@@ -517,8 +517,16 @@ fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     );
     assert_eq!(
         workflow.matches(mapping).count(),
-        3,
-        "global env plus both publish jobs should use Cargo's native token variable"
+        2,
+        "both publish steps should use Cargo's native token variable"
+    );
+    let global_env = workflow
+        .split_once("\njobs:\n")
+        .expect("release workflow should define jobs")
+        .0;
+    assert!(
+        !global_env.contains("CARGO_REGISTRY_TOKEN:"),
+        "the publish token must be step-scoped, not exposed to every job (issue #648)"
     );
     assert!(
         !workflow
