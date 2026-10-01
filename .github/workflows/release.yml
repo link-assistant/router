@@ -298,6 +298,13 @@ jobs:
           rust-script --test scripts/check-release-needed.rs
           rust-script scripts/check-release-workflow.rs
 
+      # Job-scoped, unlike the snippet checks above: a tool installed in one job
+      # is absent from every other job's fresh runner (issue #648).
+      - name: Check every workflow job installs the tools it runs
+        run: |
+          rust-script --test scripts/check-workflow-tools.rs
+          rust-script scripts/check-workflow-tools.rs
+
   # === DEPENDENCY AUDIT ===
   # Both dependency surfaces the router carries: the Rust crates and the JS
   # toolchain that builds the admin console. Deliberately *not* in `build`'s
@@ -1147,6 +1154,11 @@ jobs:
         with:
           toolchain: 1.98.1
           targets: ${{ matrix.target }}
+
+      # Each job starts on a fresh runner: without this step the upload below
+      # exits 127 and the release ships no binaries (issue #648, v1.15.0).
+      - name: Install rust-script
+        run: cargo install rust-script --version 0.36.0 --locked
 
       - name: Verify tag and package version
         shell: bash
