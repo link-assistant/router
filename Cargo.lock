@@ -1388,16 +1388,17 @@ dependencies = [
 
 [[package]]
 name = "hyper-util"
-version = "0.1.20"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96547c2556ec9d12fb1578c4eaf448b04993e7fb79cbaad930a656880a6bdfa0"
+checksum = "ddc03d96684f9226b8a787cdb71488417b53ab5ea8fdb1dac946cb9431cc8bff"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "bytes",
  "futures-channel",
  "futures-util",
  "http",
  "http-body",
+ "httparse",
  "hyper",
  "ipnet",
  "libc",
@@ -1721,7 +1722,7 @@ dependencies = [
  "hyper-util",
  "jsonwebtoken",
  "link-cli",
- "links-notation 0.20.0",
+ "links-notation 0.22.0",
  "lino-arguments",
  "lino-objects-codec",
  "log-lazy",
@@ -1753,9 +1754,9 @@ dependencies = [
 
 [[package]]
 name = "link-cli"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22b8713bafccde8ab4298b27bd5188462ecdfbb52506559c3dc7aa762e33e92c"
+checksum = "fa72e7df128dec6a6b3b108db806d3405fd6e6a6e523a44f28e446912060d316"
 dependencies = [
  "anyhow",
  "doublets",
@@ -1776,9 +1777,9 @@ dependencies = [
 
 [[package]]
 name = "links-notation"
-version = "0.20.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a555110f0a83efdab03956ef46ac5ad74e7dfb5dea3929a9ad388af06913de7b"
+checksum = "120d3b63178b82b0a416d7180f3d3c57170a8bbb00ffac4975d27779013fc4be"
 dependencies = [
  "links-notation-macro",
  "nom 8.0.0",
@@ -3564,9 +3565,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-test"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f6d24790a10a7af737693a3e8f1d03faef7e6ca0cc99aae5066f533766de545"
+checksum = "12bc5db7778a8e08ee255090861e0e7aac55e784300077e7ed293c7be36168b2"
 dependencies = [
  "futures-core",
  "tokio",
