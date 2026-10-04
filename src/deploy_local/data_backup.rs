@@ -241,10 +241,12 @@ fn covered(
 /// What the next checkpoint of `root` would hold, without writing anything.
 /// The token export is estimated from the current text projection.
 pub(super) fn predict(root: &Path) -> io::Result<u64> {
-    let data = root.join("data");
-    if fs::symlink_metadata(&data).is_err() {
+    if fs::symlink_metadata(root.join("data")).is_err() {
         return Ok(0);
     }
+    // Resolve the root as `capture` does, so both name the same path (on
+    // macOS a temporary directory under /var resolves to /private/var).
+    let data = root.canonicalize()?.join("data");
     let mut manifest = Manifest {
         schema: SCHEMA.into(),
         signing_secret_sha256: String::new(),

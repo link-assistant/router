@@ -342,3 +342,24 @@ fn refusals_name_their_reason_and_path() {
         checkpoint_remedy(&io::Error::other(reason))
     );
 }
+
+/// A root reached through a symlink, as macOS reaches `/private/var` through
+/// `/var`, must be named the same way by `--status` and by the real run.
+#[cfg(unix)]
+#[test]
+fn status_and_capture_name_the_same_path_for_a_symlinked_root() {
+    use std::os::unix::fs::symlink;
+    let root = root();
+    let oversized = root.path().join("data/sessions/huge.lino");
+    fs::create_dir_all(oversized.parent().unwrap()).unwrap();
+    fs::File::create(&oversized)
+        .unwrap()
+        .set_len(LIMIT + 1)
+        .unwrap();
+    let alias_parent = tempfile::tempdir().unwrap();
+    let alias = alias_parent.path().join("alias");
+    symlink(root.path(), &alias).unwrap();
+    let predicted = checkpoint_status(&alias).unwrap_err();
+    let actual = checkpoint_remedy(&capture(&alias, &[], "secret").unwrap_err());
+    assert_eq!(predicted, actual);
+}
