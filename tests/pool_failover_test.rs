@@ -30,6 +30,7 @@ use tempfile::TempDir;
 const ACCOUNTS: [&str; 3] = ["primary", "account-1", "account-2"];
 const MESSAGES: &str = "/api/services/anthropic/v1/messages";
 const COUNT_TOKENS: &str = "/api/services/anthropic/v1/messages/count_tokens";
+const CODEX_RESPONSES: &str = "/api/services/codex/v1/responses";
 const ADMIN_KEY: &str = "pool-admin";
 
 /// One scripted vendor answer.
@@ -150,7 +151,9 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
         }
         Reply::Ok => {
             let streamed = body.get("stream").and_then(Value::as_bool) == Some(true);
-            let (text, content_type) = if path.ends_with("/count_tokens") {
+            let (text, content_type) = if path.ends_with("/responses") {
+                (codex_stream_from(&account), "text/event-stream")
+            } else if path.ends_with("/count_tokens") {
                 (r#"{"input_tokens":37}"#.to_string(), "application/json")
             } else if streamed {
                 (stream_from(&account), "text/event-stream")
@@ -213,6 +216,30 @@ fn stream_from(account: &str) -> String {
     stream
 }
 
+/// A native Codex Responses stream naming the account that answered.
+fn codex_stream_from(account: &str) -> String {
+    let id = format!("resp_{}", account.replace('-', "_"));
+    let text = format!("answered by {account}");
+    let events = [
+        json!({"type":"response.created","response":{"id":id,"model":"gpt-5","status":"in_progress","output":[]}}),
+        json!({"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":text}),
+        json!({"type":"response.completed","response":{"id":id,"object":"response","model":"gpt-5","status":"completed",
+            "output":[{"id":"msg_1","type":"message","role":"assistant","status":"completed",
+                       "content":[{"type":"output_text","text":text,"annotations":[]}]}],
+            "usage":{"input_tokens":3,"output_tokens":2,"total_tokens":5}}}),
+    ];
+    let mut stream = String::new();
+    for event in &events {
+        stream.push_str("event: ");
+        stream.push_str(event["type"].as_str().unwrap());
+        stream.push_str("\ndata: ");
+        stream.push_str(&event.to_string());
+        stream.push_str("\n\n");
+    }
+    stream.push_str("data: [DONE]\n\n");
+    stream
+}
+
 struct Pool {
     client: reqwest::Client,
     url: String,
@@ -237,6 +264,9 @@ struct Options {
     failover: bool,
     cooldown: Duration,
     pause_at_percent: Option<u8>,
+    /// Pool Codex accounts behind the native Responses route instead of
+    /// Claude accounts behind the Anthropic pass-through.
+    codex: bool,
 }
 
 impl Default for Options {
@@ -245,6 +275,7 @@ impl Default for Options {
             failover: true,
             cooldown: Duration::from_secs(60),
             pause_at_percent: None,
+            codex: false,
         }
     }
 }
@@ -277,23 +308,36 @@ impl Pool {
             .map(|account| {
                 let home = data.path().join(account);
                 std::fs::create_dir_all(&home).unwrap();
-                std::fs::write(
-                    home.join(".credentials.json"),
-                    json!({"claudeAiOauth": {
-                        "accessToken": format!("tok-{account}"),
-                        "refreshToken": format!("refresh-{account}"),
-                        "expiresAt": 4_102_444_800_000_i64,
-                    }})
-                    .to_string(),
-                )
-                .unwrap();
+                let (file, credentials) = if options.codex {
+                    (
+                        "auth.json",
+                        json!({"tokens": {
+                            "access_token": format!("tok-{account}"),
+                            "account_id": format!("acct_{account}"),
+                        }}),
+                    )
+                } else {
+                    (
+                        ".credentials.json",
+                        json!({"claudeAiOauth": {
+                            "accessToken": format!("tok-{account}"),
+                            "refreshToken": format!("refresh-{account}"),
+                            "expiresAt": 4_102_444_800_000_i64,
+                        }}),
+                    )
+                };
+                std::fs::write(home.join(file), credentials.to_string()).unwrap();
                 home
             })
             .collect();
         let router = AccountRouter::new_for_provider(
             homes[0].clone(),
             &homes[1..],
-            SubscriptionProvider::Claude,
+            if options.codex {
+                SubscriptionProvider::Codex
+            } else {
+                SubscriptionProvider::Claude
+            },
             AccountRouterOptions {
                 strategy: SelectionStrategy::Priority,
                 cooldown: options.cooldown,
@@ -319,7 +363,7 @@ impl Pool {
                 ttl_hours: 1,
                 label: "pool client",
                 max_tokens: Some(100_000),
-                client_kind: Some("claude"),
+                client_kind: Some(if options.codex { "codex" } else { "claude" }),
                 principal_id: Some("primary"),
                 ..IssueRequest::default()
             })
@@ -335,7 +379,11 @@ impl Pool {
             model_catalogs: Arc::new(ModelCatalogCache::new()),
             subscription_cache: cache,
             upstream_base_url: stub_url,
-            upstream_provider: UpstreamProvider::Anthropic,
+            upstream_provider: if options.codex {
+                UpstreamProvider::Codex
+            } else {
+                UpstreamProvider::Anthropic
+            },
             gonka: None,
             bridge_model: None,
             bridge_model_policy:
@@ -376,6 +424,10 @@ impl Pool {
             .route(
                 COUNT_TOKENS,
                 post(link_assistant_router::proxy::proxy_handler),
+            )
+            .route(
+                CODEX_RESPONSES,
+                post(link_assistant_router::proxy::openai_responses_native),
             )
             .route(
                 "/api/management/accounts",
@@ -420,6 +472,25 @@ impl Pool {
             Some(session) => request.header("x-claude-code-session-id", session),
             None => request,
         }
+    }
+
+    /// A native Codex Responses request, as the Codex CLI sends it.
+    async fn send_codex(&self, body: &Value) -> (StatusCode, String) {
+        let response = self
+            .client
+            .post(format!("{}{CODEX_RESPONSES}", self.url))
+            .bearer_auth(&self.token)
+            .header("x-openai-internal-codex-responses-lite", "true")
+            .header("user-agent", "codex_exec/0.153.0")
+            .header("x-codex-turn-metadata", "pool-failover-codex")
+            .header("originator", "codex_cli_rs")
+            .header("version", "0.153.0")
+            .json(body)
+            .send()
+            .await
+            .unwrap();
+        let status = response.status();
+        (status, response.text().await.unwrap())
     }
 
     async fn send(&self, session: Option<&str>, body: &Value) -> (StatusCode, String) {
@@ -472,3 +543,5 @@ fn rate_limited_for(seconds: u64) -> Reply {
 
 #[path = "pool_failover/cases.rs"]
 mod cases;
+#[path = "pool_failover/codex.rs"]
+mod codex;
