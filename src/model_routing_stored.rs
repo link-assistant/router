@@ -37,9 +37,14 @@ pub(super) async fn append_stored_provider_models(
         let Ok(live_models) =
             crate::provider_proxy::live_openai_compatible_catalog(state, &provider).await
         else {
-            mark_provider_degraded(catalog, &provider.name);
+            mark_provider_degraded(
+                catalog,
+                &provider.name,
+                "live provider catalog refresh failed",
+            );
             continue;
         };
+        let exhaustion = state.provider_store.exhaustion(&provider.name);
         for model in live_models {
             let mut projected = model.raw;
             projected.insert("id".into(), Value::String(model.id));
@@ -47,14 +52,35 @@ pub(super) async fn append_stored_provider_models(
                 .entry("object")
                 .or_insert_with(|| Value::String("model".into()));
             projected.insert("owned_by".into(), Value::String(provider.name.clone()));
+            mark_row_unavailable(&mut projected, exhaustion.as_ref());
             super::insert_catalog_candidate(catalog, Value::Object(projected));
         }
-        mark_provider_healthy(catalog, &provider.name);
+        match exhaustion {
+            Some(exhaustion) => {
+                mark_provider_degraded(catalog, &provider.name, &exhaustion.summary());
+            }
+            None => mark_provider_healthy(catalog, &provider.name),
+        }
     }
     Ok(())
 }
 
-fn mark_provider_degraded(catalog: &mut Value, provider: &str) {
+/// Keep an exhausted account's rows listed — z.ai still lists them — but say
+/// on each row that Router cannot currently serve it, and why (issue #657).
+fn mark_row_unavailable(
+    row: &mut serde_json::Map<String, Value>,
+    exhaustion: Option<&crate::zai_upstream_error::ZaiExhaustion>,
+) {
+    if let Some(exhaustion) = exhaustion {
+        row.insert("router_available".into(), Value::Bool(false));
+        row.insert(
+            "router_unavailable_reason".into(),
+            Value::String(exhaustion.summary()),
+        );
+    }
+}
+
+fn mark_provider_degraded(catalog: &mut Value, provider: &str, reason: &str) {
     let Some(object) = catalog.as_object_mut() else {
         return;
     };
@@ -70,10 +96,7 @@ fn mark_provider_degraded(catalog: &mut Value, provider: &str) {
         .entry("degraded_reasons")
         .or_insert_with(|| Value::Object(serde_json::Map::new()));
     if let Some(reasons) = reasons.as_object_mut() {
-        reasons.insert(
-            provider.to_string(),
-            Value::String("live provider catalog refresh failed".into()),
-        );
+        reasons.insert(provider.to_string(), Value::String(reason.into()));
     }
 }
 
@@ -108,27 +131,10 @@ pub(super) async fn append_zai_models(
         return Ok(());
     };
     let Ok(live_models) = crate::zai_coding_plan::live_catalog(state, &provider).await else {
-        if let Some(object) = catalog.as_object_mut() {
-            let degraded = object
-                .entry("degraded_providers")
-                .or_insert_with(|| Value::Array(Vec::new()));
-            if let Some(entries) = degraded.as_array_mut()
-                && !entries.iter().any(|entry| entry == "z.ai")
-            {
-                entries.push(Value::String("z.ai".into()));
-            }
-            let reasons = object
-                .entry("degraded_reasons")
-                .or_insert_with(|| Value::Object(serde_json::Map::new()));
-            if let Some(reasons) = reasons.as_object_mut() {
-                reasons.insert(
-                    "z.ai".into(),
-                    Value::String("live z.ai catalog refresh failed".into()),
-                );
-            }
-        }
+        mark_provider_degraded(catalog, "z.ai", "live z.ai catalog refresh failed");
         return Ok(());
     };
+    let exhaustion = state.provider_store.exhaustion(&provider.name);
     let registry = crate::zai_coding_plan::live_registry_for_client(client, &live_models)
         .map_err(ModelRouteError::NotFound)?;
     for (entry, live) in registry.into_iter().zip(live_models) {
@@ -154,7 +160,12 @@ pub(super) async fn append_zai_models(
         projected
             .entry("owned_by")
             .or_insert_with(|| Value::String(entry.owner.into()));
+        mark_row_unavailable(&mut projected, exhaustion.as_ref());
         super::insert_catalog_candidate(catalog, Value::Object(projected));
+    }
+    if let Some(exhaustion) = exhaustion {
+        mark_provider_degraded(catalog, "z.ai", &exhaustion.summary());
+        return Ok(());
     }
     if let Some(healthy) = catalog
         .get_mut("healthy_providers")

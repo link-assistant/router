@@ -75,6 +75,26 @@ fn assert_private(output: &Output, token: &str) {
     }
 }
 
+/// The first entry under `data` that another user owns, as the host sees it.
+fn foreign_entry(data: &std::path::Path, uid: u32) -> Option<std::path::PathBuf> {
+    use std::os::unix::fs::MetadataExt as _;
+    let mut pending = vec![data.to_path_buf()];
+    while let Some(path) = pending.pop() {
+        let Ok(metadata) = std::fs::symlink_metadata(&path) else {
+            continue;
+        };
+        if metadata.uid() != uid {
+            return Some(path);
+        }
+        if metadata.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&path)
+        {
+            pending.extend(entries.flatten().map(|entry| entry.path()));
+        }
+    }
+    None
+}
+
 /// Stops a host Router left behind by a failed assertion.
 struct HostGuard(std::path::PathBuf);
 
@@ -119,10 +139,23 @@ fn a_container_deployment_moves_to_the_host_and_back_keeping_its_tokens() {
     assert!(authorized(&deployment, &token));
 
     let uid = id("-u");
-    if uid != "0" {
-        // The backend ran as root, so the data it wrote is root's: the plan
-        // names the one command that hands it to this user.
-        let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);
+    let data = deployment.root.path().join("data");
+    let stranger = foreign_entry(&data, uid.parse().expect("a numeric uid"));
+    println!(
+        "observed ownership under {}: {}",
+        data.display(),
+        stranger.as_ref().map_or_else(
+            || "every entry belongs to this user".to_string(),
+            |path| format!("{} belongs to another user", path.display())
+        )
+    );
+    let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);
+    if stranger.is_some() {
+        // The backend ran as root and the bind mount kept root's ownership
+        // (Linux Docker): the plan names the one command that hands the data
+        // to this user. Docker Desktop on macOS presents bind-mounted files as
+        // the host user's, so there the plan is clean (issue #656); the branch
+        // follows what the host actually shows, not `id -u`.
         assert_eq!(plan.status.code(), Some(1));
         assert!(String::from_utf8_lossy(&plan.stdout).contains("blocker=foreign-owned-data"));
         assert!(running(link_assistant_router::deploy::RELAY) && running(&backend));
@@ -132,6 +165,12 @@ fn a_container_deployment_moves_to_the_host_and_back_keeping_its_tokens() {
             .output()
             .unwrap();
         assert!(chown.status.success(), "{chown:?}");
+        assert_eq!(foreign_entry(&data, uid.parse().unwrap()), None);
+    } else {
+        assert!(
+            !String::from_utf8_lossy(&plan.stdout).contains("blocker=foreign-owned-data"),
+            "no entry is foreign-owned, so no ownership blocker may be invented"
+        );
     }
 
     let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);

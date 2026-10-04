@@ -233,7 +233,11 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
         if p.exists() { "present" } else { "<empty>" }
     );
 
-    if catalog_error {
+    // A z.ai plan the serving process saw refused as exhausted (issue #657).
+    let exhausted = link_assistant_router::zai_upstream_error::status_report(&config.data_dir);
+    print!("{exhausted}");
+
+    if catalog_error || !exhausted.is_empty() {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

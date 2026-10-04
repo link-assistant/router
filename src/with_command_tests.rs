@@ -433,6 +433,7 @@ fn claude_picker_lists_rows_without_capability_metadata() {
 #[test]
 fn codex_overlays_routing_without_repointing_user_configuration() {
     let models = [RouterModel {
+        router_unavailable_reason: None,
         id: "gpt-5.6-sol".to_string(),
         owned_by: "codex".to_string(),
         selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -767,6 +768,7 @@ fn gemini_settings_select_the_api_key_flow() {
 #[test]
 fn a_client_that_cannot_be_extended_keeps_its_profile() {
     let models = [RouterModel {
+        router_unavailable_reason: None,
         id: "test-model".to_string(),
         owned_by: "test".to_string(),
         selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -865,4 +867,36 @@ fn a_client_that_cannot_be_extended_keeps_its_profile() {
             );
         }
     }
+}
+
+/// Issue #657: an exhausted z.ai plan keeps its rows listed, so a saved or
+/// requested GLM model is still accepted, but the picker and the launch say
+/// Router cannot serve it right now and name a servable alternative.
+#[test]
+fn an_unservable_claude_model_is_labelled_and_warned_about() {
+    let reason = "z.ai Coding Plan cannot serve requests (code 1113): Insufficient balance";
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "claude-sonnet-5-5", "owned_by": "anthropic"},
+        {"id": "glm-5.3", "owned_by": "z.ai", "router_unavailable_reason": reason}
+    ]))
+    .expect("deserialize exhausted catalog fixture");
+    let options = prepared_claude_settings(&models)["modelPicker"]["options"].clone();
+    assert!(
+        options
+            .as_array()
+            .unwrap()
+            .contains(&json!({"label": "glm-5.3 (unavailable)", "model": "glm-5.3"})),
+        "{options}"
+    );
+
+    let warning = claude_unavailable_model_warning(Some("glm-5.3"), &models)
+        .expect("an unservable saved model is reported");
+    assert!(warning.contains("`glm-5.3`"), "{warning}");
+    assert!(warning.contains(reason), "{warning}");
+    assert!(warning.contains("`claude-sonnet-5-5`"), "{warning}");
+    assert_eq!(
+        claude_unavailable_model_warning(Some("claude-sonnet-5-5"), &models),
+        None
+    );
+    assert_eq!(claude_unavailable_model_warning(None, &models), None);
 }

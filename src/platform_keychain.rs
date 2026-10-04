@@ -68,6 +68,54 @@ pub const fn service_name(provider: SubscriptionProvider) -> Option<&'static str
     }
 }
 
+/// The Keychain service Claude Code keeps the login of one config directory in.
+///
+/// Claude Code scopes its entry by `CLAUDE_CONFIG_DIR`: with the variable
+/// unset it uses `Claude Code-credentials`; with it set, the name gains `-` and
+/// the first eight hex digits of the SHA-256 of the variable's value. One fixed
+/// name therefore answers for the wrong profile whenever a separate config
+/// directory is in use (issue #653). `config_dir` is the raw variable value,
+/// not a canonical path: the vendor hashes what it was given.
+#[must_use]
+pub fn claude_service_for(config_dir: Option<&std::ffi::OsStr>) -> String {
+    use sha2::Digest as _;
+    const BASE: &str = "Claude Code-credentials";
+    let Some(dir) = config_dir.filter(|dir| !dir.is_empty()) else {
+        return BASE.to_string();
+    };
+    let digest = sha2::Sha256::digest(dir.to_string_lossy().as_bytes());
+    format!("{BASE}-{}", hex::encode(&digest[..4]))
+}
+
+/// Whether the platform store holds an entry under `service`.
+///
+/// Only existence is asked: the secret is never requested, so no access-control
+/// prompt can appear and no credential byte is read (issue #653). Returns
+/// `false` off macOS and whenever the store cannot be asked.
+#[must_use]
+#[allow(clippy::missing_const_for_fn)] // const only off macOS
+pub fn has_entry(service: &str) -> bool {
+    generic_password_exists(service)
+}
+
+#[cfg(target_os = "macos")]
+fn generic_password_exists(service: &str) -> bool {
+    // No `-w`: attributes are readable without the item's ACL; the password
+    // is not.
+    std::process::Command::new("/usr/bin/security")
+        .args(["find-generic-password", "-s", service])
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success())
+}
+
+#[cfg(not(target_os = "macos"))]
+const fn generic_password_exists(_service: &str) -> bool {
+    false
+}
+
 /// Read the raw credential JSON a vendor CLI keeps in the platform store.
 ///
 /// Returns `None` when this platform or provider has no such store, when the

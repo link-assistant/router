@@ -169,6 +169,7 @@ rust-script scripts/verify-contracts.rs --require-parity # exit 3 unless every a
 | `request-logs` | request and denied-request logging, `router logs`, format migration, conversation records |
 | `backup-reset-restore` | client profile backup, reset, restore, and maintenance |
 | `rolling-updates` | `router deploy`: draining updates, `TOKEN_SECRET` continuity, relay rotation, recovery, host mode |
+| `staging` | disposable primary/candidate namespaces, live stream continuity, real Claude responses, retained primary data |
 
 The result goes to `target/verification/result.json` (or `--output PATH`), and
 each area's full test output is written beside it:
@@ -182,16 +183,25 @@ each area's full test output is written beside it:
   "parity": false,
   "failed": false,
   "skipped": 12,
+  "areas_not_run": [
+    {"name": "staging", "reason": "…", "enable_with": "docs/testing-tiers.md#proving-the-vendor-areas-from-macos"}
+  ],
+  "targets_not_run": [],
   "areas": [
     {
       "name": "real-clients",
       "status": "not-proven",
+      "ran": true,
       "passed": 13, "failed": 0, "ignored": 0,
+      "not_run": [],
+      "targets": [
+        {"target": "real_clients_test", "status": "not-proven", "passed": 9, "failed": 0, "ignored": 0}
+      ],
       "skipped": [
         {"tier": "tier3-real-client-offline", "test": "current_codex_reaches_the_native_responses_surface_offline", "reason": "ROUTER_REAL_CLIENT_TESTS=1 is not set"}
       ],
       "enable_skipped_with": "ROUTER_REAL_CLIENT_TESTS=1 with the vendor CLIs on PATH; …",
-      "commands": ["cargo test --locked --test real_clients_test --test host_client_lifecycle_test -- --nocapture --test-threads=1"],
+      "commands": ["cargo test --locked --no-fail-fast --test real_clients_test -- --nocapture --test-threads=1", "…"],
       "log": "…/target/verification/real-clients.log"
     }
   ]
@@ -206,6 +216,47 @@ listed by test, with the tier and the reason, which the tests append as JSON
 lines to the file named by `ROUTER_VERIFICATION_SKIPS`. The exit status is 1 when
 a test failed, and 3 when `--require-parity` was given without parity.
 
+Each test target runs as its own `cargo test --no-fail-fast` command, so one
+failing target cannot hide the targets after it (issue #655). A target that
+reports no `test result:` line is listed in the area's `not_run` and in the
+top-level `targets_not_run` as `area/target`, and the area is not proven. An area
+that executed nothing at all — for example, a vendor area refused before Cargo
+because no safe credential boundary exists — is listed in `areas_not_run` with
+its reason. The final line counts each kind separately and names them, so
+unexecuted areas never read as skipped tests (issue #654):
+
+```text
+verification parity=false failed=false skipped=12 areas_not_run=2 (real-clients, zai-only-entitlements) targets_not_run=0 result=…/result.json
+```
+
+### Proving the vendor areas from macOS
+
+`real-clients`, `zai-only-entitlements`, `anthropic-entitlements` and `staging`
+launch vendor CLIs. On macOS the verifier refuses them before any vendor
+process runs, because a temporary `HOME` does not isolate the login Keychain
+(see below), and reports them in `areas_not_run`. To prove the first two from a
+Mac, run them in a disposable Linux container:
+
+```bash
+scripts/verify-contracts-in-linux.sh                       # real-clients and zai-only-entitlements
+scripts/verify-contracts-in-linux.sh --area real-clients   # any verify-contracts.rs arguments
+```
+
+The script needs a running Docker runtime (Docker Desktop is enough). It mounts
+the checkout read-only, copies it inside the container, installs Claude Code,
+Codex and OpenCode at the pinned CI versions, and runs the verifier as an
+ordinary user with no Keychain and no access to the host's home directory. The
+container is removed when it exits. Only `ROUTER_LIVE_ZAI_API_KEY`,
+`ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST`, `ROUTER_HOST_CLI_TESTS`,
+`ROUTER_HOST_CLI_URL` and `ROUTER_HOST_CLI_TOKEN` are forwarded, by name, and
+only when set; their values are never printed. The result is written to
+`target/verification-linux/result.json`, with one log per area beside it.
+
+`anthropic-entitlements` and `staging` need a Claude credential or a disposable
+Docker host, and are not run this way: they are proven by the manual
+[live tier](#in-ci) workflow or on a disposable Linux host. `zai-only-entitlements`
+also runs in that workflow, so a release can show it proven without a Mac.
+
 A downstream can then drop its copies of these areas and keep only the
 assertions that are its own: SSH tunnels, its entitlement choices, and its
 deployment.
@@ -215,7 +266,10 @@ deployment.
 Tier 4 runs from `.github/workflows/live-tier.yml`, on `workflow_dispatch` only,
 and reads its credentials from repository secrets. It deliberately does not run
 on pull requests: a fork has no secrets, and a tier that fails for want of a
-credential would block unrelated work.
+credential would block unrelated work. It also runs
+`rust-script scripts/verify-contracts.rs --area zai-only-entitlements` with the
+pinned Claude Code and Codex installed, and uploads the result, so that area is
+proven on Linux rather than refused on a developer's Mac (issue #654).
 
 ## What tier 4 owns
 
@@ -272,9 +326,11 @@ instead of downgrading clients. Pinned and newer-release CI jobs use it too.
 
 Native macOS vendor probes are refused before version, doctor or TUI because
 temporary HOME and proxy settings do not isolate the OS Keychain. No
-environment flag bypasses this refusal. Use disposable Linux verification;
-a future disposable macOS account/VM verifier must establish OS isolation,
-unchanged keychain default/search list and no GUI prompt. The dialog's original
+environment flag bypasses this refusal. Use disposable Linux verification
+([from macOS](#proving-the-vendor-areas-from-macos), through
+`scripts/verify-contracts-in-linux.sh`); a native macOS verifier would have to
+establish OS isolation, an unchanged keychain default/search list and no GUI
+prompt, and none exists. The dialog's original
 responsible CLI remains unproven. Unix diagnostic/PTY cancellation terminates
 owned process groups, including descendants; this is not Windows cleanup
 proof.

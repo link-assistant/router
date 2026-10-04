@@ -20,6 +20,8 @@ pub enum ModelRouteError {
     NotFound(String),
     /// A live exact model id has more than one owning provider.
     Conflict(String),
+    /// The model exists, but this request may not reach its provider.
+    Forbidden(String),
 }
 
 #[path = "model_routing_snapshot.rs"]
@@ -48,7 +50,9 @@ impl std::fmt::Display for ModelRouteError {
             Self::ModelRequired => {
                 formatter.write_str("model is required when UPSTREAM_PROVIDER=auto")
             }
-            Self::NotFound(message) | Self::Conflict(message) => formatter.write_str(message),
+            Self::NotFound(message) | Self::Conflict(message) | Self::Forbidden(message) => {
+                formatter.write_str(message)
+            }
         }
     }
 }
@@ -59,6 +63,7 @@ pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
         ModelRouteError::ModelRequired => (StatusCode::BAD_REQUEST, "invalid_request_error"),
         ModelRouteError::Conflict(_) => (StatusCode::CONFLICT, "invalid_provider_state"),
         ModelRouteError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found_error"),
+        ModelRouteError::Forbidden(_) => (StatusCode::FORBIDDEN, "permission_error"),
     };
     crate::proxy::error_response(status, error_type, &error.to_string())
 }

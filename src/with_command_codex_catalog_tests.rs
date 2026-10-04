@@ -13,6 +13,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
     let root = tempfile::tempdir().expect("temporary catalog directory");
     let models = [
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-reasoning-a".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -36,6 +37,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
             client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-reasoning-b".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -74,6 +76,7 @@ fn codex_catalog_preserves_per_model_live_reasoning_metadata() {
 
 fn metadata_less(id: &str) -> RouterModel {
     RouterModel {
+        router_unavailable_reason: None,
         id: id.to_string(),
         owned_by: "z.ai".to_string(),
         selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -138,6 +141,7 @@ fn codex_catalog_keeps_a_configured_effort_on_rows_without_metadata() {
     let models = [
         metadata_less("glm-5.3-flash"),
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-medium-only".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -170,6 +174,7 @@ fn codex_catalog_omits_inconsistent_reasoning_metadata_without_blocking_healthy_
     let root = tempfile::tempdir().expect("temporary catalog directory");
     let models = [
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-reasoning-inconsistent".to_string(),
             owned_by: "unknown-provider".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -183,6 +188,7 @@ fn codex_catalog_omits_inconsistent_reasoning_metadata_without_blocking_healthy_
             client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-reasoning-known".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -224,6 +230,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
     let root = tempfile::tempdir().expect("temporary catalog directory");
     let models = [
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-supports-xhigh".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -243,6 +250,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
             client_capabilities: crate::clients::RouterClientCapabilities::default(),
         },
         RouterModel {
+            router_unavailable_reason: None,
             id: "future-medium-only".to_string(),
             owned_by: "openai".to_string(),
             selector_kind: crate::model_contract::ModelSelectorKind::default(),
@@ -288,6 +296,7 @@ fn codex_catalog_never_offers_a_model_that_would_reset_an_explicit_effort() {
 fn codex_catalog_refuses_a_catalog_with_nothing_launchable() {
     let root = tempfile::tempdir().expect("temporary catalog directory");
     let model = |id: &str, default: &str, supported: &str| RouterModel {
+        router_unavailable_reason: None,
         id: id.to_string(),
         owned_by: "openai".to_string(),
         selector_kind: crate::model_contract::ModelSelectorKind::default(),

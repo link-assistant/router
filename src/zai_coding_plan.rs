@@ -532,6 +532,42 @@ pub(crate) async fn live_provider_for_model(
         .then_some(provider))
 }
 
+/// Explain why a model the z.ai catalog lists was not routed to z.ai.
+///
+/// Automatic routing consults z.ai only for a request carrying its bound
+/// client's own evidence, while `/api/models` lists GLM for weaker catalog
+/// evidence. Without this the same token saw GLM listed and then "not
+/// advertised by any subscription" (issue #657). Local only: it reads the
+/// catalog Router already cached and never contacts z.ai.
+pub(crate) fn unproven_request_for_listed_model(
+    state: &crate::app_state::AppState,
+    model: &str,
+    client: Option<ClientKind>,
+) -> Option<String> {
+    let provider = resolve(state).ok().flatten()?;
+    let client = client?;
+    // A client the plan does not permit is never shown its models, so for it
+    // the model stays unknown (404), as `/api/models` says.
+    let policy = provider_policy(&provider).ok()?;
+    policy.authorize(client, &policy.subscriber_id).ok()?;
+    let cached = state
+        .provider_store
+        .cached_provider_catalog(&provider.name)
+        .ok()
+        .flatten()
+        .filter(|cached| cached.fingerprint == catalog_fingerprint(&provider))?;
+    if !cached.models.iter().any(|candidate| candidate.id == model) {
+        return None;
+    }
+    let client = client.canonical_name();
+    Some(format!(
+        "model '{model}' is served by the z.ai Coding Plan, which Router uses only for requests \
+         whose headers match the token's {client} client binding and subscriber; this request \
+         did not, so it was not sent to z.ai. Send it from that client (for example through \
+         `router with`)"
+    ))
+}
+
 /// Decide whether an automatic request may consult the z.ai catalog.
 ///
 /// This is intentionally local-only: subscriber, client, protocol, and real
@@ -669,7 +705,20 @@ pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Opt
     let Ok(Some(provider)) = resolve(state) else {
         return Some(false);
     };
+    // z.ai keeps listing models for an account it refuses to serve (#657).
+    if state.provider_store.exhaustion(&provider.name).is_some() {
+        return Some(false);
+    }
     Some(live_catalog(state, &provider).await.is_ok())
+}
+
+/// The refusal that marks the configured Coding Plan exhausted, recorded from
+/// the last inference z.ai refused and cleared by the next one it serves.
+pub(crate) fn recorded_exhaustion(
+    state: &crate::app_state::AppState,
+) -> Option<crate::zai_upstream_error::ZaiExhaustion> {
+    let provider = resolve(state).ok().flatten()?;
+    state.provider_store.exhaustion(&provider.name)
 }
 
 fn policy_error(surface: crate::metrics::Surface, message: &str) -> axum::response::Response {

@@ -993,3 +993,6 @@ async fn automatic_catalog_is_live_client_specific_and_routes_only_exact_ids() {
 
 #[path = "zai_coding_plan_catalog_tests.rs"]
 mod catalog_tests;
+
+#[path = "zai_coding_plan_exhaustion_tests.rs"]
+mod exhaustion_tests;

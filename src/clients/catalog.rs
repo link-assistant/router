@@ -40,6 +40,18 @@ pub struct RouterModel {
     /// contracts. An empty object means no safe identity was advertised.
     #[serde(default)]
     pub client_capabilities: RouterClientCapabilities,
+    /// Why Router cannot serve this listed row right now — an exhausted z.ai
+    /// Coding Plan keeps its rows listed (issue #657). `None` when servable.
+    #[serde(default)]
+    pub router_unavailable_reason: Option<String>,
+}
+
+impl RouterModel {
+    /// Whether Router can serve this row right now.
+    #[must_use]
+    pub const fn is_servable(&self) -> bool {
+        self.router_unavailable_reason.is_none()
+    }
 }
 
 /// Whether one exact client-facing model spelling is authorized by the live
@@ -289,7 +301,9 @@ pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> 
     // A withdrawn/unhealthy flagship is absent here, so the deterministic
     // provider-recency fallback below remains available (#634).
     if let Some(flagship) = catalog.iter().find(|model| {
-        model.owned_by == super::ZAI_MODEL_OWNER && model.id == FRESH_ZAI_PREFERRED_MODEL
+        model.owned_by == super::ZAI_MODEL_OWNER
+            && model.id == FRESH_ZAI_PREFERRED_MODEL
+            && model.is_servable()
     }) {
         return Some(flagship.id.clone());
     }
@@ -303,8 +317,10 @@ pub fn claude_gateway_model(catalog: &[RouterModel], explicit: Option<&str>) -> 
         .iter()
         .filter(|model| model.owned_by == super::ZAI_MODEL_OWNER)
         .max_by(|left, right| {
-            left.provider_created_at
-                .cmp(&right.provider_created_at)
+            // A row Router cannot serve is never preferred over one it can.
+            left.is_servable()
+                .cmp(&right.is_servable())
+                .then_with(|| left.provider_created_at.cmp(&right.provider_created_at))
                 .then_with(|| left.id.cmp(&right.id))
         })
         .map(|model| model.id.clone())

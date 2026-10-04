@@ -451,6 +451,7 @@ async fn native_owner(
         let status = match error {
             crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
             crate::model_routing::ModelRouteError::Conflict(_) => StatusCode::CONFLICT,
+            crate::model_routing::ModelRouteError::Forbidden(_) => StatusCode::FORBIDDEN,
             crate::model_routing::ModelRouteError::ModelRequired => StatusCode::BAD_REQUEST,
         };
         native_error(status, &error.to_string())

@@ -45,10 +45,22 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         .collect::<Vec<_>>();
     match crate::zai_coding_plan::configured_health(&state).await {
         Some(true) => healthy.push("z.ai"),
-        Some(false) => degraded.push(serde_json::json!({
-            "provider": "z.ai",
-            "reason": "the Coding Plan credential was rejected upstream and needs replacement",
-        })),
+        Some(false) => degraded.push(crate::zai_coding_plan::recorded_exhaustion(&state).map_or_else(
+            || {
+                serde_json::json!({
+                    "provider": "z.ai",
+                    "reason": "the Coding Plan credential was rejected upstream and needs replacement",
+                })
+            },
+            |exhaustion| {
+                serde_json::json!({
+                    "provider": "z.ai",
+                    "state": "exhausted",
+                    "reason": exhaustion.summary(),
+                    "upstream_code": exhaustion.code.to_string(),
+                })
+            },
+        )),
         None => {}
     }
     let status = if degraded.is_empty() {

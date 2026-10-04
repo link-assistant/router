@@ -13,6 +13,13 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 
 const LIMIT: u64 = 256 * 1024 * 1024;
+const FILES: usize = 10_000;
+const DEPTH: usize = 32;
+const DEADLINE: Duration = Duration::from_secs(10);
+/// Recoverable state an update can corrupt. Request logs (`requests/`) are
+/// append-only history already capped by `REQUEST_LOG_MAX_BYTES`; they stay in
+/// place and are never read into the checkpoint budget (issue #658).
+const COVERED: [&str; 3] = ["providers.lenv", "projects", "sessions"];
 const SCHEMA: &str = "link-assistant-router/data-backup/v1";
 
 #[derive(Deserialize, Serialize)]
@@ -81,35 +88,64 @@ fn safe_relative(path: &Path) -> bool {
 
 fn read_bounded(path: &Path, remaining: &mut u64) -> io::Result<Vec<u8>> {
     if !fs::symlink_metadata(path)?.is_file() {
-        return Err(invalid(
-            "checkpoint requires a regular file; no symlink or special file is followed",
-        ));
+        return Err(invalid(&format!(
+            "checkpoint requires a regular file at {}; no symlink or special file is followed",
+            path.display()
+        )));
     }
     let mut bytes = Vec::new();
     fs::File::open(path)?
         .take(*remaining + 1)
         .read_to_end(&mut bytes)?;
     let length = u64::try_from(bytes.len()).map_err(|_| invalid("checkpoint too large"))?;
-    if length > *remaining {
-        return Err(invalid("checkpoint exceeds the 256 MiB budget"));
-    }
-    *remaining -= length;
+    charge(path, length, remaining)?;
     Ok(bytes)
 }
 
+/// The one budget check shared by the real checkpoint and its `--status`
+/// prediction, so both name the same path and budget (issue #658).
+fn charge(path: &Path, length: u64, remaining: &mut u64) -> io::Result<()> {
+    if length > *remaining {
+        return Err(invalid(&format!(
+            "checkpoint exceeds the {} MiB budget at {} ({length} bytes, {} bytes of budget left)",
+            LIMIT / (1024 * 1024),
+            path.display(),
+            *remaining
+        )));
+    }
+    *remaining -= length;
+    Ok(())
+}
+
+/// Walk one covered path. With a destination the files are copied and
+/// hashed; without one only their sizes are charged, which is the dry run
+/// `--status` reports. Both take the same refusals in the same order.
 fn copy_tree(
     source: &Path,
     relative: &Path,
-    destination: &Path,
+    destination: Option<&Path>,
     manifest: &mut Manifest,
     remaining: &mut u64,
     deadline: Instant,
 ) -> io::Result<()> {
-    if Instant::now() >= deadline
-        || manifest.files.len() >= 10_000
-        || relative.components().count() > 32
-    {
-        return Err(invalid("checkpoint exceeded its time/file/depth budget"));
+    if Instant::now() >= deadline {
+        return Err(invalid(&format!(
+            "checkpoint exceeded its {}-second time budget at {}",
+            DEADLINE.as_secs(),
+            source.display()
+        )));
+    }
+    if manifest.files.len() >= FILES {
+        return Err(invalid(&format!(
+            "checkpoint exceeded its {FILES}-file budget at {}",
+            source.display()
+        )));
+    }
+    if relative.components().count() > DEPTH {
+        return Err(invalid(&format!(
+            "checkpoint exceeded its {DEPTH}-level depth budget at {}",
+            source.display()
+        )));
     }
     if !safe_relative(relative) {
         manifest
@@ -119,7 +155,10 @@ fn copy_tree(
     }
     let metadata = fs::symlink_metadata(source)?;
     if metadata.file_type().is_symlink() {
-        return Err(invalid("checkpoint refuses a symlink in recoverable state"));
+        return Err(invalid(&format!(
+            "checkpoint refuses a symlink in recoverable state at {}",
+            source.display()
+        )));
     }
     if metadata.is_dir() {
         for entry in fs::read_dir(source)? {
@@ -139,18 +178,111 @@ fn copy_tree(
         let key = relative
             .iter()
             .map(|part| {
-                part.to_str()
-                    .ok_or_else(|| invalid("checkpoint path is not valid Unicode"))
+                part.to_str().ok_or_else(|| {
+                    invalid(&format!(
+                        "checkpoint path is not valid Unicode at {}",
+                        source.display()
+                    ))
+                })
             })
             .collect::<io::Result<Vec<_>>>()?
             .join("/");
-        let bytes = read_bounded(source, remaining)?;
-        write(&destination.join(relative), &bytes)?;
-        manifest.files.insert(key, hex(&bytes));
+        let digest = if let Some(destination) = destination {
+            if metadata.len() > *remaining {
+                // Refuse before reading, with the words the prediction used.
+                charge(source, metadata.len(), remaining)?;
+            }
+            let bytes = read_bounded(source, remaining)?;
+            write(&destination.join(relative), &bytes)?;
+            hex(&bytes)
+        } else {
+            charge(source, metadata.len(), remaining)?;
+            String::new()
+        };
+        manifest.files.insert(key, digest);
     } else {
-        return Err(invalid("checkpoint refuses a special file"));
+        return Err(invalid(&format!(
+            "checkpoint refuses a special file at {}",
+            source.display()
+        )));
     }
     Ok(())
+}
+
+fn covered(
+    data: &Path,
+    destination: Option<&Path>,
+    manifest: &mut Manifest,
+    remaining: &mut u64,
+    deadline: Instant,
+) -> io::Result<()> {
+    if fs::symlink_metadata(data)?.file_type().is_symlink() {
+        return Err(invalid(&format!(
+            "checkpoint data root is a symlink at {}",
+            data.display()
+        )));
+    }
+    for name in COVERED {
+        let source = data.join(name);
+        if fs::symlink_metadata(&source).is_ok() {
+            copy_tree(
+                &source,
+                Path::new(name),
+                destination,
+                manifest,
+                remaining,
+                deadline,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+/// What the next checkpoint of `root` would hold, without writing anything.
+/// The token export is estimated from the current text projection.
+pub(super) fn predict(root: &Path) -> io::Result<u64> {
+    if fs::symlink_metadata(root.join("data")).is_err() {
+        return Ok(0);
+    }
+    // Resolve the root as `capture` does, so both name the same path (on
+    // macOS a temporary directory under /var resolves to /private/var).
+    let data = root.canonicalize()?.join("data");
+    let mut manifest = Manifest {
+        schema: SCHEMA.into(),
+        signing_secret_sha256: String::new(),
+        files: BTreeMap::new(),
+        excluded: Vec::new(),
+    };
+    let mut remaining = LIMIT;
+    covered(
+        &data,
+        None,
+        &mut manifest,
+        &mut remaining,
+        Instant::now() + DEADLINE,
+    )?;
+    // The checkpoint holds a JSON export and a text projection of the tokens;
+    // the existing projection is the closest size known without reading it.
+    let projection = data.join("tokens.lino");
+    let tokens = fs::metadata(&projection).map_or(0, |metadata| metadata.len());
+    charge(&projection, tokens.saturating_mul(2), &mut remaining)?;
+    Ok(LIMIT - remaining)
+}
+
+/// `--status` lines for the checkpoint an update or host move takes first.
+pub(super) fn checkpoint_status(root: &Path) -> Result<String, String> {
+    predict(root)
+        .map(|bytes| {
+            format!("data_checkpoint estimate_bytes={bytes} budget_bytes={LIMIT} excluded=requests")
+        })
+        .map_err(|error| checkpoint_remedy(&error))
+}
+
+/// One wording for the refusal, shared by `--status` and the real run.
+pub(super) fn checkpoint_remedy(error: &io::Error) -> String {
+    format!(
+        "recoverable non-OAuth data checkpoint failed: {error}. Move or shrink that path (request logs under data/requests are not checkpointed), then retry"
+    )
 }
 
 fn hex(bytes: &[u8]) -> String {
@@ -172,30 +304,21 @@ pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &str) -> io:
         files: BTreeMap::new(),
         excluded: Vec::new(),
     };
-    let data = root.join("data");
-    if fs::symlink_metadata(&data)?.file_type().is_symlink() {
-        return Err(invalid("checkpoint data root is a symlink"));
-    }
     let mut remaining = LIMIT;
-    let deadline = Instant::now() + Duration::from_secs(10);
-    for name in ["providers.lenv", "requests", "projects", "sessions"] {
-        let source = data.join(name);
-        if fs::symlink_metadata(&source).is_ok() {
-            copy_tree(
-                &source,
-                Path::new(name),
-                &destination,
-                &mut manifest,
-                &mut remaining,
-                deadline,
-            )?;
-        }
-    }
+    let deadline = Instant::now() + DEADLINE;
+    covered(
+        &root.join("data"),
+        Some(&destination),
+        &mut manifest,
+        &mut remaining,
+        deadline,
+    )?;
     let tokens = serde_json::to_vec(records)?;
-    if tokens.len() as u64 > remaining {
-        return Err(invalid("token checkpoint exceeds budget"));
-    }
-    remaining -= tokens.len() as u64;
+    charge(
+        &destination.join("tokens.json"),
+        tokens.len() as u64,
+        &mut remaining,
+    )?;
     write(&destination.join("tokens.json"), &tokens)?;
     manifest.files.insert("tokens.json".into(), hex(&tokens));
     let store = TextTokenStore::open(destination.join("tokens.lino"))
@@ -217,6 +340,7 @@ pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &str) -> io:
     manifest.excluded.extend(
         [
             "OAuth homes and OS credential stores",
+            "requests (append-only request logs, left in place)",
             "refresh-recovery",
             "unregistered data paths",
             "concurrent changes after each file/export",
@@ -247,7 +371,7 @@ pub(super) fn restore(root: &Path, snapshot: &Path, secret: &str, replace: bool)
             "checkpoint schema/signing secret mismatch; nothing restored",
         ));
     }
-    if manifest.files.len() > 10_000 {
+    if manifest.files.len() > FILES {
         return Err(invalid("checkpoint file budget exceeded"));
     }
     let mut files = BTreeMap::new();
@@ -380,7 +504,7 @@ impl super::Coordinator<'_> {
             .list()
             .map_err(|_| "current token inventory cannot be backed up")?;
         let previous = capture(self.root, &records, self.token_secret)
-            .map_err(|_| "pre-restore checkpoint failed; nothing restored")?;
+            .map_err(|error| format!("pre-restore checkpoint failed: {error}; nothing restored"))?;
         restore(self.root, snapshot, self.token_secret, replace).map_err(|error| {
             format!(
                 "state restore failed: {error}; pre-restore checkpoint retained at {}",

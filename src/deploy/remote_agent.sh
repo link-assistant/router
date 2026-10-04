@@ -521,7 +521,7 @@ if [ -n "$old_container" ]; then
 @@DATA_CHECKPOINT@@
 JS_CHECKPOINT
     then
-        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"recoverable non-OAuth data checkpoint failed; no candidate or cutover attempted"}' >&2
+        echo '{"schema":"link-assistant-router/preservation/v1","status":"refused","blocker":"data-checkpoint","reason":"recoverable non-OAuth data checkpoint failed (its path and budget are printed above); no candidate or cutover attempted"}' >&2
         exit 1
     fi
 else

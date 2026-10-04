@@ -432,6 +432,11 @@ pub(crate) async fn forward_provider_at_routed(
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     state.metrics.record_request(surface, status.as_u16(), None);
 
+    if crate::zai_upstream_error::is_refusal_to_classify(state, &provider, status) {
+        let (zai, id) = (upstream_resp, &correlation_id);
+        return crate::zai_upstream_error::relay_refusal(state, &provider, surface, zai, id).await;
+    }
+
     let content_type = upstream_resp
         .headers()
         .get("content-type")

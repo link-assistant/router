@@ -80,3 +80,29 @@ fn an_absent_entry_reads_as_no_credential() {
 fn looking_up_a_storeless_provider_touches_no_store() {
     assert!(lookup(SubscriptionProvider::Codex).is_none());
 }
+
+/// Claude Code names a per-directory entry after the SHA-256 of the
+/// `CLAUDE_CONFIG_DIR` value; an unset or empty variable means the default
+/// entry (issue #653).
+#[test]
+fn claude_service_is_scoped_by_the_config_directory() {
+    assert_eq!(claude_service_for(None), "Claude Code-credentials");
+    assert_eq!(
+        claude_service_for(Some(std::ffi::OsStr::new(""))),
+        "Claude Code-credentials"
+    );
+    // sha256("/tmp/claude-a") = f6bf8f9d…
+    let scoped = claude_service_for(Some(std::ffi::OsStr::new("/tmp/claude-a")));
+    assert_eq!(scoped, "Claude Code-credentials-f6bf8f9d");
+    assert_ne!(
+        scoped,
+        claude_service_for(Some(std::ffi::OsStr::new("/tmp/claude-b")))
+    );
+}
+
+/// The presence probe has no store to ask off macOS, and never errors.
+#[test]
+#[cfg(not(target_os = "macos"))]
+fn presence_is_false_without_a_platform_store() {
+    assert!(!has_entry("Claude Code-credentials"));
+}

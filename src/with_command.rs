@@ -29,7 +29,8 @@ use codex_catalog::write_codex_model_catalog;
 mod claude_settings;
 use claude_settings::{
     ClaudeModelSelection, append_claude_model_picker, claude_saved_model_selection,
-    unavailable_native_claude_model, validate_claude_model_selection,
+    claude_unavailable_model_warning, unavailable_native_claude_model,
+    validate_claude_model_selection,
 };
 
 #[path = "with_command_model_policy.rs"]
@@ -525,6 +526,7 @@ impl TemporaryClient {
                 // being deliberate (issue #563). Both ways of having already
                 // chosen therefore suppress the pin: a value in this
                 // environment, and a default saved in the profile Claude reads.
+                let mut chosen_model = None;
                 let chosen_by_user = user_model_selection
                     .map(|model| ClaudeModelSelection {
                         model: model.to_string(),
@@ -547,10 +549,18 @@ impl TemporaryClient {
                             user_claude_settings,
                         )
                     })
+                    .inspect(|selection| chosen_model = Some(selection.model.clone()))
                     .map(|selection| validate_claude_model_selection(selection, models))
                     .transpose()?
                     .flatten();
                 let gateway_model = crate::clients::claude_gateway_model(models, model_override);
+                let launched = chosen_model
+                    .as_deref()
+                    .or(model_override)
+                    .or(gateway_model.as_deref());
+                if let Some(warning) = claude_unavailable_model_warning(launched, models) {
+                    eprintln!("{warning}");
+                }
                 // The picker's Default row is not the user's selection: Claude
                 // resolves it through its family variables, so an unpinned
                 // family on a z.ai-only catalog advertises an unauthorized

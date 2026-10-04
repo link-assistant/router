@@ -138,6 +138,14 @@ impl Coordinator<'_> {
             "credential_ownership=shared-data durable-per-credential-locks single-refresh-writer"
         );
         println!("{}", self.claude.status_line(self.root));
+        self.print_provider_exhaustion();
+        match data_backup::checkpoint_status(self.root) {
+            Ok(line) => println!("{line}"),
+            Err(reason) => println!(
+                "blocker=data-checkpoint forceable=false reason={}",
+                serde_json::to_string(&reason).unwrap_or_default()
+            ),
+        }
         match existing {
             Existing::Absent => {
                 println!("old_backend=absent");

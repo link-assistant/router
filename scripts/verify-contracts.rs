@@ -145,7 +145,10 @@ const AREAS: &[Area] = &[
         covers: "live personal Anthropic and z.ai union catalog, actual Claude picker, exact model identities and successful real responses through a single-owner serving Router",
         enable: "ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON, ROUTER_LIVE_MIXED_URL, ROUTER_LIVE_MIXED_TOKEN and ROUTER_LIVE_MIXED_INFERENCE=1; a safe OS boundary and installed Claude",
         runs: &[Run {
-            targets: &["mixed_entitlements_live_test", "subscription_usage_live_test"],
+            targets: &[
+                "mixed_entitlements_live_test",
+                "subscription_usage_live_test",
+            ],
             unit: &[],
             filter: None,
             serial: true,
@@ -200,7 +203,10 @@ const AREAS: &[Area] = &[
         covers: "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog",
         enable: "ROUTER_STAGING_LIVE_TESTS=1, ROUTER_STAGING_DISPOSABLE_HOST=1, ROUTER_STAGING_ZAI_API_KEY, ROUTER_DEPLOY_TEST_IMAGE and installed Claude; static key only, no copied OAuth",
         runs: &[Run {
-            targets: &["staging_live_test"], unit: &[], filter: None, serial: true,
+            targets: &["staging_live_test"],
+            unit: &[],
+            filter: None,
+            serial: true,
         }],
     },
 ];
@@ -252,23 +258,52 @@ fn skips(log: &str) -> Vec<Value> {
     unique.into_values().collect()
 }
 
-/// `proven` only when tests ran, none failed, and none skipped or were
-/// ignored: a skipped case never counts toward parity.
-fn status(succeeded: bool, counts: &Counts, skipped: usize) -> &'static str {
+/// `proven` only when every declared target ran, none failed, and none
+/// skipped or were ignored: a skipped case or an unexecuted target never
+/// counts toward parity.
+fn status(succeeded: bool, counts: &Counts, skipped: usize, not_run: usize) -> &'static str {
     if !succeeded || counts.failed > 0 {
         "failed"
-    } else if skipped > 0 || counts.ignored > 0 || counts.passed == 0 {
+    } else if not_run > 0 || skipped > 0 || counts.ignored > 0 || counts.passed == 0 {
         "not-proven"
     } else {
         "proven"
     }
 }
 
-fn cargo_args(run: &Run) -> Vec<String> {
-    let mut args = vec!["test".to_string(), "--locked".to_string()];
+/// How many test binaries reported a `test result:` line.
+fn results(output: &str) -> usize {
+    output
+        .lines()
+        .filter(|line| line.trim().starts_with("test result: "))
+        .count()
+}
+
+/// One `cargo test` invocation per declared target, labelled by that target.
+///
+/// Plain `cargo test` stops at the first failing test binary, so every target
+/// after it silently went unexecuted while the area reported only what ran
+/// (issue #655). One invocation per target, each with `--no-fail-fast`, makes
+/// every declared target produce its own result or be named as not run.
+fn invocations(run: &Run) -> Vec<(String, Vec<String>)> {
+    if run.targets.is_empty() {
+        return vec![(run.unit.join(" "), cargo_args(run, None))];
+    }
+    run.targets
+        .iter()
+        .map(|target| ((*target).to_string(), cargo_args(run, Some(target))))
+        .collect()
+}
+
+fn cargo_args(run: &Run, target: Option<&str>) -> Vec<String> {
+    let mut args = vec![
+        "test".to_string(),
+        "--locked".to_string(),
+        "--no-fail-fast".to_string(),
+    ];
     args.extend(run.unit.iter().map(|arg| (*arg).to_string()));
-    for target in run.targets {
-        args.extend(["--test".to_string(), (*target).to_string()]);
+    if let Some(target) = target {
+        args.extend(["--test".to_string(), target.to_string()]);
     }
     if let Some(filter) = run.filter {
         args.push(filter.to_string());
@@ -287,37 +322,69 @@ fn verify(
     client_filter: Option<&str>,
 ) -> Value {
     let skip_log = directory.join(format!("{}.skips", area.name));
-    let _ = std::fs::remove_file(&skip_log);
-    let mut output = String::new();
-    let mut succeeded = true;
-    let mut commands = Vec::new();
-    for run in area.runs {
-        let mut args = cargo_args(run);
-        if let Some(filter) = client_filter.filter(|_| area.name == "real-clients") {
-            args.insert(
-                args.iter()
-                    .position(|arg| arg == "--")
-                    .expect("test separator"),
-                filter.to_string(),
-            );
-        }
-        commands.push(format!("cargo {}", args.join(" ")));
-        eprintln!("verify {}: cargo {}", area.name, args.join(" "));
+    verify_with(area, directory, client_filter, |args| {
         match Command::new("cargo")
-            .args(&args)
+            .args(args)
             .env(SKIP_LOG, &skip_log)
             .envs(variables.iter().map(|(key, value)| (key, value)))
             .output()
         {
-            Ok(result) => {
-                succeeded &= result.status.success();
-                output.push_str(&String::from_utf8_lossy(&result.stdout));
-                output.push_str(&String::from_utf8_lossy(&result.stderr));
+            Ok(result) => (
+                result.status.success(),
+                format!(
+                    "{}{}",
+                    String::from_utf8_lossy(&result.stderr),
+                    String::from_utf8_lossy(&result.stdout)
+                ),
+            ),
+            Err(error) => (false, format!("could not run cargo: {error}\n")),
+        }
+    })
+}
+
+/// [`verify`] with the `cargo` invocation injected: `cargo` receives the
+/// arguments and returns its success and combined output.
+fn verify_with(
+    area: &Area,
+    directory: &Path,
+    client_filter: Option<&str>,
+    mut cargo: impl FnMut(&[String]) -> (bool, String),
+) -> Value {
+    let skip_log = directory.join(format!("{}.skips", area.name));
+    let _ = std::fs::remove_file(&skip_log);
+    let mut output = String::new();
+    let mut succeeded = true;
+    let mut commands = Vec::new();
+    let mut targets = Vec::new();
+    let mut not_run = Vec::new();
+    for run in area.runs {
+        for (target, mut args) in invocations(run) {
+            if let Some(filter) = client_filter.filter(|_| area.name == "real-clients") {
+                args.insert(
+                    args.iter()
+                        .position(|arg| arg == "--")
+                        .expect("test separator"),
+                    filter.to_string(),
+                );
             }
-            Err(error) => {
-                succeeded = false;
-                output.push_str(&format!("could not run cargo: {error}\n"));
+            commands.push(format!("cargo {}", args.join(" ")));
+            eprintln!("verify {}: cargo {}", area.name, args.join(" "));
+            let (ran, text) = cargo(&args);
+            succeeded &= ran;
+            let counted = counts(&text);
+            let reported = results(&text) > 0;
+            if !reported {
+                not_run.push(target.clone());
             }
+            targets.push(json!({
+                "target": target,
+                "status": if !reported { "not-run" } else { status(ran, &counted, 0, 0) },
+                "passed": counted.passed,
+                "failed": counted.failed,
+                "ignored": counted.ignored,
+            }));
+            output.push_str(&format!("==> verify {} target {target}\n", area.name));
+            output.push_str(&text);
         }
     }
     let log = directory.join(format!("{}.log", area.name));
@@ -326,27 +393,91 @@ fn verify(
     }
     let counts = counts(&output);
     let skipped = skips(&std::fs::read_to_string(&skip_log).unwrap_or_default());
-    let status = status(succeeded, &counts, skipped.len());
+    let status = status(succeeded, &counts, skipped.len(), not_run.len());
     eprintln!(
-        "verify {}: {status} passed={} failed={} ignored={} skipped={}",
+        "verify {}: {status} passed={} failed={} ignored={} skipped={} not_run={}{}",
         area.name,
         counts.passed,
         counts.failed,
         counts.ignored,
-        skipped.len()
+        skipped.len(),
+        not_run.len(),
+        named(&not_run)
     );
     json!({
         "name": area.name,
         "covers": area.covers,
         "status": status,
+        "ran": true,
         "passed": counts.passed,
         "failed": counts.failed,
         "ignored": counts.ignored,
         "skipped": skipped,
+        "not_run": not_run,
+        "targets": targets,
         "enable_skipped_with": area.enable,
         "commands": commands,
         "log": log.display().to_string(),
     })
+}
+
+/// ` (a, b)` for a non-empty list, so a summary count names what it counts.
+fn named(items: &[String]) -> String {
+    if items.is_empty() {
+        String::new()
+    } else {
+        format!(" ({})", items.join(", "))
+    }
+}
+
+/// Areas that executed no test at all, with the reason, and every declared
+/// target that produced no result, as `area/target`.
+///
+/// Counted separately from skipped tests: an area that never ran is not two
+/// skipped tests, and the summary must not read as if it were (issue #654).
+fn unexecuted(areas: &[Value]) -> (Vec<Value>, Vec<String>) {
+    let not_run_areas = areas
+        .iter()
+        .filter(|area| area["ran"] == false)
+        .map(|area| json!({"name": area["name"], "reason": area["reason"], "enable_with": area["enable_with"]}))
+        .collect();
+    let not_run_targets = areas
+        .iter()
+        .flat_map(|area| {
+            let name = area["name"].as_str().unwrap_or_default().to_string();
+            area["not_run"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .map(move |target| format!("{name}/{target}"))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    (not_run_areas, not_run_targets)
+}
+
+/// The one-line summary; every count names what it counts.
+fn summary(
+    parity: bool,
+    failed: bool,
+    skipped: usize,
+    areas_not_run: &[Value],
+    targets_not_run: &[String],
+    output: &Path,
+) -> String {
+    let area_names: Vec<String> = areas_not_run
+        .iter()
+        .filter_map(|area| area["name"].as_str().map(str::to_string))
+        .collect();
+    format!(
+        "verification parity={parity} failed={failed} skipped={skipped} areas_not_run={}{} targets_not_run={}{} result={}",
+        area_names.len(),
+        named(&area_names),
+        targets_not_run.len(),
+        named(targets_not_run),
+        output.display()
+    )
 }
 
 fn usage() -> ! {
@@ -376,7 +507,10 @@ fn router_version() -> Option<String> {
 }
 
 fn needs_client_preparation(area: &str) -> bool {
-    matches!(area, "real-clients" | "anthropic-entitlements" | "zai-only-entitlements" | "staging")
+    matches!(
+        area,
+        "real-clients" | "anthropic-entitlements" | "zai-only-entitlements" | "staging"
+    )
 }
 
 fn main() {
@@ -418,14 +552,20 @@ fn main() {
     }
     let directory = directory.canonicalize().unwrap_or(directory);
 
-    let needs_clients = prepare_only || selected.is_empty()
+    let needs_clients = prepare_only
+        || selected.is_empty()
         || selected.iter().any(|name| needs_client_preparation(name));
-    let clients: Vec<&str> = if client_filter.is_some() || prepare_only || selected.is_empty()
-        || selected.iter().any(|name| name == "real-clients") {
+    let clients: Vec<&str> = if client_filter.is_some()
+        || prepare_only
+        || selected.is_empty()
+        || selected.iter().any(|name| name == "real-clients")
+    {
         client_filter.as_deref().into_iter().collect()
     } else if selected.iter().any(|name| name == "zai-only-entitlements") {
         vec!["claude", "codex"]
-    } else { vec!["claude"] };
+    } else {
+        vec!["claude"]
+    };
     if let Some(client) = &client_filter {
         if !verification_client::CLIENTS
             .iter()
@@ -455,7 +595,7 @@ fn main() {
         .filter(|_| !prepare_only)
         .map(|area| {
             if needs_client_preparation(area.name) && (preparation_failed || preparation_unproven) {
-                json!({"name":area.name,"status":if preparation_failed {"failed"} else {"not-proven"},"skipped":[],"reason":"client preparation did not complete; no vendor probes or Cargo test compilation attempted"})
+                json!({"name":area.name,"status":if preparation_failed {"failed"} else {"not-proven"},"ran":false,"skipped":[],"not_run":[],"reason":"client preparation did not complete; no vendor probes or Cargo test compilation attempted","enable_with":"docs/testing-tiers.md#proving-the-vendor-areas-from-macos"})
             } else { verify(area, &directory, &variables, client_filter.as_deref()) }
         })
         .collect();
@@ -469,6 +609,7 @@ fn main() {
         .iter()
         .map(|area| area["skipped"].as_array().map_or(0, Vec::len))
         .sum();
+    let (areas_not_run, targets_not_run) = unexecuted(&areas);
     let result = json!({
         "schema": SCHEMA,
         "router_version": router_version(),
@@ -480,6 +621,8 @@ fn main() {
         "parity": parity,
         "failed": failed,
         "skipped": skipped,
+        "areas_not_run": areas_not_run,
+        "targets_not_run": targets_not_run,
         "areas": areas,
         "client_preparation": preparation,
     });
@@ -489,15 +632,22 @@ fn main() {
         exit(2);
     }
     println!(
-        "verification parity={parity} failed={failed} skipped={skipped} result={}",
-        output.display()
+        "{}",
+        summary(
+            parity,
+            failed,
+            skipped,
+            &areas_not_run,
+            &targets_not_run,
+            &output
+        )
     );
     if failed {
         exit(1);
     }
     if require_parity && !parity {
         eprintln!(
-            "error: parity was required, but some area is not proven; its skipped tests and how to enable them are in {}",
+            "error: parity was required, but some area is not proven; its skipped tests, unexecuted areas and targets, and how to enable them are in {}",
             output.display()
         );
         exit(3);
@@ -542,15 +692,16 @@ not json
             failed: 0,
             ignored: 0,
         };
-        assert_eq!(status(true, &green, 0), "proven");
-        assert_eq!(status(true, &green, 1), "not-proven");
-        assert_eq!(status(true, &Counts::default(), 0), "not-proven");
-        assert_eq!(status(false, &green, 0), "failed");
+        assert_eq!(status(true, &green, 0, 0), "proven");
+        assert_eq!(status(true, &green, 1, 0), "not-proven");
+        assert_eq!(status(true, &green, 0, 1), "not-proven");
+        assert_eq!(status(true, &Counts::default(), 0, 0), "not-proven");
+        assert_eq!(status(false, &green, 0, 0), "failed");
         let ignored = Counts {
             ignored: 1,
             ..green
         };
-        assert_eq!(status(true, &ignored, 0), "not-proven");
+        assert_eq!(status(true, &ignored, 0, 0), "not-proven");
     }
 
     #[test]
@@ -576,20 +727,148 @@ not json
     }
 
     #[test]
-    fn serial_runs_pass_one_thread() {
-        let args = cargo_args(&AREAS.iter().find(|area| area.name == "rolling-updates").unwrap().runs[1]);
-        assert!(args.ends_with(&["--nocapture".to_string(), "--test-threads=1".to_string()]));
+    fn serial_runs_pass_one_thread_and_never_fail_fast() {
+        let rolling = &AREAS
+            .iter()
+            .find(|area| area.name == "rolling-updates")
+            .unwrap()
+            .runs[1];
+        for (_, args) in invocations(rolling) {
+            assert!(args.contains(&"--no-fail-fast".to_string()), "{args:?}");
+            assert!(args.ends_with(&["--nocapture".to_string(), "--test-threads=1".to_string()]));
+        }
         assert_eq!(
-            cargo_args(&unit(&["--bin", "router"], "deploy_local")),
-            [
-                "test",
-                "--locked",
-                "--bin",
-                "router",
-                "deploy_local",
-                "--",
-                "--nocapture"
-            ]
+            invocations(&unit(&["--bin", "router"], "deploy_local")),
+            [(
+                "--bin router".to_string(),
+                [
+                    "test",
+                    "--locked",
+                    "--no-fail-fast",
+                    "--bin",
+                    "router",
+                    "deploy_local",
+                    "--",
+                    "--nocapture"
+                ]
+                .map(String::from)
+                .to_vec()
+            )]
+        );
+    }
+
+    #[test]
+    fn every_declared_target_is_its_own_invocation() {
+        let rolling = &AREAS
+            .iter()
+            .find(|area| area.name == "rolling-updates")
+            .unwrap()
+            .runs[1];
+        let labels: Vec<String> = invocations(rolling)
+            .into_iter()
+            .map(|(label, _)| label)
+            .collect();
+        assert_eq!(
+            labels,
+            rolling
+                .targets
+                .iter()
+                .map(|t| t.to_string())
+                .collect::<Vec<_>>()
+        );
+        for (label, args) in invocations(rolling) {
+            let at = args.iter().position(|arg| arg == "--test").expect("--test");
+            assert_eq!(args[at + 1], label);
+            assert_eq!(args.iter().filter(|arg| *arg == "--test").count(), 1);
+        }
+    }
+
+    /// Issue #655: a failing first target no longer hides the others, and a
+    /// target that produced no `test result:` line is named, not omitted.
+    #[test]
+    fn a_failing_first_target_does_not_hide_the_rest() {
+        const AREA: Area = Area {
+            name: "fixture",
+            covers: "fixture",
+            enable: "nothing",
+            runs: &[tests(&[
+                "first_fails",
+                "second_passes",
+                "third_never_reports",
+            ])],
+        };
+        let directory = tempfile::tempdir().unwrap();
+        let mut seen = Vec::new();
+        let area = verify_with(&AREA, directory.path(), None, |args| {
+            let target = args[args.iter().position(|arg| arg == "--test").unwrap() + 1].clone();
+            seen.push(target.clone());
+            match target.as_str() {
+                "first_fails" => (
+                    false,
+                    "test result: FAILED. 1 passed; 2 failed; 0 ignored\n".into(),
+                ),
+                "second_passes" => (
+                    true,
+                    "test result: ok. 8 passed; 0 failed; 0 ignored\n".into(),
+                ),
+                _ => (false, "error: could not compile\n".into()),
+            }
+        });
+        assert_eq!(
+            seen,
+            ["first_fails", "second_passes", "third_never_reports"]
+        );
+        assert_eq!(area["status"], "failed");
+        assert_eq!(area["passed"], 9);
+        assert_eq!(area["failed"], 2);
+        assert_eq!(area["not_run"], json!(["third_never_reports"]));
+        let statuses: Vec<&str> = area["targets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|target| target["status"].as_str().unwrap())
+            .collect();
+        assert_eq!(statuses, ["failed", "proven", "not-run"]);
+        let (areas_not_run, targets_not_run) = unexecuted(&[area]);
+        assert!(areas_not_run.is_empty());
+        let line = summary(
+            false,
+            true,
+            0,
+            &areas_not_run,
+            &targets_not_run,
+            Path::new("r.json"),
+        );
+        assert!(
+            line.contains("targets_not_run=1 (fixture/third_never_reports)"),
+            "{line}"
+        );
+    }
+
+    /// Issue #654: areas that never ran are counted and named in the summary,
+    /// separately from skipped tests.
+    #[test]
+    fn areas_that_never_ran_are_named_in_the_summary() {
+        let reason = "client preparation did not complete";
+        let areas = [
+            json!({"name": "catalogs", "ran": true, "skipped": [{"test": "a"}, {"test": "b"}], "not_run": []}),
+            json!({"name": "real-clients", "ran": false, "reason": reason, "skipped": [], "not_run": []}),
+            json!({"name": "staging", "ran": false, "reason": reason, "skipped": [], "not_run": []}),
+        ];
+        let (areas_not_run, targets_not_run) = unexecuted(&areas);
+        assert_eq!(areas_not_run.len(), 2);
+        assert_eq!(areas_not_run[0]["reason"], reason);
+        let line = summary(
+            false,
+            false,
+            2,
+            &areas_not_run,
+            &targets_not_run,
+            Path::new("r.json"),
+        );
+        assert_eq!(
+            line,
+            "verification parity=false failed=false skipped=2 areas_not_run=2 (real-clients, staging) targets_not_run=0 result=r.json"
         );
     }
 }

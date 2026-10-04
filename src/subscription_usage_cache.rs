@@ -57,6 +57,40 @@ pub(super) async fn cached_or_probe_at(
     provider: UsageProvider,
     refresh_url_override: Option<&str>,
 ) -> ProbeResult {
+    // Boxed so this wrapper does not grow every caller's future.
+    let result = Box::pin(probe_through_cache(
+        state,
+        subject,
+        principal,
+        provider,
+        refresh_url_override,
+    ))
+    .await;
+    match (provider, result) {
+        (UsageProvider::ZAi, ProbeResult::Usage(mut usage)) => {
+            // Applied after the cache: the quota endpoint keeps reporting an
+            // account z.ai refuses to serve, and the refusal clears as soon as
+            // a request succeeds (issue #657).
+            if let Some(exhaustion) = crate::zai_coding_plan::recorded_exhaustion(state) {
+                usage.state = super::UsageState::Unavailable;
+                usage.status = "exhausted".into();
+                usage.allowed = Some(false);
+                usage.limit_reached = Some(true);
+                usage.rate_limit_reached_type = Some(exhaustion.summary());
+            }
+            ProbeResult::Usage(usage)
+        }
+        (_, result) => result,
+    }
+}
+
+async fn probe_through_cache(
+    state: &AppState,
+    subject: &str,
+    principal: &str,
+    provider: UsageProvider,
+    refresh_url_override: Option<&str>,
+) -> ProbeResult {
     loop {
         let prepared = match prepare_probe(state, principal, provider).await {
             Ok(prepared) => prepared,

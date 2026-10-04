@@ -98,7 +98,15 @@ pub async fn route_state_with_subscription_for_client(
             subscription: None,
         });
     }
-    route_subscription_model_for_providers(state, model, entitled_providers).await
+    route_subscription_model_for_providers(state, model, entitled_providers)
+        .await
+        .map_err(|error| match error {
+            ModelRouteError::NotFound(_) if !zai_authorized => {
+                crate::zai_coding_plan::unproven_request_for_listed_model(state, model, client)
+                    .map_or(error, ModelRouteError::Forbidden)
+            }
+            other => other,
+        })
 }
 
 /// Compatibility wrapper returning only the routed state.

@@ -338,3 +338,27 @@ fn a_key_encrypted_under_a_placeholder_is_reported_as_disclosed() {
         "an ordinary mismatch is not a disclosure: {error}"
     );
 }
+
+#[test]
+fn replacing_or_removing_a_provider_forgets_its_recorded_exhaustion() {
+    let exhausted = || {
+        crate::zai_upstream_error::classify(
+            br#"{"error":{"code":"1113","message":"[1113][Insufficient balance or no resource package. Please recharge.][req]"}}"#,
+        )
+        .unwrap()
+    };
+    let dir = tempdir().unwrap();
+    let store = ProviderStore::open(dir.path(), "secret").unwrap();
+    store.upsert(upsert()).unwrap();
+
+    // A new key or account may have quota, so the next request re-learns.
+    store.record_exhaustion("litellm", exhausted());
+    store.upsert(upsert()).unwrap();
+    assert!(store.exhaustion("litellm").is_none());
+
+    // Doctor must not keep reporting an account that is no longer configured.
+    store.record_exhaustion("litellm", exhausted());
+    assert!(store.delete("litellm").unwrap());
+    assert!(store.exhaustion("litellm").is_none());
+    assert_eq!(crate::zai_upstream_error::status_report(dir.path()), "");
+}

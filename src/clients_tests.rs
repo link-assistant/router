@@ -639,3 +639,37 @@ fn the_written_catalog_agrees_with_the_launcher() {
         }
     }
 }
+
+/// Issue #657: a fresh z.ai profile is never pointed at a row Router cannot
+/// serve while a servable one exists.
+#[test]
+fn claude_gateway_model_prefers_a_servable_row() {
+    let unavailable =
+        Some("z.ai Coding Plan cannot serve requests (code 1311): plan excludes model".to_string());
+    let catalog = vec![
+        RouterModel {
+            id: "glm-5.3".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            provider_created_at: Some(1_800_000_000),
+            router_unavailable_reason: unavailable.clone(),
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "glm-5.3-flash".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            provider_created_at: Some(1_900_000_000),
+            router_unavailable_reason: unavailable,
+            ..RouterModel::default()
+        },
+        RouterModel {
+            id: "glm-4.7".into(),
+            owned_by: ZAI_MODEL_OWNER.into(),
+            provider_created_at: Some(1_700_000_000),
+            ..RouterModel::default()
+        },
+    ];
+    assert_eq!(
+        claude_gateway_model(&catalog, None).as_deref(),
+        Some("glm-4.7")
+    );
+}
