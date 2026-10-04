@@ -360,3 +360,33 @@ fn alive(pid: u32) -> bool {
             .is_ok_and(|output| String::from_utf8_lossy(&output.stdout).contains(&pid.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{HostRuntime as _, System};
+
+    /// `router deploy` probes the candidate from inside its own runtime; the
+    /// probe must not build a nested one there (issue #662).
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn the_catalog_probe_works_inside_the_deploy_runtime() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let app = axum::Router::new().route(
+            "/api/models",
+            axum::routing::get(|| async {
+                axum::Json(serde_json::json!({
+                    "data": [{"id": "claude-fixture", "owned_by": "anthropic"}]
+                }))
+            }),
+        );
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let catalog = System::default().catalog(port, "probe-token");
+
+        server.abort();
+        assert_eq!(
+            catalog.unwrap().into_iter().collect::<Vec<_>>(),
+            ["anthropic/claude-fixture"]
+        );
+    }
+}
