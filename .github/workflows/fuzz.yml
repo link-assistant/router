@@ -42,13 +42,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      # cargo-fuzz's locked dependencies do not build on nightly, so install
+      # it with the pinned stable toolchain; only the fuzz build needs nightly.
+      - name: Install cargo-fuzz
+        run: cargo +1.98.1 install cargo-fuzz --version 0.13.1 --locked
+
       - name: Setup Rust nightly
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
         with:
           toolchain: nightly
-
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz --version 0.13.1 --locked
 
       - name: Run ${{ matrix.target }}
         env:

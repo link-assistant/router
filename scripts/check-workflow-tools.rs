@@ -52,7 +52,7 @@ const TOOLS: &[Tool] = &[
     Tool {
         name: "cargo-fuzz",
         uses: &["cargo +nightly fuzz", "cargo fuzz"],
-        installs: &["cargo install cargo-fuzz"],
+        installs: &["cargo install cargo-fuzz", "install cargo-fuzz"],
     },
     Tool {
         name: "sccache",
