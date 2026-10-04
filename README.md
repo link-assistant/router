@@ -1439,6 +1439,49 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins, capped at 24 hours |
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
+| `--pool-failover` / `POOL_FAILOVER` | `off` | `pre-first-byte` retries a pooled Claude request on the next eligible account after a 429, 529, retryable 5xx, transport error, or 401 — only before the first response byte reaches the client. `off` relays the failure as before |
+| `--pool-failover-max-attempts` / `POOL_FAILOVER_MAX_ATTEMPTS` | `3` | Upstream attempts per request under pool failover, the first included (1-16) |
+| `--pool-failover-budget-secs` / `POOL_FAILOVER_BUDGET_SECS` | `30` | Wall-clock seconds after which pool failover stops trying further accounts |
+| `--account-pause-at-percent` / `ACCOUNT_PAUSE_AT_PERCENT` | (unset) | Pause a pooled account once a vendor rate-limit window reports this utilization percentage (1-100); it resumes when the window resets. Unset never pauses |
+| `--intercept-warmup` / `INTERCEPT_WARMUP` | `false` | Answer Claude Code's `Warmup` probe locally (JSON or SSE) instead of spending subscription quota on it |
+
+#### Pool failover and vendor rate limits
+
+With `POOL_FAILOVER=pre-first-byte`, a pooled request that fails before any
+byte reaches the client is retried on the next eligible account, under one
+correlation id; each switch is logged as a `pool_failover` request-log record
+and counted in `link_assistant_pool_failovers_total`. The client sees one
+response and is billed once. A conversation bound to a cooling account detours
+for as long as the cooldown lasts and then returns to its account; concurrent
+failovers rotate across the pool; tokens pinned to an account never fall back;
+and a client that disconnects stops the retries. When a retry moves to a
+different account, Claude `thinking`/`redacted_thinking` blocks (signed by the
+first account) are dropped from the history.
+
+Every Claude response — `count_tokens` included — is read for the
+`anthropic-ratelimit-unified-*` headers (names are case-insensitive). A rejected
+window cools the account until its reset, the longest window winning; a
+rejection that only concerns one model family (for example `7d_opus`) cools
+that family on the account instead of the whole credential. With
+`ACCOUNT_PAUSE_AT_PERCENT`, an account whose window reaches the threshold is
+paused until the reset. Operators can pause and resume accounts directly:
+
+```bash
+curl -X POST -H "Authorization: Bearer $ADMIN_KEY" \
+  -d '{"reason":"maintenance","until_unix":1767225600}' \
+  http://localhost:8080/api/management/accounts/account-1/pause
+curl -X POST -H "Authorization: Bearer $ADMIN_KEY" \
+  http://localhost:8080/api/management/accounts/account-1/resume
+```
+
+The state is persisted under the data directory and shown by
+`GET /api/management/accounts` (`cooldown_reason`, `cooldown_until_unix`,
+`model_cooldowns`, `paused`, `windows`), `accounts list --json`, `usage`
+(`rate limits:` line and the `cooling_down_accounts`, `paused_accounts`,
+`model_cooldowns` JSON fields), `doctor`, `deploy --status`, and the aggregate
+gauges `link_assistant_pool_accounts_cooling_down`,
+`link_assistant_pool_accounts_paused` and `link_assistant_pool_model_cooldowns`
+plus `link_assistant_warmup_intercepted_total` on `/metrics`.
 
 #### Storage formats and ownership
 
