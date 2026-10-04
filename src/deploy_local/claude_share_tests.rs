@@ -239,3 +239,71 @@ fn switching_modes_is_a_different_launch_specification() {
     assert_ne!(shared.label(), Provision::Isolated.label());
     assert_eq!(shared.label(), "shared:/home/operator/.claude");
 }
+
+/// A file-backed `CLAUDE_CONFIG_DIR` is shared even though the default
+/// Keychain entry — another profile's login — exists (issue #653).
+#[test]
+fn a_file_backed_home_is_not_refused_for_an_unrelated_keychain_login() {
+    let home = home_with(Some(&login()));
+    let data = tempfile::tempdir().unwrap();
+    let mut asked = Vec::new();
+
+    let provision = Provision::assess_in(
+        ClaudeCredentials::Share,
+        Some(home.path().as_os_str().to_owned()),
+        Some("/nonexistent-user-home".into()),
+        data.path(),
+        |service: &str| {
+            asked.push(service.to_string());
+            service == "Claude Code-credentials"
+        },
+    );
+
+    assert!(
+        matches!(provision, Provision::Shared { .. }),
+        "{provision:?}"
+    );
+    let expected =
+        link_assistant_router::platform_keychain::claude_service_for(Some(home.path().as_os_str()));
+    assert_eq!(asked, vec![expected]);
+    assert_ne!(asked[0], "Claude Code-credentials");
+}
+
+/// The entry of the shared directory itself still decides: a Keychain login
+/// for exactly that `CLAUDE_CONFIG_DIR` is refused.
+#[test]
+fn the_shared_homes_own_keychain_login_is_refused() {
+    let home = home_with(Some(&login()));
+    let data = tempfile::tempdir().unwrap();
+    let own =
+        link_assistant_router::platform_keychain::claude_service_for(Some(home.path().as_os_str()));
+
+    let provision = Provision::assess_in(
+        ClaudeCredentials::Share,
+        Some(home.path().as_os_str().to_owned()),
+        None,
+        data.path(),
+        |service: &str| service == own,
+    );
+
+    assert!(refused(&provision).contains("macOS Keychain"));
+}
+
+/// Without `CLAUDE_CONFIG_DIR` the default home is judged by the default entry.
+#[test]
+fn the_default_home_is_judged_by_the_default_entry() {
+    let user = tempfile::tempdir().unwrap();
+    std::fs::create_dir(user.path().join(".claude")).unwrap();
+    std::fs::write(user.path().join(".claude/.credentials.json"), login()).unwrap();
+    let data = tempfile::tempdir().unwrap();
+
+    let provision = Provision::assess_in(
+        ClaudeCredentials::Share,
+        None,
+        Some(user.path().as_os_str().to_owned()),
+        data.path(),
+        |service: &str| service == "Claude Code-credentials",
+    );
+
+    assert!(refused(&provision).contains("macOS Keychain"));
+}

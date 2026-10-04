@@ -21,7 +21,7 @@
 use std::path::{Path, PathBuf};
 
 use link_assistant_router::cli::ClaudeCredentials;
-use link_assistant_router::env_paths::directory;
+use link_assistant_router::env_paths::from_value;
 
 /// Claude Code's own credential file inside its home.
 const CREDENTIAL_FILE: &str = ".credentials.json";
@@ -46,12 +46,37 @@ pub(super) enum Provision {
 impl Provision {
     /// Decide from the operator's choice and this machine's Claude Code home.
     pub(super) fn assess(mode: ClaudeCredentials, data: &Path) -> Self {
+        Self::assess_in(
+            mode,
+            std::env::var_os("CLAUDE_CONFIG_DIR"),
+            std::env::var_os("HOME"),
+            data,
+            link_assistant_router::platform_keychain::has_entry,
+        )
+    }
+
+    /// [`Self::assess`] for a given environment and Keychain presence probe.
+    ///
+    /// The probe is asked about the entry of the home being shared — the one
+    /// Claude Code itself would use for that `CLAUDE_CONFIG_DIR` — so another
+    /// profile's Keychain login does not condemn a file-backed home (#653).
+    pub(super) fn assess_in(
+        mode: ClaudeCredentials,
+        config_dir: Option<std::ffi::OsString>,
+        user_home: Option<std::ffi::OsString>,
+        data: &Path,
+        has_entry: impl FnOnce(&str) -> bool,
+    ) -> Self {
         match mode {
             ClaudeCredentials::Isolated => Self::Isolated,
             ClaudeCredentials::Share => {
-                let home = directory("CLAUDE_CONFIG_DIR")
-                    .or_else(|| directory("HOME").map(|home| home.join(".claude")));
-                share(home.as_deref(), keychain_holds_login, data)
+                let config_dir = from_value(config_dir);
+                let service = link_assistant_router::platform_keychain::claude_service_for(
+                    config_dir.as_deref().map(Path::as_os_str),
+                );
+                let home =
+                    config_dir.or_else(|| from_value(user_home).map(|home| home.join(".claude")));
+                share(home.as_deref(), || has_entry(&service), data)
             }
         }
     }
@@ -95,15 +120,6 @@ impl Provision {
             Self::Refused(reason) => format!("anthropic_credential=refused reason={reason}"),
         }
     }
-}
-
-/// Whether the platform secret store, not the file, holds the live login.
-fn keychain_holds_login() -> bool {
-    // The secret is dropped here; only its presence is used.
-    link_assistant_router::platform_keychain::lookup(
-        link_assistant_router::subscription::SubscriptionProvider::Claude,
-    )
-    .is_some()
 }
 
 pub(super) fn share(
