@@ -429,13 +429,25 @@ impl Coordinator<'_> {
         match inventory {
             Ok(inventory) => {
                 for run in &inventory.runs {
-                    if run.state != RunState::StalePinned {
+                    let label = serde_json::to_string(&run.label).unwrap_or_else(|_| "null".into());
+                    // Only a renewed lease proves a wrapper is alive; an
+                    // expired one no longer blocks, pinned or not (#663).
+                    if run.state.live() {
                         plan.block(
                             "live-run",
                             format!(
-                                "run {} ({}) is {} and would be interrupted",
+                                "run {} ({label}) is {} and would be interrupted",
                                 run.id,
-                                serde_json::to_string(&run.label).unwrap_or_else(|_| "null".into()),
+                                run.state.as_str()
+                            ),
+                            true,
+                        );
+                    } else if run.state == RunState::LegacyUnpinned {
+                        plan.block(
+                            "unleased-run",
+                            format!(
+                                "run {} ({label}) is {} and has no run lease, so Router cannot tell whether it is still running",
+                                run.id,
                                 run.state.as_str()
                             ),
                             true,

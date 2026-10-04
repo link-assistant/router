@@ -8,6 +8,12 @@ use serde::Serialize;
 pub(super) enum RunState {
     LivePinned,
     StalePinned,
+    /// A current wrapper that keeps the client's own model selection (no
+    /// `--model`): it has a renewable lease but no exact-model policy.
+    LiveUnpinned,
+    /// The same, once no wrapper renews the lease (issue #663).
+    StaleUnpinned,
+    /// Neither a model policy nor a lease: the record predates both.
     LegacyUnpinned,
 }
 
@@ -16,8 +22,20 @@ impl RunState {
         match self {
             Self::LivePinned => "live-pinned",
             Self::StalePinned => "stale-pinned",
+            Self::LiveUnpinned => "live-unpinned",
+            Self::StaleUnpinned => "stale-unpinned",
             Self::LegacyUnpinned => "legacy-unpinned",
         }
+    }
+
+    /// A renewed lease is evidence that a wrapper process is alive.
+    pub(super) const fn live(self) -> bool {
+        matches!(self, Self::LivePinned | Self::LiveUnpinned)
+    }
+
+    /// No wrapper renews the lease any more.
+    pub(super) const fn stale(self) -> bool {
+        matches!(self, Self::StalePinned | Self::StaleUnpinned)
     }
 }
 
@@ -46,12 +64,15 @@ impl Inventory {
                 let live = record
                     .run_lease_expires_at
                     .is_some_and(|expires_at| expires_at >= now);
-                let state = if !pinned {
-                    RunState::LegacyUnpinned
-                } else if live {
-                    RunState::LivePinned
-                } else {
-                    RunState::StalePinned
+                // Only a record with neither a policy nor a lease is legacy:
+                // the current wrapper always takes a lease, with or without
+                // `--model` (issue #663).
+                let state = match (pinned, record.run_lease_expires_at.is_some(), live) {
+                    (true, _, true) => RunState::LivePinned,
+                    (true, _, false) => RunState::StalePinned,
+                    (false, _, true) => RunState::LiveUnpinned,
+                    (false, true, false) => RunState::StaleUnpinned,
+                    (false, false, false) => RunState::LegacyUnpinned,
                 };
                 Run {
                     id: record.id,
@@ -71,16 +92,8 @@ impl Inventory {
     }
 
     pub(super) fn print(&self) {
-        let live = self
-            .runs
-            .iter()
-            .filter(|run| run.state == RunState::LivePinned)
-            .count();
-        let stale = self
-            .runs
-            .iter()
-            .filter(|run| run.state == RunState::StalePinned)
-            .count();
+        let live = self.runs.iter().filter(|run| run.state.live()).count();
+        let stale = self.runs.iter().filter(|run| run.state.stale()).count();
         let blockers = self.blockers().count();
         println!("run_inventory live={live} stale={stale} blockers={blockers}");
         for run in &self.runs {
@@ -119,16 +132,23 @@ mod tests {
               {"id":"expired","label":"gone","issued_at":1,"expires_at":99,
                "revoked":false,"ephemeral":true},
               {"id":"revoked","label":"gone","issued_at":1,"expires_at":200,
-               "revoked":true,"ephemeral":true}
+               "revoked":true,"ephemeral":true},
+              {"id":"unpinned","label":"with-claude","issued_at":1,"expires_at":200,
+               "revoked":false,"ephemeral":true,"run_lease_expires_at":150},
+              {"id":"exited","label":"with-claude","issued_at":1,"expires_at":200,
+               "revoked":false,"ephemeral":true,"run_lease_expires_at":99}
             ]"#,
             100,
         )
         .unwrap();
 
-        assert_eq!(inventory.runs.len(), 3);
+        assert_eq!(inventory.runs.len(), 5);
         assert_eq!(inventory.runs[0].state, RunState::LegacyUnpinned);
         assert_eq!(inventory.runs[1].state, RunState::LivePinned);
         assert_eq!(inventory.runs[2].state, RunState::StalePinned);
+        // The current wrapper without `--model` leases its run (issue #663).
+        assert_eq!(inventory.runs[3].state, RunState::LiveUnpinned);
+        assert_eq!(inventory.runs[4].state, RunState::StaleUnpinned);
         assert_eq!(
             inventory
                 .blockers()

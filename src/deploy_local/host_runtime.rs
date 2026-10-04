@@ -60,39 +60,54 @@ pub(super) trait HostRuntime {
         port: u16,
         bearer: &str,
     ) -> Result<std::collections::BTreeSet<String>, String> {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .map_err(|_| "catalog runtime unavailable")?;
-        runtime.block_on(async {
-            let client = reqwest::Client::builder()
-                .no_proxy()
-                .timeout(Duration::from_secs(10))
-                .build()
-                .map_err(|_| "catalog client unavailable")?;
-            let response = client
-                .get(format!("http://127.0.0.1:{port}/api/models"))
-                .bearer_auth(bearer)
-                .send()
-                .await
-                .map_err(|_| "issued-token catalog request failed")?;
-            if !response.status().is_success() {
-                return Err("issued-token catalog was rejected".into());
-            }
-            let body: serde_json::Value =
-                response.json().await.map_err(|_| "catalog JSON invalid")?;
-            let rows = body["data"].as_array().ok_or("catalog models absent")?;
-            rows.iter()
-                .map(|row| {
-                    let id = row["id"].as_str().ok_or("catalog model ID absent")?;
-                    Ok(format!(
-                        "{}/{id}",
-                        row["owned_by"].as_str().unwrap_or_default()
-                    ))
-                })
-                .collect()
+        // `router deploy` runs inside the `#[tokio::main]` runtime, where
+        // building and blocking on a second runtime panics (issue #662). The
+        // probe gets a thread of its own, so it works from both contexts.
+        std::thread::scope(|scope| {
+            scope
+                .spawn(|| catalog_on_own_runtime(port, bearer))
+                .join()
+                .unwrap_or_else(|_| Err("catalog probe failed".into()))
         })
     }
+}
+
+/// The body of [`HostRuntime::catalog`], on a thread with no runtime.
+fn catalog_on_own_runtime(
+    port: u16,
+    bearer: &str,
+) -> Result<std::collections::BTreeSet<String>, String> {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|_| "catalog runtime unavailable")?;
+    runtime.block_on(async {
+        let client = reqwest::Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .map_err(|_| "catalog client unavailable")?;
+        let response = client
+            .get(format!("http://127.0.0.1:{port}/api/models"))
+            .bearer_auth(bearer)
+            .send()
+            .await
+            .map_err(|_| "issued-token catalog request failed")?;
+        if !response.status().is_success() {
+            return Err("issued-token catalog was rejected".into());
+        }
+        let body: serde_json::Value = response.json().await.map_err(|_| "catalog JSON invalid")?;
+        let rows = body["data"].as_array().ok_or("catalog models absent")?;
+        rows.iter()
+            .map(|row| {
+                let id = row["id"].as_str().ok_or("catalog model ID absent")?;
+                Ok(format!(
+                    "{}/{id}",
+                    row["owned_by"].as_str().unwrap_or_default()
+                ))
+            })
+            .collect()
+    })
 }
 
 /// The real host: processes, loopback HTTP and the platform secret store.
