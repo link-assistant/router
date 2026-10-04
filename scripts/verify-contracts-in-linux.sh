@@ -69,7 +69,8 @@ docker run --rm --init \
     bash -euo pipefail -c '
         export DEBIAN_FRONTEND=noninteractive
         apt-get update >/dev/null
-        apt-get install -y --no-install-recommends ca-certificates curl git pkg-config libssl-dev nodejs npm >/dev/null
+        # procps provides the pgrep and ps that client lifecycle checks run.
+        apt-get install -y --no-install-recommends ca-certificates curl git pkg-config libssl-dev nodejs npm procps >/dev/null
         npm install --global --silent \
             "@anthropic-ai/claude-code@${ROUTER_REAL_CLIENT_CLAUDE_VERSION}" \
             "@openai/codex@${ROUTER_REAL_CLIENT_CODEX_VERSION}" \
