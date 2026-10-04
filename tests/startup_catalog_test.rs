@@ -114,7 +114,10 @@ async fn the_first_models_response_already_contains_a_healthy_subscription() {
             !matches!(process.0.try_wait(), Ok(Some(_))),
             "Router exited before it accepted connections"
         );
-        assert!(Instant::now() < deadline, "Router never accepted connections");
+        assert!(
+            Instant::now() < deadline,
+            "Router never accepted connections"
+        );
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
     let accepted_after = started.elapsed();
@@ -144,14 +147,13 @@ async fn the_first_models_response_already_contains_a_healthy_subscription() {
     assert_eq!(response.status(), reqwest::StatusCode::OK);
     let models: serde_json::Value = response.json().await.expect("models JSON");
 
-    let ids = models["data"]
+    let listed = models["data"]
         .as_array()
         .expect("model rows")
         .iter()
-        .filter_map(|row| row["id"].as_str())
-        .collect::<Vec<_>>();
+        .any(|row| row["id"] == "startup-fixture-model");
     assert!(
-        ids.contains(&"startup-fixture-model"),
+        listed,
         "the first /api/models after the listener accepted ({accepted_after:?}) \
          omitted the healthy subscription's rows: {models}"
     );
