@@ -1,0 +1,5 @@
+data: {"type":"response.output_text.delta",
+data:  "delta":"世界"}
+
+data: {"type":"response.completed","response":{"usage":{"input_tokens":1,"output_tokens":2}}}
+

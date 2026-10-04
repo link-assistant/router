@@ -1,0 +1,70 @@
+# Fuzz the SSE stream translators and every request translator (issue #670).
+# Pull requests run each target briefly from the checked-in corpus; the nightly
+# schedule runs longer. A crash fails the job and uploads the reproducer.
+# The same corpus is replayed on stable by tests/fuzz_corpus_replay_test.rs.
+name: Fuzz
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'fuzz/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/fuzz.yml'
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Seconds per target
+        default: '600'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [sse_stream_translators, request_translators]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust nightly
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --version 0.13.1 --locked
+
+      - name: Run ${{ matrix.target }}
+        env:
+          SECONDS_PER_TARGET: ${{ github.event_name == 'pull_request' && '60' || inputs.seconds || '1200' }}
+        run: |
+          # -rss_limit_mb and -max_len bound memory per input; a run that
+          # exceeds them counts as a failure (unbounded allocation).
+          cargo +nightly fuzz run ${{ matrix.target }} \
+            fuzz/corpus/${{ matrix.target }} -- \
+            -max_total_time="$SECONDS_PER_TARGET" -rss_limit_mb=2048 -max_len=65536 \
+            -timeout=10
+
+      - name: Upload crash reproducers
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-artifacts-${{ matrix.target }}
+          path: fuzz/artifacts/
+          if-no-files-found: ignore

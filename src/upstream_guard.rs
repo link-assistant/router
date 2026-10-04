@@ -94,6 +94,20 @@ const fn classify_v6(ip: Ipv6Addr) -> Option<AddressClass> {
     }
 }
 
+/// A policy installed by the embedding process, taking precedence over
+/// [`ALLOW_PRIVATE_NETWORKS_ENV`].
+static PROCESS_POLICY: std::sync::OnceLock<NetworkPolicy> = std::sync::OnceLock::new();
+
+/// Install the process-wide policy without touching the environment.
+///
+/// Embedders and integration tests that run Router in-process use this
+/// instead of `std::env::set_var`. Only the first installation takes effect,
+/// and it must happen before the first provider request; the result is the
+/// policy now in force.
+pub fn install_process_policy(policy: NetworkPolicy) -> NetworkPolicy {
+    *PROCESS_POLICY.get_or_init(|| policy)
+}
+
 /// Which refused address classes a provider base URL may still use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[allow(clippy::struct_excessive_bools)]
@@ -149,6 +163,9 @@ impl NetworkPolicy {
     pub fn from_env() -> Self {
         if cfg!(test) {
             return Self::allow_all();
+        }
+        if let Some(policy) = PROCESS_POLICY.get() {
+            return *policy;
         }
         Self::parse(std::env::var(ALLOW_PRIVATE_NETWORKS_ENV).ok().as_deref())
     }

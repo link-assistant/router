@@ -50,6 +50,11 @@ const TOOLS: &[Tool] = &[
         installs: &["cargo install cargo-llvm-cov"],
     },
     Tool {
+        name: "cargo-fuzz",
+        uses: &["cargo +nightly fuzz", "cargo fuzz"],
+        installs: &["cargo install cargo-fuzz"],
+    },
+    Tool {
         name: "sccache",
         uses: &["RUSTC_WRAPPER=sccache", "RUSTC_WRAPPER: sccache"],
         installs: &["mozilla-actions/sccache-action@"],

@@ -116,7 +116,7 @@ async fn an_upstream_that_stalls_after_its_headers_times_out_mid_body() {
         socket
             .write_all(
                 b"HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\ntransfer-encoding: chunked\r\n\r\n\
-                  1a\r\nevent: message_start\ndata: {}\r\n",
+                  1d\r\nevent: message_start\ndata: {}\r\n",
             )
             .await
             .unwrap();

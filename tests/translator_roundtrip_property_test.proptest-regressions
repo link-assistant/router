@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 8e5693c1538573d18580f89a9643b03d6482156b4364481f86d14e52cb01773a # shrinks to question = "a", calls = [ToolCall { id: "toolu_0_a0aa", name: "a", input: Object {} }]

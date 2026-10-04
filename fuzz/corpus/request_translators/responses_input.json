@@ -1,0 +1,1 @@
+{"model": "m", "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}, {"type": "function_call", "call_id": "c", "name": "f", "arguments": "{}"}, {"type": "function_call_output", "call_id": "c", "output": "ok"}, {"type": "reasoning", "encrypted_content": "enc", "summary": []}], "instructions": "be brief", "reasoning": {"effort": "high"}}
