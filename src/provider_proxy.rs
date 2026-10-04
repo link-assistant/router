@@ -383,8 +383,21 @@ pub(crate) async fn forward_provider_at_routed(
     };
     let bytes_sent = serialized.len() as u64;
 
+    // Records written before the guard existed are checked on use as well.
+    let upstream_client =
+        match crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url) {
+            Ok(client) => client,
+            Err(error) => {
+                state.metrics.record_request(surface, 403, None);
+                return error_response(
+                    StatusCode::FORBIDDEN,
+                    "permission_error",
+                    &error.to_string(),
+                );
+            }
+        };
     let upstream_url = join_openai_compatible_url(&provider.base_url, upstream_path);
-    let mut upstream_req = state.client.post(upstream_url);
+    let mut upstream_req = upstream_client.post(upstream_url);
     if native_protocol {
         let Some(api_key) = provider.api_key.as_deref() else {
             return error_response(
@@ -415,7 +428,7 @@ pub(crate) async fn forward_provider_at_routed(
     let correlation_id = crate::request_log::correlation_id(headers);
     let upstream_resp = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, upstream_req)
+        .send_upstream(&correlation_id, upstream_client, upstream_req)
         .await
     {
         Ok(resp) => resp,
@@ -601,6 +614,8 @@ pub(crate) async fn live_openai_compatible_catalog(
     ) {
         return Err("provider does not use the OpenAI-compatible catalog contract".into());
     }
+    let client = crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url)
+        .map_err(|error| error.to_string())?;
     let fingerprint = openai_provider_catalog_fingerprint(provider);
     if let Some(cached) = state
         .provider_store
@@ -621,7 +636,7 @@ pub(crate) async fn live_openai_compatible_catalog(
     }
 
     if provider.kind == ProviderKind::Lefine {
-        let models = match crate::lefine::fetch_catalog(&state.client, provider).await {
+        let models = match crate::lefine::fetch_catalog(client, provider).await {
             Ok(models) => models,
             Err(error) if error.kind() != crate::lefine::CatalogFailureKind::CredentialRejected => {
                 tracing::warn!(provider = %provider.name, "live Lefine catalog unavailable; using configured exact ids");
@@ -664,7 +679,7 @@ pub(crate) async fn live_openai_compatible_catalog(
     }
 
     let url = join_openai_compatible_url(&provider.base_url, "/v1/models");
-    let mut request = state.client.get(&url);
+    let mut request = client.get(&url);
     if let Some(key) = provider.api_key.as_deref().filter(|key| !key.is_empty()) {
         request = request.bearer_auth(key);
     }
@@ -837,163 +852,17 @@ pub(crate) fn join_openai_compatible_url(base_url: &str, path: &str) -> String {
     }
 }
 
-/// Response-identity contract applied while a provider stream is relayed.
-#[derive(Default)]
-struct SettledRelayIdentity {
-    requested_model: Option<String>,
-    model_policy: Option<crate::model_contract::ModelAccessPolicy>,
-    selector_kind: crate::model_contract::ModelSelectorKind,
-    completion_audit: Option<crate::audit::ResponseModelAudit>,
-}
-
-/// Relay an upstream stream, recording each frame and settling it at the end.
-///
-/// Split out so the settlement can be exercised directly: this is the code path
-/// whose absence left every `OpenAI` and Gemini stream without a terminal record
-/// (issue #258), and a defect here is invisible until a log is read days later.
-fn settled_relay_stream(
-    upstream: reqwest::Response,
-    response_log: std::sync::Arc<crate::request_log::RequestLog>,
-    correlation_id: String,
-    logger: log_lazy::LogLazy,
-    mut usage: Option<crate::usage::UsageTracker>,
-    model_identity: SettledRelayIdentity,
-) -> impl futures_util::Stream<Item = Result<bytes::Bytes, std::io::Error>> + use<> {
-    let started = std::time::Instant::now();
-    let outcome = std::sync::Arc::new(std::sync::Mutex::new(new_stream_outcome(
-        upstream.headers(),
-    )));
-    let end_outcome = std::sync::Arc::clone(&outcome);
-    let end_log = std::sync::Arc::clone(&response_log);
-    let end_id = correlation_id.clone();
-    let mut identity = crate::output_limit::ResponsesStreamRewriter::new(
-        model_identity
-            .requested_model
-            .as_deref()
-            .unwrap_or_default(),
-        None,
-    );
-    if let Some(policy) = model_identity.model_policy.as_ref() {
-        identity = identity
-            .with_model_policy(policy)
-            .with_selector_kind(model_identity.selector_kind);
-    }
-    let completion_audit = model_identity.completion_audit;
-    let identity_state = std::sync::Arc::new(std::sync::Mutex::new((identity, false)));
-    let chunk_identity_state = std::sync::Arc::clone(&identity_state);
-    let chunk_completion_audit = completion_audit.clone();
-    let stream = upstream.bytes_stream().map(move |chunk| {
-        let mut settled = outcome.lock().expect("stream outcome lock");
-        match &chunk {
-            Ok(bytes) => {
-                response_log.record_upstream_body(&correlation_id, bytes);
-                account_for_frame(&mut settled, bytes);
-                if let Some(tracker) = &mut usage {
-                    tracker.feed(bytes);
-                }
-            }
-            Err(error) => settled.detail = Some(error.to_string()),
-        }
-        drop(settled);
-        chunk
-            .map(|bytes| {
-                let mut state = chunk_identity_state
-                    .lock()
-                    .expect("stream identity state lock");
-                let (identity, model_audited) = &mut *state;
-                let output = if identity.active() {
-                    let output = bytes::Bytes::from(identity.push(&bytes));
-                    let served_model = identity.upstream_model().map(str::to_string);
-                    if !*model_audited
-                        && let (Some(audit), Some(served_model)) =
-                            (chunk_completion_audit.as_ref(), served_model.as_deref())
-                    {
-                        audit.record_verified(served_model);
-                        *model_audited = true;
-                    }
-                    output
-                } else {
-                    bytes
-                };
-                drop(state);
-                output
-            })
-            .map_err(std::io::Error::other)
-    });
-    let stream = stream.chain(futures_util::stream::once(async move {
-        let output = {
-            let mut state = identity_state.lock().expect("stream identity state lock");
-            let (identity, model_audited) = &mut *state;
-            let output = identity.finish();
-            let served_model = identity.upstream_model().map(str::to_string);
-            if !*model_audited
-                && let (Some(audit), Some(served_model)) =
-                    (completion_audit.as_ref(), served_model.as_deref())
-            {
-                audit.record_verified(served_model);
-                *model_audited = true;
-            }
-            drop(state);
-            output
-        };
-        Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
-    }));
-    stream
-        .chain(futures_util::stream::once(async move {
-            crate::request_log::settle_stream(
-                &end_log,
-                &end_id,
-                &end_outcome,
-                started.elapsed().as_millis(),
-                &logger,
-            );
-            Err(std::io::Error::other(
-                crate::request_log::STREAM_END_MARKER,
-            ))
-        }))
-        .take_while(|item| {
-            futures_util::future::ready(
-                !matches!(item, Err(error) if error.to_string() == crate::request_log::STREAM_END_MARKER),
-            )
-        })
-}
-
-/// Fold one relayed frame into the outcome being accumulated.
-///
-/// Counting the frame is bookkeeping; noticing the dialect's terminator is the
-/// part that matters, since it is what lets the terminal record say the turn
-/// completed rather than leaving its ending unknown (issue #258).
-fn account_for_frame(outcome: &mut crate::request_log::StreamOutcome, bytes: &[u8]) {
-    outcome.frames += 1;
-    outcome.bytes += bytes.len() as u64;
-    if crate::request_log::frame_terminates_stream(bytes) {
-        outcome.terminated = true;
-    }
-}
-
-/// The starting outcome for a stream this relay is about to forward.
-///
-/// A relay that never settles its streams leaves every one of its exchanges
-/// with no terminal record, so the log can only report the ending as unknown
-/// (issue #258). `inspectable` comes from the upstream headers, since a
-/// compressed body cannot be scanned for a terminator (issue #255).
-fn new_stream_outcome(headers: &reqwest::header::HeaderMap) -> crate::request_log::StreamOutcome {
-    crate::request_log::StreamOutcome {
-        streamed: true,
-        terminated: false,
-        inspectable: crate::request_log::body_is_inspectable(headers),
-        detail: None,
-        frames: 0,
-        bytes: 0,
-        duration_ms: 0,
-    }
-}
-
 fn is_event_stream(content_type: &HeaderValue) -> bool {
     content_type
         .to_str()
         .is_ok_and(|value| value.to_ascii_lowercase().contains("text/event-stream"))
 }
+
+#[path = "provider_proxy_relay.rs"]
+mod relay;
+use relay::{SettledRelayIdentity, settled_relay_stream};
+#[cfg(test)]
+use relay::{account_for_frame, new_stream_outcome};
 
 #[cfg(test)]
 #[path = "provider_proxy_tests.rs"]

@@ -111,7 +111,12 @@ fn anthropic_sse_response(
                         ));
                     }
                     Some(Err(error)) => {
-                        return Some((Err(std::io::Error::other(error)), (data, translator, true)));
+                        // A mid-stream failure becomes one in-band error
+                        // event, never a synthesized `message_stop` (#668).
+                        let kind = crate::stream_termination::FailureKind::of(&error);
+                        tracing::warn!(%error, ?kind, "bridged upstream stream failed");
+                        let frames = translator.interrupt(kind);
+                        return Some((Ok(Bytes::from(frames.concat())), (data, translator, true)));
                     }
                     None => {
                         let frames = translator.finish();

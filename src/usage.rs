@@ -1,4 +1,20 @@
 //! Upstream usage extraction for per-token spend budgets.
+//!
+//! # Counting rule
+//!
+//! A budget is charged for every token the upstream processed: all input
+//! tokens, cached or not, plus all output tokens (issue #671).
+//!
+//! - Anthropic reports cache tokens beside `input_tokens`, so
+//!   `cache_creation_input_tokens` and `cache_read_input_tokens` are added to it.
+//! - `OpenAI` Chat (`prompt_tokens`), Responses (`input_tokens`) and Gemini
+//!   (`promptTokenCount`) already include their cached tokens, which are only
+//!   broken out in `*_details` / `cachedContentTokenCount`, so nothing is added.
+//! - A vendor `total_tokens` / `totalTokenCount` is used when present.
+//!
+//! A stream that ends before the upstream's final usage report (a client
+//! disconnect, an upstream reset or a stall) is charged at least an estimate of
+//! the output it streamed, about four characters per token (issue #668).
 
 use serde_json::Value;
 
@@ -16,7 +32,12 @@ fn token_parts(value: &Value) -> Option<(Option<u64>, Option<u64>, Option<u64>)>
         if let Some(total) = usage.get("total_tokens").and_then(Value::as_u64) {
             return Some((Some(total), None, None));
         }
-        let input = first_u64(usage, &["input_tokens", "prompt_tokens"]);
+        let input = first_u64(usage, &["input_tokens", "prompt_tokens"]).map(|input| {
+            ["cache_creation_input_tokens", "cache_read_input_tokens"]
+                .iter()
+                .filter_map(|field| usage.get(*field).and_then(Value::as_u64))
+                .fold(input, u64::saturating_add)
+        });
         let output = first_u64(usage, &["output_tokens", "completion_tokens"]);
         if input.is_some() || output.is_some() {
             return Some((None, input, output));
@@ -38,6 +59,110 @@ fn token_parts(value: &Value) -> Option<(Option<u64>, Option<u64>, Option<u64>)>
         .and_then(token_parts)
 }
 
+/// Characters of model output streamed by one SSE event, in any dialect.
+fn streamed_output_chars(value: &Value) -> usize {
+    let text_len = |value: Option<&Value>| {
+        value
+            .and_then(Value::as_str)
+            .map_or(0, |text| text.chars().count())
+    };
+    match value.get("type").and_then(Value::as_str) {
+        // Anthropic Messages.
+        Some("content_block_delta") => {
+            let delta = value.get("delta");
+            ["text", "thinking", "partial_json"]
+                .iter()
+                .map(|field| text_len(delta.and_then(|delta| delta.get(*field))))
+                .sum()
+        }
+        // OpenAI Responses: output text, reasoning and tool-argument deltas.
+        Some(kind)
+            if kind.starts_with("response.") && kind.rsplit('.').next() == Some("delta") =>
+         {
+            text_len(value.get("delta"))
+        }
+        Some(_) => 0,
+        None => {
+            // OpenAI Chat Completions chunks.
+            let chat: usize = value
+                .get("choices")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|choice| choice.get("delta"))
+                .map(|delta| {
+                    let arguments: usize = delta
+                        .get("tool_calls")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                        .map(|call| text_len(call.pointer("/function/arguments")))
+                        .sum();
+                    ["content", "reasoning_content", "reasoning"]
+                        .iter()
+                        .map(|field| text_len(delta.get(*field)))
+                        .sum::<usize>()
+                        + arguments
+                })
+                .sum();
+            // Gemini, bare or inside the Code Assist `response` envelope.
+            let gemini_value = value.get("response").unwrap_or(value);
+            let gemini: usize = gemini_value
+                .get("candidates")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|candidate| {
+                    candidate
+                        .pointer("/content/parts")
+                        .and_then(Value::as_array)
+                })
+                .flatten()
+                .map(|part| text_len(part.get("text")))
+                .sum();
+            chat + gemini
+        }
+    }
+}
+
+/// Whether one SSE event carries the upstream's final usage for the turn.
+fn reports_final_usage(value: &Value) -> bool {
+    match value.get("type").and_then(Value::as_str) {
+        Some("message_delta") => value.get("usage").is_some_and(Value::is_object),
+        Some("response.completed" | "response.incomplete" | "response.failed") => true,
+        Some(_) => false,
+        None => {
+            // OpenAI sends a usage object only on the final chunk.
+            if value.get("usage").is_some_and(Value::is_object) {
+                return true;
+            }
+            let gemini_value = value.get("response").unwrap_or(value);
+            gemini_value.get("usageMetadata").is_some()
+                && gemini_value
+                    .get("candidates")
+                    .and_then(Value::as_array)
+                    .is_some_and(|candidates| {
+                        candidates
+                            .iter()
+                            .any(|candidate| candidate.get("finishReason").is_some())
+                    })
+        }
+    }
+}
+
+/// Characters per estimated output token for a stream cut short.
+const ESTIMATED_CHARS_PER_TOKEN: u64 = 4;
+
+/// The usage a [`UsageTracker`] settles.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Settlement {
+    /// Tokens charged against the budget.
+    pub tokens: u64,
+    /// Whether the output part was estimated from streamed content because
+    /// the stream ended before the upstream reported its final usage.
+    pub estimated: bool,
+}
+
 fn first_u64(value: &Value, fields: &[&str]) -> Option<u64> {
     fields
         .iter()
@@ -57,6 +182,10 @@ pub struct UsageTracker {
     input_tokens: u64,
     output_tokens: u64,
     saw_sse: bool,
+    /// Characters of model output relayed so far.
+    streamed_chars: u64,
+    /// Whether the upstream reported its final usage for the turn.
+    saw_final_usage: bool,
     /// Spend reserved for this request at admission, released on drop.
     reserved_tokens: u64,
 }
@@ -87,6 +216,8 @@ impl UsageTracker {
             input_tokens: 0,
             output_tokens: 0,
             saw_sse: false,
+            streamed_chars: 0,
+            saw_final_usage: false,
             reserved_tokens,
         }
     }
@@ -115,13 +246,49 @@ impl UsageTracker {
         if bytes == b"[DONE]" {
             return;
         }
-        if let Ok(value) = serde_json::from_slice::<Value>(bytes)
-            && let Some((total, input, output)) = token_parts(&value)
-        {
+        let Ok(value) = serde_json::from_slice::<Value>(bytes) else {
+            return;
+        };
+        if self.saw_sse {
+            self.streamed_chars = self
+                .streamed_chars
+                .saturating_add(streamed_output_chars(&value) as u64);
+            self.saw_final_usage |= reports_final_usage(&value);
+        } else {
+            // A complete JSON body carries the final usage by definition.
+            self.saw_final_usage = true;
+        }
+        if let Some((total, input, output)) = token_parts(&value) {
             self.total_tokens = self.total_tokens.max(total.unwrap_or(0));
             self.input_tokens = self.input_tokens.max(input.unwrap_or(0));
             self.output_tokens = self.output_tokens.max(output.unwrap_or(0));
         }
+    }
+
+    /// The usage this tracker would settle now.
+    ///
+    /// When a stream ended before the upstream's final usage report, output
+    /// is at least an estimate from the streamed content, so a disconnect
+    /// mid-stream is never charged as almost free (issue #668).
+    #[must_use]
+    pub fn settlement(&self) -> Settlement {
+        let estimate = if self.saw_sse && !self.saw_final_usage {
+            self.streamed_chars.div_ceil(ESTIMATED_CHARS_PER_TOKEN)
+        } else {
+            0
+        };
+        let estimated = estimate > self.output_tokens;
+        let output = self.output_tokens.max(estimate);
+        let tokens = if estimated {
+            // A total reported before the cut cannot include the estimate.
+            self.input_tokens
+                .saturating_add(output)
+                .max(self.total_tokens)
+        } else {
+            self.total_tokens
+                .max(self.input_tokens.saturating_add(self.output_tokens))
+        };
+        Settlement { tokens, estimated }
     }
 }
 
@@ -216,9 +383,15 @@ impl Drop for UsageTracker {
                 .unwrap_or(&remaining);
             self.add_json(data);
         }
-        let tokens = self
-            .total_tokens
-            .max(self.input_tokens.saturating_add(self.output_tokens));
+        let Settlement { tokens, estimated } = self.settlement();
+        if estimated {
+            tracing::info!(
+                token_id = %self.token_id,
+                tokens,
+                estimated = true,
+                "stream ended before the upstream reported final usage; settling an estimate"
+            );
+        }
         // Settle unconditionally: a request that reported no usage still has to
         // give its reservation back, or the budget leaks until restart.
         if (tokens > 0 || self.reserved_tokens > 0)
@@ -230,6 +403,10 @@ impl Drop for UsageTracker {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "usage_settlement_tests.rs"]
+mod settlement_tests;
 
 #[cfg(test)]
 mod tests {

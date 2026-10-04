@@ -128,6 +128,8 @@ impl Router {
             .env("ROUTER_HOST", "127.0.0.1")
             .env("ROUTER_PORT", port.to_string())
             .env("STORAGE_POLICY", "text")
+            // The mock provider listens on loopback (issue #669).
+            .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
             .env("DATA_DIR", data)
             .env("REQUEST_LOG", log)
             .env("DISABLE_LOGIN_API", "true")

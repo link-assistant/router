@@ -89,6 +89,22 @@ const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
 /// quota fields and request IDs are preserved consistently. Besides standard
 /// hop-by-hop fields, it removes fields named by `Connection`, upstream
 /// credentials, and `Content-Length` (response bodies may be translated).
+/// The dialect a successful streamed body may carry an in-band error in.
+///
+/// `None` keeps the transport abort for bodies Router relays opaquely: a
+/// non-streamed reply, an error status, or a compressed stream (issue #668).
+pub(crate) fn in_band_dialect(
+    status: StatusCode,
+    headers: &reqwest::header::HeaderMap,
+    path: &str,
+) -> Option<crate::stream_termination::StreamDialect> {
+    (status.is_success()
+        && crate::request_log::response_is_streamed(headers)
+        && crate::request_log::body_is_inspectable(headers))
+    .then(|| crate::stream_termination::StreamDialect::from_path(path))
+    .flatten()
+}
+
 pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
     let connection_headers: HashSet<String> = headers
         .get_all("connection")
@@ -776,6 +792,9 @@ async fn proxy_handler_with_subscription(
     // decided by the response headers, so it cannot report a turn that is cut
     // mid-flight (issue #230).
     let started = std::time::Instant::now();
+    // A failure after the first byte reaches the client as one in-band error
+    // event in its own dialect, never as a synthesized success (issue #668).
+    let in_band_dialect = in_band_dialect(status, upstream_resp.headers(), &upstream_path);
     // A single-shot JSON reply has no terminator to miss, so settling it as a
     // cut stream warned once per successful request and filled `logs anomalies`
     // with healthy traffic (issue #252).
@@ -794,9 +813,7 @@ async fn proxy_handler_with_subscription(
     let end_log = std::sync::Arc::clone(&response_log);
     let end_id = correlation_id.clone();
     let logger = state.logger.clone();
-    let stream = upstream_resp
-        .bytes_stream()
-        .map(move |chunk| {
+    let stream = upstream_resp.bytes_stream().map(move |chunk| {
             let mut state = outcome.lock().expect("stream outcome lock");
             match &chunk {
                 Ok(bytes) => {
@@ -814,7 +831,8 @@ async fn proxy_handler_with_subscription(
             }
             drop(state);
             chunk.map_err(std::io::Error::other)
-        })
+        });
+    let stream = crate::stream_termination::in_band_errors(stream, in_band_dialect)
         .chain(futures_util::stream::once(async move {
             crate::request_log::settle_stream(
                 &end_log,

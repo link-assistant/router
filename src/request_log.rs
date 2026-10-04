@@ -431,7 +431,7 @@ impl RequestLog {
         correlation_id: &str,
         client: &reqwest::Client,
         builder: reqwest::RequestBuilder,
-    ) -> reqwest::Result<reqwest::Response> {
+    ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
         let request = builder.build()?;
         self.record(
             correlation_id,
@@ -444,7 +444,12 @@ impl RequestLog {
             }),
         );
         let started = Instant::now();
-        let result = client.execute(request).await;
+        let result = crate::upstream_client::execute_with_first_byte_timeout(
+            client,
+            request,
+            crate::upstream_client::upstream_first_byte_timeout(),
+        )
+        .await;
         match &result {
             Ok(response) => self.record(
                 correlation_id,
