@@ -78,18 +78,13 @@ pub const fn service_name(provider: SubscriptionProvider) -> Option<&'static str
 /// not a canonical path: the vendor hashes what it was given.
 #[must_use]
 pub fn claude_service_for(config_dir: Option<&std::ffi::OsStr>) -> String {
+    use sha2::Digest as _;
     const BASE: &str = "Claude Code-credentials";
     let Some(dir) = config_dir.filter(|dir| !dir.is_empty()) else {
         return BASE.to_string();
     };
-    use sha2::Digest as _;
     let digest = sha2::Sha256::digest(dir.to_string_lossy().as_bytes());
-    let hash: String = digest
-        .iter()
-        .take(4)
-        .map(|byte| format!("{byte:02x}"))
-        .collect();
-    format!("{BASE}-{hash}")
+    format!("{BASE}-{}", hex::encode(&digest[..4]))
 }
 
 /// Whether the platform store holds an entry under `service`.
@@ -98,6 +93,7 @@ pub fn claude_service_for(config_dir: Option<&std::ffi::OsStr>) -> String {
 /// prompt can appear and no credential byte is read (issue #653). Returns
 /// `false` off macOS and whenever the store cannot be asked.
 #[must_use]
+#[allow(clippy::missing_const_for_fn)] // const only off macOS
 pub fn has_entry(service: &str) -> bool {
     generic_password_exists(service)
 }

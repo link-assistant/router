@@ -149,13 +149,13 @@ fn a_container_deployment_moves_to_the_host_and_back_keeping_its_tokens() {
             |path| format!("{} belongs to another user", path.display())
         )
     );
+    let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);
     if stranger.is_some() {
         // The backend ran as root and the bind mount kept root's ownership
         // (Linux Docker): the plan names the one command that hands the data
         // to this user. Docker Desktop on macOS presents bind-mounted files as
         // the host user's, so there the plan is clean (issue #656); the branch
         // follows what the host actually shows, not `id -u`.
-        let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);
         assert_eq!(plan.status.code(), Some(1));
         assert!(String::from_utf8_lossy(&plan.stdout).contains("blocker=foreign-owned-data"));
         assert!(running(link_assistant_router::deploy::RELAY) && running(&backend));
@@ -167,7 +167,6 @@ fn a_container_deployment_moves_to_the_host_and_back_keeping_its_tokens() {
         assert!(chown.status.success(), "{chown:?}");
         assert_eq!(foreign_entry(&data, uid.parse().unwrap()), None);
     } else {
-        let plan = deploy(&deployment, home.path(), &["--mode", "host", "--status"]);
         assert!(
             !String::from_utf8_lossy(&plan.stdout).contains("blocker=foreign-owned-data"),
             "no entry is foreign-owned, so no ownership blocker may be invented"

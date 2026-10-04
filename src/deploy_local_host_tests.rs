@@ -534,7 +534,7 @@ fn status_without_the_secret_reports_unknown_convergence_and_no_plan() {
         root.path(),
         "router:1",
         &placeholder,
-        Docker::with_runner(runner.clone()),
+        Docker::with_runner(runner),
         &|_, _| Provision::Isolated,
         &host,
     );
