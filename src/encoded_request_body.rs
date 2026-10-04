@@ -59,7 +59,7 @@ pub struct NativeBody {
 }
 
 impl NativeBody {
-    pub fn encode(self, value: &Value) -> Result<Vec<u8>, String> {
+    pub fn encode(&self, value: &Value) -> Result<Vec<u8>, String> {
         if *value == self.original {
             return Ok(self.bytes.to_vec());
         }

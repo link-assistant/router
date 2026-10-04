@@ -288,7 +288,7 @@ fn strip_signed_history(routing_body: &Value, original: &Bytes) -> Bytes {
 
 /// Record one failed attempt that is being retried, under the request's
 /// correlation id.
-fn note_failover(
+pub fn note_failover(
     state: &AppState,
     correlation_id: &str,
     attempt: u32,
@@ -310,7 +310,7 @@ fn note_failover(
     );
 }
 
-fn log_stop(state: &AppState, correlation_id: &str, attempt: u32, why: &str) {
+pub fn log_stop(state: &AppState, correlation_id: &str, attempt: u32, why: &str) {
     tracing::info!(correlation_id, attempt, "pool failover stopped: {why}");
     state.request_log.record(
         correlation_id,

@@ -832,6 +832,7 @@ fn intercept_warmup(state: &AppState, path: &str, body: &serde_json::Value) -> O
 #[path = "proxy_dispatch.rs"]
 mod dispatch;
 use dispatch::resolve_upstream_credentials;
+pub(crate) use dispatch::{log_stop, note_failover};
 
 /// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
 ///
