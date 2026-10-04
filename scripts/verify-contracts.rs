@@ -439,7 +439,7 @@ fn unexecuted(areas: &[Value]) -> (Vec<Value>, Vec<String>) {
     let not_run_areas = areas
         .iter()
         .filter(|area| area["ran"] == false)
-        .map(|area| json!({"name": area["name"], "reason": area["reason"]}))
+        .map(|area| json!({"name": area["name"], "reason": area["reason"], "enable_with": area["enable_with"]}))
         .collect();
     let not_run_targets = areas
         .iter()

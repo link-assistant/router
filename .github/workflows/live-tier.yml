@@ -87,6 +87,32 @@ jobs:
           cargo test --locked --test live_model_selection_test -- --nocapture --test-threads=1
           cargo test --locked --test lefine_live_test -- --nocapture --test-threads=1
 
+      # The z.ai-only entitlement area launches Claude Code and Codex, which a
+      # developer's Mac refuses to do outside a disposable boundary (issue
+      # #654). This runner is that boundary, so the area is proven here and the
+      # machine-readable result is kept with the run.
+      - name: Install the pinned clients for zai-only-entitlements
+        run: |
+          npm install --global @openai/codex@0.154.0 opencode-ai@1.18.29
+
+      - name: Verify zai-only-entitlements
+        env:
+          ROUTER_LIVE_ZAI_API_KEY: ${{ secrets.ROUTER_LIVE_ZAI_API_KEY }}
+          ROUTER_REAL_CLIENT_CLAUDE_VERSION: '2.1.265'
+          ROUTER_REAL_CLIENT_CODEX_VERSION: '0.154.0'
+          ROUTER_REAL_CLIENT_OPENCODE_VERSION: '1.18.29'
+        run: |
+          rust-script scripts/verify-contracts.rs --area zai-only-entitlements \
+            --output target/verification/zai-only-entitlements.json
+
+      - name: Upload the zai-only-entitlements result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: zai-only-entitlements-verification
+          path: target/verification/
+          if-no-files-found: warn
+
       # A dispatch that proved nothing must say so in the summary rather than
       # reporting a green check: "ran with no credentials" and "passed" are
       # different outcomes and must not look the same.
