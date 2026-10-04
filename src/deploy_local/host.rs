@@ -52,6 +52,8 @@ struct Plan {
     secret: SecretMatch,
     inventory: Option<Inventory>,
     converged: bool,
+    /// The predicted pre-move data checkpoint, when it fits.
+    checkpoint: Option<String>,
     blockers: Vec<Blocker>,
 }
 
@@ -166,6 +168,7 @@ impl Coordinator<'_> {
             secret: SecretMatch::Matches,
             inventory: None,
             converged: false,
+            checkpoint: None,
             blockers: Vec::new(),
         };
         let docker = self.docker.available().is_ok();
@@ -223,6 +226,12 @@ impl Coordinator<'_> {
                 ),
                 false,
             );
+        }
+        // Every move or update checkpoints first; predict it so the plan names
+        // the blocker the real run would hit (issue #658).
+        match super::data_backup::checkpoint_status(self.root) {
+            Ok(line) => plan.checkpoint = Some(line),
+            Err(reason) => plan.block("data-checkpoint", reason, false),
         }
         let fingerprint = fingerprint(self.token_secret);
         plan.converged = plan.from.is_none()
@@ -474,6 +483,9 @@ impl Coordinator<'_> {
             }
         }
         println!("rollback_command=\"{ROLLBACK_COMMAND}\"");
+        if let Some(line) = &plan.checkpoint {
+            println!("{line}");
+        }
         for blocker in &plan.blockers {
             println!(
                 "blocker={} forceable={} reason={}",

@@ -70,8 +70,12 @@ Catalog checks do not prove a historical data snapshot; consult each report's
 restore and unproven fields before relying on recovery.
 
 Updates checkpoint logical token records (including revocations/budgets),
-encrypted static provider configuration and registered request/project/session
-files before starting a candidate. Local checkpoints are under
+encrypted static provider configuration and registered project/session files
+before starting a candidate. Request logs (`data/requests`) are append-only
+history capped by `REQUEST_LOG_MAX_BYTES`; they stay in place and are not read
+into the 256 MiB checkpoint budget. A refusal names its reason (budget, symlink,
+special file, file count, depth or time limit) and the offending path, and
+`router deploy --status` predicts the same refusal as `blocker=data-checkpoint`. Local checkpoints are under
 `ROOT/.state-backups/UUID`; remote checkpoints are under the original mounted
 `DATA/.state-backups/UUID`. Manifests contain file checksums and signing-secret
 identity. Checkpoint failure refuses even with `--accept-access-loss`.

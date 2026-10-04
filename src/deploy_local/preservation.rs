@@ -110,7 +110,7 @@ impl Coordinator<'_> {
         let checkpoint = self.preservation_checkpoint_using(&all_records, &source_secret)?;
         println!(
             "{}",
-            json!({"schema":"link-assistant-router/preservation/v1","status":"baseline","catalogs":catalogs,"checkpoint":checkpoint,"checkpoint_scope":"logical token state, encrypted static provider configuration and registered request/project/session files; individual-file/export boundaries","credential_source":"shared-original-directory","credentials_copied":false,"profiles_projects_sessions":"external client homes remain outside deployment mutation scope","rollback_scope":"previous backend and relay; offline additive/replacement checkpoint restore; OAuth is never replayed"})
+            json!({"schema":"link-assistant-router/preservation/v1","status":"baseline","catalogs":catalogs,"checkpoint":checkpoint,"checkpoint_scope":"logical token state, encrypted static provider configuration and registered project/session files (request logs stay in place); individual-file/export boundaries","credential_source":"shared-original-directory","credentials_copied":false,"profiles_projects_sessions":"external client homes remain outside deployment mutation scope","rollback_scope":"previous backend and relay; offline additive/replacement checkpoint restore; OAuth is never replayed"})
         );
         Ok(Baseline { records, catalogs })
     }
@@ -127,16 +127,26 @@ impl Coordinator<'_> {
         records: &[TokenRecord],
         source_secret: &str,
     ) -> Result<Option<std::path::PathBuf>, String> {
-        super::data_backup::capture(self.root, records, source_secret).map_or_else(|_| {
-            println!("{}", json!({"schema":"link-assistant-router/preservation/v1","status":"refused","reason":"recoverable non-OAuth data checkpoint failed; no candidate started","oauth_copied":false}));
-            Err("recoverable non-OAuth data checkpoint failed; provider access-loss permission does not authorize losing state".into())
-        }, |path| {
-            println!(
-                "{}",
-                json!({"schema":"link-assistant-router/preservation/v1","status":"data-checkpoint","checkpoint":path,"oauth_copied":false,"global_atomic_snapshot":false})
-            );
-            Ok(Some(path))
-        })
+        match super::data_backup::capture(self.root, records, source_secret) {
+            Ok(path) => {
+                println!(
+                    "{}",
+                    json!({"schema":"link-assistant-router/preservation/v1","status":"data-checkpoint","checkpoint":path,"oauth_copied":false,"global_atomic_snapshot":false})
+                );
+                Ok(Some(path))
+            }
+            Err(error) => {
+                // Keep the cause: an operator cannot act on "failed" (issue #658).
+                let reason = super::data_backup::checkpoint_remedy(&error);
+                println!(
+                    "{}",
+                    json!({"schema":"link-assistant-router/preservation/v1","status":"refused","blocker":"data-checkpoint","reason":format!("{reason}; no candidate started"),"oauth_copied":false})
+                );
+                Err(format!(
+                    "{reason}; provider access-loss permission does not authorize losing state"
+                ))
+            }
+        }
     }
 
     pub(super) fn preservation_catalogs(

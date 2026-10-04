@@ -137,10 +137,16 @@ fn explicit_access_loss_permission_is_separate_from_connection_force() {
 fn failed_candidate_retains_a_noncredential_checkpoint() {
     let root = tempfile::tempdir().unwrap();
     let runner = installed(root.path());
-    std::fs::create_dir_all(root.path().join("data/requests/session")).unwrap();
+    std::fs::create_dir_all(root.path().join("data/sessions/session")).unwrap();
     std::fs::write(
-        root.path().join("data/requests/session/requests.lino"),
+        root.path().join("data/sessions/session/requests.lino"),
         b"historical request",
+    )
+    .unwrap();
+    std::fs::create_dir_all(root.path().join("data/requests/log")).unwrap();
+    std::fs::write(
+        root.path().join("data/requests/log/requests.lino"),
+        b"request log",
     )
     .unwrap();
     std::fs::write(
@@ -158,12 +164,15 @@ fn failed_candidate_retains_a_noncredential_checkpoint() {
         .unwrap()
         .path();
     let manifest = std::fs::read_to_string(backup.join("manifest.json")).unwrap();
-    assert!(manifest.contains("requests/session/requests.lino"));
+    assert!(manifest.contains("sessions/session/requests.lino"));
     assert!(!manifest.contains("rotating-credential-do-not-copy"));
     assert_eq!(
-        std::fs::read(backup.join("requests/session/requests.lino")).unwrap(),
+        std::fs::read(backup.join("sessions/session/requests.lino")).unwrap(),
         b"historical request"
     );
+    // Request logs are append-only history and stay where they are (#658).
+    assert!(!manifest.contains("requests/log/requests.lino"));
+    assert!(!backup.join("requests").exists());
     assert!(!backup.join("credentials").exists());
     assert!(backup.join("tokens.json").exists());
 }
@@ -316,7 +325,7 @@ fn access_loss_permission_cannot_authorize_a_failed_data_checkpoint() {
         update
             .deploy(&update.existing().unwrap())
             .unwrap_err()
-            .contains("checkpoint failed")
+            .contains("checkpoint failed: checkpoint refuses a symlink in recoverable state at ")
     );
     assert!(
         !runner
