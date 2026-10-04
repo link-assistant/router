@@ -16,11 +16,17 @@ use parse::parse_catalog;
 use parse::{next_catalog_cursor, parse_catalog_records, provider_protocols};
 #[path = "model_catalog_errors.rs"]
 mod errors;
+#[path = "model_catalog_persistence.rs"]
+mod persistence;
 #[path = "model_catalog_selector.rs"]
 mod selector;
+#[path = "model_catalog_startup.rs"]
+mod startup;
 #[cfg(test)]
 use errors::resource_error_code;
 pub use errors::{is_credential_rejection, is_permission_refusal};
+use persistence::{invalidation_path, load_persisted_catalogs, secure_directory};
+pub use startup::{INITIAL_REFRESH_TIMEOUT, refresh_catalogs_from_startup};
 
 /// Provider-catalog verdict shared by status reporting and credential promotion.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -107,6 +113,13 @@ pub struct CatalogStatus {
     /// retained across a credential failure for diagnostics, but is not
     /// exposed for routing while this is false.
     pub credential_healthy: bool,
+    /// Whether this process is still waiting for its first authenticated
+    /// refresh of a catalog it only knows from disk or from before an
+    /// invalidation. Such a catalog is not routable, but nothing has failed:
+    /// health reports it as starting, never degraded (issue #665). Never
+    /// persisted — a restart sets it again.
+    #[serde(skip)]
+    pub awaiting_refresh: bool,
 }
 
 impl CatalogStatus {
@@ -139,6 +152,15 @@ impl CatalogStatus {
     #[must_use]
     pub const fn is_degraded(&self) -> bool {
         !self.discovered || !self.credential_healthy
+    }
+
+    /// Whether no refresh has decided this account yet: nothing observed in
+    /// this process, or a retained catalog awaiting its first authenticated
+    /// refresh (issue #665).
+    #[must_use]
+    pub const fn is_pending(&self) -> bool {
+        self.awaiting_refresh
+            || (!self.discovered && self.last_error.is_none() && !self.credential_healthy)
     }
 }
 
@@ -210,6 +232,7 @@ impl ModelCatalogCache {
         for status in entries.values_mut() {
             if status.discovered {
                 status.credential_healthy = false;
+                status.awaiting_refresh = true;
                 status.last_error =
                     Some("awaiting authenticated catalog refresh after router restart".to_string());
             }
@@ -332,6 +355,24 @@ impl ModelCatalogCache {
             return true;
         };
         first.is_degraded() && matching.all(CatalogStatus::is_degraded)
+    }
+
+    /// Whether `provider` has no usable catalog *yet*, without any account
+    /// having failed: never observed in this process, or every account still
+    /// awaiting its first refresh. Reported as pending, not degraded, so a
+    /// healthy subscription is not announced as broken while Router starts
+    /// (issue #665).
+    #[must_use]
+    pub fn provider_is_pending(&self, provider: SubscriptionProvider) -> bool {
+        let entries = self
+            .entries
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        entries
+            .iter()
+            .filter(|((entry_provider, _), _)| *entry_provider == provider)
+            .map(|((_, account), status)| self.routable_status(provider, account, status))
+            .all(|status| status.is_pending())
     }
 
     /// Whether any account has catalog or failure evidence for `provider`.
@@ -479,6 +520,7 @@ impl ModelCatalogCache {
                 last_error: None,
                 discovered: true,
                 credential_healthy: true,
+                awaiting_refresh: false,
             },
         );
         drop(entries);
@@ -518,6 +560,8 @@ impl ModelCatalogCache {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let entry = entries.entry((provider, account.to_string())).or_default();
         entry.last_error = Some(error.to_string());
+        // A refresh has now decided this account, even though it failed.
+        entry.awaiting_refresh = false;
         if credential_rejected {
             entry.credential_healthy = false;
         }
@@ -533,6 +577,9 @@ impl ModelCatalogCache {
     ) -> CatalogStatus {
         let mut status = status.clone();
         if self.is_invalidated(provider, router_account) {
+            // Pending until the next refresh decides it, unless a refresh has
+            // already failed since.
+            status.awaiting_refresh |= status.last_error.is_none();
             status.credential_healthy = false;
             status.last_error =
                 Some("authorization changed; awaiting authenticated catalog refresh".to_string());
@@ -600,53 +647,6 @@ impl ModelCatalogCache {
         }
         true
     }
-}
-
-fn load_persisted_catalogs(
-    path: &Path,
-) -> Result<HashMap<(SubscriptionProvider, String), CatalogStatus>, String> {
-    let bytes = match std::fs::read(path) {
-        Ok(bytes) => bytes,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(HashMap::new()),
-        Err(error) => return Err(error.to_string()),
-    };
-    let persisted: PersistedCatalogs =
-        serde_json::from_slice(&bytes).map_err(|error| error.to_string())?;
-    if persisted.version != PERSISTED_CATALOG_VERSION {
-        return Err(format!(
-            "unsupported persisted catalog version {}",
-            persisted.version
-        ));
-    }
-    Ok(persisted
-        .entries
-        .into_iter()
-        .map(|entry| ((entry.provider, entry.router_account), entry.status))
-        .collect())
-}
-
-fn invalidation_path(
-    directory: &Path,
-    provider: SubscriptionProvider,
-    router_account: &str,
-) -> PathBuf {
-    use sha2::Digest as _;
-    let digest = sha2::Sha256::digest(format!("{provider}\0{router_account}").as_bytes());
-    directory.join(format!(
-        "{}-{}.invalidated",
-        provider.as_str(),
-        hex::encode(digest)
-    ))
-}
-
-fn secure_directory(path: &Path) -> std::io::Result<()> {
-    std::fs::create_dir_all(path)?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))?;
-    }
-    Ok(())
 }
 
 /// Fetch every currently healthy credential and update the cache independently.

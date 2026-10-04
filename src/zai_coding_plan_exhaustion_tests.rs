@@ -276,3 +276,73 @@ async fn a_listed_model_without_client_evidence_is_forbidden_not_unknown() {
     );
     handle.abort();
 }
+
+/// Issue #664: the marking must survive the projections of the routes clients
+/// actually read — `/api/models` (the `router with` wrapper) and the native
+/// service catalogs — and reach the wrapper's parsed rows.
+#[tokio::test]
+async fn the_unavailable_marking_reaches_every_projected_catalog_and_the_wrapper() {
+    async fn catalog(response: axum::response::Response) -> serde_json::Value {
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        serde_json::from_slice(&bytes).unwrap()
+    }
+    let (base_url, _, handle) = switchable_upstream().await;
+    let data = tempfile::tempdir().unwrap();
+    let mut state = crate::model_routing::tests::auto_state(Vec::new(), data.path());
+    install_provider(&mut state, &base_url, &[]);
+    state.upstream_provider = crate::config::UpstreamProvider::Auto;
+    state.provider_store.record_exhaustion(
+        "z-ai-personal",
+        crate::zai_upstream_error::classify(EXHAUSTED.as_bytes()).unwrap(),
+    );
+
+    let aggregate = catalog(
+        crate::model_routing::aggregate_models(
+            axum::extract::State(state.clone()),
+            axum::extract::OriginalUri("/api/models".parse().unwrap()),
+            client_headers(&state, ClientKind::ClaudeCode, "owner-a"),
+        )
+        .await,
+    )
+    .await;
+    let anthropic = catalog(
+        crate::model_routing::models(
+            axum::extract::State(state.clone()),
+            axum::extract::OriginalUri(
+                "/api/services/anthropic/v1/models?limit=1000"
+                    .parse()
+                    .unwrap(),
+            ),
+            client_headers(&state, ClientKind::ClaudeCode, "owner-a"),
+        )
+        .await,
+    )
+    .await;
+    for (surface, rows) in [
+        ("/api/models", &aggregate["data"]),
+        ("anthropic", &anthropic["data"]),
+    ] {
+        let glm = rows
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["id"] == "glm-5.3")
+            .unwrap_or_else(|| panic!("{surface} lists the exhausted row: {rows}"));
+        assert_eq!(glm["router_available"], false, "{surface}: {glm}");
+        let reason = glm["router_unavailable_reason"]
+            .as_str()
+            .unwrap_or_default();
+        assert!(reason.contains("code 1113"), "{surface}: {glm}");
+        assert!(!reason.ends_with('.'), "{surface}: {reason}");
+    }
+
+    let parsed =
+        crate::clients::parse_router_models(aggregate["data"].as_array().unwrap()).unwrap();
+    let glm = parsed.iter().find(|model| model.id == "glm-5.3").unwrap();
+    assert!(
+        !glm.is_servable(),
+        "the wrapper sees the row as unavailable"
+    );
+    handle.abort();
+}

@@ -134,15 +134,25 @@ from a launchd agent.
 ## What happens during an update
 
 Before changing serving state, the coordinator reports the old and candidate
-identity, established relay connection count, credential ownership, and three
+identity, established relay connection count, credential ownership, and five
 run-credential classes:
 
 - `live-pinned`: a managed wrapper has an unexpired renewable lease and an
   exact-model policy.
 - `stale-pinned`: the exact-model policy remains durable, but no current wrapper
   lease proves that the process is alive. This does not block an update.
-- `legacy-unpinned`: the record predates exact-model policy. It is never treated
-  as protected and blocks a normal update.
+- `live-unpinned`: a wrapper started without `--model`, which keeps the
+  client's own model selection, still renews its lease.
+- `stale-unpinned`: the same run once its lease has expired, because the wrapper
+  exited. Like `stale-pinned`, it does not block an update.
+- `legacy-unpinned`: the record has neither an exact-model policy nor a run
+  lease, so it predates both. It is never treated as protected and blocks a
+  normal update.
+
+A host-mode replacement closes the listener, so it also refuses while a run is
+`live-pinned` or `live-unpinned`, as a `live-run` that would be interrupted. A
+`legacy-unpinned` run is reported as an `unleased-run`: nothing proves it is
+still running, and nothing proves it has exited.
 
 The candidate mounts the same durable Router data as the old backend. OAuth
 refresh, login, and import use the shared per-credential transaction locks, so

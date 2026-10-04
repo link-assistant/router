@@ -23,7 +23,7 @@ fn default_image() -> String {
 }
 
 /// Where a local deployment keeps its credential and data directories.
-fn default_root(data_dir: &Path) -> PathBuf {
+pub fn default_root(data_dir: &Path) -> PathBuf {
     data_dir.join("deploy")
 }
 

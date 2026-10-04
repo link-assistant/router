@@ -36,6 +36,7 @@ pub(crate) use snapshot::{
 #[path = "model_routing_catalog_snapshot.rs"]
 mod catalog_snapshot;
 pub(crate) use catalog_snapshot::ConfiguredCatalogSnapshot;
+use catalog_snapshot::merge_configured_degradation;
 
 #[path = "model_routing_native_catalog.rs"]
 mod native_catalog;
@@ -431,7 +432,9 @@ fn account_health(
             ),
             Some("the credential was rejected upstream and needs re-authentication"),
         )
-    } else if !account_matches {
+    } else if !account_matches || status.awaiting_refresh {
+        // A catalog retained from before a restart or an invalidation has not
+        // been refreshed yet; nothing has failed (issue #665).
         (ProviderHealthState::Starting, None, None)
     } else if status.discovered && !status.credential_healthy {
         (
@@ -603,10 +606,21 @@ fn model_catalog_with(
     // A provider is degraded when it has never discovered a live catalog or its
     // credential has stopped working. There is no bundled fallback to fall back
     // to any more (issue #192), so this reports missing coverage rather than
-    // stale coverage.
+    // stale coverage. A provider no refresh has decided yet is starting, not
+    // degraded: a healthy subscription must not be announced as broken in the
+    // seconds after Router starts (issue #665).
+    let starting = providers
+        .iter()
+        .filter(|provider| {
+            catalogs.provider_is_degraded(**provider) && catalogs.provider_is_pending(**provider)
+        })
+        .map(|provider| provider.as_str())
+        .collect::<Vec<_>>();
     let degraded = providers
         .iter()
-        .filter(|provider| catalogs.provider_is_degraded(**provider))
+        .filter(|provider| {
+            catalogs.provider_is_degraded(**provider) && !catalogs.provider_is_pending(**provider)
+        })
         .map(|provider| provider.as_str())
         .collect::<Vec<_>>();
     let healthy_providers = providers
@@ -657,6 +671,7 @@ fn model_catalog_with(
         // longer ships a fallback catalog, so it is always false.
         "using_fallback": false,
         "degraded_providers": degraded,
+        "starting_providers": starting,
         "healthy_providers": healthy_providers,
         "catalog_conflicts": conflicts,
         "catalog_conflict_candidates": conflict_candidates,
@@ -689,34 +704,6 @@ pub async fn pinned_model_catalog(state: &AppState, provider: SubscriptionProvid
     };
     merge_configured_degradation(&health, &mut catalog);
     catalog
-}
-
-/// Add every configured-but-unusable subscription to `degraded_providers`.
-///
-/// Reported with a fixed public reason, so a client can distinguish degradation
-/// without receiving a credential path or upstream response body (issue #318).
-fn merge_configured_degradation(health: &[ProviderHealthReport], catalog: &mut Value) {
-    let mut degraded = catalog
-        .get("degraded_providers")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    let mut reasons = serde_json::Map::new();
-    for entry in health.iter().filter(|entry| entry.is_degraded()) {
-        let name = Value::from(entry.provider.as_str());
-        if !degraded.contains(&name) {
-            degraded.push(name);
-        }
-        // The summary, not the reason: service model catalogs answer client tokens,
-        // and a credential path is not a client's business.
-        if let Some(summary) = entry.summary {
-            reasons.insert(entry.provider.as_str().to_string(), Value::from(summary));
-        }
-    }
-    if let Some(object) = catalog.as_object_mut() {
-        object.insert("degraded_providers".into(), Value::Array(degraded));
-        object.insert("degraded_reasons".into(), Value::Object(reasons));
-    }
 }
 
 fn principal_catalog_records(
@@ -956,6 +943,9 @@ mod recovery_tests;
 #[cfg(test)]
 #[path = "model_routing_snapshot_tests.rs"]
 mod snapshot_tests;
+#[cfg(test)]
+#[path = "model_routing_startup_tests.rs"]
+mod startup_tests;
 #[cfg(test)]
 #[path = "model_routing_tests.rs"]
 pub(crate) mod tests;

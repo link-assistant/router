@@ -44,7 +44,7 @@ async fn state_with_zai_health(
     (state, data, handle)
 }
 
-async fn subscription_report(state: AppState) -> (StatusCode, Value) {
+pub(super) async fn subscription_report(state: AppState) -> (StatusCode, Value) {
     let app = axum::Router::new()
         .route(
             "/health/subscriptions",

@@ -507,14 +507,14 @@ async fn run_server(
     if let Some(router) = state.account_router.as_ref() {
         catalog_readers.extend(router.subscription_readers());
     }
-    let catalog_refresh = tokio::spawn(
-        link_assistant_router::model_catalog::refresh_catalogs_for_accounts_forever(
-            state.client.clone(),
-            catalog_readers,
-            Arc::clone(&state.subscription_cache),
-            Arc::clone(&state.model_catalogs),
-        ),
-    );
+    let catalog_refresh = link_assistant_router::model_catalog::refresh_catalogs_from_startup(
+        state.client.clone(),
+        catalog_readers,
+        Arc::clone(&state.subscription_cache),
+        Arc::clone(&state.model_catalogs),
+        link_assistant_router::model_catalog::INITIAL_REFRESH_TIMEOUT,
+    )
+    .await;
 
     // Opt-in, and announced: a deployment that is recording every client
     // exchange to a file, or answering from one instead of a provider, must say

@@ -189,7 +189,9 @@ again:
   reason.
 - `/api/models` keeps the GLM rows, since z.ai still lists them, but marks
   each one `router_available: false` with `router_unavailable_reason`, and
-  lists z.ai under `degraded_providers`.
+  lists z.ai under `degraded_providers`. The native catalogs
+  (`/api/services/anthropic/v1/models`, `/api/services/openai/v1/models` and
+  the Codex catalog) carry the same two fields.
 - `router with claude` labels those rows `(unavailable)` in its `/model`
   picker. If the saved, explicit or fallback model is one of them, it prints a
   warning before launch naming the reason and a servable alternative. A fresh
@@ -202,6 +204,12 @@ a restart. `router doctor` and
 account, for example
 `provider_exhausted provider=z-ai-personal upstream_code=1113 observed_at_unix=… reason="…"`;
 `router doctor` then exits 1.
+
+`router doctor` inspects both `DATA_DIR` and the data directory of the default
+deploy root (`DATA_DIR/deploy/data`) and names each directory it read, for
+example `provider exhaustion     : none recorded in /srv/router/data`.
+A deployment started with `--root DIR` keeps its state in `DIR/data`; run
+`DATA_DIR=DIR/data router doctor` to inspect it.
 
 A request whose headers do not prove the token's bound client is never sent to
 z.ai. When that client is one the plan permits and the cached z.ai catalog

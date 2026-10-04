@@ -43,6 +43,7 @@ pub(super) fn project_catalog(
     for field in [
         "model_policy",
         "healthy_providers",
+        "starting_providers",
         "degraded_providers",
         "degraded_reasons",
         "catalog_conflicts",
@@ -89,6 +90,7 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
             projected.insert(field.into(), value.clone());
         }
     }
+    super::native_catalog::copy_availability(raw, &mut projected);
     if let Some(fetched) = raw
         .get("router_fetched_at")
         .filter(|value| value.is_number() || value.is_string())

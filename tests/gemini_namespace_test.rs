@@ -451,6 +451,7 @@ async fn gemini_list_models_matches_the_union_of_connected_subscriptions() {
         "router_fetched_at",
         "using_fallback",
         "healthy_providers",
+        "starting_providers",
         "degraded_providers",
         "degraded_reasons",
         "catalog_conflicts",

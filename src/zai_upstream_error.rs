@@ -16,6 +16,7 @@
 //!
 //! Codes from <https://docs.z.ai/api-reference/api-code>.
 
+use std::fmt::Write as _;
 use std::time::SystemTime;
 
 use axum::http::{HeaderValue, StatusCode};
@@ -51,11 +52,15 @@ pub struct ZaiExhaustion {
 
 impl ZaiExhaustion {
     /// The operator-facing sentence every surface uses.
+    ///
+    /// z.ai's reason usually ends with its own full stop; it is trimmed so the
+    /// summary can be followed by another sentence without `..` (issue #664).
     #[must_use]
     pub fn summary(&self) -> String {
         format!(
             "z.ai Coding Plan cannot serve requests (code {}): {}",
-            self.code, self.reason
+            self.code,
+            self.reason.trim_end().trim_end_matches(['.', '。'])
         )
     }
 
@@ -356,6 +361,40 @@ pub fn status_report(data_dir: &std::path::Path) -> String {
     lines.into_iter().map(|line| line + "\n").collect()
 }
 
+/// The exhaustion section of `router doctor`, and whether any was recorded.
+///
+/// `doctor` runs as a separate process with its own `DATA_DIR`, while a local
+/// deployment keeps its state under `<root>/data`. It reported nothing for an
+/// exhausted plan that a host deployment had recorded (issue #664), so it now
+/// inspects each candidate directory and names every one it read.
+#[must_use]
+pub fn doctor_report(data_dirs: &[std::path::PathBuf]) -> (String, bool) {
+    let mut report = String::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut found = false;
+    for data_dir in data_dirs.iter().filter(|dir| seen.insert(dir.as_path())) {
+        let lines = status_report(data_dir);
+        let result = if lines.is_empty() {
+            "none recorded"
+        } else {
+            found = true;
+            "recorded"
+        };
+        let _ = write!(
+            report,
+            "provider exhaustion     : {result} in {}\n{lines}",
+            data_dir.display()
+        );
+    }
+    if !found {
+        report.push_str(
+            "note: a deployment started with --root DIR records it in DIR/data; run doctor \
+             with DATA_DIR=DIR/data to inspect that deployment\n",
+        );
+    }
+    (report, found)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -412,6 +451,14 @@ mod tests {
         let message = value["error"]["message"].as_str().expect("message");
         assert!(message.contains("code 1113"), "{message}");
         assert!(message.contains("Insufficient balance"), "{message}");
+        assert!(
+            !message.contains(".."),
+            "issue #664 double period: {message}"
+        );
+        assert!(
+            message.contains("Please recharge. Recharge the z.ai plan"),
+            "{message}"
+        );
     }
 
     #[tokio::test]
@@ -450,5 +497,31 @@ mod tests {
         assert_eq!(status_report(data.path()), "");
         let restarted = crate::providers::ProviderStore::open(data.path(), "secret").unwrap();
         assert!(restarted.exhaustion("z-ai").is_none());
+    }
+
+    #[test]
+    fn doctor_names_every_data_dir_it_inspected_and_finds_a_deployment_record() {
+        let own = tempfile::tempdir().unwrap();
+        let deployment = tempfile::tempdir().unwrap();
+        let (report, found) = doctor_report(&[own.path().into(), deployment.path().into()]);
+        assert!(!found, "{report}");
+        assert!(report.contains(&format!("none recorded in {}", own.path().display())));
+        assert!(report.contains("DATA_DIR=DIR/data"), "{report}");
+
+        let store = crate::providers::ProviderStore::open(deployment.path(), "secret").unwrap();
+        store.record_exhaustion("z-ai", classify(EXHAUSTED.as_bytes()).unwrap());
+        let (report, found) = doctor_report(&[
+            own.path().into(),
+            deployment.path().into(),
+            deployment.path().into(),
+        ]);
+        assert!(found, "{report}");
+        assert!(report.contains(&format!("recorded in {}", deployment.path().display())));
+        assert_eq!(
+            report.matches("provider_exhausted provider=z-ai").count(),
+            1,
+            "{report}"
+        );
+        assert!(!report.contains("DATA_DIR=DIR/data"), "{report}");
     }
 }
