@@ -234,10 +234,15 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     );
 
     // A z.ai plan the serving process saw refused as exhausted (issue #657).
-    let exhausted = link_assistant_router::zai_upstream_error::status_report(&config.data_dir);
+    // A local deployment at the default root records it under its own data
+    // directory, not this process's (issue #664).
+    let (exhausted, found) = link_assistant_router::zai_upstream_error::doctor_report(&[
+        config.data_dir.clone(),
+        crate::deploy_cli::default_root(&config.data_dir).join("data"),
+    ]);
     print!("{exhausted}");
 
-    if catalog_error || !exhausted.is_empty() {
+    if catalog_error || found {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

@@ -103,8 +103,12 @@ fn codex_model(raw: &Map<String, Value>, id: &str, priority: usize) -> Map<Strin
         priority,
     )
     .as_object()
+    .map(|model| {
+        let mut model = model.clone();
+        copy_availability(raw, &mut model);
+        model
+    })
     .expect("model-info projection is an object")
-    .clone()
 }
 
 fn deduplicated(
@@ -145,6 +149,7 @@ fn anthropic_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     if let Some(capabilities) = raw.get("capabilities").and_then(Value::as_object) {
         model.insert("capabilities".into(), Value::Object(capabilities.clone()));
     }
+    copy_availability(raw, &mut model);
     model
 }
 
@@ -155,7 +160,25 @@ fn openai_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     ]);
     copy_number(raw, &mut model, "created");
     copy_string(raw, &mut model, "owned_by");
+    copy_availability(raw, &mut model);
     model
+}
+
+/// Keep Router's per-row availability marking through every projection.
+///
+/// A row of an exhausted z.ai plan stays listed but carries
+/// `router_available: false` and the reason (issue #657). The projections
+/// build each row from an allow-list of fields, so without this the marking
+/// never reached `/api/models` or the native service catalogs, and the
+/// `router with` picker label and pre-launch warning never fired (issue #664).
+pub(super) fn copy_availability(source: &Map<String, Value>, target: &mut Map<String, Value>) {
+    if let Some(value) = source
+        .get("router_available")
+        .filter(|value| value.is_boolean())
+    {
+        target.insert("router_available".into(), value.clone());
+    }
+    copy_string(source, target, "router_unavailable_reason");
 }
 
 fn copy_string(source: &Map<String, Value>, target: &mut Map<String, Value>, key: &str) {
