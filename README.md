@@ -697,8 +697,10 @@ contains Router's own request and token counters.
 Consumer catalogs exist only after authenticated discovery for that exact
 account, and are recorded with the account identity, the fetch time and an
 explicit health flag. Before the first discovery a provider advertises nothing;
-the canonical client catalog reports it under `degraded_providers` rather than
-filling the gap from source. The experimental z.ai Coding Plan uses its
+the canonical client catalog reports it under `starting_providers` rather than
+filling the gap from source, and moves it to `degraded_providers` only when a
+refresh fails. Router waits for the first refresh before it accepts
+connections. The experimental z.ai Coding Plan uses its
 authenticated non-inference `/api/anthropic/v1/models` response as its live
 source of truth; no source-code model allowlist filters it. When a credential
 is revoked its last known catalog stays

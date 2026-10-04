@@ -47,6 +47,13 @@ cannot, and why:
 }
 ```
 
+A subscription whose catalog has not been refreshed yet, for example the
+catalog kept from before a restart, is listed under `starting_providers` and
+answers `200`; only a refresh that fails or a rejected credential makes it
+degraded. Router also waits up to 20 seconds for the first refresh of every
+subscription before it accepts connections, so the first `/api/models` a client
+sees already lists the subscription's models.
+
 Only subscriptions this deployment is actually configured for are reported, so
 "claude was never set up here" and "claude is currently unavailable" cannot
 render identically. The same state is scrapeable:

@@ -112,21 +112,32 @@ pub(super) fn opencode_headers(state: &AppState, account: Option<&str>) -> Heade
 }
 
 /// Only live-discovered models are advertised, tagged with their real
-/// owner. An undiscovered provider contributes nothing and is reported as
-/// degraded rather than filled in from source (issue #192).
+/// owner. An undiscovered provider contributes nothing rather than being
+/// filled in from source (issue #192), and is starting, not degraded, until a
+/// refresh decides it (issue #665).
 #[test]
 fn catalog_unions_only_live_discovered_models() {
     let catalogs = ModelCatalogCache::new();
 
-    // Before any discovery the union is empty and both providers degraded.
+    // Before any discovery the union is empty and both providers starting.
     let empty = model_catalog(
         &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
         &catalogs,
     );
     assert_eq!(empty["data"], json!([]));
     assert_eq!(empty["using_fallback"], false);
-    assert_eq!(empty["degraded_providers"], json!(["claude", "codex"]));
+    assert_eq!(empty["starting_providers"], json!(["claude", "codex"]));
+    assert_eq!(empty["degraded_providers"], json!([]));
     assert_eq!(empty["healthy_providers"], json!([]));
+
+    // A refresh that fails is a real degradation.
+    catalogs.record_failure(SubscriptionProvider::Codex, "vendor unavailable", false);
+    let failed = model_catalog(
+        &[SubscriptionProvider::Claude, SubscriptionProvider::Codex],
+        &catalogs,
+    );
+    assert_eq!(failed["starting_providers"], json!(["claude"]));
+    assert_eq!(failed["degraded_providers"], json!(["codex"]));
 
     // Synthetic ids: no real vendor name appears anywhere in this test.
     catalogs.record_success(SubscriptionProvider::Claude, vec!["aurora-2-base".into()]);
@@ -145,6 +156,7 @@ fn catalog_unions_only_live_discovered_models() {
             .any(|m| m["id"] == "borealis-9-ultra" && m["owned_by"] == "openai")
     );
     assert_eq!(catalog["degraded_providers"], json!([]));
+    assert_eq!(catalog["starting_providers"], json!([]));
     assert_eq!(catalog["healthy_providers"], json!(["claude", "codex"]));
 
     let unavailable = model_catalog(&[], &catalogs);

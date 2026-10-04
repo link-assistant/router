@@ -176,6 +176,7 @@ fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
         "model_policy": catalog.get("model_policy").cloned().unwrap_or_else(|| json!({})),
         "health": {
             "healthy_providers": catalog.get("healthy_providers").cloned().unwrap_or_else(|| json!([])),
+            "starting_providers": catalog.get("starting_providers").cloned().unwrap_or_else(|| json!([])),
             "degraded_providers": catalog.get("degraded_providers").cloned().unwrap_or_else(|| json!([])),
             "degraded_reasons": catalog.get("degraded_reasons").cloned().unwrap_or_else(|| json!({})),
         },
