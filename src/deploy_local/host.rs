@@ -553,11 +553,14 @@ impl Coordinator<'_> {
     }
 
     /// One `provider_exhausted` line per z.ai plan the serving process saw
-    /// refused as exhausted (issue #657); nothing when there is none.
+    /// refused as exhausted (issue #657), then one line per pooled account in
+    /// a vendor cooldown or pause (issue #677); nothing when there is none.
     pub(super) fn print_provider_exhaustion(&self) {
+        let data = self.root.join("data");
         print!(
-            "{}",
-            link_assistant_router::zai_upstream_error::status_report(&self.root.join("data"))
+            "{}{}",
+            link_assistant_router::zai_upstream_error::status_report(&data),
+            link_assistant_router::account_limits::status_report(&data)
         );
     }
 }

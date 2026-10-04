@@ -282,6 +282,9 @@ pub struct Config {
     /// Explicit, bounded emergency any-token mode (issue #645). Off unless
     /// `--emergency-accept-any-token` is given.
     pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
+    /// Account-pool failover, threshold pause and warmup interception
+    /// (issues #676, #677). Defaults keep the historical behaviour.
+    pub pool: crate::pool_failover::PoolPolicy,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login API settings (`/api/management/login`).
@@ -576,6 +579,7 @@ impl Config {
             admin_key,
             allow_anonymous_admin,
             emergency_auth: crate::emergency_auth::EmergencyAuthConfig::from_env(),
+            pool: crate::pool_failover::PoolPolicy::from_env(),
             mpp,
             login,
             admin_ui,
@@ -690,6 +694,7 @@ impl Config {
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
             emergency_auth: args.emergency_auth,
+            pool: args.pool,
             mpp: args.mpp,
             login: crate::login::LoginConfig {
                 claude_code_home: PathBuf::from(args.claude_code_home),
@@ -768,6 +773,7 @@ pub struct BuildArgs<'a> {
     pub admin_key: Option<String>,
     pub allow_anonymous_admin: bool,
     pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
+    pub pool: crate::pool_failover::PoolPolicy,
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login settings. `claude_code_home` is overwritten by
     /// [`Config::build`] so the login flow always writes where the router reads.

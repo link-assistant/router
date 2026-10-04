@@ -242,6 +242,16 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     ]);
     print!("{exhausted}");
 
+    // Pool failover and vendor rate-limit state (issues #676, #677). A cooling
+    // or paused account is the pool working as configured, not a fault, so it
+    // does not change the exit code.
+    print!("{}", config.pool.doctor_lines());
+    let (limits, _) = link_assistant_router::account_limits::doctor_report(&[
+        config.data_dir.clone(),
+        crate::deploy_cli::default_root(&config.data_dir).join("data"),
+    ]);
+    print!("{limits}");
+
     if catalog_error || found {
         ExitCode::from(1)
     } else {

@@ -221,9 +221,21 @@ async fn administrative_provider_usage(
                 ProbeResult::Usage(usage) => Some(*usage),
                 ProbeResult::NotConfigured => None,
             };
+            if let (Some(router), Some(sample)) = (state.account_router.as_ref(), &sample) {
+                // A fresh reading drives the `ACCOUNT_PAUSE_AT_PERCENT`
+                // threshold the same way response headers do (issue #677).
+                router.observe_usage_windows(&principal, &limit_windows(sample));
+            }
             samples.push(sample);
         }
-        return Some(aggregate_pool_usage(provider, configured, &samples));
+        let mut usage = aggregate_pool_usage(provider, configured, &samples);
+        if let (Some(router), Some(pool)) = (state.account_router.as_ref(), usage.pool.as_mut()) {
+            let counts = router.limit_counts();
+            pool.cooling_down_accounts = Some(counts.cooling_down);
+            pool.paused_accounts = Some(counts.paused);
+            pool.model_cooldowns = Some(counts.model_cooldowns);
+        }
+        return Some(usage);
     }
 
     match cache::cached_or_probe(
@@ -237,6 +249,30 @@ async fn administrative_provider_usage(
         ProbeResult::Usage(usage) => Some(*usage),
         ProbeResult::NotConfigured => None,
     }
+}
+
+/// One account's usage windows in the router's rate-limit vocabulary.
+fn limit_windows(usage: &SubscriptionUsage) -> Vec<crate::account_limits::WindowLimit> {
+    if usage.state != UsageState::Available {
+        return Vec::new();
+    }
+    usage
+        .windows
+        .iter()
+        .map(|window| crate::account_limits::WindowLimit {
+            name: window.name.clone(),
+            status: None,
+            reset_unix: window
+                .resets_at
+                .as_deref()
+                .and_then(|reset| chrono::DateTime::parse_from_rfc3339(reset).ok())
+                .and_then(|reset| u64::try_from(reset.timestamp()).ok()),
+            utilization: window
+                .used_percentage
+                .or_else(|| window.remaining_percentage.map(|left| 100.0 - left))
+                .map(|used| used / 100.0),
+        })
+        .collect()
 }
 
 #[derive(Default)]
@@ -320,6 +356,9 @@ fn aggregate_pool_usage(
         configured_accounts: configured,
         contributing_accounts: contributing,
         unavailable_accounts: configured.saturating_sub(contributing),
+        cooling_down_accounts: None,
+        paused_accounts: None,
+        model_cooldowns: None,
     });
     usage.windows = windows;
     usage

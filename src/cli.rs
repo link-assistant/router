@@ -33,6 +33,7 @@ mod deploy_args;
 mod emergency_args;
 mod log_ops;
 mod model_ops;
+mod pool_args;
 mod store_ops;
 mod targets;
 mod value_parsers;
@@ -47,6 +48,7 @@ pub use self::deploy_args::{ClaudeCredentials, DeployArgs, DeployMode, UsageArgs
 pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
 pub use self::model_ops::ModelOp;
+pub use self::pool_args::PoolArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
@@ -580,6 +582,10 @@ pub struct Cli {
     #[command(flatten)]
     pub emergency: EmergencyArgs,
 
+    /// Account-pool failover, threshold pause and warmup (issues #676, #677).
+    #[command(flatten)]
+    pub pool: PoolArgs,
+
     /// Telegram Bot API token. Unset keeps the Telegram admin channel off;
     /// setting it starts an outbound long-polling bot that accepts admin
     /// commands in private chats only.
@@ -939,6 +945,7 @@ impl Cli {
             )?,
             allow_anonymous_admin: self.allow_anonymous_admin,
             emergency_auth: self.emergency.config(),
+            pool: self.pool.policy(),
             chat_admin: crate::config::chat_admin_config(
                 self.telegram_bot_token.clone(),
                 self.vk_bot_token.clone(),

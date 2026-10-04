@@ -60,6 +60,12 @@ pub fn request_routing_context(
     RoutingContext {
         session_key: header_session.or(body_session),
         pinned_account,
+        model: body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .filter(|model| !model.is_empty())
+            .map(ToString::to_string),
+        exclude: Vec::new(),
     }
 }
 

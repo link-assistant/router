@@ -4,6 +4,7 @@
 //! supports Claude MAX OAuth sessions, and provides multi-tenant
 //! access via custom-issued tokens.
 
+pub mod account_limits;
 pub mod accounts;
 pub mod accounts_cli;
 pub mod activitypub;
@@ -105,6 +106,7 @@ pub mod on_demand_cli;
 pub mod openai;
 pub mod output_limit;
 pub mod platform_keychain;
+pub mod pool_failover;
 pub mod primary_listener;
 pub mod provider_acceptance;
 mod provider_config;
@@ -158,6 +160,7 @@ pub mod usage;
 pub mod vendor_cli_refresh;
 pub mod verification_client;
 pub mod vk;
+pub mod warmup;
 pub mod with_command;
 pub mod zai_coding_plan;
 pub mod zai_upstream_error;

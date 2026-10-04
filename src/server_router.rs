@@ -164,6 +164,14 @@ pub(crate) fn management_routes(
                 get(proxy::accounts_endpoint),
             )
             .route(
+                route_template(RouteId::AccountPause),
+                post(crate::monitoring_api::account_pause_endpoint),
+            )
+            .route(
+                route_template(RouteId::AccountResume),
+                post(crate::monitoring_api::account_resume_endpoint),
+            )
+            .route(
                 route_template(RouteId::Metrics),
                 get(proxy::metrics_endpoint),
             );

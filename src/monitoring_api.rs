@@ -1,6 +1,6 @@
 //! Monitoring endpoints served on the proxy port.
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 
@@ -35,6 +35,9 @@ pub async fn metrics_endpoint(State(state): State<AppState>) -> impl IntoRespons
     body.push_str(&crate::metrics::render_subscription_health(&gauges));
     body.push_str(&state.token_manager.diagnostics().render_prometheus());
     body.push_str(&state.token_manager.emergency().render_prometheus());
+    if let Some(router) = state.account_router.as_ref() {
+        body.push_str(&router.limit_counts().render_prometheus());
+    }
     (
         StatusCode::OK,
         [("content-type", "text/plain; version=0.0.4")],
@@ -82,6 +85,12 @@ pub async fn accounts_endpoint(
                 "remaining_requests": health.remaining_requests,
                 "last_error": health.last_error,
                 "cooldown_remaining_seconds": health.cooldown_remaining.map(|d| d.as_secs()),
+                "cooldown_reason": health.limits.cooldown_reason,
+                "cooldown_until_unix": health.limits.cooldown_until_unix,
+                "model_cooldowns": health.limits.model_cooldowns,
+                "paused": health.limits.paused_at(crate::account_limits::now_unix()),
+                "pause": health.limits.pause,
+                "windows": health.limits.windows,
             })
         })
         .collect();
@@ -90,6 +99,74 @@ pub async fn accounts_endpoint(
         axum::Json(serde_json::json!({"accounts": snap})),
     )
         .into_response()
+}
+
+/// `POST /api/management/accounts/{name}/pause` — take a pooled account out of
+/// rotation until it is resumed (issue #677).
+///
+/// An optional JSON body may carry
+/// `until_unix` (lift on its own then) and `reason`. Admin-only.
+pub async fn account_pause_endpoint(
+    State(state): State<AppState>,
+    Path(name): Path<String>,
+    headers: HeaderMap,
+    body: Option<axum::Json<serde_json::Value>>,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return admin_required();
+    }
+    let Some(router) = state.account_router.as_ref() else {
+        return no_pool();
+    };
+    let body = body.map(|axum::Json(body)| body).unwrap_or_default();
+    let until_unix = body.get("until_unix").and_then(serde_json::Value::as_u64);
+    let reason = body
+        .get("reason")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("paused by an operator");
+    match router.pause(&name, until_unix, reason) {
+        Ok(()) => (
+            StatusCode::OK,
+            axum::Json(
+                serde_json::json!({"account": name, "paused": true, "until_unix": until_unix}),
+            ),
+        )
+            .into_response(),
+        Err(error) => error_response(StatusCode::NOT_FOUND, "not_found_error", &error.to_string()),
+    }
+}
+
+/// `POST /api/management/accounts/{name}/resume` — lift a manual or threshold
+/// pause (issue #677). Admin-only.
+pub async fn account_resume_endpoint(
+    State(state): State<AppState>,
+    Path(name): Path<String>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    if !is_admin_authorised(&state, &headers) {
+        return admin_required();
+    }
+    let Some(router) = state.account_router.as_ref() else {
+        return no_pool();
+    };
+    match router.resume(&name) {
+        Ok(was_paused) => (
+            StatusCode::OK,
+            axum::Json(
+                serde_json::json!({"account": name, "paused": false, "was_paused": was_paused}),
+            ),
+        )
+            .into_response(),
+        Err(error) => error_response(StatusCode::NOT_FOUND, "not_found_error", &error.to_string()),
+    }
+}
+
+fn no_pool() -> Response {
+    error_response(
+        StatusCode::CONFLICT,
+        "invalid_request_error",
+        "no account pool is configured",
+    )
 }
 
 /// `GET /api/management/auth/status` — provider-verified credential status.

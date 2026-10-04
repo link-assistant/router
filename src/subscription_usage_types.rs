@@ -114,6 +114,16 @@ pub struct UsagePool {
     pub configured_accounts: usize,
     pub contributing_accounts: usize,
     pub unavailable_accounts: usize,
+    /// Accounts the router holds out of rotation on a vendor rate limit
+    /// (issue #677). Absent when not reported.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cooling_down_accounts: Option<usize>,
+    /// Accounts paused by an operator or by `ACCOUNT_PAUSE_AT_PERCENT`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub paused_accounts: Option<usize>,
+    /// Per-model cooldowns across the pool, where only one model was limited.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_cooldowns: Option<usize>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

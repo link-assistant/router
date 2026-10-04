@@ -35,7 +35,6 @@ use axum::response::{IntoResponse, Response};
 use futures_util::StreamExt;
 use std::collections::{BTreeMap, HashSet};
 
-use crate::accounts::RoutingContext;
 pub(crate) use crate::api_error::error_response;
 use crate::api_error::malformed_json_response;
 pub use crate::app_state::AppState;
@@ -45,10 +44,8 @@ pub use crate::monitoring_api::{
     accounts_endpoint, credential_status_endpoint, metrics_endpoint, usage_endpoint,
 };
 use crate::openai;
-use crate::request_routing::ResolvedUpstreamCredential;
 pub(crate) use crate::request_routing::{request_routing_context, retry_after_duration};
 use crate::responses;
-use crate::subscription::SubscriptionProvider;
 
 /// The canonical Anthropic service path prefix used by the proxy.
 pub const API_PREFIX: &str = "/api/services/anthropic/";
@@ -628,6 +625,9 @@ async fn proxy_handler_with_subscription(
             Ok(body) => body,
             Err(error) => return malformed_json_response(&error.to_string()),
         };
+        if let Some(response) = intercept_warmup(&state, &path, &body) {
+            return response;
+        }
         return crate::anthropic_bridge::handle_anthropic_surface_routed(
             &state,
             &incoming_headers,
@@ -659,6 +659,9 @@ async fn proxy_handler_with_subscription(
         Ok(body) => body,
         Err(error) => return malformed_json_response(&error.to_string()),
     };
+    if let Some(response) = intercept_warmup(&state, &path, &routing_body) {
+        return response;
+    }
 
     // Enforce the per-token budgets (max_requests, rate limit, and the token
     // spend cap). The spend cap reserves this request's declared output budget
@@ -700,86 +703,36 @@ async fn proxy_handler_with_subscription(
     };
     let routing_context = request_routing_context(&incoming_headers, &routing_body, pinned_account);
 
-    // Get the real OAuth token (multi-account aware).
-    let resolved =
-        match resolve_upstream_credentials(&state, &routing_context, subscription.as_ref()).await {
-            Ok(resolved) => resolved,
-            Err(e) => {
-                tracing::error!("Failed to resolve upstream credentials: {e}");
-                return error_response(
-                    StatusCode::BAD_GATEWAY,
-                    "api_error",
-                    "Upstream authentication unavailable",
-                );
-            }
-        };
-    let oauth_token = resolved.access_token;
-    let selected_account = resolved.account;
-    let evidence_token = resolved.evidence_token;
-
-    // Build upstream headers
-    let upstream_headers = build_upstream_headers(&incoming_headers, &oauth_token, &state.logger);
-
-    state.logger.verbose(|| {
-        format!(
-            "Forwarding {method} {upstream_url} ({} bytes)",
-            body_bytes.len()
-        )
-    });
-
-    // Forward request to upstream
-    let upstream_req = state
-        .client
-        .request(method, &upstream_url)
-        .headers(upstream_headers)
-        .body(body_bytes);
-
     let correlation_id = crate::request_log::correlation_id(&incoming_headers);
-    let upstream_resp = match state
-        .request_log
-        .send_upstream(&correlation_id, &state.client, upstream_req)
-        .await
+    // Select an account and send; with pool failover on, retried on another
+    // account until the first byte is relayed (issue #676).
+    let reply = match dispatch::dispatch(dispatch::Dispatch {
+        state: &state,
+        method: &method,
+        upstream_url: &upstream_url,
+        incoming_headers: &incoming_headers,
+        body: body_bytes,
+        routing_body: &routing_body,
+        context: routing_context,
+        subscription: subscription.as_ref(),
+        correlation_id: &correlation_id,
+    })
+    .await
     {
-        Ok(resp) => resp,
-        Err(e) => {
-            tracing::error!("Upstream request failed: {e}");
-            return error_response(
-                StatusCode::BAD_GATEWAY,
-                "api_error",
-                &format!("Upstream request failed: {e}"),
-            );
-        }
+        Ok(reply) => reply,
+        Err(response) => return response,
     };
-
-    let status = StatusCode::from_u16(upstream_resp.status().as_u16())
-        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-    let retry_after = retry_after_duration(upstream_resp.headers());
-    crate::request_routing::record_claude_evidence(
-        &state,
-        selected_account.as_deref(),
-        evidence_token.as_ref(),
-        status.as_u16(),
-    )
-    .await;
-    state
-        .logger
-        .verbose(|| format!("Upstream responded: {status}"));
-
-    // Record metrics; flag account as cooling-down on 429/insufficient_quota.
+    let status = reply.status;
+    // One request, one recorded outcome: the attempts it took are counted
+    // separately as pool failovers.
     state.metrics.record_request(
         crate::metrics::Surface::Anthropic,
         status.as_u16(),
-        selected_account.as_deref(),
+        reply.account.as_deref(),
     );
-    if status.as_u16() == 429
-        && let (Some(router), Some(name)) =
-            (state.account_router.as_ref(), selected_account.as_deref())
-    {
-        router.report_failure_with_retry_after(name, "upstream returned 429", retry_after);
-    }
 
     // Build the response -- stream it back to preserve SSE
-    let response_headers = relay_response_headers(upstream_resp.headers());
+    let response_headers = relay_response_headers(&reply.headers);
 
     // Stream the response body
     let response_log = std::sync::Arc::clone(&state.request_log);
@@ -794,16 +747,16 @@ async fn proxy_handler_with_subscription(
     let started = std::time::Instant::now();
     // A failure after the first byte reaches the client as one in-band error
     // event in its own dialect, never as a synthesized success (issue #668).
-    let in_band_dialect = in_band_dialect(status, upstream_resp.headers(), &upstream_path);
+    let in_band_dialect = in_band_dialect(status, &reply.headers, &upstream_path);
     // A single-shot JSON reply has no terminator to miss, so settling it as a
     // cut stream warned once per successful request and filled `logs anomalies`
     // with healthy traffic (issue #252).
     let outcome = std::sync::Arc::new(std::sync::Mutex::new(crate::request_log::StreamOutcome {
-        streamed: crate::request_log::response_is_streamed(upstream_resp.headers()),
+        streamed: crate::request_log::response_is_streamed(&reply.headers),
         terminated: false,
         // A compressed body is relayed byte for byte, so its frames cannot be
         // scanned for a terminator (issue #255).
-        inspectable: crate::request_log::body_is_inspectable(upstream_resp.headers()),
+        inspectable: crate::request_log::body_is_inspectable(&reply.headers),
         detail: None,
         frames: 0,
         bytes: 0,
@@ -813,7 +766,7 @@ async fn proxy_handler_with_subscription(
     let end_log = std::sync::Arc::clone(&response_log);
     let end_id = correlation_id.clone();
     let logger = state.logger.clone();
-    let stream = upstream_resp.bytes_stream().map(move |chunk| {
+    let stream = reply.body.map(move |chunk| {
         let mut state = outcome.lock().expect("stream outcome lock");
         match &chunk {
             Ok(bytes) => {
@@ -860,83 +813,25 @@ async fn proxy_handler_with_subscription(
     response
 }
 
-/// Resolve and refresh the selected OAuth credential, retaining the full token
-/// so inference evidence can be bound to the generation that produced it.
-async fn resolve_upstream_credentials(
-    state: &AppState,
-    context: &RoutingContext,
-    validated: Option<&crate::model_routing::ValidatedSubscription>,
-) -> Result<ResolvedUpstreamCredential, Box<dyn std::error::Error + Send + Sync>> {
-    if let Some(validated) = validated {
-        if validated.provider != SubscriptionProvider::Claude {
-            return Err("validated subscription does not match the Anthropic provider".into());
-        }
-        let selected = validated
-            .for_dispatch_with_context(state, context)
-            .await
-            .map_err(std::io::Error::other)?;
-        return Ok(ResolvedUpstreamCredential {
-            access_token: selected.token.access_token.clone(),
-            account: Some(selected.name),
-            evidence_token: Some(selected.token),
-        });
-    }
-    if let Some(router) = state.account_router.as_ref() {
-        let sel = router
-            .select_subscription_where_authoritative(context, &state.subscription_cache, |_| true)
-            .await?;
-        let now_ms = chrono::Utc::now().timestamp_millis();
-        let token = state
-            .subscription_cache
-            .get_fresh_loaded(
-                &state.client,
-                router.provider(),
-                &sel.name,
-                sel.token,
-                now_ms,
-            )
-            .await
-            .map_err(std::io::Error::other)?;
-        return Ok(ResolvedUpstreamCredential {
-            access_token: token.access_token.clone(),
-            account: Some(sel.name),
-            evidence_token: Some(token),
-        });
-    }
-    if state
-        .subscription_cache
-        .store_for_subscription(
-            SubscriptionProvider::Claude,
-            crate::credential_recovery_store::PRIMARY_ACCOUNT,
-        )
-        .is_some()
+/// Answer Claude Code's "Warmup" probe locally when `INTERCEPT_WARMUP` is on,
+/// so it spends no subscription quota (issue #677).
+fn intercept_warmup(state: &AppState, path: &str, body: &serde_json::Value) -> Option<Response> {
+    if !path.ends_with("/v1/messages")
+        || !crate::pool_failover::current().intercept_warmup
+        || !crate::warmup::is_warmup_request(body)
     {
-        let token = state
-            .subscription_cache
-            .get_fresh_registered(
-                &state.client,
-                SubscriptionProvider::Claude,
-                crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                chrono::Utc::now().timestamp_millis(),
-            )
-            .await
-            .map_err(std::io::Error::other)?;
-        return Ok(ResolvedUpstreamCredential {
-            access_token: token.access_token.clone(),
-            account: None,
-            evidence_token: Some(token),
-        });
+        return None;
     }
-    let token = state
-        .oauth_provider
-        .get_fresh_token(&state.client, &state.subscription_cache)
-        .await?;
-    Ok(ResolvedUpstreamCredential {
-        access_token: token,
-        account: None,
-        evidence_token: None,
-    })
+    state.metrics.record_warmup_intercepted();
+    state
+        .logger
+        .verbose(|| "Answered a warmup probe locally".to_string());
+    Some(crate::warmup::warmup_response(body))
 }
+
+#[path = "proxy_dispatch.rs"]
+mod dispatch;
+use dispatch::resolve_upstream_credentials;
 
 /// `POST /v1/chat/completions` — `OpenAI` Chat Completions.
 ///

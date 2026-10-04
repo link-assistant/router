@@ -36,6 +36,13 @@ pub fn run(
                         "request_limit": health.request_limit,
                         "remaining_requests": health.remaining_requests,
                         "home": health.home.display().to_string(),
+                        // Vendor rate-limit state (issue #677).
+                        "cooldown_reason": health.limits.cooldown_reason,
+                        "cooldown_until_unix": health.limits.cooldown_until_unix,
+                        "model_cooldowns": health.limits.model_cooldowns,
+                        "paused": health.limits.paused_at(crate::account_limits::now_unix()),
+                        "pause": health.limits.pause,
+                        "windows": health.limits.windows,
                     })
                 })
                 .collect();

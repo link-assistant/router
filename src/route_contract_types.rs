@@ -93,6 +93,8 @@ pub enum RouteId {
     LoginCode,
     Usage,
     Accounts,
+    AccountPause,
+    AccountResume,
     CredentialStatus,
     AuthDiagnostics,
     EmergencyAuthStatus,
