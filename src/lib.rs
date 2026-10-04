@@ -158,6 +158,7 @@ pub mod verification_client;
 pub mod vk;
 pub mod with_command;
 pub mod zai_coding_plan;
+pub mod zai_upstream_error;
 
 mod anthropic_nonstream;
 

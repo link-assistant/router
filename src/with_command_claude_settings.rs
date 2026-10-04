@@ -165,6 +165,11 @@ fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
             .then_with(|| left.id.cmp(&right.id))
     });
     let mut rows: Vec<(String, Option<String>)> = Vec::with_capacity(candidates.len());
+    let unavailable = candidates
+        .iter()
+        .filter(|model| !model.is_servable())
+        .map(|model| model.id.clone())
+        .collect::<Vec<_>>();
     for model in candidates {
         let behaves_as = model
             .client_capabilities
@@ -184,7 +189,14 @@ fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
         .into_iter()
         .map(|(id, behaves_as)| {
             let mut row = serde_json::Map::new();
-            row.insert("label".into(), json!(id));
+            // The row stays selectable — z.ai still lists it — but the label
+            // says Router cannot serve it right now (issue #657).
+            let label = if unavailable.contains(&id) {
+                format!("{id} (unavailable)")
+            } else {
+                id.clone()
+            };
+            row.insert("label".into(), json!(label));
             row.insert("model".into(), json!(id));
             if let Some(behaves_as) = behaves_as {
                 row.insert("behavesAs".into(), json!(behaves_as));
@@ -193,6 +205,37 @@ fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
         })
         .collect();
     (options, has_anthropic)
+}
+
+/// A warning for a launch whose model Router cannot serve right now, naming a
+/// servable alternative (issue #657).
+///
+/// The launch is not refused: the request still reaches the provider, which
+/// may have been recharged, and is answered with the provider's reason if not.
+/// What the user must not get is a silent session on a model that cannot
+/// answer.
+pub(super) fn claude_unavailable_model_warning(
+    model: Option<&str>,
+    models: &[RouterModel],
+) -> Option<String> {
+    let model = model?.trim();
+    let reason = models
+        .iter()
+        .filter(|candidate| candidate.id == model)
+        .find_map(|candidate| candidate.router_unavailable_reason.as_deref())?;
+    let alternative = crate::clients::usable_models(ClientKind::ClaudeCode, models)
+        .into_iter()
+        .find(crate::clients::RouterModel::is_servable)
+        .map(|candidate| candidate.id);
+    let advice = alternative.map_or_else(
+        || "no other model in this client's catalog is currently servable".to_string(),
+        |alternative| {
+            format!("choose another model with /model or --model, for example `{alternative}`")
+        },
+    );
+    Some(format!(
+        "warning: Claude model `{model}` cannot be served right now: {reason}; {advice}"
+    ))
 }
 
 /// The Claude model the client itself has saved as its default, if any.

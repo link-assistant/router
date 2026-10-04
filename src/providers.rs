@@ -261,6 +261,8 @@ pub struct ProviderStore {
     inner: Arc<RwLock<HashMap<String, ProviderRecord>>>,
     entitlement_policy: Arc<RwLock<crate::client_policy::SubscriptionEntitlementPolicy>>,
     provider_catalogs: Arc<RwLock<HashMap<String, CachedProviderCatalog>>>,
+    exhaustions: Arc<RwLock<HashMap<String, crate::zai_upstream_error::ZaiExhaustion>>>,
+    data_dir: PathBuf,
     response_affinities: crate::response_affinity::ResponseAffinityStore,
     codex_remote_control: crate::codex_remote_control::CodexRemoteControlStore,
 }
@@ -299,6 +301,8 @@ impl ProviderStore {
                 crate::client_policy::SubscriptionEntitlementPolicy::default(),
             )),
             provider_catalogs: Arc::new(RwLock::new(HashMap::new())),
+            exhaustions: Arc::new(RwLock::new(crate::zai_upstream_error::load(data_dir))),
+            data_dir: data_dir.to_path_buf(),
             response_affinities,
             codex_remote_control,
         })
@@ -358,6 +362,39 @@ impl ProviderStore {
             .map_err(|_| ProviderError::LockPoisoned)?
             .insert(name.to_string(), catalog);
         Ok(())
+    }
+
+    /// Record that a provider's account refused inference until the operator
+    /// acts (issue #657). The next successful response clears it; until then
+    /// it is kept under the data directory, so it survives a restart and
+    /// offline diagnostics see it.
+    pub(crate) fn record_exhaustion(
+        &self,
+        name: &str,
+        exhaustion: crate::zai_upstream_error::ZaiExhaustion,
+    ) {
+        if let Ok(mut exhaustions) = self.exhaustions.write() {
+            exhaustions.insert(name.to_string(), exhaustion);
+            crate::zai_upstream_error::save(&self.data_dir, &exhaustions);
+        }
+    }
+
+    /// Forget a recorded exhaustion after the provider served a request.
+    pub(crate) fn clear_exhaustion(&self, name: &str) {
+        if let Ok(mut exhaustions) = self.exhaustions.write()
+            && exhaustions.remove(name).is_some()
+        {
+            crate::zai_upstream_error::save(&self.data_dir, &exhaustions);
+        }
+    }
+
+    /// The provider's last recorded exhaustion, if it has not served since.
+    #[must_use]
+    pub fn exhaustion(&self, name: &str) -> Option<crate::zai_upstream_error::ZaiExhaustion> {
+        self.exhaustions
+            .read()
+            .ok()
+            .and_then(|exhaustions| exhaustions.get(name).cloned())
     }
 
     /// Return all providers sorted by name.

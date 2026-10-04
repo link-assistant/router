@@ -161,6 +161,53 @@ Catalog responses remain successful when the allowed set is empty and include
 a z.ai degradation reason after a failed health check. This lets a client
 refresh without affecting healthy Claude, ChatGPT, or ordinary API providers.
 
+## An exhausted plan
+
+z.ai answers an account with no balance or resource package with HTTP 429 and
+an Anthropic-shaped `rate_limit_error`, for example
+`{"error":{"code":"1113","message":"[1113][Insufficient balance or no resource package. Please recharge.][<request id>]","type":"rate_limit_error"},"type":"error"}`.
+Clients retry a 429, so Claude Code used to wait silently forever (issue #657).
+Router reads the business code
+([z.ai error codes](https://docs.z.ai/api-reference/api-code)) and, for an
+account state that only the operator or the next billing period can change
+(1113, 1309, 1310, 1311, 1314, 1315 and 1316–1321), answers with a
+non-retryable **402**: Anthropic `billing_error` on Messages and
+`insufficient_quota` on Chat Completions and Responses. The message names
+z.ai's reason and the code, and the body carries `upstream_code` and
+`upstream_request_id`. The `x-router-upstream-error-code` header carries the
+code as well. Short-window limits (1302, 1305, 1308, 1313) and every other
+refusal are relayed unchanged as before.
+
+The account is then recorded as exhausted until z.ai serves a request for it
+again:
+
+- `/health/subscriptions` lists z.ai under `degraded_providers` with
+  `state: "exhausted"`, the reason and `upstream_code`. The
+  `link_assistant_subscription_healthy{provider="z.ai"}` gauge reads `0`.
+- `router doctor` and `deploy --status` print a `provider_exhausted` line.
+- `router usage` shows z.ai as `exhausted` with the reason as its limit
+  reason.
+- `/api/models` keeps the GLM rows, since z.ai still lists them, but marks
+  each one `router_available: false` with `router_unavailable_reason`, and
+  lists z.ai under `degraded_providers`.
+- `router with claude` labels those rows `(unavailable)` in its `/model`
+  picker. If the saved, explicit or fallback model is one of them, it prints a
+  warning before launch naming the reason and a servable alternative. A fresh
+  profile is never pointed at an unavailable row while a servable one exists.
+
+The state is kept in `data/provider-exhaustion.json` (owner-only) until z.ai
+serves a request again, so it survives a restart. `router doctor` and
+`deploy --status` read that file offline and print one line per exhausted
+account, for example
+`provider_exhausted provider=z-ai-personal upstream_code=1113 observed_at_unix=… reason="…"`;
+`router doctor` then exits 1.
+
+A request whose headers do not prove the token's bound client is never sent to
+z.ai. When the token's cached z.ai catalog lists the requested model, Router
+answers **403** `permission_error` saying so. It used to answer a 404 claiming
+no subscription advertises the model, which contradicted `/api/models` for the
+same token.
+
 ## Remove access
 
 ```bash

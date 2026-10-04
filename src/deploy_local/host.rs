@@ -536,7 +536,17 @@ impl Coordinator<'_> {
             plan.blockers.iter().any(|blocker| blocker.forceable)
         );
         println!("{}", plan.convergence());
+        self.print_provider_exhaustion();
         println!("status_is_read_only=true");
+    }
+
+    /// One `provider_exhausted` line per z.ai plan the serving process saw
+    /// refused as exhausted (issue #657); nothing when there is none.
+    pub(super) fn print_provider_exhaustion(&self) {
+        print!(
+            "{}",
+            link_assistant_router::zai_upstream_error::status_report(&self.root.join("data"))
+        );
     }
 }
 
