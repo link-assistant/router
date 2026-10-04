@@ -446,6 +446,7 @@ mod tests {
 
         reopened.clear_exhaustion("z-ai");
         assert!(!data.path().join(STATE_FILE).exists());
+
         assert_eq!(status_report(data.path()), "");
         let restarted = crate::providers::ProviderStore::open(data.path(), "secret").unwrap();
         assert!(restarted.exhaustion("z-ai").is_none());

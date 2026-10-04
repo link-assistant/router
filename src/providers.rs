@@ -441,7 +441,8 @@ impl ProviderStore {
         record: ProviderRecord,
         mode: ProviderInstallMode,
     ) -> Result<ProviderInstallResult, ProviderError> {
-        self.mutate(
+        let name = record.name.clone();
+        let result = self.mutate(
             |records| -> (Result<ProviderInstallResult, ProviderError>, bool) {
                 if mode == ProviderInstallMode::IfAbsent
                     && let Some(existing) = records.get(&record.name)
@@ -475,15 +476,27 @@ impl ProviderStore {
                 };
                 (Ok(result), true)
             },
-        )?
+        )?;
+        // A replaced key or account may have quota; the next request re-learns.
+        if matches!(
+            result,
+            Ok(ProviderInstallResult::Created(_) | ProviderInstallResult::Replaced(_))
+        ) {
+            self.clear_exhaustion(&name);
+        }
+        result
     }
 
     /// Delete a provider by name.
     pub fn delete(&self, name: &str) -> Result<bool, ProviderError> {
-        self.mutate(|records| {
+        let removed = self.mutate(|records| {
             let removed = records.remove(name).is_some();
             (removed, removed)
-        })
+        })?;
+        if removed {
+            self.clear_exhaustion(name);
+        }
+        Ok(removed)
     }
 
     /// Import providers from JSON, `.lenv`, or indented Links-style config.
