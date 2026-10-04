@@ -52,12 +52,49 @@ struct Plan {
     secret: SecretMatch,
     inventory: Option<Inventory>,
     converged: bool,
+    /// Serving this executable, version and port, but `TOKEN_SECRET` was
+    /// not supplied, so whether it signs with the same secret is unknown.
+    secret_unknown: bool,
     /// The predicted pre-move data checkpoint, when it fits.
     checkpoint: Option<String>,
     blockers: Vec<Blocker>,
 }
 
 impl Plan {
+    /// The mutating steps a deploy would take; none when nothing is known
+    /// to need changing.
+    fn steps(&self, port: u16) -> Vec<String> {
+        if self.converged || self.secret_unknown {
+            return Vec::new();
+        }
+        let mut steps = Vec::new();
+        if self.from.is_some() {
+            steps.push(
+                "action=validate-host-candidate listener=127.0.0.1:ephemeral token_probe=required"
+                    .to_string(),
+            );
+            steps.push(format!("action=stop-relay container={RELAY} retained=true"));
+        }
+        steps.push(format!(
+            "action=start-host listener=127.0.0.1:{port} validate=health,token_probe"
+        ));
+        if let Some(active) = &self.from {
+            steps.push(format!(
+                "action=stop-backend container={} retained=true",
+                active.backend
+            ));
+        }
+        steps
+    }
+
+    fn convergence(&self) -> String {
+        if self.secret_unknown {
+            "converged=unknown reason=\"TOKEN_SECRET was not supplied; the host Router serves this executable, version and port, but its signing secret cannot be compared\"".to_string()
+        } else {
+            format!("converged={}", self.converged)
+        }
+    }
+
     fn block(&mut self, name: &'static str, reason: impl Into<String>, forceable: bool) {
         self.blockers.push(Blocker {
             name,
@@ -168,6 +205,7 @@ impl Coordinator<'_> {
             secret: SecretMatch::Matches,
             inventory: None,
             converged: false,
+            secret_unknown: false,
             checkpoint: None,
             blockers: Vec::new(),
         };
@@ -234,15 +272,32 @@ impl Coordinator<'_> {
             Err(reason) => plan.block("data-checkpoint", reason, false),
         }
         let fingerprint = fingerprint(self.token_secret);
-        plan.converged = plan.from.is_none()
+        let serving_this = plan.from.is_none()
             && plan.record_serving
             && plan.record.as_ref().is_some_and(|record| {
                 Path::new(&record.executable) == plan.executable
                     && record.router_version == link_assistant_router::VERSION
                     && record.port == self.port
-                    && record.token_secret == fingerprint
             });
+        plan.converged = serving_this
+            && plan
+                .record
+                .as_ref()
+                .is_some_and(|record| record.token_secret == fingerprint);
+        // Without the secret, status reports what it can prove and invents
+        // no restart for a host that already serves this build (issue #659).
+        plan.secret_unknown = serving_this && plan.secret == SecretMatch::NotSupplied;
         Ok(plan)
+    }
+
+    /// The plan steps and convergence line `--status` would print.
+    #[cfg(test)]
+    pub(super) fn host_status_summary(
+        &self,
+        runtime: &dyn HostRuntime,
+    ) -> Result<(Vec<String>, String), String> {
+        let plan = self.host_plan(self.state.host()?, runtime)?;
+        Ok((plan.steps(self.port), plan.convergence()))
     }
 
     /// Secret, listener, connections and runs of whatever serves now.
@@ -458,29 +513,11 @@ impl Coordinator<'_> {
             ),
             None => println!("host_process=absent"),
         }
-        if !plan.converged {
-            let mut step = 0;
-            let mut print = |action: String| {
-                step += 1;
-                println!("plan step={step} {action}");
-            };
-            if plan.from.is_some() {
-                print("action=validate-host-candidate listener=127.0.0.1:ephemeral token_probe=required".into());
-                print(format!("action=stop-relay container={RELAY} retained=true"));
-            }
-            print(format!(
-                "action=start-host listener=127.0.0.1:{} validate=health,token_probe",
-                self.port
-            ));
-            if let Some(active) = &plan.from {
-                print(format!(
-                    "action=stop-backend container={} retained=true",
-                    active.backend
-                ));
-            }
-            if plan.from.is_some() {
-                println!("on_failure=restart {RELAY}; the container deployment keeps serving");
-            }
+        for (step, action) in plan.steps(self.port).iter().enumerate() {
+            println!("plan step={} {action}", step + 1);
+        }
+        if plan.from.is_some() {
+            println!("on_failure=restart {RELAY}; the container deployment keeps serving");
         }
         println!("rollback_command=\"{ROLLBACK_COMMAND}\"");
         if let Some(line) = &plan.checkpoint {
@@ -498,10 +535,14 @@ impl Coordinator<'_> {
             "force_update_interrupts={}",
             plan.blockers.iter().any(|blocker| blocker.forceable)
         );
-        println!("converged={}", plan.converged);
+        println!("{}", plan.convergence());
         println!("status_is_read_only=true");
     }
 }
 
 #[path = "host_migrate.rs"]
 mod migrate;
+
+#[cfg(test)]
+#[path = "host_plan_tests.rs"]
+mod tests;

@@ -499,3 +499,45 @@ fn the_plan_predicts_the_data_checkpoint() {
     assert!(mutations(&runner.0.lock().unwrap()).is_empty());
     assert!(host.world().spawned_ports.is_empty());
 }
+
+/// Issue #659: without `TOKEN_SECRET`, a host serving this build is neither
+/// "not converged" nor given a `start-host` step.
+#[test]
+fn status_without_the_secret_reports_unknown_convergence_and_no_plan() {
+    let root = tempfile::tempdir().unwrap();
+    let runner = FakeRunner::default();
+    let host = FakeHost::default();
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+    let mut status = super::coordinator(runner.clone(), root.path(), "router:1", 8080, false);
+    let (steps, convergence) = status.host_status_summary(&host).unwrap();
+    assert!(steps.is_empty());
+    assert_eq!(convergence, "converged=true");
+
+    let placeholder = link_assistant_router::token_secret::placeholder("status");
+    status.token_secret = &placeholder;
+    let (steps, convergence) = status.host_status_summary(&host).unwrap();
+    assert!(steps.is_empty(), "{steps:?}");
+    assert!(
+        convergence.starts_with("converged=unknown reason=\"TOKEN_SECRET was not supplied"),
+        "{convergence}"
+    );
+    let code = run_assessed(
+        &{
+            let mut args = deploy_args();
+            host_mode(&mut args);
+            args.status = true;
+            args
+        },
+        root.path(),
+        "router:1",
+        &placeholder,
+        Docker::with_runner(runner.clone()),
+        &|_, _| Provision::Isolated,
+        &host,
+    );
+    assert_eq!(code, ExitCode::SUCCESS);
+    assert_eq!(host.world().processes.len(), 1);
+}

@@ -109,11 +109,17 @@ after review), when the run inventory is unknown, when the `TOKEN_SECRET` differ
 from the deployment's, when a transaction is pending, when another process
 holds the port, or when a file under `data/` belongs to another user. On Linux
 an earlier backend ran as root, and the message names the `sudo chown -R`
-command; Docker Desktop on macOS maps bind-mount files to the host user.
+command; Docker Desktop on macOS maps bind-mount files to the host user. The
+plan also predicts the recoverable data checkpoint every move takes first
+(`data_checkpoint estimate_bytes=… budget_bytes=…`) and names a covered file
+that would not fit as `blocker=data-checkpoint`; request logs are not part of
+that checkpoint.
 
 Once in host mode, `router deploy` and `router deploy --status` keep the mode.
 A rerun with the same Router and secret reports `converged=true` and changes
-nothing. Replacing a serving host Router, for a newer binary or a changed
+nothing. Without `TOKEN_SECRET`, `--status` cannot compare the serving
+host's signing secret: when it serves this executable, version and port it
+reports `converged=unknown` with the reason and prints no plan steps. Replacing a serving host Router, for a newer binary or a changed
 secret, closes its connections, so it is planned as a blocker and needs
 `--force-update`; the replacement goes through the same validation. `router deploy --mode container` restarts the
 retained backend, stops the host Router, and restarts the relay; if the relay
