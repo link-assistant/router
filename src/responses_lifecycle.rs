@@ -208,8 +208,15 @@ pub(crate) async fn forward_stored_provider(
         .api_key
         .as_deref()
         .ok_or_else(|| unavailable("the response's provider credential is unavailable"))?;
-    let request = state
-        .client
+    let client = crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url)
+        .map_err(|error| {
+            openai_error(
+                StatusCode::FORBIDDEN,
+                "permission_error",
+                &error.to_string(),
+            )
+        })?;
+    let request = client
         .request(
             reqwest::Method::from_bytes(method.as_str().as_bytes())
                 .expect("HTTP methods accepted by axum are valid for reqwest"),
@@ -219,7 +226,7 @@ pub(crate) async fn forward_stored_provider(
         .body(body.clone());
     state
         .request_log
-        .send_upstream(correlation_id, &state.client, request)
+        .send_upstream(correlation_id, client, request)
         .await
         .map_err(|error| upstream_error(&format!("provider request failed: {error}")))
 }

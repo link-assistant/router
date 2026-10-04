@@ -137,6 +137,8 @@ fn router(data: &std::path::Path, home: &std::path::Path) -> Command {
         .env("DATA_DIR", data)
         .env("CLAUDE_CODE_HOME", home.join("claude"))
         .env("STORAGE_POLICY", "memory")
+        // The mock provider listens on loopback (issue #669).
+        .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
         .env("DISABLE_LOGIN_API", "true")
         .env("UPSTREAM_PROVIDER", "auto");
     command

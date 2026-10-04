@@ -92,8 +92,12 @@ pub async fn list(
         |query| format!("/v1/chat/completions?{query}"),
     );
     let correlation_id = crate::request_log::correlation_id(request.headers());
-    let upstream = state
-        .client
+    let client =
+        match crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url) {
+            Ok(client) => client,
+            Err(error) => return bad_gateway(&error.to_string()),
+        };
+    let upstream = client
         .get(crate::provider_proxy::join_openai_compatible_url(
             &provider.base_url,
             &path,
@@ -104,7 +108,7 @@ pub async fn list(
         ));
     let upstream = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, upstream)
+        .send_upstream(&correlation_id, client, upstream)
         .await
     {
         Ok(response) => response,
@@ -220,8 +224,12 @@ async fn forward(
     };
     let path = resource_path(&completion_id, operation, uri.query());
     let correlation_id = crate::request_log::correlation_id(&parts.headers);
-    let upstream = state
-        .client
+    let client =
+        match crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url) {
+            Ok(client) => client,
+            Err(error) => return bad_gateway(&error.to_string()),
+        };
+    let upstream = client
         .request(
             reqwest::Method::from_bytes(parts.method.as_str().as_bytes())
                 .expect("HTTP methods accepted by axum are valid for reqwest"),
@@ -234,7 +242,7 @@ async fn forward(
         .body(body.clone());
     let upstream = match state
         .request_log
-        .send_upstream(&correlation_id, &state.client, upstream)
+        .send_upstream(&correlation_id, client, upstream)
         .await
     {
         Ok(response) => response,

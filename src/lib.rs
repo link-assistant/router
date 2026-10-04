@@ -130,6 +130,7 @@ pub mod server_router;
 mod sse;
 pub mod stop_sequences;
 pub mod storage;
+pub mod stream_termination;
 mod structured_output;
 pub mod subscription;
 pub mod subscription_health;
@@ -152,6 +153,7 @@ pub mod tokens_remote;
 #[cfg(unix)]
 pub mod unix_listener;
 pub mod upstream_client;
+pub mod upstream_guard;
 pub mod usage;
 pub mod vendor_cli_refresh;
 pub mod verification_client;

@@ -18,6 +18,8 @@ use serde_json::{Value, json};
 
 use crate::openai::extract_sse_data;
 
+pub use crate::stream_termination::INCOMPLETE_STREAM_MESSAGE;
+
 /// Render one Anthropic SSE frame (named event plus JSON payload).
 #[must_use]
 pub fn anthropic_frame(event: &str, payload: &Value) -> String {
@@ -46,6 +48,10 @@ pub struct AnthropicStreamTranslator {
     buffer: Vec<u8>,
     started: bool,
     finished: bool,
+    /// Whether the upstream sent a terminal signal (`[DONE]`, a chat
+    /// `finish_reason`, or `response.completed`/`response.incomplete`).
+    /// Without one, an ended upstream is a cut stream, not a finished turn.
+    upstream_terminated: bool,
     /// Index of the content block currently open, if any.
     open_block: Option<usize>,
     /// Anthropic index of the text block, once opened.
@@ -78,6 +84,7 @@ impl AnthropicStreamTranslator {
             buffer: Vec::new(),
             started: false,
             finished: false,
+            upstream_terminated: false,
             open_block: None,
             text_index: None,
             tool_indices: BTreeMap::new(),
@@ -113,7 +120,13 @@ impl AnthropicStreamTranslator {
         frames
     }
 
-    /// Emit the closing frames if the upstream ended without a terminal event.
+    /// Flush the stream when the upstream body ends.
+    ///
+    /// After a terminal upstream signal this emits the closing frames. When
+    /// the upstream ended without one (issue #668) the turn is incomplete, so
+    /// the client receives an Anthropic `error` event rather than a
+    /// synthesized `message_stop` that would pass a cut answer off as
+    /// complete.
     pub fn finish(&mut self) -> Vec<String> {
         if self.finished {
             return Vec::new();
@@ -121,8 +134,53 @@ impl AnthropicStreamTranslator {
         let mut frames = self.ensure_started();
         let pending = self.stop_filter.finish();
         frames.extend(self.emit_text_delta(&pending));
-        frames.extend(self.close_stream());
+        if self.upstream_terminated {
+            frames.extend(self.close_stream());
+        } else {
+            frames.extend(self.fail_incomplete());
+        }
         frames
+    }
+
+    /// End the stream after an upstream transport failure.
+    ///
+    /// Text already held back by the stop-sequence filter is flushed, then
+    /// one Anthropic `error` event names the failure. A failure after the
+    /// upstream's terminal signal closes the turn normally instead.
+    pub fn interrupt(&mut self, kind: crate::stream_termination::FailureKind) -> Vec<String> {
+        if self.finished || self.upstream_terminated {
+            return self.finish();
+        }
+        let pending = self.stop_filter.finish();
+        let mut frames = if pending.is_empty() {
+            Vec::new()
+        } else {
+            let mut frames = self.ensure_started();
+            frames.extend(self.emit_text_delta(&pending));
+            frames
+        };
+        self.finished = true;
+        let frame = crate::stream_termination::error_frame(
+            crate::stream_termination::StreamDialect::Anthropic,
+            kind,
+        );
+        frames.push(String::from_utf8_lossy(&frame).into_owned());
+        frames
+    }
+
+    /// Whether the upstream stream ended with a terminal signal.
+    #[must_use]
+    pub const fn upstream_terminated(&self) -> bool {
+        self.upstream_terminated
+    }
+
+    fn fail_incomplete(&mut self) -> Vec<String> {
+        self.finished = true;
+        let frame = crate::stream_termination::error_frame(
+            crate::stream_termination::StreamDialect::Anthropic,
+            crate::stream_termination::FailureKind::Truncated,
+        );
+        vec![String::from_utf8_lossy(&frame).into_owned()]
     }
 
     fn translate_block(&mut self, block: &str) -> Vec<String> {
@@ -131,6 +189,7 @@ impl AnthropicStreamTranslator {
             return Vec::new();
         }
         if data == "[DONE]" {
+            self.upstream_terminated = true;
             return self.finish();
         }
         let Ok(event) = serde_json::from_str::<Value>(&data) else {
@@ -191,6 +250,7 @@ impl AnthropicStreamTranslator {
             }
         }
         if let Some(reason) = choice.get("finish_reason").and_then(Value::as_str) {
+            self.upstream_terminated = true;
             self.stop_reason = Some(map_stop_reason(reason).to_string());
         }
         frames
@@ -364,6 +424,7 @@ impl AnthropicStreamTranslator {
                 ));
             }
             "response.completed" | "response.incomplete" => {
+                self.upstream_terminated = true;
                 let response = event.get("response").unwrap_or(&Value::Null);
                 self.absorb_usage(response.get("usage"));
                 if self.stop_reason.is_none() {
@@ -670,6 +731,10 @@ fn response_content_key(event: &Value) -> (u64, u64) {
 }
 
 #[cfg(test)]
+#[path = "anthropic_stream_termination_tests.rs"]
+mod termination_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -919,11 +984,13 @@ mod tests {
     }
 
     #[test]
-    fn finish_is_idempotent_and_always_terminates_the_stream() {
+    fn finish_is_idempotent_and_reports_a_cut_stream_as_an_error() {
         let mut t = AnthropicStreamTranslator::new("claude-sonnet-4-5");
         let first = joined(&t.finish());
         assert!(first.contains("event: message_start"));
-        assert!(first.contains("event: message_stop"));
+        assert!(first.contains("event: error"), "{first}");
+        assert!(first.contains(INCOMPLETE_STREAM_MESSAGE), "{first}");
+        assert!(!first.contains("message_stop"), "{first}");
         assert!(t.finish().is_empty());
     }
 }

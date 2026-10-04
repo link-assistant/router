@@ -114,8 +114,9 @@ async fn retrieve_openai_native(
     let path = uri
         .query()
         .map_or_else(|| path.clone(), |query| format!("{path}?{query}"));
-    let request = state
-        .client
+    let client =
+        crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url).ok()?;
+    let request = client
         .get(crate::provider_proxy::join_openai_compatible_url(
             &provider.base_url,
             &path,
@@ -124,7 +125,7 @@ async fn retrieve_openai_native(
     let correlation_id = crate::request_log::correlation_id(headers);
     let Ok(upstream) = state
         .request_log
-        .send_upstream(&correlation_id, &state.client, request)
+        .send_upstream(&correlation_id, client, request)
         .await
     else {
         return None;
