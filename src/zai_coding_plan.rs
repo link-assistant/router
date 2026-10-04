@@ -545,6 +545,11 @@ pub(crate) fn unproven_request_for_listed_model(
     client: Option<ClientKind>,
 ) -> Option<String> {
     let provider = resolve(state).ok().flatten()?;
+    let client = client?;
+    // A client the plan does not permit is never shown its models, so for it
+    // the model stays unknown (404), as `/api/models` says.
+    let policy = provider_policy(&provider).ok()?;
+    policy.authorize(client, &policy.subscriber_id).ok()?;
     let cached = state
         .provider_store
         .cached_provider_catalog(&provider.name)
@@ -554,14 +559,12 @@ pub(crate) fn unproven_request_for_listed_model(
     if !cached.models.iter().any(|candidate| candidate.id == model) {
         return None;
     }
-    let client = client.map_or_else(
-        || "a client-bound token".to_string(),
-        |client| format!("the token's {} client binding", client.canonical_name()),
-    );
+    let client = client.canonical_name();
     Some(format!(
         "model '{model}' is served by the z.ai Coding Plan, which Router uses only for requests \
-         whose headers match {client}; this request's did not, so it was not sent to z.ai. \
-         Send it from that client (for example through `router with`)"
+         whose headers match the token's {client} client binding and subscriber; this request \
+         did not, so it was not sent to z.ai. Send it from that client (for example through \
+         `router with`)"
     ))
 }
 

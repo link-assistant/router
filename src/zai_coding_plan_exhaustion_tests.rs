@@ -124,7 +124,7 @@ async fn exhausted_plan_is_a_non_retryable_billing_error_for_every_request_shape
         assert!(!message.contains("zai-secret-key"), "{message}");
     }
 
-    let (status, _, error) = send(&state, ClientKind::Codex, messages(false)).await;
+    let (status, _, error) = send(&state, ClientKind::Opencode, messages(false)).await;
     assert_eq!(status, StatusCode::PAYMENT_REQUIRED, "{error}");
     assert_eq!(error["error"]["type"], "insufficient_quota", "{error}");
     assert_eq!(error["error"]["code"], "insufficient_quota", "{error}");
