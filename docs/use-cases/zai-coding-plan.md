@@ -196,14 +196,16 @@ again:
   profile is never pointed at an unavailable row while a servable one exists.
 
 The state is kept in `data/provider-exhaustion.json` (owner-only) until z.ai
-serves a request again, so it survives a restart. `router doctor` and
+serves a request again or the provider is replaced or removed, so it survives
+a restart. `router doctor` and
 `deploy --status` read that file offline and print one line per exhausted
 account, for example
 `provider_exhausted provider=z-ai-personal upstream_code=1113 observed_at_unix=… reason="…"`;
 `router doctor` then exits 1.
 
 A request whose headers do not prove the token's bound client is never sent to
-z.ai. When the token's cached z.ai catalog lists the requested model, Router
+z.ai. When that client is one the plan permits and the cached z.ai catalog
+lists the requested model, Router
 answers **403** `permission_error` saying so. It used to answer a 404 claiming
 no subscription advertises the model, which contradicted `/api/models` for the
 same token.
