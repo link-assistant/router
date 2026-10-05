@@ -64,6 +64,8 @@ pub struct AccountRouterOptions {
     /// Data directory where vendor cooldowns and pauses persist across
     /// restarts. `None` keeps them in memory only.
     pub state_dir: Option<PathBuf>,
+    /// Per-account connection isolation and egress proxies (issue #678).
+    pub http: crate::account_http::AccountHttpPolicy,
 }
 
 impl Default for AccountRouterOptions {
@@ -76,6 +78,7 @@ impl Default for AccountRouterOptions {
             failover: false,
             pause_at_percent: None,
             state_dir: None,
+            http: crate::account_http::AccountHttpPolicy::default(),
         }
     }
 }
@@ -248,6 +251,8 @@ struct AccountRouterInner {
     failover: bool,
     pause_at_percent: Option<u8>,
     state_dir: Option<PathBuf>,
+    /// Each account's own upstream clients (issue #678).
+    http: crate::account_http::AccountClients,
 }
 
 /// Information returned to the caller for use in upstream calls.
@@ -319,6 +324,7 @@ impl AccountRouter {
             failover,
             pause_at_percent,
             state_dir,
+            http,
         } = options;
         let mut accounts = Vec::with_capacity(1 + additional.len());
         let request_limit = |index: usize| request_limits.get(index).copied().flatten();
@@ -349,10 +355,35 @@ impl AccountRouter {
                 failover,
                 pause_at_percent,
                 state_dir,
+                http: crate::account_http::AccountClients::new(http),
             }),
         };
+        for name in router.inner.http.policy().proxies.keys() {
+            if !router
+                .inner
+                .accounts
+                .iter()
+                .any(|account| &account.name == name)
+            {
+                tracing::warn!("ACCOUNT_EGRESS_PROXY names {name}, which is not a pool account");
+            }
+        }
         router.restore_limits();
         router
+    }
+
+    /// The upstream client of `account`: its own connection pool, cookie
+    /// store and egress proxy (issue #678).
+    ///
+    /// # Errors
+    /// The account's egress proxy cannot be resolved; the request must fail
+    /// rather than egress directly.
+    pub fn http_client(
+        &self,
+        account: &str,
+        cookies: crate::account_http::CookieMode,
+    ) -> Result<reqwest::Client, String> {
+        self.inner.http.client(account, cookies)
     }
 
     /// Provider whose credential layout is used by every account in the pool.

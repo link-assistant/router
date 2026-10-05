@@ -19,6 +19,7 @@ use bytes::Bytes;
 use serde_json::Value;
 
 use super::{CodexResponsesMode, join_subscription_url, subscription_headers};
+use crate::account_http::CookieMode;
 use crate::accounts::{RoutingContext, UpstreamObservation};
 use crate::metrics::Surface;
 use crate::pool_failover::{RetryReason, classify_status};
@@ -238,11 +239,22 @@ async fn send_attempt(
     let state = request.state;
     let provider = request.provider;
     let upstream_url = join_subscription_url(provider, base_url, request.path);
-    let upstream_client = crate::upstream_client::subscription_client(
-        &state.client,
-        provider,
-        state.subscription_base_url.is_some(),
-    );
+    let custom_base_url = state.subscription_base_url.is_some();
+    let shared_client =
+        crate::upstream_client::subscription_client(&state.client, provider, custom_base_url);
+    // A pooled account sends on its own connections, with its own Cloudflare
+    // cookies and through its own egress proxy (issue #678).
+    let cookies = if provider == SubscriptionProvider::Codex && !custom_base_url {
+        CookieMode::CodexCloudflare
+    } else {
+        CookieMode::None
+    };
+    let router = state.account_router.as_ref();
+    let upstream_client =
+        crate::account_http::pooled_client(router, Some(account), shared_client, cookies)?;
+    let refresh_client =
+        crate::account_http::pooled_client(router, Some(account), &state.client, CookieMode::None)?;
+    let upstream_client = &upstream_client;
     let build_request = |token: &SubscriptionToken| {
         let mut builder = upstream_client.post(upstream_url.clone());
         if request.native_protocol {
@@ -293,7 +305,7 @@ async fn send_attempt(
         && let Some(refreshed) = state
             .subscription_cache
             .refresh_rejected(
-                &state.client,
+                &refresh_client,
                 provider,
                 account,
                 token,
@@ -416,11 +428,25 @@ async fn select_account(
             token: disk_token,
         }
     };
-    // Pinned routing performs its ordinary serving-path refresh here.
+    // Pinned routing performs its ordinary serving-path refresh here, through
+    // the account's own egress.
+    let client = crate::account_http::pooled_client(
+        state.account_router.as_ref(),
+        Some(&selected.name),
+        &state.client,
+        CookieMode::None,
+    )
+    .map_err(|error| {
+        SelectError::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "account_unavailable",
+            error,
+        )
+    })?;
     let token = state
         .subscription_cache
         .get_fresh_loaded(
-            &state.client,
+            &client,
             provider,
             &selected.name,
             selected.token,

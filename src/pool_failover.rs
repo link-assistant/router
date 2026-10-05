@@ -67,6 +67,8 @@ pub struct PoolPolicy {
     pub pause_at_percent: Option<u8>,
     /// `INTERCEPT_WARMUP`: answer Claude Code's "Warmup" probe locally.
     pub intercept_warmup: bool,
+    /// Per-account connection isolation and egress proxies (issue #678).
+    pub account_http: crate::account_http::AccountHttpPolicy,
 }
 
 impl Default for PoolPolicy {
@@ -77,6 +79,7 @@ impl Default for PoolPolicy {
             budget: Duration::from_secs(DEFAULT_BUDGET_SECS),
             pause_at_percent: None,
             intercept_warmup: false,
+            account_http: crate::account_http::AccountHttpPolicy::default(),
         }
     }
 }
@@ -110,6 +113,7 @@ impl PoolPolicy {
                     "1" | "true" | "yes" | "on"
                 )
             }),
+            account_http: account_http_from_env(),
         }
     }
 
@@ -132,8 +136,43 @@ impl PoolPolicy {
             self.pause_at_percent
                 .map_or_else(|| "off".to_string(), |percent| format!("{percent}%")),
             if self.intercept_warmup { "on" } else { "off" },
-        )
+        ) + &self.account_http.doctor_line()
     }
+}
+
+/// `ACCOUNT_POOL_IDLE_TIMEOUT_SECS`, `ACCOUNT_CONNECTION_MAX_AGE_SECS` and
+/// `ACCOUNT_EGRESS_PROXY`; an invalid value keeps its default and is logged.
+fn account_http_from_env() -> crate::account_http::AccountHttpPolicy {
+    use crate::account_http::{
+        AccountHttpPolicy, DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS,
+        DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS, parse_egress_proxies,
+    };
+    let secs = |name: &str, default: u64| {
+        std::env::var(name)
+            .ok()
+            .and_then(|value| value.trim().parse::<u64>().ok())
+            .unwrap_or(default)
+    };
+    let proxies = std::env::var("ACCOUNT_EGRESS_PROXY")
+        .ok()
+        .map(|raw| {
+            parse_egress_proxies(&raw).unwrap_or_else(|error| {
+                tracing::warn!("ACCOUNT_EGRESS_PROXY ignored: {error}");
+                std::collections::BTreeMap::new()
+            })
+        })
+        .unwrap_or_default();
+    AccountHttpPolicy::new(
+        secs(
+            "ACCOUNT_POOL_IDLE_TIMEOUT_SECS",
+            DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS,
+        ),
+        secs(
+            "ACCOUNT_CONNECTION_MAX_AGE_SECS",
+            DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS,
+        ),
+        proxies,
+    )
 }
 
 /// The policy the serving process runs with. A process-wide setting, like the
@@ -190,6 +229,7 @@ impl crate::config::Config {
             failover: self.pool.failover_enabled(),
             pause_at_percent: self.pool.pause_at_percent,
             state_dir: Some(self.data_dir.clone()),
+            http: self.pool.account_http.clone(),
         }
     }
 }

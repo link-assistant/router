@@ -170,6 +170,9 @@ pub enum UpstreamSendError {
     Http(reqwest::Error),
     /// No response headers arrived within the first-byte timeout.
     FirstByteTimeout(Duration),
+    /// The pooled account's client could not be built, typically because its
+    /// egress proxy secret is missing (issue #678). Nothing was sent.
+    Egress(String),
 }
 
 impl UpstreamSendError {
@@ -179,6 +182,7 @@ impl UpstreamSendError {
         match self {
             Self::Http(error) => error.is_timeout(),
             Self::FirstByteTimeout(_) => true,
+            Self::Egress(_) => false,
         }
     }
 }
@@ -192,6 +196,7 @@ impl std::fmt::Display for UpstreamSendError {
                 "upstream sent no response within {}s (UPSTREAM_FIRST_BYTE_TIMEOUT_SECS)",
                 limit.as_secs()
             ),
+            Self::Egress(error) => error.fmt(f),
         }
     }
 }

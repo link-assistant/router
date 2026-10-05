@@ -21,10 +21,12 @@ use futures_util::stream::BoxStream;
 use serde_json::{Value, json};
 
 use super::{AppState, build_upstream_headers, error_response, retry_after_duration};
+use crate::account_http::CookieMode;
 use crate::accounts::{RoutingContext, UpstreamObservation};
 use crate::pool_failover::{RetryReason, classify_status};
 use crate::request_routing::ResolvedUpstreamCredential;
 use crate::subscription::SubscriptionProvider;
+use crate::upstream_client::UpstreamSendError;
 
 /// Bytes of a failed response read before deciding whether to retry it. Error
 /// bodies are small; a larger one is still relayed whole.
@@ -171,15 +173,25 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 body.len()
             )
         });
-        let builder = state
-            .client
-            .request(request.method.clone(), request.upstream_url)
-            .headers(headers)
-            .body(body);
-        let upstream_call =
+        // Each pooled account sends on its own connections, through its own
+        // egress proxy when it has one (issue #678).
+        let upstream_call = async {
+            let client = crate::account_http::pooled_client(
+                router,
+                account.as_deref(),
+                &state.client,
+                CookieMode::None,
+            )
+            .map_err(UpstreamSendError::Egress)?;
+            let builder = client
+                .request(request.method.clone(), request.upstream_url)
+                .headers(headers)
+                .body(body);
             state
                 .request_log
-                .send_upstream(request.correlation_id, &state.client, builder);
+                .send_upstream(request.correlation_id, &client, builder)
+                .await
+        };
         let outcome = if attempt > 1 {
             let bounded =
                 tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), upstream_call)
@@ -345,15 +357,13 @@ pub(super) async fn resolve_upstream_credentials(
             .select_subscription_where_authoritative(context, &state.subscription_cache, |_| true)
             .await?;
         let now_ms = chrono::Utc::now().timestamp_millis();
+        // The refresh leaves through the account's own egress as well.
+        let client = router
+            .http_client(&sel.name, CookieMode::None)
+            .map_err(std::io::Error::other)?;
         let token = state
             .subscription_cache
-            .get_fresh_loaded(
-                &state.client,
-                router.provider(),
-                &sel.name,
-                sel.token,
-                now_ms,
-            )
+            .get_fresh_loaded(&client, router.provider(), &sel.name, sel.token, now_ms)
             .await
             .map_err(std::io::Error::other)?;
         return Ok(ResolvedUpstreamCredential {

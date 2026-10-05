@@ -1,6 +1,13 @@
-//! Account-pool failover, threshold pause and warmup flags (issues #676, #677).
+//! Account-pool failover, threshold pause, warmup and per-account connection
+//! flags (issues #676, #677, #678).
+
+use std::collections::BTreeMap;
 
 use super::value_parsers::parse_truthy;
+use crate::account_http::{
+    AccountHttpPolicy, DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS,
+    DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS, EgressProxy, parse_egress_proxies,
+};
 use crate::pool_failover::{
     DEFAULT_BUDGET_SECS, DEFAULT_MAX_ATTEMPTS, FailoverMode, PoolPolicy, parse_percent,
 };
@@ -64,7 +71,45 @@ pub struct PoolArgs {
         global = true
     )]
     pub intercept_warmup: bool,
+
+    /// Seconds an idle upstream connection of a pooled account stays open.
+    /// Every account has its own connection pool. `0` keeps idle connections.
+    #[arg(
+        long,
+        env = "ACCOUNT_POOL_IDLE_TIMEOUT_SECS",
+        default_value_t = DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS,
+        global = true
+    )]
+    pub account_pool_idle_timeout_secs: u64,
+
+    /// Seconds after which a pooled account's upstream client is rotated, so
+    /// no connection outlives it; in-flight requests finish on the old one.
+    /// `0` never rotates.
+    #[arg(
+        long,
+        env = "ACCOUNT_CONNECTION_MAX_AGE_SECS",
+        default_value_t = DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS,
+        global = true
+    )]
+    pub account_connection_max_age_secs: u64,
+
+    /// Per-account egress proxies: comma-separated `ACCOUNT=SPEC`, where
+    /// `ACCOUNT` is `primary`, `account-1`, ... and `SPEC` is `env:VAR` or
+    /// `file:PATH` holding the proxy URL, or a password-less
+    /// `http://`, `https://`, `socks5://` or `socks5h://` URL optionally
+    /// followed by `;password-env=VAR` or `;password-file=PATH`. A URL
+    /// carrying a password is refused so no secret reaches argv.
+    #[arg(
+        long,
+        env = "ACCOUNT_EGRESS_PROXY",
+        value_parser = parse_egress_proxies,
+        global = true
+    )]
+    pub account_egress_proxy: Option<EgressProxies>,
 }
+
+/// Parsed `--account-egress-proxy`.
+pub type EgressProxies = BTreeMap<String, EgressProxy>;
 
 impl PoolArgs {
     /// The resolved policy.
@@ -76,6 +121,11 @@ impl PoolArgs {
             budget: std::time::Duration::from_secs(self.pool_failover_budget_secs),
             pause_at_percent: self.account_pause_at_percent,
             intercept_warmup: self.intercept_warmup,
+            account_http: AccountHttpPolicy::new(
+                self.account_pool_idle_timeout_secs,
+                self.account_connection_max_age_secs,
+                self.account_egress_proxy.clone().unwrap_or_default(),
+            ),
         }
     }
 }
