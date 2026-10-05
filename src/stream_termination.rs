@@ -244,6 +244,13 @@ impl TerminalEventDetector {
         self.seen || block_is_terminal(&String::from_utf8_lossy(&self.carry))
     }
 
+    /// Whether the relayed bytes stop inside an event, so anything appended
+    /// must first close it with a blank line.
+    #[must_use]
+    pub const fn mid_frame(&self) -> bool {
+        !self.carry.is_empty()
+    }
+
     #[cfg(test)]
     pub(crate) const fn carried(&self) -> usize {
         self.carry.len()
@@ -273,6 +280,21 @@ pub struct InBandErrors<S> {
     dialect: Option<StreamDialect>,
     detector: TerminalEventDetector,
     done: bool,
+}
+
+impl<S> InBandErrors<S> {
+    /// The error event, preceded by a blank line when the upstream stopped
+    /// mid-event, so the client never parses the two as one corrupt event.
+    fn terminal_error(&self, dialect: StreamDialect, kind: FailureKind) -> Bytes {
+        let frame = error_frame(dialect, kind);
+        if !self.detector.mid_frame() {
+            return frame;
+        }
+        let mut closed = Vec::with_capacity(frame.len() + 2);
+        closed.extend_from_slice(b"\n\n");
+        closed.extend_from_slice(&frame);
+        Bytes::from(closed)
+    }
 }
 
 impl<S, E> Stream for InBandErrors<S>
@@ -307,14 +329,16 @@ where
                 }
                 let kind = FailureKind::of(error.as_ref());
                 tracing::warn!(%error, ?kind, ?dialect, "upstream stream failed before completion");
-                Poll::Ready(Some(Ok(error_frame(dialect, kind))))
+                Poll::Ready(Some(Ok(this.terminal_error(dialect, kind))))
             }
             Poll::Ready(None) => {
                 this.done = true;
                 match this.dialect {
                     Some(dialect) if !this.detector.seen() => {
                         tracing::warn!(?dialect, "upstream stream ended before its terminal event");
-                        Poll::Ready(Some(Ok(error_frame(dialect, FailureKind::Truncated))))
+                        Poll::Ready(Some(Ok(
+                            this.terminal_error(dialect, FailureKind::Truncated)
+                        )))
                     }
                     _ => Poll::Ready(None),
                 }

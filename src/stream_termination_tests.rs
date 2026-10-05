@@ -197,3 +197,30 @@ async fn a_body_that_ends_without_its_terminal_event_ends_with_an_error() {
     let (out, _) = relay(vec![Ok(b"opaque")], None).await;
     assert_eq!(out, "opaque");
 }
+
+#[tokio::test]
+async fn an_error_after_a_half_received_event_starts_a_frame_of_its_own() {
+    for (partial, dialect, _) in PARTIAL {
+        // Cut the event in the middle of its JSON, then reset or just end.
+        let half: &'static [u8] = &partial[..partial.len() / 2];
+        for ending in [vec![Err(reset())], vec![]] {
+            let mut chunks = vec![Ok(half)];
+            chunks.extend(ending);
+            let (out, error) = relay(chunks, Some(dialect)).await;
+            assert!(error.is_none(), "{dialect:?}");
+            let (relayed, appended) = out.split_at(half.len());
+            assert_eq!(relayed.as_bytes(), half, "{dialect:?}");
+            assert!(
+                appended.starts_with("\n\n") && appended.contains("before completion"),
+                "{dialect:?}: the error must not join the cut event: {out:?}"
+            );
+        }
+    }
+    // A cut on an event boundary needs no extra separator.
+    let (out, _) = relay(
+        vec![Ok(PARTIAL[0].0), Err(reset())],
+        Some(StreamDialect::Anthropic),
+    )
+    .await;
+    assert!(!out.contains("\n\n\n"), "{out:?}");
+}
