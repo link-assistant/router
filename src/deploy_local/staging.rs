@@ -476,7 +476,12 @@ pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
     let result = namespace(args.staging.as_deref().expect("staging dispatch")).and_then(|_| {
         // Status/verification report existing state without planning a start.
         // Validate the identity first, and never create state for a missing image.
-        if !args.down && !args.status && !args.verify && args.image.is_none() {
+        if !args.down
+            && !args.status
+            && !args.verify
+            && args.image.is_none()
+            && args.build.is_none()
+        {
             crate::deploy_image::ensure_default(image, link_assistant_router::VERSION)?;
         }
         execute(args, root, image, &Docker::default())

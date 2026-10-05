@@ -122,7 +122,9 @@ precedence applies to local/container/host and remote deployments.
 
 The real-CLI local table covers port, instance, image, build, root, mode,
 claude_credentials and public_port (including its local refusal), in `[deploy]`
-and `[local]`, with both host/container modes. Separate real-CLI remote tables
+and `[local]`, with both host/container modes. Configured table calls provide
+only `--config` and `--status`; the registry-independent fixture image is also
+in the file rather than supplied as a deployment flag. Separate remote tables
 cover server, instance, port, public_port, image, build, root and seed_credentials
 in their applicable remote context. `server` and `seed_credentials` are
 documented remote-only controls: a shared config does not silently redirect a
@@ -225,5 +227,17 @@ existing Cargo default after the source copy, while keeping the flat stub for
 the manifest-only cache layer. Both experiment tests pass, including directory
 binaries, benches, tests and examples and the package-named binary fallback;
 the final commit receives fresh CI rather than relying on the previous SHA.
+The same audit found that staging's newly added image preflight also ran for
+an explicit `--build`, although staging already supports building its image
+locally. A real-CLI fake-Docker regression failed with `image-unpublished`
+despite that override (saved `staging-build-before.log`). Staging now bypasses
+the registry preflight for an explicit build, matching the local path. The
+test checks both dispatches, verifies that neither probes a registry manifest,
+and proves staging reaches its existing execution path. The default-image
+missing-release regression continues to require refusal before state writes.
+After that correction, all 104 local binary/integration targets pass again:
+1,086 tests passed, none failed and one opt-in test was ignored. The stricter
+config-only table is also rerun separately after moving its fixture image into
+the config file.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.

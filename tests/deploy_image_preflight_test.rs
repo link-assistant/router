@@ -53,3 +53,56 @@ fn an_unpublished_default_image_refuses_local_and_staging_plans_without_writes()
         assert!(!root.exists(), "preflight must not create deployment state");
     }
 }
+
+#[test]
+fn an_explicit_build_does_not_require_a_published_default_image() {
+    let home = tempfile::tempdir().unwrap();
+    let docker = home.path().join("docker");
+    std::fs::write(&docker, "#!/bin/sh\nprintf '%s\\n' \"$1\" >> \"$IMAGE_PREFLIGHT_CALLS\"\ncase \"$1\" in info) echo 28; exit 0;; ps) exit 0;; manifest) echo 'manifest unknown' >&2;; esac\nexit 1\n").unwrap();
+    std::fs::set_permissions(&docker, std::fs::Permissions::from_mode(0o700)).unwrap();
+    for staging in [false, true] {
+        let root = home.path().join(if staging { "staging" } else { "local" });
+        let calls = home.path().join(if staging {
+            "staging-calls"
+        } else {
+            "local-calls"
+        });
+        let mut command = Command::new(env!("CARGO_BIN_EXE_router"));
+        command.args(["deploy", "--root", root.to_str().unwrap(), "--build", "."]);
+        if staging {
+            command.args(["--staging", "build-preflight"]);
+        } else {
+            command.arg("--status");
+        }
+        let output = command
+            .env("HOME", home.path())
+            .env("DATA_DIR", home.path().join("data"))
+            .env("IMAGE_PREFLIGHT_CALLS", &calls)
+            .env(
+                "PATH",
+                format!(
+                    "{}:{}",
+                    home.path().display(),
+                    std::env::var("PATH").unwrap()
+                ),
+            )
+            .env("TOKEN_SECRET", "image-preflight-secret")
+            .env("RUST_LOG", "error")
+            .output()
+            .unwrap();
+        let rendered = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(!rendered.contains("image-unpublished"), "{rendered}");
+        let calls = std::fs::read_to_string(calls).unwrap();
+        assert!(!calls.lines().any(|call| call == "manifest"), "{calls}");
+        if staging {
+            assert!(
+                root.join("staging.json").exists(),
+                "the explicit build reaches staging execution: {rendered}"
+            );
+        }
+    }
+}

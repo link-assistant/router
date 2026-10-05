@@ -192,9 +192,16 @@ fn every_local_section_setting_matches_its_equivalent_flags() {
     for section in ["deploy", "local"] {
         for mode in ["container", "host"] {
             for (setting, flags) in &cases {
+                // Keep the entire deployment selection in the config; this
+                // fixture image makes the comparison independent of registries.
+                let image = if setting.starts_with("image") {
+                    ""
+                } else {
+                    "image = \"example/router:1.2.3\"\n"
+                };
                 std::fs::write(
                     &config,
-                    format!("[{section}]\nmode = \"{mode}\"\n{setting}\n"),
+                    format!("[{section}]\nmode = \"{mode}\"\n{image}{setting}\n"),
                 )
                 .unwrap();
                 let run = |arguments: &[&str]| {
@@ -218,12 +225,9 @@ fn every_local_section_setting_matches_its_equivalent_flags() {
                         .output()
                         .unwrap()
                 };
-                // An explicit image keeps this config comparison independent
-                // of registry access; the image row supplies its own override.
-                let mut configured = vec!["--config", config.to_str().unwrap()];
+                let configured = ["--config", config.to_str().unwrap()];
                 let mut equivalent = vec!["--mode", mode];
                 if !setting.starts_with("image") {
-                    configured.extend(["--image", "example/router:1.2.3"]);
                     equivalent.extend(["--image", "example/router:1.2.3"]);
                 }
                 equivalent.extend(flags);
