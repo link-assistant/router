@@ -302,7 +302,7 @@ fn family_rank(id: &str) -> usize {
 }
 
 /// The numeric version in a model id, ignoring date stamps such as
-/// `20250514`: `claude-opus-4-1-20250805` is version `[4, 1]`.
+/// `20250514`: an id ending in `-4-1-20250805` is version `[4, 1]`.
 fn version_of(id: &str) -> Vec<u32> {
     id.split(|character: char| !character.is_ascii_digit())
         .filter(|part| !part.is_empty() && part.len() < 6)
