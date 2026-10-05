@@ -65,3 +65,23 @@ fn an_interrupted_stream_flushes_held_text_then_reports_the_failure() {
     assert!(out.contains("message_stop"), "{out}");
     assert!(!out.contains("event: error"), "{out}");
 }
+
+#[test]
+fn a_stall_relayed_in_band_by_the_inner_proxy_is_reported_as_a_timeout() {
+    use crate::stream_termination::{FailureKind, StreamDialect, error_frame};
+    for dialect in [StreamDialect::OpenAiChat, StreamDialect::Responses] {
+        for (kind, expected) in [
+            (FailureKind::Stalled, "timeout_error"),
+            (FailureKind::Interrupted, "api_error"),
+        ] {
+            let mut t = AnthropicStreamTranslator::new("claude-sonnet-4-5");
+            let mut out =
+                joined(&t.push(b"data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n"));
+            out.push_str(&joined(&t.push(&error_frame(dialect, kind))));
+            out.push_str(&joined(&t.finish()));
+            assert_eq!(out.matches("event: error").count(), 1, "{out}");
+            assert!(out.contains(&format!("\"type\":\"{expected}\"")), "{out}");
+            assert!(!out.contains("message_stop"), "{out}");
+        }
+    }
+}

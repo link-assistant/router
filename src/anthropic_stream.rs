@@ -195,6 +195,9 @@ impl AnthropicStreamTranslator {
         let Ok(event) = serde_json::from_str::<Value>(&data) else {
             return Vec::new();
         };
+        if let Some(kind) = crate::stream_termination::FailureKind::of_in_band(&event) {
+            return self.interrupt(kind);
+        }
         if event
             .get("type")
             .and_then(Value::as_str)

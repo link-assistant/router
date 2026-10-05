@@ -102,6 +102,23 @@ impl FailureKind {
         Self::Interrupted
     }
 
+    /// The failure named by an in-band error event Router itself emitted in
+    /// the Chat or Responses dialect, so a bridge relaying that event can
+    /// report it in its own dialect instead of as a generic error.
+    #[must_use]
+    pub fn of_in_band(event: &serde_json::Value) -> Option<Self> {
+        let code = event
+            .pointer("/error/code")
+            .or_else(|| event.get("code"))
+            .and_then(serde_json::Value::as_str)?;
+        match code {
+            "upstream_timeout" => Some(Self::Stalled),
+            "upstream_interrupted" => Some(Self::Interrupted),
+            "upstream_incomplete" => Some(Self::Truncated),
+            _ => None,
+        }
+    }
+
     const fn message(self) -> &'static str {
         match self {
             Self::Stalled => "upstream stream stalled past the idle timeout before completion",
