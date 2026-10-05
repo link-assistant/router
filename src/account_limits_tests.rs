@@ -35,6 +35,8 @@ fn parses_overall_and_named_windows_case_insensitively() {
             "Seven_Day",
         ),
         ("anthropic-ratelimit-unified-7d-unknown", "x"),
+        ("anthropic-ratelimit-unified-overage-status", "rejected"),
+        ("anthropic-ratelimit-unified-overage-reset", "9000"),
     ]));
     let names: Vec<&str> = limits.windows.iter().map(|w| w.name.as_str()).collect();
     assert_eq!(names, ["5h", "7d", "overall"]);

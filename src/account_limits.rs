@@ -152,6 +152,9 @@ pub fn parse_unified(headers: &HeaderMap) -> UnifiedLimits {
         let (window, field) = match rest {
             "status" | "reset" | "utilization" => ("overall", rest),
             _ => match rest.rsplit_once('-') {
+                // `overage-*` describes paid usage beyond the plan, not a
+                // usage window: `rejected` there only means overage is off.
+                Some(("overage", _)) => continue,
                 Some((window, field @ ("status" | "reset" | "utilization"))) => (window, field),
                 _ => continue,
             },

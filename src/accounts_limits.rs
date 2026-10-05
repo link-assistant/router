@@ -15,6 +15,10 @@ use crate::account_limits::{
     AccountLimitState, LimitScope, Pause, PauseKind, ThresholdDecision, WindowLimit, now_unix,
 };
 
+/// The longest a window reading waits to be saved; a cooldown or pause is
+/// saved at once.
+const LIMITS_SAVE_INTERVAL_SECS: u64 = 60;
+
 /// One upstream response, as the pool needs to see it.
 pub struct UpstreamObservation<'a> {
     pub account: &'a str,
@@ -114,6 +118,9 @@ impl AccountRouter {
             return;
         };
         let now = now_unix();
+        self.inner
+            .limits_saved_unix
+            .store(now, std::sync::atomic::Ordering::Relaxed);
         let accounts = self
             .inner
             .accounts
@@ -146,10 +153,12 @@ impl AccountRouter {
 
     /// Apply what one upstream response said about its account.
     ///
-    /// - A `429`, or any window reported `rejected`, cools the account (or one
-    ///   model on it — see [`crate::account_limits::classify_scope`]) until the
-    ///   longest rejected window resets. Without a usable reset the existing
-    ///   `Retry-After`/default cooldown applies.
+    /// - A `429` cools the account (or one model on it — see
+    ///   [`crate::account_limits::classify_scope`]) until the longest rejected
+    ///   window resets. Without a usable reset the existing
+    ///   `Retry-After`/default cooldown applies. A response that was served
+    ///   never cools its account, whatever its windows say: an account drawing
+    ///   on paid overage reports `rejected` on answers it still gives.
     /// - Utilization readings drive `ACCOUNT_PAUSE_AT_PERCENT`.
     ///
     /// Every response is observed, `count_tokens` included: it carries the
@@ -161,7 +170,7 @@ impl AccountRouter {
         let limits = crate::account_limits::parse_unified(observed.headers);
         let now = now_unix();
         let mut outcome = ObservedLimits::default();
-        let rejected = observed.status == 429 || limits.rejected().next().is_some();
+        let rejected = observed.status == 429;
         {
             let mut state = self.inner.accounts[index].limits();
             state.expire(now);
@@ -202,7 +211,14 @@ impl AccountRouter {
             }
         }
         outcome.paused = self.apply_threshold(index, &limits.windows, now);
-        if rejected || outcome.paused || !limits.windows.is_empty() {
+        let readings_due = !limits.windows.is_empty()
+            && now
+                >= self
+                    .inner
+                    .limits_saved_unix
+                    .load(std::sync::atomic::Ordering::Relaxed)
+                    .saturating_add(LIMITS_SAVE_INTERVAL_SECS);
+        if rejected || outcome.paused || readings_due {
             self.persist_limits();
         }
         outcome

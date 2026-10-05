@@ -295,6 +295,46 @@ async fn a_window_at_the_threshold_pauses_the_account() {
     );
 }
 
+/// A served response never cools its account, even when its windows read
+/// `rejected`: overage-off and paid-overage answers carry that on a `200`.
+#[tokio::test]
+async fn a_served_response_with_rejected_windows_keeps_the_account() {
+    let pool = Pool::start(Options::default()).await;
+    let reset = link_assistant_router::account_limits::now_unix() + 3600;
+    pool.vendor.ok_headers.lock().unwrap().insert(
+        "primary".into(),
+        vec![
+            ("anthropic-ratelimit-unified-status", "rejected".into()),
+            ("anthropic-ratelimit-unified-reset", reset.to_string()),
+            (
+                "anthropic-ratelimit-unified-overage-status",
+                "rejected".into(),
+            ),
+            (
+                "anthropic-ratelimit-unified-overage-reset",
+                reset.to_string(),
+            ),
+        ],
+    );
+
+    for _ in 0..2 {
+        let (status, body) = pool.send(None, &hello(false)).await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        assert!(body.contains("answered by primary"), "{body}");
+    }
+    let primary = pool.health("primary");
+    assert!(primary.healthy, "{primary:?}");
+    assert_eq!(primary.limits.cooldown_until_unix, None);
+    assert!(
+        primary
+            .limits
+            .windows
+            .iter()
+            .all(|window| window.name != "overage"),
+        "{primary:?}"
+    );
+}
+
 /// An operator can pause and resume an account through the management API.
 #[tokio::test]
 async fn the_api_pauses_and_resumes_an_account() {

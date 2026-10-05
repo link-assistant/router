@@ -251,6 +251,9 @@ struct AccountRouterInner {
     failover: bool,
     pause_at_percent: Option<u8>,
     state_dir: Option<PathBuf>,
+    /// When the limit state was last written, so window readings alone are
+    /// saved at most once a minute rather than on every response.
+    limits_saved_unix: std::sync::atomic::AtomicU64,
     /// Each account's own upstream clients (issue #678).
     http: crate::account_http::AccountClients,
 }
@@ -355,6 +358,7 @@ impl AccountRouter {
                 failover,
                 pause_at_percent,
                 state_dir,
+                limits_saved_unix: std::sync::atomic::AtomicU64::new(0),
                 http: crate::account_http::AccountClients::new(http),
             }),
         };
