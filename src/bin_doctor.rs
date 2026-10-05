@@ -236,20 +236,27 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     // A z.ai plan the serving process saw refused as exhausted (issue #657).
     // A local deployment at the default root records it under its own data
     // directory, not this process's (issue #664).
-    let (exhausted, found) = link_assistant_router::zai_upstream_error::doctor_report(&[
+    // Every deployment `router deploy` registered is inspected too, so one
+    // started with `--root DIR` is no longer invisible here (issue #684).
+    let (registered, unseen) = link_assistant_router::deploy::registry::doctor_targets(
+        &link_assistant_router::deploy::registry::path(&config.data_dir),
+    );
+    let data_dirs: Vec<std::path::PathBuf> = [
         config.data_dir.clone(),
         crate::deploy_cli::default_root(&config.data_dir).join("data"),
-    ]);
+    ]
+    .into_iter()
+    .chain(registered)
+    .collect();
+    print!("{unseen}");
+    let (exhausted, found) = link_assistant_router::zai_upstream_error::doctor_report(&data_dirs);
     print!("{exhausted}");
 
     // Pool failover and vendor rate-limit state (issues #676, #677). A cooling
     // or paused account is the pool working as configured, not a fault, so it
     // does not change the exit code.
     print!("{}", config.pool.doctor_lines());
-    let (limits, _) = link_assistant_router::account_limits::doctor_report(&[
-        config.data_dir.clone(),
-        crate::deploy_cli::default_root(&config.data_dir).join("data"),
-    ]);
+    let (limits, _) = link_assistant_router::account_limits::doctor_report(&data_dirs);
     print!("{limits}");
 
     if catalog_error || found {
