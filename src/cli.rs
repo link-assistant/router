@@ -101,7 +101,17 @@ pub fn parse_arguments(arguments: Vec<std::ffi::OsString>) -> Cli {
         );
     command = substitute_usage_name(command, &invoked);
     let matches = command.get_matches_from(arguments);
-    Cli::from_arg_matches(&matches).unwrap_or_else(|error| error.exit())
+    let mut cli = Cli::from_arg_matches(&matches).unwrap_or_else(|error| error.exit());
+    // A propagated global default is not a deploy override of --config (#688).
+    if let Some(Command::Deploy(deploy)) = &mut cli.command
+        && matches
+            .subcommand_matches("deploy")
+            .and_then(|args| args.value_source("port"))
+            == Some(clap::parser::ValueSource::DefaultValue)
+    {
+        deploy.port = None;
+    }
+    cli
 }
 
 /// The subcommands whose usage line is written out, and what follows the name.

@@ -75,6 +75,7 @@ impl Fake {
             .env("PATH", path)
             .env("TOKEN_SECRET", SECRET)
             .env("HOME", self.path())
+            .env_remove("ROUTER_PORT")
             .env("DEPLOY_TEST_PROVIDER_KEY", PROVIDER_KEY)
             .env("DEPLOY_TEST_RUNTIME", ENV_VALUE)
             .output()
@@ -218,6 +219,20 @@ fn command_line_flags_override_the_config_file() {
 }
 
 #[test]
+fn config_ports_are_not_replaced_by_global_defaults_in_remote_mode() {
+    let fake = Fake::new("exit 0");
+    for section in ["deploy", "remote"] {
+        let config = fake.write(
+            "port.toml",
+            &format!("[{section}]\nserver = \"deploy@example.test\"\nport = 18080\n"),
+        );
+        let output = fake.deploy(&["--remote", "--config", config.to_str().unwrap()]);
+        assert!(output.status.success(), "{}", stderr(&output));
+        assert!(fake.arguments().contains("'18080'"), "{}", fake.arguments());
+    }
+}
+
+#[test]
 fn the_json_document_reports_fingerprints_steps_and_validation_but_no_values() {
     let fake = Fake::new(
         r#"printf '%s\n' 'ROUTER_DEPLOY_EVENT {"event":"step","name":"build","at_ms":1000}' >&2
@@ -316,5 +331,80 @@ fn remote_only_settings_are_refused_for_a_local_deploy() {
             "{args:?}: {}",
             stderr(&output)
         );
+    }
+}
+
+#[test]
+fn shared_section_remote_keys_match_flags_and_keep_target_home_paths() {
+    let fake = Fake::new("exit 0");
+    let cases = [
+        (
+            "server = \"other@example.test\"",
+            vec!["--server", "other@example.test"],
+        ),
+        ("port = 18080", vec!["--port", "18080"]),
+        ("public_port = 8443", vec!["--public-port", "8443"]),
+        ("instance = \"blue\"", vec!["--instance", "blue"]),
+        (
+            "image = \"example/router:1.2.3\"",
+            vec!["--image", "example/router:1.2.3"],
+        ),
+        (
+            "build = \"/target/context\"",
+            vec!["--build", "/target/context"],
+        ),
+        ("root = \"~/deployment\"", vec!["--root", "~/deployment"]),
+        (
+            "seed_credentials = [\"claude\"]",
+            vec!["--seed-credential", "claude"],
+        ),
+    ];
+    let normalized = |arguments: String| {
+        arguments
+            .split_whitespace()
+            .map(|word| {
+                if uuid::Uuid::parse_str(word.trim_matches('\'')).is_ok() {
+                    "COOKIE"
+                } else {
+                    word
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    for section in ["deploy", "remote"] {
+        for (setting, flags) in &cases {
+            let server = if setting.starts_with("server") {
+                ""
+            } else {
+                "server = \"deploy@example.test\"\n"
+            };
+            let config = fake.write("parity.toml", &format!("[{section}]\n{server}{setting}\n"));
+            let file = fake.deploy(&["--remote", "--config", config.to_str().unwrap(), "--status"]);
+            assert!(
+                file.status.success(),
+                "{section} {setting}: {}",
+                stderr(&file)
+            );
+            let configured = normalized(fake.arguments());
+            let payload = fake.payload();
+            let mut equivalent = vec!["--status"];
+            if !setting.starts_with("server") {
+                equivalent.extend(["--server", "deploy@example.test"]);
+            }
+            equivalent.extend(flags);
+            let flag = fake.deploy(&equivalent);
+            assert!(
+                flag.status.success(),
+                "{section} {setting}: {}",
+                stderr(&flag)
+            );
+            assert_eq!(
+                configured,
+                normalized(fake.arguments()),
+                "{section} {setting}"
+            );
+            assert_eq!(payload, fake.payload(), "{section} {setting}");
+        }
     }
 }

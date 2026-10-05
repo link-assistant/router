@@ -64,7 +64,10 @@ impl Plan {
     /// The mutating steps a deploy would take; none when nothing is known
     /// to need changing.
     fn steps(&self, port: u16) -> Vec<String> {
-        if self.converged || self.secret_unknown {
+        if self.converged
+            || self.secret_unknown
+            || self.blockers.iter().any(|blocker| !blocker.forceable)
+        {
             return Vec::new();
         }
         let mut steps = Vec::new();
@@ -369,7 +372,7 @@ impl Coordinator<'_> {
             };
             if record.port != self.port {
                 plan.block(
-                    "stable-listener-change",
+                    "port-mismatch",
                     format!(
                         "host mode keeps the stable listener; pass --port {}",
                         record.port

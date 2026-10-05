@@ -143,6 +143,7 @@ impl Coordinator<'_> {
     fn print_status(&self, existing: &Existing) -> Result<bool, String> {
         println!("deployment_root={}", self.root.display());
         println!("candidate_image={}", self.image);
+        println!("listener=127.0.0.1:{}", self.port);
         println!(
             "credential_ownership=shared-data durable-per-credential-locks single-refresh-writer"
         );

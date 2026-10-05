@@ -116,6 +116,86 @@ fn text(output: &Output) -> String {
 }
 
 #[test]
+fn a_serving_host_on_another_port_blocks_status_and_mutation() {
+    let host = Host {
+        home: tempfile::tempdir().unwrap(),
+        port: free_port(),
+    };
+    assert!(host.deploy(&["--mode", "host"]).status.success());
+    let pid = host.pid().unwrap();
+    let other_port = free_port().to_string();
+    let root = host.root().display().to_string();
+    for status in [true, false] {
+        let mut args = vec![
+            "deploy",
+            "--root",
+            &root,
+            "--mode",
+            "host",
+            "--port",
+            &other_port,
+        ];
+        if status {
+            args.push("--status");
+        }
+        let output = common::router_with_env(host.home.path(), &args, &[("TOKEN_SECRET", SECRET)]);
+        let rendered = text(&output);
+        assert!(!output.status.success(), "{rendered}");
+        assert!(rendered.contains("port-mismatch"), "{rendered}");
+        assert!(!rendered.contains("action=start-host"), "{rendered}");
+        assert_eq!(host.pid(), Some(pid));
+        assert_eq!(host.status("/api/health", None), Some(200));
+    }
+    assert!(host.deploy(&["--down", "--yes"]).status.success());
+}
+
+#[test]
+fn config_alone_starts_and_reconciles_the_requested_host_listener() {
+    for section in ["deploy", "local"] {
+        let host = Host {
+            home: tempfile::tempdir().unwrap(),
+            port: free_port(),
+        };
+        let config = host.home.path().join("router-deploy.toml");
+        std::fs::write(
+            &config,
+            format!(
+                "[{section}]\nmode = \"host\"\nport = {}\nroot = {:?}\n",
+                host.port,
+                host.root().to_str().unwrap()
+            ),
+        )
+        .unwrap();
+        let run = |status: bool| {
+            let mut args = vec!["deploy", "--config", config.to_str().unwrap()];
+            if status {
+                args.push("--status");
+            }
+            std::process::Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+                .args(&args)
+                .env("HOME", host.home.path())
+                .env("TOKEN_SECRET", SECRET)
+                .env("DATA_DIR", host.home.path().join("router-data"))
+                .env_remove("ROUTER_PORT")
+                .output()
+                .unwrap()
+        };
+        let output = run(false);
+        assert!(output.status.success(), "{}", text(&output));
+        let pid = host.pid().unwrap();
+        assert_eq!(host.status("/api/health", None), Some(200));
+        let status = run(true);
+        assert!(
+            text(&status).contains("converged=true"),
+            "{}",
+            text(&status)
+        );
+        assert_eq!(host.pid(), Some(pid));
+        assert!(host.deploy(&["--down", "--yes"]).status.success());
+    }
+}
+
+#[test]
 fn host_mode_serves_the_deployment_tokens_and_stops_on_down() {
     let host = Host {
         home: tempfile::tempdir().unwrap(),

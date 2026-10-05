@@ -26,6 +26,12 @@ The default root is the configured Router data directory followed by `deploy/`.
 Use `--root DIR` to select another root. Its `credentials/`, `data/`, and
 `state/` subdirectories are durable; `--down` does not delete them.
 
+The default image is pinned to this CLI's version. Before printing a container
+plan, deploy checks for a cached image or a published registry manifest. If that
+version has no image, it exits with `image-unpublished` and names the version;
+select an available release with `--image TAG_OR_DIGEST` or build with `--build
+DIR`. Host deployments, removal and state restoration do not require an image.
+
 ## Configuration file, runtime variables and instances
 
 `router deploy --config FILE` takes its settings from the same TOML file a
@@ -35,6 +41,13 @@ key. A local run reads `[deploy]`, `[local]`, `[env]` and `[tokens]`, and
 command-line flags override the file. Provider keys and verification profiles
 apply only to remote runs; SSH flags, `--provider-key` and
 `--verification-profile` are refused locally with status `2`.
+
+The default server port does not override a file's `port`. An explicit `--port`
+or `ROUTER_PORT` overrides the file, including an explicit `8080`. A relative
+`root` resolves against the config file's directory; `~` and `~/...` expand
+against the current user's home instead. The same home prefixes work in
+`--root`, including staging. Other users' home prefixes such as `~someone`
+are refused; use an absolute path for those.
 
 `--env NAME`, `--env NAME=env:VAR` or `--env NAME=file:PATH` passes a runtime
 variable to the backend by name, in a container or in host mode. The value is
@@ -135,6 +148,9 @@ that would not fit as `blocker=data-checkpoint`; request logs are not part of
 that checkpoint.
 
 Once in host mode, `router deploy` and `router deploy --status` keep the mode.
+Requesting a different port for that root reports the non-forceable
+`port-mismatch` blocker, prints no start steps, and leaves the serving process
+and its data directory alone. Select the existing port or use another root.
 A rerun with the same Router and secret reports `converged=true` and changes
 nothing. Without `TOKEN_SECRET`, `--status` cannot compare the serving host's
 signing secret: when it serves this executable, version and port it reports

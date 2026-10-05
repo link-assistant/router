@@ -33,10 +33,10 @@ pub fn default_root(data_dir: &Path) -> PathBuf {
 }
 
 fn resolved_root(args: &DeployArgs, data_dir: &Path) -> Result<PathBuf, String> {
-    let root = args
-        .root
-        .as_deref()
-        .map_or_else(|| default_root(data_dir), PathBuf::from);
+    let root = match args.root.as_deref() {
+        Some(root) => link_assistant_router::deploy_config::expand_home(root)?,
+        None => default_root(data_dir),
+    };
     if root.is_absolute() {
         Ok(root)
     } else {
@@ -188,20 +188,27 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
         return ExitCode::from(2);
     }
     if args.staging.is_some() {
-        let root = args.root.as_deref().map_or_else(
-            || {
-                config
-                    .data_dir
-                    .join("staging")
-                    .join(args.staging.as_deref().expect("namespace"))
+        let root = match args.root.as_deref() {
+            Some(root) => match link_assistant_router::deploy_config::expand_home(root) {
+                Ok(root) => root,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    return ExitCode::from(2);
+                }
             },
-            PathBuf::from,
-        );
-        return crate::deploy_local::staging::run(
-            args,
-            &root,
-            &args.image.clone().unwrap_or_else(default_image),
-        );
+            None => config
+                .data_dir
+                .join("staging")
+                .join(args.staging.as_deref().expect("namespace")),
+        };
+        let image = args.image.clone().unwrap_or_else(default_image);
+        if !args.down
+            && !args.verify
+            && let Some(code) = image_preflight(args, &root, &image)
+        {
+            return code;
+        }
+        return crate::deploy_local::staging::run(args, &root, &image);
     }
     let (args, merged, remote) = match resolve(args) {
         Ok(resolved) => resolved,
@@ -251,10 +258,13 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    let image = args.image.clone().unwrap_or_else(default_image);
+    if let Some(code) = image_preflight(args, &root, &image) {
+        return code;
+    }
     if let Some(code) = service_before(args, &root) {
         return code;
     }
-    let image = args.image.clone().unwrap_or_else(default_image);
     let code = crate::deploy_local::run(args, &root, &image, &config.token_secret);
     if code == ExitCode::SUCCESS && !args.status {
         record_in_registry(args, &root, &config.data_dir);
@@ -271,6 +281,27 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
         };
     }
     code
+}
+
+/// A missing default image cannot yield an executable container plan.
+fn image_preflight(args: &DeployArgs, root: &Path, image: &str) -> Option<ExitCode> {
+    let host = args.mode == Some(DeployMode::Host)
+        || (args.mode.is_none() && root.join("state/host").exists());
+    if args.image.is_some()
+        || args.build.is_some()
+        || host
+        || args.down
+        || args.uninstall_service
+        || args.restore_state.is_some()
+    {
+        return None;
+    }
+    crate::deploy_image::ensure_default(image, link_assistant_router::VERSION)
+        .err()
+        .map(|error| {
+            eprintln!("error: {error}");
+            ExitCode::from(2)
+        })
 }
 
 /// The service steps that come before the deployment runs (issue #684):
