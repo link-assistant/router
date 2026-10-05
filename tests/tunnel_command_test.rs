@@ -136,10 +136,13 @@ fn ssh_forward_comes_up_on_loopback_with_a_pinned_key_and_checks_the_router() {
     assert!(text(&up).contains("models=200"), "{}", text(&up));
     assert!(!text(&up).contains(TOKEN));
 
-    // The supervisor starts ssh in the background; wait for its argv.
+    // The supervisor starts ssh in the background; wait until the stub has
+    // written its whole argv (the destination comes last).
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
-    while harness.arguments("ssh").is_empty() && std::time::Instant::now() < deadline {
-        std::thread::yield_now();
+    while !harness.arguments("ssh").contains("router@far.example")
+        && std::time::Instant::now() < deadline
+    {
+        std::thread::sleep(std::time::Duration::from_millis(20));
     }
     let arguments = harness.arguments("ssh");
     for expected in [
