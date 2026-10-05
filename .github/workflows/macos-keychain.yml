@@ -1,0 +1,130 @@
+# Real macOS Keychain coverage (issue #674). The unit tests elsewhere never
+# touch a keychain, so nothing proved that Router finds Claude Code's
+# `Claude Code-credentials` entry, its CLAUDE_CONFIG_DIR-scoped variant, or
+# prefers the live entry over a stale ~/.claude/.credentials.json.
+#
+# This job creates a throwaway keychain, makes it the default for the runner
+# user, seeds it with fake Claude Code items, runs the keychain tests with
+# ROUTER_TEST_KEYCHAIN=1, and deletes the keychain whatever happened. No real
+# credential is involved.
+name: macOS Keychain
+
+on:
+  pull_request:
+    paths:
+      - 'src/platform_keychain*.rs'
+      - 'src/subscription.rs'
+      - 'src/subscription/**'
+      - 'src/deploy_local/claude_share.rs'
+      - 'tests/macos_keychain_test.rs'
+      - '.github/workflows/macos-keychain.yml'
+  schedule:
+    - cron: '9 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-keychain-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  keychain:
+    name: Keychain lookups on macOS
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-keychain-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-keychain-cargo-
+
+      - name: Build keychain tests
+        run: cargo test --locked --no-run --test macos_keychain_test
+
+      - name: Create throwaway keychain
+        run: |
+          keychain="$RUNNER_TEMP/router-ci.keychain-db"
+          password="$(uuidgen)"
+          echo "::add-mask::$password"
+          echo "ORIGINAL_KEYCHAIN=$(security default-keychain -d user | xargs)" >> "$GITHUB_ENV"
+          echo "ROUTER_CI_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+          security create-keychain -p "$password" "$keychain"
+          # Stay unlocked for the job; never lock on sleep.
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          # Search the throwaway keychain first and make it the default, so
+          # `security find-generic-password` without -k finds the seeded items.
+          # shellcheck disable=SC2046
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | xargs)
+          security default-keychain -d user -s "$keychain"
+          security list-keychains -d user
+
+      - name: Seed fake Claude Code credentials
+        run: |
+          now_ms=$(( $(date +%s) * 1000 ))
+          live="{\"claudeAiOauth\":{\"accessToken\":\"keychain-ci-fake-access-token\",\"refreshToken\":\"keychain-ci-fake-refresh-token\",\"expiresAt\":$(( now_ms + 30 * 86400000 )),\"scopes\":[\"user:inference\"],\"subscriptionType\":\"max\"}}"
+          stale="{\"claudeAiOauth\":{\"accessToken\":\"file-ci-stale-access-token\",\"refreshToken\":\"file-ci-stale-refresh-token\",\"expiresAt\":$(( now_ms + 3600000 )),\"scopes\":[\"user:inference\"],\"subscriptionType\":\"max\"}}"
+          # -A: any application may read the item without a prompt, which a
+          # headless runner could never answer. Only this throwaway keychain
+          # is affected.
+          security add-generic-password -U -A -a "$USER" -s "Claude Code-credentials" \
+            -w "$live" "$ROUTER_CI_KEYCHAIN"
+          # Claude Code's name for CLAUDE_CONFIG_DIR=/tmp/router-keychain-ci:
+          # the base name, '-', and the first 8 hex digits of its SHA-256.
+          scoped="Claude Code-credentials-$(printf %s /tmp/router-keychain-ci | shasum -a 256 | cut -c1-8)"
+          security add-generic-password -U -A -a "$USER" -s "$scoped" -w "$live" "$ROUTER_CI_KEYCHAIN"
+          mkdir -p "$HOME/.claude"
+          printf '%s' "$stale" > "$HOME/.claude/.credentials.json"
+          chmod 600 "$HOME/.claude/.credentials.json"
+          security find-generic-password -s "Claude Code-credentials" > /dev/null
+          security find-generic-password -s "$scoped" > /dev/null
+
+      - name: Run keychain tests
+        env:
+          ROUTER_TEST_KEYCHAIN: '1'
+        run: |
+          cargo test --locked --test macos_keychain_test -- --nocapture
+          cargo test --locked --lib platform_keychain
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      # Smoke only: the pinned Claude Code installs and starts beside the
+      # seeded keychain. It is never given the fake credential to use.
+      - name: Claude Code smoke
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.265
+          claude --version
+
+      - name: Delete throwaway keychain
+        if: always()
+        run: |
+          if [ -n "${ORIGINAL_KEYCHAIN:-}" ]; then
+            security default-keychain -d user -s "$ORIGINAL_KEYCHAIN" || true
+            # shellcheck disable=SC2046
+            security list-keychains -d user -s $(security list-keychains -d user | xargs | tr ' ' '\n' | grep -v router-ci) || true
+          fi
+          if [ -n "${ROUTER_CI_KEYCHAIN:-}" ]; then
+            security delete-keychain "$ROUTER_CI_KEYCHAIN" || true
+          fi
+          rm -f "$HOME/.claude/.credentials.json"
