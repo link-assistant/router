@@ -107,6 +107,9 @@ async fn run() -> ExitCode {
         Some(Command::Models { op }) => {
             return link_assistant_router::model_command::run(op).await;
         }
+        Some(Command::Tunnel(args)) => {
+            return link_assistant_router::tunnel_command::run(args).await;
+        }
         _ => {}
     }
 
@@ -189,7 +192,8 @@ async fn run() -> ExitCode {
             Command::With(_)
             | Command::Server { .. }
             | Command::Configure(_)
-            | Command::Models { .. },
+            | Command::Models { .. }
+            | Command::Tunnel(_),
         ) => {
             unreachable!("handled before config")
         }

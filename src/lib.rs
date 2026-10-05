@@ -154,6 +154,7 @@ pub mod token_secret;
 pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
+pub mod tunnel_command;
 #[cfg(unix)]
 pub mod unix_listener;
 pub mod upstream_client;

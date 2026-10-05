@@ -741,6 +741,8 @@ pub enum Command {
         #[command(subcommand)]
         op: ModelOp,
     },
+    /// Reach a remote Router over a loopback-only SSH forward (issue #682).
+    Tunnel(crate::tunnel_command::TunnelArgs),
     /// Select and manage the server used by `with`.
     Server {
         #[command(subcommand)]
