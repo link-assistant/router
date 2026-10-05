@@ -119,6 +119,20 @@ fn marker(root: &Path) -> String {
     format!("root={}", root.display())
 }
 
+/// Escape a path for a systemd setting that takes a bare path, such as
+/// `WorkingDirectory=` or `StandardOutput=append:`: those do not unquote, so
+/// only specifiers are escaped.
+fn systemd_path(path: &Path) -> String {
+    path.display().to_string().replace('%', "%%")
+}
+
+/// Whether a unit file was written for `root`. The marker is matched with its
+/// closing parenthesis, so `/srv/r` does not claim the unit of `/srv/r2`.
+fn written_for(existing: &str, root: &Path) -> bool {
+    existing.contains(&format!("({})", marker(root)))
+        || existing.contains(&format!("({})", xml(&marker(root)).replace("--", "- -")))
+}
+
 /// Quote a value for a systemd `Environment=` or `ExecStart=` word.
 fn systemd_quote(value: &str) -> String {
     format!(
@@ -164,7 +178,7 @@ pub fn systemd_unit(unit: &Unit) -> String {
          Type=simple\n\
          WorkingDirectory={}\n",
         marker(&unit.root),
-        systemd_quote(&unit.data_dir.display().to_string()),
+        systemd_path(&unit.data_dir),
     );
     for (name, value) in environment(unit) {
         let _ = writeln!(
@@ -173,8 +187,7 @@ pub fn systemd_unit(unit: &Unit) -> String {
             systemd_quote(&format!("{name}={value}"))
         );
     }
-    let log = systemd_quote(&unit.log.display().to_string());
-    let log = &log[1..log.len() - 1];
+    let log = systemd_path(&unit.log);
     let _ = write!(
         text,
         "ExecStart={} serve\n\
@@ -279,8 +292,7 @@ pub fn install(root: &Path, token_secret: &str) -> Result<Record, String> {
     let (name, file) = names(manager);
     let path = unit_path(manager, &file)?;
     if let Ok(existing) = std::fs::read_to_string(&path)
-        && !existing.contains(&marker(root))
-        && !existing.contains(&xml(&marker(root)).replace("--", "- -"))
+        && !written_for(&existing, root)
     {
         return Err(format!(
             "{} belongs to another deployment; remove it with `router deploy --uninstall-service --root DIR` for that root, or use --instance",
@@ -433,6 +445,16 @@ mod tests {
             "{text}"
         );
         assert!(text.contains("Restart=on-failure"), "{text}");
+        // WorkingDirectory= takes a bare path; quotes would stop the unit
+        // from loading.
+        assert!(
+            text.contains("WorkingDirectory=/srv/router 50%%/data\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("StandardOutput=append:/srv/router 50%%/state/host.log\n"),
+            "{text}"
+        );
         assert!(!text.contains("TOKEN_SECRET="), "{text}");
     }
 
@@ -451,5 +473,18 @@ mod tests {
         assert!(
             !text.contains("<!-- Written by router deploy install-service (root=/srv/a&amp;b--c")
         );
+    }
+
+    #[test]
+    fn a_unit_belongs_only_to_the_exact_root_it_names() {
+        let mut unit = unit();
+        unit.root = PathBuf::from("/srv/r2");
+        let systemd = systemd_unit(&unit);
+        assert!(written_for(&systemd, Path::new("/srv/r2")));
+        assert!(!written_for(&systemd, Path::new("/srv/r")));
+        unit.root = PathBuf::from("/srv/a--b2");
+        let plist = launchd_plist(&unit, "com.link-assistant.router");
+        assert!(written_for(&plist, Path::new("/srv/a--b2")));
+        assert!(!written_for(&plist, Path::new("/srv/a--b")));
     }
 }
