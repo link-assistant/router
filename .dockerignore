@@ -1,0 +1,17 @@
+.git
+target
+debug
+dev/log
+**/node_modules
+**/__pycache__
+**/mutants.out*
+coverage
+criterion
+doc
+logs
+*.log
+.env
+.env.*
+link-assistant-router
+result
+result-*

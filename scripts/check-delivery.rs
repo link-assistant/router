@@ -11,6 +11,8 @@
 
 #[path = "../src/bounded_process.rs"]
 mod bounded_process;
+#[path = "release-status.rs"]
+mod release_status;
 
 use serde_json::{Value, json};
 use std::process::Command;
@@ -214,6 +216,9 @@ fn inspect(repository: &str, source: &str, verify: bool) -> Result<Value, String
     )
     .ok()
     .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+    let release_stable = release
+        .as_ref()
+        .is_some_and(release_status::is_stable_release);
     let mut artifacts_verified = false;
     let mut artifact_error = None;
     let mut asset_digests = None;
@@ -253,11 +258,11 @@ fn inspect(repository: &str, source: &str, verify: bool) -> Result<Value, String
         workflow["state"] == "active",
         &runs,
         contains_source,
-        release.is_some() && contains_source,
+        release_stable && contains_source,
         artifacts_verified,
     );
     Ok(
-        json!({"schema":"link-assistant-router/delivery/v1","source_revision":source,"version":version,"release_revision":revision,"release_contains_source":contains_source,"workflow_state":workflow["state"],"runs":runs,"state":delivery,"reason":reason,"artifacts_verified":artifacts_verified,"artifact_error":artifact_error,"asset_digests":asset_digests,"image_digest":image_digest,"recovery":format!("gh workflow run release.yml --repo {repository} --ref main -f release_mode=recover"),"mutation_performed":false}),
+        json!({"schema":"link-assistant-router/delivery/v1","source_revision":source,"version":version,"release_revision":revision,"release_contains_source":contains_source,"release_stable":release_stable,"workflow_state":workflow["state"],"runs":runs,"state":delivery,"reason":reason,"artifacts_verified":artifacts_verified,"artifact_error":artifact_error,"asset_digests":asset_digests,"image_digest":image_digest,"recovery":format!("gh workflow run release.yml --repo {repository} --ref main -f release_mode=recover"),"mutation_performed":false}),
     )
 }
 

@@ -57,7 +57,7 @@ fn dockerfile_builder_copies_embedded_admin_ui_before_building_source() {
         .find("COPY ui/dist/ ui/dist/")
         .expect("builder stage should copy the committed admin UI bundle");
     let source_copy = builder_stage
-        .find("COPY src/ src/")
+        .find("COPY . .")
         .expect("builder stage should copy the Rust source");
 
     assert!(
@@ -67,33 +67,13 @@ fn dockerfile_builder_copies_embedded_admin_ui_before_building_source() {
 }
 
 #[test]
-fn release_workflow_does_not_gate_releases_on_docker_builds() {
+fn release_workflow_prepares_artifacts_before_stable_publication() {
     let workflow = read_lf(".github/workflows/release.yml");
-
-    assert!(
-        !workflow.contains("docker-build:\n"),
-        "CI should not build and discard an image before publishing release artifacts"
-    );
-    assert!(
-        !workflow.contains("needs: [lint, test, build, docker-build]"),
-        "release jobs should not wait for an image build"
-    );
-    assert!(
-        workflow.contains(
-            "create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]"
-        ),
-        "GitHub release publication should depend directly on completed crate release jobs"
-    );
-    assert!(
-        workflow.contains(
-            "publish-docker-images:\n    name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})\n    needs: [create-github-release]"
-        ),
-        "published image builds should begin only after the GitHub release exists"
-    );
-    assert!(
-        workflow.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"),
-        "follow-up image jobs should build the immutable version tag produced by the release"
-    );
+    assert!(workflow.contains("--prerelease true"));
+    assert!(workflow.contains("finalize-release:"));
+    assert!(workflow.contains("needs.verify-release-provenance.result == 'success'"));
+    assert!(workflow.contains("--prerelease=false --latest"));
+    assert!(workflow.contains("ref: refs/tags/v${{ env.RELEASE_VERSION }}"));
 }
 
 #[test]
@@ -516,8 +496,8 @@ fn release_workflow_maps_crates_io_token_fallback_to_cargo_native_env() {
     );
     assert_eq!(
         workflow.matches(mapping).count(),
-        2,
-        "both publish steps should use Cargo's native token variable"
+        1,
+        "the final publish step should use Cargo's native token variable"
     );
     let global_env = workflow
         .split_once("\njobs:\n")
@@ -638,7 +618,7 @@ fn readme_rust_badge_tracks_the_manifest() {
 }
 
 #[test]
-fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
+fn release_workflow_publishes_synced_docker_hub_image_before_crate() {
     let workflow = fs::read_to_string(".github/workflows/release.yml")
         .expect("release workflow should be readable");
 
@@ -674,45 +654,20 @@ fn release_workflow_publishes_synced_docker_hub_image_after_crate() {
         "all native matrix legs should share one image build step"
     );
 
-    let auto_publish = workflow
-        .find("- name: Publish to Crates.io")
-        .expect("auto release should publish the crate");
-    let auto_wait = workflow
+    let finalization = workflow
+        .split_once("\n  finalize-release:\n")
+        .expect("artifact-gated finalization job")
+        .1;
+    let publish = finalization.find("- name: Publish to Crates.io").unwrap();
+    let wait = finalization
         .find("- name: Wait for Crate availability on Crates.io")
-        .expect("auto release should wait for the crate to be visible");
-    let docker_build = workflow
-        .find("publish-docker-images:")
-        .expect("shared native Docker build job should exist");
-    let docker_manifests = workflow
-        .find("publish-docker-manifests:")
-        .expect("shared Docker manifest job should exist");
-    let github_release = workflow
-        .find("create-github-release:")
-        .expect("shared GitHub release job should exist");
-
-    let manual_release = workflow
-        .find("manual-release:")
-        .expect("manual release job should exist");
-    let manual_section = &workflow[manual_release..];
-    let manual_publish = manual_section
-        .find("- name: Publish to Crates.io")
-        .expect("manual release should publish the crate");
-    let manual_wait = manual_section
-        .find("- name: Wait for Crate availability on Crates.io")
-        .expect("manual release should wait for the crate to be visible");
-    assert!(
-        auto_publish < auto_wait
-            && auto_wait < docker_build
-            && manual_publish < manual_wait
-            && manual_release + manual_wait < docker_build
-            && docker_build < docker_manifests,
-        "both release paths should publish crates.io before the shared follow-up jobs"
-    );
-    assert!(
-        workflow[github_release..].contains("needs: [auto-release, manual-release]")
-            && workflow[docker_build..].contains("needs: [create-github-release]"),
-        "the workflow DAG should publish the GitHub release before native Docker images"
-    );
+        .unwrap();
+    let promote = finalization
+        .find("- name: Promote verified release to stable and latest")
+        .unwrap();
+    assert!(publish < wait && wait < promote);
+    assert!(finalization.contains("needs.publish-docker-manifests.result == 'success'"));
+    assert!(finalization.contains("needs.publish-release-artifacts.result == 'success'"));
 }
 
 #[test]
