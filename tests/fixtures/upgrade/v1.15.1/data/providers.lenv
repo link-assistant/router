@@ -1,0 +1,3 @@
+# Link.Assistant.Router provider store
+# Each PROVIDER value is JSON; inline API keys are encrypted.
+PROVIDER: {"name":"upgrade-stub","kind":"openai-compatible","base_url":"http://127.0.0.1:9/v1","default_model":"stub-model","models":[],"supported_clients":[],"encrypted_api_key":"aes256gcm:u1RzVKEp73smz+96zJGxbc8xvInj2iMBbW65yDa3chPX6atwmds8A3T/vqv3wRRyZEubc7Qkbw==","enabled":true,"intermediary_risk_acknowledged":false,"unsupported_clients":[]}
