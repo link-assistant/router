@@ -155,6 +155,16 @@ pub struct ReplayRouter {
     pub data: TempDir,
 }
 
+/// An HTTP client whose idle keep-alive connections close after two seconds
+/// (`reqwest` keeps them for 90 by default), so once traffic stops the
+/// connection pools drain and the soak test can tell an idle pool from a leak.
+fn http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .pool_idle_timeout(Duration::from_secs(2))
+        .build()
+        .expect("HTTP client")
+}
+
 impl ReplayRouter {
     pub async fn start(provider: UpstreamProvider) -> Self {
         link_assistant_router::upstream_guard::install_process_policy(
@@ -201,7 +211,7 @@ impl ReplayRouter {
             .expect("install replay bridge policy");
         let log_root = data.path().join("requests");
         let mut state = AppState {
-            client: reqwest::Client::new(),
+            client: http_client(),
             token_manager: token_manager.clone(),
             oauth_provider,
             account_router: None,
@@ -253,7 +263,7 @@ impl ReplayRouter {
         }
         let (url, router_task) = spawn(app(state)).await;
         Self {
-            client: reqwest::Client::new(),
+            client: http_client(),
             url,
             provider,
             token_manager,
