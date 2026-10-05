@@ -1,0 +1,73 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "openai-chat",
+  "description": "Non-streamed Chat Completions turn with cached prompt tokens",
+  "provenance": "hand-written from the vendor's documented wire format; re-record with scripts/record-vendor-fixtures.rs",
+  "record": {
+    "url": "https://api.openai.com/v1/chat/completions",
+    "auth_env": "OPENAI_API_KEY",
+    "auth_header": "authorization",
+    "model_env": "OPENAI_CHAT_FIXTURE_MODEL",
+    "headers": {}
+  },
+  "request": {
+    "model": "{model}",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. "
+      },
+      {
+        "role": "user",
+        "content": "Say hello."
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "x-request-id": "req_scrubbed"
+    },
+    "json": {
+      "id": "chatcmpl-scrubbed0002",
+      "object": "chat.completion",
+      "created": 1700000000,
+      "model": "gpt-4.1-2025-04-14",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Hello there!",
+            "refusal": null,
+            "annotations": []
+          },
+          "logprobs": null,
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 2048,
+        "completion_tokens": 12,
+        "total_tokens": 2060,
+        "prompt_tokens_details": {
+          "cached_tokens": 1920,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "service_tier": "default",
+      "system_fingerprint": "fp_scrubbed"
+    }
+  },
+  "expect": {
+    "text": "Hello there!",
+    "charged_tokens": 2060
+  }
+}

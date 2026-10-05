@@ -288,6 +288,11 @@ jobs:
       - name: Test contract verification command
         run: rust-script --test scripts/verify-contracts.rs
 
+      # Recorded vendor cassettes (issue #671) stay scrubbed and replayable;
+      # offline, no keys needed.
+      - name: Check vendor fixture cassettes
+        run: rust-script scripts/record-vendor-fixtures.rs --check
+
       - name: Test bounded remote data checkpoint payload
         run: python3 experiments/issue-642/remote-checkpoint.py
 

@@ -1,0 +1,36 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "anthropic",
+  "description": "HTTP 500 api_error error envelope",
+  "provenance": "hand-written from the documented error envelope; vendor errors cannot be provoked on demand, so it is not re-recorded",
+  "record": null,
+  "request": {
+    "model": "{model}",
+    "max_tokens": 16,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ]
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_scrubbed"
+    },
+    "json": {
+      "type": "error",
+      "error": {
+        "type": "api_error",
+        "message": "Internal server error"
+      },
+      "request_id": "req_scrubbed"
+    }
+  },
+  "expect": {
+    "status": 500,
+    "error_type": "api_error"
+  }
+}

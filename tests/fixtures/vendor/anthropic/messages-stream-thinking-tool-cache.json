@@ -1,0 +1,124 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "anthropic",
+  "description": "Streamed turn with a signed thinking block, text, a tool call and prompt-cache usage",
+  "provenance": "hand-written from the vendor's documented wire format; re-record with scripts/record-vendor-fixtures.rs",
+  "record": {
+    "url": "https://api.anthropic.com/v1/messages",
+    "auth_env": "ANTHROPIC_API_KEY",
+    "auth_header": "x-api-key",
+    "model_env": "ANTHROPIC_FIXTURE_MODEL",
+    "headers": {
+      "anthropic-version": "2023-06-01"
+    }
+  },
+  "request": {
+    "model": "{model}",
+    "max_tokens": 2048,
+    "stream": true,
+    "thinking": {
+      "type": "enabled",
+      "budget_tokens": 1024
+    },
+    "system": [
+      {
+        "type": "text",
+        "text": "You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. ",
+        "cache_control": {
+          "type": "ephemeral"
+        }
+      }
+    ],
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Current weather for a city",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "city"
+          ]
+        }
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the weather in Paris?"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/event-stream; charset=utf-8",
+      "request-id": "req_scrubbed"
+    },
+    "sse": [
+      "event: message_start",
+      "data: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_scrubbed_0001\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-4-5-20250929\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":1500,\"cache_read_input_tokens\":3000,\"cache_creation\":{\"ephemeral_5m_input_tokens\":1500,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\"}}}",
+      "",
+      "event: ping",
+      "data: {\"type\":\"ping\"}",
+      "",
+      "event: content_block_start",
+      "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user wants the weather in Paris, so I should call get_weather.\"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"c2NydWJiZWQtdGhpbmtpbmctc2lnbmF0dXJlLTAwMDE=\"}}",
+      "",
+      "event: content_block_stop",
+      "data: {\"type\":\"content_block_stop\",\"index\":0}",
+      "",
+      "event: content_block_start",
+      "data: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Let me check the weather\"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" in Paris.\"}}",
+      "",
+      "event: content_block_stop",
+      "data: {\"type\":\"content_block_stop\",\"index\":1}",
+      "",
+      "event: content_block_start",
+      "data: {\"type\":\"content_block_start\",\"index\":2,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_scrubbed_0001\",\"name\":\"get_weather\",\"input\":{}}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"city\\\": \"}}",
+      "",
+      "event: content_block_delta",
+      "data: {\"type\":\"content_block_delta\",\"index\":2,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"Paris\\\"}\"}}",
+      "",
+      "event: content_block_stop",
+      "data: {\"type\":\"content_block_stop\",\"index\":2}",
+      "",
+      "event: message_delta",
+      "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null},\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":1500,\"cache_read_input_tokens\":3000,\"output_tokens\":48}}",
+      "",
+      "event: message_stop",
+      "data: {\"type\":\"message_stop\"}",
+      ""
+    ]
+  },
+  "expect": {
+    "text": "Let me check the weather in Paris.",
+    "tool": "get_weather",
+    "tool_arguments": {
+      "city": "Paris"
+    },
+    "charged_tokens": 4560
+  }
+}

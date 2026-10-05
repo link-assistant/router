@@ -1,0 +1,49 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "gemini-code-assist",
+  "description": "Code Assist streamGenerateContent turn with cached content tokens",
+  "provenance": "hand-written from the vendor's documented wire format; re-record with scripts/record-vendor-fixtures.rs",
+  "record": {
+    "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse",
+    "auth_env": "GEMINI_API_KEY",
+    "auth_header": "x-goog-api-key",
+    "model_env": "GEMINI_FIXTURE_MODEL",
+    "headers": {},
+    "code_assist_envelope": true
+  },
+  "request": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Say hello."
+          }
+        ]
+      }
+    ],
+    "systemInstruction": {
+      "parts": [
+        {
+          "text": "You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. You are terse. "
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/event-stream"
+    },
+    "sse": [
+      "data: {\"response\":{\"candidates\":[{\"content\":{\"role\":\"model\",\"parts\":[{\"text\":\"Hello\"}]}}],\"usageMetadata\":{\"promptTokenCount\":3000,\"totalTokenCount\":3000,\"cachedContentTokenCount\":2048},\"modelVersion\":\"gemini-2.5-pro\",\"responseId\":\"scrubbed0001\"},\"traceId\":\"scrubbed\"}",
+      "",
+      "data: {\"response\":{\"candidates\":[{\"content\":{\"role\":\"model\",\"parts\":[{\"text\":\" there!\"}]},\"finishReason\":\"STOP\"}],\"usageMetadata\":{\"promptTokenCount\":3000,\"candidatesTokenCount\":20,\"totalTokenCount\":3044,\"cachedContentTokenCount\":2048,\"thoughtsTokenCount\":24,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":3000}],\"cacheTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":2048}]},\"modelVersion\":\"gemini-2.5-pro\",\"responseId\":\"scrubbed0001\"},\"traceId\":\"scrubbed\"}",
+      ""
+    ]
+  },
+  "expect": {
+    "text": "Hello there!",
+    "charged_tokens": 3044
+  }
+}
