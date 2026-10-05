@@ -481,7 +481,15 @@ fn execute_with_disk(
 }
 
 pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
-    match execute(args, root, image, &Docker::default()) {
+    let result = namespace(args.staging.as_deref().expect("staging dispatch")).and_then(|_| {
+        // Status/verification report existing state without planning a start.
+        // Validate the identity first, and never create state for a missing image.
+        if !args.down && !args.status && !args.verify && args.image.is_none() {
+            crate::deploy_image::ensure_default(image, link_assistant_router::VERSION)?;
+        }
+        execute(args, root, image, &Docker::default())
+    });
+    match result {
         Ok(report) => {
             println!("{}", serde_json::to_string_pretty(&report).unwrap());
             ExitCode::SUCCESS

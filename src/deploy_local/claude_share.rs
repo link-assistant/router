@@ -20,11 +20,29 @@
 
 use std::path::{Path, PathBuf};
 
-use link_assistant_router::cli::ClaudeCredentials;
+use link_assistant_router::cli::{ClaudeCredentials, DeployArgs};
 use link_assistant_router::env_paths::from_value;
 
 /// Claude Code's own credential file inside its home.
 const CREDENTIAL_FILE: &str = ".credentials.json";
+
+/// Preserve credential refusals before checking a default container image.
+pub fn preflight(args: &DeployArgs, root: &Path) -> Option<std::process::ExitCode> {
+    let mode = args.claude_credentials?;
+    if args.status || args.down {
+        return None;
+    }
+    refusal(&Provision::assess(mode, &root.join("data")), root)
+}
+
+pub(super) fn refusal(provision: &Provision, root: &Path) -> Option<std::process::ExitCode> {
+    let Provision::Refused(reason) = provision else {
+        return None;
+    };
+    println!("{}", provision.status_line(root));
+    eprintln!("error: --claude-credentials share refused before deployment mutation: {reason}");
+    Some(std::process::ExitCode::from(2))
+}
 
 /// Backend label recording the credential a container was started with.
 pub(super) const LABEL_SUFFIX: &str = "claude-credentials";

@@ -33,9 +33,10 @@ branch `issue-689-4bcc94b199c2`.
   Clippy with warnings denied, file-size, terminology and applicable script
   checks; preserve large logs. The broader suite and CI are tracked in the PR.
 - [x] Add the automatic patch-release changelog trigger.
-- [ ] Commit useful atomic changes after checks.
-- [ ] Fetch/merge latest main if needed; push only the prepared branch.
-- [ ] Read complete PR diff, verify requirements and existing behavior.
+- [x] Commit useful atomic changes after checks.
+- [x] Fetch latest main (already an ancestor); push only the prepared branch.
+- [x] Read the PR diff, verify requirements and existing behavior; correct
+  the additional preflight-order regressions exposed by the broader suite.
 - [ ] Update title/body and closing references; mark PR ready.
 - [ ] List latest CI runs with timestamps/SHA; preserve every failed run's logs
   in `ci-logs/`, read large logs in chunks of at most 1500 lines, fix specific
@@ -170,5 +171,11 @@ extensions. Release script tests pass (10 create-release, 5 delivery and 2
 release-needed tests); the standalone path helper passes both tests.
 The complete binary/integration suite, doc tests and latest-head CI results are
 reported in PR #690 as they complete.
+The broader local suite exposed preflight-order regressions in existing
+credential-sharing and staging CLI tests: a credential refusal must remain
+independent of Docker, and staging status/verification of an absent namespace
+must remain read-only and succeed without an image. Credential refusal now
+precedes the default image check; staging checks the image only for a mutating
+start, after validating the namespace, preserving its structured error report.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.

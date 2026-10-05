@@ -29,6 +29,7 @@ mod state;
 mod tests;
 
 use claude_share::Provision;
+pub use claude_share::preflight as credential_preflight;
 use docker::Docker;
 use inventory::Inventory;
 use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
@@ -823,14 +824,10 @@ fn run_assessed(
             .unwrap_or_else(|| coordinator.active_claude_mode());
         coordinator.claude = assess(mode, &root.join("data"));
         // A refusal needs no container runtime to explain itself.
-        if let Provision::Refused(reason) = &coordinator.claude
-            && !args.status
+        if !args.status
+            && let Some(code) = claude_share::refusal(&coordinator.claude, root)
         {
-            println!("{}", coordinator.claude.status_line(root));
-            eprintln!(
-                "error: --claude-credentials share refused before deployment mutation: {reason}"
-            );
-            return ExitCode::from(2);
+            return code;
         }
     }
     if let Err(error) = coordinator.docker.available() {

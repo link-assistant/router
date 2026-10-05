@@ -202,12 +202,6 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
                 .join(args.staging.as_deref().expect("namespace")),
         };
         let image = args.image.clone().unwrap_or_else(default_image);
-        if !args.down
-            && !args.verify
-            && let Some(code) = image_preflight(args, &root, &image)
-        {
-            return code;
-        }
         return crate::deploy_local::staging::run(args, &root, &image);
     }
     let (args, merged, remote) = match resolve(args) {
@@ -295,6 +289,9 @@ fn image_preflight(args: &DeployArgs, root: &Path, image: &str) -> Option<ExitCo
         || args.restore_state.is_some()
     {
         return None;
+    }
+    if let Some(code) = crate::deploy_local::credential_preflight(args, root) {
+        return Some(code);
     }
     crate::deploy_image::ensure_default(image, link_assistant_router::VERSION)
         .err()

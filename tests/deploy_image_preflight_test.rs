@@ -13,9 +13,11 @@ fn an_unpublished_default_image_refuses_local_and_staging_plans_without_writes()
     for staging in [false, true] {
         let root = home.path().join(if staging { "staging" } else { "local" });
         let mut command = Command::new(env!("CARGO_BIN_EXE_router"));
-        command.args(["deploy", "--root", root.to_str().unwrap(), "--status"]);
+        command.args(["deploy", "--root", root.to_str().unwrap()]);
         if staging {
             command.args(["--staging", "image-preflight"]);
+        } else {
+            command.arg("--status");
         }
         let output = command
             .env("HOME", home.path())
