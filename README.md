@@ -1444,6 +1444,9 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `--pool-failover-budget-secs` / `POOL_FAILOVER_BUDGET_SECS` | `30` | Wall-clock seconds after which pool failover stops trying further accounts |
 | `--account-pause-at-percent` / `ACCOUNT_PAUSE_AT_PERCENT` | (unset) | Pause a pooled account once a vendor rate-limit window reports this utilization percentage (1-100); it resumes when the window resets. Unset never pauses |
 | `--intercept-warmup` / `INTERCEPT_WARMUP` | `false` | Answer Claude Code's `Warmup` probe locally (JSON or SSE) instead of spending subscription quota on it |
+| `--account-pool-idle-timeout-secs` / `ACCOUNT_POOL_IDLE_TIMEOUT_SECS` | `90` | Seconds an idle upstream connection of a pooled account stays open; `0` keeps idle connections |
+| `--account-connection-max-age-secs` / `ACCOUNT_CONNECTION_MAX_AGE_SECS` | `300` | Seconds after which a pooled account's upstream client is replaced, so no connection outlives it; `0` never replaces it |
+| `--account-egress-proxy` / `ACCOUNT_EGRESS_PROXY` | (none) | Per-account egress proxies, `ACCOUNT=SPEC,...`; see [Per-account connections and egress](#per-account-connections-and-egress) |
 
 #### Pool failover and vendor rate limits
 
@@ -1497,6 +1500,51 @@ The state is persisted under the data directory and shown by
 gauges `link_assistant_pool_accounts_cooling_down`,
 `link_assistant_pool_accounts_paused` and `link_assistant_pool_model_cooldowns`
 plus `link_assistant_warmup_intercepted_total` on `/metrics`.
+
+#### Per-account connections and egress
+
+Every pooled account (`primary`, `account-1`, ...) sends with its own HTTP
+client, on the Anthropic pass-through and on the Codex subscription path alike
+(#678). Accounts therefore never share a TCP connection, and on canonical Codex
+each account keeps its own Cloudflare cookie store, so a vendor cannot link two
+accounts through a reused connection or cookie. Token refreshes of an account
+go through the same client. Without a pool, or without any of the settings
+below, requests behave as before apart from this separation.
+
+- Idle connections close after `ACCOUNT_POOL_IDLE_TIMEOUT_SECS` (default 90).
+- After `ACCOUNT_CONNECTION_MAX_AGE_SECS` (default 300) the account's client is
+  replaced on its next request. New requests open fresh connections; requests
+  already in flight hold a reference to the old client and finish on their
+  connection, which closes when the last of them ends. The cookie store is
+  carried over. A connection can therefore outlive the maximum age only by the
+  length of the request it is serving.
+
+`ACCOUNT_EGRESS_PROXY` routes chosen accounts through a proxy
+(`http://`, `https://`, `socks5://` or `socks5h://`, the last resolving host
+names at the proxy). Credentials never appear on the command line or in the
+variable itself; each entry is `ACCOUNT=SPEC` where `SPEC` is one of:
+
+- `env:VAR` — the whole proxy URL, credentials included, is read from `VAR`;
+- `file:PATH` — the same, read from a file (for example a mounted secret);
+- a URL without a password, optionally followed by `;password-env=VAR` or
+  `;password-file=PATH` naming where the password is read.
+
+```bash
+export ACCOUNT_EGRESS_PROXY='account-1=socks5h://alice@10.0.0.5:1080;password-file=/run/secrets/proxy-1,account-2=env:ACCOUNT_2_PROXY_URL'
+```
+
+A URL that carries a password is rejected at startup. Secrets are read when the
+account's client is built, so a rotated secret file takes effect within one
+maximum connection age. If an account's proxy cannot be resolved (variable
+unset, file missing), its requests fail — they never fall back to a direct
+connection — and pool failover, when enabled, moves on to the next account.
+`doctor` shows the settings without credentials: a proxy URL is reduced to
+scheme, host and port, and secrets appear only as their `env:`/`file:`
+reference.
+
+Limitations: only pooled requests are separated. A single-account router, the
+Codex WebSocket transport, and background calls such as model catalogs and
+subscription usage keep using the shared client.
 
 #### Storage formats and ownership
 
