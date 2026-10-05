@@ -71,6 +71,12 @@ pub struct DeploySettingsArgs {
     /// must be proven before cutover. `--server` only.
     #[arg(long, value_name = "FILE")]
     pub verification_profile: Option<PathBuf>,
+    /// Hand this machine's login for a subscription to the new deployment:
+    /// `claude` (`anthropic`) or `codex` (`chatgpt`). Repeatable. The refresh
+    /// chain is moved, not forked: the local source is marked handed over
+    /// and the document travels on SSH stdin. `--server` only.
+    #[arg(long = "seed-credential", value_name = "PROVIDER")]
+    pub seed_credential: Vec<String>,
 }
 
 impl DeploySettingsArgs {
@@ -94,5 +100,6 @@ impl DeploySettingsArgs {
             || !self.provider_key.is_empty()
             || self.provider_key_mode.is_some()
             || self.verification_profile.is_some()
+            || !self.seed_credential.is_empty()
     }
 }

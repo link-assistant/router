@@ -81,6 +81,7 @@ pub fn payload(
     values: Option<&ResolvedDeploy>,
     json: bool,
     token_secret: &str,
+    seeds: &[link_assistant_router::deploy_seed::Seed],
 ) -> Option<String> {
     let mut lines: Vec<String> = Vec::new();
     if let Some(instance) = &merged.instance {
@@ -120,6 +121,15 @@ pub fn payload(
             }
         }
     }
+    for seed in seeds {
+        // The document is a secret: it rides the payload on stdin, never argv.
+        lines.push(format!(
+            "seed {} {} {}",
+            seed.provider.as_str(),
+            encode(&seed.document),
+            seed.fingerprint
+        ));
+    }
     if lines.is_empty() {
         None
     } else {
@@ -158,10 +168,21 @@ pub struct Collected {
 
 /// Read one agent stream: event lines are collected, the rest is either
 /// collected (`stdout`) or forwarded to this process's stderr.
+/// Where a collected stream's ordinary (non-event) lines go.
+#[derive(Clone, Copy)]
+pub enum Echo {
+    /// Kept for the `--json` document.
+    Keep,
+    /// Passed through to this process's stdout.
+    Stdout,
+    /// Passed through to this process's stderr.
+    Stderr,
+}
+
 pub fn collect<R: Read + Send + 'static>(
     stream: R,
     sink: Arc<Mutex<Collected>>,
-    keep_output: bool,
+    echo: Echo,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         for line in BufReader::new(stream).lines() {
@@ -172,12 +193,16 @@ pub fn collect<R: Read + Send + 'static>(
                 {
                     collected.events.push(value);
                 }
-            } else if keep_output {
-                if let Ok(mut collected) = sink.lock() {
-                    collected.output.push(line);
-                }
             } else {
-                eprintln!("{line}");
+                match echo {
+                    Echo::Keep => {
+                        if let Ok(mut collected) = sink.lock() {
+                            collected.output.push(line);
+                        }
+                    }
+                    Echo::Stdout => println!("{line}"),
+                    Echo::Stderr => eprintln!("{line}"),
+                }
             }
         }
     })
@@ -298,13 +323,17 @@ mod tests {
     #[test]
     fn no_settings_add_no_ssh_options_and_no_payload() {
         assert!(ssh_options(&SshSettings::default(), None).is_empty());
-        assert_eq!(payload(&Merged::default(), None, false, "secret"), None);
+        assert_eq!(
+            payload(&Merged::default(), None, false, "secret", &[]),
+            None
+        );
         assert_eq!(
             payload(
                 &Merged::default(),
                 Some(&ResolvedDeploy::default()),
                 false,
-                "secret"
+                "secret",
+                &[]
             ),
             None
         );
@@ -351,7 +380,7 @@ mod tests {
             env: vec![("UPSTREAM_TOKEN".into(), "value with spaces".into())],
             ..ResolvedDeploy::default()
         };
-        let encoded = payload(&merged, Some(&values), true, "secret").unwrap();
+        let encoded = payload(&merged, Some(&values), true, "secret", &[]).unwrap();
         let decoded = String::from_utf8(
             base64::engine::general_purpose::STANDARD
                 .decode(encoded)

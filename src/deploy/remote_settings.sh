@@ -45,6 +45,7 @@ if [ -n "${ROUTER_DEPLOY_PAYLOAD:-}" ]; then
     : > "$SETTINGS_DIR/runtime.env"
     : > "$SETTINGS_DIR/keys"
     : > "$SETTINGS_DIR/token-args"
+    : > "$SETTINGS_DIR/seeds"
     while IFS=' ' read -r setting first second third fourth; do
         case "$setting" in
             instance)
@@ -85,6 +86,21 @@ if [ -n "${ROUTER_DEPLOY_PAYLOAD:-}" ]; then
             tokens) TOKENS_LIMITED=1 ;;
             token-arg)
                 { printf '%s' "$first" | base64 -d; printf '\n'; } >> "$SETTINGS_DIR/token-args" ;;
+            seed)
+                case "$first" in
+                    claude|codex) ;;
+                    *) echo "error: invalid seed credential provider" >&2; exit 2 ;;
+                esac
+                case "$third" in
+                    hmac-sha256:*) ;;
+                    *) echo "error: invalid seed credential fingerprint" >&2; exit 2 ;;
+                esac
+                case "${third#hmac-sha256:}" in
+                    ''|*[!0-9a-f]*) echo "error: invalid seed credential fingerprint" >&2; exit 2 ;;
+                esac
+                # The coordinator settles its local mark from these events.
+                EVENTS=1
+                printf '%s %s %s\n' "$first" "$second" "$third" >> "$SETTINGS_DIR/seeds" ;;
             '') ;;
             *) echo "error: unknown deploy setting $setting" >&2; exit 2 ;;
         esac

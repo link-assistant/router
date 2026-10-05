@@ -136,6 +136,13 @@ fn check_target(args: &DeployArgs, remote: bool) -> Result<(), String> {
         if args.settings.verification_profile.is_some() {
             return Err("--verification-profile needs --server or --remote".to_string());
         }
+        if !args.settings.seed_credential.is_empty() {
+            return Err(
+                "--seed-credential hands a login to a remote deployment; it needs --server or \
+                 --remote (a local deployment reads this machine's login directly)"
+                    .to_string(),
+            );
+        }
         let ssh = &args.settings;
         if ssh.ssh_port.is_some()
             || ssh.ssh_identity.is_some()
@@ -159,10 +166,14 @@ fn resolve(args: &DeployArgs) -> Result<(DeployArgs, Merged, bool), String> {
     if let Some(instance) = &merged.instance {
         link_assistant_router::deploy::instance::select(instance)?;
     }
-    if !remote && (!merged.provider_keys.is_empty() || merged.verification.is_some()) {
+    if !remote
+        && (!merged.provider_keys.is_empty()
+            || merged.verification.is_some()
+            || !merged.seed_credentials.is_empty())
+    {
         eprintln!(
-            "note: provider keys and the verification profile in --config apply to remote \
-             deployments only; this local run ignores them."
+            "note: provider keys, seed credentials and the verification profile in --config \
+             apply to remote deployments only; this local run ignores them."
         );
     }
     Ok((resolved, merged, remote))

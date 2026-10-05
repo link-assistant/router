@@ -65,6 +65,7 @@ pub mod credential_store;
 pub mod deploy;
 pub mod deploy_config;
 pub mod deploy_relay;
+pub mod deploy_seed;
 pub mod deployment_preservation;
 pub mod doctor;
 pub mod durable_file;

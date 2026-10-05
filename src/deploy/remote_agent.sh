@@ -454,10 +454,57 @@ share_holding() {
     printf '%s\tpresent\t%s\tshared-original-directory\n' "$provider" "$source" >> "$HOLDINGS"
 }
 
-HOLDINGS=$RELEASE/credential-holdings.unsigned
-: > "$HOLDINGS"
 claude_home=${CLAUDE_CODE_HOME:-"$HOME/.claude"}
 codex_home=${CODEX_HOME:-"$HOME/.codex"}
+
+# `--seed-credential` (issue #681): install a login handed over by the
+# coordinator, the way `auth import --if-absent` would — never over a login
+# the target already holds — before the live directories are shared with the
+# candidate. A receipt keyed by the refresh chain's fingerprint makes a re-run,
+# or a re-run after a lost response, a no-op that still reports success.
+seed_credentials_step() {
+    if [ -z "$SETTINGS_DIR" ] || [ ! -s "$SETTINGS_DIR/seeds" ]; then return 0; fi
+    mark seed-credentials
+    mkdir -p "$STATE/seed-receipts"
+    while IFS=' ' read -r seed_provider seed_document seed_fingerprint; do
+        case "$seed_provider" in
+            claude) seed_home=$claude_home; seed_file=.credentials.json
+                set -- .credentials.json credentials.json auth.json oauth.json ;;
+            codex) seed_home=$codex_home; seed_file=auth.json; set -- auth.json ;;
+        esac
+        receipt=$STATE/seed-receipts/$seed_provider
+        seed_present=0
+        for filename in "$@"; do
+            if [ -f "$seed_home/$filename" ]; then seed_present=1; fi
+        done
+        if [ -r "$receipt" ] && [ "$(cat "$receipt")" = "$seed_fingerprint" ]; then
+            seed_action=already-seeded
+        elif [ "$seed_present" = 1 ]; then
+            seed_action=kept-existing
+        else
+            mkdir -p "$seed_home" && chmod 700 "$seed_home" || return 1
+            seed_temporary="$seed_home/.$seed_file.seed.$$"
+            printf '%s' "$seed_document" | base64 -d > "$seed_temporary" || {
+                rm -f "$seed_temporary"
+                echo "error: seed credential $seed_provider could not be decoded" >&2
+                return 1
+            }
+            chmod 600 "$seed_temporary" && mv "$seed_temporary" "$seed_home/$seed_file" || return 1
+            # The receipt is written only after the login is in place, so a
+            # receipt always means "this chain is installed here".
+            { printf '%s\n' "$seed_fingerprint" > "$receipt.tmp.$$" &&
+                mv "$receipt.tmp.$$" "$receipt"; } || return 1
+            seed_action=imported
+        fi
+        echo "seed credential $seed_provider: $seed_action"
+        event "{\"event\":\"seed_credential\",\"provider\":\"$seed_provider\",\"fingerprint\":\"$seed_fingerprint\",\"action\":\"$seed_action\"}"
+    done < "$SETTINGS_DIR/seeds"
+    rm -f "$SETTINGS_DIR/seeds"
+}
+seed_credentials_step || exit 1
+
+HOLDINGS=$RELEASE/credential-holdings.unsigned
+: > "$HOLDINGS"
 gemini_home=${GEMINI_HOME:-"${GEMINI_CLI_HOME:-$HOME}/.gemini"}
 qwen_home=${QWEN_HOME:-"$HOME/.qwen"}
 share_holding claude "$claude_home" .claude .credentials.json credentials.json auth.json oauth.json config.json

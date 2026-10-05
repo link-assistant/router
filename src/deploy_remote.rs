@@ -13,6 +13,7 @@ use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::deploy_config::{Merged, ResolvedDeploy};
 
+mod seeding;
 mod session;
 
 static AGENT: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
@@ -221,6 +222,7 @@ struct Prepared {
     values: Option<ResolvedDeploy>,
     known_hosts: Option<tempfile::NamedTempFile>,
     payload: Option<String>,
+    seeds: Vec<link_assistant_router::deploy_seed::Seed>,
 }
 
 fn prepare(
@@ -243,11 +245,21 @@ fn prepare(
                 .map_err(|error| format!("could not write the pinned known_hosts file: {error}"))
         })
         .transpose()?;
-    let payload = session::payload(merged, values.as_ref(), args.json, token_secret);
+    let seeds = if mode == RemoteMode::Deploy {
+        seeding::prepare(
+            merged,
+            args.server.as_deref().unwrap_or_default(),
+            token_secret,
+        )?
+    } else {
+        Vec::new()
+    };
+    let payload = session::payload(merged, values.as_ref(), args.json, token_secret, &seeds);
     Ok(Prepared {
         values,
         known_hosts,
         payload,
+        seeds,
     })
 }
 
@@ -281,6 +293,10 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
         }
     };
     let target = args.server.as_deref().expect("validated target");
+    if let Err(error) = seeding::mark_pending(&prepared.seeds, target) {
+        eprintln!("error: {error}");
+        return ExitCode::from(2);
+    }
     let cookie = uuid::Uuid::new_v4().simple().to_string();
     let remote = remote_command(
         &agent_arguments(args, mode, &cookie),
@@ -298,7 +314,9 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
         ))
         .args(["--", target, &remote])
         .stdin(Stdio::piped());
-    if args.json {
+    // Seeding reads the target's answer from its event stream, so the
+    // session is captured then too; without `--json` its output is echoed.
+    if args.json || !prepared.seeds.is_empty() {
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
     }
     let started = std::time::Instant::now();
@@ -311,14 +329,18 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
     };
     let collected = std::sync::Arc::new(std::sync::Mutex::new(session::Collected::default()));
     let readers: Vec<_> = [
-        child
-            .stdout
-            .take()
-            .map(|stream| session::collect(stream, collected.clone(), true)),
+        child.stdout.take().map(|stream| {
+            let echo = if args.json {
+                session::Echo::Keep
+            } else {
+                session::Echo::Stdout
+            };
+            session::collect(stream, collected.clone(), echo)
+        }),
         child
             .stderr
             .take()
-            .map(|stream| session::collect(stream, collected.clone(), false)),
+            .map(|stream| session::collect(stream, collected.clone(), session::Echo::Stderr)),
     ]
     .into_iter()
     .flatten()
@@ -382,13 +404,14 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
     } else if code == ExitCode::from(LEASE_EXIT) {
         eprintln!("lease error: target ownership could not be proved safely");
     }
+    let collected = collected
+        .lock()
+        .map(|mut collected| std::mem::take(&mut *collected))
+        .unwrap_or_default();
+    let seeded = seeding::settle(&prepared.seeds, target, &collected.events);
     if args.json {
         let exit_code = exit_number(code);
-        let collected = collected
-            .lock()
-            .map(|mut collected| std::mem::take(&mut *collected))
-            .unwrap_or_default();
-        let document = session::document(
+        let mut document = session::document(
             merged,
             prepared.values.as_ref(),
             token_secret,
@@ -401,6 +424,9 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
                 ssh_exit,
             },
         );
+        if let Some(object) = document.as_object_mut() {
+            object.insert("seed_credentials".into(), seeded.into());
+        }
         println!(
             "{}",
             serde_json::to_string_pretty(&document).unwrap_or_default()

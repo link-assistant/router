@@ -424,6 +424,8 @@ pub struct DeploySection {
     pub mode: Option<String>,
     /// `--claude-credentials` (`isolated` or `share`).
     pub claude_credentials: Option<String>,
+    /// `--seed-credential`, repeated (remote only).
+    pub seed_credentials: Vec<String>,
 }
 
 impl DeploySection {
@@ -444,6 +446,9 @@ impl DeploySection {
             mode,
             claude_credentials
         );
+        if !other.seed_credentials.is_empty() {
+            self.seed_credentials.clone_from(&other.seed_credentials);
+        }
     }
 }
 
@@ -636,6 +641,7 @@ fn parse_section(
             "root",
             "mode",
             "claude_credentials",
+            "seed_credentials",
         ],
     )?;
     let instance = string(table, section, "instance")?;
@@ -655,6 +661,7 @@ fn parse_section(
         root,
         mode: string(table, section, "mode")?,
         claude_credentials: string(table, section, "claude_credentials")?,
+        seed_credentials: strings(table, section, "seed_credentials")?,
     })
 }
 

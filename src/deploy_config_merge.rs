@@ -32,6 +32,8 @@ pub struct Merged {
     pub provider_key_mode: ProviderKeyMode,
     /// Verification profile.
     pub verification: Option<VerificationProfile>,
+    /// Logins to hand over to a remote deployment (issue #681).
+    pub seed_credentials: Vec<crate::deploy_seed::SeedProvider>,
 }
 
 fn upsert<T>(items: &mut Vec<T>, item: T, name: impl Fn(&T) -> &str) {
@@ -133,6 +135,13 @@ pub fn merge(args: &DeploySettingsArgs, remote: bool) -> Result<Merged, String> 
         None => file.verification,
     };
 
+    let seed_credentials =
+        crate::deploy_seed::parse_providers(if args.seed_credential.is_empty() {
+            &section.seed_credentials
+        } else {
+            &args.seed_credential
+        })?;
+
     Ok(Merged {
         section,
         instance,
@@ -142,6 +151,7 @@ pub fn merge(args: &DeploySettingsArgs, remote: bool) -> Result<Merged, String> 
         provider_keys,
         provider_key_mode: args.provider_key_mode.unwrap_or_default(),
         verification,
+        seed_credentials,
     })
 }
 
