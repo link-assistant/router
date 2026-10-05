@@ -80,12 +80,6 @@ const RESPONSE_CREDENTIAL_HEADERS: &[&str] = &[
     "anthropic-auth-token",
 ];
 
-/// Select end-to-end upstream response headers that are safe to relay to a client.
-///
-/// This policy is shared by Claude and subscription provider paths so vendor
-/// quota fields and request IDs are preserved consistently. Besides standard
-/// hop-by-hop fields, it removes fields named by `Connection`, upstream
-/// credentials, and `Content-Length` (response bodies may be translated).
 /// The dialect a successful streamed body may carry an in-band error in.
 ///
 /// `None` keeps the transport abort for bodies Router relays opaquely: a
@@ -102,6 +96,12 @@ pub(crate) fn in_band_dialect(
     .flatten()
 }
 
+/// Select end-to-end upstream response headers that are safe to relay to a client.
+///
+/// This policy is shared by Claude and subscription provider paths so vendor
+/// quota fields and request IDs are preserved consistently. Besides standard
+/// hop-by-hop fields, it removes fields named by `Connection`, upstream
+/// credentials, and `Content-Length` (response bodies may be translated).
 pub(crate) fn relay_response_headers(headers: &HeaderMap) -> HeaderMap {
     let connection_headers: HashSet<String> = headers
         .get_all("connection")
