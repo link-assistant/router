@@ -302,9 +302,19 @@ fn provider_target(
         ));
     }
     let path = strip_service_path(uri, Service::OpenAi);
+    // The same SSRF guard as every other API-key provider path (issue #669).
+    let client = crate::upstream_client::guarded_provider_client(&state.client, &provider.base_url)
+        .map_err(|blocked| {
+            error(
+                StatusCode::FORBIDDEN,
+                "permission_error",
+                &blocked.to_string(),
+            )
+        })?
+        .clone();
     Ok((
         Target {
-            client: state.client.clone(),
+            client,
             url: crate::provider_proxy::join_openai_compatible_url(&provider.base_url, &path),
             headers: crate::proxy::native_request_headers(incoming, key),
         },

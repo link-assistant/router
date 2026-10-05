@@ -57,10 +57,28 @@ impl AddressClass {
 pub fn classify(ip: IpAddr) -> Option<AddressClass> {
     match ip {
         IpAddr::V4(v4) => classify_v4(v4),
-        IpAddr::V6(v6) => v6
-            .to_ipv4_mapped()
-            .map_or_else(|| classify_v6(v6), classify_v4),
+        IpAddr::V6(v6) => embedded_v4(v6).map_or_else(|| classify_v6(v6), classify_v4),
     }
+}
+
+/// The IPv4 address an IPv6 address reaches: IPv4-mapped (`::ffff:a.b.c.d`),
+/// IPv4-compatible (`::a.b.c.d`) or well-known-prefix NAT64
+/// (`64:ff9b::a.b.c.d`), which a DNS64 network routes to that IPv4 host.
+fn embedded_v4(ip: Ipv6Addr) -> Option<Ipv4Addr> {
+    if let Some(v4) = ip.to_ipv4_mapped() {
+        return Some(v4);
+    }
+    let segments = ip.segments();
+    let tail = Ipv4Addr::new(
+        ip.octets()[12],
+        ip.octets()[13],
+        ip.octets()[14],
+        ip.octets()[15],
+    );
+    let nat64 = segments[..6] == [0x64, 0xff9b, 0, 0, 0, 0];
+    // `::` and `::1` keep their own IPv6 meaning.
+    let compatible = segments[..6] == [0; 6] && u32::from(tail) > 1;
+    (nat64 || compatible).then_some(tail)
 }
 
 fn classify_v4(ip: Ipv4Addr) -> Option<AddressClass> {
@@ -264,6 +282,17 @@ impl NetworkPolicy {
             _ => Ok(allowed),
         }
     }
+}
+
+/// Resolve `host` and keep only the addresses the process policy allows, for
+/// connections made outside reqwest (the Responses WebSocket upstream).
+///
+/// # Errors
+/// A resolution failure, or every address being refused.
+pub async fn resolve_allowed(host: &str, port: u16) -> std::io::Result<Vec<SocketAddr>> {
+    let policy = NetworkPolicy::from_env();
+    let addrs: Vec<SocketAddr> = tokio::net::lookup_host((host, port)).await?.collect();
+    policy.filter(host, addrs).map_err(std::io::Error::other)
 }
 
 /// Host names that only ever name a cloud metadata service.

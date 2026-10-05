@@ -128,6 +128,12 @@ static PROVIDER_CLIENT: LazyLock<Option<reqwest::Client>> = LazyLock::new(|| {
     upstream_client_builder()
         .dns_resolver(std::sync::Arc::new(GuardedResolver::new(policy)))
         .build()
+        .map_err(|error| {
+            tracing::error!(
+                "the guarded provider client could not be built; provider requests \
+                 use the shared client without DNS-rebinding protection: {error}"
+            );
+        })
         .ok()
 });
 
