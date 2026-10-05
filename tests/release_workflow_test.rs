@@ -619,8 +619,7 @@ fn readme_rust_badge_tracks_the_manifest() {
 
 #[test]
 fn release_workflow_publishes_synced_docker_hub_image_before_crate() {
-    let workflow = fs::read_to_string(".github/workflows/release.yml")
-        .expect("release workflow should be readable");
+    let workflow = read_lf(".github/workflows/release.yml");
 
     assert!(
         workflow.contains("DOCKERHUB_IMAGE: konard/link-assistant-router"),

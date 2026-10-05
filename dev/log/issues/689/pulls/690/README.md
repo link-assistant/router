@@ -205,5 +205,12 @@ home expansion and read-only status on every Unix test host. CI coverage also
 rose from 85.938702% to 86.010891% (71,709 / 83,372 lines; saved coverage log
 lines 4974–5013), requiring the improved baseline to be committed. The existing
 coverage floor and ratchet remain unchanged.
+The complete Windows log from that run subsequently exposed one updated
+workflow assertion that still read CRLF text without the file's existing
+normalization helper (combined log lines 51625–51648). The retained
+`experiments/issue-689/test_windows_workflow.py` reproduces the same failure on
+Linux by temporarily using CRLF workflow bytes and restoring them in `finally`.
+The assertion now uses the same `read_lf` helper as its neighbors. All 29
+release workflow/gate tests are verified against both LF and CRLF.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.
