@@ -6,15 +6,18 @@
 //! sent, and answers each from a per-account script.
 
 use std::collections::{HashMap, VecDeque};
+use std::net::SocketAddr;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use axum::Router;
 use axum::body::{Body, to_bytes};
-use axum::extract::{Request, State};
+use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::{get, post};
+use link_assistant_router::account_http::AccountHttpPolicy;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions, SelectionStrategy};
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::config::UpstreamProvider;
@@ -44,6 +47,12 @@ enum Reply {
         headers: Vec<(&'static str, String)>,
         delay: Duration,
     },
+    /// A `200` stream that sends `message_start` and one long text delta,
+    /// then resets the connection (`reset`) or goes silent until the router
+    /// hangs up (issues #668 and #669).
+    Cut { reset: bool },
+    /// A redirect to `location` (issue #669).
+    Redirect { status: u16, location: String },
 }
 
 impl Reply {
@@ -69,6 +78,12 @@ struct Vendor {
     seen: Arc<Mutex<Vec<(String, String, Value)>>>,
     /// Successful-answer headers per account.
     ok_headers: Arc<Mutex<HashMap<String, Headers>>>,
+    /// `(account, client port)` per request: one port per TCP connection.
+    peers: Arc<Mutex<Vec<(String, u16)>>>,
+    /// `Cookie` headers received, per account.
+    cookies: Arc<Mutex<Vec<(String, String)>>>,
+    /// [`Reply::Cut`] streams whose connection the router closed.
+    closed: Arc<AtomicUsize>,
 }
 
 impl Vendor {
@@ -110,6 +125,21 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
         .to_string();
     let account = token.strip_prefix("tok-").unwrap_or(&token).to_string();
     let path = request.uri().path().to_string();
+    if let Some(ConnectInfo(peer)) = request.extensions().get::<ConnectInfo<SocketAddr>>() {
+        vendor
+            .peers
+            .lock()
+            .unwrap()
+            .push((account.clone(), peer.port()));
+    }
+    if let Some(cookie) = request.headers().get("cookie") {
+        let cookie = cookie.to_str().unwrap_or_default().to_string();
+        vendor
+            .cookies
+            .lock()
+            .unwrap()
+            .push((account.clone(), cookie));
+    }
     let body = to_bytes(request.into_body(), 1024 * 1024).await.unwrap();
     let body: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
     vendor
@@ -149,6 +179,15 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
             }
             response
         }
+        Reply::Cut { reset } => cut_stream(&account, reset, vendor.closed.clone()),
+        Reply::Redirect { status, location } => {
+            let mut response = Response::new(Body::empty());
+            *response.status_mut() = StatusCode::from_u16(status).unwrap();
+            response
+                .headers_mut()
+                .insert("location", HeaderValue::from_str(&location).unwrap());
+            response
+        }
         Reply::Ok => {
             let streamed = body.get("stream").and_then(Value::as_bool) == Some(true);
             let (text, content_type) = if path.ends_with("/responses") {
@@ -164,6 +203,11 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
             response
                 .headers_mut()
                 .insert("content-type", HeaderValue::from_static(content_type));
+            // A vendor session cookie, which no other account may ever echo.
+            response.headers_mut().insert(
+                "set-cookie",
+                HeaderValue::from_str(&format!("vendor_session={account}; Path=/")).unwrap(),
+            );
             for (name, value) in vendor
                 .ok_headers
                 .lock()
@@ -179,6 +223,55 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
             response
         }
     }
+}
+
+/// Counts a [`Reply::Cut`] stream the router hung up on.
+struct Closed(Arc<AtomicUsize>);
+
+impl Drop for Closed {
+    fn drop(&mut self) {
+        self.0.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+/// Text of the one delta a [`Reply::Cut`] stream sends: 400 characters, an
+/// estimated 100 output tokens.
+const CUT_TEXT_CHARS: usize = 400;
+
+fn cut_stream(account: &str, reset: bool, closed: Arc<AtomicUsize>) -> Response {
+    use futures_util::StreamExt as _;
+    let mut message = message_from(account);
+    message["content"] = json!([]);
+    message["usage"] = json!({"input_tokens": 3, "output_tokens": 1});
+    let head = format!(
+        "event: message_start\ndata: {}\n\nevent: content_block_delta\ndata: {}\n\n",
+        json!({"type": "message_start", "message": message}),
+        json!({"type": "content_block_delta", "index": 0,
+               "delta": {"type": "text_delta", "text": "x".repeat(CUT_TEXT_CHARS)}}),
+    );
+    let first = futures_util::stream::once(async move {
+        Ok::<_, std::io::Error>(axum::body::Bytes::from(head))
+    });
+    let tail = futures_util::stream::unfold(Some(Closed(closed)), move |guard| async move {
+        let guard = guard?;
+        // Let the head reach the router before the cut.
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        if reset {
+            drop(guard);
+            Some((Err(std::io::Error::other("scripted reset")), None))
+        } else {
+            // The guard lives in this future until the router hangs up.
+            std::future::pending::<()>().await;
+            drop(guard);
+            None
+        }
+    });
+    let mut response = Response::new(Body::from_stream(first.chain(tail)));
+    response.headers_mut().insert(
+        "content-type",
+        HeaderValue::from_static("text/event-stream"),
+    );
+    response
 }
 
 fn message_from(account: &str) -> Value {
@@ -243,6 +336,8 @@ fn codex_stream_from(account: &str) -> String {
 struct Pool {
     client: reqwest::Client,
     url: String,
+    /// Base URL of the stub vendor.
+    stub_url: String,
     token: String,
     token_id: String,
     vendor: Vendor,
@@ -267,6 +362,8 @@ struct Options {
     /// Pool Codex accounts behind the native Responses route instead of
     /// Claude accounts behind the Anthropic pass-through.
     codex: bool,
+    /// Per-account connection and egress settings (issue #678).
+    http: AccountHttpPolicy,
 }
 
 impl Default for Options {
@@ -276,6 +373,7 @@ impl Default for Options {
             cooldown: Duration::from_secs(60),
             pause_at_percent: None,
             codex: false,
+            http: AccountHttpPolicy::default(),
         }
     }
 }
@@ -284,7 +382,13 @@ async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = listener.local_addr().unwrap();
     let task = tokio::spawn(async move {
-        axum::serve(listener, app).await.unwrap();
+        // Connect info lets the vendor tell TCP connections apart.
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap();
     });
     (format!("http://{address}"), task)
 }
@@ -301,6 +405,7 @@ impl Pool {
             budget: Duration::from_secs(30),
             pause_at_percent: None,
             intercept_warmup: true,
+            account_http: AccountHttpPolicy::default(),
         });
         let data = tempfile::tempdir().unwrap();
         let homes: Vec<_> = ACCOUNTS
@@ -346,6 +451,7 @@ impl Pool {
                 failover: options.failover,
                 pause_at_percent: options.pause_at_percent,
                 state_dir: Some(data.path().to_path_buf()),
+                http: options.http.clone(),
             },
         );
         let cache = Arc::new(TokenCache::new());
@@ -378,7 +484,7 @@ impl Pool {
             subscription_readers: Vec::new(),
             model_catalogs: Arc::new(ModelCatalogCache::new()),
             subscription_cache: cache,
-            upstream_base_url: stub_url,
+            upstream_base_url: stub_url.clone(),
             upstream_provider: if options.codex {
                 UpstreamProvider::Codex
             } else {
@@ -448,8 +554,13 @@ impl Pool {
             .with_state(state.clone());
         let (url, app_task) = spawn(app).await;
         Self {
-            client: reqwest::Client::new(),
+            // Never follows a relayed redirect, so a test sees what the router sent.
+            client: reqwest::Client::builder()
+                .redirect(reqwest::redirect::Policy::none())
+                .build()
+                .unwrap(),
             url,
+            stub_url,
             token,
             token_id,
             vendor,
@@ -545,3 +656,7 @@ fn rate_limited_for(seconds: u64) -> Reply {
 mod cases;
 #[path = "pool_failover/codex.rs"]
 mod codex;
+#[path = "pool_failover/isolation.rs"]
+mod isolation;
+#[path = "pool_failover/streams.rs"]
+mod streams;
