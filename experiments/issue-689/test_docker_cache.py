@@ -28,22 +28,31 @@ name = "cache-repro"
 [[bin]]
 name = "custom_name"
 path = "custom/entrypoint"
+[[bin]]
+name = "directory_binary"
 [[bench]]
 name = "hot_paths"
 harness = false
 [[bench]]
 name = "custom_bench"
 path = "custom/bench.rs"
+[[bench]]
+name = "directory_bench"
+harness = false
 [[test]]
 name = "integration"
 [[test]]
 name = "custom_test"
 path = "custom/test.rs"
+[[test]]
+name = "directory_test"
 [[example]]
 name = "usage"
 [[example]]
 name = "custom_example"
 path = "custom/example.rs"
+[[example]]
+name = "directory_example"
 ''')
             subprocess.run(["python3", str(GENERATOR)], cwd=root, check=True)
             result = subprocess.run(
@@ -61,8 +70,19 @@ path = "custom/example.rs"
             for path in ["custom/library.rs", "custom/router.rs", "benches/hot_paths.rs",
                          "custom/bench.rs", "tests/integration.rs", "custom/test.rs",
                          "examples/usage.rs", "custom/example.rs", "src/main.rs",
-                         "custom/entrypoint"]:
+                         "custom/entrypoint", "src/bin/directory_binary/main.rs",
+                         "benches/directory_bench/main.rs", "tests/directory_test/main.rs",
+                         "examples/directory_example/main.rs"]:
+                (root / path).parent.mkdir(parents=True, exist_ok=True)
                 (root / path).write_text("" if path == "custom/library.rs" else "fn main() {}\n")
+            subprocess.run(["python3", str(GENERATOR), "--touch"], cwd=root, check=True)
+            subprocess.run(["cargo", "check", "--all-targets"], cwd=root, check=True)
+            # A binary named after its package can also use src/bin rather
+            # than src/main.rs when that primary default is absent.
+            (root / "src/main.rs").unlink()
+            package_binary = root / "src/bin/cache-repro/main.rs"
+            package_binary.parent.mkdir(parents=True)
+            package_binary.write_text("fn main() {}\n")
             subprocess.run(["python3", str(GENERATOR), "--touch"], cwd=root, check=True)
             subprocess.run(["cargo", "check", "--all-targets"], cwd=root, check=True)
 

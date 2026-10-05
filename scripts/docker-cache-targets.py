@@ -15,18 +15,24 @@ RECORD = Path(".docker-cache-targets.json")
 
 def targets():
     manifest = tomllib.loads(Path("Cargo.toml").read_text())
-    declared = [(manifest.get("lib", {"path": "src/lib.rs"}), "src/lib.rs", "")]
+    declared = [(manifest.get("lib", {}), ["src/lib.rs"], "")]
     for kind, directory in [("bin", "src/bin"), ("bench", "benches"),
                             ("test", "tests"), ("example", "examples")]:
         for target in manifest.get(kind, []):
-            default = f"{directory}/{target['name']}.rs"
+            defaults = [f"{directory}/{target['name']}.rs",
+                        f"{directory}/{target['name']}/main.rs"]
             if kind == "bin" and target["name"] == manifest["package"]["name"]:
-                default = "src/main.rs"
-            declared.append((target, default, "fn main() {}\n"))
+                defaults.insert(0, "src/main.rs")
+            declared.append((target, defaults, "fn main() {}\n"))
     if not manifest.get("bin"):
-        declared.append(({}, "src/main.rs", "fn main() {}\n"))
-    for target, default, content in declared:
-        path = Path(target.get("path", default))
+        declared.append(({}, ["src/main.rs"], "fn main() {}\n"))
+    for target, defaults, content in declared:
+        # Empty cache stages use the first valid default. After copying the
+        # real sources, resolve Cargo's alternate name/main.rs layout as well.
+        candidates = [Path(default) for default in defaults]
+        path = Path(target["path"]) if "path" in target else next(
+            (candidate for candidate in candidates if candidate.is_file()), candidates[0]
+        )
         if path.is_absolute() or ".." in path.parts:
             raise SystemExit(f"cache target must be a relative Rust source path: {path}")
         yield path, content

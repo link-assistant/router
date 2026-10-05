@@ -87,7 +87,9 @@ No background command is left running at completion.
 - [Cargo target declarations](https://doc.rust-lang.org/cargo/reference/cargo-targets.html)
   explain explicit and inferred target paths. Tests exercise benches, tests,
   examples, custom library/binary paths, the repository's real manifest, and
-  replacing stubs with real sources for the final layer.
+  replacing stubs with real sources for the final layer. Both `name.rs` and
+  `name/main.rs` default layouts are resolved after the real sources are copied;
+  package-named binaries also retain Cargo's `src/main.rs` preference.
 - [clap ValueSource](https://docs.rs/clap/latest/clap/parser/enum.ValueSource.html)
   supplies the distinction needed for config precedence. Renaming the clap
   argument or changing `Cli.port` to `Option<u16>` were alternatives, but would
@@ -212,5 +214,16 @@ normalization helper (combined log lines 51625–51648). The retained
 Linux by temporarily using CRLF workflow bytes and restoring them in `finally`.
 The assertion now uses the same `read_lf` helper as its neighbors. All 29
 release workflow/gate tests are verified against both LF and CRLF.
+All workflows on `cfc13664c3ca842068d0d2e3a5733559206220ca` subsequently
+passed, including the full Linux, macOS and Windows suites, coverage, package
+build, Docker runtime smoke, fuzzing, benchmarks, real clients and Keychain.
+The final audit then added Cargo's directory target layouts to the Docker
+experiment. Before the correction, `--touch` rejected a valid binary at
+`src/bin/directory_binary/main.rs` because it required the flat `.rs` path
+(saved `docker-directory-targets-before.log`). The generator now selects an
+existing Cargo default after the source copy, while keeping the flat stub for
+the manifest-only cache layer. Both experiment tests pass, including directory
+binaries, benches, tests and examples and the package-named binary fallback;
+the final commit receives fresh CI rather than relying on the previous SHA.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.
