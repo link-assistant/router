@@ -114,6 +114,17 @@ pub struct DeployArgs {
     /// Without this flag a deploy keeps the current mode.
     #[arg(long, value_enum, conflicts_with_all = ["server", "down"])]
     pub mode: Option<DeployMode>,
+    /// Supervise the host deployment with a launchd agent or a systemd user
+    /// unit that restarts the same binary on the same data directory and
+    /// port (issue #684). The signing secret is read from a `0600` file
+    /// through `TOKEN_SECRET_FILE`; it is never in the unit or in argv.
+    #[arg(long, conflicts_with_all = ["server", "staging", "status", "down", "restore_state", "uninstall_service"])]
+    pub install_service: bool,
+    /// Disable and remove the service `--install-service` wrote, and its
+    /// secret file. The running Router is stopped only if the service
+    /// started it.
+    #[arg(long, conflicts_with_all = ["server", "staging", "status", "down", "restore_state", "mode"])]
+    pub uninstall_service: bool,
     /// Settings that can also come from `--config` (issues #679, #680, #683).
     #[command(flatten)]
     pub settings: super::DeploySettingsArgs,

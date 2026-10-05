@@ -166,7 +166,11 @@ pub const fn names_local_state(cli: &crate::cli::Cli) -> bool {
 #[must_use]
 pub fn relax_token_secret_for_cli(mut cli: crate::cli::Cli) -> crate::cli::Cli {
     let serves = matches!(cli.command, None | Some(Command::Serve));
-    if !serves && cli.token_secret.as_deref().is_none_or(str::is_empty) {
+    // A secret held in `TOKEN_SECRET_FILE` was supplied too (issue #684);
+    // `into_config` reads it, so the stand-in must not shadow it.
+    let from_file =
+        std::env::var_os(crate::token_secret::FILE_ENV).is_some_and(|path| !path.is_empty());
+    if !serves && !from_file && cli.token_secret.as_deref().is_none_or(str::is_empty) {
         cli.token_secret = Some(crate::token_secret::placeholder("cli-command"));
     }
     cli

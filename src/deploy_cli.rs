@@ -117,6 +117,12 @@ fn check_target(args: &DeployArgs, remote: bool) -> Result<(), String> {
     if args.json && args.staging.is_none() && !remote {
         return Err("--json needs --staging, --server or --remote".to_string());
     }
+    if remote && (args.install_service || args.uninstall_service) {
+        return Err(
+            "--install-service supervises a local host deployment; it needs no --server"
+                .to_string(),
+        );
+    }
     if !remote && args.public_port.is_some() {
         return Err("--public-port needs --server or --remote".to_string());
     }
@@ -194,16 +200,26 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
         }
     };
     let args = &args;
-    let deploying = !args.down && !args.status;
+    let deploying = !args.down && !args.status && !args.uninstall_service;
     if remote {
         return crate::deploy_remote::run(args, &config.token_secret, &merged);
     }
-    if let Some(refusal) = secret_refusal(&config.token_secret, args.down || args.status) {
+    if let Some(refusal) = secret_refusal(
+        &config.token_secret,
+        args.down || args.status || args.uninstall_service,
+    ) {
         eprintln!("{refusal}");
         return ExitCode::from(2);
     }
     if deploying {
         match merged.read_values() {
+            Ok(values) if args.install_service && !values.env.is_empty() => {
+                eprintln!(
+                    "error: --install-service cannot carry --env values into a unit without \
+                     writing them to disk; deploy without --env, or supervise the Router yourself"
+                );
+                return ExitCode::from(2);
+            }
             Ok(values) => crate::deploy_local::runtime_env::configure(
                 crate::deploy_local::runtime_env::LocalSettings {
                     env: values.env,
@@ -224,8 +240,100 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    if let Some(code) = service_before(args, &root) {
+        return code;
+    }
     let image = args.image.clone().unwrap_or_else(default_image);
-    crate::deploy_local::run(args, &root, &image, &config.token_secret)
+    let code = crate::deploy_local::run(args, &root, &image, &config.token_secret);
+    if code == ExitCode::SUCCESS && !args.status {
+        record_in_registry(args, &root, &config.data_dir);
+    }
+    if code == ExitCode::SUCCESS && args.install_service {
+        return match crate::deploy_local::service::install(&root, &config.token_secret) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!(
+                    "error: the host deployment serves, but its service was not installed: {error}"
+                );
+                ExitCode::from(1)
+            }
+        };
+    }
+    code
+}
+
+/// The service steps that come before the deployment runs (issue #684):
+/// `--uninstall-service` alone, removal on `--down`, and stopping a
+/// service-started Router so the deploy can bind the stable port.
+fn service_before(args: &DeployArgs, root: &Path) -> Option<ExitCode> {
+    use crate::deploy_local::service;
+    if args.uninstall_service {
+        return Some(match service::uninstall(root) {
+            Ok(true) => ExitCode::SUCCESS,
+            Ok(false) => {
+                println!("host_service=absent root={}", root.display());
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("error: {error}");
+                ExitCode::from(1)
+            }
+        });
+    }
+    let installed = service::installed(root);
+    if args.install_service
+        && args.mode != Some(DeployMode::Host)
+        && !root.join("state").join("host").exists()
+    {
+        eprintln!("error: --install-service supervises a host deployment; add --mode host");
+        return Some(ExitCode::from(2));
+    }
+    let record = installed?;
+    if args.status {
+        println!(
+            "host_service=installed name={} unit={}",
+            record.name,
+            record.unit.display()
+        );
+    } else if args.down {
+        if !args.yes {
+            return None;
+        }
+        if let Err(error) = service::uninstall(root) {
+            eprintln!("error: {error}");
+            return Some(ExitCode::from(1));
+        }
+    } else {
+        service::stop(&record);
+    }
+    None
+}
+
+/// Keep the registry `router doctor` reads in step with this run (#684).
+///
+/// A failure to record is reported but never fails a deployment that is
+/// already serving: doctor then names the default root only, as before.
+fn record_in_registry(args: &DeployArgs, root: &Path, data_dir: &Path) {
+    use link_assistant_router::deploy::registry;
+    let path = registry::path(data_dir);
+    let result = if args.down {
+        registry::unregister(&path, root)
+    } else {
+        let host = root.join("state").join("host").exists();
+        registry::register(
+            &path,
+            registry::Entry {
+                root: root.to_path_buf(),
+                mode: if host { "host" } else { "container" }.to_string(),
+                port: args.port(),
+                instance: link_assistant_router::deploy::instance::selected().map(str::to_string),
+                registered_at: chrono::Utc::now().timestamp(),
+            },
+        )
+    };
+    if let Err(error) = result {
+        eprintln!("warning: the deployment registry was not updated: {error}");
+    }
 }
 
 #[cfg(test)]
@@ -252,6 +360,8 @@ mod tests {
             root: None,
             claude_credentials: None,
             mode: None,
+            install_service: false,
+            uninstall_service: false,
             settings: link_assistant_router::cli::DeploySettingsArgs::default(),
         }
     }

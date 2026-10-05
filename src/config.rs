@@ -365,7 +365,8 @@ impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
         let port = env::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
         let host = env::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-        let token_secret = env::var("TOKEN_SECRET").ok();
+        let token_secret = crate::token_secret::or_from_file(env::var("TOKEN_SECRET").ok())
+            .map_err(ConfigError::TokenSecretFile)?;
         let claude_code_home = env::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
             let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
             format!("{home}/.claude")
@@ -859,6 +860,8 @@ pub enum ConfigError {
     InvalidListenHost(String),
     /// `TOKEN_SECRET` environment variable is missing or empty.
     MissingTokenSecret,
+    /// `TOKEN_SECRET_FILE` was set and could not supply a secret (issue #684).
+    TokenSecretFile(String),
     /// Routing mode was not recognised.
     InvalidRoutingMode,
     /// Upstream API format was not recognised.
@@ -921,7 +924,8 @@ impl std::fmt::Display for ConfigError {
             Self::InvalidBridgeModelPolicy(message)
             | Self::InvalidSubscriptionBridgePolicy(message)
             | Self::InvalidProxiedClientPolicy(message)
-            | Self::InvalidPrimaryListener(message) => write!(f, "{message}"),
+            | Self::InvalidPrimaryListener(message)
+            | Self::TokenSecretFile(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

@@ -66,6 +66,48 @@ pub fn ensure_real(secret: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// The variable naming a file that holds the signing secret (issue #684).
+///
+/// A service unit references the file, so the secret never appears in the
+/// unit, in `systemctl show`, or in any process's argv.
+pub const FILE_ENV: &str = "TOKEN_SECRET_FILE";
+
+/// The secret in `path`, without one trailing line break.
+///
+/// # Errors
+///
+/// When the file cannot be read, is not UTF-8, or holds no secret.
+pub fn read_file(path: &std::path::Path) -> Result<String, String> {
+    let text = std::fs::read_to_string(path)
+        .map_err(|error| format!("{FILE_ENV}={} could not be read: {error}", path.display()))?;
+    let secret = text.strip_suffix('\n').map_or(text.as_str(), |text| {
+        text.strip_suffix('\r').unwrap_or(text)
+    });
+    if secret.is_empty() {
+        return Err(format!("{FILE_ENV}={} is empty", path.display()));
+    }
+    Ok(secret.to_string())
+}
+
+/// `secret`, or the content of `TOKEN_SECRET_FILE` when no secret was given.
+///
+/// An explicit `TOKEN_SECRET` or `--token-secret` wins, so a file left in
+/// the environment cannot silently replace a secret the operator passed.
+///
+/// # Errors
+///
+/// When `TOKEN_SECRET_FILE` is set and cannot supply a secret.
+pub fn or_from_file(secret: Option<String>) -> Result<Option<String>, String> {
+    if secret.as_deref().is_some_and(|secret| !secret.is_empty()) {
+        return Ok(secret);
+    }
+    std::env::var_os(FILE_ENV)
+        .filter(|path| !path.is_empty())
+        .map_or(Ok(secret), |path| {
+            read_file(std::path::Path::new(&path)).map(Some)
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,5 +132,23 @@ mod tests {
         }
         assert!(ensure_real(&placeholder("auth")).is_err());
         assert!(ensure_real("a-real-operator-secret").is_ok());
+    }
+
+    #[test]
+    fn a_secret_file_loses_one_line_break_and_an_empty_one_is_refused() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("secret");
+        std::fs::write(&path, "file-held-secret\n").unwrap();
+        assert_eq!(read_file(&path).unwrap(), "file-held-secret");
+        std::fs::write(&path, "  spaced \n\n").unwrap();
+        assert_eq!(read_file(&path).unwrap(), "  spaced \n");
+        std::fs::write(&path, "\n").unwrap();
+        assert!(read_file(&path).unwrap_err().contains("empty"));
+        assert!(read_file(&directory.path().join("missing")).is_err());
+        // An explicit secret wins without the file being consulted.
+        assert_eq!(
+            or_from_file(Some("explicit".into())).unwrap().as_deref(),
+            Some("explicit")
+        );
     }
 }

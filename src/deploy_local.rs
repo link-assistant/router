@@ -21,6 +21,7 @@ mod preservation;
 mod relay_rotation;
 pub mod runtime_env;
 mod secret;
+pub mod service;
 pub mod staging;
 mod state;
 #[cfg(test)]

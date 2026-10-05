@@ -445,6 +445,8 @@ mod tests {
             root: None,
             claude_credentials: None,
             mode: None,
+            install_service: false,
+            uninstall_service: false,
             settings: link_assistant_router::cli::DeploySettingsArgs::default(),
         }
     }

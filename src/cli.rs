@@ -213,7 +213,8 @@ pub struct Cli {
     #[arg(long, env = "VERBOSE", global = true, value_parser = parse_truthy)]
     pub verbose: bool,
 
-    /// JWT signing secret (or `TOKEN_SECRET` env).
+    /// JWT signing secret (or `TOKEN_SECRET` env, or a file named by
+    /// `TOKEN_SECRET_FILE`).
     #[arg(long, env = "TOKEN_SECRET", global = true, hide_env_values = true)]
     pub token_secret: Option<String>,
 
@@ -818,7 +819,8 @@ impl Cli {
     /// Build a [`Config`] from the parsed CLI / env / `.lenv` values.
     pub fn into_config(&self) -> Result<Config, ConfigError> {
         let port = self.port.to_string();
-        let token_secret = self.token_secret.clone();
+        let token_secret = crate::token_secret::or_from_file(self.token_secret.clone())
+            .map_err(ConfigError::TokenSecretFile)?;
         let process_home = std::env::var_os("HOME")
             .filter(|home| !home.is_empty())
             .map_or_else(|| PathBuf::from("/root"), PathBuf::from);
