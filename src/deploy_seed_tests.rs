@@ -114,8 +114,11 @@ fn a_missing_login_is_refused_before_anything_is_written() {
     let home = tempfile::tempdir().unwrap();
     let error = prepare(SeedProvider::Codex, home.path(), "far", SECRET).unwrap_err();
     assert!(error.starts_with("--seed-credential codex"), "{error}");
-    // The vendor reader may create its home directory; no file is written.
-    let written: Vec<_> = walk(home.path());
+    // The vendor reader takes its transaction lock; no credential is written.
+    let written: Vec<_> = walk(home.path())
+        .into_iter()
+        .filter(|path| path.extension().is_none_or(|extension| extension != "lock"))
+        .collect();
     assert!(written.is_empty(), "{written:?}");
 }
 
