@@ -228,6 +228,15 @@ fn docker_companion_runs_forward_mode_on_the_host_network_without_secrets() {
     for absent in [TOKEN, "0.0.0.0", "-p\n", "not-a-real-key"] {
         assert!(!arguments.contains(absent), "{absent} in {arguments}");
     }
+    // The companion runs as the key's owner, so a 0600 key stays readable.
+    {
+        use std::os::unix::fs::MetadataExt as _;
+        let metadata = std::fs::metadata(harness.path("id")).unwrap();
+        if metadata.uid() != 0 {
+            let user = format!("--user\n{}:{}\n", metadata.uid(), metadata.gid());
+            assert!(arguments.contains(&user), "{user} not in {arguments}");
+        }
+    }
 
     let down = harness.tunnel(&[&["down"][..], &target].concat());
     assert!(down.status.success(), "{}", text(&down));
@@ -278,4 +287,38 @@ fn up_refuses_an_unpinned_host_key_and_a_wrong_token_fails_the_check() {
     assert_eq!(wrong.status.code(), Some(1), "{}", text(&wrong));
     assert!(text(&wrong).contains("models=401"), "{}", text(&wrong));
     let _ = harness.tunnel(&[&["down"][..], &target].concat());
+}
+
+/// An `up` whose forward never answers stops the supervisor it started
+/// instead of leaving it retrying a wrong host key forever.
+#[test]
+fn an_up_that_never_answers_leaves_nothing_running() {
+    let harness = Harness::new();
+    let unused = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    let port = unused.local_addr().unwrap().port().to_string();
+    drop(unused);
+    let known = known(&harness);
+    let target = [
+        "--server",
+        "router@far.example",
+        "--local-port",
+        &port,
+        "--ssh-known-hosts",
+        &known,
+    ];
+    let up = harness.tunnel(&[&["up"][..], &target, &["--wait", "1"]].concat());
+    assert_eq!(up.status.code(), Some(1), "{}", text(&up));
+    assert!(text(&up).contains("tunnel=stopped"), "{}", text(&up));
+    let records: Vec<_> = std::fs::read_dir(harness.path(".link-assistant-router/tunnels"))
+        .unwrap()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "json"))
+        .collect();
+    assert!(records.is_empty(), "{records:?}");
+    let status = harness.tunnel(&[&["status"][..], &target].concat());
+    assert!(
+        text(&status).contains("tunnel=stopped"),
+        "{}",
+        text(&status)
+    );
 }

@@ -100,14 +100,20 @@ struct Record {
     container: Option<String>,
 }
 
-/// A name for the forward that is safe in a file and container name.
+/// A name for the forward that is safe in a file and container name. A short
+/// hash of the exact server keeps `a@b.c` and `a-b-c` apart.
 #[must_use]
 pub fn tunnel_name(server: &str, local_port: u16) -> String {
-    let server: String = server
+    use sha2::Digest as _;
+    let digest = sha2::Sha256::digest(server.as_bytes());
+    let sanitized: String = server
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() { c } else { '-' })
         .collect();
-    format!("router-tunnel-{server}-{local_port}")
+    format!(
+        "router-tunnel-{sanitized}-{}-{local_port}",
+        hex::encode(&digest[..4])
+    )
 }
 
 fn state_dir() -> Result<PathBuf, String> {
@@ -220,6 +226,17 @@ pub fn docker_arguments(target: &TunnelTarget, name: &str) -> Result<Vec<String>
     ]
     .map(str::to_string)
     .to_vec();
+    // The key is mounted as it is on the host, usually 0600 and owned by the
+    // caller: run the companion as that owner so it can read it. The image
+    // gives such a user a passwd entry at start (ssh needs one).
+    if let Some((uid, gid)) = owner(identity).filter(|(uid, _)| *uid != 0) {
+        arguments.extend([
+            "--user".to_string(),
+            format!("{uid}:{gid}"),
+            "--group-add".to_string(),
+            "0".to_string(),
+        ]);
+    }
     for (variable, value) in [
         ("TUNNEL_MODE", "forward".to_string()),
         ("TUNNEL_SSH_HOST", host.to_string()),
@@ -242,6 +259,46 @@ pub fn docker_arguments(target: &TunnelTarget, name: &str) -> Result<Vec<String>
     Ok(arguments)
 }
 
+/// The owner of `path` as `(uid, gid)`; `None` off Unix or when unreadable.
+fn owner(path: &Path) -> Option<(u32, u32)> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt as _;
+        std::fs::metadata(path)
+            .ok()
+            .map(|metadata| (metadata.uid(), metadata.gid()))
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = path;
+        None
+    }
+}
+
+/// Whether `pid` still runs the supervisor named `name`, so a pid the system
+/// has since reused for another process is never signalled. When neither
+/// `/proc` nor `ps` can tell, the recorded pid is trusted.
+fn is_supervisor(pid: u32, name: &str) -> bool {
+    if let Ok(command_line) = std::fs::read(format!("/proc/{pid}/cmdline")) {
+        return command_line
+            .split(|byte| *byte == 0)
+            .any(|argument| argument == name.as_bytes());
+    }
+    match Command::new("ps")
+        .args(["-o", "args=", "-p", &pid.to_string()])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+    {
+        Ok(output) if output.status.success() => {
+            String::from_utf8_lossy(&output.stdout).contains(name)
+        }
+        // `ps` exits non-zero when no such process exists.
+        Ok(_) => false,
+        Err(_) => true,
+    }
+}
+
 fn output(program: &str, arguments: &[String]) -> Result<String, String> {
     let output = Command::new(program)
         .args(arguments)
@@ -262,11 +319,12 @@ fn output(program: &str, arguments: &[String]) -> Result<String, String> {
 fn alive(record: &Record) -> bool {
     match record.via {
         Via::Ssh => record.pid.is_some_and(|pid| {
-            Command::new("kill")
-                .args(["-0", &pid.to_string()])
-                .stderr(Stdio::null())
-                .status()
-                .is_ok_and(|status| status.success())
+            is_supervisor(pid, &tunnel_name(&record.server, record.local_port))
+                && Command::new("kill")
+                    .args(["-0", &pid.to_string()])
+                    .stderr(Stdio::null())
+                    .status()
+                    .is_ok_and(|status| status.success())
         }),
         Via::Docker => record.container.as_ref().is_some_and(|name| {
             output(
@@ -312,8 +370,9 @@ fn start(target: &TunnelTarget, name: &str, directory: &Path) -> Result<Record, 
             let log = std::fs::File::create(directory.join(format!("{name}.log")))
                 .map_err(|error| format!("could not open the tunnel log: {error}"))?;
             let mut command = Command::new("sh");
+            // `$0` names the tunnel, so `down` can recognise the process.
             command
-                .args(["-c", SUPERVISOR, "router-tunnel", "ssh"])
+                .args(["-c", SUPERVISOR, name, "ssh"])
                 .args(&arguments)
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
@@ -331,7 +390,9 @@ fn start(target: &TunnelTarget, name: &str, directory: &Path) -> Result<Record, 
 
 fn stop(record: &Record) {
     match (record.via, record.pid, &record.container) {
-        (Via::Ssh, Some(pid), _) => {
+        (Via::Ssh, Some(pid), _)
+            if is_supervisor(pid, &tunnel_name(&record.server, record.local_port)) =>
+        {
             // The supervisor leads its own process group: end it and its ssh.
             let _ = Command::new("kill")
                 .args(["-TERM", "--", &format!("-{pid}")])
@@ -366,8 +427,19 @@ async fn probe(port: u16, path: &str, token: Option<&str>) -> Option<u16> {
         .map(|response| response.status().as_u16())
 }
 
-/// Check the Router through the tunnel; `true` when it is usable.
-async fn check(port: u16, wait: u64) -> bool {
+/// What answered through the tunnel.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Checked {
+    /// Health and, with a token, the authorized catalog answered `200`.
+    Usable,
+    /// The Router answered, but not as expected (a wrong token, say).
+    Refused,
+    /// Nothing healthy answered before the wait ran out.
+    Unreachable,
+}
+
+/// Check the Router through the tunnel.
+async fn check(port: u16, wait: u64) -> Checked {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(wait);
     let health = loop {
         let status = probe(port, "/api/health", None).await;
@@ -381,21 +453,25 @@ async fn check(port: u16, wait: u64) -> bool {
         health.map_or_else(|| "unreachable".to_string(), |status| status.to_string())
     );
     if health != Some(200) {
-        return false;
+        return Checked::Unreachable;
     }
     let token = std::env::var(TOKEN_ENV)
         .ok()
         .filter(|token| !token.is_empty());
     let Some(token) = token else {
         println!("models=skipped (set {TOKEN_ENV} to check an authorized /v1/models)");
-        return true;
+        return Checked::Usable;
     };
     let models = probe(port, "/v1/models", Some(&token)).await;
     println!(
         "models={}",
         models.map_or_else(|| "unreachable".to_string(), |status| status.to_string())
     );
-    models == Some(200)
+    if models == Some(200) {
+        Checked::Usable
+    } else {
+        Checked::Refused
+    }
 }
 
 /// Run `router tunnel`.
@@ -434,7 +510,7 @@ pub async fn run(args: &TunnelArgs) -> ExitCode {
                 "tunnel={} via={via} {described}",
                 if running { "running" } else { "stopped" }
             );
-            if running && check(target.local_port, 0).await {
+            if running && check(target.local_port, 0).await == Checked::Usable {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::from(1)
@@ -459,7 +535,7 @@ async fn up(
     if let Some(record) = existing.filter(alive) {
         if record.via == target.via && record.remote_port == target.remote_port {
             println!("tunnel=running {described} (already up; nothing started)");
-            return if check(target.local_port, target.wait).await {
+            return if check(target.local_port, target.wait).await == Checked::Usable {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::from(1)
@@ -488,15 +564,29 @@ async fn up(
         return ExitCode::from(1);
     }
     println!("tunnel=started {described}");
-    if check(target.local_port, target.wait).await {
-        ExitCode::SUCCESS
-    } else {
-        eprintln!(
-            "error: the Router did not answer through the tunnel; see `router tunnel status` \
-             and the tunnel log in {}",
-            directory.display()
-        );
-        ExitCode::from(1)
+    match check(target.local_port, target.wait).await {
+        Checked::Usable => ExitCode::SUCCESS,
+        Checked::Refused => {
+            eprintln!(
+                "error: the Router answered through the tunnel but refused the check; \
+                 the tunnel stays up (`router tunnel down` stops it)"
+            );
+            ExitCode::from(1)
+        }
+        Checked::Unreachable => {
+            // A wrong host key or an unreachable server will not fix itself:
+            // do not leave a supervisor retrying it forever.
+            stop(&record);
+            let _ = std::fs::remove_file(path);
+            println!("tunnel=stopped {described}");
+            eprintln!(
+                "error: nothing answered through the tunnel within {}s, so it was stopped; \
+                 see the tunnel log in {}",
+                target.wait,
+                directory.display()
+            );
+            ExitCode::from(1)
+        }
     }
 }
 
@@ -567,9 +657,42 @@ mod tests {
 
     #[test]
     fn tunnel_names_are_safe_file_and_container_names() {
+        let name = tunnel_name("deploy@host.example", 8080);
+        assert!(
+            name.starts_with("router-tunnel-deploy-host-example-") && name.ends_with("-8080"),
+            "{name}"
+        );
+        assert!(name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-'));
+        assert_ne!(name, tunnel_name("deploy-host-example", 8080));
+    }
+
+    #[test]
+    fn a_reused_pid_is_not_taken_for_the_supervisor() {
+        // This test process is alive but is no tunnel supervisor.
+        assert!(!is_supervisor(
+            std::process::id(),
+            "router-tunnel-x-00000000-1"
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_companion_runs_as_the_key_owner() {
+        use std::os::unix::fs::MetadataExt as _;
+        let known = tempfile::NamedTempFile::new().unwrap();
+        std::fs::write(known.path(), "far.example ssh-ed25519 AAAA\n").unwrap();
+        let key = tempfile::NamedTempFile::new().unwrap();
+        let mut target = target(known.path());
+        target.ssh_identity = Some(key.path().to_path_buf());
+        let metadata = std::fs::metadata(key.path()).unwrap();
+        let arguments = docker_arguments(&target, "router-tunnel-x").unwrap();
+        let user = format!("{}:{}", metadata.uid(), metadata.gid());
         assert_eq!(
-            tunnel_name("deploy@host.example", 8080),
-            "router-tunnel-deploy-host-example-8080"
+            arguments
+                .windows(2)
+                .any(|pair| pair == ["--user", user.as_str()]),
+            metadata.uid() != 0,
+            "{arguments:?}"
         );
     }
 }

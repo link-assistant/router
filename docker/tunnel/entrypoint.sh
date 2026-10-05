@@ -25,6 +25,14 @@ if [ "$(id -u)" = 0 ]; then
   echo "the tunnel runs as an unprivileged user; do not run it as root" >&2
   exit 1
 fi
+# `router tunnel up --via docker` runs the companion as the owner of the
+# mounted key (`--user uid:gid --group-add 0`). ssh needs a passwd entry for
+# its user, so give such a uid one; /etc/passwd is writable by group 0 only.
+if ! id -un >/dev/null 2>&1 && [ -w /etc/passwd ]; then
+  printf 'tunnel-%s:x:%s:%s::/tmp:/sbin/nologin\n' "$(id -u)" "$(id -u)" "$(id -g)" >> /etc/passwd
+  HOME=/tmp
+  export HOME
+fi
 if [ ! -r "$TUNNEL_SSH_KEY" ]; then
   echo "TUNNEL_SSH_KEY is not readable: $TUNNEL_SSH_KEY" >&2
   exit 1
