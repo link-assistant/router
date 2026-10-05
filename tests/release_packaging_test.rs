@@ -9,6 +9,25 @@ fn read_lf(path: &str) -> String {
         .replace("\r\n", "\n")
 }
 
+/// The `name` of every `[[bin]]` table, and of no other table (`[[bench]]`
+/// targets have names too, but are never packaged).
+fn declared_binaries(manifest: &str) -> Vec<String> {
+    let mut in_bin = false;
+    let mut binaries = Vec::new();
+    for line in manifest.lines() {
+        if line.starts_with('[') {
+            in_bin = line.trim() == "[[bin]]";
+        } else if in_bin
+            && let Some(name) = line
+                .strip_prefix("name = \"")
+                .and_then(|rest| rest.strip_suffix('"'))
+        {
+            binaries.push(name.to_string());
+        }
+    }
+    binaries
+}
+
 /// Every binary the manifest declares must be packaged into the release
 /// archive, and must be smoke-tested there.
 ///
@@ -22,15 +41,7 @@ fn every_declared_binary_is_packaged_and_smoke_tested() {
     let manifest = read_lf("Cargo.toml");
     let workflow = read_lf(".github/workflows/release.yml");
 
-    let binaries: Vec<String> = manifest
-        .lines()
-        .skip_while(|line| !line.starts_with("[[bin]]"))
-        .filter_map(|line| {
-            line.strip_prefix("name = \"")
-                .and_then(|rest| rest.strip_suffix('"'))
-                .map(str::to_string)
-        })
-        .collect();
+    let binaries = declared_binaries(&manifest);
     assert!(
         binaries.len() >= 3,
         "expected the declared binaries, found {binaries:?}"
@@ -61,15 +72,7 @@ fn every_packaged_binary_is_reachable_in_the_container_image() {
     let manifest = read_lf("Cargo.toml");
     let dockerfile = read_lf("Dockerfile");
 
-    let binaries: Vec<String> = manifest
-        .lines()
-        .skip_while(|line| !line.starts_with("[[bin]]"))
-        .filter_map(|line| {
-            line.strip_prefix("name = \"")
-                .and_then(|rest| rest.strip_suffix('"'))
-                .map(str::to_string)
-        })
-        .collect();
+    let binaries = declared_binaries(&manifest);
     assert!(
         binaries.len() >= 3,
         "expected the declared binaries, found {binaries:?}"
