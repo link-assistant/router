@@ -277,3 +277,86 @@ fn no_settings_need_no_payload_and_change_nothing() {
     assert_eq!(merged.known_hosts().unwrap(), None);
     assert!(resolved.tokens.issue_arguments().is_empty());
 }
+
+#[test]
+fn every_ssh_token_and_profile_flag_replaces_the_file() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("deploy.toml");
+    std::fs::write(&file, FULL).unwrap();
+    let pins = directory.path().join("known_hosts");
+    std::fs::write(
+        &pins,
+        "# pinned\n\nother.test ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOther\n",
+    )
+    .unwrap();
+    let profile = directory.path().join("profile.toml");
+    std::fs::write(&profile, "clients = [\"codex\"]\n").unwrap();
+    let flags = DeploySettingsArgs {
+        config: Some(file),
+        ssh_identity: Some("other_key".into()),
+        ssh_known_hosts: Some(pins.clone()),
+        ssh_keepalive: Some(5),
+        deadline: Some(60),
+        token_max_requests: Some(7),
+        token_max_tokens: Some(8),
+        token_rate_limit: Some(9),
+        token_allowed_model: vec!["gpt-5".into()],
+        verification_profile: Some(profile),
+        ..DeploySettingsArgs::default()
+    };
+
+    let merged = merge(&flags, true).unwrap();
+
+    assert_eq!(merged.ssh.identity_file, Some("other_key".into()));
+    assert!(
+        merged.ssh.known_hosts.is_empty(),
+        "a flag pin replaces the file's"
+    );
+    assert_eq!(merged.ssh.keepalive_secs, Some(5));
+    assert_eq!(merged.ssh.deadline_secs, Some(60));
+    assert_eq!(
+        merged.known_hosts().unwrap().unwrap(),
+        "other.test ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOther\n"
+    );
+    assert_eq!(merged.tokens.ttl_hours, Some(72));
+    assert_eq!(merged.tokens.max_requests, Some(7));
+    assert_eq!(merged.tokens.max_tokens, Some(8));
+    assert_eq!(merged.tokens.rate_limit_per_minute, Some(9));
+    assert_eq!(merged.tokens.allowed_models, vec!["gpt-5".to_string()]);
+    let verification = merged.verification.unwrap();
+    assert_eq!(verification.clients.len(), 1);
+
+    std::fs::write(&pins, "# nothing pinned\n").unwrap();
+    let error = merge(&flags, true).unwrap().known_hosts().unwrap_err();
+    assert!(error.contains("pins no host key"), "{error}");
+    std::fs::remove_file(&pins).unwrap();
+    let error = merge(&flags, true).unwrap().known_hosts().unwrap_err();
+    assert!(error.contains("could not read"), "{error}");
+
+    for (flags, expected) in [
+        (
+            DeploySettingsArgs {
+                deadline: Some(0),
+                ..DeploySettingsArgs::default()
+            },
+            "at least one second",
+        ),
+        (
+            DeploySettingsArgs {
+                token_ttl_hours: Some(0),
+                ..DeploySettingsArgs::default()
+            },
+            "ttl_hours must be positive",
+        ),
+        (
+            DeploySettingsArgs {
+                verification_profile: Some(directory.path().join("missing.toml")),
+                ..DeploySettingsArgs::default()
+            },
+            "could not read",
+        ),
+    ] {
+        let error = merge(&flags, false).unwrap_err();
+        assert!(error.contains(expected), "{error}");
+    }
+}
