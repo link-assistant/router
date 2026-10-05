@@ -111,7 +111,14 @@ fn config_home_root_is_expanded_before_resolving_relative_paths() {
 
 #[test]
 fn remote_home_roots_expand_on_the_target_without_creating_directories() {
+    use std::os::unix::fs::PermissionsExt as _;
     let home = tempfile::tempdir().unwrap();
+    // The remote agent requires GNU timeout on its Linux target. This
+    // read-only, absent-deployment path never invokes it, so keep the test
+    // independent of which host tools are installed (including on macOS).
+    let timeout = home.path().join("timeout");
+    std::fs::write(&timeout, "#!/bin/sh\nexit 99\n").unwrap();
+    std::fs::set_permissions(&timeout, std::fs::Permissions::from_mode(0o700)).unwrap();
     let agent = home.path().join("agent.sh");
     let script = include_str!("../src/deploy/remote_agent.sh").replace(
         "@@DEPLOY_SETTINGS@@",
@@ -134,6 +141,14 @@ fn remote_home_roots_expand_on_the_target_without_creating_directories() {
             "example.test",
         ])
         .env("HOME", home.path().join("target-home"))
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                home.path().display(),
+                std::env::var("PATH").unwrap()
+            ),
+        )
         .env_remove("ROUTER_DEPLOY_PAYLOAD")
         .output()
         .unwrap();

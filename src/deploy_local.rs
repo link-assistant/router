@@ -17,6 +17,7 @@ mod docker;
 mod host;
 mod host_runtime;
 mod inventory;
+mod operation_lock;
 mod preservation;
 mod relay_rotation;
 pub mod runtime_env;
@@ -32,6 +33,7 @@ use claude_share::Provision;
 pub use claude_share::preflight as credential_preflight;
 use docker::Docker;
 use inventory::Inventory;
+use operation_lock::OperationLock;
 use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
 
 /// Relay container name; carries `--instance` (issue #679).
@@ -373,7 +375,7 @@ impl Coordinator<'_> {
         Ok(())
     }
 
-    fn acquire_lock(&self) -> Result<std::fs::File, String> {
+    fn acquire_lock(&self) -> Result<OperationLock, String> {
         let path = self.state.directory().join("update.lock");
         let file = OpenOptions::new()
             .create(true)
@@ -386,7 +388,7 @@ impl Coordinator<'_> {
             })?;
         file.try_lock()
             .map_err(|error| format!("pending lifecycle operation owns the deployment lock; no recovery or mutation attempted: {error}"))?;
-        Ok(file)
+        Ok(OperationLock(file))
     }
 
     fn wait_healthy(&self, container: &str, origin: &str) -> Result<(), String> {

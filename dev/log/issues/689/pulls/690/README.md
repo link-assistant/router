@@ -37,6 +37,8 @@ branch `issue-689-4bcc94b199c2`.
 - [x] Fetch latest main (already an ancestor); push only the prepared branch.
 - [x] Read the PR diff, verify requirements and existing behavior; correct
   the additional preflight-order regressions exposed by the broader suite.
+- [x] Reproduce the macOS CI lifecycle-lock race with an inherited descriptor;
+  share an explicit unlock guard across local, host and staging operations.
 - [ ] Update title/body and closing references; mark PR ready.
 - [ ] List latest CI runs with timestamps/SHA; preserve every failed run's logs
   in `ci-logs/`, read large logs in chunks of at most 1500 lines, fix specific
@@ -177,5 +179,31 @@ independent of Docker, and staging status/verification of an absent namespace
 must remain read-only and succeed without an image. Credential refusal now
 precedes the default image check; staging checks the image only for a mutating
 start, after validating the namespace, preserving its structured error report.
+After those corrections, all 104 binary/integration targets pass locally:
+1,083 tests passed and one opt-in test was ignored. Doc tests also pass.
+The previous-head [CI run 37340177325](https://github.com/link-assistant/router/actions/runs/37340177325)
+also exposed a macOS deployment lifecycle-lock race in
+`deploy_local_secret_tests.rs:165` (saved combined log lines 16106–16119).
+An operation's file was closed, but an unrelated child could briefly retain an
+inherited descriptor and its shared Unix lock. A deterministic regression first
+failed with `WouldBlock` after dropping the operation while retaining a cloned
+descriptor. The operation now explicitly unlocks when its scope ends; the same
+guard is reused by local/container, host and staging deployments. The test also
+verifies that a competing operation remains blocked while the owner is active.
+Rust's [File locking documentation](https://doc.rust-lang.org/std/fs/struct.File.html#method.unlock)
+documents explicit unlocking of the shared file lock; the regression exercises
+the duplicate-descriptor case rather than depending on parallel fork timing.
+After this correction, all 104 binary/integration targets pass again: 1,085
+tests passed and one opt-in test was ignored. All-target/all-feature Clippy
+with warnings denied, formatting, file-size and terminology checks pass. The
+portable remote-agent regression separately passes all four parity tests.
+On the subsequent head, Ubuntu tests and the full amd64 Docker runtime build
+passed. macOS then exposed that the new direct remote-agent test depended on
+the host having GNU timeout, a Linux target prerequisite. The absent-deployment
+status test now supplies a fixture that fails if invoked, so it exercises only
+home expansion and read-only status on every Unix test host. CI coverage also
+rose from 85.938702% to 86.010891% (71,709 / 83,372 lines; saved coverage log
+lines 4974–5013), requiring the improved baseline to be committed. The existing
+coverage floor and ratchet remain unchanged.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.
