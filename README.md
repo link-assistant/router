@@ -1758,6 +1758,15 @@ install the key. `--verification-profile` sets the clients, providers and exact
 models the candidate must prove first. `--json` reports fingerprints, validation
 results, and per-step and per-subprocess timings. It never reports values.
 
+`--seed-credential anthropic|codex` (repeatable, or `seed_credentials` in
+`[deploy]`) gives a first remote deployment this machine's Claude or Codex
+login. The refresh chain is moved, not copied: the local file is marked handed
+over (this machine's Router stops refreshing it) before the document travels
+over the SSH session's stdin. The target installs it only when it has no login
+of its own and records a receipt, so re-running is a no-op and recovers a lost
+response. Seeding the same chain to a second server is refused. `--json`
+reports each provider's fingerprint, target action and local state.
+
 ### Build the image
 
 ```bash
@@ -1900,6 +1909,23 @@ sudo systemctl status link-assistant-router
 journalctl -u link-assistant-router -f
 ```
 
+### Supervising a host deployment
+
+`router deploy --mode host --install-service` writes a systemd user unit
+(`~/.config/systemd/user`) or a launchd agent (`~/Library/LaunchAgents`) that
+restarts the same binary on the same data directory and port at login and
+after a crash. The signing secret goes to a `0600` file under the deployment's
+state directory and reaches Router through `TOKEN_SECRET_FILE`, so it is never
+in the unit or in argv. The unit is enabled, not started: the process the
+deploy just started keeps serving. `--uninstall-service` removes the unit and
+the secret file. A systemd user unit starts at boot only with
+`loginctl enable-linger $USER`.
+
+Every local or host deploy records its root in
+`~/.link-assistant-router/deployments.json` (paths, modes and ports only), and
+`router doctor --local` inspects each registered root, including deployments
+started with `--root DIR`.
+
 ### Resilient reverse SSH tunnel
 
 The companion [`docker/tunnel/Dockerfile`](docker/tunnel/Dockerfile) runs
@@ -1926,6 +1952,25 @@ The remote bind defaults to loopback. Set `TUNNEL_REMOTE_BIND` only when the
 far-side SSH server is deliberately configured to expose remote forwards.
 Host verification is strict and fail-closed: `TUNNEL_KNOWN_HOSTS` must point to
 a readable, non-empty file containing the pinned far-side host key.
+The container refuses to run as root. A bind-mounted key with a group- or
+world-readable mode is copied to a private `0600` file first, so the host
+file's mode does not need to change. `TUNNEL_MODE=forward` with
+`TUNNEL_LOCAL_PORT` (and optional `TUNNEL_TARGET_HOST`/`TUNNEL_TARGET_PORT`)
+reverses the direction: a `127.0.0.1`-only `-L` forward to a remote Router.
+
+### Reaching a remote Router through a forward tunnel
+
+`router tunnel up --server user@host --ssh-known-hosts FILE` opens an SSH
+local forward bound to `127.0.0.1` only (default port 8080 on both sides),
+checks `/api/health` and, with a client token in
+`LINK_ASSISTANT_ROUTER_TOKEN`, an authorized `/v1/models` through it.
+`router tunnel status` and `router tunnel down` report and stop it. The host
+key is pinned (`StrictHostKeyChecking=yes`, never `accept-new`). `--via ssh`
+(default) runs `ssh -L` under a reconnecting supervisor; `--via docker`
+(requires `--ssh-identity`) runs the tunnel companion below with
+`TUNNEL_MODE=forward` on the host network. The token is sent as a header,
+never in argv.
+
 
 ### Akash and Kubernetes
 

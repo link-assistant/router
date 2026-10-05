@@ -63,7 +63,7 @@ failures use status `1`; invalid invocation or missing consent uses `2`.
 
 Remote deployment reads credentials only from the target's Claude, Codex,
 Gemini, and Qwen homes. Nothing from the invoking machine's vendor homes is
-uploaded. Recognized credential files are copied into the candidate's isolated
+uploaded unless `--seed-credential` asks for it (see below). Recognized credential files are copied into the candidate's isolated
 credential tree and byte-compared; it remains writable only so Router can make
 durable refreshes inside that release. Mutable Router data has a separate
 mount. The release records a signed digest, target source path, and explicit
@@ -77,6 +77,71 @@ State defaults to
 an absolute alternative. Broad system roots are refused, and existing Docker
 objects with the reserved relay/network names are never adopted unless their
 ownership label names the exact deployment root.
+
+## Seeding a login
+
+```bash
+TOKEN_SECRET='a-long-random-secret' router deploy --server deploy@203.0.113.10 \
+  --seed-credential anthropic --seed-credential codex --json
+```
+
+`--seed-credential` (repeatable; `claude`/`anthropic` or `codex`/`chatgpt`, or
+`seed_credentials = ["claude", "codex"]` in `[deploy]`) brings a first remote
+deployment to "Anthropic and Codex usable" without copying credential files by
+hand (issue #681). OAuth refresh tokens are single-use, so two machines
+refreshing one chain break each other. The chain is therefore moved, never
+forked:
+
+1. Before anything is sent, the local `~/.claude/.credentials.json` or
+   `~/.codex/auth.json` is marked handed over, in state `pending`. Router's
+   `refresh_owner: external` metadata means this machine's Router no longer
+   refreshes that login.
+2. The document, without Router's local metadata, travels inside the settings
+   payload on the SSH session's stdin. It is never in argv.
+3. The target installs it in the SSH user's Claude or Codex home (`0600` file,
+   `0700` directory) only when no login is there yet, and writes a receipt
+   keyed by the chain's fingerprint (HMAC by `TOKEN_SECRET`). The candidate
+   then picks it up through the usual credential provenance.
+4. The target's answer settles the local mark. `imported` or `already-seeded`
+   leaves it `handed-over`. `kept-existing` (the target had its own login)
+   restores the local file byte for byte.
+
+If the response is lost, the mark stays `pending`. That is safe, because
+nothing refreshes the chain locally. Re-running the same command finds the
+receipt and settles it without a second copy. Seeding a chain already handed
+over to a different server is refused with exit 2, because that would fork it.
+So is a login held only in the macOS Keychain, which cannot be marked, and a
+missing login; nothing reaches SSH in those cases. `--json` adds
+`seed_credentials: [{provider, fingerprint, action, local_source}]`.
+
+The vendor CLI on this machine does not read Router's marker. If it is used
+afterwards, it can still refresh the handed-over chain itself. Log in again
+locally first to get a separate login for this machine.
+
+## Reaching the deployment through a tunnel
+
+```bash
+export LINK_ASSISTANT_ROUTER_TOKEN=la_sk_...   # optional: checks /v1/models too
+router tunnel up --server deploy@203.0.113.10 --ssh-known-hosts ./pinned_known_hosts
+router tunnel status --server deploy@203.0.113.10
+router tunnel down --server deploy@203.0.113.10
+```
+
+`router tunnel` (issue #682) opens an SSH local forward from
+`127.0.0.1:--local-port` (default 8080) to the Router's loopback port on the
+server (`--remote-port`, default 8080). It binds loopback only. The host key
+is pinned: `up` requires `--ssh-known-hosts` and uses
+`StrictHostKeyChecking=yes`. `up` is a no-op when the forward already runs,
+and waits up to `--wait` seconds (default 30) for `/api/health`, and for an authorized
+`/v1/models` when `LINK_ASSISTANT_ROUTER_TOKEN` is set (sent as a header,
+never in argv).
+
+`--via ssh` (default) runs `ssh -L` under a supervisor loop that reconnects
+after a drop. `--via docker --ssh-identity KEY` runs the tunnel companion
+image (`docker/tunnel/Dockerfile`, built locally) with `TUNNEL_MODE=forward`
+and `--restart unless-stopped` on the host network, which is Linux-oriented.
+The companion refuses to run as root, and it copies a bind-mounted key with a
+loose mode to a private `0600` file instead of failing.
 
 ## Declarative configuration
 
