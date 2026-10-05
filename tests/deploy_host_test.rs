@@ -28,11 +28,17 @@ impl Host {
     }
 
     fn deploy(&self, extra: &[&str]) -> Output {
+        self.deploy_with(extra, &[])
+    }
+
+    fn deploy_with(&self, extra: &[&str], env: &[(&str, &str)]) -> Output {
         let port = self.port.to_string();
         let root = self.root().display().to_string();
         let mut args = vec!["deploy", "--port", &port, "--root", &root];
         args.extend_from_slice(extra);
-        let output = common::router_with_env(self.home.path(), &args, &[("TOKEN_SECRET", SECRET)]);
+        let mut variables = vec![("TOKEN_SECRET", SECRET)];
+        variables.extend_from_slice(env);
+        let output = common::router_with_env(self.home.path(), &args, &variables);
         println!(
             "$ router {}\n{}{}",
             args.join(" "),
@@ -155,4 +161,198 @@ fn host_mode_serves_the_deployment_tokens_and_stops_on_down() {
     assert!(down.status.success(), "{}", text(&down));
     assert!(host.pid().is_none());
     assert_eq!(host.status("/api/health", None), None);
+}
+
+/// Issue #684: a host deployment with a custom `--root` is registered, so
+/// `router doctor --local` reports that deployment's provider exhaustion
+/// without `DATA_DIR` pointing at it, and names a registered root it lost.
+#[test]
+fn doctor_finds_a_registered_custom_root_and_names_a_lost_one() {
+    let host = Host {
+        home: tempfile::tempdir().unwrap(),
+        port: free_port(),
+    };
+    let deployed = host.deploy(&["--mode", "host"]);
+    assert!(deployed.status.success(), "{}", text(&deployed));
+    let registry = host
+        .home
+        .path()
+        .join(".link-assistant-router/deployments.json");
+    let recorded = std::fs::read_to_string(&registry).expect("the deploy is registered");
+    assert!(recorded.contains("\"host\""), "{recorded}");
+    assert!(!recorded.contains(SECRET), "{recorded}");
+
+    std::fs::write(
+        host.root().join("data/provider-exhaustion.json"),
+        r#"{"zai":{"code":1113,"reason":"Insufficient balance","request_id":"req-684","observed_at_unix":1}}"#,
+    )
+    .unwrap();
+    let doctor = common::router_with_env(host.home.path(), &["doctor", "--local"], &[]);
+    let report = text(&doctor);
+    let data = host.root().join("data").display().to_string();
+    assert!(
+        report.contains(&format!("provider exhaustion     : recorded in {data}")),
+        "{report}"
+    );
+    assert!(report.contains("1113"), "{report}");
+
+    let down = host.deploy(&["--down", "--yes"]);
+    assert!(down.status.success(), "{}", text(&down));
+    let forgotten = std::fs::read_to_string(&registry).unwrap();
+    assert!(
+        !forgotten.contains(&host.root().display().to_string()),
+        "{forgotten}"
+    );
+
+    // A registered root that disappeared is named rather than skipped.
+    let lost = host.home.path().join("lost-root");
+    std::fs::write(
+        &registry,
+        format!(
+            r#"{{"deployments":[{{"root":"{}","mode":"host","port":1,"registered_at":1}}]}}"#,
+            lost.display()
+        ),
+    )
+    .unwrap();
+    let doctor = common::router_with_env(host.home.path(), &["doctor", "--local"], &[]);
+    let report = text(&doctor);
+    assert!(report.contains("could not see"), "{report}");
+    assert!(report.contains(&lost.display().to_string()), "{report}");
+}
+
+/// A stand-in service manager on PATH that logs each invocation.
+fn stub_managers(home: &Path) -> String {
+    use std::os::unix::fs::PermissionsExt as _;
+    let bin = home.join("bin");
+    std::fs::create_dir_all(&bin).unwrap();
+    for name in ["systemctl", "launchctl"] {
+        let path = bin.join(name);
+        std::fs::write(&path, "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$0.log\"\n").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    format!(
+        "{}:{}",
+        bin.display(),
+        std::env::var("PATH").unwrap_or_default()
+    )
+}
+
+fn mode_of(path: &Path) -> u32 {
+    use std::os::unix::fs::PermissionsExt as _;
+    std::fs::metadata(path).unwrap().permissions().mode() & 0o777
+}
+
+/// Issue #684: `--install-service` writes a systemd user unit or a launchd
+/// agent for the same binary, data directory and port, with the signing
+/// secret in a `0600` file named by `TOKEN_SECRET_FILE` and never in the
+/// unit; `--uninstall-service` and `--down` remove it.
+#[test]
+fn install_service_writes_a_unit_without_the_secret_and_removes_it() {
+    let host = Host {
+        home: tempfile::tempdir().unwrap(),
+        port: free_port(),
+    };
+    let home = host.home.path();
+    let path = stub_managers(home);
+    let systemd = [
+        ("PATH", path.as_str()),
+        ("LINK_ASSISTANT_ROUTER_SERVICE_MANAGER", "systemd"),
+    ];
+
+    let installed = host.deploy_with(&["--mode", "host", "--install-service"], &systemd);
+    assert!(installed.status.success(), "{}", text(&installed));
+    assert!(!text(&installed).contains(SECRET));
+    let unit_path = home.join(".config/systemd/user/link-assistant-router.service");
+    let unit = std::fs::read_to_string(&unit_path).expect("the unit is written");
+    let secret_file = host.root().join("state/token-secret");
+    assert!(!unit.contains(SECRET), "the secret is not in the unit");
+    for expected in [
+        format!(
+            "ExecStart=\"{}\" serve",
+            env!("CARGO_BIN_EXE_link-assistant-router")
+        ),
+        format!("Environment=\"ROUTER_PORT={}\"", host.port),
+        "Environment=\"ROUTER_HOST=127.0.0.1\"".to_string(),
+        format!(
+            "Environment=\"DATA_DIR={}\"",
+            host.root().join("data").display()
+        ),
+        format!(
+            "Environment=\"TOKEN_SECRET_FILE={}\"",
+            secret_file.display()
+        ),
+        "Restart=on-failure".to_string(),
+    ] {
+        assert!(unit.contains(&expected), "{expected} not in {unit}");
+    }
+    assert_eq!(mode_of(&secret_file), 0o600);
+    assert_eq!(mode_of(&unit_path), 0o600);
+    assert_eq!(
+        std::fs::read_to_string(&secret_file).unwrap().trim_end(),
+        SECRET
+    );
+    let calls = std::fs::read_to_string(home.join("bin/systemctl.log")).unwrap();
+    assert!(calls.contains("--user daemon-reload"), "{calls}");
+    assert!(
+        calls.contains("--user enable link-assistant-router.service"),
+        "{calls}"
+    );
+    assert!(!calls.contains(SECRET), "{calls}");
+
+    // The file alone signs what the deployment accepts: a token issued with
+    // only TOKEN_SECRET_FILE authorizes against the running Router.
+    let data = host.root().join("data").display().to_string();
+    let file = secret_file.display().to_string();
+    let issued = common::router_with_env(
+        home,
+        &["tokens", "issue", "--label", "service"],
+        &[
+            ("TOKEN_SECRET", ""),
+            ("TOKEN_SECRET_FILE", &file),
+            ("DATA_DIR", &data),
+        ],
+    );
+    assert!(issued.status.success(), "{}", text(&issued));
+    let token = String::from_utf8_lossy(&issued.stdout)
+        .split_whitespace()
+        .find(|word| word.starts_with(link_assistant_router::token::TOKEN_PREFIX))
+        .expect("a token is printed")
+        .to_string();
+    let authorized = host.status("/api/models", Some(&token));
+    assert!(
+        authorized.is_some_and(|status| status != 401),
+        "{authorized:?}"
+    );
+
+    let removed = host.deploy_with(&["--uninstall-service"], &systemd);
+    assert!(removed.status.success(), "{}", text(&removed));
+    assert!(!unit_path.exists() && !secret_file.exists());
+    let calls = std::fs::read_to_string(home.join("bin/systemctl.log")).unwrap();
+    assert!(
+        calls.contains("--user disable link-assistant-router.service"),
+        "{calls}"
+    );
+    assert!(host.pid().is_some(), "the deployment itself keeps serving");
+
+    let launchd = [
+        ("PATH", path.as_str()),
+        ("LINK_ASSISTANT_ROUTER_SERVICE_MANAGER", "launchd"),
+    ];
+    let installed = host.deploy_with(&["--install-service"], &launchd);
+    assert!(installed.status.success(), "{}", text(&installed));
+    let plist_path = home.join("Library/LaunchAgents/com.link-assistant.router.plist");
+    let plist = std::fs::read_to_string(&plist_path).expect("the agent is written");
+    assert!(!plist.contains(SECRET));
+    assert!(plist.contains("<key>TOKEN_SECRET_FILE</key>"), "{plist}");
+    assert!(plist.contains("<key>KeepAlive</key>"), "{plist}");
+    assert_eq!(mode_of(&plist_path), 0o600);
+    let calls = std::fs::read_to_string(home.join("bin/launchctl.log")).unwrap();
+    assert!(calls.contains("enable gui/"), "{calls}");
+
+    let down = host.deploy_with(&["--down", "--yes"], &launchd);
+    assert!(down.status.success(), "{}", text(&down));
+    assert!(!plist_path.exists());
+    let calls = std::fs::read_to_string(home.join("bin/launchctl.log")).unwrap();
+    assert!(calls.contains("bootout gui/"), "{calls}");
+    assert!(calls.contains("disable gui/"), "{calls}");
 }
