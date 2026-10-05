@@ -70,9 +70,14 @@ fn an_interrupted_stream_flushes_held_text_then_reports_the_failure() {
 fn a_stall_relayed_in_band_by_the_inner_proxy_is_reported_as_a_timeout() {
     use crate::stream_termination::{FailureKind, StreamDialect, error_frame};
     for dialect in [StreamDialect::OpenAiChat, StreamDialect::Responses] {
-        for (kind, expected) in [
-            (FailureKind::Stalled, "timeout_error"),
-            (FailureKind::Interrupted, "api_error"),
+        for (kind, expected, message) in [
+            (FailureKind::Stalled, "timeout_error", "stalled"),
+            (FailureKind::Interrupted, "api_error", "interrupted"),
+            (
+                FailureKind::Truncated,
+                "api_error",
+                "ended before completion",
+            ),
         ] {
             let mut t = AnthropicStreamTranslator::new("claude-sonnet-4-5");
             let mut out =
@@ -81,6 +86,9 @@ fn a_stall_relayed_in_band_by_the_inner_proxy_is_reported_as_a_timeout() {
             out.push_str(&joined(&t.finish()));
             assert_eq!(out.matches("event: error").count(), 1, "{out}");
             assert!(out.contains(&format!("\"type\":\"{expected}\"")), "{out}");
+            assert!(out.contains(message), "{out}");
+            // Re-rendered by Router, not relayed with the inner dialect's code.
+            assert!(!out.contains("\"code\""), "{out}");
             assert!(!out.contains("message_stop"), "{out}");
         }
     }
