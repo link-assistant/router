@@ -130,6 +130,20 @@ fn an_unresolvable_proxy_fails_closed() {
 }
 
 #[test]
+fn an_invalid_proxy_list_fails_every_account_closed_without_echoing_it() {
+    let raw = "primary=http://alice@proxy.example:8080;s3cret";
+    let error = parse_egress_proxies(raw).unwrap_err();
+    assert!(!error.contains("s3cret"), "{error}");
+    let policy = AccountHttpPolicy::default().with_proxy_error(Some(error));
+    assert!(policy.doctor_line().contains("invalid"));
+    let clients = AccountClients::new(policy);
+    for account in ["primary", "account-1"] {
+        let error = clients.client(account, CookieMode::None).unwrap_err();
+        assert!(error.contains("ACCOUNT_EGRESS_PROXY is invalid"), "{error}");
+    }
+}
+
+#[test]
 fn unpooled_requests_keep_the_shared_client() {
     let shared = reqwest::Client::new();
     assert!(pooled_client(None, Some("primary"), &shared, CookieMode::None).is_ok());

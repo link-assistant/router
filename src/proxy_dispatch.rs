@@ -112,7 +112,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
     } else {
         1
     };
-    let deadline = Instant::now() + policy.budget;
+    let deadline = policy.deadline(Instant::now());
     // The account whose signatures the conversation history carries.
     let origin = router.and_then(|router| router.session_account(&request.context));
     let mut context = request.context;
@@ -216,9 +216,16 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                         account.as_deref(),
                         RetryReason::Transport,
                     );
-                    last = Some(Failure::Transport(error.to_string()));
+                    // A vendor reply (with its Retry-After) beats a later
+                    // connection failure as the answer to relay.
+                    if !matches!(last, Some(Failure::Reply(_))) {
+                        last = Some(Failure::Transport(error.to_string()));
+                    }
                     context.exclude.extend(account);
                     continue;
+                }
+                if let Some(Failure::Reply(reply)) = last {
+                    return Ok(reply);
                 }
                 return Err(transport_error(&error.to_string()));
             }

@@ -10,7 +10,7 @@
 //! lives with the proxy. Defaults keep the historical behaviour: failover off,
 //! no threshold pause, no warmup interception.
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
@@ -20,6 +20,9 @@ use crate::accounts::AccountRouterOptions;
 pub const DEFAULT_MAX_ATTEMPTS: u32 = 3;
 /// Default bound on the time spent across every attempt of one request.
 pub const DEFAULT_BUDGET_SECS: u64 = 30;
+/// Longest accepted `POOL_FAILOVER_BUDGET_SECS`; a larger value is clamped so
+/// the per-request deadline can never overflow.
+pub const MAX_BUDGET_SECS: u64 = 24 * 60 * 60;
 
 /// `POOL_FAILOVER`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -85,6 +88,14 @@ impl Default for PoolPolicy {
 }
 
 impl PoolPolicy {
+    /// The instant by which every attempt of a request starting at `now` must
+    /// be done.
+    #[must_use]
+    pub fn deadline(&self, now: Instant) -> Instant {
+        let budget = self.budget.min(Duration::from_secs(MAX_BUDGET_SECS));
+        now.checked_add(budget).unwrap_or(now)
+    }
+
     /// Read the policy from the environment; an invalid value keeps its
     /// default and is logged.
     #[must_use]
@@ -104,7 +115,9 @@ impl PoolPolicy {
                 .map_or(defaults.max_attempts, |n| n.max(1)),
             budget: var("POOL_FAILOVER_BUDGET_SECS")
                 .and_then(|value| value.trim().parse::<u64>().ok())
-                .map_or(defaults.budget, Duration::from_secs),
+                .map_or(defaults.budget, |secs| {
+                    Duration::from_secs(secs.min(MAX_BUDGET_SECS))
+                }),
             pause_at_percent: var("ACCOUNT_PAUSE_AT_PERCENT")
                 .and_then(|value| parse_percent(&value).ok()),
             intercept_warmup: var("INTERCEPT_WARMUP").is_some_and(|value| {
@@ -141,7 +154,8 @@ impl PoolPolicy {
 }
 
 /// `ACCOUNT_POOL_IDLE_TIMEOUT_SECS`, `ACCOUNT_CONNECTION_MAX_AGE_SECS` and
-/// `ACCOUNT_EGRESS_PROXY`; an invalid value keeps its default and is logged.
+/// `ACCOUNT_EGRESS_PROXY`; an invalid timeout keeps its default, and an
+/// invalid proxy list makes every pooled account fail closed.
 fn account_http_from_env() -> crate::account_http::AccountHttpPolicy {
     use crate::account_http::{
         AccountHttpPolicy, DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS,
@@ -153,15 +167,19 @@ fn account_http_from_env() -> crate::account_http::AccountHttpPolicy {
             .and_then(|value| value.trim().parse::<u64>().ok())
             .unwrap_or(default)
     };
-    let proxies = std::env::var("ACCOUNT_EGRESS_PROXY")
-        .ok()
-        .map(|raw| {
-            parse_egress_proxies(&raw).unwrap_or_else(|error| {
-                tracing::warn!("ACCOUNT_EGRESS_PROXY ignored: {error}");
-                std::collections::BTreeMap::new()
-            })
-        })
-        .unwrap_or_default();
+    // An unreadable setting must not silently send every account direct.
+    let (proxies, proxy_error) = std::env::var("ACCOUNT_EGRESS_PROXY").map_or_else(
+        |_| (std::collections::BTreeMap::new(), None),
+        |raw| match parse_egress_proxies(&raw) {
+            Ok(proxies) => (proxies, None),
+            Err(error) => {
+                tracing::error!(
+                    "ACCOUNT_EGRESS_PROXY is invalid; pooled accounts will refuse to send: {error}"
+                );
+                (std::collections::BTreeMap::new(), Some(error))
+            }
+        },
+    );
     AccountHttpPolicy::new(
         secs(
             "ACCOUNT_POOL_IDLE_TIMEOUT_SECS",
@@ -173,6 +191,7 @@ fn account_http_from_env() -> crate::account_http::AccountHttpPolicy {
         ),
         proxies,
     )
+    .with_proxy_error(proxy_error)
 }
 
 /// The policy the serving process runs with. A process-wide setting, like the

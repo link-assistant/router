@@ -85,7 +85,7 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
     } else {
         1
     };
-    let deadline = Instant::now() + policy.budget;
+    let deadline = policy.deadline(Instant::now());
     let encode = |value: &Value| {
         request.native_body.as_ref().map_or_else(
             || {
@@ -176,8 +176,15 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
                         RetryReason::Transport,
                     );
                     context.exclude.push(account.clone());
-                    last = Some(Err((account, error)));
+                    // A vendor reply (with its Retry-After) beats a later
+                    // connection failure as the answer to relay.
+                    if !matches!(last, Some(Ok(_))) {
+                        last = Some(Err((account, error)));
+                    }
                     continue;
+                }
+                if let Some(Ok(dispatched)) = last {
+                    return Ok(dispatched);
                 }
                 return Err(transport_error(&request, Some(&account), &error));
             }

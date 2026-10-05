@@ -31,6 +31,19 @@ fn defaults_keep_historical_behaviour() {
 }
 
 #[test]
+fn an_oversized_budget_never_overflows_the_deadline() {
+    let policy = PoolPolicy {
+        budget: Duration::from_secs(u64::MAX),
+        ..PoolPolicy::default()
+    };
+    let now = Instant::now();
+    assert_eq!(
+        policy.deadline(now),
+        now + Duration::from_secs(MAX_BUDGET_SECS)
+    );
+}
+
+#[test]
 fn percent_is_bounded() {
     assert_eq!(parse_percent("90"), Ok(90));
     assert_eq!(parse_percent("85%"), Ok(85));

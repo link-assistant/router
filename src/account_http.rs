@@ -120,7 +120,7 @@ impl EgressProxy {
         for option in parts {
             let (key, value) = option
                 .split_once('=')
-                .ok_or_else(|| format!("expected key=value after ';', got '{option}'"))?;
+                .ok_or_else(|| "expected key=value after ';'".to_string())?;
             let reference = match key.trim() {
                 "password-env" => SecretRef::Env(non_empty(value, "password-env")?),
                 "password-file" => {
@@ -252,6 +252,9 @@ pub struct AccountHttpPolicy {
     /// Egress proxies by account name. An account without one connects
     /// directly, as before.
     pub proxies: BTreeMap<String, EgressProxy>,
+    /// Why the configured egress proxies could not be read. Every pooled
+    /// account then refuses to send rather than egress directly.
+    pub proxy_error: Option<String>,
 }
 
 impl Default for AccountHttpPolicy {
@@ -260,6 +263,7 @@ impl Default for AccountHttpPolicy {
             pool_idle_timeout: Some(Duration::from_secs(DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS)),
             max_connection_age: Some(Duration::from_secs(DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS)),
             proxies: BTreeMap::new(),
+            proxy_error: None,
         }
     }
 }
@@ -277,7 +281,15 @@ impl AccountHttpPolicy {
             pool_idle_timeout: bound(pool_idle_timeout_secs),
             max_connection_age: bound(max_connection_age_secs),
             proxies,
+            proxy_error: None,
         }
+    }
+
+    /// Record why the proxy list could not be read (see `proxy_error`).
+    #[must_use]
+    pub fn with_proxy_error(mut self, error: Option<String>) -> Self {
+        self.proxy_error = error;
+        self
     }
 
     /// One `doctor` line; proxies are shown without credentials.
@@ -286,7 +298,9 @@ impl AccountHttpPolicy {
         let secs = |bound: Option<Duration>| {
             bound.map_or_else(|| "off".to_string(), |d| format!("{}s", d.as_secs()))
         };
-        let proxies = if self.proxies.is_empty() {
+        let proxies = if self.proxy_error.is_some() {
+            "invalid, pooled accounts refuse to send".to_string()
+        } else if self.proxies.is_empty() {
             "none".to_string()
         } else {
             self.proxies
@@ -433,6 +447,11 @@ impl AccountClients {
         account: &str,
         cookies: Option<AccountCookies>,
     ) -> Result<reqwest::Client, String> {
+        if let Some(error) = &self.policy.proxy_error {
+            return Err(format!(
+                "egress proxy of account {account}: ACCOUNT_EGRESS_PROXY is invalid ({error})"
+            ));
+        }
         let mut builder = crate::upstream_client::upstream_client_builder()
             .pool_idle_timeout(self.policy.pool_idle_timeout);
         if let Some(proxy) = self.policy.proxies.get(account) {
