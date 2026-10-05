@@ -32,6 +32,9 @@ pub(super) struct Host {
     pub router_version: String,
     /// [`super::secret::fingerprint`] of the secret it was started with.
     pub token_secret: String,
+    /// Runtime environment fingerprint (`--env`, issue #679), when any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime_env: Option<String>,
     /// The container backend it replaced, retained stopped for rollback.
     pub previous_backend: Option<String>,
     pub started_at: i64,

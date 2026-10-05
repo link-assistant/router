@@ -182,3 +182,32 @@ pub struct RouteSpec {
     pub dialect: ApiDialect,
     pub listeners: &'static [ListenerKind],
 }
+
+/// Pre-`/api/...` paths a serving Router must answer with 404.
+///
+/// They stay unclassified on purpose. The deploy verifier probes every one of
+/// them against a candidate (issue #683).
+pub const REMOVED_ROUTES: &[(&str, &str)] = &[
+    ("GET", "/health"),
+    ("GET", "/health/subscriptions"),
+    ("POST", "/v1/messages"),
+    ("POST", "/v1/chat/completions"),
+    ("GET", "/v1/models"),
+    ("POST", "/api/anthropic/v1/messages"),
+    ("POST", "/api/openai/v1/responses"),
+    ("POST", "/api/codex/v1/responses"),
+    ("POST", "/api/qwen/v1/chat/completions"),
+    ("GET", "/api/gemini/v1beta/models"),
+    (
+        "POST",
+        "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict",
+    ),
+    ("POST", "/invoke"),
+    ("GET", "/api/tokens"),
+    ("GET", "/api/providers"),
+    ("POST", "/api/login"),
+    ("GET", "/api/admin/status"),
+    ("GET", "/metrics"),
+    ("GET", "/user"),
+    ("GET", "/actor/code"),
+];

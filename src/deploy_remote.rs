@@ -11,13 +11,43 @@ use std::process::{Command, ExitCode, Stdio};
 
 use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
+use link_assistant_router::deploy_config::{Merged, ResolvedDeploy};
+
+mod session;
 
 static AGENT: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-    include_str!("deploy/remote_agent.sh").replace(
-        "@@DATA_CHECKPOINT@@",
-        include_str!("deploy/data_checkpoint.js"),
-    )
+    include_str!("deploy/remote_agent.sh")
+        .replace(
+            "@@DEPLOY_SETTINGS@@",
+            include_str!("deploy/remote_settings.sh"),
+        )
+        .replace(
+            "@@PROVIDER_KEY_PLAN@@",
+            include_str!("deploy/provider_key_plan.js"),
+        )
+        .replace(
+            "@@PROVIDER_KEY_CHECK@@",
+            include_str!("deploy/provider_key_check.js"),
+        )
+        .replace(
+            "@@VERIFY_PROFILE@@",
+            include_str!("deploy/verify_profile.js"),
+        )
+        .replace("@@REMOVED_ROUTES@@", &removed_routes_json())
+        .replace(
+            "@@DATA_CHECKPOINT@@",
+            include_str!("deploy/data_checkpoint.js"),
+        )
 });
+
+/// The removed-route list the verification profile probes, as a JS literal.
+fn removed_routes_json() -> String {
+    let routes: Vec<[&str; 2]> = link_assistant_router::route_contract::REMOVED_ROUTES
+        .iter()
+        .map(|(method, path)| [*method, *path])
+        .collect();
+    serde_json::to_string(&routes).unwrap_or_else(|_| "[]".to_string())
+}
 const AGENT_LEASE_EXIT: i32 = 73;
 const TRANSPORT_EXIT: u8 = 10;
 const LEASE_EXIT: u8 = 11;
@@ -82,7 +112,7 @@ fn public_name(target: &str) -> String {
         .to_string()
 }
 
-fn remote_command(arguments: &[String]) -> String {
+fn remote_command(arguments: &[String], with_payload: bool) -> String {
     let wrapper = concat!(
         "umask 077; ",
         "IFS= read -r router_secret_b64 || exit 64; ",
@@ -93,7 +123,17 @@ fn remote_command(arguments: &[String]) -> String {
         "export TOKEN_SECRET; ",
         "exec sh -s -- \"$@\""
     );
-    let mut command = format!("sh -c {} sh", shell_quote(wrapper));
+    // Deploy settings (issue #679) travel as a second stdin line, so that
+    // runtime values and provider keys never reach the remote argv either.
+    let wrapper = if with_payload {
+        wrapper.replace(
+            "exec sh -s",
+            "IFS= read -r ROUTER_DEPLOY_PAYLOAD || exit 64; export ROUTER_DEPLOY_PAYLOAD; exec sh -s",
+        )
+    } else {
+        wrapper.to_string()
+    };
+    let mut command = format!("sh -c {} sh", shell_quote(&wrapper));
     for argument in arguments {
         command.push(' ');
         command.push_str(&shell_quote(argument));
@@ -120,7 +160,7 @@ fn agent_arguments(args: &DeployArgs, mode: RemoteMode, cookie: &str) -> Vec<Str
         build_mode.to_string(),
         build_value.to_string(),
         args.root.clone().unwrap_or_default(),
-        args.port.to_string(),
+        args.port().to_string(),
         args.public_port
             .map_or_else(String::new, |port| port.to_string()),
         public_name(args.server.as_deref().unwrap_or_default()),
@@ -176,8 +216,44 @@ fn validate(args: &DeployArgs, mode: RemoteMode) -> Result<(), String> {
     Ok(())
 }
 
+/// Settings resolved for one run: values, the pinned host keys, the payload.
+struct Prepared {
+    values: Option<ResolvedDeploy>,
+    known_hosts: Option<tempfile::NamedTempFile>,
+    payload: Option<String>,
+}
+
+fn prepare(
+    args: &DeployArgs,
+    mode: RemoteMode,
+    token_secret: &str,
+    merged: &Merged,
+) -> Result<Prepared, String> {
+    // Only a deploy reads values: `--status` and `--down` must work even
+    // when a variable the deploy passes through is unset here.
+    let values = if mode == RemoteMode::Deploy {
+        Some(merged.read_values()?)
+    } else {
+        None
+    };
+    let known_hosts = merged
+        .known_hosts()?
+        .map(|text| {
+            session::pinned_known_hosts(&text)
+                .map_err(|error| format!("could not write the pinned known_hosts file: {error}"))
+        })
+        .transpose()?;
+    let payload = session::payload(merged, values.as_ref(), args.json, token_secret);
+    Ok(Prepared {
+        values,
+        known_hosts,
+        payload,
+    })
+}
+
 /// Run the target-side deployment agent and preserve transport/lease identity.
-fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr) -> ExitCode {
+#[allow(clippy::too_many_lines)]
+fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Merged) -> ExitCode {
     let mode = match mode(args).and_then(|mode| {
         validate(args, mode)?;
         Ok(mode)
@@ -197,65 +273,152 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr) -> ExitCode 
         );
         return ExitCode::from(2);
     }
+    let prepared = match prepare(args, mode, token_secret, merged) {
+        Ok(prepared) => prepared,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(2);
+        }
+    };
     let target = args.server.as_deref().expect("validated target");
     let cookie = uuid::Uuid::new_v4().simple().to_string();
-    let remote = remote_command(&agent_arguments(args, mode, &cookie));
-    let mut child = match Command::new(ssh)
-        .args([
-            "-o",
-            "BatchMode=yes",
-            "-o",
-            "StrictHostKeyChecking=yes",
-            "--",
-            target,
-            &remote,
-        ])
-        .stdin(Stdio::piped())
-        .spawn()
-    {
+    let remote = remote_command(
+        &agent_arguments(args, mode, &cookie),
+        prepared.payload.is_some(),
+    );
+    let mut command = Command::new(ssh);
+    command
+        .args(["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes"])
+        .args(session::ssh_options(
+            &merged.ssh,
+            prepared
+                .known_hosts
+                .as_ref()
+                .map(tempfile::NamedTempFile::path),
+        ))
+        .args(["--", target, &remote])
+        .stdin(Stdio::piped());
+    if args.json {
+        command.stdout(Stdio::piped()).stderr(Stdio::piped());
+    }
+    let started = std::time::Instant::now();
+    let mut child = match command.spawn() {
         Ok(child) => child,
         Err(error) => {
             eprintln!("transport error: could not start OpenSSH: {error}");
             return ExitCode::from(TRANSPORT_EXIT);
         }
     };
+    let collected = std::sync::Arc::new(std::sync::Mutex::new(session::Collected::default()));
+    let readers: Vec<_> = [
+        child
+            .stdout
+            .take()
+            .map(|stream| session::collect(stream, collected.clone(), true)),
+        child
+            .stderr
+            .take()
+            .map(|stream| session::collect(stream, collected.clone(), false)),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
     // Observation and removal do not need the signing secret at all. Besides
     // reducing exposure, this keeps the non-serving placeholder (which may
     // contain NUL) out of a shell variable on those paths.
     let encoded =
         base64::engine::general_purpose::STANDARD.encode(transported_secret(mode, token_secret));
-    let write_result = child.stdin.take().map_or_else(
-        || Err(std::io::Error::other("SSH stdin was not available")),
-        |mut stdin| {
+    let payload = prepared.payload.clone();
+    // Written from a thread so a session that never connects cannot block
+    // the deadline on a full pipe.
+    let writer = child.stdin.take().map(|mut stdin| {
+        std::thread::spawn(move || -> std::io::Result<()> {
             writeln!(stdin, "{encoded}")?;
+            if let Some(payload) = payload {
+                writeln!(stdin, "{payload}")?;
+            }
             stdin.write_all(AGENT.as_bytes())
+        })
+    });
+    let deadline = merged.ssh.deadline_secs.map(std::time::Duration::from_secs);
+    let waited = session::wait(&mut child, deadline);
+    let write_result = writer.map_or_else(
+        || Err(std::io::Error::other("SSH stdin was not available")),
+        |writer| {
+            writer
+                .join()
+                .unwrap_or_else(|_| Err(std::io::Error::other("stdin writer panicked")))
         },
     );
-    if let Err(error) = write_result {
-        eprintln!("transport error: could not send the deployment agent: {error}");
-        let _ = child.kill();
-        let _ = child.wait();
-        return ExitCode::from(TRANSPORT_EXIT);
+    for reader in readers {
+        let _ = reader.join();
     }
-    let status = match child.wait() {
-        Ok(status) => status,
+    let (code, ssh_exit) = match waited {
+        Ok(Some(status)) => {
+            if let Err(error) = write_result
+                && status.code() != Some(0)
+            {
+                eprintln!("transport error: could not send the deployment agent: {error}");
+                (ExitCode::from(TRANSPORT_EXIT), status.code())
+            } else {
+                (mapped_exit(status), status.code())
+            }
+        }
+        Ok(None) => {
+            eprintln!(
+                "deadline error: the deployment did not finish within {}s; the session was \
+                 closed and the target rolls an unaccepted candidate back",
+                merged.ssh.deadline_secs.unwrap_or_default()
+            );
+            (ExitCode::from(session::DEADLINE_EXIT), None)
+        }
         Err(error) => {
             eprintln!("transport error: could not wait for OpenSSH: {error}");
-            return ExitCode::from(TRANSPORT_EXIT);
+            (ExitCode::from(TRANSPORT_EXIT), None)
         }
     };
-    let code = mapped_exit(status);
     if code == ExitCode::from(TRANSPORT_EXIT) {
         eprintln!("transport error: the SSH connection to {target} failed");
     } else if code == ExitCode::from(LEASE_EXIT) {
         eprintln!("lease error: target ownership could not be proved safely");
     }
+    if args.json {
+        let exit_code = exit_number(code);
+        let collected = collected
+            .lock()
+            .map(|mut collected| std::mem::take(&mut *collected))
+            .unwrap_or_default();
+        let document = session::document(
+            merged,
+            prepared.values.as_ref(),
+            token_secret,
+            &collected,
+            &session::Outcome {
+                server: target,
+                mode: mode.as_str(),
+                exit_code,
+                ssh_ms: started.elapsed().as_millis(),
+                ssh_exit,
+            },
+        );
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&document).unwrap_or_default()
+        );
+    }
     code
 }
 
+fn exit_number(code: ExitCode) -> u8 {
+    [0, 1, 2, TRANSPORT_EXIT, LEASE_EXIT, session::DEADLINE_EXIT]
+        .into_iter()
+        .find(|number| ExitCode::from(*number) == code)
+        .unwrap_or(1)
+}
+
 /// Run the target-side deployment agent and preserve transport/lease identity.
-pub fn run(args: &DeployArgs, token_secret: &str) -> ExitCode {
-    run_with_ssh(args, token_secret, OsStr::new("ssh"))
+pub fn run(args: &DeployArgs, token_secret: &str, merged: &Merged) -> ExitCode {
+    run_with_ssh(args, token_secret, OsStr::new("ssh"), merged)
 }
 
 #[cfg(test)]
@@ -275,20 +438,21 @@ mod tests {
             yes: false,
             force_update: false,
             accept_access_loss: false,
-            port: 8080,
+            port: Some(8080),
             public_port: None,
             image: None,
             build: None,
             root: None,
             claude_credentials: None,
             mode: None,
+            settings: link_assistant_router::cli::DeploySettingsArgs::default(),
         }
     }
 
     #[test]
     fn secrets_are_stdin_only_and_never_part_of_the_remote_command() {
         let args = args();
-        let command = remote_command(&agent_arguments(&args, RemoteMode::Deploy, "cookie"));
+        let command = remote_command(&agent_arguments(&args, RemoteMode::Deploy, "cookie"), false);
         assert!(!command.contains("super-secret"));
         assert!(command.contains("read -r router_secret_b64"));
         assert!(!command.contains("StrictHostKeyChecking"));
@@ -298,7 +462,7 @@ mod tests {
     fn every_non_secret_argument_is_shell_quoted() {
         let mut args = args();
         args.root = Some("/srv/a deployment's root".into());
-        let command = remote_command(&agent_arguments(&args, RemoteMode::Deploy, "cookie"));
+        let command = remote_command(&agent_arguments(&args, RemoteMode::Deploy, "cookie"), false);
         assert!(
             command.contains("'/srv/a deployment'\"'\"'s root'"),
             "{command}"
@@ -348,6 +512,22 @@ mod tests {
         assert!(AGENT.contains("trap on_failure EXIT\ntrap 'exit 130' HUP INT TERM"));
         assert!(AGENT.contains("trap release_lease EXIT\ntrap 'exit 130' HUP INT TERM"));
         assert!(!AGENT.contains("trap on_failure EXIT HUP INT TERM"));
+    }
+
+    #[test]
+    fn every_agent_fragment_is_expanded_and_probes_each_removed_route() {
+        assert!(!AGENT.contains("@@"), "an unexpanded placeholder");
+        assert!(AGENT.contains("ROUTER_DEPLOY_PAYLOAD"));
+        assert!(AGENT.contains("provider_keys_step || exit 1"));
+        for (method, path) in link_assistant_router::route_contract::REMOVED_ROUTES {
+            assert!(
+                AGENT.contains(&format!("[\"{method}\",\"{path}\"]")),
+                "{path}"
+            );
+        }
+        // The relay and network names carry the instance, so two instances
+        // on one host never adopt each other's objects.
+        assert!(AGENT.contains("RELAY=router-deploy-relay${INSTANCE:+-$INSTANCE}"));
     }
 
     /// Once live verification succeeds, recovery must know the candidate is
@@ -477,7 +657,7 @@ mod tests {
         let secret = "operator-only-signing-secret";
 
         assert_eq!(
-            run_with_ssh(&args(), secret, ssh.as_os_str()),
+            run_with_ssh(&args(), secret, ssh.as_os_str(), &Merged::default()),
             ExitCode::SUCCESS
         );
 
@@ -507,13 +687,23 @@ mod tests {
         ] {
             let (_directory, ssh) = fake_ssh(remote);
             assert_eq!(
-                run_with_ssh(&args(), "operator-secret", ssh.as_os_str()),
+                run_with_ssh(
+                    &args(),
+                    "operator-secret",
+                    ssh.as_os_str(),
+                    &Merged::default()
+                ),
                 ExitCode::from(public)
             );
         }
         let missing = std::path::Path::new("/definitely/missing/router-ssh");
         assert_eq!(
-            run_with_ssh(&args(), "operator-secret", missing.as_os_str()),
+            run_with_ssh(
+                &args(),
+                "operator-secret",
+                missing.as_os_str(),
+                &Merged::default()
+            ),
             ExitCode::from(TRANSPORT_EXIT)
         );
     }
@@ -530,7 +720,12 @@ mod tests {
             let placeholder = link_assistant_router::token_secret::placeholder("read-only-test");
 
             assert_eq!(
-                run_with_ssh(&candidate, &placeholder, ssh.as_os_str()),
+                run_with_ssh(
+                    &candidate,
+                    &placeholder,
+                    ssh.as_os_str(),
+                    &Merged::default()
+                ),
                 ExitCode::SUCCESS
             );
             let input = std::fs::read(ssh.with_extension("input")).unwrap();
@@ -546,14 +741,24 @@ mod tests {
         let mut candidate = args();
         candidate.down = true;
         assert_eq!(
-            run_with_ssh(&candidate, "operator-secret", missing.as_os_str()),
+            run_with_ssh(
+                &candidate,
+                "operator-secret",
+                missing.as_os_str(),
+                &Merged::default()
+            ),
             ExitCode::from(2)
         );
 
         candidate.down = false;
         let placeholder = link_assistant_router::token_secret::placeholder("remote-test");
         assert_eq!(
-            run_with_ssh(&candidate, &placeholder, missing.as_os_str()),
+            run_with_ssh(
+                &candidate,
+                &placeholder,
+                missing.as_os_str(),
+                &Merged::default()
+            ),
             ExitCode::from(2)
         );
     }

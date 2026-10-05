@@ -63,6 +63,7 @@ pub mod credential_source;
 pub mod credential_status;
 pub mod credential_store;
 pub mod deploy;
+pub mod deploy_config;
 pub mod deploy_relay;
 pub mod deployment_preservation;
 pub mod doctor;
@@ -182,6 +183,8 @@ mod codex_loopback_bridge_tests;
 mod codex_remote_control_tests;
 #[cfg(test)]
 mod credential_source_tests;
+#[cfg(test)]
+mod deploy_config_tests;
 #[cfg(test)]
 mod deploy_tests;
 #[cfg(test)]

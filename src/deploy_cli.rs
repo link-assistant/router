@@ -7,8 +7,10 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use link_assistant_router::cli::DeployArgs;
+use clap::ValueEnum as _;
+use link_assistant_router::cli::{ClaudeCredentials, DeployArgs, DeployMode};
 use link_assistant_router::config::Config;
+use link_assistant_router::deploy_config::{Merged, merge};
 
 /// Default image for a local deployment: this binary's own version.
 ///
@@ -23,8 +25,11 @@ fn default_image() -> String {
 }
 
 /// Where a local deployment keeps its credential and data directories.
+///
+/// With `--instance NAME` the default is `deploy-NAME`, so two instances on
+/// one host never share state. Without one it is the historical `deploy`.
 pub fn default_root(data_dir: &Path) -> PathBuf {
-    data_dir.join("deploy")
+    data_dir.join(link_assistant_router::deploy::instance::qualify("deploy"))
 }
 
 fn resolved_root(args: &DeployArgs, data_dir: &Path) -> Result<PathBuf, String> {
@@ -63,9 +68,107 @@ fn secret_refusal(token_secret: &str, does_not_sign: bool) -> Option<String> {
         })
 }
 
+/// Fill flags the operator omitted from `--config`, then check the
+/// combinations clap can no longer check because a value may come from it.
+fn apply_section(args: &mut DeployArgs, merged: &Merged, remote: bool) -> Result<(), String> {
+    let section = &merged.section;
+    if remote && args.server.is_none() {
+        args.server.clone_from(&section.server);
+        if args.server.is_none() {
+            return Err("--remote needs `server` in [remote] or [deploy] of --config".to_string());
+        }
+    }
+    args.port = args.port.or(section.port);
+    args.public_port = args.public_port.or(section.public_port);
+    if args.image.is_none() {
+        args.image.clone_from(&section.image);
+    }
+    if args.build.is_none() {
+        args.build.clone_from(&section.build);
+    }
+    if args.root.is_none() {
+        args.root.clone_from(&section.root);
+    }
+    if !remote {
+        if args.mode.is_none()
+            && let Some(mode) = &section.mode
+        {
+            args.mode = Some(DeployMode::from_str(mode, true).map_err(|_| {
+                format!("--config: mode must be `container` or `host`, not `{mode}`")
+            })?);
+        }
+        if args.claude_credentials.is_none()
+            && !args.down
+            && let Some(value) = &section.claude_credentials
+        {
+            args.claude_credentials =
+                Some(ClaudeCredentials::from_str(value, true).map_err(|_| {
+                    format!(
+                        "--config: claude_credentials must be `isolated` or `share`, not `{value}`"
+                    )
+                })?);
+        }
+    }
+    Ok(())
+}
+
+/// Refuse combinations of flags that only make sense for one target.
+fn check_target(args: &DeployArgs, remote: bool) -> Result<(), String> {
+    if args.json && args.staging.is_none() && !remote {
+        return Err("--json needs --staging, --server or --remote".to_string());
+    }
+    if !remote && args.public_port.is_some() {
+        return Err("--public-port needs --server or --remote".to_string());
+    }
+    if !remote {
+        if !args.settings.provider_key.is_empty() || args.settings.provider_key_mode.is_some() {
+            return Err(
+                "--provider-key is verified in a remote candidate; it needs --server or --remote"
+                    .to_string(),
+            );
+        }
+        if args.settings.verification_profile.is_some() {
+            return Err("--verification-profile needs --server or --remote".to_string());
+        }
+        let ssh = &args.settings;
+        if ssh.ssh_port.is_some()
+            || ssh.ssh_identity.is_some()
+            || ssh.ssh_known_hosts.is_some()
+            || ssh.ssh_keepalive.is_some()
+            || ssh.deadline.is_some()
+        {
+            return Err("SSH settings need --server or --remote".to_string());
+        }
+    }
+    Ok(())
+}
+
+/// Merge `--config` with the flags into the arguments a run uses.
+fn resolve(args: &DeployArgs) -> Result<(DeployArgs, Merged, bool), String> {
+    let remote = args.server.is_some() || args.settings.remote;
+    let merged = merge(&args.settings, remote)?;
+    let mut resolved = args.clone();
+    apply_section(&mut resolved, &merged, remote)?;
+    check_target(&resolved, remote)?;
+    if let Some(instance) = &merged.instance {
+        link_assistant_router::deploy::instance::select(instance)?;
+    }
+    if !remote && (!merged.provider_keys.is_empty() || merged.verification.is_some()) {
+        eprintln!(
+            "note: provider keys and the verification profile in --config apply to remote \
+             deployments only; this local run ignores them."
+        );
+    }
+    Ok((resolved, merged, remote))
+}
+
 pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
-    if args.server.is_some() {
-        return crate::deploy_remote::run(args, &config.token_secret);
+    if args.staging.is_some() && args.settings.any() {
+        eprintln!(
+            "error: --staging takes no deploy settings; a staging namespace never shares a \
+             configuration with the deployment it rehearses"
+        );
+        return ExitCode::from(2);
     }
     if args.staging.is_some() {
         let root = args.root.as_deref().map_or_else(
@@ -83,9 +186,35 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
             &args.image.clone().unwrap_or_else(default_image),
         );
     }
+    let (args, merged, remote) = match resolve(args) {
+        Ok(resolved) => resolved,
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(2);
+        }
+    };
+    let args = &args;
+    let deploying = !args.down && !args.status;
+    if remote {
+        return crate::deploy_remote::run(args, &config.token_secret, &merged);
+    }
     if let Some(refusal) = secret_refusal(&config.token_secret, args.down || args.status) {
         eprintln!("{refusal}");
         return ExitCode::from(2);
+    }
+    if deploying {
+        match merged.read_values() {
+            Ok(values) => crate::deploy_local::runtime_env::configure(
+                crate::deploy_local::runtime_env::LocalSettings {
+                    env: values.env,
+                    tokens: values.tokens,
+                },
+            ),
+            Err(error) => {
+                eprintln!("error: {error}");
+                return ExitCode::from(2);
+            }
+        }
     }
 
     let root = match resolved_root(args, &config.data_dir) {
@@ -116,13 +245,14 @@ mod tests {
             yes: false,
             force_update: false,
             accept_access_loss: false,
-            port: link_assistant_router::deploy::DEFAULT_PORT,
+            port: Some(8080),
             public_port: None,
             image: None,
             build: None,
             root: None,
             claude_credentials: None,
             mode: None,
+            settings: link_assistant_router::cli::DeploySettingsArgs::default(),
         }
     }
 

@@ -15,7 +15,15 @@ command -v timeout >/dev/null 2>&1 || {
 docker() {
     budget=30
     case "$1" in build|pull) budget=900;; esac
-    command timeout --kill-after=5s "${budget}s" docker "$@"
+    if [ "${EVENTS:-0}" != 1 ]; then
+        command timeout --kill-after=5s "${budget}s" docker "$@"
+        return
+    fi
+    docker_started=$(now_ms)
+    docker_status=0
+    command timeout --kill-after=5s "${budget}s" docker "$@" || docker_status=$?
+    event "{\"event\":\"subprocess\",\"program\":\"docker\",\"command\":\"$1\",\"started_ms\":$docker_started,\"duration_ms\":$(($(now_ms) - docker_started)),\"exit_code\":$docker_status}"
+    return "$docker_status"
 }
 
 MODE=$1
@@ -30,10 +38,12 @@ PUBLIC_PORT=$9
 shift 9
 PUBLIC_NAME=$1
 
+@@DEPLOY_SETTINGS@@
+
 LEASE_EXIT=73
 OWNER_LABEL=com.link-assistant.router.remote-deploy
-RELAY=router-deploy-relay
-NETWORK=router-deploy-network
+RELAY=router-deploy-relay${INSTANCE:+-$INSTANCE}
+NETWORK=router-deploy-network${INSTANCE:+-$INSTANCE}
 
 case "$COOKIE" in
     *[!A-Za-z0-9-]*|'') echo "error: invalid deployment cookie" >&2; exit 2 ;;
@@ -44,7 +54,7 @@ esac
 if [ -n "$ROOT_ARGUMENT" ]; then
     ROOT=$ROOT_ARGUMENT
 else
-    ROOT=${XDG_DATA_HOME:-"$HOME/.local/share"}/link-assistant-router/deploy
+    ROOT=${XDG_DATA_HOME:-"$HOME/.local/share"}/link-assistant-router/deploy${INSTANCE:+-$INSTANCE}
 fi
 case "$ROOT" in
     /*) ;;
@@ -99,8 +109,11 @@ status() {
 }
 
 if [ "$MODE" = status ]; then
-    status
-    exit $?
+    mark status
+    status_code=0
+    status || status_code=$?
+    mark complete
+    exit "$status_code"
 fi
 
 if [ "$MODE" = down ] && [ ! -d "$ROOT" ]; then
@@ -230,9 +243,11 @@ release_lease() {
     fi
     flock -u 9 2>/dev/null || true
     exec 9>&-
+    remove_settings
 }
 
 export ROUTER_DEPLOY_COOKIE=$COOKIE
+mark lease
 acquire_lease
 trap release_lease EXIT
 trap 'exit 130' HUP INT TERM
@@ -262,7 +277,7 @@ fi
 STATE=$ROOT/state
 RELEASES=$ROOT/releases
 RELEASE=$RELEASES/$COOKIE
-CANDIDATE=router-deploy-$COOKIE
+CANDIDATE=router-deploy-${INSTANCE:+$INSTANCE-}$COOKIE
 TRANSACTION=$STATE/transaction
 mkdir -p "$STATE" "$RELEASES" "$RELEASE/home" "$RELEASE/data"
 
@@ -543,6 +558,7 @@ if [ -z "$old_root" ]; then
     fi
 fi
 
+mark build
 case "$BUILD_MODE" in
     release)
         command -v git >/dev/null 2>&1 || { echo "error: git is required on the target" >&2; exit 1; }
@@ -601,6 +617,15 @@ for provider in claude codex gemini qwen; do
         set -- "$@" -v "$source:/data/home/$directory"
     fi
 done
+# Runtime environment passthrough (issue #679): values reach Docker through a
+# private file, never argv; the fingerprint label tells a reconcile apart.
+if [ -n "$SETTINGS_DIR" ] && [ -s "$SETTINGS_DIR/runtime.env" ]; then
+    set -- "$@" --env-file "$SETTINGS_DIR/runtime.env" \
+        --label "$OWNER_LABEL.runtime-env=$ENV_FINGERPRINT"
+fi
+if [ -n "$INSTANCE" ]; then set -- "$@" --label "$OWNER_LABEL.instance=$INSTANCE"; fi
+
+mark candidate
 
 docker run -d --name "$CANDIDATE" --network "$NETWORK" --restart unless-stopped \
     --user "$SELF_UID:$SELF_GID" \
@@ -615,6 +640,7 @@ docker run -d --name "$CANDIDATE" --network "$NETWORK" --restart unless-stopped 
     ${PUBLIC_PORT:+-e TLS_SELF_SIGNED_DNS=$PUBLIC_NAME} \
     ${PUBLIC_PORT:+-e LISTENERS=0.0.0.0:8080=combined,http;0.0.0.0:8443=inference-only,tls} \
     "$IMAGE" serve >/dev/null
+if [ -n "$SETTINGS_DIR" ]; then rm -f "$SETTINGS_DIR/runtime.env"; fi
 
 cleanup_candidate() {
     remove_owned_candidate "$CANDIDATE"
@@ -650,6 +676,7 @@ trap 'exit 130' HUP INT TERM
 candidate_port=$(docker port "$CANDIDATE" 8080/tcp | sed -n 's/.*://p' | sed -n '1p')
 [ -n "$candidate_port" ] || { echo "error: candidate has no temporary management port" >&2; exit 1; }
 
+mark health
 ready=0
 attempt=0
 while [ "$attempt" -lt 300 ]; do
@@ -684,6 +711,7 @@ ADMIN=$(docker exec "$CANDIDATE" router tokens issue --admin --ttl-hours 1 \
     --label deploy-verification | grep -o 'la_sk_[A-Za-z0-9._-]*' | sed -n '1p')
 [ -n "$ADMIN" ] || { echo "error: candidate could not mint a verification admin token" >&2; exit 1; }
 export VERIFY_ADMIN=$ADMIN
+provider_keys_step || exit 1
 
 verify_router() {
     VERIFY_ORIGIN=$1
@@ -691,7 +719,7 @@ verify_router() {
     VERIFY_PUBLIC_NAME=$PUBLIC_NAME
     export VERIFY_ORIGIN VERIFY_PUBLIC_ORIGIN VERIFY_PUBLIC_NAME VERIFY_CLAUDE VERIFY_CODEX VERIFY_QWEN VERIFY_GEMINI VERIFY_OPENCODE
     docker exec -i -e VERIFY_ORIGIN -e VERIFY_PUBLIC_ORIGIN -e VERIFY_ADMIN \
-        -e VERIFY_PUBLIC_NAME \
+        -e VERIFY_PUBLIC_NAME -e VERIFY_PROFILE \
         -e VERIFY_CLAUDE -e VERIFY_CODEX -e VERIFY_QWEN -e VERIFY_GEMINI -e VERIFY_OPENCODE \
         -e NODE_EXTRA_CA_CERTS=/data/router/tls/cert.pem "$CANDIDATE" bun - <<'JAVASCRIPT'
 const origin = process.env.VERIFY_ORIGIN;
@@ -874,6 +902,7 @@ if (publicOrigin) {
       fail(`public TLS inference failed before leaving Router: ${live.status}`);
   }
 }
+@@VERIFY_PROFILE@@
 JAVASCRIPT
 }
 
@@ -881,7 +910,16 @@ VERIFY_CLAUDE= VERIFY_CODEX= VERIFY_QWEN= VERIFY_GEMINI= VERIFY_OPENCODE=
 export VERIFY_CLAUDE VERIFY_CODEX VERIFY_QWEN VERIFY_GEMINI VERIFY_OPENCODE
 public_candidate=
 if [ -n "$PUBLIC_PORT" ]; then public_candidate=https://127.0.0.1:8443; fi
-verification=$(verify_router "http://127.0.0.1:8080" "$public_candidate") || {
+mark verification
+verified=1
+if [ -n "$PROFILE" ]; then
+    VERIFY_PROFILE=$(cat "$PROFILE")
+    export VERIFY_PROFILE
+fi
+verification=$(verify_router "http://127.0.0.1:8080" "$public_candidate") || verified=0
+unset VERIFY_PROFILE
+report_profile "$verification"
+[ "$verified" = 1 ] || {
     echo "error: candidate verification failed" >&2
     exit 1
 }
@@ -926,11 +964,12 @@ else
         -e "ROUTER_DEPLOY_RELAY_LISTENERS=$relay_listeners" "$IMAGE" serve >/dev/null
 fi
 
+mark cutover
 relay_ready=0
 attempt=0
 while [ "$attempt" -lt 60 ]; do
     if docker exec "$CANDIDATE" bun -e \
-        'const r=await fetch("http://router-deploy-relay:8080/api/health");process.exit(r.status===200?0:1)' \
+        "const r=await fetch('http://$RELAY:8080/api/health');process.exit(r.status===200?0:1)" \
         >/dev/null 2>&1; then
         relay_ready=1
         break
@@ -954,6 +993,7 @@ candidate_image=$image_id
 source_revision=$source_revision
 EOF
 
+mark post-verify
 live_public=
 if [ -n "$PUBLIC_PORT" ]; then live_public=https://$RELAY:8443; fi
 if ! verify_router "http://$RELAY:8080" "$live_public" >/dev/null; then
@@ -989,6 +1029,7 @@ management_port=$MANAGEMENT_PORT
 public_port=$PUBLIC_PORT
 EOF
 
+mark retire
 if [ -n "$old_container" ] && [ "$old_container" != "$CANDIDATE" ]; then
     while [ "$(cat "$STATE/connections/$old_container" 2>/dev/null || echo 0)" != 0 ]; do
         sleep 1
@@ -1018,4 +1059,6 @@ public_port=$PUBLIC_PORT
 EOF
 trap release_lease EXIT
 trap 'exit 130' HUP INT TERM
+deploy_token_step
+mark complete
 echo "deployment is ready on $PUBLIC_NAME (management: 127.0.0.1:$MANAGEMENT_PORT${PUBLIC_PORT:+, public TLS: $PUBLIC_PORT})"

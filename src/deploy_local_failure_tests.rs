@@ -228,7 +228,7 @@ fn ownership_and_durable_record_disagreements_fail_closed() {
 
     coordinator.state.clear_deployment_records().unwrap();
     runner.0.lock().unwrap().containers.insert(
-        RELAY.into(),
+        RELAY.to_string(),
         Container {
             running: true,
             image_ref: "router:1".into(),
@@ -246,7 +246,7 @@ fn ownership_and_durable_record_disagreements_fail_closed() {
     assert!(coordinator.remove_relay().unwrap_err().contains("unowned"));
     assert!(
         coordinator
-            .remove_backend(RELAY)
+            .remove_backend(&RELAY)
             .unwrap_err()
             .contains("unowned")
     );

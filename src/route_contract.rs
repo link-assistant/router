@@ -10,7 +10,8 @@ use std::sync::OnceLock;
 #[path = "route_contract_types.rs"]
 mod types;
 pub use types::{
-    ApiDialect, ListenerKind, RouteAuth, RouteClass, RouteId, RouteMethod, RouteSpec, ServiceKind,
+    ApiDialect, ListenerKind, REMOVED_ROUTES, RouteAuth, RouteClass, RouteId, RouteMethod,
+    RouteSpec, ServiceKind,
 };
 
 #[path = "route_contract_native.rs"]

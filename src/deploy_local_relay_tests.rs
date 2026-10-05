@@ -27,7 +27,7 @@ fn topology(root: &Path, backend_image: &str, relay_image: &str) -> FakeRunner {
         );
         world
             .containers
-            .insert(RELAY.into(), relay_container(root, relay_image, 8080));
+            .insert(RELAY.to_string(), relay_container(root, relay_image, 8080));
         drop(world);
     }
     let serving = coordinator(runner.clone(), root, backend_image, 8080, false);
@@ -60,13 +60,15 @@ fn run(runner: &FakeRunner, root: &Path, image: &str, status: bool, force: bool)
 }
 
 fn relay_image(runner: &FakeRunner) -> String {
-    runner.0.lock().unwrap().containers[RELAY].image_ref.clone()
+    runner.0.lock().unwrap().containers[&*RELAY]
+        .image_ref
+        .clone()
 }
 
 fn relay_runs(runner: &FakeRunner) -> usize {
     mutations(&runner.0.lock().unwrap())
         .iter()
-        .filter(|command| command[0] == "run" && command.iter().any(|a| a == RELAY))
+        .filter(|command| command[0] == "run" && command.iter().any(|a| a == &*RELAY))
         .count()
 }
 
@@ -98,8 +100,8 @@ fn an_update_moves_the_relay_to_the_new_image_after_the_old_backend_drains() {
     let position =
         |predicate: &dyn Fn(&Vec<String>) -> bool| commands.iter().position(predicate).unwrap();
     let removed_backend = position(&|c| c[0] == "rm" && c.last().unwrap() == "backend-a");
-    let removed_relay = position(&|c| c[0] == "rm" && c.last().unwrap() == RELAY);
-    let started_relay = position(&|c| c[0] == "run" && c.iter().any(|a| a == RELAY));
+    let removed_relay = position(&|c| c[0] == "rm" && c.last().unwrap() == &*RELAY);
+    let started_relay = position(&|c| c[0] == "run" && c.iter().any(|a| a == &*RELAY));
     assert!(removed_backend < removed_relay && removed_relay < started_relay);
     assert!(world.commands.iter().flatten().all(|a| a != SECRET));
     drop(world);
@@ -153,7 +155,7 @@ fn a_busy_relay_is_not_rotated_and_status_reports_the_skew() {
     assert!(
         mutations(&world)
             .iter()
-            .all(|command| command.iter().any(|a| a == RELAY)),
+            .all(|command| command.iter().any(|a| a == &*RELAY)),
         "{:?}",
         mutations(&world)
     );
@@ -176,7 +178,7 @@ fn force_rotates_a_busy_relay_and_a_failed_rotation_restores_the_old_relay() {
         ExitCode::from(1)
     );
     assert_eq!(relay_image(&runner), "router:1");
-    assert!(runner.0.lock().unwrap().containers[RELAY].running);
+    assert!(runner.0.lock().unwrap().containers[&*RELAY].running);
 
     runner
         .0

@@ -67,7 +67,18 @@ pub async fn issue_token(
         return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
     }
 
-    match state.token_manager.issue(&request) {
+    let model_policy = ModelAccessPolicy {
+        allowed_models: req.allowed_models.clone().unwrap_or_default(),
+        ..ModelAccessPolicy::default()
+    };
+    if let Err(message) = model_policy.validate() {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &message);
+    }
+
+    match state
+        .token_manager
+        .issue_with_model_policy(&request, &model_policy)
+    {
         Ok(token) => {
             state.metrics.record_token_issued();
             (
@@ -470,6 +481,10 @@ pub struct IssueTokenRequest {
     /// what every existing token keeps (issue #262).
     #[serde(default)]
     pub github_repos: Option<Vec<String>>,
+    /// Exact model ids the token may request (issue #679). Omit for the
+    /// established unpinned behaviour.
+    #[serde(default)]
+    pub allowed_models: Option<Vec<String>>,
 }
 
 /// Request body for the managed client-token issuance endpoint.

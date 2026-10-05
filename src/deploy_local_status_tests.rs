@@ -81,7 +81,7 @@ fn orphaned_topology(root: &Path) -> FakeRunner {
         );
         world
             .containers
-            .insert(RELAY.into(), relay_container(root, "router:1", 8080));
+            .insert(RELAY.to_string(), relay_container(root, "router:1", 8080));
         drop(world);
     }
     let serving = coordinator(runner.clone(), root, "router:1", 8080, false);
@@ -171,7 +171,7 @@ fn deploy_adopts_the_serving_topology_without_touching_a_container() {
     assert!(mutations(&world).is_empty(), "{:?}", mutations(&world));
     assert_eq!(world.token_inventory, tokens_before);
     assert!(world.containers["backend-a"].running);
-    assert!(world.containers[RELAY].running);
+    assert!(world.containers[&*RELAY].running);
     drop(world);
     let adopted = coordinator(runner.clone(), root.path(), "router:1", 8080, false);
     let ActiveRecord::Valid(active) = adopted.state.active_record() else {
@@ -239,7 +239,7 @@ fn adoption_refuses_a_newer_record_and_a_relay_owned_by_another_root() {
         .lock()
         .unwrap()
         .containers
-        .get_mut(RELAY)
+        .get_mut(&*RELAY)
         .unwrap()
         .labels
         .insert(format!("{LABEL_KEY}.root"), "/elsewhere".into());

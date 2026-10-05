@@ -30,6 +30,7 @@ mod auth_ops;
 mod client_ops;
 mod configure;
 mod deploy_args;
+mod deploy_settings_args;
 mod emergency_args;
 mod log_ops;
 mod model_ops;
@@ -45,6 +46,7 @@ pub use self::client_ops::{
 };
 pub use self::configure::ConfigureArgs;
 pub use self::deploy_args::{ClaudeCredentials, DeployArgs, DeployMode, UsageArgs};
+pub use self::deploy_settings_args::DeploySettingsArgs;
 pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
 pub use self::model_ops::ModelOp;

@@ -94,7 +94,8 @@ fn args() -> DeployArgs {
             let port = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             TcpListener::bind(("127.0.0.1", port)).ok().map(|_| port)
         })
-        .expect("available fixture port");
+        .expect("available fixture port")
+        .into();
     args
 }
 
@@ -155,9 +156,9 @@ fn creation_status_and_cleanup_touch_only_journal_owned_resources() {
     let state = runner.0.lock().unwrap();
     assert!(!state.container && !state.network);
     for command in &state.commands {
-        assert!(!command.iter().any(|arg| arg == super::super::RELAY
+        assert!(!command.iter().any(|arg| arg == &*super::super::RELAY
             || arg == super::super::LEGACY
-            || arg == super::super::NETWORK
+            || arg == &*super::super::NETWORK
             || arg == "prune"));
     }
     drop(state);
@@ -170,7 +171,7 @@ fn collision_failure_and_pending_cleanup_never_recover_other_deployments() {
     let runner = Runner::default();
     let docker = Docker::with_runner(runner.clone());
     let mut args = args();
-    let listener = TcpListener::bind(("127.0.0.1", args.port)).unwrap();
+    let listener = TcpListener::bind(("127.0.0.1", args.port())).unwrap();
     assert!(
         execute(&args, &root, "router:1.2.3", &docker)
             .unwrap_err()
@@ -204,7 +205,7 @@ fn stalled_control_and_healthy_http_are_distinct_and_status_is_read_only() {
     let mut args = args();
     execute(&args, &root, "router:1.2.3", &docker).unwrap();
     runner.0.lock().unwrap().control_failed = true;
-    let listener = TcpListener::bind(("127.0.0.1", args.port)).unwrap();
+    let listener = TcpListener::bind(("127.0.0.1", args.port())).unwrap();
     let server = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().unwrap();
         // Read the probe's request before answering: closing a socket with
@@ -311,7 +312,7 @@ fn cleanup_refuses_unexpected_container_names_and_foreign_network_owners() {
     execute(&args, &root, "router:1.2.3", &docker).unwrap();
     {
         let mut state = runner.0.lock().unwrap();
-        state.name = super::super::RELAY.into();
+        state.name = super::super::RELAY.to_string();
         state.commands.clear();
     }
     args.down = true;

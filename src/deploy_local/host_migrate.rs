@@ -111,10 +111,10 @@ impl Coordinator<'_> {
                     "{connections} connection(s) opened during validation; nothing was changed, rerun when idle"
                 ));
             }
-            self.docker.stop(RELAY)?;
+            self.docker.stop(&RELAY)?;
             println!("relay={RELAY} stopped=true retained=true");
             if let Err(error) = self.start_host(plan, runtime, Some(&active.backend), probe) {
-                let restored = self.docker.start(RELAY).and_then(|()| {
+                let restored = self.docker.start(&RELAY).and_then(|()| {
                     self.wait_healthy(&active.backend, &format!("http://{RELAY}:8080"))
                 });
                 return Err(match restored {
@@ -196,6 +196,7 @@ impl Coordinator<'_> {
             executable: plan.executable.display().to_string(),
             router_version: link_assistant_router::VERSION.to_string(),
             token_secret: fingerprint(self.token_secret),
+            runtime_env: super::super::runtime_env::fingerprint(self.token_secret),
             previous_backend: previous_backend.map(str::to_string),
             started_at: chrono::Utc::now().timestamp(),
         })?;
@@ -371,10 +372,10 @@ impl Coordinator<'_> {
         }
         let relayed = self
             .docker
-            .start(RELAY)
+            .start(&RELAY)
             .and_then(|()| self.wait_healthy(backend, &format!("http://{RELAY}:8080")));
         if let Err(error) = relayed {
-            let _ = self.docker.stop(RELAY);
+            let _ = self.docker.stop(&RELAY);
             if serving {
                 self.respawn(record, runtime)?;
             }
@@ -394,6 +395,7 @@ impl Coordinator<'_> {
         self.state.write_host(&Host {
             pid,
             started_at: chrono::Utc::now().timestamp(),
+            runtime_env: super::super::runtime_env::fingerprint(self.token_secret),
             ..record.clone()
         })
     }

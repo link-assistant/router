@@ -819,6 +819,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             rate_limit_per_minute,
             admin,
             github_repo,
+            allowed_model,
             ..
         } => {
             let request = IssueRequest {
@@ -839,7 +840,15 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 eprintln!("error: {message}");
                 return ExitCode::from(2);
             }
-            match mgr.issue(&request) {
+            let model_policy = link_assistant_router::model_contract::ModelAccessPolicy {
+                allowed_models: allowed_model.clone(),
+                ..Default::default()
+            };
+            if let Err(message) = model_policy.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
+            }
+            match mgr.issue_with_model_policy(&request, &model_policy) {
                 Ok(t) => {
                     println!("{t}");
                     ExitCode::SUCCESS

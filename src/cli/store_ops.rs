@@ -44,6 +44,10 @@ pub enum TokenOp {
         /// the default and what every existing token keeps.
         #[arg(long = "github-repo", value_name = "OWNER/REPO")]
         github_repo: Vec<String>,
+        /// Exact model id this token may request. Repeat for several; omit
+        /// for the established unpinned behaviour.
+        #[arg(long = "allowed-model", value_name = "MODEL")]
+        allowed_model: Vec<String>,
         #[command(flatten)]
         target: AuthTarget,
     },

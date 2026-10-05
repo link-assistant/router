@@ -249,7 +249,7 @@ impl Docker {
     }
 
     pub(super) fn relay_connection_count(&self, backend: &str) -> Result<String, String> {
-        if !self.exists(RELAY) || !self.running(RELAY)? {
+        if !self.exists(&RELAY) || !self.running(&RELAY)? {
             // Restarting or stopping the relay necessarily closes all of the
             // TCP connections it owned, even if its last durable count was
             // nonzero.
@@ -257,7 +257,7 @@ impl Docker {
         }
         let path = format!("/deploy-state/connections/{backend}");
         self.exec(
-            RELAY,
+            &RELAY,
             &[
                 "sh",
                 "-c",
@@ -293,7 +293,7 @@ impl Docker {
 
     pub(super) fn create_network(&self, root: &Path) -> Result<(), String> {
         if self
-            .output(&["network".into(), "inspect".into(), NETWORK.into()])
+            .output(&["network".into(), "inspect".into(), NETWORK.to_string()])
             .is_ok()
         {
             if self.network_owned(root) {
@@ -310,14 +310,14 @@ impl Docker {
             format!("{LABEL_KEY}.root={}", root.display()),
             "--label".into(),
             format!("{LABEL_KEY}.spec={SPEC_VERSION}"),
-            NETWORK.into(),
+            NETWORK.to_string(),
         ])?;
         Ok(())
     }
 
     pub(super) fn remove_network(&self, root: &Path) -> Result<(), String> {
         if self.network_owned(root) {
-            self.output(&["network".into(), "rm".into(), NETWORK.into()])?;
+            self.output(&["network".into(), "rm".into(), NETWORK.to_string()])?;
         }
         Ok(())
     }
@@ -329,7 +329,7 @@ impl Docker {
                 "inspect".into(),
                 "--format".into(),
                 format!("{{{{index .Labels {key:?}}}}}"),
-                NETWORK.into(),
+                NETWORK.to_string(),
             ])
             .ok()
         };
@@ -347,8 +347,14 @@ impl Docker {
         token_secret: &str,
         claude: &Provision,
     ) -> Result<(), String> {
-        let arguments = backend_arguments(name, image, root, claude, &fingerprint(token_secret));
-        let output = self.command(&arguments, &[("TOKEN_SECRET", token_secret)])?;
+        let mut arguments =
+            backend_arguments(name, image, root, claude, &fingerprint(token_secret));
+        let runtime = super::runtime_env::current();
+        super::runtime_env::insert(&mut arguments, runtime, token_secret);
+        let output = self.command(
+            &arguments,
+            &super::runtime_env::environment(runtime, token_secret),
+        )?;
         if output.success {
             Ok(())
         } else {
@@ -361,9 +367,9 @@ impl Docker {
             "run".into(),
             "-d".into(),
             "--name".into(),
-            RELAY.into(),
+            RELAY.to_string(),
             "--network".into(),
-            NETWORK.into(),
+            NETWORK.to_string(),
             "--restart".into(),
             "unless-stopped".into(),
             "--label".into(),
@@ -439,7 +445,7 @@ fn backend_arguments(
         "--name".into(),
         name.into(),
         "--network".into(),
-        NETWORK.into(),
+        NETWORK.to_string(),
         "--restart".into(),
         "unless-stopped".into(),
         "--label".into(),

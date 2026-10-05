@@ -237,7 +237,7 @@ impl Coordinator<'_> {
                     // not this deployment and only matters if it holds the port.
                     Err(_)
                         if self.state.active()?.is_none()
-                            && !self.docker.owned(RELAY, self.root, "relay") => {}
+                            && !self.docker.owned(&RELAY, self.root, "relay") => {}
                     Err(error) => plan.block("inconsistent-state", error, false),
                 }
             } else if self.state.current()?.is_some()
@@ -280,10 +280,10 @@ impl Coordinator<'_> {
                     && record.port == self.port
             });
         plan.converged = serving_this
-            && plan
-                .record
-                .as_ref()
-                .is_some_and(|record| record.token_secret == fingerprint);
+            && plan.record.as_ref().is_some_and(|record| {
+                record.token_secret == fingerprint
+                    && record.runtime_env == super::runtime_env::fingerprint(self.token_secret)
+            });
         // Without the secret, status reports what it can prove and invents
         // no restart for a host that already serves this build (issue #659).
         plan.secret_unknown = serving_this && plan.secret == SecretMatch::NotSupplied;
@@ -329,7 +329,7 @@ impl Coordinator<'_> {
                 .docker
                 .listeners_on(self.port)?
                 .into_iter()
-                .filter(|name| name != RELAY)
+                .filter(|name| name != &*RELAY)
                 .collect::<Vec<_>>();
             if !foreign.is_empty() {
                 plan.block(
@@ -495,7 +495,7 @@ impl Coordinator<'_> {
                 );
                 println!(
                     "relay={RELAY} running={} port={}",
-                    self.docker.running(RELAY).unwrap_or(false),
+                    self.docker.running(&RELAY).unwrap_or(false),
                     active.port
                 );
                 println!(

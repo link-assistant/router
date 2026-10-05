@@ -6,7 +6,7 @@
 use clap::{Args, ValueEnum};
 
 /// What a `router deploy` run should do.
-#[derive(Debug, Args)]
+#[derive(Clone, Debug, Args)]
 pub struct DeployArgs {
     /// Restore a non-OAuth data checkpoint to a stopped local deployment.
     /// Existing records/files take precedence unless --replace-state is set.
@@ -22,8 +22,10 @@ pub struct DeployArgs {
     /// Read-only machine-readable staging verification (no paid probes).
     #[arg(long, requires = "staging", conflicts_with_all = ["down", "status"])]
     pub verify: bool,
-    /// Machine-readable staging result.
-    #[arg(long, requires = "staging")]
+    /// Machine-readable result: the staging report, or with `--server` a
+    /// `link-assistant-router/deploy/v1` document with per-step and
+    /// per-subprocess timings, provider-key and verification results.
+    #[arg(long)]
     pub json: bool,
     /// SSH destination on which to converge the deployment.
     ///
@@ -63,14 +65,15 @@ pub struct DeployArgs {
     #[arg(long, conflicts_with_all = ["server", "staging", "status", "down"])]
     pub accept_access_loss: bool,
     /// Published host port.
-    #[arg(long, default_value_t = crate::deploy::DEFAULT_PORT)]
-    pub port: u16,
+    /// Defaults to 8080, or to `port` in `--config`.
+    #[arg(long)]
+    pub port: Option<u16>,
     /// Public TLS port exposing inference only.
     ///
     /// Management remains on the loopback-only `--port` listener. The remote
     /// verifier trusts the deployment's generated CA rather than disabling
     /// certificate validation.
-    #[arg(long, requires = "server")]
+    #[arg(long)]
     pub public_port: Option<u16>,
     /// Image to deploy. Must be a release tag or digest, never a moving ref.
     ///
@@ -111,6 +114,17 @@ pub struct DeployArgs {
     /// Without this flag a deploy keeps the current mode.
     #[arg(long, value_enum, conflicts_with_all = ["server", "down"])]
     pub mode: Option<DeployMode>,
+    /// Settings that can also come from `--config` (issues #679, #680, #683).
+    #[command(flatten)]
+    pub settings: super::DeploySettingsArgs,
+}
+
+impl DeployArgs {
+    /// The published port: `--port`, else the default.
+    #[must_use]
+    pub fn port(&self) -> u16 {
+        self.port.unwrap_or(crate::deploy::DEFAULT_PORT)
+    }
 }
 
 /// Where a local deployment serves from.
