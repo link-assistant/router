@@ -1456,7 +1456,11 @@ for as long as the cooldown lasts and then returns to its account; concurrent
 failovers rotate across the pool; tokens pinned to an account never fall back;
 and a client that disconnects stops the retries. When a retry moves to a
 different account, Claude `thinking`/`redacted_thinking` blocks (signed by the
-first account) are dropped from the history.
+first account) are dropped from the history. The Codex subscription path
+(`/api/services/codex/v1/responses` and the routes bridged onto it) follows the
+same policy; there a switch drops `reasoning` input items that carry
+`encrypted_content`, which only the issuing account can decrypt. A retry on the
+same account, or the first attempt, forwards the body unchanged.
 
 Every Claude response — `count_tokens` included — is read for the
 `anthropic-ratelimit-unified-*` headers (names are case-insensitive). A rejected
@@ -1464,7 +1468,18 @@ window cools the account until its reset, the longest window winning; a
 rejection that only concerns one model family (for example `7d_opus`) cools
 that family on the account instead of the whole credential. With
 `ACCOUNT_PAUSE_AT_PERCENT`, an account whose window reaches the threshold is
-paused until the reset. Operators can pause and resume accounts directly:
+paused until the reset. Operators can pause and resume accounts from the CLI,
+which calls the admin API of the selected router (`--server`, or the
+configured one) and edits this machine's data directory with `--local`:
+
+```bash
+router accounts pause account-1 --reason maintenance --until 6h
+router accounts pause account-1 --until 2026-12-01T00:00:00Z
+router accounts resume account-1
+```
+
+`--until` takes Unix seconds, an RFC 3339 time or a delay (`90m`, `6h`, `2d`);
+without it the pause lasts until `resume`. The same over HTTP:
 
 ```bash
 curl -X POST -H "Authorization: Bearer $ADMIN_KEY" \
@@ -1576,6 +1591,9 @@ router tokens import --local --from /srv/previous-router
 
 # Inspect configured accounts:
 router accounts list
+# Take one out of rotation, and put it back (issue #677):
+router accounts pause account-1 --reason maintenance --until 6h
+router accounts resume account-1
 
 # Manage OpenAI-compatible upstream providers:
 router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
