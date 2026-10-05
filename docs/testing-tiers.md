@@ -144,8 +144,8 @@ the count for a harness that wants to assert on it without parsing output.
 
 Tests behind a switch rather than a credential announce themselves the same way,
 through `tiers::opt_in`. These switches are `ROUTER_REAL_CLIENT_TESTS=1`,
-`ROUTER_HOST_CLI_TESTS=1`, `ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1`, and
-`LEFINE_INFERENCE_ACCEPTANCE=1`. Before issue #629 they returned early without a
+`ROUTER_HOST_CLI_TESTS=1`, `ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1`,
+`LEFINE_INFERENCE_ACCEPTANCE=1`, and `ROUTER_TEST_KEYCHAIN=1` (macOS only). Before issue #629 they returned early without a
 word, so a green run could not say which real-client cases never ran.
 
 ## Router-owned verification for downstream projects
@@ -260,6 +260,28 @@ also runs in that workflow, so a release can show it proven without a Mac.
 A downstream can then drop its copies of these areas and keep only the
 assertions that are its own: SSH tunnels, its entitlement choices, and its
 deployment.
+
+## Replay, performance, stability, platform and upgrade checks
+
+Alongside the four tiers, a few suites guard properties a single request cannot
+show. The fast ones run in `cargo test`; the slow ones have their own workflow,
+triggered on pull requests only when the code they guard changes.
+
+| Suite | Proves | Run locally | Workflow |
+| --- | --- | --- | --- |
+| Vendor cassettes (`tests/vendor_fixture_replay_test.rs`, `tests/fixtures/vendor/`) | Recorded Anthropic, Codex, Chat and Gemini exchanges (thinking, tool use, cache reads, 400/429/500/529) replay through every client surface with the same translated output and the same charge (#671) | `cargo test --test vendor_fixture_replay_test` | every change; `release.yml` checks the cassettes with `rust-script scripts/record-vendor-fixtures.rs --check` |
+| Claude Code feature matrix (`tests/claude_code_feature_matrix_test.rs`) | Vision, PDFs, citations, thinking, structured outputs, server tools and beta headers pass through the native surface and are translated or refused cleanly on the Codex bridge (#675) | `cargo test --test claude_code_feature_matrix_test` | every change |
+| Benchmarks (`benches/hot_paths.rs`) | SSE and request translation and token validation do not get more than 25% slower (median) than the pull request's base, measured on the same runner (#672) | `cargo bench --bench hot_paths -- --save-baseline before`, change, `cargo bench --bench hot_paths -- --save-baseline after`, then `rust-script scripts/compare-benchmarks.rs before after` | `benchmarks.yml` |
+| Mutation testing (`.cargo/mutants.toml`) | Tests notice changes to token validation and reservations, the SSRF guard, authentication, credential handling, budget settlement and log redaction (#672) | `cargo install cargo-mutants --locked`, then `cargo mutants --file src/token_validate.rs` | `mutants.yml`: changed lines on pull requests, every listed module nightly |
+| Soak (`tests/soak_test.rs`, ignored) | Streamed, translated, unary and client-abandoned requests leave resident memory, live tasks and open descriptors bounded and no reservation open (#672) | `SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture` | `soak.yml`: one minute on pull requests, ten nightly |
+| macOS Keychain (`tests/macos_keychain_test.rs`) | Router finds `Claude Code-credentials` and its `CLAUDE_CONFIG_DIR`-scoped entry in a real keychain, and prefers it to a stale credentials file (#674) | on macOS, against a throwaway keychain seeded as `macos-keychain.yml` does, with `ROUTER_TEST_KEYCHAIN=1` | `macos-keychain.yml` |
+| Upgrade matrix (`scripts/upgrade-matrix.sh`, `tests/upgrade_fixture_test.rs`) | A data directory written by each of the last three releases (capped, admin and revoked tokens, a provider with an encrypted key, a server profile) is listed, served and extended unchanged by the new build (#673) | `cargo test --test upgrade_fixture_test`, or `scripts/upgrade-matrix.sh download v1.15.3 /tmp/old`, `seed /tmp/old/router /tmp/state`, `verify target/debug/router /tmp/state` | `upgrade-matrix.yml` |
+
+The macOS Keychain test never reads a developer's own credential: off macOS, or
+without `ROUTER_TEST_KEYCHAIN=1`, it skips and says so like any other gated
+test. The upgrade fixture holds only throwaway secrets (a test signing secret
+and a fake API key); regenerate it with
+`scripts/upgrade-matrix.sh fixture <released router> tests/fixtures/upgrade/<version>`.
 
 ## In CI
 

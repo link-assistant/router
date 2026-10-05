@@ -14,6 +14,9 @@
 //! - `~/.claude/.credentials.json` holding [`STALE_FILE_TOKEN`] with an older
 //!   expiry, the stale snapshot issue #249 was about.
 
+mod common;
+
+use common::tiers::Tier;
 use link_assistant_router::platform_keychain::{self, Origin};
 use link_assistant_router::subscription::{SubscriptionProvider, SubscriptionReader};
 
@@ -21,14 +24,18 @@ const SEEDED_ACCESS_TOKEN: &str = "keychain-ci-fake-access-token";
 const STALE_FILE_TOKEN: &str = "file-ci-stale-access-token";
 const SCOPED_DIR: &str = "/tmp/router-keychain-ci";
 
-/// Whether the seeded throwaway keychain is in place.
+/// Whether the seeded throwaway keychain is in place. A skip is announced
+/// and counted like every other gated test, never silent.
 fn seeded() -> bool {
-    let enabled =
-        cfg!(target_os = "macos") && std::env::var("ROUTER_TEST_KEYCHAIN").as_deref() == Ok("1");
-    if !enabled {
-        eprintln!("skipped: set ROUTER_TEST_KEYCHAIN=1 on macOS with the seeded keychain");
+    if !cfg!(target_os = "macos") {
+        common::tiers::unavailable(
+            Tier::Integration,
+            &common::tiers::current_test(),
+            "the Keychain exists only on macOS",
+        );
+        return false;
     }
-    enabled
+    common::tiers::opt_in(Tier::Integration, "ROUTER_TEST_KEYCHAIN")
 }
 
 #[test]

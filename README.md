@@ -2173,6 +2173,25 @@ cargo test test_token_roundtrip
 cargo test -- --nocapture
 ```
 
+### Benchmarks, soak, mutation and upgrade checks
+
+```bash
+# Hot-path benchmarks; compare two saved baselines
+cargo bench --bench hot_paths -- --save-baseline before
+rust-script scripts/compare-benchmarks.rs before after
+
+# One-minute soak (memory, tasks, descriptors, open reservations)
+SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture
+
+# Upgrade from a checked-in v1.15.1 data directory
+cargo test --test upgrade_fixture_test
+```
+
+Mutation testing (`cargo mutants`, configured in `.cargo/mutants.toml`), the
+macOS Keychain suite and the upgrade matrix over the last three releases run in
+their own workflows; [docs/testing-tiers.md](docs/testing-tiers.md) lists what
+each one proves and how to run it.
+
 ### Code quality checks
 
 ```bash
