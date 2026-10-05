@@ -239,5 +239,13 @@ After that correction, all 104 local binary/integration targets pass again:
 1,086 tests passed, none failed and one opt-in test was ignored. The stricter
 config-only table is also rerun separately after moving its fixture image into
 the config file.
+The final source run passed Linux/macOS suites and every independent workflow,
+but its coverage job required a second ratchet update: the additional staging
+build regression raised measured coverage to 86.029112% (71,750 / 83,402 lines).
+The coverage evaluation itself passed; the subsequent clean-diff check refused
+the automatically improved baseline (`coverage-d07a4dc.log`, lines 4977–5016).
+The measured value is committed without changing the floor, tolerance or
+compiler settings. The actual CI report is used to verify the gate locally,
+and final publication/readiness waits for fresh CI on the baseline commit.
 Full logs, including resource failures, are preserved locally under `ci-logs/`
 and excluded from commits by the existing `*.log` rule.
