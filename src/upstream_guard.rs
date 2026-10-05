@@ -15,7 +15,9 @@
 //! - **Dial time** — [`GuardedResolver`] resolves host names for the provider
 //!   client and drops every refused address *at connect time*, so a name that
 //!   answered with a public address when it was configured and with a private
-//!   one later (DNS rebinding) still cannot reach the private one.
+//!   one later (DNS rebinding) still cannot reach the private one. Behind a
+//!   system `HTTPS_PROXY` the proxy resolves the provider host, so only the
+//!   first check applies there.
 //!
 //! Local setups that point a provider at a loopback service opt in with
 //! `UPSTREAM_ALLOW_PRIVATE_NETWORKS` (see [`NetworkPolicy::parse`]).
