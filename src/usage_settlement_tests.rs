@@ -224,3 +224,14 @@ fn a_reservation_is_settled_with_the_estimate_on_disconnect() {
     assert_eq!(record.used_tokens, 20);
     assert_eq!(record.reserved_tokens, 0);
 }
+
+#[test]
+fn only_response_delta_events_count_as_streamed_output() {
+    let delta = |kind: &str| streamed_output_chars(&json!({"type": kind, "delta": "abc"}));
+    assert_eq!(delta("response.output_text.delta"), 3);
+    assert_eq!(delta("response.reasoning_summary_text.delta"), 3);
+    // A finished or unrelated event repeats text already counted, or none.
+    assert_eq!(delta("response.output_text.done"), 0);
+    assert_eq!(delta("response.created"), 0);
+    assert_eq!(delta("thread.message.delta"), 0);
+}
