@@ -1747,6 +1747,17 @@ cutover, and records signed rollback/provenance state. See the
 public inference-only TLS, status/down behavior, and distinct transport/lease
 exit codes.
 
+Both accept a declarative `--config router-deploy.toml` (flags override its
+keys). It sets the instance name, runtime variables passed by name
+(`--env NAME[=env:VAR|file:PATH]`, fingerprinted so a changed value
+reconciles), SSH port, identity, pinned `known_hosts`, keepalive and an overall
+`--deadline` (exit status `12`), and limits for the deploy-issued token. On a
+remote target, `--provider-key NAME=SOURCE` validates a key in the candidate
+before cutover. With `--provider-key-mode keep|if-absent|replace` it can also
+install the key. `--verification-profile` sets the clients, providers and exact
+models the candidate must prove first. `--json` reports fingerprints, validation
+results, and per-step and per-subprocess timings. It never reports values.
+
 ### Build the image
 
 ```bash

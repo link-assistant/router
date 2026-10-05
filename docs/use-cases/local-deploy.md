@@ -26,6 +26,25 @@ The default root is the configured Router data directory followed by `deploy/`.
 Use `--root DIR` to select another root. Its `credentials/`, `data/`, and
 `state/` subdirectories are durable; `--down` does not delete them.
 
+## Configuration file, runtime variables and instances
+
+`router deploy --config FILE` takes its settings from the same TOML file a
+remote deployment uses; see the
+[remote deployment guide](remote-deploy.md#declarative-configuration) for every
+key. A local run reads `[deploy]`, `[local]`, `[env]` and `[tokens]`, and
+command-line flags override the file. Provider keys and verification profiles
+apply only to remote runs; SSH flags, `--provider-key` and
+`--verification-profile` are refused locally with status `2`.
+
+`--env NAME`, `--env NAME=env:VAR` or `--env NAME=file:PATH` passes a runtime
+variable to the backend by name, in a container or in host mode. The value is
+placed in the process environment and never in argv. An HMAC fingerprint of
+the names and values is part of the launch specification, so changing a value
+reconciles the deployment exactly as changing the image does. `--instance NAME`
+suffixes the relay, network and backend names and the default root
+(`deploy-NAME/`), so several deployments can share one host. `--token-*` flags
+(or `[tokens]`) bound the `deploy` client token the deployment issues.
+
 ## Anthropic credentials
 
 By default the backend is isolated from the host's Claude Code login: it reads
