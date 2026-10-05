@@ -274,7 +274,7 @@ fn network(world: &mut World, arguments: &[String]) -> Result<CommandOutput, Str
     match arguments.get(1).map(String::as_str) {
         Some("inspect") => {
             let Some(network_labels) = &world.network_labels else {
-                return FakeRunner::absent(NETWORK);
+                return FakeRunner::absent(&NETWORK);
             };
             option(arguments, "--format").map_or_else(
                 || FakeRunner::ok("[]\n"),
@@ -473,7 +473,7 @@ fn exec(
         }
         return FakeRunner::ok("token-value-withheld-by-production\n");
     }
-    if arguments.get(1).map(String::as_str) == Some(RELAY) {
+    if arguments.get(1).map(String::as_str) == Some(&*RELAY) {
         let backend = arguments.last().unwrap().rsplit('/').next().unwrap();
         let count = world
             .connection_counts
@@ -531,13 +531,16 @@ pub(super) fn deploy_args() -> DeployArgs {
         yes: false,
         force_update: false,
         accept_access_loss: false,
-        port: 8080,
+        port: Some(8080),
         public_port: None,
         image: None,
         build: None,
         root: None,
         claude_credentials: None,
         mode: None,
+        install_service: false,
+        uninstall_service: false,
+        settings: link_assistant_router::cli::DeploySettingsArgs::default(),
     }
 }
 
@@ -614,7 +617,7 @@ fn absent_install_and_managed_update_cut_over_then_drain_without_exposing_the_se
     assert!(world.signing_secret_received);
     assert!(!world.containers.contains_key(&active.backend));
     assert!(world.containers.contains_key(&replacement.backend));
-    assert!(world.containers.contains_key(RELAY));
+    assert!(world.containers.contains_key(&*RELAY));
     assert!(
         world
             .commands
@@ -669,7 +672,7 @@ fn dispatcher_covers_status_install_no_op_repair_update_and_removal() {
         .lock()
         .unwrap()
         .containers
-        .get_mut(RELAY)
+        .get_mut(&*RELAY)
         .unwrap()
         .running = false;
     assert_eq!(
@@ -855,7 +858,7 @@ fn interrupted_managed_cutovers_restore_the_old_pointer_and_accepted_ones_finish
             managed_container(root.path(), "router:2", "sha256:new"),
         );
         world.containers.insert(
-            RELAY.into(),
+            RELAY.to_string(),
             Container {
                 running: true,
                 image_ref: "router:2".into(),

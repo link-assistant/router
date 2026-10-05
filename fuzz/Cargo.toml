@@ -1,0 +1,32 @@
+[package]
+name = "link-assistant-router-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1"
+link-assistant-router = { path = ".." }
+
+# Keep this crate out of the router package's build: it is run only through
+# `cargo +nightly fuzz` (issue #670).
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "sse_stream_translators"
+path = "fuzz_targets/sse_stream_translators.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "request_translators"
+path = "fuzz_targets/request_translators.rs"
+test = false
+doc = false
+bench = false

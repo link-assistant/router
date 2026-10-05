@@ -48,6 +48,10 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+#[path = "deploy/instance.rs"]
+pub mod instance;
+#[path = "deploy/registry.rs"]
+pub mod registry;
 #[path = "deploy/runtime.rs"]
 pub mod runtime;
 #[path = "deploy/step.rs"]

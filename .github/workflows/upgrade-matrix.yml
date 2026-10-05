@@ -1,0 +1,138 @@
+# Upgrade compatibility matrix (issue #673). Each of the last three releases
+# writes a data directory with its own binary: a capped token, an admin token,
+# a revoked token, a provider with an encrypted API key and a persisted server
+# profile. The Router built from this commit must list, serve and extend it:
+# old tokens keep their ids, caps and revocation, the old admin token reads the
+# management API, the revoked one is refused, and the store stays writable.
+# scripts/upgrade-matrix.sh does the work; tests/upgrade_fixture_test.rs
+# replays a checked-in v1.15.1 state in the ordinary test run.
+name: Upgrade matrix
+
+on:
+  pull_request:
+    paths:
+      - 'src/storage.rs'
+      - 'src/storage/**'
+      - 'src/storage_*.rs'
+      - 'src/token*.rs'
+      - 'src/providers.rs'
+      - 'src/managed_server*.rs'
+      - 'src/managed_server/**'
+      - 'tests/upgrade_fixture_test.rs'
+      - 'tests/fixtures/upgrade/**'
+      - 'src/lino_json.rs'
+      - 'scripts/upgrade-matrix.sh'
+      - '.github/workflows/upgrade-matrix.yml'
+  schedule:
+    - cron: '17 3 * * 2'
+  workflow_dispatch:
+    inputs:
+      releases:
+        description: How many of the latest releases to upgrade from
+        default: '3'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upgrade-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  releases:
+    name: Pick releases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      tags: ${{ steps.pick.outputs.tags }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COUNT: ${{ inputs.releases || '3' }}
+        run: |
+          tags="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases \
+            --limit "$COUNT" --json tagName --jq '[.[].tagName]')"
+          echo "upgrading from: $tags"
+          [ "$tags" != "[]" ] || { echo "no releases found" >&2; exit 1; }
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build router
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-upgrade-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-upgrade-cargo-
+
+      - name: Build
+        run: cargo build --locked --bin router
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: router-under-test
+          path: target/debug/router
+          retention-days: 1
+
+  upgrade:
+    name: Upgrade from ${{ matrix.tag }}
+    needs: [releases, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.releases.outputs.tags) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: router-under-test
+          path: ${{ runner.temp }}/new
+
+      - name: Download ${{ matrix.tag }}
+        id: old
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPGRADE_REPO: ${{ github.repository }}
+          TAG: ${{ matrix.tag }}
+        run: |
+          router="$(scripts/upgrade-matrix.sh download "$TAG" "$RUNNER_TEMP/old")"
+          echo "router=$router" >> "$GITHUB_OUTPUT"
+
+      - name: Seed state with ${{ matrix.tag }}
+        env:
+          OLD: ${{ steps.old.outputs.router }}
+        run: scripts/upgrade-matrix.sh seed "$OLD" "$RUNNER_TEMP/state"
+
+      - name: Verify with this commit
+        run: |
+          chmod +x "$RUNNER_TEMP/new/router"
+          scripts/upgrade-matrix.sh verify "$RUNNER_TEMP/new/router" "$RUNNER_TEMP/state"
+
+      - name: Upload server log
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: upgrade-${{ matrix.tag }}-serve-log
+          path: ${{ runner.temp }}/state/serve.log
+          if-no-files-found: ignore

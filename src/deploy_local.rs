@@ -7,9 +7,11 @@ use std::thread;
 use std::time::Duration;
 
 use link_assistant_router::cli::DeployArgs;
+use link_assistant_router::deploy::instance::InstanceName;
 
 mod claude_share;
 mod data_backup;
+mod deploy_token;
 mod diagnose;
 mod docker;
 mod host;
@@ -17,7 +19,9 @@ mod host_runtime;
 mod inventory;
 mod preservation;
 mod relay_rotation;
+pub mod runtime_env;
 mod secret;
+pub mod service;
 pub mod staging;
 mod state;
 #[cfg(test)]
@@ -29,8 +33,13 @@ use docker::Docker;
 use inventory::Inventory;
 use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
 
-pub const RELAY: &str = link_assistant_router::deploy::RELAY;
-pub const NETWORK: &str = link_assistant_router::deploy::NETWORK;
+/// Relay container name; carries `--instance` (issue #679).
+pub static RELAY: InstanceName = InstanceName::new(link_assistant_router::deploy::RELAY);
+/// Network name; carries `--instance`.
+pub static NETWORK: InstanceName = InstanceName::new(link_assistant_router::deploy::NETWORK);
+/// Backend name prefix; carries `--instance`.
+static BACKEND_PREFIX: InstanceName =
+    InstanceName::prefix(link_assistant_router::deploy::BACKEND_PREFIX);
 pub const LABEL_KEY: &str = link_assistant_router::deploy::LABEL_KEY;
 const LEGACY: &str = link_assistant_router::deploy::CONTAINER;
 pub const SPEC_VERSION: &str = "local-v1";
@@ -85,16 +94,16 @@ impl Coordinator<'_> {
                 ));
             }
             let expected_port = active.port.to_string();
-            if self.docker.exists(RELAY)
-                && (!self.docker.owned(RELAY, self.root, "relay")
+            if self.docker.exists(&RELAY)
+                && (!self.docker.owned(&RELAY, self.root, "relay")
                     || self
                         .docker
-                        .label(RELAY, &format!("{LABEL_KEY}.spec"))
+                        .label(&RELAY, &format!("{LABEL_KEY}.spec"))
                         .as_deref()
                         != Some(SPEC_VERSION)
                     || self
                         .docker
-                        .label(RELAY, &format!("{LABEL_KEY}.port"))
+                        .label(&RELAY, &format!("{LABEL_KEY}.port"))
                         .as_deref()
                         != Some(expected_port.as_str()))
             {
@@ -102,7 +111,7 @@ impl Coordinator<'_> {
             }
             return Ok(Existing::Managed(active));
         }
-        if self.docker.exists(RELAY) {
+        if self.docker.exists(&RELAY) {
             return Err(format!(
                 "{RELAY} exists without a durable active deployment record"
             ));
@@ -183,7 +192,7 @@ impl Coordinator<'_> {
             }
             Existing::Managed(active) => {
                 let backend_running = self.docker.running(&active.backend)?;
-                let relay_running = self.docker.running(RELAY).unwrap_or(false);
+                let relay_running = self.docker.running(&RELAY).unwrap_or(false);
                 println!("old_backend={} image={}", active.backend, active.image_ref);
                 println!(
                     "old_backend_claude_credentials={}",
@@ -272,7 +281,7 @@ impl Coordinator<'_> {
     fn preflight(&self, existing: &Existing) -> Result<Option<Inventory>, String> {
         let allowed_holder = match existing {
             Existing::Legacy => Some(LEGACY),
-            Existing::Managed(active) if active.port == self.port => Some(RELAY),
+            Existing::Managed(active) if active.port == self.port => Some(&*RELAY),
             Existing::Absent | Existing::Managed(_) => None,
         };
         let foreign = self
@@ -389,32 +398,6 @@ impl Coordinator<'_> {
         Err(format!("{container} did not become healthy"))
     }
 
-    fn ensure_deploy_token(&self, backend: &str) {
-        let present = self
-            .docker
-            .token_inventory(backend)
-            .ok()
-            .and_then(|rendered| serde_json::from_str::<Vec<serde_json::Value>>(&rendered).ok())
-            .is_some_and(|records| {
-                records.iter().any(|record| {
-                    record.get("label").and_then(serde_json::Value::as_str) == Some("deploy")
-                        && !record
-                            .get("revoked")
-                            .and_then(serde_json::Value::as_bool)
-                            .unwrap_or(false)
-                })
-            });
-        if !present {
-            match self
-                .docker
-                .exec(backend, &["router", "tokens", "issue", "--label", "deploy"])
-            {
-                Ok(_) => println!("issued deploy client token (value withheld)"),
-                Err(error) => println!("deploy client token skipped: {error}"),
-            }
-        }
-    }
-
     fn drain(&self, backend: &str) -> Result<(), String> {
         let mut last = u64::MAX;
         let mut zero_observations = 0_u8;
@@ -447,13 +430,13 @@ impl Coordinator<'_> {
     }
 
     fn remove_relay(&self) -> Result<(), String> {
-        if !self.docker.exists(RELAY) {
+        if !self.docker.exists(&RELAY) {
             return Ok(());
         }
-        if !self.docker.owned(RELAY, self.root, "relay") {
+        if !self.docker.owned(&RELAY, self.root, "relay") {
             return Err(format!("refusing to remove unowned relay {RELAY}"));
         }
-        self.docker.remove(RELAY)
+        self.docker.remove(&RELAY)
     }
 
     fn finish_accepted(&self, transaction: &Transaction) -> Result<(), String> {
@@ -587,6 +570,10 @@ impl Coordinator<'_> {
             || self.state.current()?.as_deref() != Some(&active.backend)
             || !self.docker.owned(&active.backend, self.root, "backend")
             || self.secret_match(&active.backend) != secret::SecretMatch::Matches
+            || !runtime_env::matches(
+                self.runtime_env_label(&active.backend).as_deref(),
+                self.token_secret,
+            )
         {
             return Ok(false);
         }
@@ -601,15 +588,15 @@ impl Coordinator<'_> {
             println!("restored backend={}", active.backend);
             true
         };
-        if !self.docker.exists(RELAY) {
+        if !self.docker.exists(&RELAY) {
             self.docker
                 .run_relay(&active.image_ref, self.root, active.port)?;
             println!("restored relay={RELAY}");
             changed = true;
-        } else if !self.docker.owned(RELAY, self.root, "relay") {
+        } else if !self.docker.owned(&RELAY, self.root, "relay") {
             return Err(format!("refusing unowned relay {RELAY}"));
-        } else if !self.docker.running(RELAY)? {
-            self.docker.start(RELAY)?;
+        } else if !self.docker.running(&RELAY)? {
+            self.docker.start(&RELAY)?;
             println!("restored relay={RELAY}");
             changed = true;
         }
@@ -619,19 +606,15 @@ impl Coordinator<'_> {
 
     fn topology_needs_repair(&self, active: &Active) -> Result<bool, String> {
         Ok(!self.docker.running(&active.backend)?
-            || !self.docker.exists(RELAY)
-            || !self.docker.running(RELAY)?)
+            || !self.docker.exists(&RELAY)
+            || !self.docker.running(&RELAY)?)
     }
 
     fn deploy(&self, existing: &Existing) -> Result<(), String> {
         let baseline = self.preservation_baseline(existing)?;
         let image_id = self.docker.ensure_image(self.image, self.build)?;
         self.docker.create_network(self.root)?;
-        let candidate = format!(
-            "{}{}",
-            link_assistant_router::deploy::BACKEND_PREFIX,
-            uuid::Uuid::new_v4().simple()
-        );
+        let candidate = format!("{}{}", BACKEND_PREFIX, uuid::Uuid::new_v4().simple());
         let (previous, previous_kind, previous_port) = match &existing {
             Existing::Absent => (None, PreviousKind::None, None),
             Existing::Legacy => (
@@ -821,7 +804,7 @@ fn run_assessed(
         root,
         image,
         build: args.build.as_deref(),
-        port: args.port,
+        port: args.port(),
         token_secret,
         force: args.force_update,
         accept_access_loss: args.accept_access_loss,

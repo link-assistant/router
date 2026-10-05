@@ -44,6 +44,10 @@ pub enum TokenOp {
         /// the default and what every existing token keeps.
         #[arg(long = "github-repo", value_name = "OWNER/REPO")]
         github_repo: Vec<String>,
+        /// Exact model id this token may request. Repeat for several; omit
+        /// for the established unpinned behaviour.
+        #[arg(long = "allowed-model", value_name = "MODEL")]
+        allowed_model: Vec<String>,
         #[command(flatten)]
         target: AuthTarget,
     },
@@ -198,6 +202,35 @@ pub enum AccountOp {
         /// Emit JSON instead of the table (issue #314).
         #[arg(long)]
         json: bool,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
+    /// Take a pooled account out of rotation (issue #677).
+    ///
+    /// Calls `POST /api/management/accounts/{name}/pause` on the selected
+    /// router. Locally (`--local`, or no selection) the pause is written to
+    /// the data directory, where the router reads it when it starts.
+    Pause {
+        /// Account name, as `accounts list` prints it.
+        name: String,
+        /// Why the account is paused; shown by `accounts list --json`.
+        #[arg(long)]
+        reason: Option<String>,
+        /// When the pause lifts on its own: Unix seconds, an RFC 3339 time,
+        /// or a delay such as `90m`, `6h` or `2d`. Without it the pause lasts
+        /// until `accounts resume`.
+        #[arg(long, value_parser = super::value_parsers::parse_until)]
+        until: Option<u64>,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
+    /// Put a paused account back into rotation (issue #677).
+    ///
+    /// Lifts a manual pause or an `ACCOUNT_PAUSE_AT_PERCENT` one, through
+    /// `POST /api/management/accounts/{name}/resume` on the selected router.
+    Resume {
+        /// Account name, as `accounts list` prints it.
+        name: String,
         #[command(flatten)]
         target: AuthTarget,
     },

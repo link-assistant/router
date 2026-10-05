@@ -38,7 +38,7 @@ path = "src/bin/with-router.rs"
 axum = { version = "0.8", features = ["macros", "ws"] }
 hyper = { version = "1.11", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio"] }
-reqwest = { version = "0.13", features = ["stream", "json", "form", "query", "cookies"] }
+reqwest = { version = "0.13", features = ["stream", "json", "form", "query", "cookies", "socks"] }
 cookie_store = "0.22.1"
 url = "2.5"
 tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync", "net"] }
@@ -90,6 +90,13 @@ proptest = "1"
 tokio-test = "0.4"
 tower = { version = "0.5", features = ["util"] }
 wait-timeout = "0.2"
+criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
+
+# Hot-path benchmarks (issue #672); the Benchmarks workflow compares a pull
+# request against its base with scripts/compare-benchmarks.rs.
+[[bench]]
+name = "hot_paths"
+harness = false
 
 [lints.rust]
 unsafe_code = "deny"
@@ -116,3 +123,11 @@ missing_panics_doc = "allow"
 lto = true
 codegen-units = 1
 strip = true
+
+# Benchmarks compare a pull request against its base on the same runner, so
+# relative timings are what matter; skip the release profile's full LTO to keep
+# the two bench builds within the CI job's minutes.
+[profile.bench]
+lto = false
+codegen-units = 16
+strip = false

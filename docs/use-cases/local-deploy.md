@@ -26,6 +26,25 @@ The default root is the configured Router data directory followed by `deploy/`.
 Use `--root DIR` to select another root. Its `credentials/`, `data/`, and
 `state/` subdirectories are durable; `--down` does not delete them.
 
+## Configuration file, runtime variables and instances
+
+`router deploy --config FILE` takes its settings from the same TOML file a
+remote deployment uses; see the
+[remote deployment guide](remote-deploy.md#declarative-configuration) for every
+key. A local run reads `[deploy]`, `[local]`, `[env]` and `[tokens]`, and
+command-line flags override the file. Provider keys and verification profiles
+apply only to remote runs; SSH flags, `--provider-key` and
+`--verification-profile` are refused locally with status `2`.
+
+`--env NAME`, `--env NAME=env:VAR` or `--env NAME=file:PATH` passes a runtime
+variable to the backend by name, in a container or in host mode. The value is
+placed in the process environment and never in argv. An HMAC fingerprint of
+the names and values is part of the launch specification, so changing a value
+reconciles the deployment exactly as changing the image does. `--instance NAME`
+suffixes the relay, network and backend names and the default root
+(`deploy-NAME/`), so several deployments can share one host. `--token-*` flags
+(or `[tokens]`) bound the `deploy` client token the deployment issues.
+
 ## Anthropic credentials
 
 By default the backend is isolated from the host's Claude Code login: it reads
@@ -128,8 +147,46 @@ if the relay does not become healthy, the host Router is started again. `router
 deploy --down --yes` stops the host Router as well as the containers.
 
 The host process is recorded in `state/host` and logs to `state/host.log`. It
-does not survive a reboot or logout by itself; rerun `router deploy` or start it
-from a launchd agent.
+does not survive a reboot or logout by itself. Use `--install-service`, or
+rerun `router deploy`.
+
+### Supervising the host Router
+
+```bash
+TOKEN_SECRET='a-long-random-secret' router deploy --mode host --install-service
+router deploy --uninstall-service
+```
+
+`--install-service` writes a systemd user unit
+(`~/.config/systemd/user/link-assistant-router*.service`) or a launchd agent
+(`~/Library/LaunchAgents`) (issue #684). It runs the same executable on the
+same `data/` directory and port, starts it at login, and restarts it after a
+failure. The signing secret is written to a `0600` file under `state/` and
+reaches the Router through `TOKEN_SECRET_FILE`, so it is in neither the unit
+nor any argv. `TOKEN_SECRET_FILE` works for `router serve` too; an explicit
+`TOKEN_SECRET` wins.
+
+The unit is enabled, not started: the Router the deploy just started keeps
+serving, and the service manager takes over at the next login or boot. A
+later deploy stops a service-started Router before it starts its own on the
+stable port, then rewrites the unit for what it deployed. `--uninstall-service`
+disables and removes the unit and the secret file. It stops the Router only
+when the service started it. Limitations:
+
+- The unit carries the data directory, port and secret file. It does not
+  carry `CLAUDE_CODE_HOME` or `--env` values.
+- A systemd user unit starts at boot only with `loginctl enable-linger $USER`.
+- After a reboot, `deploy --status` sees the recorded pid as gone until the
+  service, or a rerun, starts the Router again.
+
+## Deployment registry and doctor
+
+Every successful local or host deploy records its root, mode and port in
+`~/.link-assistant-router/deployments.json` (never a secret). `router doctor
+--local` inspects the data directory of every registered root, including
+deployments started with `--root DIR`, so their recorded provider exhaustion
+and account limits are not hidden. A registered root that no longer exists is
+named, not silently skipped.
 
 ## What happens during an update
 

@@ -199,6 +199,16 @@ const AREAS: &[Area] = &[
         ],
     },
     Area {
+        name: "deploy-configuration",
+        covers: "`router deploy --config`: declarative TOML, runtime env passthrough and its fingerprint, instance names, SSH port/identity/pinned known_hosts/keepalive/deadline, deploy token policy, `--provider-key` validation modes, verification profiles and the `--json` document",
+        enable: "nothing; a stand-in ssh records the session",
+        runs: &[
+            tests(&["deploy_config_test"]),
+            unit(&["--lib"], "deploy_config"),
+            unit(&["--bin", "router"], "deploy_remote"),
+        ],
+    },
+    Area {
         name: "staging",
         covers: "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog",
         enable: "ROUTER_STAGING_LIVE_TESTS=1, ROUTER_STAGING_DISPOSABLE_HOST=1, ROUTER_STAGING_ZAI_API_KEY, ROUTER_DEPLOY_TEST_IMAGE and installed Claude; static key only, no copied OAuth",

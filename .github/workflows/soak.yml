@@ -1,0 +1,73 @@
+# Soak test (issue #672): tests/soak_test.rs drives many streamed, translated,
+# unary and client-abandoned requests through the in-process Router and fails
+# when resident memory, live tasks or open file descriptors keep growing, or a
+# budget reservation is left open. Nightly runs it for ten minutes; a pull
+# request that touches the proxy or streaming code runs it for one.
+name: Soak
+
+on:
+  pull_request:
+    paths:
+      - 'src/proxy*.rs'
+      - 'src/proxy/**'
+      - 'src/subscription_proxy*.rs'
+      - 'src/provider_proxy*.rs'
+      - 'src/usage.rs'
+      - 'src/token_reservation.rs'
+      - 'src/stream_termination.rs'
+      - 'src/*stream*.rs'
+      - 'tests/soak_test.rs'
+      - 'tests/support/replay_router.rs'
+      - '.github/workflows/soak.yml'
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Soak duration in seconds
+        default: '600'
+      concurrency:
+        description: Concurrent clients
+        default: '16'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: soak-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  soak:
+    name: Soak
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-soak-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-soak-cargo-
+
+      - name: Run soak test
+        env:
+          SOAK_SECONDS: ${{ github.event_name == 'pull_request' && '60' || inputs.seconds || '600' }}
+          SOAK_CONCURRENCY: ${{ inputs.concurrency || '16' }}
+        # Release mode: the debug build's allocation patterns are not the
+        # ones a deployment sees.
+        run: cargo test --locked --release --test soak_test -- --ignored --nocapture

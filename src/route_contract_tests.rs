@@ -231,35 +231,16 @@ fn codex_remote_control_has_only_its_seven_canonical_service_routes() {
 
 #[test]
 fn removed_paths_have_no_route_contract() {
-    for (method, path) in [
-        (http::Method::GET, "/health"),
-        (http::Method::GET, "/health/subscriptions"),
-        (http::Method::POST, "/v1/messages"),
-        (http::Method::POST, "/v1/chat/completions"),
-        (http::Method::GET, "/v1/models"),
-        (http::Method::POST, "/api/anthropic/v1/messages"),
-        (http::Method::POST, "/api/openai/v1/responses"),
-        (http::Method::POST, "/api/codex/v1/responses"),
-        (http::Method::POST, "/api/qwen/v1/chat/completions"),
-        (http::Method::GET, "/api/gemini/v1beta/models"),
-        (
-            http::Method::POST,
-            "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict",
-        ),
-        (http::Method::POST, "/invoke"),
-        (http::Method::GET, "/api/tokens"),
-        (http::Method::GET, "/api/providers"),
-        (http::Method::POST, "/api/login"),
-        (http::Method::GET, "/api/admin/status"),
-        (http::Method::GET, "/metrics"),
-        (http::Method::GET, "/user"),
-        (http::Method::GET, "/actor/code"),
-    ] {
+    // One list shared with the deploy verifier, which probes every entry
+    // against a live candidate (issue #683).
+    for (method, path) in crate::route_contract::REMOVED_ROUTES {
+        let method = http::Method::from_bytes(method.as_bytes()).expect("method");
         assert!(
             route_for_path(&method, path).is_none(),
             "removed route still classified: {method} {path}"
         );
     }
+    assert!(crate::route_contract::REMOVED_ROUTES.len() >= 19);
 }
 
 #[test]

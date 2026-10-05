@@ -74,6 +74,7 @@ pub fn call_for(op: &TokenOp) -> Call {
             rate_limit_per_minute,
             admin,
             github_repo,
+            allowed_model,
             ..
         } => Call {
             method: "POST",
@@ -87,6 +88,7 @@ pub fn call_for(op: &TokenOp) -> Call {
                 "rate_limit_per_minute": rate_limit_per_minute,
                 "scope": admin.then_some(crate::token::ADMIN_SCOPE),
                 "github_repos": (!github_repo.is_empty()).then(|| github_repo.clone()),
+                "allowed_models": (!allowed_model.is_empty()).then(|| allowed_model.clone()),
             })),
         },
         TokenOp::Rotate {

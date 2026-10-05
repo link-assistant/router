@@ -897,7 +897,10 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
 | `--allow-proxied-client` / `PROXIED_CLIENT_OVERRIDES` | — | No | Repeatable reviewed proxy identity; currently only `codex`, permitting a Codex-bound Bearer token plus `X-Link-Assistant-Proxied-Client: codex` to call canonical Codex Responses without the native CLI fingerprint |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
-| `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever |
+| `UPSTREAM_CONNECT_TIMEOUT_SECS` | `10` | No | Seconds to wait for an upstream TCP and TLS connection; `0` disables the bound |
+| `UPSTREAM_FIRST_BYTE_TIMEOUT_SECS` | `120` | No | Seconds to wait for an upstream's response headers; `0` disables the bound |
+| `UPSTREAM_IDLE_TIMEOUT_SECS` / `UPSTREAM_READ_TIMEOUT_SECS` | `120` | No | Seconds to wait for the *next byte* from an upstream before failing the request; `0` disables the bound. A long answer may legitimately stream for many minutes, but a backend that has gone silent must not leave a client waiting forever. A stream that stalls mid-answer ends with one in-band error event (`timeout_error` for Anthropic clients) |
+| `UPSTREAM_ALLOW_PRIVATE_NETWORKS` | (none) | No | Comma-separated address classes an API-key provider base URL may reach: `loopback`, `private`, `link-local`, or `all`. By default these and cloud metadata addresses are refused when the provider is configured, when it is used, and again when its host name is resolved (DNS rebinding). Requests sent through a system `HTTPS_PROXY` are resolved by the proxy, so the resolve-time check does not apply to them |
 | `--api-format` / `UPSTREAM_API_FORMAT` | (auto) | No | Restrict the proxy to `anthropic` / `bedrock` / `vertex` |
 | `--bridge-model` / `ANTHROPIC_BRIDGE_MODEL` | (from live catalog) | No | Upstream model used when the Anthropic service is served from a non-Anthropic upstream. Unset selects one from the account's live catalog ([details](docs/use-cases/chatgpt-in-claude-code.md)) |
 | `--bridge-model-policy` / `BRIDGE_MODEL_POLICY` | `first-advertised` | No | How to pick that model from the catalog: `first-advertised` or `last-advertised`. When no compatible model exists the request fails with `model_selection_required` rather than falling back to a built-in name |
@@ -1439,6 +1442,112 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins, capped at 24 hours |
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
+| `--pool-failover` / `POOL_FAILOVER` | `off` | `pre-first-byte` retries a pooled Claude request on the next eligible account after a 429, 529, retryable 5xx, transport error, or 401 — only before the first response byte reaches the client. `off` relays the failure as before |
+| `--pool-failover-max-attempts` / `POOL_FAILOVER_MAX_ATTEMPTS` | `3` | Upstream attempts per request under pool failover, the first included (1-16) |
+| `--pool-failover-budget-secs` / `POOL_FAILOVER_BUDGET_SECS` | `30` | Wall-clock seconds after which pool failover stops trying further accounts |
+| `--account-pause-at-percent` / `ACCOUNT_PAUSE_AT_PERCENT` | (unset) | Pause a pooled account once a vendor rate-limit window reports this utilization percentage (1-100); it resumes when the window resets. Unset never pauses |
+| `--intercept-warmup` / `INTERCEPT_WARMUP` | `false` | Answer Claude Code's `Warmup` probe locally (JSON or SSE) instead of spending subscription quota on it |
+| `--account-pool-idle-timeout-secs` / `ACCOUNT_POOL_IDLE_TIMEOUT_SECS` | `90` | Seconds an idle upstream connection of a pooled account stays open; `0` keeps idle connections |
+| `--account-connection-max-age-secs` / `ACCOUNT_CONNECTION_MAX_AGE_SECS` | `300` | Seconds after which a pooled account's upstream client is replaced, so no connection outlives it; `0` never replaces it |
+| `--account-egress-proxy` / `ACCOUNT_EGRESS_PROXY` | (none) | Per-account egress proxies, `ACCOUNT=SPEC,...`; see [Per-account connections and egress](#per-account-connections-and-egress) |
+
+#### Pool failover and vendor rate limits
+
+With `POOL_FAILOVER=pre-first-byte`, a pooled request that fails before any
+byte reaches the client is retried on the next eligible account, under one
+correlation id; each switch is logged as a `pool_failover` request-log record
+and counted in `link_assistant_pool_failovers_total`. The client sees one
+response and is billed once. A conversation bound to a cooling account detours
+for as long as the cooldown lasts and then returns to its account; concurrent
+failovers rotate across the pool; tokens pinned to an account never fall back;
+and a client that disconnects stops the retries. When a retry moves to a
+different account, Claude `thinking`/`redacted_thinking` blocks (signed by the
+first account) are dropped from the history. The Codex subscription path
+(`/api/services/codex/v1/responses` and the routes bridged onto it) follows the
+same policy; there a switch drops `reasoning` input items that carry
+`encrypted_content`, which only the issuing account can decrypt. A retry on the
+same account, or the first attempt, forwards the body unchanged.
+
+Every Claude response — `count_tokens` included — is read for the
+`anthropic-ratelimit-unified-*` headers (names are case-insensitive). A rejected
+window cools the account until its reset, the longest window winning; a
+rejection that only concerns one model family (for example `7d_opus`) cools
+that family on the account instead of the whole credential. With
+`ACCOUNT_PAUSE_AT_PERCENT`, an account whose window reaches the threshold is
+paused until the reset. Operators can pause and resume accounts from the CLI,
+which calls the admin API of the selected router (`--server`, or the
+configured one) and edits this machine's data directory with `--local`:
+
+```bash
+router accounts pause account-1 --reason maintenance --until 6h
+router accounts pause account-1 --until 2026-12-01T00:00:00Z
+router accounts resume account-1
+```
+
+`--until` takes Unix seconds, an RFC 3339 time or a delay (`90m`, `6h`, `2d`);
+without it the pause lasts until `resume`. The same over HTTP:
+
+```bash
+curl -X POST -H "Authorization: Bearer $ADMIN_KEY" \
+  -d '{"reason":"maintenance","until_unix":1767225600}' \
+  http://localhost:8080/api/management/accounts/account-1/pause
+curl -X POST -H "Authorization: Bearer $ADMIN_KEY" \
+  http://localhost:8080/api/management/accounts/account-1/resume
+```
+
+The state is persisted under the data directory and shown by
+`GET /api/management/accounts` (`cooldown_reason`, `cooldown_until_unix`,
+`model_cooldowns`, `paused`, `windows`), `accounts list --json`, `usage`
+(`rate limits:` line and the `cooling_down_accounts`, `paused_accounts`,
+`model_cooldowns` JSON fields), `doctor`, `deploy --status`, and the aggregate
+gauges `link_assistant_pool_accounts_cooling_down`,
+`link_assistant_pool_accounts_paused` and `link_assistant_pool_model_cooldowns`
+plus `link_assistant_warmup_intercepted_total` on `/metrics`.
+
+#### Per-account connections and egress
+
+Every pooled account (`primary`, `account-1`, ...) sends with its own HTTP
+client, on the Anthropic pass-through and on the Codex subscription path alike
+(#678). Accounts therefore never share a TCP connection, and on canonical Codex
+each account keeps its own Cloudflare cookie store, so a vendor cannot link two
+accounts through a reused connection or cookie. Token refreshes of an account
+go through the same client. Without a pool, or without any of the settings
+below, requests behave as before apart from this separation.
+
+- Idle connections close after `ACCOUNT_POOL_IDLE_TIMEOUT_SECS` (default 90).
+- After `ACCOUNT_CONNECTION_MAX_AGE_SECS` (default 300) the account's client is
+  replaced on its next request. New requests open fresh connections; requests
+  already in flight hold a reference to the old client and finish on their
+  connection, which closes when the last of them ends. The cookie store is
+  carried over. A connection can therefore outlive the maximum age only by the
+  length of the request it is serving.
+
+`ACCOUNT_EGRESS_PROXY` routes chosen accounts through a proxy
+(`http://`, `https://`, `socks5://` or `socks5h://`, the last resolving host
+names at the proxy). Credentials never appear on the command line or in the
+variable itself; each entry is `ACCOUNT=SPEC` where `SPEC` is one of:
+
+- `env:VAR` — the whole proxy URL, credentials included, is read from `VAR`;
+- `file:PATH` — the same, read from a file (for example a mounted secret);
+- a URL without a password, optionally followed by `;password-env=VAR` or
+  `;password-file=PATH` naming where the password is read.
+
+```bash
+export ACCOUNT_EGRESS_PROXY='account-1=socks5h://alice@10.0.0.5:1080;password-file=/run/secrets/proxy-1,account-2=env:ACCOUNT_2_PROXY_URL'
+```
+
+A URL that carries a password is rejected at startup. Secrets are read when the
+account's client is built, so a rotated secret file takes effect within one
+maximum connection age. If an account's proxy cannot be resolved (variable
+unset, file missing), its requests fail — they never fall back to a direct
+connection — and pool failover, when enabled, moves on to the next account.
+`doctor` shows the settings without credentials: a proxy URL is reduced to
+scheme, host and port, and secrets appear only as their `env:`/`file:`
+reference.
+
+Limitations: only pooled requests are separated. A single-account router, the
+Codex WebSocket transport, and background calls such as model catalogs and
+subscription usage keep using the shared client.
 
 #### Storage formats and ownership
 
@@ -1533,6 +1642,9 @@ router tokens import --local --from /srv/previous-router
 
 # Inspect configured accounts:
 router accounts list
+# Take one out of rotation, and put it back (issue #677):
+router accounts pause account-1 --reason maintenance --until 6h
+router accounts resume account-1
 
 # Manage OpenAI-compatible upstream providers:
 router providers add --name litellm --base-url http://litellm:4000/v1 --model claude-sonnet
@@ -1637,6 +1749,26 @@ cutover, and records signed rollback/provenance state. See the
 [remote deployment guide](docs/use-cases/remote-deploy.md) for prerequisites,
 public inference-only TLS, status/down behavior, and distinct transport/lease
 exit codes.
+
+Both accept a declarative `--config router-deploy.toml` (flags override its
+keys). It sets the instance name, runtime variables passed by name
+(`--env NAME[=env:VAR|file:PATH]`, fingerprinted so a changed value
+reconciles), SSH port, identity, pinned `known_hosts`, keepalive and an overall
+`--deadline` (exit status `12`), and limits for the deploy-issued token. On a
+remote target, `--provider-key NAME=SOURCE` validates a key in the candidate
+before cutover. With `--provider-key-mode keep|if-absent|replace` it can also
+install the key. `--verification-profile` sets the clients, providers and exact
+models the candidate must prove first. `--json` reports fingerprints, validation
+results, and per-step and per-subprocess timings. It never reports values.
+
+`--seed-credential anthropic|codex` (repeatable, or `seed_credentials` in
+`[deploy]`) gives a first remote deployment this machine's Claude or Codex
+login. The refresh chain is moved, not copied: the local file is marked handed
+over (this machine's Router stops refreshing it) before the document travels
+over the SSH session's stdin. The target installs it only when it has no login
+of its own and records a receipt, so re-running is a no-op and recovers a lost
+response. Seeding the same chain to a second server is refused. `--json`
+reports each provider's fingerprint, target action and local state.
 
 ### Build the image
 
@@ -1780,6 +1912,23 @@ sudo systemctl status link-assistant-router
 journalctl -u link-assistant-router -f
 ```
 
+### Supervising a host deployment
+
+`router deploy --mode host --install-service` writes a systemd user unit
+(`~/.config/systemd/user`) or a launchd agent (`~/Library/LaunchAgents`) that
+restarts the same binary on the same data directory and port at login and
+after a crash. The signing secret goes to a `0600` file under the deployment's
+state directory and reaches Router through `TOKEN_SECRET_FILE`, so it is never
+in the unit or in argv. The unit is enabled, not started: the process the
+deploy just started keeps serving. `--uninstall-service` removes the unit and
+the secret file. A systemd user unit starts at boot only with
+`loginctl enable-linger $USER`.
+
+Every local or host deploy records its root in
+`~/.link-assistant-router/deployments.json` (paths, modes and ports only), and
+`router doctor --local` inspects each registered root, including deployments
+started with `--root DIR`.
+
 ### Resilient reverse SSH tunnel
 
 The companion [`docker/tunnel/Dockerfile`](docker/tunnel/Dockerfile) runs
@@ -1806,6 +1955,25 @@ The remote bind defaults to loopback. Set `TUNNEL_REMOTE_BIND` only when the
 far-side SSH server is deliberately configured to expose remote forwards.
 Host verification is strict and fail-closed: `TUNNEL_KNOWN_HOSTS` must point to
 a readable, non-empty file containing the pinned far-side host key.
+The container refuses to run as root. A bind-mounted key with a group- or
+world-readable mode is copied to a private `0600` file first, so the host
+file's mode does not need to change. `TUNNEL_MODE=forward` with
+`TUNNEL_LOCAL_PORT` (and optional `TUNNEL_TARGET_HOST`/`TUNNEL_TARGET_PORT`)
+reverses the direction: a `127.0.0.1`-only `-L` forward to a remote Router.
+
+### Reaching a remote Router through a forward tunnel
+
+`router tunnel up --server user@host --ssh-known-hosts FILE` opens an SSH
+local forward bound to `127.0.0.1` only (default port 8080 on both sides),
+checks `/api/health` and, with a client token in
+`LINK_ASSISTANT_ROUTER_TOKEN`, an authorized `/v1/models` through it.
+`router tunnel status` and `router tunnel down` report and stop it. The host
+key is pinned (`StrictHostKeyChecking=yes`, never `accept-new`). `--via ssh`
+(default) runs `ssh -L` under a reconnecting supervisor; `--via docker`
+(requires `--ssh-identity`) runs the tunnel companion below with
+`TUNNEL_MODE=forward` on the host network. The token is sent as a header,
+never in argv.
+
 
 ### Akash and Kubernetes
 
@@ -2007,6 +2175,25 @@ cargo test test_token_roundtrip
 # With verbose output
 cargo test -- --nocapture
 ```
+
+### Benchmarks, soak, mutation and upgrade checks
+
+```bash
+# Hot-path benchmarks; compare two saved baselines
+cargo bench --bench hot_paths -- --save-baseline before
+rust-script scripts/compare-benchmarks.rs before after
+
+# One-minute soak (memory, tasks, descriptors, open reservations)
+SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture
+
+# Upgrade from a checked-in v1.15.1 data directory
+cargo test --test upgrade_fixture_test
+```
+
+Mutation testing (`cargo mutants`, configured in `.cargo/mutants.toml`), the
+macOS Keychain suite and the upgrade matrix over the last three releases run in
+their own workflows; [docs/testing-tiers.md](docs/testing-tiers.md) lists what
+each one proves and how to run it.
 
 ### Code quality checks
 

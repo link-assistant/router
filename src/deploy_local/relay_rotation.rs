@@ -32,14 +32,14 @@ impl Coordinator<'_> {
     /// The relay's image reference when it runs other code than the active
     /// backend. Image ids decide: a second tag of the same image is not skew.
     pub(super) fn relay_skew(&self, active: &Active) -> Result<Option<String>, String> {
-        if !self.docker.exists(RELAY) {
+        if !self.docker.exists(&RELAY) {
             return Ok(None);
         }
-        let relay_id = self.docker.container_image_id(RELAY)?;
+        let relay_id = self.docker.container_image_id(&RELAY)?;
         if relay_id == active.image_id {
             return Ok(None);
         }
-        self.docker.image_ref(RELAY).map(Some)
+        self.docker.image_ref(&RELAY).map(Some)
     }
 
     /// Print both versions so mixed images are never reported as converged.
@@ -48,11 +48,11 @@ impl Coordinator<'_> {
             "backend_image={} image_id={}",
             active.image_ref, active.image_id
         );
-        if self.docker.exists(RELAY) {
+        if self.docker.exists(&RELAY) {
             println!(
                 "relay_image={} image_id={}",
-                self.docker.image_ref(RELAY)?,
-                self.docker.container_image_id(RELAY)?
+                self.docker.image_ref(&RELAY)?,
+                self.docker.container_image_id(&RELAY)?
             );
         } else {
             println!("relay_image=absent");
@@ -89,7 +89,7 @@ impl Coordinator<'_> {
         let Some(previous) = self.relay_skew(active)? else {
             return Ok(Rotation::Current);
         };
-        if !self.docker.owned(RELAY, self.root, "relay") {
+        if !self.docker.owned(&RELAY, self.root, "relay") {
             return Err(format!("refusing to rotate unowned relay {RELAY}"));
         }
         println!(

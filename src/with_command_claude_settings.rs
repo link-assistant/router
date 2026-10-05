@@ -214,28 +214,109 @@ fn claude_model_picker_options(models: &[RouterModel]) -> (Vec<Value>, bool) {
 /// may have been recharged, and is answered with the provider's reason if not.
 /// What the user must not get is a silent session on a model that cannot
 /// answer.
+///
+/// The alternative is the user's last working selection when one is recorded
+/// and still servable, otherwise the flagship of the servable catalog (issue
+/// #684): the alphabetically first row was routinely the smallest model.
 pub(super) fn claude_unavailable_model_warning(
     model: Option<&str>,
     models: &[RouterModel],
+    last_working: Option<&str>,
 ) -> Option<String> {
     let model = model?.trim();
     let reason = models
         .iter()
         .filter(|candidate| candidate.id == model)
         .find_map(|candidate| candidate.router_unavailable_reason.as_deref())?;
-    let alternative = crate::clients::usable_models(ClientKind::ClaudeCode, models)
-        .into_iter()
-        .find(crate::clients::RouterModel::is_servable)
-        .map(|candidate| candidate.id);
+    let usable = crate::clients::usable_models(ClientKind::ClaudeCode, models);
+    let servable: Vec<&RouterModel> = usable
+        .iter()
+        .filter(|candidate| candidate.is_servable() && candidate.id != model)
+        .collect();
+    let remembered = last_working
+        .map(str::trim)
+        .and_then(|last| servable.iter().find(|candidate| candidate.id == last));
+    let alternative = remembered
+        .copied()
+        .or_else(|| {
+            servable
+                .iter()
+                .copied()
+                .max_by(|left, right| flagship_order(left, right))
+        })
+        .map(|candidate| candidate.id.clone());
     let advice = alternative.map_or_else(
         || "no other model in this client's catalog is currently servable".to_string(),
         |alternative| {
-            format!("choose another model with /model or --model, for example `{alternative}`")
+            let why = if remembered.is_some() {
+                "your last working selection"
+            } else {
+                "the most capable servable model"
+            };
+            format!(
+                "choose another model with /model or --model, for example `{alternative}` \
+                 ({why})"
+            )
         },
     );
     Some(format!(
         "warning: Claude model `{model}` cannot be served right now: {reason}; {advice}"
     ))
+}
+
+/// Where a Router-owned profile remembers the last model a launch could serve.
+const LAST_WORKING_MODEL: &str = "router-last-working-model";
+
+/// The launch warning, reading and maintaining the last working selection in
+/// the profile `root` (issue #684). A launch on a servable model records it,
+/// so the next exhausted launch suggests what the user last used rather than a
+/// model they never chose.
+pub(super) fn claude_launch_model_warning(
+    root: &Path,
+    launched: Option<&str>,
+    models: &[RouterModel],
+) -> Option<String> {
+    let path = root.join(LAST_WORKING_MODEL);
+    let last_working = fs::read_to_string(&path).ok();
+    let warning = claude_unavailable_model_warning(launched, models, last_working.as_deref());
+    if warning.is_none()
+        && let Some(launched) = launched.map(str::trim)
+        && models
+            .iter()
+            .any(|candidate| candidate.id == launched && candidate.is_servable())
+        && last_working.as_deref().map(str::trim) != Some(launched)
+    {
+        // Best effort: a profile that cannot be written only loses the hint.
+        let _ = fs::write(&path, launched);
+    }
+    warning
+}
+
+/// Claude family rank: the flagship family first.
+fn family_rank(id: &str) -> usize {
+    let id = id.to_ascii_lowercase();
+    ["haiku", "sonnet", "opus"]
+        .iter()
+        .position(|family| id.contains(family))
+        .map_or(0, |position| position + 1)
+}
+
+/// The numeric version in a model id, ignoring date stamps such as
+/// `20250514`: an id ending in `-4-1-20250805` is version `[4, 1]`.
+fn version_of(id: &str) -> Vec<u32> {
+    id.split(|character: char| !character.is_ascii_digit())
+        .filter(|part| !part.is_empty() && part.len() < 6)
+        .filter_map(|part| part.parse().ok())
+        .collect()
+}
+
+/// Order by family, then version, then the provider's creation time, then id.
+pub(super) fn flagship_order(left: &RouterModel, right: &RouterModel) -> std::cmp::Ordering {
+    family_rank(&left.id)
+        .cmp(&family_rank(&right.id))
+        .then_with(|| version_of(&left.id).cmp(&version_of(&right.id)))
+        .then_with(|| left.provider_created_at.cmp(&right.provider_created_at))
+        .then_with(|| right.id.cmp(&left.id))
 }
 
 /// The Claude model the client itself has saved as its default, if any.

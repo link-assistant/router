@@ -1,0 +1,70 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "anthropic",
+  "description": "Non-streamed turn answered from the prompt cache",
+  "provenance": "hand-written from the vendor's documented wire format; re-record with scripts/record-vendor-fixtures.rs",
+  "record": {
+    "url": "https://api.anthropic.com/v1/messages",
+    "auth_env": "ANTHROPIC_API_KEY",
+    "auth_header": "x-api-key",
+    "model_env": "ANTHROPIC_FIXTURE_MODEL",
+    "headers": {
+      "anthropic-version": "2023-06-01"
+    }
+  },
+  "request": {
+    "model": "{model}",
+    "max_tokens": 256,
+    "system": [
+      {
+        "type": "text",
+        "text": "You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. You are a weather assistant. ",
+        "cache_control": {
+          "type": "ephemeral"
+        }
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Say hello."
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_scrubbed"
+    },
+    "json": {
+      "id": "msg_scrubbed_0002",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-sonnet-4-5-20250929",
+      "content": [
+        {
+          "type": "text",
+          "text": "Hello!"
+        }
+      ],
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 20,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 4000,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 15,
+        "service_tier": "standard"
+      }
+    }
+  },
+  "expect": {
+    "text": "Hello!",
+    "charged_tokens": 4035
+  }
+}

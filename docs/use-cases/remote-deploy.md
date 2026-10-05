@@ -55,14 +55,15 @@ is written and signed before candidate health checking so the next run can
 resume conservatively or restore the exact old container and release root.
 
 Exit status `10` means OpenSSH transport failed. Exit status `11` means the
-target agent could not establish lease ownership safely. Other deployment
+target agent could not establish lease ownership safely. Exit status `12`
+means the `--deadline` (or `[ssh] deadline_secs`) passed. Other deployment
 failures use status `1`; invalid invocation or missing consent uses `2`.
 
 ## Credential provenance
 
 Remote deployment reads credentials only from the target's Claude, Codex,
 Gemini, and Qwen homes. Nothing from the invoking machine's vendor homes is
-uploaded. Recognized credential files are copied into the candidate's isolated
+uploaded unless `--seed-credential` asks for it (see below). Recognized credential files are copied into the candidate's isolated
 credential tree and byte-compared; it remains writable only so Router can make
 durable refreshes inside that release. Mutable Router data has a separate
 mount. The release records a signed digest, target source path, and explicit
@@ -76,3 +77,218 @@ State defaults to
 an absolute alternative. Broad system roots are refused, and existing Docker
 objects with the reserved relay/network names are never adopted unless their
 ownership label names the exact deployment root.
+
+## Seeding a login
+
+```bash
+TOKEN_SECRET='a-long-random-secret' router deploy --server deploy@203.0.113.10 \
+  --seed-credential anthropic --seed-credential codex --json
+```
+
+`--seed-credential` (repeatable; `claude`/`anthropic` or `codex`/`chatgpt`, or
+`seed_credentials = ["claude", "codex"]` in `[deploy]`) brings a first remote
+deployment to "Anthropic and Codex usable" without copying credential files by
+hand (issue #681). OAuth refresh tokens are single-use, so two machines
+refreshing one chain break each other. The chain is therefore moved, never
+forked:
+
+1. Before anything is sent, the local `~/.claude/.credentials.json` or
+   `~/.codex/auth.json` is marked handed over, in state `pending`. Router's
+   `refresh_owner: external` metadata means this machine's Router no longer
+   refreshes that login.
+2. The document, without Router's local metadata, travels inside the settings
+   payload on the SSH session's stdin. It is never in argv.
+3. The target installs it in the SSH user's Claude or Codex home (`0600` file,
+   `0700` directory) only when no login is there yet, and writes a receipt
+   keyed by the chain's fingerprint (HMAC by `TOKEN_SECRET`). The candidate
+   then picks it up through the usual credential provenance.
+4. The target's answer settles the local mark. `imported` or `already-seeded`
+   leaves it `handed-over`. `kept-existing` (the target had its own login)
+   restores the local file byte for byte.
+
+If the response is lost, the mark stays `pending`. That is safe, because
+nothing refreshes the chain locally. Re-running the same command finds the
+receipt and settles it without a second copy. Seeding a chain already handed
+over to a different server is refused with exit 2, because that would fork it.
+So is a login held only in the macOS Keychain, which cannot be marked, and a
+missing login; nothing reaches SSH in those cases. `--json` adds
+`seed_credentials: [{provider, fingerprint, action, local_source}]`.
+
+The vendor CLI on this machine does not read Router's marker. If it is used
+afterwards, it can still refresh the handed-over chain itself. Log in again
+locally first to get a separate login for this machine.
+
+## Reaching the deployment through a tunnel
+
+```bash
+export LINK_ASSISTANT_ROUTER_TOKEN=la_sk_...   # optional: checks /v1/models too
+router tunnel up --server deploy@203.0.113.10 --ssh-known-hosts ./pinned_known_hosts
+router tunnel status --server deploy@203.0.113.10
+router tunnel down --server deploy@203.0.113.10
+```
+
+`router tunnel` (issue #682) opens an SSH local forward from
+`127.0.0.1:--local-port` (default 8080) to the Router's loopback port on the
+server (`--remote-port`, default 8080). It binds loopback only. The host key
+is pinned: `up` requires `--ssh-known-hosts` and uses
+`StrictHostKeyChecking=yes`. `up` is a no-op when the forward already runs,
+and waits up to `--wait` seconds (default 30) for `/api/health`, and for an authorized
+`/v1/models` when `LINK_ASSISTANT_ROUTER_TOKEN` is set (sent as a header,
+never in argv).
+
+`--via ssh` (default) runs `ssh -L` under a supervisor loop that reconnects
+after a drop. `--via docker --ssh-identity KEY` runs the tunnel companion
+image (`docker/tunnel/Dockerfile`, built locally) with `TUNNEL_MODE=forward`
+and `--restart unless-stopped` on the host network, which is Linux-oriented.
+The companion refuses to run as root, and it copies a bind-mounted key with a
+loose mode to a private `0600` file instead of failing.
+
+## Declarative configuration
+
+`router deploy --config FILE` reads the deployment's settings from TOML.
+Command-line flags override its keys. The same file drives a local run
+(`router deploy --config FILE`), a host-mode run (`mode = "host"` in
+`[local]`) and a remote run (`router deploy --remote --config FILE`, which
+takes `server` from `[remote]` or `[deploy]`). An unknown key, a malformed
+value or a missing secret source exits with status `2` before anything runs.
+
+```toml
+[deploy]                 # shared by every target
+instance = "blue"        # suffixes relay, network, backend names and the root
+
+[local]                  # local only: port, image, build, root, mode, claude_credentials
+mode = "container"
+
+[remote]                 # remote only: server, port, public_port, image, build, root
+server = "router@example.test"
+public_port = 8443
+
+[env]                    # runtime variables passed to the backend, by name
+UPSTREAM_IDLE_TIMEOUT_SECS = "env"           # this environment, same name
+ZAI_API_KEY = "env:DEPLOY_ZAI_KEY"           # another variable
+EXTRA_CA = "file:/etc/router/extra-ca.pem"   # a file
+
+[ssh]                    # remote only
+port = 2222
+identity_file = "/home/operator/.ssh/router_deploy"
+known_hosts = ["example.test ssh-ed25519 AAAAC3Nza..."]
+keepalive_secs = 15
+deadline_secs = 1800
+
+[tokens]                 # limits on the client token deploy issues
+ttl_hours = 720
+max_requests = 100000
+max_tokens = 50000000
+rate_limit_per_minute = 60
+allowed_models = ["glm-4.6"]
+
+[provider_keys.zai]      # remote only, see "Provider keys"
+source = "env:DEPLOY_ZAI_KEY"
+mode = "replace"
+kind = "anthropic-compatible"
+base_url = "https://api.z.ai/api/anthropic"
+models = ["glm-4.6"]
+
+[verification]           # remote only, see "Verification profile"
+clients = ["claude", "codex"]
+providers = ["zai"]
+```
+
+The equivalent flags are `--instance`, `--env NAME[=SOURCE]` (repeatable),
+`--ssh-port`, `--ssh-identity`, `--ssh-known-hosts FILE`, `--ssh-keepalive`,
+`--deadline SECONDS`, `--token-ttl-hours`, `--token-max-requests`,
+`--token-max-tokens`, `--token-rate-limit`, `--token-allowed-model`
+(repeatable), `--provider-key NAME=SOURCE` (repeatable),
+`--provider-key-mode` and `--verification-profile FILE`. Without any of them a
+deployment behaves exactly as before.
+
+Secrets are named, never written. `[env]` and `[provider_keys]` accept only
+`env`, `env:VAR` or `file:PATH`; a literal value is refused without being
+echoed. Values never appear in argv or in output. On a remote target they
+travel inside one base64 line on the SSH session's stdin, after the token
+secret, and reach the backend through a short-lived owner-only `--env-file`
+that is removed as soon as the candidate starts. Each deployment records an
+HMAC-SHA256 fingerprint of the runtime names and values (keyed by
+`TOKEN_SECRET`) as a backend label, so a changed value reconciles a local
+deployment the way a changed image does, and a remote run reports it.
+
+SSH settings add options to the strict session and never relax it:
+`known_hosts` (or `--ssh-known-hosts`) pins the only keys trusted for the
+target, replacing the user and global files; `accept-new` is never used.
+`identity_file` sets `IdentitiesOnly=yes`. When `deadline_secs` passes, the
+session is ended and `router deploy` exits with status `12`; the target's
+lease and rollback records make the interrupted run recoverable by the next
+one, exactly as for a dropped connection.
+
+With a `[tokens]` policy the deployment issues one `deploy`-labelled client
+token with those limits when no unrevoked one exists. Its value is withheld
+from output; recover it with `router tokens` on the target.
+
+## Provider keys
+
+`--provider-key NAME=SOURCE` (or `[provider_keys.NAME]`) checks an API key in
+the candidate before cutover. The key is first added to a private, empty Router
+inside the candidate. That Router has its own data directory and no access to
+the shared store, logins or clients. The check passes only if the provider's
+model appears, undegraded, in a client catalog and a minimal request to that
+model returns a 2xx status. The provider record is the target's existing record
+when it has one. Otherwise it comes from the `[provider_keys.NAME]` template
+(`kind`, `base_url`, `default_model`, `models`, `supported_clients`).
+
+`--provider-key-mode` decides what happens next:
+
+- `keep` (default) validates and reports, and never writes a key.
+- `if-absent` installs the key only when the target has no such provider.
+- `replace` installs it only after positive validation. A negative result
+  stops the deployment before cutover, keeps the old backend serving, and
+  leaves the stored key unchanged.
+
+The candidate shares Router's data directory with the serving backend, so an
+installed key is visible to the old backend as soon as it is written, including
+when a later step rolls the deployment back. The output and `--json` report a
+fingerprint, the action (`validated`, `created`, `replaced`, `kept-existing`,
+`refused`) and the validation result for each key. They never report a value.
+
+## Verification profile
+
+`--verification-profile FILE` (or `[verification]` in `--config`) sets what the
+candidate must prove before cutover, in addition to the built-in checks:
+
+```toml
+clients = ["claude", "codex", "opencode"]     # each needs a live 2xx
+providers = ["zai", "anthropic"]              # each needs a live 2xx
+require_client_launch = true                  # stub `router with <client>` launch
+quota_requires_upstream_evidence = true       # 429 counts only with upstream evidence
+check_thinking_display = true                 # Claude `--settings` shows thinking
+
+[models.zai]                                  # exact model per client
+claude = "glm-4.6"
+opencode = "glm-4.6"
+```
+
+Every route in Router's removed-route contract must answer `404` on the
+management listener, and on the public listener too when there is one. The
+public listener must serve the anonymized `/api/usage` view (no pool, account
+or e-mail fields) and must refuse the admin token for inference.
+`check_thinking_display` is opt-in. It checks the `--settings` that
+`router with claude` writes, and when a Claude model is pinned it also makes
+one live thinking request. A profile failure is a verification failure, so the
+old backend keeps serving.
+
+## JSON report
+
+`router deploy --server ... --json` prints one
+`link-assistant-router/deploy/v1` document on stdout. It contains:
+
+- the status and exit code
+- the runtime variable names and their fingerprint
+- each provider key's fingerprint, action and validation
+- the verification-profile result
+- the deploy-token action
+- the steps (lease, build, candidate, health, verification, cutover,
+  post-verify, retire, complete) with their start time and duration
+- each SSH and target `docker` subprocess, with its duration and exit code
+- the agent's human-readable output lines
+
+The target writes these events to stderr only when `--json` is given.
+Without `--json` the output is unchanged.

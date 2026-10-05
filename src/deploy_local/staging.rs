@@ -291,8 +291,7 @@ fn execute_with_disk(
         }
         let canonical = root.canonicalize().map_err(|error| error.to_string())?;
         let owner = uuid::Uuid::new_v4().to_string();
-        let state =
-            json!({"namespace":name,"owner":owner,"root":canonical,"image":image,"port":args.port});
+        let state = json!({"namespace":name,"owner":owner,"root":canonical,"image":image,"port":args.port()});
         private_file(&marker, serde_json::to_string(&state).unwrap().as_bytes())?;
         let secret = format!(
             "{}{}",
@@ -361,7 +360,7 @@ fn execute_with_disk(
             json!({"schema":"link-assistant-router/staging/v1","namespace":name,"status":"removed","data_retained":true,"cleanup_scope":name,"primary_preservation":"not-proven","parity":false}),
         );
     }
-    if !read_only && (state["image"] != image || state["port"] != args.port) {
+    if !read_only && (state["image"] != image || state["port"] != args.port()) {
         return Err(
             "staging journal image/port differs; remove this namespace or use a new one".into(),
         );
@@ -370,8 +369,8 @@ fn execute_with_disk(
         if available_disk(&root)? < 1024 * 1024 {
             return Err("staging requires at least 1 GiB free disk".into());
         }
-        let listeners = docker.listeners_on(args.port)?;
-        if !listeners.is_empty() || TcpListener::bind(("127.0.0.1", args.port)).is_err() {
+        let listeners = docker.listeners_on(args.port())?;
+        if !listeners.is_empty() || TcpListener::bind(("127.0.0.1", args.port())).is_err() {
             return Err("staging port has an active listener; choose a separate --port".into());
         }
         fs::create_dir_all(root.join("data")).map_err(|error| error.to_string())?;
@@ -399,7 +398,7 @@ fn execute_with_disk(
             fs::read_to_string(root.join("token-secret")).map_err(|error| error.to_string())?;
         let key = std::env::var("ROUTER_STAGING_ZAI_API_KEY").unwrap_or_default();
         let result = docker.command(
-            &arguments(&name, owner, &root, image, args.port),
+            &arguments(&name, owner, &root, image, args.port()),
             &[
                 ("TOKEN_SECRET", &secret),
                 ("ROUTER_STAGING_ZAI_API_KEY", &key),
@@ -514,7 +513,7 @@ mod tests {
         for invalid in ["", "../primary", "UPPER", "a/b", "a:1"] {
             assert!(namespace(invalid).is_err());
         }
-        assert_ne!(namespace("review").unwrap(), super::super::RELAY);
+        assert_ne!(namespace("review").unwrap(), &*super::super::RELAY);
     }
     #[test]
     fn staged_arguments_have_no_primary_mount_or_rotating_login() {
@@ -528,7 +527,7 @@ mod tests {
         let joined = args.join(" ");
         assert!(joined.contains("127.0.0.1:19876:8080"));
         assert!(joined.contains("--memory 768m --memory-swap 768m --cpus 1"));
-        assert!(!joined.contains(super::super::NETWORK));
+        assert!(!joined.contains(&*super::super::NETWORK));
         assert!(!joined.contains("credentials"));
         assert!(!joined.contains("prune"));
     }

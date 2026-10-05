@@ -91,6 +91,16 @@ Thank you for your interest in contributing! This document provides guidelines a
    for what each tier proves and how to run the live one against your own
    subscription.
 
+   Changes to the stream or request translators, token and credential code,
+   the proxy, storage or keychain lookup also trigger slower, path-filtered
+   workflows: benchmarks against the pull request's base (`benches/`), a
+   one-minute soak (`tests/soak_test.rs`), mutation testing of the touched
+   lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade
+   matrix over the last three releases. The same document says how to run
+   each one locally. If you change a translator, a recorded cassette in
+   `tests/fixtures/vendor/` may need updating with
+   `rust-script scripts/record-vendor-fixtures.rs`.
+
 5. **Add a changelog fragment**
 
    For any user-facing changes, create a changelog fragment:

@@ -37,6 +37,11 @@ pub struct Metrics {
     pub anthropic_messages: AtomicU64,
     pub tokens_issued: AtomicU64,
     pub tokens_revoked: AtomicU64,
+    /// Pooled requests retried on another account before the first byte
+    /// (issue #676).
+    pub pool_failovers: AtomicU64,
+    /// "Warmup" probes answered locally (issue #677).
+    pub warmup_intercepted: AtomicU64,
     pub status_counts: Mutex<HashMap<u16, u64>>,
     pub account_calls: Mutex<HashMap<String, u64>>,
     /// Per-token request counters, keyed by router token id (JWT `sub`).
@@ -108,6 +113,16 @@ impl Metrics {
 
     pub fn record_token_revoked(&self) {
         self.tokens_revoked.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// One pooled request moved to another account before its first byte.
+    pub fn record_pool_failover(&self) {
+        self.pool_failovers.fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// One "Warmup" probe answered without an upstream call.
+    pub fn record_warmup_intercepted(&self) {
+        self.warmup_intercepted.fetch_add(1, Ordering::Relaxed);
     }
 }
 
@@ -196,6 +211,19 @@ pub fn render_prometheus(m: &Metrics) -> String {
         out.push(' ');
         out.push_str(&value.to_string());
         out.push('\n');
+    }
+    for (name, counter) in [
+        ("link_assistant_pool_failovers_total", &m.pool_failovers),
+        (
+            "link_assistant_warmup_intercepted_total",
+            &m.warmup_intercepted,
+        ),
+    ] {
+        let _ = writeln!(
+            out,
+            "# TYPE {name} counter\n{name} {}",
+            counter.load(Ordering::Relaxed)
+        );
     }
     out.push_str("# TYPE link_assistant_status_total counter\n");
     let mut sorted_status: Vec<_> = snap.status_counts.iter().collect();

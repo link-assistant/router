@@ -30,9 +30,11 @@ mod auth_ops;
 mod client_ops;
 mod configure;
 mod deploy_args;
+mod deploy_settings_args;
 mod emergency_args;
 mod log_ops;
 mod model_ops;
+mod pool_args;
 mod store_ops;
 mod targets;
 mod value_parsers;
@@ -44,9 +46,11 @@ pub use self::client_ops::{
 };
 pub use self::configure::ConfigureArgs;
 pub use self::deploy_args::{ClaudeCredentials, DeployArgs, DeployMode, UsageArgs};
+pub use self::deploy_settings_args::DeploySettingsArgs;
 pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
 pub use self::model_ops::ModelOp;
+pub use self::pool_args::PoolArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
 use self::value_parsers::parse_truthy;
 pub use self::with::{ServerOp, WithArgs, protect_client_arguments};
@@ -209,7 +213,8 @@ pub struct Cli {
     #[arg(long, env = "VERBOSE", global = true, value_parser = parse_truthy)]
     pub verbose: bool,
 
-    /// JWT signing secret (or `TOKEN_SECRET` env).
+    /// JWT signing secret (or `TOKEN_SECRET` env, or a file named by
+    /// `TOKEN_SECRET_FILE`).
     #[arg(long, env = "TOKEN_SECRET", global = true, hide_env_values = true)]
     pub token_secret: Option<String>,
 
@@ -580,6 +585,10 @@ pub struct Cli {
     #[command(flatten)]
     pub emergency: EmergencyArgs,
 
+    /// Account-pool failover, threshold pause and warmup (issues #676, #677).
+    #[command(flatten)]
+    pub pool: PoolArgs,
+
     /// Telegram Bot API token. Unset keeps the Telegram admin channel off;
     /// setting it starts an outbound long-polling bot that accepts admin
     /// commands in private chats only.
@@ -732,6 +741,8 @@ pub enum Command {
         #[command(subcommand)]
         op: ModelOp,
     },
+    /// Reach a remote Router over a loopback-only SSH forward (issue #682).
+    Tunnel(crate::tunnel_command::TunnelArgs),
     /// Select and manage the server used by `with`.
     Server {
         #[command(subcommand)]
@@ -810,7 +821,8 @@ impl Cli {
     /// Build a [`Config`] from the parsed CLI / env / `.lenv` values.
     pub fn into_config(&self) -> Result<Config, ConfigError> {
         let port = self.port.to_string();
-        let token_secret = self.token_secret.clone();
+        let token_secret = crate::token_secret::or_from_file(self.token_secret.clone())
+            .map_err(ConfigError::TokenSecretFile)?;
         let process_home = std::env::var_os("HOME")
             .filter(|home| !home.is_empty())
             .map_or_else(|| PathBuf::from("/root"), PathBuf::from);
@@ -939,6 +951,7 @@ impl Cli {
             )?,
             allow_anonymous_admin: self.allow_anonymous_admin,
             emergency_auth: self.emergency.config(),
+            pool: self.pool.policy(),
             chat_admin: crate::config::chat_admin_config(
                 self.telegram_bot_token.clone(),
                 self.vk_bot_token.clone(),

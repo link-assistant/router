@@ -4,6 +4,7 @@
 //! 1000-line limit.
 
 use super::*;
+use claude_settings::{claude_unavailable_model_warning, flagship_order};
 
 /// Gemini CLI resolves settings as `<home>/.gemini/settings.json`, where
 /// `<home>` is `GEMINI_CLI_HOME` if set and `$HOME` otherwise. Pointing
@@ -889,14 +890,81 @@ fn an_unservable_claude_model_is_labelled_and_warned_about() {
         "{options}"
     );
 
-    let warning = claude_unavailable_model_warning(Some("glm-5.3"), &models)
+    let warning = claude_unavailable_model_warning(Some("glm-5.3"), &models, None)
         .expect("an unservable saved model is reported");
     assert!(warning.contains("`glm-5.3`"), "{warning}");
     assert!(warning.contains(reason), "{warning}");
     assert!(warning.contains("`claude-sonnet-5-5`"), "{warning}");
     assert_eq!(
-        claude_unavailable_model_warning(Some("claude-sonnet-5-5"), &models),
+        claude_unavailable_model_warning(Some("claude-sonnet-5-5"), &models, None),
         None
     );
-    assert_eq!(claude_unavailable_model_warning(None, &models), None);
+    assert_eq!(claude_unavailable_model_warning(None, &models, None), None);
+}
+
+/// Issue #684: the suggested alternative is the flagship of the servable
+/// catalog (opus > sonnet > haiku, newest version), not the first row.
+#[test]
+fn the_unavailable_model_warning_suggests_the_flagship() {
+    let reason = "z.ai Coding Plan cannot serve requests (code 1113)";
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "claude-haiku-4-5", "owned_by": "anthropic"},
+        {"id": "claude-opus-4-20250514", "owned_by": "anthropic"},
+        {"id": "claude-opus-4-1", "owned_by": "anthropic"},
+        {"id": "claude-sonnet-5-5", "owned_by": "anthropic"},
+        {"id": "claude-opus-5-5", "owned_by": "anthropic",
+         "router_unavailable_reason": "exhausted"},
+        {"id": "glm-5.3", "owned_by": "z.ai", "router_unavailable_reason": reason}
+    ]))
+    .expect("deserialize catalog fixture");
+    let warning = claude_unavailable_model_warning(Some("glm-5.3"), &models, None).unwrap();
+    // The unservable opus-5-5 is never suggested; among servable rows the
+    // opus family wins over a newer sonnet, and 4.1 beats a dated 4.0.
+    assert!(warning.contains("`claude-opus-4-1`"), "{warning}");
+    assert!(warning.contains("most capable"), "{warning}");
+
+    let by_id = |id: &str| models.iter().find(|model| model.id == id).unwrap();
+    assert_eq!(
+        flagship_order(by_id("claude-opus-4-1"), by_id("claude-opus-4-20250514")),
+        std::cmp::Ordering::Greater
+    );
+    assert_eq!(
+        flagship_order(by_id("claude-sonnet-5-5"), by_id("claude-haiku-4-5")),
+        std::cmp::Ordering::Greater
+    );
+}
+
+/// Issue #684: a recorded last working selection outranks the flagship while
+/// it is servable, and is ignored once it is not.
+#[test]
+fn the_unavailable_model_warning_prefers_the_last_working_selection() {
+    let models: Vec<RouterModel> = serde_json::from_value(json!([
+        {"id": "claude-haiku-4-5", "owned_by": "anthropic"},
+        {"id": "claude-opus-4-1", "owned_by": "anthropic"},
+        {"id": "glm-5.3", "owned_by": "z.ai", "router_unavailable_reason": "exhausted"}
+    ]))
+    .expect("deserialize catalog fixture");
+    let warning =
+        claude_unavailable_model_warning(Some("glm-5.3"), &models, Some("claude-haiku-4-5\n"))
+            .unwrap();
+    assert!(warning.contains("`claude-haiku-4-5`"), "{warning}");
+    assert!(warning.contains("last working"), "{warning}");
+    let stale =
+        claude_unavailable_model_warning(Some("glm-5.3"), &models, Some("glm-5.3")).unwrap();
+    assert!(stale.contains("`claude-opus-4-1`"), "{stale}");
+
+    // A servable launch records itself; the next exhausted launch uses it.
+    let profile = tempfile::tempdir().unwrap();
+    assert_eq!(
+        claude_settings::claude_launch_model_warning(
+            profile.path(),
+            Some("claude-haiku-4-5"),
+            &models
+        ),
+        None
+    );
+    let warning =
+        claude_settings::claude_launch_model_warning(profile.path(), Some("glm-5.3"), &models)
+            .unwrap();
+    assert!(warning.contains("`claude-haiku-4-5`"), "{warning}");
 }

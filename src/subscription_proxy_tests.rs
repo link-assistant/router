@@ -1,4 +1,5 @@
 use super::*;
+use crate::proxy::relay_response_headers;
 
 #[test]
 fn codex_strips_the_output_cap_it_enforces_locally() {

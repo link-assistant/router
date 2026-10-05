@@ -53,6 +53,19 @@ pub struct AccountRouterOptions {
     pub session_affinity_ttl: Duration,
     /// Optional request cap for each account, ordered primary then additional.
     pub request_limits: Vec<Option<usize>>,
+    /// Pre-first-byte failover is enabled (issue #676): a session whose bound
+    /// account is cooling down is served by another account *without* being
+    /// rebound, so it returns once the cooldown ends. Off keeps the strict
+    /// session-affinity error.
+    pub failover: bool,
+    /// Pause an account once a vendor window reaches this utilization percent
+    /// (`ACCOUNT_PAUSE_AT_PERCENT`, issue #677). `None` never pauses early.
+    pub pause_at_percent: Option<u8>,
+    /// Data directory where vendor cooldowns and pauses persist across
+    /// restarts. `None` keeps them in memory only.
+    pub state_dir: Option<PathBuf>,
+    /// Per-account connection isolation and egress proxies (issue #678).
+    pub http: crate::account_http::AccountHttpPolicy,
 }
 
 impl Default for AccountRouterOptions {
@@ -62,6 +75,10 @@ impl Default for AccountRouterOptions {
             cooldown: Duration::from_secs(60),
             session_affinity_ttl: Duration::from_secs(60 * 60),
             request_limits: Vec::new(),
+            failover: false,
+            pause_at_percent: None,
+            state_dir: None,
+            http: crate::account_http::AccountHttpPolicy::default(),
         }
     }
 }
@@ -73,6 +90,12 @@ pub struct RoutingContext {
     pub session_key: Option<String>,
     /// Explicit account selected by the router-issued caller token.
     pub pinned_account: Option<String>,
+    /// Requested model id, so a model-scoped vendor cooldown blocks only that
+    /// model on its account (issue #677).
+    pub model: Option<String>,
+    /// Accounts an earlier attempt of this same request already tried; a
+    /// pre-first-byte failover never returns to them (issue #676).
+    pub exclude: Vec<String>,
 }
 
 impl RoutingContext {
@@ -81,7 +104,7 @@ impl RoutingContext {
     pub fn for_session(session: impl Into<String>) -> Self {
         Self {
             session_key: Some(session.into()),
-            pinned_account: None,
+            ..Self::default()
         }
     }
 
@@ -89,8 +112,8 @@ impl RoutingContext {
     #[must_use]
     pub fn pinned(account: impl Into<String>) -> Self {
         Self {
-            session_key: None,
             pinned_account: Some(account.into()),
+            ..Self::default()
         }
     }
 }
@@ -104,15 +127,52 @@ struct AccountState {
     request_limit: Option<usize>,
     cooldown_until: Mutex<Option<Instant>>,
     last_error: Mutex<Option<String>>,
+    /// Vendor rate-limit state: model cooldowns, pauses, last windows.
+    limits: Mutex<crate::account_limits::AccountLimitState>,
 }
 
 impl AccountState {
+    fn new(name: String, reader: SubscriptionReader, home: PathBuf, limit: Option<usize>) -> Self {
+        Self {
+            name,
+            reader,
+            home,
+            used: AtomicUsize::new(0),
+            request_limit: limit,
+            cooldown_until: Mutex::new(None),
+            last_error: Mutex::new(None),
+            limits: Mutex::new(crate::account_limits::AccountLimitState::default()),
+        }
+    }
+
     fn is_healthy(&self) -> bool {
         let guard = self
             .cooldown_until
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        !matches!(*guard, Some(t) if t > Instant::now())
+        !matches!(*guard, Some(t) if t > Instant::now()) && !self.is_paused()
+    }
+
+    fn limits(&self) -> std::sync::MutexGuard<'_, crate::account_limits::AccountLimitState> {
+        self.limits
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    fn is_paused(&self) -> bool {
+        self.limits().paused_at(crate::account_limits::now_unix())
+    }
+
+    /// Whether this account may serve `context`: available, not already tried
+    /// by this request, and not cooling down for the requested model.
+    fn serves(&self, context: &RoutingContext) -> bool {
+        self.is_available()
+            && !context.exclude.contains(&self.name)
+            && context.model.as_deref().is_none_or(|model| {
+                !self
+                    .limits()
+                    .blocks_model(model, crate::account_limits::now_unix())
+            })
     }
 
     /// What the credential on disk says about this account, right now.
@@ -186,6 +246,16 @@ struct AccountRouterInner {
     cooldown: Duration,
     session_affinity_ttl: Duration,
     affinities: Mutex<HashMap<String, AffinityBinding>>,
+    /// Rotates failover candidates so concurrent failovers spread out.
+    failover_cursor: AtomicUsize,
+    failover: bool,
+    pause_at_percent: Option<u8>,
+    state_dir: Option<PathBuf>,
+    /// When the limit state was last written, so window readings alone are
+    /// saved at most once a minute rather than on every response.
+    limits_saved_unix: std::sync::atomic::AtomicU64,
+    /// Each account's own upstream clients (issue #678).
+    http: crate::account_http::AccountClients,
 }
 
 /// Information returned to the caller for use in upstream calls.
@@ -207,6 +277,16 @@ enum SelectionMode {
     Automatic,
     Pinned,
     Session,
+    /// A bound session served elsewhere while its account cannot serve it;
+    /// the binding is kept so the session returns (issue #676).
+    Detour,
+}
+
+impl SelectionMode {
+    /// Whether an unusable candidate moves on to the next one.
+    const fn falls_through(self) -> bool {
+        matches!(self, Self::Automatic | Self::Detour)
+    }
 }
 
 impl AccountRouter {
@@ -244,30 +324,28 @@ impl AccountRouter {
             cooldown,
             session_affinity_ttl,
             request_limits,
+            failover,
+            pause_at_percent,
+            state_dir,
+            http,
         } = options;
         let mut accounts = Vec::with_capacity(1 + additional.len());
         let request_limit = |index: usize| request_limits.get(index).copied().flatten();
-        accounts.push(AccountState {
-            name: "primary".to_string(),
-            reader: SubscriptionReader::new(provider, &primary),
-            home: primary,
-            used: AtomicUsize::new(0),
-            request_limit: request_limit(0),
-            cooldown_until: Mutex::new(None),
-            last_error: Mutex::new(None),
-        });
+        accounts.push(AccountState::new(
+            "primary".to_string(),
+            SubscriptionReader::new(provider, &primary),
+            primary,
+            request_limit(0),
+        ));
         for (i, p) in additional.iter().enumerate() {
-            accounts.push(AccountState {
-                name: format!("account-{}", i + 1),
-                reader: SubscriptionReader::new(provider, p),
-                home: p.clone(),
-                used: AtomicUsize::new(0),
-                request_limit: request_limit(i + 1),
-                cooldown_until: Mutex::new(None),
-                last_error: Mutex::new(None),
-            });
+            accounts.push(AccountState::new(
+                format!("account-{}", i + 1),
+                SubscriptionReader::new(provider, p),
+                p.clone(),
+                request_limit(i + 1),
+            ));
         }
-        Self {
+        let router = Self {
             inner: Arc::new(AccountRouterInner {
                 accounts,
                 cursor: AtomicUsize::new(0),
@@ -276,8 +354,40 @@ impl AccountRouter {
                 cooldown,
                 session_affinity_ttl,
                 affinities: Mutex::new(HashMap::new()),
+                failover_cursor: AtomicUsize::new(0),
+                failover,
+                pause_at_percent,
+                state_dir,
+                limits_saved_unix: std::sync::atomic::AtomicU64::new(0),
+                http: crate::account_http::AccountClients::new(http),
             }),
+        };
+        for name in router.inner.http.policy().proxies.keys() {
+            if !router
+                .inner
+                .accounts
+                .iter()
+                .any(|account| &account.name == name)
+            {
+                tracing::warn!("ACCOUNT_EGRESS_PROXY names {name}, which is not a pool account");
+            }
         }
+        router.restore_limits();
+        router
+    }
+
+    /// The upstream client of `account`: its own connection pool, cookie
+    /// store and egress proxy (issue #678).
+    ///
+    /// # Errors
+    /// The account's egress proxy cannot be resolved; the request must fail
+    /// rather than egress directly.
+    pub fn http_client(
+        &self,
+        account: &str,
+        cookies: crate::account_http::CookieMode,
+    ) -> Result<reqwest::Client, String> {
+        self.inner.http.client(account, cookies)
     }
 
     /// Provider whose credential layout is used by every account in the pool.
@@ -386,6 +496,11 @@ impl AccountRouter {
                         .lock()
                         .unwrap_or_else(std::sync::PoisonError::into_inner)
                         .and_then(|t| t.checked_duration_since(Instant::now())),
+                    limits: {
+                        let mut limits = a.limits().clone();
+                        limits.expire(crate::account_limits::now_unix());
+                        limits
+                    },
                 }
             })
             .collect()
@@ -430,29 +545,29 @@ impl AccountRouter {
         let (indices, mode) = self.selection_plan(context)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.is_available() || !allowed(&account.name) {
-                if !matches!(mode, SelectionMode::Automatic) {
+            if !account.serves(context) || !allowed(&account.name) {
+                if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
                 continue;
             }
             match account.reader.read_token() {
                 Ok(token) if account.try_record_use() => {
-                    self.bind_session(context, idx);
+                    self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
                         token,
                     });
                 }
                 Ok(_) => {
-                    if !matches!(mode, SelectionMode::Automatic) {
+                    if !mode.falls_through() {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
                 Err(error) => {
                     self.record_error(idx, &error.to_string());
                     self.start_cooldown(idx, self.inner.cooldown);
-                    if !matches!(mode, SelectionMode::Automatic) {
+                    if !mode.falls_through() {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
@@ -471,8 +586,8 @@ impl AccountRouter {
         let (indices, mode) = self.selection_plan(context)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.is_available() {
-                if !matches!(mode, SelectionMode::Automatic) {
+            if !account.serves(context) {
+                if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
                 continue;
@@ -482,25 +597,25 @@ impl AccountRouter {
                 .await
             {
                 Ok(Some(_)) if !allowed(&account.name) => {
-                    if !matches!(mode, SelectionMode::Automatic) {
+                    if !mode.falls_through() {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
                 Ok(Some(token)) if account.try_record_use() => {
-                    self.bind_session(context, idx);
+                    self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
                         token,
                     });
                 }
                 Ok(Some(_)) => {
-                    if !matches!(mode, SelectionMode::Automatic) {
+                    if !mode.falls_through() {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
                 Ok(None) | Err(_) => {
                     self.record_error(idx, "the registered credential store is unusable");
-                    if !matches!(mode, SelectionMode::Automatic) {
+                    if !mode.falls_through() {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
@@ -520,12 +635,25 @@ impl AccountRouter {
             let Some(index) = self.inner.accounts.iter().position(|a| a.name == pin) else {
                 return Err(AccountError::UnknownPinnedAccount(pin.to_string()));
             };
+            // A token-pinned account never falls back, failover or not.
+            if context.exclude.iter().any(|tried| tried == pin) {
+                return Err(AccountError::PinnedAccountUnavailable(pin.to_string()));
+            }
             return Ok((vec![index], SelectionMode::Pinned));
         }
         if let Some(session) = context.session_key.as_deref()
             && let Some(index) = self.bound_account(session)
         {
-            return Ok((vec![index], SelectionMode::Session));
+            if !self.inner.failover || self.inner.accounts[index].serves(context) {
+                return Ok((vec![index], SelectionMode::Session));
+            }
+            // Failover: serve the session elsewhere for now, but keep (and
+            // refresh) its binding so it returns once the account recovers.
+            self.bind_session(context, index);
+            return Ok((self.failover_order(Some(index)), SelectionMode::Detour));
+        }
+        if !context.exclude.is_empty() {
+            return Ok((self.failover_order(None), SelectionMode::Automatic));
         }
         let mut indices: Vec<usize> = (0..self.inner.accounts.len()).collect();
         match self.inner.strategy {
@@ -539,6 +667,33 @@ impl AccountRouter {
             }),
         }
         Ok((indices, SelectionMode::Automatic))
+    }
+
+    /// Failover candidates, rotated by a dedicated cursor so concurrent
+    /// failovers from one account spread across the others instead of all
+    /// landing on the next one in priority order.
+    fn failover_order(&self, skip: Option<usize>) -> Vec<usize> {
+        let mut indices: Vec<usize> = (0..self.inner.accounts.len())
+            .filter(|index| Some(*index) != skip)
+            .collect();
+        if !indices.is_empty() {
+            let start = self.inner.failover_cursor.fetch_add(1, Ordering::Relaxed) % indices.len();
+            indices.rotate_left(start);
+        }
+        indices
+    }
+
+    /// The account a session is currently bound to, if any.
+    #[must_use]
+    pub fn session_account(&self, context: &RoutingContext) -> Option<String> {
+        let index = self.bound_account(context.session_key.as_deref()?)?;
+        Some(self.inner.accounts[index].name.clone())
+    }
+
+    fn bind_selected(&self, context: &RoutingContext, mode: SelectionMode, index: usize) {
+        if !matches!(mode, SelectionMode::Detour) {
+            self.bind_session(context, index);
+        }
     }
 
     fn compare_usage(left: &AccountState, right: &AccountState) -> CmpOrdering {
@@ -596,7 +751,7 @@ impl AccountRouter {
         match mode {
             SelectionMode::Pinned => AccountError::PinnedAccountUnavailable(account.to_string()),
             SelectionMode::Session => AccountError::SessionAccountUnavailable(account.to_string()),
-            SelectionMode::Automatic => AccountError::NoHealthyAccounts,
+            SelectionMode::Automatic | SelectionMode::Detour => AccountError::NoHealthyAccounts,
         }
     }
 
@@ -757,6 +912,9 @@ pub struct AccountHealth {
     pub remaining_requests: Option<usize>,
     pub last_error: Option<String>,
     pub cooldown_remaining: Option<Duration>,
+    /// Vendor rate-limit state: cooldown reason, model cooldowns, pause and
+    /// the windows last reported (issue #677).
+    pub limits: crate::account_limits::AccountLimitState,
 }
 
 /// Errors returned by the multi-account router.
@@ -772,6 +930,8 @@ pub enum AccountError {
     PinnedAccountUnavailable(String),
     /// A session's bound account is cooling down or spent.
     SessionAccountUnavailable(String),
+    /// An operator command named no configured account.
+    UnknownAccount(String),
 }
 
 impl std::fmt::Display for AccountError {
@@ -788,11 +948,16 @@ impl std::fmt::Display for AccountError {
             Self::SessionAccountUnavailable(account) => {
                 write!(f, "session account {account} is unavailable")
             }
+            Self::UnknownAccount(account) => write!(f, "no configured account named {account}"),
         }
     }
 }
 
 impl std::error::Error for AccountError {}
+
+#[path = "accounts_limits.rs"]
+mod limits;
+pub use limits::{LimitCounts, ObservedLimits, UpstreamObservation};
 
 #[cfg(test)]
 #[path = "accounts_tests.rs"]

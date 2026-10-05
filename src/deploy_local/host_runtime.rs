@@ -150,6 +150,10 @@ impl HostRuntime for System {
         for name in link_assistant_router::emergency_auth::ENV_VARS {
             command.env_remove(name);
         }
+        // `--env` passthrough (issue #679); reserved names are refused earlier.
+        for (name, value) in &super::runtime_env::current().env {
+            command.env(name, value);
+        }
         if let Some(home) = launch.claude_home {
             command
                 .env("CLAUDE_CODE_HOME", home)

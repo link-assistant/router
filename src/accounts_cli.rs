@@ -36,6 +36,13 @@ pub fn run(
                         "request_limit": health.request_limit,
                         "remaining_requests": health.remaining_requests,
                         "home": health.home.display().to_string(),
+                        // Vendor rate-limit state (issue #677).
+                        "cooldown_reason": health.limits.cooldown_reason,
+                        "cooldown_until_unix": health.limits.cooldown_until_unix,
+                        "model_cooldowns": health.limits.model_cooldowns,
+                        "paused": health.limits.paused_at(crate::account_limits::now_unix()),
+                        "pause": health.limits.pause,
+                        "windows": health.limits.windows,
                     })
                 })
                 .collect();
@@ -62,6 +69,135 @@ pub fn run(
                 );
             }
             ExitCode::SUCCESS
+        }
+        AccountOp::Pause {
+            name,
+            reason,
+            until,
+            ..
+        } => {
+            let reason = reason.as_deref().unwrap_or(DEFAULT_PAUSE_REASON);
+            match router.pause(name, *until, reason) {
+                Ok(()) => {
+                    println!("{}", pause_message(name, *until));
+                    println!("{LOCAL_NOTE}");
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        AccountOp::Resume { name, .. } => match router.resume(name) {
+            Ok(was_paused) => {
+                println!("{}", resume_message(name, was_paused));
+                println!("{LOCAL_NOTE}");
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("error: {error}");
+                ExitCode::from(1)
+            }
+        },
+    }
+}
+
+/// The reason recorded when the operator gives none; the management API uses
+/// the same words.
+const DEFAULT_PAUSE_REASON: &str = "paused by an operator";
+
+/// The local form edits the persisted pool state, not a running process.
+const LOCAL_NOTE: &str = "note: recorded in this machine's data directory; a router started \
+     from it applies the change at startup. Pass --server <URL> to change a running router.";
+
+fn pause_message(name: &str, until: Option<u64>) -> String {
+    until.map_or_else(
+        || format!("paused {name} until it is resumed"),
+        |until| {
+            let when =
+                chrono::DateTime::from_timestamp(i64::try_from(until).unwrap_or(i64::MAX), 0)
+                    .map_or_else(|| until.to_string(), |time| time.to_rfc3339());
+            format!("paused {name} until {when}")
+        },
+    )
+}
+
+fn resume_message(name: &str, was_paused: bool) -> String {
+    if was_paused {
+        format!("resumed {name}")
+    } else {
+        format!("{name} was not paused")
+    }
+}
+
+/// The account-name placeholder in the pause/resume route templates.
+const NAME_PLACEHOLDER: &str = concat!("{", "name", "}");
+
+/// Percent-encode an account name for one URL path segment, so a name can
+/// never reach a different route.
+fn path_segment(name: &str) -> String {
+    use std::fmt::Write as _;
+
+    let mut encoded = String::with_capacity(name.len());
+    for byte in name.bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') {
+            encoded.push(char::from(byte));
+        } else {
+            let _ = write!(encoded, "%{byte:02X}");
+        }
+    }
+    encoded
+}
+
+/// Run an `accounts` operation against a selected router over its admin API
+/// (issues #294, #677).
+pub async fn run_remote(
+    server: &crate::managed_server::ResolvedServer,
+    op: &AccountOp,
+) -> ExitCode {
+    use crate::route_contract::{RouteId, route_template};
+
+    let (route, name, body) = match op {
+        AccountOp::List { .. } => return crate::auth_remote::accounts(server).await,
+        AccountOp::Pause {
+            name,
+            reason,
+            until,
+            ..
+        } => (
+            RouteId::AccountPause,
+            name,
+            serde_json::json!({
+                "reason": reason.as_deref().unwrap_or(DEFAULT_PAUSE_REASON),
+                "until_unix": until,
+            }),
+        ),
+        AccountOp::Resume { name, .. } => (RouteId::AccountResume, name, serde_json::json!({})),
+    };
+    let path = route_template(route).replace(NAME_PLACEHOLDER, &path_segment(name));
+    match crate::auth_remote::post(server, &path, body).await {
+        Ok(answer) => {
+            println!("server: {} ({})", server.base_url, server.source);
+            let message = match op {
+                AccountOp::Pause { .. } => pause_message(
+                    name,
+                    answer.get("until_unix").and_then(serde_json::Value::as_u64),
+                ),
+                _ => resume_message(
+                    name,
+                    answer
+                        .get("was_paused")
+                        .and_then(serde_json::Value::as_bool)
+                        .unwrap_or(true),
+                ),
+            };
+            println!("{message}");
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("error: {error}");
+            ExitCode::from(1)
         }
     }
 }

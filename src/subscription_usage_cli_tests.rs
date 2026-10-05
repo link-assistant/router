@@ -144,6 +144,9 @@ fn human_output_explains_pool_coverage_and_distinct_reset_times() {
         configured_accounts: 3,
         contributing_accounts: 2,
         unavailable_accounts: 1,
+        cooling_down_accounts: Some(1),
+        paused_accounts: Some(0),
+        model_cooldowns: Some(2),
     });
     usage.windows[0].resets_at = None;
     usage.windows[0].contributors = Some(2);
@@ -154,6 +157,10 @@ fn human_output_explains_pool_coverage_and_distinct_reset_times() {
 
     assert!(
         output.contains("accounts: 3 configured, 2 contributing, 1 unavailable"),
+        "{output}"
+    );
+    assert!(
+        output.contains("rate limits: 1 cooling down, 0 paused, 2 model cooldowns"),
         "{output}"
     );
     assert!(

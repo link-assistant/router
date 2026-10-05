@@ -282,6 +282,9 @@ pub struct Config {
     /// Explicit, bounded emergency any-token mode (issue #645). Off unless
     /// `--emergency-accept-any-token` is given.
     pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
+    /// Account-pool failover, threshold pause and warmup interception
+    /// (issues #676, #677). Defaults keep the historical behaviour.
+    pub pool: crate::pool_failover::PoolPolicy,
     /// Optional MPP charge settings for OpenAI-compatible endpoints.
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login API settings (`/api/management/login`).
@@ -362,7 +365,8 @@ impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
         let port = env::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
         let host = env::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-        let token_secret = env::var("TOKEN_SECRET").ok();
+        let token_secret = crate::token_secret::or_from_file(env::var("TOKEN_SECRET").ok())
+            .map_err(ConfigError::TokenSecretFile)?;
         let claude_code_home = env::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
             let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
             format!("{home}/.claude")
@@ -576,6 +580,7 @@ impl Config {
             admin_key,
             allow_anonymous_admin,
             emergency_auth: crate::emergency_auth::EmergencyAuthConfig::from_env(),
+            pool: crate::pool_failover::PoolPolicy::from_env(),
             mpp,
             login,
             admin_ui,
@@ -690,6 +695,7 @@ impl Config {
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
             emergency_auth: args.emergency_auth,
+            pool: args.pool,
             mpp: args.mpp,
             login: crate::login::LoginConfig {
                 claude_code_home: PathBuf::from(args.claude_code_home),
@@ -768,6 +774,7 @@ pub struct BuildArgs<'a> {
     pub admin_key: Option<String>,
     pub allow_anonymous_admin: bool,
     pub emergency_auth: crate::emergency_auth::EmergencyAuthConfig,
+    pub pool: crate::pool_failover::PoolPolicy,
     pub mpp: crate::mpp::MppConfig,
     /// Interactive login settings. `claude_code_home` is overwritten by
     /// [`Config::build`] so the login flow always writes where the router reads.
@@ -853,6 +860,8 @@ pub enum ConfigError {
     InvalidListenHost(String),
     /// `TOKEN_SECRET` environment variable is missing or empty.
     MissingTokenSecret,
+    /// `TOKEN_SECRET_FILE` was set and could not supply a secret (issue #684).
+    TokenSecretFile(String),
     /// Routing mode was not recognised.
     InvalidRoutingMode,
     /// Upstream API format was not recognised.
@@ -915,7 +924,8 @@ impl std::fmt::Display for ConfigError {
             Self::InvalidBridgeModelPolicy(message)
             | Self::InvalidSubscriptionBridgePolicy(message)
             | Self::InvalidProxiedClientPolicy(message)
-            | Self::InvalidPrimaryListener(message) => write!(f, "{message}"),
+            | Self::InvalidPrimaryListener(message)
+            | Self::TokenSecretFile(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
                 "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"

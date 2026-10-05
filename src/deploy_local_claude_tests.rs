@@ -63,7 +63,7 @@ fn backend(runner: &FakeRunner) -> Container {
     world
         .containers
         .iter()
-        .find(|(name, _)| name.as_str() != RELAY)
+        .find(|(name, _)| name.as_str() != &*RELAY)
         .map(|(_, container)| container.clone())
         .expect("a backend")
 }

@@ -19,3 +19,5 @@ rust-script scripts/check-coverage.rs \
 When coverage rises, the checker updates `coverage-baseline.txt`; commit that diff so the ratchet increase is reviewable. A pull request cannot lower the default-branch baseline silently. Maintainers may apply the `coverage-exception` label for an intentional decrease, but CI still rewrites the baseline to the measured value and requires that change to be committed and reviewed.
 
 Line coverage only shows that a test executed a line. It is a floor against new blind spots, not evidence that behavior is correct, and it does not replace failure-path, concurrency, integration, or adversarial tests.
+
+Mutation testing is the complement for the modules where a wrong answer is a security failure: `.cargo/mutants.toml` lists token validation and reservations, the upstream SSRF guard, authentication, credential handling, budget settlement and log redaction, and the `Mutants` workflow fails when a mutant survives (issue #672). See [testing-tiers.md](testing-tiers.md#replay-performance-stability-platform-and-upgrade-checks) for that and the other non-coverage checks.

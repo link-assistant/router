@@ -1,0 +1,102 @@
+# Hot-path benchmarks (issue #672): SSE stream translation, request
+# translation and token verification (benches/hot_paths.rs). A pull request
+# runs them on its base and on its head on the same runner and fails when any
+# benchmark's median is more than 25% slower (scripts/compare-benchmarks.rs).
+# Absolute numbers on shared runners are noisy; only the relative change is
+# judged, and the threshold can be raised for a manual run.
+name: Benchmarks
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'benches/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'scripts/compare-benchmarks.rs'
+      - '.github/workflows/benchmarks.yml'
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Commit, branch or tag to compare against
+        default: main
+      threshold:
+        description: Percent slowdown that fails the run
+        default: '25'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  compare:
+    name: Compare against base
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: 1.98.1
+
+      - name: Cache cargo
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-bench-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bench-cargo-
+
+      - name: Install rust-script
+        run: cargo install rust-script --version 0.36.0 --locked
+
+      - name: Benchmark base
+        id: base
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || inputs.base || 'main' }}
+        run: |
+          # Detached, so a base that is also the checked-out branch (a manual
+          # run on main) is accepted; a branch name resolves to its remote tip.
+          base="$(git rev-parse --verify --quiet "origin/$BASE_REF^{commit}" \
+            || git rev-parse --verify "$BASE_REF^{commit}")"
+          git worktree add --detach "$RUNNER_TEMP/base" "$base"
+          if [ ! -f "$RUNNER_TEMP/base/benches/hot_paths.rs" ]; then
+            echo "Base $BASE_REF has no benches/hot_paths.rs; nothing to compare against." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "present=true" >> "$GITHUB_OUTPUT"
+          # One target directory, so Criterion keeps both baselines side by side.
+          cd "$RUNNER_TEMP/base"
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
+            cargo bench --locked --bench hot_paths -- --save-baseline pr-base
+
+      - name: Benchmark head
+        run: cargo bench --locked --bench hot_paths -- --save-baseline pr-head
+
+      - name: Compare
+        if: steps.base.outputs.present == 'true'
+        env:
+          THRESHOLD: ${{ inputs.threshold || '25' }}
+        run: rust-script scripts/compare-benchmarks.rs pr-base pr-head --threshold "$THRESHOLD"
+
+      - name: Upload Criterion data
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: criterion
+          path: target/criterion/
+          if-no-files-found: ignore

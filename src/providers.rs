@@ -570,6 +570,8 @@ impl ProviderStore {
         if base_url.is_empty() {
             return Err(ProviderError::Invalid("base_url is required".into()));
         }
+        crate::upstream_client::check_provider_base_url(&base_url)
+            .map_err(|error| ProviderError::Invalid(error.to_string()))?;
         let encrypted_api_key = match input.api_key.as_deref().filter(|s| !s.is_empty()) {
             Some(key) => Some(encrypt_api_key(key, &self.token_secret)?),
             None => input.encrypted_api_key.filter(|s| !s.is_empty()),

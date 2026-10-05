@@ -1,0 +1,90 @@
+(
+  type "RouterState"
+  subtype "TokenStore"
+  value (
+    (
+      type "TokenRecord"
+      subtype "77ce771f-1f87-4ab8-85f8-5fb3fb85fb30"
+      value (
+        id "77ce771f-1f87-4ab8-85f8-5fb3fb85fb30"
+        label "upgrade-revoked"
+        issued_at 1791173154
+        expires_at 2106533154
+        revoked true
+        ephemeral false
+        run_lease_expires_at null
+        account null
+        sliding_window_seconds null
+        max_requests null
+        used_requests "0"
+        max_tokens null
+        used_tokens "0"
+        reserved_tokens "0"
+        rate_limit_per_minute null
+        rate_window_started_at "0"
+        rate_window_requests "0"
+        scope ""
+        github_repos ""
+        client_kind null
+        principal_id null
+        model_policy "{}"
+      )
+    )
+    (
+      type "TokenRecord"
+      subtype "d35aafb4-c83c-4914-bb33-127cf3ae9706"
+      value (
+        id "d35aafb4-c83c-4914-bb33-127cf3ae9706"
+        label "upgrade-admin"
+        issued_at 1791173153
+        expires_at 2106533153
+        revoked false
+        ephemeral false
+        run_lease_expires_at null
+        account null
+        sliding_window_seconds null
+        max_requests null
+        used_requests "0"
+        max_tokens null
+        used_tokens "0"
+        reserved_tokens "0"
+        rate_limit_per_minute null
+        rate_window_started_at "0"
+        rate_window_requests "0"
+        scope "admin"
+        github_repos ""
+        client_kind null
+        principal_id null
+        model_policy "{}"
+      )
+    )
+    (
+      type "TokenRecord"
+      subtype "d775ced5-2d98-4b12-b243-a58cfca9dc8f"
+      value (
+        id "d775ced5-2d98-4b12-b243-a58cfca9dc8f"
+        label "upgrade-user"
+        issued_at 1791173153
+        expires_at 2106533153
+        revoked false
+        ephemeral false
+        run_lease_expires_at null
+        account null
+        sliding_window_seconds null
+        max_requests "50"
+        used_requests "0"
+        max_tokens "100000"
+        used_tokens "0"
+        reserved_tokens "0"
+        rate_limit_per_minute null
+        rate_window_started_at "0"
+        rate_window_requests "0"
+        scope ""
+        github_repos ""
+        client_kind null
+        principal_id null
+        model_policy "{}"
+      )
+    )
+  )
+)

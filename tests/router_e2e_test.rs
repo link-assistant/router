@@ -95,6 +95,11 @@ impl TestRouter {
         invalid_body: bool,
         max_proxy_request_bytes: usize,
     ) -> Self {
+        // The stub upstream listens on loopback; opt in the way an operator
+        // would with UPSTREAM_ALLOW_PRIVATE_NETWORKS=loopback.
+        link_assistant_router::upstream_guard::install_process_policy(
+            link_assistant_router::upstream_guard::NetworkPolicy::parse(Some("loopback")),
+        );
         let data = tempfile::tempdir().expect("temporary test data");
         let dialect = if provider == UpstreamProvider::Codex {
             StubDialect::Codex

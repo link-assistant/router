@@ -268,6 +268,13 @@ pub(super) async fn forward_openai(
             };
             Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
         }));
+        // A cut Claude stream ends with an error in the client's dialect,
+        // never with a synthesized `[DONE]` (issue #668).
+        let dialect = match shape {
+            OpenAIShape::Chat => crate::stream_termination::StreamDialect::OpenAiChat,
+            OpenAIShape::Response => crate::stream_termination::StreamDialect::Responses,
+        };
+        let stream = crate::stream_termination::in_band_errors(stream, Some(dialect));
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = StatusCode::OK;
         *response.headers_mut() = response_headers;

@@ -1,4 +1,6 @@
-//! Narrow process-wide Cloudflare cookie continuity for official Codex traffic.
+//! Narrow Cloudflare cookie continuity for official Codex traffic: one
+//! process-wide store for unpooled traffic, and an isolated store per pooled
+//! account (issue #678).
 //!
 //! Policy is tied to Codex 0.154.0. The store must never be broadened to hold
 //! account, session, authentication, CSRF, preference, or caller cookies.
@@ -38,6 +40,12 @@ struct CodexCloudflareCookieStore {
 
 pub fn with_cookie_store(builder: ClientBuilder) -> ClientBuilder {
     builder.cookie_provider(Arc::clone(&SHARED_STORE))
+}
+
+/// A new, empty store with the same policy, owned by one pooled account so
+/// its Cloudflare cookies never reach another account (issue #678).
+pub fn isolated_store() -> Arc<dyn ReqwestCookieStore> {
+    Arc::new(CodexCloudflareCookieStore::default())
 }
 
 pub fn cookie_header(url: &Url) -> Option<HeaderValue> {

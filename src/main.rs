@@ -17,7 +17,6 @@
 
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::time::Duration;
 
 mod auth_cli;
 mod auth_import;
@@ -33,7 +32,7 @@ mod recover_admin_cli;
 mod shutdown;
 
 use axum::middleware::from_fn_with_state;
-use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions};
+use link_assistant_router::accounts::AccountRouter;
 use link_assistant_router::cli::{AccountOp, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode};
 use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
@@ -107,6 +106,9 @@ async fn run() -> ExitCode {
         }
         Some(Command::Models { op }) => {
             return link_assistant_router::model_command::run(op).await;
+        }
+        Some(Command::Tunnel(args)) => {
+            return link_assistant_router::tunnel_command::run(args).await;
         }
         _ => {}
     }
@@ -190,7 +192,8 @@ async fn run() -> ExitCode {
             Command::With(_)
             | Command::Server { .. }
             | Command::Configure(_)
-            | Command::Models { .. },
+            | Command::Models { .. }
+            | Command::Tunnel(_),
         ) => {
             unreachable!("handled before config")
         }
@@ -235,16 +238,7 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
             None
         } else {
             let (provider, primary) = config.subscription_pool();
-            let options = AccountRouterOptions {
-                strategy: config.account_routing_strategy,
-                cooldown: Duration::from_secs(config.account_cooldown_secs),
-                session_affinity_ttl: Duration::from_secs(config.session_affinity_ttl_secs),
-                request_limits: config
-                    .account_request_limits
-                    .iter()
-                    .map(|limit| (*limit != 0).then_some(*limit))
-                    .collect(),
-            };
+            let options = config.account_router_options();
             Some(AccountRouter::new_for_provider(
                 primary,
                 &config.additional_account_dirs,
@@ -338,6 +332,8 @@ async fn run_server(
     );
     tracing::info!("Routing mode: {:?}", config.routing_mode);
     tracing::info!("Storage policy: {:?}", config.storage_policy);
+    // Pool failover, the pause threshold and warmup interception (#676, #677).
+    link_assistant_router::pool_failover::install(config.pool.clone());
     if config.routing_mode == RoutingMode::Cli || config.routing_mode == RoutingMode::Hybrid {
         tracing::warn!(
             "RoutingMode::{:?} is configured but the CLI backend is not yet wired; falling back to direct.",
@@ -746,7 +742,9 @@ async fn run_remote_command(
     match command {
         // The routes exist and are admin-gated; only the wiring was missing.
         Command::Tokens { op } => link_assistant_router::tokens_remote::run(server, op).await,
-        Command::Accounts { .. } => link_assistant_router::auth_remote::accounts(server).await,
+        Command::Accounts { op } => {
+            link_assistant_router::accounts_cli::run_remote(server, op).await
+        }
         Command::Providers { op } => {
             link_assistant_router::providers_cli::run_remote(server, op).await
         }
@@ -825,6 +823,7 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
             rate_limit_per_minute,
             admin,
             github_repo,
+            allowed_model,
             ..
         } => {
             let request = IssueRequest {
@@ -845,7 +844,15 @@ fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
                 eprintln!("error: {message}");
                 return ExitCode::from(2);
             }
-            match mgr.issue(&request) {
+            let model_policy = link_assistant_router::model_contract::ModelAccessPolicy {
+                allowed_models: allowed_model.clone(),
+                ..Default::default()
+            };
+            if let Err(message) = model_policy.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
+            }
+            match mgr.issue_with_model_policy(&request, &model_policy) {
                 Ok(t) => {
                     println!("{t}");
                     ExitCode::SUCCESS
@@ -970,21 +977,7 @@ fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
         Ok((_, None)) => {
             // Single-account mode: synthesise a one-account router for inspection.
             let (provider, primary) = config.subscription_pool();
-            AccountRouter::new_for_provider(
-                primary,
-                &[],
-                provider,
-                AccountRouterOptions {
-                    strategy: config.account_routing_strategy,
-                    cooldown: Duration::from_secs(config.account_cooldown_secs),
-                    session_affinity_ttl: Duration::from_secs(config.session_affinity_ttl_secs),
-                    request_limits: config
-                        .account_request_limits
-                        .iter()
-                        .map(|limit| (*limit != 0).then_some(*limit))
-                        .collect(),
-                },
-            )
+            AccountRouter::new_for_provider(primary, &[], provider, config.account_router_options())
         }
         Err(e) => {
             eprintln!("error: {e}");

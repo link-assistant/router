@@ -4,6 +4,8 @@
 //! supports Claude MAX OAuth sessions, and provides multi-tenant
 //! access via custom-issued tokens.
 
+pub mod account_http;
+pub mod account_limits;
 pub mod accounts;
 pub mod accounts_cli;
 pub mod activitypub;
@@ -61,7 +63,9 @@ pub mod credential_source;
 pub mod credential_status;
 pub mod credential_store;
 pub mod deploy;
+pub mod deploy_config;
 pub mod deploy_relay;
+pub mod deploy_seed;
 pub mod deployment_preservation;
 pub mod doctor;
 pub mod durable_file;
@@ -105,6 +109,7 @@ pub mod on_demand_cli;
 pub mod openai;
 pub mod output_limit;
 pub mod platform_keychain;
+pub mod pool_failover;
 pub mod primary_listener;
 pub mod provider_acceptance;
 mod provider_config;
@@ -130,6 +135,7 @@ pub mod server_router;
 mod sse;
 pub mod stop_sequences;
 pub mod storage;
+pub mod stream_termination;
 mod structured_output;
 pub mod subscription;
 pub mod subscription_health;
@@ -149,13 +155,16 @@ pub mod token_secret;
 pub mod tokens_remote;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
+pub mod tunnel_command;
 #[cfg(unix)]
 pub mod unix_listener;
 pub mod upstream_client;
+pub mod upstream_guard;
 pub mod usage;
 pub mod vendor_cli_refresh;
 pub mod verification_client;
 pub mod vk;
+pub mod warmup;
 pub mod with_command;
 pub mod zai_coding_plan;
 pub mod zai_upstream_error;
@@ -176,6 +185,8 @@ mod codex_loopback_bridge_tests;
 mod codex_remote_control_tests;
 #[cfg(test)]
 mod credential_source_tests;
+#[cfg(test)]
+mod deploy_config_tests;
 #[cfg(test)]
 mod deploy_tests;
 #[cfg(test)]

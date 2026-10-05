@@ -96,6 +96,8 @@ async fn one_process_serves_combined_and_inference_only_primary_listeners() {
         .env("DATA_DIR", data_dir.path())
         .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
         .env("STORAGE_POLICY", "memory")
+        // The mock provider listens on loopback (issue #669).
+        .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
         .env("DISABLE_LOGIN_API", "true")
         .env("TLS_CERT_FILE", &cert)
         .env("TLS_KEY_FILE", key)
@@ -268,6 +270,8 @@ fn a_failed_second_bind_never_leaves_the_first_listener_serving() {
         .env("DATA_DIR", data_dir.path())
         .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
         .env("STORAGE_POLICY", "memory")
+        // The mock provider listens on loopback (issue #669).
+        .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
         .env("DISABLE_LOGIN_API", "true")
         .env_remove("TLS_CERT_FILE")
         .env_remove("TLS_KEY_FILE")

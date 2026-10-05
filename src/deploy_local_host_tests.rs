@@ -205,7 +205,7 @@ fn the_plan_is_read_only() {
     assert!(mutations(&runner.0.lock().unwrap()).is_empty());
     assert!(host.world().spawned_ports.is_empty());
     assert!(State::new(root.path()).host().unwrap().is_none());
-    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    assert!(running(&runner, &RELAY) && running(&runner, &backend));
 }
 
 #[test]
@@ -258,7 +258,7 @@ fn a_validated_candidate_takes_over_the_stable_listener_and_the_containers_come_
     assert_eq!(record.token_secret, fingerprint(SECRET));
     assert_eq!(record.previous_backend.as_deref(), Some(backend.as_str()));
     // Stopped, not removed, and the relay pointer is untouched.
-    assert!(!running(&runner, RELAY) && !running(&runner, &backend));
+    assert!(!running(&runner, &RELAY) && !running(&runner, &backend));
     assert_eq!(
         State::new(root.path()).current().unwrap().as_deref(),
         Some(backend.as_str())
@@ -279,7 +279,7 @@ fn a_validated_candidate_takes_over_the_stable_listener_and_the_containers_come_
         args.mode = Some(DeployMode::Container);
     });
     assert_eq!(code, ExitCode::SUCCESS);
-    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    assert!(running(&runner, &RELAY) && running(&runner, &backend));
     assert!(host.world().processes.is_empty());
     assert!(State::new(root.path()).host().unwrap().is_none());
     assert_eq!(
@@ -304,7 +304,7 @@ fn a_candidate_rejecting_the_deployment_tokens_changes_nothing() {
     assert_eq!(host.world().spawned_ports, [CANDIDATE_PORT]);
     assert!(host.world().processes.is_empty());
     assert!(mutations(&runner.0.lock().unwrap()).is_empty());
-    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    assert!(running(&runner, &RELAY) && running(&runner, &backend));
     assert!(State::new(root.path()).host().unwrap().is_none());
 }
 
@@ -322,7 +322,7 @@ fn a_failed_start_on_the_stable_port_restarts_the_relay() {
 
     assert_eq!(host.world().spawned_ports, [CANDIDATE_PORT, 8080]);
     assert!(host.world().processes.is_empty());
-    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    assert!(running(&runner, &RELAY) && running(&runner, &backend));
     assert!(State::new(root.path()).host().unwrap().is_none());
     no_secret_leaks(&runner, root.path());
 }
@@ -399,7 +399,7 @@ fn the_return_plan_is_read_only() {
     assert!(mutations(&runner.0.lock().unwrap()).is_empty());
     assert_eq!(host.world().processes.len(), 1);
     assert!(State::new(root.path()).host().unwrap().is_some());
-    assert!(!running(&runner, RELAY) && !running(&runner, &backend));
+    assert!(!running(&runner, &RELAY) && !running(&runner, &backend));
 }
 
 #[test]
@@ -420,7 +420,7 @@ fn a_relay_failing_on_return_leaves_the_host_router_serving() {
     });
 
     assert_eq!(code, ExitCode::from(1));
-    assert!(!running(&runner, RELAY));
+    assert!(!running(&runner, &RELAY));
     let after = State::new(root.path()).host().unwrap().unwrap();
     assert_ne!(after.pid, before.pid, "the host Router was restarted");
     assert_eq!(after.previous_backend.as_deref(), Some(backend.as_str()));
@@ -460,7 +460,7 @@ fn leaving_a_host_deployment_without_containers() {
     assert!(host.world().processes.is_empty());
     assert!(State::new(root.path()).host().unwrap().is_none());
     let backend = State::new(root.path()).current().unwrap().unwrap();
-    assert!(running(&runner, RELAY) && running(&runner, &backend));
+    assert!(running(&runner, &RELAY) && running(&runner, &backend));
     no_secret_leaks(&runner, root.path());
 }
 

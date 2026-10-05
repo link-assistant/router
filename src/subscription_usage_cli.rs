@@ -159,6 +159,16 @@ fn format_subscription(output: &mut String, usage: &SubscriptionUsage) {
             "  accounts: {} configured, {} contributing, {} unavailable",
             pool.configured_accounts, pool.contributing_accounts, pool.unavailable_accounts
         );
+        if let (Some(cooling), Some(paused), Some(models)) = (
+            pool.cooling_down_accounts,
+            pool.paused_accounts,
+            pool.model_cooldowns,
+        ) {
+            let _ = writeln!(
+                output,
+                "  rate limits: {cooling} cooling down, {paused} paused, {models} model cooldowns"
+            );
+        }
     }
     if let Some(allowed) = usage.allowed {
         let _ = writeln!(output, "  allowed: {allowed}");

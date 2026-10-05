@@ -577,6 +577,10 @@ fn responses_error(error: &Value) -> Value {
 }
 
 #[cfg(test)]
+#[path = "stream_tests.rs"]
+mod rechunk_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

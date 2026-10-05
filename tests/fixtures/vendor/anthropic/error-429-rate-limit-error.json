@@ -1,0 +1,37 @@
+{
+  "schema": "link-assistant-router/vendor-cassette/v1",
+  "vendor": "anthropic",
+  "description": "HTTP 429 rate_limit_error error envelope",
+  "provenance": "hand-written from the documented error envelope; vendor errors cannot be provoked on demand, so it is not re-recorded",
+  "record": null,
+  "request": {
+    "model": "{model}",
+    "max_tokens": 16,
+    "messages": [
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ]
+  },
+  "response": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_scrubbed",
+      "retry-after": "17"
+    },
+    "json": {
+      "type": "error",
+      "error": {
+        "type": "rate_limit_error",
+        "message": "This request would exceed your organization's rate limit."
+      },
+      "request_id": "req_scrubbed"
+    }
+  },
+  "expect": {
+    "status": 429,
+    "error_type": "rate_limit_error"
+  }
+}

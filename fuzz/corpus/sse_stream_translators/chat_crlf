@@ -1,0 +1,6 @@
+data: {"choices":[{"delta":{"content":"STOP here 東"}}]}
+
+data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c","function":{"name":"f","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}
+
+data: [DONE]
+

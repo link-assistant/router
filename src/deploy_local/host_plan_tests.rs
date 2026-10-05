@@ -18,6 +18,7 @@ fn serving(secret: SecretMatch, converged: bool, secret_unknown: bool) -> Plan {
             executable: EXECUTABLE.into(),
             router_version: link_assistant_router::VERSION.into(),
             token_secret: "fingerprint".into(),
+            runtime_env: None,
             previous_backend: None,
             started_at: 1,
         }),

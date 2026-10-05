@@ -246,7 +246,11 @@ async fn session(
         .max_write_buffer_size(state.max_proxy_request_bytes.saturating_mul(2));
     let connected = tokio::time::timeout(
         CONNECT_TIMEOUT,
-        tokio_tungstenite::connect_async_with_config(request, Some(config), false),
+        connect_upstream(
+            request,
+            config,
+            target.provider == UpstreamProvider::OpenAICompatible,
+        ),
     )
     .await;
     let (mut upstream, handshake) = match connected {
@@ -467,6 +471,16 @@ async fn prepare_target(
             "authentication_error",
             "upstream_credential_unavailable",
             "the selected provider credential is unavailable",
+            None,
+            stream_id(event).as_deref(),
+        )
+    })?;
+    crate::upstream_client::check_provider_base_url(&provider.base_url).map_err(|blocked| {
+        websocket_error(
+            StatusCode::FORBIDDEN,
+            "permission_error",
+            "upstream_address_refused",
+            &blocked.to_string(),
             None,
             stream_id(event).as_deref(),
         )
@@ -698,6 +712,48 @@ fn reserve_turn(
         reserved,
     )
     .into_tracker())
+}
+
+/// Connect the upstream WebSocket. An API-key provider's host is resolved
+/// through the SSRF guard and dialled at a checked address, so a name rebound
+/// to an internal address is never reached (issue #669).
+async fn connect_upstream(
+    request: http::Request<()>,
+    config: tungstenite::protocol::WebSocketConfig,
+    guarded: bool,
+) -> Result<
+    (
+        tokio_tungstenite::WebSocketStream<
+            tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+        >,
+        tungstenite::handshake::client::Response,
+    ),
+    tungstenite::Error,
+> {
+    if !guarded {
+        return tokio_tungstenite::connect_async_with_config(request, Some(config), false).await;
+    }
+    let uri = request.uri();
+    let host = uri
+        .host()
+        .unwrap_or_default()
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_string();
+    let port = uri.port_u16().unwrap_or_else(|| {
+        if uri.scheme_str() == Some("wss") {
+            443
+        } else {
+            80
+        }
+    });
+    let addrs = crate::upstream_guard::resolve_allowed(&host, port)
+        .await
+        .map_err(tungstenite::Error::Io)?;
+    let stream = tokio::net::TcpStream::connect(addrs.as_slice())
+        .await
+        .map_err(tungstenite::Error::Io)?;
+    tokio_tungstenite::client_async_tls_with_config(request, stream, Some(config), None).await
 }
 
 fn websocket_request(target: &UpstreamTarget) -> Result<http::Request<()>, String> {
