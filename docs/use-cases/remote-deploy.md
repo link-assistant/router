@@ -6,6 +6,12 @@ deployment uses batch mode and strict host-key checking. The target also needs
 Docker, `/proc`, core POSIX utilities, `base64`, and util-linux `flock`. `git`
 is needed for the default pinned-release build.
 
+The remote default builds the CLI's exact source release tag on the target;
+it does not pull the local deploy's default GHCR image. Home-relative `--root`
+or config roots (`~` and `~/...`) expand against the target user's home.
+Ordinary relative roots in config still resolve against the config directory;
+remote roots must ultimately be absolute.
+
 ```bash
 # Build the exact Router release tag on the target and deploy it.
 TOKEN_SECRET='a-long-random-secret' router deploy --server router@example.test

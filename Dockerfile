@@ -6,20 +6,19 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         pkg-config \
-        libssl-dev && \
+        libssl-dev \
+        python3 && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy manifests first for dependency caching
 COPY Cargo.toml Cargo.lock ./
 
-# Create a dummy src to build dependencies
-RUN mkdir -p src/bin && \
-    echo "pub const VERSION: &str = \"0.0.0\";" > src/lib.rs && \
-    echo "fn main() {}" > src/main.rs && \
-    echo "fn main() {}" > src/bin/with-router.rs && \
-    echo "fn main() {}" > src/bin/link-assistant-router.rs && \
-    cargo build --release --locked && \
-    rm -rf src
+# Cargo validates every declared target even when only binaries are built.
+# Generate all paths from the manifest instead of maintaining a list (#687).
+COPY scripts/docker-cache-targets.py /tmp/docker-cache-targets.py
+RUN python3 /tmp/docker-cache-targets.py && \
+    cargo build --release --locked --bins && \
+    python3 /tmp/docker-cache-targets.py --clean
 
 # Copy the committed admin UI before the Rust source. RustEmbed needs this
 # directory at compile time, and keeping it in a separate layer preserves the
@@ -29,12 +28,14 @@ COPY ui/dist/ ui/dist/
 # The capability contract validates checked provider evidence at compile time.
 COPY docs/provider-evidence/anthropic-adaptive-thinking.json docs/provider-evidence/anthropic-adaptive-thinking.json
 
-# Copy real source code
-COPY src/ src/
+# Copy every real target, including custom bench/test/example paths. Keeping
+# only src/ here would make Cargo reject the manifest again after stub cleanup.
+# .dockerignore excludes build output and local state from this layer.
+COPY . .
 
 # Touch files to invalidate cache for source changes
-RUN touch src/lib.rs src/main.rs src/bin/link-assistant-router.rs && \
-    cargo build --release --locked
+RUN python3 /tmp/docker-cache-targets.py --touch && \
+    cargo build --release --locked --bins
 
 # Runtime base
 #

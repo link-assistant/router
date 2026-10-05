@@ -2,7 +2,7 @@
 //! Create GitHub Release from CHANGELOG.md
 //!
 //! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>
-//!   [--crates-io-url <url>] [--docker-hub-url <url>]
+//!   [--crates-io-url <url>] [--docker-hub-url <url>] [--prerelease true]
 //!
 //! ```cargo
 //! [dependencies]
@@ -17,7 +17,7 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::{exit, Command, Stdio};
+use std::process::{Command, Stdio, exit};
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -156,6 +156,8 @@ struct ReleasePayload {
     tag_name: String,
     name: String,
     body: String,
+    /// Incomplete releases stay visible for artifact upload, but cannot be Latest.
+    prerelease: bool,
     /// Whether this release becomes the one GitHub marks "Latest".
     ///
     /// GitHub derives that marker from publication time, so a release page
@@ -166,7 +168,6 @@ struct ReleasePayload {
     #[serde(skip_serializing_if = "Option::is_none")]
     make_latest: Option<String>,
 }
-
 
 /// Versions with a tag on the default branch but no release page.
 ///
@@ -204,8 +205,16 @@ fn orphaned_versions(repository: &str, tag_prefix: &str) -> Vec<String> {
     }
     let releases = match Command::new("gh")
         .args([
-            "release", "list", "--repo", repository, "--limit", "1000", "--json", "tagName",
-            "--jq", ".[].tagName",
+            "release",
+            "list",
+            "--repo",
+            repository,
+            "--limit",
+            "1000",
+            "--json",
+            "tagName",
+            "--jq",
+            ".[].tagName",
         ])
         .output()
     {
@@ -241,6 +250,7 @@ fn publish_release(
     crates_io_url: Option<&str>,
     docker_hub_url: Option<&str>,
     backfill: bool,
+    prerelease: bool,
 ) -> Result<(), String> {
     let tag = format!("{}{}", tag_prefix, version);
     println!("Creating GitHub release for {}...", tag);
@@ -264,7 +274,8 @@ fn publish_release(
         tag_name: tag.clone(),
         name: format!("{}{}", tag_prefix, version),
         body: fit_release_body(release_notes, &tag, repository),
-        make_latest: backfill.then(|| "false".to_string()),
+        prerelease,
+        make_latest: (backfill || prerelease).then(|| "false".to_string()),
     };
 
     let payload_json = serde_json::to_string(&payload).expect("Failed to serialize payload");
@@ -311,7 +322,9 @@ fn main() {
         Some(v) => v,
         None => {
             eprintln!("Error: Missing required argument --release-version");
-            eprintln!("Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>");
+            eprintln!(
+                "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>"
+            );
             exit(1);
         }
     };
@@ -320,7 +333,9 @@ fn main() {
         Some(r) => r,
         None => {
             eprintln!("Error: Missing required argument --repository");
-            eprintln!("Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>");
+            eprintln!(
+                "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>"
+            );
             exit(1);
         }
     };
@@ -328,6 +343,7 @@ fn main() {
     let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
     let crates_io_url = get_arg("crates-io-url");
     let docker_hub_url = get_arg("docker-hub-url");
+    let prerelease = get_arg("prerelease").as_deref() == Some("true");
 
     if let Err(error) = publish_release(
         &version,
@@ -336,9 +352,15 @@ fn main() {
         crates_io_url.as_deref(),
         docker_hub_url.as_deref(),
         false,
+        prerelease,
     ) {
         eprintln!("{error}");
         exit(1);
+    }
+
+    // Artifact preparation cannot announce unrelated, unverified releases.
+    if prerelease {
+        return;
     }
 
     // Then any version that shipped without a release page. Reporting an
@@ -363,6 +385,7 @@ fn main() {
                 crates_io_url.as_deref(),
                 docker_hub_url.as_deref(),
                 true,
+                false,
             )
             .map_err(|error| eprintln!("{error}"))
             .is_err()
@@ -381,14 +404,25 @@ fn main() {
 mod tests {
     use super::*;
 
+    #[test]
+    fn an_incomplete_release_is_a_prerelease_and_never_latest() {
+        let payload = ReleasePayload {
+            tag_name: "v1.16.1".into(),
+            name: "v1.16.1".into(),
+            body: "artifact preparation".into(),
+            prerelease: true,
+            make_latest: Some("false".into()),
+        };
+        let json = serde_json::to_value(payload).unwrap();
+        assert_eq!(json["prerelease"], true);
+        assert_eq!(json["make_latest"], "false");
+    }
+
     /// A body inside the limit is published exactly as written.
     #[test]
     fn an_ordinary_release_note_is_left_alone() {
         let body = "## [1.2.3]\n\n- one fix\n".to_string();
-        assert_eq!(
-            fit_release_body(body.clone(), "v1.2.3", "owner/repo"),
-            body
-        );
+        assert_eq!(fit_release_body(body.clone(), "v1.2.3", "owner/repo"), body);
     }
 
     /// A changelog larger than the limit produced an HTTP 422 with no message,
@@ -488,6 +522,7 @@ mod tests {
             tag_name: "v0.116.0".into(),
             name: "v0.116.0".into(),
             body: "notes".into(),
+            prerelease: false,
             make_latest: true.then(|| "false".to_string()),
         };
         let json = serde_json::to_string(&backfill).expect("serialize");
@@ -505,6 +540,7 @@ mod tests {
             tag_name: "v0.118.0".into(),
             name: "v0.118.0".into(),
             body: "notes".into(),
+            prerelease: false,
             make_latest: false.then(|| "false".to_string()),
         };
         let json = serde_json::to_string(&current).expect("serialize");

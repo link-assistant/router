@@ -8,20 +8,12 @@ use std::process::{Command, ExitCode};
 use std::time::{Duration, Instant};
 
 use super::docker::Docker;
+use super::operation_lock::OperationLock;
 use link_assistant_router::cli::DeployArgs;
 use serde_json::{Value, json};
 
 const LABEL: &str = "com.link-assistant.router.staging";
 const MARKER: &str = "staging.json";
-
-struct OperationLock(std::fs::File);
-impl Drop for OperationLock {
-    fn drop(&mut self) {
-        // Explicit unlock also releases a descriptor briefly inherited by an
-        // unrelated fork before exec. All owned diagnostic work is awaited.
-        let _ = self.0.unlock();
-    }
-}
 
 fn namespace(name: &str) -> Result<String, String> {
     if name.is_empty()
@@ -481,7 +473,20 @@ fn execute_with_disk(
 }
 
 pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
-    match execute(args, root, image, &Docker::default()) {
+    let result = namespace(args.staging.as_deref().expect("staging dispatch")).and_then(|_| {
+        // Status/verification report existing state without planning a start.
+        // Validate the identity first, and never create state for a missing image.
+        if !args.down
+            && !args.status
+            && !args.verify
+            && args.image.is_none()
+            && args.build.is_none()
+        {
+            crate::deploy_image::ensure_default(image, link_assistant_router::VERSION)?;
+        }
+        execute(args, root, image, &Docker::default())
+    });
+    match result {
         Ok(report) => {
             println!("{}", serde_json::to_string_pretty(&report).unwrap());
             ExitCode::SUCCESS

@@ -24,9 +24,12 @@ use toml_edit::{DocumentMut, Item, TableLike};
 mod hmac;
 #[path = "deploy_config_merge.rs"]
 mod merge;
+#[path = "deploy_config_paths.rs"]
+mod paths;
 
 pub use hmac::{env_fingerprint, hmac_sha256_hex, value_fingerprint};
 pub use merge::{Merged, merge};
+pub use paths::expand_home;
 
 /// Names the backend owns itself, or which select its security posture.
 ///
@@ -614,13 +617,9 @@ fn path(
     key: &str,
     base: Option<&Path>,
 ) -> Result<Option<PathBuf>, String> {
-    Ok(string(table, section, key)?.map(|value| {
-        let path = PathBuf::from(value);
-        match base {
-            Some(base) if path.is_relative() => base.join(path),
-            _ => path,
-        }
-    }))
+    string(table, section, key)?
+        .map(|value| paths::config_path(&value, base, key == "root"))
+        .transpose()
 }
 
 fn parse_section(

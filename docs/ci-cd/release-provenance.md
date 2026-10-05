@@ -38,6 +38,26 @@ build jobs themselves check out the tag.
 `scripts/check-release-workflow.rs` asserts these wiring rules statically, and the lint job
 runs it on every pull request.
 
+## Stable publication waits for complete artifacts
+
+The release page is first created as a prerelease with `make_latest=false`.
+Crates.io publication and promotion to GitHub stable/latest occur only in
+`finalize-release`, after all four binary archives, both native container
+architectures, both registry manifests, provenance verification and the macOS
+lifecycle job succeed. Failed or cancelled packaging leaves the prerelease
+available for diagnosis and recovery, without announcing a stable release.
+Delivery and recovery scripts treat that prerelease as incomplete.
+
+The Docker dependency-cache stage creates every declared target from the Cargo
+manifest, including custom benchmark, test and example paths. The final source
+layer copies all real targets; `.dockerignore` excludes build output and local
+state. The Docker Runtime Build workflow builds and runs the amd64 runtime on
+pull requests affecting these inputs, without publishing images.
+
+For the missing v1.16.0 images reported in issue #687, the fix carries a patch
+changelog fragment. Merging it triggers the next patch release through this
+pipeline; existing published crate and binary identities are retained.
+
 ## Checksum files are verifiable where they land
 
 The `*.sha256` assets used to record `dist/…` paths, so the documented

@@ -94,7 +94,8 @@ fn main() {
     }
 
     if count_occurrences(&workflow, "docker/build-push-action@") != 1 {
-        failures.push("the variant-and-architecture matrix must use one shared build step".to_string());
+        failures
+            .push("the variant-and-architecture matrix must use one shared build step".to_string());
     }
 
     if workflow.contains("docker/setup-qemu-action") {
@@ -111,7 +112,9 @@ fn main() {
             .map(|(_, revision)| revision.split_whitespace().next().unwrap_or_default())
             .unwrap_or_default();
         if revision.len() != 40 || !revision.bytes().all(|byte| byte.is_ascii_hexdigit()) {
-            failures.push(format!("workflow action is not pinned to an immutable commit: {line}"));
+            failures.push(format!(
+                "workflow action is not pinned to an immutable commit: {line}"
+            ));
         }
     }
 
@@ -151,7 +154,11 @@ fn main() {
         );
     }
 
-    if count_occurrences(&workflow, "ref: ${{ needs.create-github-release.outputs.release-commit }}") < 4 {
+    if count_occurrences(
+        &workflow,
+        "ref: ${{ needs.create-github-release.outputs.release-commit }}",
+    ) < 4
+    {
         failures.push(
             "every image, binary, and verification job must check out the release tag commit"
                 .to_string(),
@@ -180,41 +187,33 @@ fn main() {
     }
 
     if count_occurrences(&workflow, "push-by-digest=true") != 1 {
-        failures.push(
-            "every matrix leg must publish its native image by digest".to_string(),
-        );
+        failures.push("every matrix leg must publish its native image by digest".to_string());
     }
 
     if count_occurrences(&workflow, "docker buildx imagetools create") != 2 {
-        failures.push(
-            "both registries must receive one merged runtime manifest".to_string(),
-        );
+        failures.push("both registries must receive one merged runtime manifest".to_string());
     }
 
-    if count_occurrences(
-        &workflow,
-        "rust-script scripts/check-docker-platforms.rs",
-    ) != 1
-    {
+    if count_occurrences(&workflow, "rust-script scripts/check-docker-platforms.rs") != 1 {
         failures.push(
             "the shared manifest job must verify every published multi-platform image".to_string(),
         );
     }
 
     if count_occurrences(&workflow, "bash scripts/verify-ghcr-visibility.sh") != 1 {
-        failures.push(
-            "the shared manifest job must verify anonymous GHCR visibility once".to_string(),
-        );
+        failures
+            .push("the shared manifest job must verify anonymous GHCR visibility once".to_string());
     }
 
     if workflow.contains("docker-build:")
         || workflow.contains("needs: [lint, test, build, docker-build]")
     {
-        failures.push("release publication must not wait for a disposable Docker build".to_string());
+        failures
+            .push("release publication must not wait for a disposable Docker build".to_string());
     }
 
-    if !workflow.contains("create-github-release:\n    name: Create GitHub Release\n    needs: [auto-release, manual-release]") {
-        failures.push("GitHub releases must be created immediately after crate publication".to_string());
+    if !workflow.contains("create-github-release:\n    name: Prepare GitHub Prerelease\n    needs: [auto-release, manual-release]") {
+        failures.push("GitHub prereleases must be prepared from the immutable release tag".to_string());
     }
 
     if !workflow.contains("rust-script --test scripts/check-github-releases.rs") {
@@ -224,12 +223,47 @@ fn main() {
     if count_occurrences(
         &workflow,
         "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}",
-    ) != 2
+    ) != 1
     {
         failures.push(
-            "both publish steps must map CARGO_REGISTRY_TOKEN and CARGO_TOKEN secrets to Cargo's native CARGO_REGISTRY_TOKEN env var"
+            "the artifact-gated publish step must map CARGO_REGISTRY_TOKEN and CARGO_TOKEN secrets to Cargo's native CARGO_REGISTRY_TOKEN env var"
                 .to_string(),
         );
+    }
+
+    let finalization = workflow
+        .split_once("\n  finalize-release:\n")
+        .map(|(_, job)| job);
+    match finalization {
+        Some(job) => {
+            for required in [
+                "publish-docker-manifests",
+                "publish-release-artifacts",
+                "verify-release-provenance",
+            ] {
+                if !job.contains(&format!("needs.{required}.result == 'success'")) {
+                    failures.push(format!("stable release must wait for {required}"));
+                }
+            }
+            if !job.contains("scripts/publish-crate.rs")
+                || !job.contains("--prerelease=false --latest")
+            {
+                failures.push(
+                    "finalization must publish the crate and promote the verified prerelease"
+                        .to_string(),
+                );
+            }
+            let preparation = workflow.split_once("\n  finalize-release:\n").unwrap().0;
+            if preparation.contains("scripts/publish-crate.rs")
+                || !preparation.contains("--prerelease true")
+            {
+                failures.push(
+                    "artifact preparation must remain a prerelease and must not publish crates.io"
+                        .to_string(),
+                );
+            }
+        }
+        None => failures.push("missing artifact-gated release finalization".to_string()),
     }
 
     // A workflow-level secret reaches every job, pull request tests included;
@@ -245,7 +279,10 @@ fn main() {
 
     // Dispatch inputs are attacker-shaped text; expanding them inside a shell
     // script lets a quote end the argument. Pass them through `env:` instead.
-    for line in workflow.lines().filter(|line| line.trim_start().starts_with("run:")) {
+    for line in workflow
+        .lines()
+        .filter(|line| line.trim_start().starts_with("run:"))
+    {
         if line.contains("${{ github.event.inputs.") || line.contains("${{ inputs.") {
             failures.push(format!(
                 "pass workflow inputs to run: through env, not ${{{{ }}}} expansion: {}",
@@ -269,7 +306,10 @@ fn main() {
     // Mutable runner aliases switch OS versions without a diff here: in
     // September 2026 every ubuntu-latest job announced the move to Ubuntu 26.
     for (path, text) in all_workflows() {
-        for line in text.lines().filter(|line| !line.trim_start().starts_with('#')) {
+        for line in text
+            .lines()
+            .filter(|line| !line.trim_start().starts_with('#'))
+        {
             if line.contains("ubuntu-latest") || line.contains("macos-latest") {
                 failures.push(format!(
                     "{path}: pin the runner OS version instead of a -latest alias: {}",
@@ -300,7 +340,9 @@ fn main() {
     }
 
     if failures.is_empty() {
-        println!("release workflow builds native images and publishes public, verified multi-platform manifests");
+        println!(
+            "release workflow builds native images and publishes public, verified multi-platform manifests"
+        );
     } else {
         for failure in failures {
             eprintln!("Error: {failure}");

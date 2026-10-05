@@ -43,6 +43,9 @@ use std::path::Path;
 use std::process::Command;
 use std::process::exit;
 
+#[path = "release-status.rs"]
+mod release_status;
+
 /// A recovery of an existing release commit keeps the same version identity.
 fn recovery_skip_bump(has_fragments: bool, tagged_head: bool) -> Result<bool, &'static str> {
     if tagged_head {
@@ -246,7 +249,12 @@ fn check_github_release(repository: &str, version: &str) -> bool {
     }
 
     match request.call() {
-        Ok(response) => response.status() == 200,
+        Ok(response) => serde_json::from_reader::<_, serde_json::Value>(response.into_reader())
+            .map(|release| release_status::is_stable_release(&release))
+            .unwrap_or_else(|error| {
+                eprintln!("Warning: Could not parse GitHub release: {error}");
+                false
+            }),
         Err(ureq::Error::Status(404, _)) => false,
         Err(e) => {
             eprintln!("Warning: Could not check GitHub release: {}", e);

@@ -56,6 +56,13 @@ if [ -n "$ROOT_ARGUMENT" ]; then
 else
     ROOT=${XDG_DATA_HOME:-"$HOME/.local/share"}/link-assistant-router/deploy${INSTANCE:+-$INSTANCE}
 fi
+# Quoted argv deliberately bypasses the caller's shell. Expand only the
+# supported home prefix here, against the target user's home, without eval.
+case "$ROOT" in
+    '~') ROOT=$HOME ;;
+    '~/'*) ROOT=$HOME/${ROOT#\~/} ;;
+    '~'*) echo "error: deployment paths support only ~ or ~/; use an absolute path" >&2; exit 2 ;;
+esac
 case "$ROOT" in
     /*) ;;
     *) echo "error: remote deployment root must be absolute: $ROOT" >&2; exit 2 ;;
