@@ -738,7 +738,9 @@ async fn run_remote_command(
     match command {
         // The routes exist and are admin-gated; only the wiring was missing.
         Command::Tokens { op } => link_assistant_router::tokens_remote::run(server, op).await,
-        Command::Accounts { .. } => link_assistant_router::auth_remote::accounts(server).await,
+        Command::Accounts { op } => {
+            link_assistant_router::accounts_cli::run_remote(server, op).await
+        }
         Command::Providers { op } => {
             link_assistant_router::providers_cli::run_remote(server, op).await
         }
