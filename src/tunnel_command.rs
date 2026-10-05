@@ -559,7 +559,10 @@ mod tests {
         );
         assert!(!arguments.iter().any(|argument| argument == "-p"));
         assert!(arguments.contains(&"TUNNEL_MODE=forward".to_string()));
-        assert!(arguments.contains(&"/keys/id:/run/secrets/ssh-key:ro".to_string()));
+        // The identity path is made absolute, which adds a drive on Windows.
+        assert!(arguments.iter().any(|argument| {
+            argument.ends_with(":/run/secrets/ssh-key:ro") && argument.contains("id")
+        }));
     }
 
     #[test]

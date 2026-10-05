@@ -114,5 +114,23 @@ fn a_missing_login_is_refused_before_anything_is_written() {
     let home = tempfile::tempdir().unwrap();
     let error = prepare(SeedProvider::Codex, home.path(), "far", SECRET).unwrap_err();
     assert!(error.starts_with("--seed-credential codex"), "{error}");
-    assert!(!home.path().join(".codex").exists());
+    // The vendor reader may create its home directory; no file is written.
+    let written: Vec<_> = walk(home.path());
+    assert!(written.is_empty(), "{written:?}");
+}
+
+fn walk(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
+    std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .flat_map(|entry| {
+            let path = entry.path();
+            if path.is_dir() {
+                walk(&path)
+            } else {
+                vec![path]
+            }
+        })
+        .collect()
 }
