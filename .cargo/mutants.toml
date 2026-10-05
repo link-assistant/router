@@ -1,0 +1,35 @@
+# cargo-mutants configuration (issue #672). The `Mutants` workflow mutates the
+# security-critical modules below and fails when a mutant survives the test
+# suite: a change to token verification, the SSRF guard, credential handling,
+# budget settlement or log redaction that no test notices.
+#
+#   cargo install cargo-mutants --locked
+#   cargo mutants --in-place --file src/token_validate.rs   # one module
+#   cargo mutants                                          # every module below
+
+examine_globs = [
+    "src/token.rs",
+    "src/token_validate.rs",
+    "src/token_constant_time.rs",
+    "src/token_reservation.rs",
+    "src/token_secret.rs",
+    "src/upstream_guard.rs",
+    "src/auth.rs",
+    "src/admin_auth.rs",
+    "src/credential_acceptance.rs",
+    "src/credential_store.rs",
+    "src/usage.rs",
+    "src/storage_budget.rs",
+    "src/request_log/redaction.rs",
+]
+
+# Logging and Debug formatting are not security behaviour.
+exclude_re = [
+    "impl Debug",
+    "impl (std::fmt::)?Display",
+    "tracing::",
+]
+
+# Whole-suite builds are slow; give each mutant's test run generous headroom
+# over the unmutated baseline before calling it a timeout.
+timeout_multiplier = 3.0
