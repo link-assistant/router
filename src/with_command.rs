@@ -28,9 +28,8 @@ use codex_catalog::write_codex_model_catalog;
 #[path = "with_command_claude_settings.rs"]
 mod claude_settings;
 use claude_settings::{
-    ClaudeModelSelection, append_claude_model_picker, claude_saved_model_selection,
-    claude_unavailable_model_warning, unavailable_native_claude_model,
-    validate_claude_model_selection,
+    ClaudeModelSelection, append_claude_model_picker, claude_launch_model_warning,
+    claude_saved_model_selection, unavailable_native_claude_model, validate_claude_model_selection,
 };
 
 #[path = "with_command_model_policy.rs"]
@@ -558,7 +557,9 @@ impl TemporaryClient {
                     .as_deref()
                     .or(model_override)
                     .or(gateway_model.as_deref());
-                if let Some(warning) = claude_unavailable_model_warning(launched, models) {
+                if let Some(warning) =
+                    claude_launch_model_warning(directory.path(), launched, models)
+                {
                     eprintln!("{warning}");
                 }
                 // The picker's Default row is not the user's selection: Claude
