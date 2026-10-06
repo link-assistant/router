@@ -168,6 +168,32 @@ fn a_released_provider_key_still_decrypts() {
     );
 }
 
+#[cfg(unix)]
+#[test]
+fn upgrade_seed_explicitly_allows_its_loopback_provider() {
+    let state = tempfile::tempdir().unwrap();
+    let output = Command::new("bash")
+        .arg(Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/upgrade-matrix.sh"))
+        .args(["seed", env!("CARGO_BIN_EXE_router")])
+        .arg(state.path())
+        .env("UPGRADE_TOKEN_SECRET", SECRET)
+        .env_remove("UPSTREAM_ALLOW_PRIVATE_NETWORKS")
+        .env_remove("LINK_ASSISTANT_ROUTER_SERVER")
+        .env_remove("LINK_ASSISTANT_ROUTER_TOKEN")
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "upgrade fixture seeding failed: {}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let store = ProviderStore::open(&state.path().join("data"), SECRET).unwrap();
+    let provider = store.resolve(PROVIDER).unwrap().unwrap();
+    assert_eq!(provider.base_url, "http://127.0.0.1:9/v1");
+    assert_eq!(provider.api_key.as_deref(), Some(PROVIDER_KEY));
+}
+
 #[test]
 fn the_cli_reads_and_extends_a_released_state() {
     let state = State::new();

@@ -68,6 +68,13 @@ impl Coordinator<'_> {
 
     /// Print the diagnosis for a status run; never a success.
     pub(super) fn diagnose(&self, error: &str) -> ExitCode {
+        let mut report = self.status_report("container", "inconsistent");
+        report["blockers"] = serde_json::json!([super::status_report::blocker(
+            "inconsistent-state",
+            error,
+            false
+        )]);
+        crate::operation_output::record(report);
         eprintln!("warning: local deployment state is inconsistent: {error}");
         for line in self.diagnosis(error) {
             println!("{line}");

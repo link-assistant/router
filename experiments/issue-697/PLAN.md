@@ -22,14 +22,14 @@
 - [x] #691: ESM Node/Bun typed package, version-safe binary resolution, secure env/stdin, deadlines, helper fixtures, real-binary tests and release integration.
 - [x] #694: declare language support; Python package and helpers; generated-client coverage; operation catalog, type/export parity, operation-language matrix and shared release gating.
 - [x] Check every occurrence across both binary aliases, all operational modules, HTTP routers and all release workflows.
-- [ ] Add changelog fragments/release trigger; commit useful atomic changes only after their local checks.
+- [x] Add changelog fragments/release trigger; commit useful atomic changes only after their local checks.
 
 ## Validation and publication
-- [ ] Run focused reproductions, bindings tests and schema/OpenAPI/parity tests.
+- [x] Run focused reproductions, bindings tests and schema/OpenAPI/parity tests.
 - [ ] Run all Rust tests, rustfmt, clippy, rustdoc, file-size/terminology/workflow/release checks.
 - [ ] Ensure main is included, push only issue-697-deffbafb3bb4, update PR 698 title/body with all seven full closing references.
 - [ ] Inspect final PR diff for regressions and removed features; verify clean working tree.
-- [ ] List CI runs with timestamps and SHAs; preserve failed-run logs in ci-logs; identify exact failures and fix them.
+- [x] List CI runs with timestamps and SHAs; preserve failed-run logs in ci-logs; identify exact failures and fix them.
 - [ ] Wait for all current-head CI runs; verify all checks pass; mark PR 698 ready.
 - [ ] Final response includes PR URL, delivered behavior and verification evidence/limits.
 

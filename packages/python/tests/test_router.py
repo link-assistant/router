@@ -1,5 +1,6 @@
 import json
 import os
+import platform
 import tempfile
 import unittest
 from pathlib import Path
@@ -88,7 +89,14 @@ class BindingTests(unittest.TestCase):
         try:
             result=router.verify(arguments=['--prepare-clients','--client','codex','--output',str(home.home/'result.json')])['data']
             self.assertEqual(result['schema'],'link-assistant-router/verification/v1')
-            self.assertEqual(result['client_preparation'][0]['observed'],'0.158.0')
+            preparation=result['client_preparation'][0]
+            if platform.system()=='Darwin':
+                self.assertIsNone(preparation['observed'])
+                self.assertEqual(preparation['status'],'not-proven')
+                self.assertIn('credential-store boundary',preparation['reason'])
+            else:
+                self.assertEqual(preparation['observed'],'0.158.0')
+                self.assertEqual(preparation['status'],'prepared')
             with self.assertRaises(RouterError) as error: verify_contracts(router=router,areas=['missing-area'])
             self.assertEqual(error.exception.exit_code,2)
         finally: stub.close(); home.close()

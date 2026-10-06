@@ -1208,6 +1208,368 @@
         "title": "IssueTokenRequest",
         "type": "object"
       },
+      "LocalDeployment": {
+        "additionalProperties": false,
+        "properties": {
+          "backend": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "image",
+                  "running"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blockers": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "forceable": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "reason",
+                "forceable"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "candidate_image": {
+            "type": "string"
+          },
+          "connections": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "converged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deployment_root": {
+            "type": "string"
+          },
+          "force_update_interrupts": {
+            "type": "boolean"
+          },
+          "host_process": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "executable": {
+                    "type": "string"
+                  },
+                  "pid": {
+                    "type": "integer"
+                  },
+                  "port": {
+                    "type": "integer"
+                  },
+                  "serving": {
+                    "type": "boolean"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "pid",
+                  "port",
+                  "version",
+                  "executable",
+                  "serving"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "host_router": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "executable": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "executable",
+                  "version"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "listener": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "host",
+              "port"
+            ],
+            "type": "object"
+          },
+          "mode": {
+            "enum": [
+              "host",
+              "container"
+            ]
+          },
+          "relay": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer"
+                  },
+                  "running": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "port",
+                  "running"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rollback_command": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runs": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "lease_expires_at": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "state",
+                    "lease_expires_at"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema": {
+            "const": "link-assistant-router/local-deployment/v1"
+          },
+          "status": {
+            "enum": [
+              "absent",
+              "legacy",
+              "managed",
+              "planned",
+              "inconsistent",
+              "interrupted"
+            ]
+          },
+          "status_is_read_only": {
+            "type": "boolean"
+          },
+          "token_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transaction": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "candidate": {
+                    "type": "string"
+                  },
+                  "image_id": {
+                    "type": "string"
+                  },
+                  "image_ref": {
+                    "type": "string"
+                  },
+                  "phase": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer"
+                  },
+                  "previous": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "previous_kind": {
+                    "type": "string"
+                  },
+                  "previous_port": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "version": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "version",
+                  "phase",
+                  "previous",
+                  "previous_kind",
+                  "previous_port",
+                  "candidate",
+                  "image_ref",
+                  "image_id",
+                  "port"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "schema",
+          "mode",
+          "status",
+          "deployment_root",
+          "candidate_image",
+          "listener",
+          "host_router",
+          "host_process",
+          "backend",
+          "relay",
+          "converged",
+          "connections",
+          "runs",
+          "blockers",
+          "force_update_interrupts",
+          "token_secret",
+          "rollback_command",
+          "status_is_read_only",
+          "transaction"
+        ],
+        "type": "object"
+      },
       "LogAnomaly": {
         "additionalProperties": false,
         "properties": {
@@ -1610,6 +1972,9 @@
               "message"
             ],
             "type": "object"
+          },
+          "request_id": {
+            "type": "string"
           },
           "type": {
             "const": "error"

@@ -40,6 +40,8 @@ Options use camelCase in JavaScript and snake_case in Python. Python keywords ha
 
 Secrets travel only through invocation `env` or `stdin`; secret-valued options are rejected before spawning. Do not put them in forwarded vendor arguments. Results carry `schema`, `operation`, `success`, `exit_code`, `data`, and `diagnostics`. `RouterError` retains the operation result, exit status and stderr. Deadlines and output limits bound child execution; cancellation is available through JavaScript `AbortSignal`.
 
+Local deployment status uses `link-assistant-router/local-deployment/v1` with structured host process, backend, relay, listener, convergence, run inventory and blockers. An unknown fact is null. Host, container, interrupted-update and inconsistent-state reports share this contract; callers do not parse `host_process=` lines. Deployment mutations report their assessed plan; call status afterward to inspect the resulting state.
+
 The [complete host maintenance wrapper](../../examples/maintain-host.mjs) contains only project configuration, policy and evidence storage. It calls the official deployment/status and verification APIs without parsing CLI text. Run it with a project config such as:
 
 ```json

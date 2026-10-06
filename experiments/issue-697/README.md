@@ -20,6 +20,7 @@ python3 experiments/issue-697/test_library_ownership.py
 python3 experiments/issue-697/test_client_versions.py
 python3 experiments/issue-697/test_contract_compatibility.py
 python3 experiments/issue-697/test_remote_json_consumers.py
+python3 experiments/issue-697/test_upgrade_seed.py
 cargo test --locked --test operations_api_test --test contract_inventory_test --test tagged_release_test
 python3 scripts/generate-contracts.py --check
 python3 scripts/generate-bindings.py --check
@@ -43,6 +44,13 @@ legacy arrays and versioned envelopes, plus failed/unrelated operation results.
 All three new-envelope cases fail against the original scripts (`--baseline`
 reads `origin/main`). This prevents duplicate deploy-token creation and preserves
 issued-token catalogs and checkpoint exports during upgrades.
+
+The upgrade-seed reproduction uses the actual Router binary with no inherited
+private-network permission. CI initially failed when released v1.16.0 refused
+the fixture's loopback provider. The fixture now explicitly allows loopback for
+its isolated commands; `upgrade_seed_explicitly_allows_its_loopback_provider`
+checks the persisted provider and encrypted key in the normal Rust suite. The
+experiment also accepts `--router` to replay seeding with a released binary.
 
 ```sh
 (cd packages/javascript && npm ci && npm test && npm run typecheck && bun test test/router.test.js)
@@ -68,3 +76,10 @@ Actual registry publication and tag-bound attestations are exercised by the
 release workflow when a release is created. This PR does not publish a release or
 rewrite previous tags. Live vendor tests retain the repository's credential-based
 opt-in; fixture and native tests do not claim paid-provider proof.
+
+# Structured deployment status
+
+`python3 experiments/issue-697/test_deploy_status.py` exercises isolated host,
+container and inconsistent-state status. All three failed before the structured
+report because data contained only human output lines. The real-host integration
+also checks the serving PID, port, convergence and absence of secret values.

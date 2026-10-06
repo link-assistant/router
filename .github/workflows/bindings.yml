@@ -39,6 +39,8 @@ jobs:
       - run: python scripts/generate-bindings.py --check
       - run: python experiments/issue-697/test_contract_compatibility.py
       - run: python experiments/issue-697/test_remote_json_consumers.py
+      - run: python experiments/issue-697/test_deploy_status.py
+        if: runner.os == 'Linux'
       - name: Compare published contracts with PR base
         if: github.event_name == 'pull_request'
         env:

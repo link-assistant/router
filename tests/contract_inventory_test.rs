@@ -88,11 +88,11 @@ fn native_model_and_error_envelopes_match_the_served_protocols() {
         "fixtures/vendor/anthropic/error-500-api-error.json"
     ))
     .unwrap();
-    contracts::validation::http(
-        &Method::POST,
+    for path in [
         "/api/services/anthropic/v1/messages",
-        500,
-        &fixture["response"]["json"],
-    )
-    .unwrap();
+        "/api/services/openai/v1/chat/completions",
+    ] {
+        contracts::validation::http(&Method::POST, path, 500, &fixture["response"]["json"])
+            .unwrap();
+    }
 }

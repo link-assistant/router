@@ -75,7 +75,7 @@ def generate(catalog):
         'Output': OUTPUT,
         'Version': obj({'version': STRING, 'source_commit': {'type': 'string', 'pattern': '^([a-f0-9]{40}|unknown)$'}}, ['version', 'source_commit']),
         'AnthropicError': obj({'type': {'const': 'error'}, 'request_id': STRING, 'error': obj({'type': STRING, 'message': STRING, 'outcome': STRING}, ['type', 'message'])}, ['type', 'error']),
-        'OpenAiError': obj({'type': {'const': 'error'}, 'error': obj({'type': STRING, 'message': STRING, 'code': {'type':['string','null']}, 'param': {'type':['string','null']}}, ['type','message'])}, ['error']),
+        'OpenAiError': obj({'type': {'const': 'error'}, 'request_id': STRING, 'error': obj({'type': STRING, 'message': STRING, 'code': {'type':['string','null']}, 'param': {'type':['string','null']}}, ['type','message'])}, ['error']),
         'GeminiError': obj({'error': obj({'code': INT,'message':STRING,'status':STRING}, ['code','message','status'])}, ['error']),
         'GitHubError': obj({'message':STRING}, ['message']),
         'OpaqueVendorPayload': {'description':'Native vendor payload passed through unchanged. Vendor-defined extensions are intentional.', 'x-router-opaque-vendor-payload':True},
@@ -111,6 +111,25 @@ def generate(catalog):
         'DeploymentEvent':obj({key:{} for key in ['schema','namespace','status','root','origin','control_health','serving_health','port_ownership','active_port_owners','catalogs','oauth_ownership','primary_preservation','real_claude_models_and_picker','resource_limits','parity','reason','data_retained','cleanup_scope','mode','previous_checkpoint','oauth_restored','global_atomic_snapshot','data_restore_proven','checkpoint','checkpoint_scope','credential_source','credentials_copied','profiles_projects_sessions','rollback_scope','oauth_copied','blocker','issued_bound_tokens','catalog_comparison','access_loss_explicitly_accepted']}, ['schema']),
     })
     components['RemoteDeployment'] = obj({key:{} for key in ['schema','target','server','mode','instance','status','exit_code','env','provider_keys','verification','deploy_token','steps','subprocesses','timings','output','seed_credentials']}, ['schema','target','server','mode','status','exit_code'])
+    nullable = lambda shape: {'anyOf': [shape, {'type': 'null'}]}
+    local_status = {
+        'schema': {'const':'link-assistant-router/local-deployment/v1'},
+        'mode': {'enum':['host','container']},
+        'status': {'enum':['absent','legacy','managed','planned','inconsistent','interrupted']},
+        'deployment_root': STRING, 'candidate_image': STRING,
+        'listener': obj({'host':STRING,'port':INT}, ['host','port']),
+        'host_router': nullable(obj({'executable':STRING,'version':STRING}, ['executable','version'])),
+        'host_process': nullable(obj({'pid':INT,'port':INT,'version':STRING,'executable':STRING,'serving':BOOL}, ['pid','port','version','executable','serving'])),
+        'backend': nullable(obj({'name':STRING,'image':nullable(STRING),'running':BOOL}, ['name','image','running'])),
+        'relay': nullable(obj({'name':STRING,'port':INT,'running':BOOL}, ['name','port','running'])),
+        'converged': nullable(BOOL), 'connections': nullable(INT),
+        'runs': nullable(array(obj({'id':STRING,'label':STRING,'state':STRING,'lease_expires_at':nullable(INT)}, ['id','label','state','lease_expires_at']))),
+        'blockers': array(obj({'name':STRING,'reason':STRING,'forceable':BOOL}, ['name','reason','forceable'])),
+        'force_update_interrupts':BOOL, 'token_secret':nullable(STRING),
+        'rollback_command':nullable(STRING), 'status_is_read_only':BOOL,
+        'transaction': nullable(obj({'version':INT,'phase':STRING,'previous':nullable(STRING),'previous_kind':STRING,'previous_port':nullable(INT),'candidate':STRING,'image_ref':STRING,'image_id':STRING,'port':INT}, ['version','phase','previous','previous_kind','previous_port','candidate','image_ref','image_id','port'])),
+    }
+    components['LocalDeployment'] = obj(local_status, list(local_status))
     target = obj({'target': STRING, 'status': STRING, 'passed': INT, 'failed': INT, 'ignored': INT}, ['target', 'status', 'passed', 'failed', 'ignored'])
     skip = obj({'tier': STRING, 'test': STRING, 'reason': STRING}, ['tier', 'test', 'reason'])
     area = obj({'name': STRING, 'covers': STRING, 'status': STRING, 'ran': BOOL, 'passed': INT, 'failed': INT, 'ignored': INT, 'skipped': array(skip), 'not_run': array(STRING), 'targets': array(target), 'enable_skipped_with': STRING, 'commands': array(STRING), 'log': STRING}, ['name', 'status', 'ran'])
@@ -197,7 +216,7 @@ def generate(catalog):
         elif name=='clients.repair': data=ref('RepairReport')
         elif name=='logs.summary': data=ref('LogSummary')
         elif name=='logs.anomalies': data=array(ref('LogAnomaly'))
-        elif name=='deploy': data={'anyOf':[ref('DeploymentEvent'), ref('RemoteDeployment'), OUTPUT]}
+        elif name=='deploy': data={'anyOf':[ref('DeploymentEvent'), ref('RemoteDeployment'), ref('LocalDeployment'), OUTPUT]}
 
         schema={'$schema':DRAFT,'$id':operation['schema'], **obj({'schema':{'const':operation['schema']},'operation':{'const':name},'success':BOOL,'exit_code':{'type':'integer','minimum':0,'maximum':255},'data':{'anyOf':[data,OUTPUT]},'diagnostics':array(STRING)}, ['schema','operation','success','exit_code','data','diagnostics']), '$defs':components, 'allOf':[{'if':{'properties':{'success':{'const':True}}},'then':{'properties':{'exit_code':{'const':0}}},'else':{'properties':{'exit_code':{'type':'integer','minimum':1}}}}]}
         # JSON Schema has $defs, while OpenAPI has components. Keep only
@@ -224,6 +243,7 @@ def generate(catalog):
         shape = copy.deepcopy(shape)
         shape['properties']['schema'] = {'const':f'link-assistant-router/{name}/v1'}
         write('schemas/'+name+'.v1.json', {'$schema':DRAFT, '$id':f'link-assistant-router/{name}/v1', **shape})
+    write('schemas/local-deployment.v1.json', {'$schema':DRAFT, '$id':'link-assistant-router/local-deployment/v1', **components['LocalDeployment']})
     matrix=['# Supported operation matrix','','Generated by `scripts/generate-contracts.py`; CI checks catalog, exports and schemas.','', '| Operation | Rust | JS/TS Node/Bun | Python | Schema |','| --- | --- | --- | --- | --- |']
     for op in catalog['operations']:
         matrix.append(f"| `{op['name']}` | `operations::request` | `{re.sub(r'[-_]([a-z])', lambda m:m[1].upper(), op['name'])}` | `{'.'.join((part.replace('-', '_') + ('_' if part in ['with','import'] else '')) for part in op['name'].split('.'))}` | v1 |")

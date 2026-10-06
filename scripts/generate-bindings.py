@@ -94,7 +94,7 @@ def main():
         if name=='logs':typ+=' & ((options?: LogsShowOptions, invocation?: Invocation) => Promise<Result<Output>>)'
         if name=='with':typ='('+typ+') & ((client: string, args: readonly string[], options?: WithOptions, invocation?: Invocation) => Promise<Result<{ client_exit_code: number | null; stdout: string; stderr: string }>>)'
         declarations.append('  '+name+': '+typ+';')
-    declarations.append('  deployStatus(options?: DeployOptions, invocation?: Invocation): Promise<Result>;')
+    declarations.append('  deployStatus(options?: DeployOptions, invocation?: Invocation): ReturnType<Router["deploy"]>;')
     declarations+=['}','export function createRouter(options?: RouterOptions): Router;', 'export function resolveBinary(options?: RouterOptions): Promise<string>;','export function validateOperation(name: string, result: unknown): Result;','export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;','']
     def pytree(node,classname):
         lines=[]; body=['class '+classname+':']

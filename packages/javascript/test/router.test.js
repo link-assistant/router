@@ -96,7 +96,15 @@ test('native verifier returns its saved versioned document using vendor fixtures
   try {
     const response = await router.verify({ arguments: ['--prepare-clients', '--client', 'codex', '--output', join(home.home, 'result.json')] });
     assert.equal(response.data.schema, 'link-assistant-router/verification/v1');
-    assert.equal(response.data.client_preparation[0].observed, '0.158.0');
+    const preparation = response.data.client_preparation[0];
+    if (process.platform === 'darwin') {
+      assert.equal(preparation.observed, null);
+      assert.equal(preparation.status, 'not-proven');
+      assert.match(preparation.reason, /credential-store boundary/);
+    } else {
+      assert.equal(preparation.observed, '0.158.0');
+      assert.equal(preparation.status, 'prepared');
+    }
     // Unknown areas exercise the shared helper's typed error without running a suite.
     await assert.rejects(verifyContracts({ router, repository: resolve('../..'), areas: ['missing-area'] }), error => error.exitCode === 2 && error.result.operation === 'verify');
   } finally { await stub.close(); await home.close(); }

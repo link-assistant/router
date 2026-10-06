@@ -55,6 +55,7 @@ GitHubError = TypedDict('GitHubError', {'message': 'str'}, total=False)
 Health = TypedDict('Health', {'status': 'str', 'version': 'str'}, total=False)
 IssueClientTokenRequest = TypedDict('IssueClientTokenRequest', {'allow_model_substitution': 'bool', 'allowed_models': 'list[str]', 'client_kind': 'str', 'ephemeral': 'bool', 'label': 'str | None', 'max_requests': 'int | None', 'model_substitution_source': 'str | None', 'run_lease': 'bool', 'sliding_expiry': 'bool | None', 'ttl_hours': 'int | None'}, total=False)
 IssueTokenRequest = TypedDict('IssueTokenRequest', {'account': 'str | None', 'allowed_models': 'list[str] | None', 'github_repos': 'list[str] | None', 'label': 'str | None', 'max_requests': 'int | None', 'max_tokens': 'int | None', 'rate_limit_per_minute': 'int | None', 'scope': 'str | None', 'sliding_expiry': 'bool | None', 'ttl_hours': 'int | None'}, total=False)
+LocalDeployment = TypedDict('LocalDeployment', {'backend': 'dict[str, Any] | None', 'blockers': 'list[dict[str, Any]]', 'candidate_image': 'str', 'connections': 'int | None', 'converged': 'bool | None', 'deployment_root': 'str', 'force_update_interrupts': 'bool', 'host_process': 'dict[str, Any] | None', 'host_router': 'dict[str, Any] | None', 'listener': 'dict[str, Any]', 'mode': "Literal['host', 'container']", 'relay': 'dict[str, Any] | None', 'rollback_command': 'str | None', 'runs': 'list[dict[str, Any]] | None', 'schema': "Literal['link-assistant-router/local-deployment/v1']", 'status': "Literal['absent', 'legacy', 'managed', 'planned', 'inconsistent', 'interrupted']", 'status_is_read_only': 'bool', 'token_secret': 'str | None', 'transaction': 'dict[str, Any] | None'}, total=False)
 LogAnomaly = TypedDict('LogAnomaly', {'correlation_ids': 'list[str]', 'detail': 'str', 'kind': 'str'}, total=False)
 LogSummary = TypedDict('LogSummary', {'bytes': 'int', 'exchanges': 'int', 'incomplete_streams': 'int', 'non_streamed': 'int', 'records': 'int', 'statuses': 'dict[str, Any]', 'streamed': 'int', 'undecodable_bodies': 'int', 'unparsable_records': 'int', 'unterminated_streams': 'int', 'unverifiable_streams': 'int'}, total=False)
 LoginView = TypedDict('LoginView', {'error': 'str | None', 'expires_at': 'int | None', 'login_id': 'str', 'provider': 'LoginView_SubscriptionProvider', 'session_expires_at': 'str', 'status': 'LoginView_LoginStatus', 'url': 'str | None', 'user_code': 'str | None'}, total=False)
@@ -65,7 +66,7 @@ ManagementReport = TypedDict('ManagementReport', {'accounts': 'Any', 'auth_url':
 Models = TypedDict('Models', {'catalog_conflict_candidates': 'Any', 'catalog_conflicts': 'Any', 'data': 'list[dict[str, Any]]', 'degraded_providers': 'Any', 'degraded_reasons': 'Any', 'first_id': 'str | None', 'has_more': 'bool', 'healthy_providers': 'Any', 'last_id': 'str | None', 'model_policy': 'TokenRecord_ModelAccessPolicy', 'object': 'str', 'starting_providers': 'Any', 'using_fallback': 'Any'}, total=False)
 NativeModels = TypedDict('NativeModels', {'models': 'list[dict[str, Any]]'}, total=False)
 OpaqueVendorPayload = Any
-OpenAiError = TypedDict('OpenAiError', {'error': 'dict[str, Any]', 'type': "Literal['error']"}, total=False)
+OpenAiError = TypedDict('OpenAiError', {'error': 'dict[str, Any]', 'request_id': 'str', 'type': "Literal['error']"}, total=False)
 OperationCatalog = TypedDict('OperationCatalog', {'languages': 'Any', 'operations': 'Any', 'routes': 'Any', 'schema': 'Any', 'types': 'Any', 'version': 'Any'}, total=False)
 Output = TypedDict('Output', {'output': 'list[str]'}, total=False)
 ProviderProvisionResponse = TypedDict('ProviderProvisionResponse', {'api_key_env': 'str | None', 'base_url': 'str', 'default_model': 'str | None', 'enabled': 'bool', 'has_encrypted_api_key': 'bool', 'intermediary_risk_acknowledged': 'bool', 'kind': 'ProviderRecord_ProviderKind', 'models': 'list[str]', 'name': 'str', 'outcome': "Literal['created', 'replaced', 'already_present']", 'subscriber_id': 'str | None', 'supported_clients': 'list[str]', 'unsupported_clients': 'list[str]'}, total=False)
@@ -286,7 +287,7 @@ class DeployResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: DeploymentEvent | RemoteDeployment | dict[str, Any]
+    data: DeploymentEvent | RemoteDeployment | LocalDeployment | dict[str, Any]
 class DoctorResult(TypedDict):
     schema: str
     operation: str
