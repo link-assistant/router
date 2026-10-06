@@ -189,7 +189,7 @@ pub fn parse_unified(headers: &HeaderMap) -> UnifiedLimits {
 /// Seconds since the unix epoch, now.
 #[must_use]
 pub fn now_unix() -> u64 {
-    SystemTime::now()
+    crate::operation_context::system_time()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs())
 }

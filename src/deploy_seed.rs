@@ -223,7 +223,7 @@ fn marked(original: &str, seed: &Seed, server: &str, state: &str) -> Result<Stri
         .or_insert_with(|| json!({}))
         .as_object_mut()
         .ok_or_else(|| "Router credential metadata is not a JSON object".to_string())?;
-    let at = std::time::SystemTime::now()
+    let at = crate::operation_context::system_time()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs());
     // Router never spends an externally owned refresh token.

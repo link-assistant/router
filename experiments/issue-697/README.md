@@ -23,7 +23,7 @@ python3 experiments/issue-697/test_remote_json_consumers.py
 python3 experiments/issue-697/test_upgrade_seed.py
 cargo test --locked --test operations_api_test --test contract_inventory_test --test tagged_release_test
 cargo test --locked --test deployment_api_test --test verification_api_test
-cargo test --locked --test token_clock_test
+cargo test --locked --test token_clock_test --test system_clock_test
 python3 scripts/generate-contracts.py --check
 python3 scripts/generate-bindings.py --check
 python3 scripts/check-contract-compatibility.py --base origin/main
@@ -124,3 +124,12 @@ The signed-expiry test first failed because the JWT decoder read wall-clock time
 even inside an injected operation context. It now verifies the same inclusive
 leeway with injected time while preserving signature validation. The before log
 is `logs/token-signed-clock-before.log`; wrong-issuer rejection is also tested.
+
+The whole-codebase clock audit found seven more direct wall-clock calls.
+All five `tests/system_clock_test.rs` cases failed before the fix, reproducing
+administrator claim expiry/timestamps, usage observations, deployment handover
+metadata and client-backup timestamps ignoring injected time. A shared adapter
+now supplies scoped `SystemTime` values while preserving native precision.
+Repeated writes at a frozen clock retain distinct backups and their original
+contents. Pre-epoch observation timestamps still clamp to zero. Elapsed-time
+deadlines continue to use the native monotonic clock.

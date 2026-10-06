@@ -139,6 +139,15 @@ pub fn now() -> chrono::DateTime<chrono::Utc> {
         .unwrap_or_else(chrono::Utc::now)
 }
 
+/// Preserve native wall-clock precision while honoring the scoped timestamp.
+pub(crate) fn system_time() -> std::time::SystemTime {
+    ACTIVE
+        .try_with(|context| context.now)
+        .ok()
+        .flatten()
+        .map_or_else(std::time::SystemTime::now, Into::into)
+}
+
 /// Resolve filesystem paths against the caller's working directory.
 pub fn current_dir() -> std::io::Result<PathBuf> {
     ACTIVE

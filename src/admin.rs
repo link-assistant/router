@@ -445,7 +445,7 @@ impl AdminClaim {
             token_sha256: sha256_hex(&token),
             token_id,
             ttl_hours,
-            expires_at: SystemTime::now() + self.candidate_ttl,
+            expires_at: crate::operation_context::system_time() + self.candidate_ttl,
         });
         Ok(Candidate {
             claim_id,
@@ -703,10 +703,9 @@ impl AdminClaim {
     }
 
     fn expire_candidate(state: &mut ClaimState) {
-        let expired = state
-            .candidate
-            .as_ref()
-            .is_some_and(|candidate| candidate.expires_at <= SystemTime::now());
+        let expired = state.candidate.as_ref().is_some_and(|candidate| {
+            candidate.expires_at <= crate::operation_context::system_time()
+        });
         if expired {
             state.candidate = None;
         }
@@ -758,7 +757,7 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 }
 
 fn unix_secs() -> u64 {
-    SystemTime::now()
+    crate::operation_context::system_time()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_secs())
 }
