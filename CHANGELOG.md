@@ -207,6 +207,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.18.1] - 2026-10-06
+
+### Fixed
+- Stop retaining upstream request payloads in the soak fixture while preserving recording for replay and feature assertions.
+- Measure soak resident memory on macOS, fail explicitly when RSS measurements are unavailable, and preserve resource and accounting diagnostics on Linux and macOS without raising the 64 MiB growth budget.
+
 ## [1.18.0] - 2026-10-06
 
 ### Added
