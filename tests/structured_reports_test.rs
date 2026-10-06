@@ -26,6 +26,12 @@ async fn isolated_doctor_reports_checks_providers_and_deployment_fields() {
     assert!(report.data["deployments"].is_array());
     assert!(report.data["recommended_models"].is_array());
     assert!(
+        report.data["output"]
+            .as_array()
+            .is_some_and(|lines| !lines.is_empty()),
+        "human rendering remains separate from domain facts"
+    );
+    assert!(
         !report
             .data
             .to_string()

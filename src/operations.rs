@@ -60,14 +60,18 @@ fn exit_number(code: ExitCode) -> u8 {
 
 fn result(operation: String, code: ExitCode, output: CapturedOutput) -> OperationResult {
     let exit_code = exit_number(code);
-    let mut data = output.data.unwrap_or_else(|| {
+    let data = if let Some(mut data) = output.data {
+        // Domain reports publish facts before their separate human rendering.
+        if let Some(lines) = data.get_mut("output") {
+            *lines = serde_json::json!(output.stdout.lines().collect::<Vec<_>>());
+        }
+        data
+    } else {
+        // Existing JSON documents already own their output field.
         serde_json::from_str(&output.stdout).unwrap_or_else(
             |_| serde_json::json!({"output": output.stdout.lines().collect::<Vec<_>>()}),
         )
-    });
-    if let Some(lines) = data.get_mut("output") {
-        *lines = serde_json::json!(output.stdout.lines().collect::<Vec<_>>());
-    }
+    };
     OperationResult {
         schema: format!("link-assistant-router/{}/v1", operation.replace('.', "-")),
         operation,
