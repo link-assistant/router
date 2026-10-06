@@ -1,0 +1,621 @@
+{
+  "$defs": {
+    "UsageEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "subscriptions": {
+          "items": {
+            "$ref": "#/$defs/UsageEnvelope_SubscriptionUsage"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "subscriptions"
+      ],
+      "title": "UsageEnvelope",
+      "type": "object"
+    },
+    "UsageEnvelope_Credits": {
+      "additionalProperties": false,
+      "properties": {
+        "approximate_cloud_messages": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "approximate_local_messages": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "balance": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "has_credits": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "overage_limit_reached": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unlimited": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "UsageEnvelope_ExtraUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "monthly_limit": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "remaining_credits": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "resets_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "used_credits": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "utilization": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "UsageEnvelope_NamedLimit": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "group": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "limit_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit_reached": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "metered_feature": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_display_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "used": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "windows": {
+          "items": {
+            "$ref": "#/$defs/UsageEnvelope_UsageWindow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "UsageEnvelope_SpendControl": {
+      "additionalProperties": false,
+      "properties": {
+        "individual_limit": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEnvelope_SpendLimit"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reached": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "UsageEnvelope_SpendLimit": {
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "remaining": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "remaining_percentage": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "reset_after_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "resets_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "used": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "used_percentage": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "UsageEnvelope_SubscriptionUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "additional_limits": {
+          "items": {
+            "$ref": "#/$defs/UsageEnvelope_NamedLimit"
+          },
+          "type": "array"
+        },
+        "allowed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "credits": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEnvelope_Credits"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extra_usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEnvelope_ExtraUsage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit_reached": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "plan": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pool": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEnvelope_UsagePool"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Redacted account-pool coverage. Present only for an administrative\naggregate; account names and credential metadata never cross the API."
+        },
+        "provider": {
+          "$ref": "#/$defs/UsageEnvelope_UsageProvider"
+        },
+        "rate_limit_reached_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rate_limit_reset_credits_available": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "retry_after_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "spend_control": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsageEnvelope_SpendControl"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "$ref": "#/$defs/UsageEnvelope_UsageState"
+        },
+        "status": {
+          "type": "string"
+        },
+        "subscription_created": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "subscription_end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trial_end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "windows": {
+          "items": {
+            "$ref": "#/$defs/UsageEnvelope_UsageWindow"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "provider",
+        "state",
+        "status",
+        "windows"
+      ],
+      "type": "object"
+    },
+    "UsageEnvelope_UsagePool": {
+      "additionalProperties": false,
+      "properties": {
+        "configured_accounts": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "contributing_accounts": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cooling_down_accounts": {
+          "description": "Accounts the router holds out of rotation on a vendor rate limit\n(issue #677). Absent when not reported.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "model_cooldowns": {
+          "description": "Per-model cooldowns across the pool, where only one model was limited.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "paused_accounts": {
+          "description": "Accounts paused by an operator or by `ACCOUNT_PAUSE_AT_PERCENT`.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "unavailable_accounts": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "configured_accounts",
+        "contributing_accounts",
+        "unavailable_accounts"
+      ],
+      "type": "object"
+    },
+    "UsageEnvelope_UsageProvider": {
+      "enum": [
+        "anthropic",
+        "openai",
+        "z-ai",
+        "lefine",
+        "gemini",
+        "qwen"
+      ],
+      "type": "string"
+    },
+    "UsageEnvelope_UsageState": {
+      "enum": [
+        "available",
+        "unavailable",
+        "unverified"
+      ],
+      "type": "string"
+    },
+    "UsageEnvelope_UsageWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "contributors": {
+          "description": "Number of pool accounts that supplied comparable percentages for this\naggregate window.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "remaining_percentage": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "reset_times": {
+          "description": "Distinct provider reset times when pooled accounts disagree. In that\ncase `resets_at` stays absent rather than inventing one timestamp.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "resets_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "used_percentage": {
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "window_seconds": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/usage/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/UsageEnvelope"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "usage"
+    },
+    "schema": {
+      "const": "link-assistant-router/usage/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

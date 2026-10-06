@@ -1,0 +1,224 @@
+{
+  "$id": "link-assistant-router/verification/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "areas": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "commands": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "covers": {
+            "type": "string"
+          },
+          "enable_skipped_with": {
+            "type": "string"
+          },
+          "failed": {
+            "type": "integer"
+          },
+          "ignored": {
+            "type": "integer"
+          },
+          "log": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "not_run": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "passed": {
+            "type": "integer"
+          },
+          "ran": {
+            "type": "boolean"
+          },
+          "skipped": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "test": {
+                  "type": "string"
+                },
+                "tier": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "tier",
+                "test",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "targets": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "failed": {
+                  "type": "integer"
+                },
+                "ignored": {
+                  "type": "integer"
+                },
+                "passed": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "target": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "target",
+                "status",
+                "passed",
+                "failed",
+                "ignored"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "ran"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "areas_not_run": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "client_preparation": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "client": {
+            "type": "string"
+          },
+          "expected": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "host_installed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "host_mismatch": {
+            "type": "boolean"
+          },
+          "observed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "installed",
+              "ci-pin",
+              "latest"
+            ]
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "client",
+          "expected",
+          "observed",
+          "status",
+          "reason",
+          "source",
+          "host_installed",
+          "host_mismatch"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "failed": {
+      "type": "boolean"
+    },
+    "generated_at_unix": {
+      "type": "integer"
+    },
+    "parity": {
+      "type": "boolean"
+    },
+    "router_version": {
+      "type": "string"
+    },
+    "schema": {
+      "const": "link-assistant-router/verification/v1"
+    },
+    "skipped": {
+      "type": "integer"
+    },
+    "targets_not_run": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "router_version",
+    "commit",
+    "generated_at_unix",
+    "complete",
+    "parity",
+    "failed",
+    "skipped",
+    "areas_not_run",
+    "targets_not_run",
+    "areas",
+    "client_preparation"
+  ],
+  "type": "object"
+}

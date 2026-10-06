@@ -17,6 +17,12 @@ own credential terms.
 [![Rust Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Flink-assistant%2Frouter%2Fmain%2FCargo.toml&query=%24.package.rust-version&label=rust&prefix=v&suffix=%2B&color=blue)](https://www.rust-lang.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
+## Integration packages
+
+Import operational logic from the Rust crate, `@link-assistant/router` for JavaScript/TypeScript on Node 20+ and Bun, or `link-assistant-router` for Python 3.10+. Each official package exposes the same operation catalog and validates versioned JSON contracts. PHP, Go and Java HTTP clients are generated and tested from the complete OpenAPI description in CI.
+
+See the [downstream integration guide](docs/integration/downstream.md), [operation × language matrix](docs/integration/operations.md), [JSON Schemas](schemas), and [OpenAPI 3.1](openapi/router.yaml). All official packages share Router's version and exact-tag release gate.
+
 ## Overview
 
 Link.Assistant.Router is a transparent proxy between API clients (such as
@@ -2361,3 +2367,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding guidelines,
 ## License
 
 [Unlicense](LICENSE) — Public Domain. See [LICENSE](LICENSE) for details.
+
+Release assets and images are built in the release tag's workflow context.
+Verify a downloaded asset against that immutable source before installing it:
+
+```sh
+gh attestation verify <asset> --repo link-assistant/router --source-ref refs/tags/vX.Y.Z
+# Also constrain the source commit when it is known:
+gh attestation verify <asset> --repo link-assistant/router --source-ref refs/tags/vX.Y.Z --source-digest <tag-commit>
+router version --json
+```
+
+`version --json` reports the package version and embedded source commit. The
+release gate checks the tag ref and digest for every asset and both image
+architectures before stable promotion. Historical releases retain their
+original provenance; this enforcement starts with the next release.

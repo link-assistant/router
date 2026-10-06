@@ -1,0 +1,181 @@
+{
+  "$defs": {
+    "DeploymentEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "access_loss_explicitly_accepted": {},
+        "active_port_owners": {},
+        "blocker": {},
+        "catalog_comparison": {},
+        "catalogs": {},
+        "checkpoint": {},
+        "checkpoint_scope": {},
+        "cleanup_scope": {},
+        "control_health": {},
+        "credential_source": {},
+        "credentials_copied": {},
+        "data_restore_proven": {},
+        "data_retained": {},
+        "global_atomic_snapshot": {},
+        "issued_bound_tokens": {},
+        "mode": {},
+        "namespace": {},
+        "oauth_copied": {},
+        "oauth_ownership": {},
+        "oauth_restored": {},
+        "origin": {},
+        "parity": {},
+        "port_ownership": {},
+        "previous_checkpoint": {},
+        "primary_preservation": {},
+        "profiles_projects_sessions": {},
+        "real_claude_models_and_picker": {},
+        "reason": {},
+        "resource_limits": {},
+        "rollback_scope": {},
+        "root": {},
+        "schema": {},
+        "serving_health": {},
+        "status": {}
+      },
+      "required": [
+        "schema"
+      ],
+      "type": "object"
+    },
+    "RemoteDeployment": {
+      "additionalProperties": false,
+      "properties": {
+        "deploy_token": {},
+        "env": {},
+        "exit_code": {},
+        "instance": {},
+        "mode": {},
+        "output": {},
+        "provider_keys": {},
+        "schema": {},
+        "seed_credentials": {},
+        "server": {},
+        "status": {},
+        "steps": {},
+        "subprocesses": {},
+        "target": {},
+        "timings": {},
+        "verification": {}
+      },
+      "required": [
+        "schema",
+        "target",
+        "server",
+        "mode",
+        "status",
+        "exit_code"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/deploy/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeploymentEvent"
+            },
+            {
+              "$ref": "#/$defs/RemoteDeployment"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "output": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "output"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "deploy"
+    },
+    "schema": {
+      "const": "link-assistant-router/deploy/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

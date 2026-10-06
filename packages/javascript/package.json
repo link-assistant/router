@@ -1,0 +1,49 @@
+{
+  "name": "@link-assistant/router",
+  "version": "1.16.1",
+  "description": "Official typed Router operations and testing helpers for Node and Bun",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./testing": {
+      "types": "./testing.d.ts",
+      "import": "./testing.js"
+    }
+  },
+  "files": [
+    "*.js",
+    "*.d.ts",
+    "catalog.json",
+    "schemas",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/link-assistant/router.git",
+    "directory": "packages/javascript"
+  },
+  "license": "Unlicense",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
