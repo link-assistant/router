@@ -1,9 +1,10 @@
 //! An in-process Router in front of a vendor stub that replays cassettes.
 //!
 //! Shared by the vendor-fixture replay tests (issue #671), the Claude Code
-//! feature matrix (issue #675) and the soak test (issue #672). The stub records
-//! every upstream request, so a test can assert both the exact bytes Router
-//! sent and what the client received.
+//! feature matrix (issue #675) and the soak test (issue #672). By default the
+//! stub records every upstream request, so a test can assert both the exact
+//! bytes Router sent and what the client received. The soak disables recording
+//! so its fixture does not retain payloads for the entire run (#705).
 //!
 //! Cassettes live under `tests/fixtures/vendor/` in the format written by
 //! `scripts/record-vendor-fixtures.rs`; see `tests/fixtures/vendor/README.md`.
@@ -140,7 +141,7 @@ pub struct Recorded {
 struct StubState {
     queue: Arc<Mutex<VecDeque<Cassette>>>,
     last: Arc<Mutex<Option<Cassette>>>,
-    requests: Arc<Mutex<Vec<Recorded>>>,
+    requests: Option<Arc<Mutex<Vec<Recorded>>>>,
     /// Delay between body chunks, so a client can disconnect mid-stream.
     chunk_delay: Arc<Mutex<Option<Duration>>>,
 }
@@ -167,11 +168,23 @@ fn http_client() -> reqwest::Client {
 
 impl ReplayRouter {
     pub async fn start(provider: UpstreamProvider) -> Self {
+        Self::start_with_recording(provider, true).await
+    }
+
+    /// Replay upstream replies without retaining any request payloads.
+    pub async fn start_without_recording(provider: UpstreamProvider) -> Self {
+        Self::start_with_recording(provider, false).await
+    }
+
+    async fn start_with_recording(provider: UpstreamProvider, recording: bool) -> Self {
         link_assistant_router::upstream_guard::install_process_policy(
             link_assistant_router::upstream_guard::NetworkPolicy::parse(Some("loopback")),
         );
         let data = tempfile::tempdir().expect("temporary router data");
-        let stub = StubState::default();
+        let stub = StubState {
+            requests: recording.then(|| Arc::new(Mutex::new(Vec::new()))),
+            ..StubState::default()
+        };
         let stub_app = Router::new().fallback(stub_vendor).with_state(stub.clone());
         let (stub_url, stub_task) = spawn(stub_app).await;
 
@@ -285,13 +298,20 @@ impl ReplayRouter {
         *self.stub.chunk_delay.lock().expect("stub delay") = delay;
     }
 
-    /// Every upstream request so far.
+    /// Every retained upstream request; empty when recording is disabled.
     pub fn requests(&self) -> Vec<Recorded> {
-        self.stub.requests.lock().expect("stub requests").clone()
+        self.stub
+            .requests
+            .as_ref()
+            .map_or_else(Vec::new, |requests| {
+                requests.lock().expect("stub requests").clone()
+            })
     }
 
     pub fn clear_requests(&self) {
-        self.stub.requests.lock().expect("stub requests").clear();
+        if let Some(requests) = &self.stub.requests {
+            requests.lock().expect("stub requests").clear();
+        }
     }
 
     /// Issue a token bound to `client`, optionally with a spend cap.
@@ -457,29 +477,28 @@ pub async fn spawn(app: Router) -> (String, tokio::task::JoinHandle<()>) {
 }
 
 async fn stub_vendor(State(state): State<StubState>, request: Request) -> Response {
-    let path = request.uri().to_string();
-    let headers = request.headers().clone();
     if request.method() == axum::http::Method::GET && request.uri().path().ends_with("/models") {
         return json_response(
             StatusCode::OK,
             &json!({"object": "list", "data": [{"id": BRIDGE_MODEL}]}),
         );
     }
-    let raw = to_bytes(request.into_body(), 16 * 1024 * 1024)
+    let (parts, body) = request.into_parts();
+    let raw = to_bytes(body, 16 * 1024 * 1024)
         .await
-        .expect("read stub request")
-        .to_vec();
-    let body = serde_json::from_slice::<Value>(&raw).unwrap_or(Value::Null);
-    state
-        .requests
-        .lock()
-        .expect("stub requests")
-        .push(Recorded {
-            path,
-            headers,
-            raw,
+        .expect("read stub request");
+    if let Some(requests) = &state.requests {
+        let body = serde_json::from_slice::<Value>(&raw).unwrap_or(Value::Null);
+        requests.lock().expect("stub requests").push(Recorded {
+            path: parts.uri.to_string(),
+            headers: parts.headers,
+            raw: raw.to_vec(),
             body,
         });
+    }
+    // Even in non-recording mode the body must be consumed, but its bytes and
+    // headers can be released before streaming the reply.
+    drop(raw);
     let cassette = {
         let next = state.queue.lock().expect("stub queue").pop_front();
         let mut last = state.last.lock().expect("stub last");

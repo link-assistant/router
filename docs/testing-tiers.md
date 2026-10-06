@@ -273,9 +273,19 @@ triggered on pull requests only when the code they guard changes.
 | Claude Code feature matrix (`tests/claude_code_feature_matrix_test.rs`) | Vision, PDFs, citations, thinking, structured outputs, server tools and beta headers pass through the native surface and are translated or refused cleanly on the Codex bridge (#675) | `cargo test --test claude_code_feature_matrix_test` | every change |
 | Benchmarks (`benches/hot_paths.rs`) | SSE and request translation and token validation do not get more than 25% slower (median) than the pull request's base, measured on the same runner (#672) | `cargo bench --bench hot_paths -- --save-baseline before`, change, `cargo bench --bench hot_paths -- --save-baseline after`, then `rust-script scripts/compare-benchmarks.rs before after` | `benchmarks.yml` |
 | Mutation testing (`.cargo/mutants.toml`) | Tests notice changes to token validation and reservations, the SSRF guard, authentication, credential handling, budget settlement and log redaction (#672) | `cargo install cargo-mutants --locked`, then `cargo mutants --file src/token_validate.rs` | `mutants.yml`: changed lines on pull requests, every listed module nightly |
-| Soak (`tests/soak_test.rs`, ignored) | Streamed, translated, unary and client-abandoned requests leave resident memory, live tasks and open descriptors bounded and no reservation open (#672) | `SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture` | `soak.yml`: one minute on pull requests, ten nightly |
+| Soak (`tests/soak_test.rs`, ignored) | Streamed, translated, unary and client-abandoned requests leave resident memory and live tasks bounded, with no reservation open; Linux also checks open descriptors (#672, #705) | `SOAK_SECONDS=60 cargo test --release --test soak_test -- --ignored --nocapture` | `soak.yml`: Linux and macOS, one minute on pull requests, ten nightly; diagnostics uploaded even on failure |
 | macOS Keychain (`tests/macos_keychain_test.rs`) | Router finds `Claude Code-credentials` and its `CLAUDE_CONFIG_DIR`-scoped entry in a real keychain, and prefers it to a stale credentials file (#674) | on macOS, against a throwaway keychain seeded as `macos-keychain.yml` does, with `ROUTER_TEST_KEYCHAIN=1` | `macos-keychain.yml` |
 | Upgrade matrix (`scripts/upgrade-matrix.sh`, `tests/upgrade_fixture_test.rs`) | A data directory written by each of the last three releases (capped, admin and revoked tokens, a provider with an encrypted key, a server profile) is listed, served and extended unchanged by the new build (#673) | `cargo test --test upgrade_fixture_test`, or `scripts/upgrade-matrix.sh download v1.15.3 /tmp/old`, `seed /tmp/old/router /tmp/state`, `verify target/debug/router /tmp/state` | `upgrade-matrix.yml` |
+
+The soak uses a non-retaining upstream fixture; ordinary replay and feature
+tests still record complete requests. RSS is measured in KiB through
+`/proc/self/status` on Linux and `/bin/ps -o rss= -p <pid>` on macOS. A missing
+baseline or final RSS sample fails with an explicit "resident memory bound
+unproven" diagnostic. Other platforms therefore cannot silently pass this
+memory claim. The default allowance remains 64 MiB after warm-up. Full request
+counts, RSS baseline/final/growth/budget, tasks, descriptors and token accounting
+are printed before assertions. Descriptor measurements are Linux-only; their
+absence is reported as an unproven connection bound.
 
 The macOS Keychain test never reads a developer's own credential: off macOS, or
 without `ROUTER_TEST_KEYCHAIN=1`, it skips and says so like any other gated
