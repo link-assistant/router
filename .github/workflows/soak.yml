@@ -2,7 +2,8 @@
 # unary and client-abandoned requests through the in-process Router and fails
 # when resident memory, live tasks or open file descriptors keep growing, or a
 # budget reservation is left open. Nightly runs it for ten minutes; a pull
-# request that touches the proxy or streaming code runs it for one.
+# request that touches the proxy or streaming code runs it for one. Linux and
+# macOS both measure RSS; descriptor measurements additionally run on Linux.
 name: Soak
 
 on:
@@ -42,8 +43,12 @@ env:
 
 jobs:
   soak:
-    name: Soak
-    runs-on: ubuntu-24.04
+    name: Soak (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,4 +75,15 @@ jobs:
           SOAK_CONCURRENCY: ${{ inputs.concurrency || '16' }}
         # Release mode: the debug build's allocation patterns are not the
         # ones a deployment sees.
-        run: cargo test --locked --release --test soak_test -- --ignored --nocapture
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --locked --release --test soak_test -- --ignored --nocapture 2>&1 | tee soak.log
+
+      - name: Preserve soak diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: soak-${{ matrix.os }}
+          path: soak.log
+          if-no-files-found: warn
