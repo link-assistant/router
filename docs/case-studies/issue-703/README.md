@@ -184,6 +184,11 @@ verify auth/client/log parity, exact and absent model identity, and stopped
 tunnel failure facts, including decoding typed payloads from unsuccessful
 operations. The coverage floor and default-branch ratchet remain enforced.
 
+Run 37451112629 then covered every line of the public report facade helpers
+and measured 86.221863% overall (73,699 / 85,476 lines). The coverage gate
+passed and required its increased baseline to be committed for review;
+`coverage-baseline.txt` records that exact measured value.
+
 ### Local compiler memory boundary
 
 The workspace has a 3 GiB memory limit. Compiling the combined 2,142-test
@@ -201,9 +206,22 @@ the ordinary sources. Run from the repository root:
 
 ```sh
 rust-script experiments/issue-703/shard-unit-tests.rs
-python3 experiments/issue-703/run-unit-shards.py
+env -u CODEX_HOME python3 experiments/issue-703/run-unit-shards.py
 ```
 
 Each compiler/test process and its complete output is recorded separately in
 `ci-logs/unit-shard-*-list.log` and `ci-logs/unit-shard-*.log`. This workaround
 does not alter the CI workflow or reduce its test coverage.
+
+All eight local shards passed. Their 2,142 distinct names exactly match the
+ordinary Linux CI unit suite from run 37451112629. The comparison is reusable:
+
+```sh
+python3 experiments/issue-703/compare-unit-test-inventories.py ci-logs/pipeline-37451112629-ubuntu.log
+```
+
+The existing `resolve_home_uses_subdir` unit test explicitly assumes that the
+provider home override is absent. Codex supplies `CODEX_HOME` in this workspace;
+remove that inherited override only from the local test subprocess environment
+to reproduce the ordinary CI environment. The original failing log is retained,
+and the application continues to honor configured provider home overrides.
