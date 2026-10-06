@@ -3662,6 +3662,9 @@
                 "enable_skipped_with": {
                   "type": "string"
                 },
+                "enable_with": {
+                  "type": "string"
+                },
                 "failed": {
                   "type": "integer"
                 },
@@ -3685,6 +3688,9 @@
                 },
                 "ran": {
                   "type": "boolean"
+                },
+                "reason": {
+                  "type": "string"
                 },
                 "skipped": {
                   "items": {
@@ -3755,7 +3761,24 @@
           },
           "areas_not_run": {
             "items": {
-              "type": "string"
+              "additionalProperties": false,
+              "properties": {
+                "enable_with": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "reason",
+                "enable_with"
+              ],
+              "type": "object"
             },
             "type": "array"
           },
@@ -3834,7 +3857,14 @@
             "type": "boolean"
           },
           "router_version": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "schema": {
             "const": "link-assistant-router/verification/v1"
@@ -3925,6 +3955,19 @@
                 }
               }
             },
+            "description": "Embedded UI"
+          }
+        },
+        "security": [],
+        "summary": "Admin UI entry point",
+        "x-router-listeners": [
+          "Admin"
+        ]
+      },
+      "head": {
+        "operationId": "head_admin_ui",
+        "responses": {
+          "200": {
             "description": "Embedded UI"
           }
         },
@@ -4050,6 +4093,35 @@
           "name": "Health",
           "path": "/api/health"
         }
+      },
+      "head": {
+        "operationId": "head_api_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "Health",
+        "tags": [
+          "Neutral"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Neutral",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "Health",
+          "path": "/api/health"
+        }
       }
     },
     "/api/management/accounts": {
@@ -4075,6 +4147,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Accounts",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Accounts",
+          "path": "/api/management/accounts"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_accounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -4451,6 +4556,35 @@
           "name": "AdminStatus",
           "path": "/api/management/admin/status"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_admin_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "AdminStatus",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "AdminStatus",
+          "path": "/api/management/admin/status"
+        }
       }
     },
     "/api/management/admin/summary": {
@@ -4476,6 +4610,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "AdminSummary",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "AdminSummary",
+          "path": "/api/management/admin/summary"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_admin_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -4562,6 +4729,39 @@
           "name": "AuthDiagnostics",
           "path": "/api/management/auth/diagnostics"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_auth_diagnostics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "AuthDiagnostics",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "AuthDiagnostics",
+          "path": "/api/management/auth/diagnostics"
+        }
       }
     },
     "/api/management/auth/status": {
@@ -4623,6 +4823,39 @@
           "name": "CredentialStatus",
           "path": "/api/management/auth/status"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_auth_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "CredentialStatus",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "CredentialStatus",
+          "path": "/api/management/auth/status"
+        }
       }
     },
     "/api/management/emergency-auth": {
@@ -4648,6 +4881,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "EmergencyAuthStatus",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "EmergencyAuthStatus",
+          "path": "/api/management/emergency-auth"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_emergency_auth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -4773,6 +5039,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "SubscriptionHealth",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "SubscriptionHealth",
+          "path": "/api/management/health/subscriptions"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_health_subscriptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -4981,6 +5280,49 @@
           "name": "LoginSession",
           "path": "/api/management/login/{id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_login_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "LoginSession",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "LoginSession",
+          "path": "/api/management/login/{id}"
+        }
       }
     },
     "/api/management/login/{id}/code": {
@@ -5099,6 +5441,39 @@
           "name": "Metrics",
           "path": "/api/management/metrics"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_metrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Metrics",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Metrics",
+          "path": "/api/management/metrics"
+        }
       }
     },
     "/api/management/providers": {
@@ -5136,6 +5511,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Providers",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Providers",
+          "path": "/api/management/providers"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -5333,6 +5741,49 @@
           "name": "Provider",
           "path": "/api/management/providers/{name}"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_providers_name",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Provider",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Provider",
+          "path": "/api/management/providers/{name}"
+        }
       }
     },
     "/api/management/tokens": {
@@ -5370,6 +5821,39 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Tokens",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Tokens",
+          "path": "/api/management/tokens"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_tokens",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -5736,6 +6220,39 @@
           "name": "Usage",
           "path": "/api/management/usage"
         }
+      },
+      "head": {
+        "operationId": "head_api_management_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Usage",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "Usage",
+          "path": "/api/management/usage"
+        }
       }
     },
     "/api/models": {
@@ -5761,6 +6278,45 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "AggregateModels",
+        "tags": [
+          "Neutral"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Neutral",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "AggregateModels",
+          "path": "/api/models"
+        }
+      },
+      "head": {
+        "operationId": "head_api_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -5900,6 +6456,34 @@
           "name": "ActivityPubFollowProblemsets",
           "path": "/api/services/activitypub/activities/follow-problemsets-code-001"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_activitypub_activities_follow_problemsets_code_001",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "ActivityPubFollowProblemsets",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Service(ActivityPub)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "GET",
+          "name": "ActivityPubFollowProblemsets",
+          "path": "/api/services/activitypub/activities/follow-problemsets-code-001"
+        }
       }
     },
     "/api/services/activitypub/actor/code": {
@@ -5944,6 +6528,34 @@
           "name": "ActivityPubActor",
           "path": "/api/services/activitypub/actor/code"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_activitypub_actor_code",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "ActivityPubActor",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Service(ActivityPub)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "GET",
+          "name": "ActivityPubActor",
+          "path": "/api/services/activitypub/actor/code"
+        }
       }
     },
     "/api/services/activitypub/actors/code/followers": {
@@ -5969,6 +6581,34 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "ActivityPubFollowers",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Service(ActivityPub)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "GET",
+          "name": "ActivityPubFollowers",
+          "path": "/api/services/activitypub/actors/code/followers"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_activitypub_actors_code_followers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -6094,6 +6734,34 @@
           "name": "ActivityPubOutbox",
           "path": "/api/services/activitypub/outbox/code"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_activitypub_outbox_code",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [],
+        "summary": "ActivityPubOutbox",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "None",
+          "class": "Service(ActivityPub)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "GET",
+          "name": "ActivityPubOutbox",
+          "path": "/api/services/activitypub/outbox/code"
+        }
       }
     },
     "/api/services/anthropic/v1/files": {
@@ -6119,6 +6787,45 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/files"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_files",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -6348,6 +7055,55 @@
           "name": "NativeAnthropic",
           "path": "/api/services/anthropic/v1/files/{file_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_files_file_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/files/{file_id}"
+        }
       }
     },
     "/api/services/anthropic/v1/files/{file_id}/content": {
@@ -6383,6 +7139,55 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/files/{file_id}/content"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_files_file_id_content",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -6511,6 +7316,45 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/messages/batches"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_messages_batches",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -6740,6 +7584,55 @@
           "name": "NativeAnthropic",
           "path": "/api/services/anthropic/v1/messages/batches/{batch_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_messages_batches_batch_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/messages/batches/{batch_id}"
+        }
       }
     },
     "/api/services/anthropic/v1/messages/batches/{batch_id}/cancel": {
@@ -6858,6 +7751,55 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/messages/batches/{batch_id}/results"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_messages_batches_batch_id_results",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -7016,6 +7958,45 @@
           "name": "AnthropicModels",
           "path": "/api/services/anthropic/v1/models"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "AnthropicModels",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "AnthropicModels",
+          "path": "/api/services/anthropic/v1/models"
+        }
       }
     },
     "/api/services/anthropic/v1/models/{model_id}": {
@@ -7081,6 +8062,55 @@
           "name": "AnthropicModel",
           "path": "/api/services/anthropic/v1/models/{model_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_models_model_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "AnthropicModel",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "AnthropicModel",
+          "path": "/api/services/anthropic/v1/models/{model_id}"
+        }
       }
     },
     "/api/services/anthropic/v1/skills": {
@@ -7106,6 +8136,45 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/skills"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_skills",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -7335,6 +8404,55 @@
           "name": "NativeAnthropic",
           "path": "/api/services/anthropic/v1/skills/{skill_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_skills_skill_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "skill_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/skills/{skill_id}"
+        }
       }
     },
     "/api/services/anthropic/v1/skills/{skill_id}/versions": {
@@ -7370,6 +8488,55 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/skills/{skill_id}/versions"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_skills_skill_id_versions",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "skill_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -7627,6 +8794,64 @@
           "name": "NativeAnthropic",
           "path": "/api/services/anthropic/v1/skills/{skill_id}/versions/{version}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_skills_skill_id_versions_version",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "skill_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/skills/{skill_id}/versions/{version}"
+        }
       }
     },
     "/api/services/anthropic/v1/skills/{skill_id}/versions/{version}/content": {
@@ -7671,6 +8896,64 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeAnthropic",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Anthropic)",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeAnthropic",
+          "path": "/api/services/anthropic/v1/skills/{skill_id}/versions/{version}/content"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_anthropic_v1_skills_skill_id_versions_version_content",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "skill_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -7902,6 +9185,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/accounts/verified_access"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_accounts_verified_access",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/accounts/verified_access"
+        }
       }
     },
     "/api/services/codex/backend-api/codex/analytics-events/events": {
@@ -8030,6 +9352,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/connectors/directory/list"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_connectors_directory_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/connectors/directory/list"
+        }
       }
     },
     "/api/services/codex/backend-api/connectors/directory/list_workspace": {
@@ -8055,6 +9416,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/connectors/directory/list_workspace"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_connectors_directory_list_workspace",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -8266,6 +9666,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/plugins/featured"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_plugins_featured",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -8644,6 +10083,45 @@
           "path": "/api/services/codex/backend-api/ps/mcp"
         }
       },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_mcp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/mcp"
+        }
+      },
       "post": {
         "operationId": "post_api_services_codex_backend_api_ps_mcp",
         "parameters": [],
@@ -8769,6 +10247,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/ps/plugins/installed"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_installed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/installed"
+        }
       }
     },
     "/api/services/codex/backend-api/ps/plugins/list": {
@@ -8794,6 +10311,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/list"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -8879,6 +10435,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/ps/plugins/search"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_search",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/search"
+        }
       }
     },
     "/api/services/codex/backend-api/ps/plugins/suggested/codex": {
@@ -8904,6 +10499,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/suggested/codex"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_suggested_codex",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -8989,6 +10623,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/ps/plugins/workspace/created"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_workspace_created",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/workspace/created"
+        }
       }
     },
     "/api/services/codex/backend-api/ps/plugins/workspace/shared": {
@@ -9014,6 +10687,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/workspace/shared"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_workspace_shared",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -9079,6 +10791,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/{plugin_id}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_plugin_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "plugin_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -9311,6 +11072,64 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/ps/plugins/{plugin_id}/skills/{skill}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_ps_plugins_plugin_id_skills_skill",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "plugin_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "skill",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -9771,6 +11590,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/wham/accounts/check"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_accounts_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/accounts/check"
+        }
       }
     },
     "/api/services/codex/backend-api/wham/accounts/send_add_credits_nudge_email": {
@@ -9899,6 +11757,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/wham/config/bundle"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_config_bundle",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/config/bundle"
+        }
       }
     },
     "/api/services/codex/backend-api/wham/profiles/me": {
@@ -9954,6 +11851,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/wham/profiles/me"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_profiles_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/profiles/me"
+        }
       }
     },
     "/api/services/codex/backend-api/wham/rate-limit-reset-credits": {
@@ -9979,6 +11915,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/rate-limit-reset-credits"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_rate_limit_reset_credits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -10147,6 +12122,55 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_remote_control_environments_environment_id_clients",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "environment_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients"
+        }
       }
     },
     "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients/{client_id}": {
@@ -10246,6 +12270,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/remote/control/server"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_remote_control_server",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -10623,6 +12686,45 @@
           "name": "NativeCodexBackend",
           "path": "/api/services/codex/backend-api/wham/settings/user"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_settings_user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/settings/user"
+        }
       }
     },
     "/api/services/codex/backend-api/wham/usage": {
@@ -10648,6 +12750,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/usage"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -10849,6 +12990,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodexBackend",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodexBackend",
+          "path": "/api/services/codex/backend-api/wham/workspace-messages"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_backend_api_wham_workspace_messages",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -11738,6 +13918,45 @@
           "path": "/api/services/codex/v1/chat/completions"
         }
       },
+      "head": {
+        "operationId": "head_api_services_codex_v1_chat_completions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexChatCompletions",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexChatCompletions",
+          "path": "/api/services/codex/v1/chat/completions"
+        }
+      },
       "post": {
         "operationId": "post_api_services_codex_v1_chat_completions",
         "parameters": [],
@@ -11937,6 +14156,55 @@
           "path": "/api/services/codex/v1/chat/completions/{completion_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_codex_v1_chat_completions_completion_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexChatCompletion",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexChatCompletion",
+          "path": "/api/services/codex/v1/chat/completions/{completion_id}"
+        }
+      },
       "post": {
         "operationId": "post_api_services_codex_v1_chat_completions_completion_id",
         "parameters": [
@@ -12052,6 +14320,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexChatCompletionMessages",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexChatCompletionMessages",
+          "path": "/api/services/codex/v1/chat/completions/{completion_id}/messages"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_chat_completions_completion_id_messages",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -12284,6 +14601,55 @@
           "path": "/api/services/codex/v1/conversations/{conversation_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_codex_v1_conversations_conversation_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexConversation",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexConversation",
+          "path": "/api/services/codex/v1/conversations/{conversation_id}"
+        }
+      },
       "patch": {
         "operationId": "patch_api_services_codex_v1_conversations_conversation_id",
         "parameters": [
@@ -12391,6 +14757,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexConversationItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexConversationItems",
+          "path": "/api/services/codex/v1/conversations/{conversation_id}/items"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_conversations_conversation_id_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -12648,6 +15063,64 @@
           "name": "CodexConversationItem",
           "path": "/api/services/codex/v1/conversations/{conversation_id}/items/{item_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_conversations_conversation_id_items_item_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexConversationItem",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexConversationItem",
+          "path": "/api/services/codex/v1/conversations/{conversation_id}/items/{item_id}"
+        }
       }
     },
     "/api/services/codex/v1/images/edits": {
@@ -12850,6 +15323,45 @@
           "path": "/api/services/codex/v1/live"
         }
       },
+      "head": {
+        "operationId": "head_api_services_codex_v1_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodex",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodex",
+          "path": "/api/services/codex/v1/live"
+        }
+      },
       "post": {
         "operationId": "post_api_services_codex_v1_live",
         "parameters": [],
@@ -12985,6 +15497,55 @@
           "name": "NativeCodex",
           "path": "/api/services/codex/v1/live/{call_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_live_call_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodex",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodex",
+          "path": "/api/services/codex/v1/live/{call_id}"
+        }
       }
     },
     "/api/services/codex/v1/models": {
@@ -13010,6 +15571,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexModels",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexModels",
+          "path": "/api/services/codex/v1/models"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -13105,6 +15705,55 @@
           "name": "CodexModel",
           "path": "/api/services/codex/v1/models/{model_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_models_model_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexModel",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexModel",
+          "path": "/api/services/codex/v1/models/{model_id}"
+        }
       }
     },
     "/api/services/codex/v1/realtime": {
@@ -13130,6 +15779,51 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodex",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodex",
+          "path": "/api/services/codex/v1/realtime"
+        },
+        "x-router-websocket": {
+          "events": {
+            "$ref": "#/components/schemas/OpaqueVendorPayload"
+          },
+          "upgrade": "websocket"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_realtime",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -13305,6 +15999,45 @@
             "$ref": "#/components/schemas/OpaqueVendorPayload"
           },
           "upgrade": "websocket"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_responses",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexResponses",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexResponses",
+          "path": "/api/services/codex/v1/responses"
         }
       },
       "post": {
@@ -13578,6 +16311,55 @@
           "name": "CodexResponse",
           "path": "/api/services/codex/v1/responses/{response_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_responses_response_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexResponse",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexResponse",
+          "path": "/api/services/codex/v1/responses/{response_id}"
+        }
       }
     },
     "/api/services/codex/v1/responses/{response_id}/cancel": {
@@ -13726,6 +16508,55 @@
           "name": "CodexResponseInputItems",
           "path": "/api/services/codex/v1/responses/{response_id}/input_items"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_responses_response_id_input_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "CodexResponseInputItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "CodexResponseInputItems",
+          "path": "/api/services/codex/v1/responses/{response_id}/input_items"
+        }
       }
     },
     "/api/services/codex/v1/user-auth-credential/whoami": {
@@ -13751,6 +16582,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeCodex",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Codex)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeCodex",
+          "path": "/api/services/codex/v1/user-auth-credential/whoami"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_codex_v1_user_auth_credential_whoami",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -13836,6 +16706,45 @@
           "name": "GeminiModels",
           "path": "/api/services/gemini/v1beta/models"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_gemini_v1beta_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Gemini failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GeminiModels",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Gemini)",
+          "dialect": "Gemini",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "GeminiModels",
+          "path": "/api/services/gemini/v1beta/models"
+        }
       }
     },
     "/api/services/gemini/v1beta/models/{model}": {
@@ -13871,6 +16780,55 @@
                 }
               }
             },
+            "description": "Gemini failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GeminiModel",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Gemini)",
+          "dialect": "Gemini",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "GeminiModel",
+          "path": "/api/services/gemini/v1beta/models/{model}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_gemini_v1beta_models_model",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "model",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Gemini failure envelope"
           }
         },
@@ -14196,23 +17154,9 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpaqueVendorPayload"
-                }
-              }
-            },
             "description": "Success"
           },
           "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubError"
-                }
-              }
-            },
             "description": "GitHub failure envelope"
           }
         },
@@ -14528,6 +17472,68 @@
           "name": "GitHubRest",
           "path": "/api/services/github/api/v3/{*path}"
         }
+      },
+      "trace": {
+        "operationId": "trace_api_services_github_api_v3_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpaqueVendorPayload"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubRest",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(GitHub)",
+          "dialect": "GitHub",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "ANY",
+          "name": "GitHubRest",
+          "path": "/api/services/github/api/v3/{*path}"
+        }
       }
     },
     "/api/services/github/git/{path}": {
@@ -14670,23 +17676,9 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpaqueVendorPayload"
-                }
-              }
-            },
             "description": "Success"
           },
           "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubError"
-                }
-              }
-            },
             "description": "GitHub failure envelope"
           }
         },
@@ -14954,6 +17946,68 @@
           },
           "required": false
         },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpaqueVendorPayload"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "Git",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Git)",
+          "dialect": "GitHub",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "ANY",
+          "name": "Git",
+          "path": "/api/services/github/git/{*path}"
+        }
+      },
+      "trace": {
+        "operationId": "trace_api_services_github_git_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -15277,6 +18331,45 @@
           "path": "/api/services/openai/v1/chat/completions"
         }
       },
+      "head": {
+        "operationId": "head_api_services_openai_v1_chat_completions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiChatCompletions",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiChatCompletions",
+          "path": "/api/services/openai/v1/chat/completions"
+        }
+      },
       "post": {
         "operationId": "post_api_services_openai_v1_chat_completions",
         "parameters": [],
@@ -15476,6 +18569,55 @@
           "path": "/api/services/openai/v1/chat/completions/{completion_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_openai_v1_chat_completions_completion_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiChatCompletion",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiChatCompletion",
+          "path": "/api/services/openai/v1/chat/completions/{completion_id}"
+        }
+      },
       "post": {
         "operationId": "post_api_services_openai_v1_chat_completions_completion_id",
         "parameters": [
@@ -15591,6 +18733,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiChatCompletionMessages",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiChatCompletionMessages",
+          "path": "/api/services/openai/v1/chat/completions/{completion_id}/messages"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_chat_completions_completion_id_messages",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -15823,6 +19014,55 @@
           "path": "/api/services/openai/v1/conversations/{conversation_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_openai_v1_conversations_conversation_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiConversation",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiConversation",
+          "path": "/api/services/openai/v1/conversations/{conversation_id}"
+        }
+      },
       "patch": {
         "operationId": "patch_api_services_openai_v1_conversations_conversation_id",
         "parameters": [
@@ -15930,6 +19170,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiConversationItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiConversationItems",
+          "path": "/api/services/openai/v1/conversations/{conversation_id}/items"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_conversations_conversation_id_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -16157,6 +19446,64 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiConversationItem",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiConversationItem",
+          "path": "/api/services/openai/v1/conversations/{conversation_id}/items/{item_id}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_conversations_conversation_id_items_item_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -16461,6 +19808,45 @@
           "name": "OpenAiModels",
           "path": "/api/services/openai/v1/models"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiModels",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiModels",
+          "path": "/api/services/openai/v1/models"
+        }
       }
     },
     "/api/services/openai/v1/models/{model_id}": {
@@ -16526,6 +19912,55 @@
           "name": "OpenAiModel",
           "path": "/api/services/openai/v1/models/{model_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_models_model_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiModel",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiModel",
+          "path": "/api/services/openai/v1/models/{model_id}"
+        }
       }
     },
     "/api/services/openai/v1/realtime": {
@@ -16551,6 +19986,51 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "NativeOpenAi",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "NativeOpenAi",
+          "path": "/api/services/openai/v1/realtime"
+        },
+        "x-router-websocket": {
+          "events": {
+            "$ref": "#/components/schemas/OpaqueVendorPayload"
+          },
+          "upgrade": "websocket"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_realtime",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -17163,6 +20643,45 @@
           "upgrade": "websocket"
         }
       },
+      "head": {
+        "operationId": "head_api_services_openai_v1_responses",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiResponses",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiResponses",
+          "path": "/api/services/openai/v1/responses"
+        }
+      },
       "post": {
         "operationId": "post_api_services_openai_v1_responses",
         "parameters": [],
@@ -17507,6 +21026,55 @@
           "name": "OpenAiResponse",
           "path": "/api/services/openai/v1/responses/{response_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_responses_response_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiResponse",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiResponse",
+          "path": "/api/services/openai/v1/responses/{response_id}"
+        }
       }
     },
     "/api/services/openai/v1/responses/{response_id}/cancel": {
@@ -17655,6 +21223,55 @@
           "name": "OpenAiResponseInputItems",
           "path": "/api/services/openai/v1/responses/{response_id}/input_items"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_openai_v1_responses_response_id_input_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "OpenAiResponseInputItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(OpenAi)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "OpenAiResponseInputItems",
+          "path": "/api/services/openai/v1/responses/{response_id}/input_items"
+        }
       }
     },
     "/api/services/qwen/v1/chat/completions": {
@@ -17680,6 +21297,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenChatCompletions",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenChatCompletions",
+          "path": "/api/services/qwen/v1/chat/completions"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_chat_completions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -17910,6 +21566,55 @@
           "path": "/api/services/qwen/v1/chat/completions/{completion_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_chat_completions_completion_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenChatCompletion",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenChatCompletion",
+          "path": "/api/services/qwen/v1/chat/completions/{completion_id}"
+        }
+      },
       "post": {
         "operationId": "post_api_services_qwen_v1_chat_completions_completion_id",
         "parameters": [
@@ -18025,6 +21730,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenChatCompletionMessages",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenChatCompletionMessages",
+          "path": "/api/services/qwen/v1/chat/completions/{completion_id}/messages"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_chat_completions_completion_id_messages",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "completion_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -18257,6 +22011,55 @@
           "path": "/api/services/qwen/v1/conversations/{conversation_id}"
         }
       },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_conversations_conversation_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenConversation",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenConversation",
+          "path": "/api/services/qwen/v1/conversations/{conversation_id}"
+        }
+      },
       "patch": {
         "operationId": "patch_api_services_qwen_v1_conversations_conversation_id",
         "parameters": [
@@ -18364,6 +22167,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenConversationItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenConversationItems",
+          "path": "/api/services/qwen/v1/conversations/{conversation_id}/items"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_conversations_conversation_id_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -18621,6 +22473,64 @@
           "name": "QwenConversationItem",
           "path": "/api/services/qwen/v1/conversations/{conversation_id}/items/{item_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_conversations_conversation_id_items_item_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenConversationItem",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenConversationItem",
+          "path": "/api/services/qwen/v1/conversations/{conversation_id}/items/{item_id}"
+        }
       }
     },
     "/api/services/qwen/v1/models": {
@@ -18646,6 +22556,45 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenModels",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenModels",
+          "path": "/api/services/qwen/v1/models"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_models",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -18741,6 +22690,55 @@
           "name": "QwenModel",
           "path": "/api/services/qwen/v1/models/{model_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_models_model_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "model_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenModel",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenModel",
+          "path": "/api/services/qwen/v1/models/{model_id}"
+        }
       }
     },
     "/api/services/qwen/v1/responses": {
@@ -18801,6 +22799,45 @@
             "$ref": "#/components/schemas/OpaqueVendorPayload"
           },
           "upgrade": "websocket"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_responses",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenResponses",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenResponses",
+          "path": "/api/services/qwen/v1/responses"
         }
       },
       "post": {
@@ -19001,6 +23038,55 @@
           "name": "QwenResponse",
           "path": "/api/services/qwen/v1/responses/{response_id}"
         }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_responses_response_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenResponse",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenResponse",
+          "path": "/api/services/qwen/v1/responses/{response_id}"
+        }
       }
     },
     "/api/services/qwen/v1/responses/{response_id}/cancel": {
@@ -19119,6 +23205,55 @@
                 }
               }
             },
+            "description": "OpenAi failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "QwenResponseInputItems",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Qwen)",
+          "dialect": "OpenAi",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "QwenResponseInputItems",
+          "path": "/api/services/qwen/v1/responses/{response_id}/input_items"
+        }
+      },
+      "head": {
+        "operationId": "head_api_services_qwen_v1_responses_response_id_input_items",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "response_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "OpenAi failure envelope"
           }
         },
@@ -19388,6 +23523,45 @@
           "name": "SubscriptionUsage",
           "path": "/api/usage"
         }
+      },
+      "head": {
+        "operationId": "head_api_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "SubscriptionUsage",
+        "tags": [
+          "Neutral"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Neutral",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "SubscriptionUsage",
+          "path": "/api/usage"
+        }
       }
     },
     "/api/usage/{provider}": {
@@ -19423,6 +23597,55 @@
                 }
               }
             },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "SubscriptionUsageProvider",
+        "tags": [
+          "Neutral"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Neutral",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "InferenceOnly"
+          ],
+          "method": "GET",
+          "name": "SubscriptionUsageProvider",
+          "path": "/api/usage/{provider}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_usage_provider",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
             "description": "Anthropic failure envelope"
           }
         },
@@ -19595,23 +23818,9 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpaqueVendorPayload"
-                }
-              }
-            },
             "description": "Success"
           },
           "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubError"
-                }
-              }
-            },
             "description": "GitHub failure envelope"
           }
         },
@@ -19927,6 +24136,68 @@
           "name": "GitHubAdapterRest",
           "path": "/api/v3/{*path}"
         }
+      },
+      "trace": {
+        "operationId": "trace_api_v3_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpaqueVendorPayload"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubAdapterRest",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(GitHub)",
+          "dialect": "GitHub",
+          "listeners": [
+            "GitHubAdapter"
+          ],
+          "method": "ANY",
+          "name": "GitHubAdapterRest",
+          "path": "/api/v3/{*path}"
+        }
       }
     },
     "/git/{path}": {
@@ -20069,23 +24340,9 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpaqueVendorPayload"
-                }
-              }
-            },
             "description": "Success"
           },
           "default": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GitHubError"
-                }
-              }
-            },
             "description": "GitHub failure envelope"
           }
         },
@@ -20401,6 +24658,68 @@
           "name": "GitHubAdapterGit",
           "path": "/git/{*path}"
         }
+      },
+      "trace": {
+        "operationId": "trace_git_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpaqueVendorPayload"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubAdapterGit",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Git)",
+          "dialect": "GitHub",
+          "listeners": [
+            "GitHubAdapter"
+          ],
+          "method": "ANY",
+          "name": "GitHubAdapterGit",
+          "path": "/git/{*path}"
+        }
       }
     }
   },
@@ -20409,6 +24728,244 @@
       "url": "http://127.0.0.1:8080"
     }
   ],
+  "x-router-any-methods": {
+    "/api/services/github/api/v3/{path}": {
+      "$ref": "#/paths/~1api~1services~1github~1api~1v3~1{path}/get",
+      "connect": {
+        "operationId": "connect_api_services_github_api_v3_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubRest",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(GitHub)",
+          "dialect": "GitHub",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "ANY",
+          "name": "GitHubRest",
+          "path": "/api/services/github/api/v3/{*path}"
+        }
+      },
+      "description": "The native catch-all accepts any valid HTTP method with the referenced authentication and response contracts. Successful CONNECT has no body; its explicit contract is below."
+    },
+    "/api/services/github/git/{path}": {
+      "$ref": "#/paths/~1api~1services~1github~1git~1{path}/get",
+      "connect": {
+        "operationId": "connect_api_services_github_git_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "Git",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Git)",
+          "dialect": "GitHub",
+          "listeners": [
+            "Combined"
+          ],
+          "method": "ANY",
+          "name": "Git",
+          "path": "/api/services/github/git/{*path}"
+        }
+      },
+      "description": "The native catch-all accepts any valid HTTP method with the referenced authentication and response contracts. Successful CONNECT has no body; its explicit contract is below."
+    },
+    "/api/v3/{path}": {
+      "$ref": "#/paths/~1api~1v3~1{path}/get",
+      "connect": {
+        "operationId": "connect_api_v3_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubAdapterRest",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(GitHub)",
+          "dialect": "GitHub",
+          "listeners": [
+            "GitHubAdapter"
+          ],
+          "method": "ANY",
+          "name": "GitHubAdapterRest",
+          "path": "/api/v3/{*path}"
+        }
+      },
+      "description": "The native catch-all accepts any valid HTTP method with the referenced authentication and response contracts. Successful CONNECT has no body; its explicit contract is below."
+    },
+    "/git/{path}": {
+      "$ref": "#/paths/~1git~1{path}/get",
+      "connect": {
+        "operationId": "connect_git_path",
+        "parameters": [
+          {
+            "description": "Wildcard path segments",
+            "in": "path",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubError"
+                }
+              }
+            },
+            "description": "GitHub failure envelope"
+          }
+        },
+        "security": [
+          {
+            "RouterBearer": []
+          },
+          {
+            "RouterApiKey": []
+          },
+          {
+            "RouterGoogleKey": []
+          }
+        ],
+        "summary": "GitHubAdapterGit",
+        "tags": [
+          "Service"
+        ],
+        "x-router-route": {
+          "auth": "Client",
+          "class": "Service(Git)",
+          "dialect": "GitHub",
+          "listeners": [
+            "GitHubAdapter"
+          ],
+          "method": "ANY",
+          "name": "GitHubAdapterGit",
+          "path": "/git/{*path}"
+        }
+      },
+      "description": "The native catch-all accepts any valid HTTP method with the referenced authentication and response contracts. Successful CONNECT has no body; its explicit contract is below."
+    }
+  },
   "x-router-streams": {
     "sse": {
       "events": [

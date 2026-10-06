@@ -24,7 +24,7 @@ fn issue_client_for(
     client: crate::clients::ClientKind,
     principal: &str,
 ) -> String {
-    state
+    let token = state
         .token_manager
         .issue(&crate::token::IssueRequest {
             ttl_hours: 1,
@@ -39,7 +39,12 @@ fn issue_client_for(
             client_kind: Some(client.canonical_name()),
             principal_id: Some(principal),
         })
-        .unwrap()
+        .unwrap();
+    state
+        .token_manager
+        .validate_token(&token)
+        .expect("usage fixture credential must validate before provider synchronization");
+    token
 }
 
 fn native_usage_request_header(

@@ -132,9 +132,10 @@ def generate(catalog):
     components['LocalDeployment'] = obj(local_status, list(local_status))
     target = obj({'target': STRING, 'status': STRING, 'passed': INT, 'failed': INT, 'ignored': INT}, ['target', 'status', 'passed', 'failed', 'ignored'])
     skip = obj({'tier': STRING, 'test': STRING, 'reason': STRING}, ['tier', 'test', 'reason'])
-    area = obj({'name': STRING, 'covers': STRING, 'status': STRING, 'ran': BOOL, 'passed': INT, 'failed': INT, 'ignored': INT, 'skipped': array(skip), 'not_run': array(STRING), 'targets': array(target), 'enable_skipped_with': STRING, 'commands': array(STRING), 'log': STRING}, ['name', 'status', 'ran'])
+    area = obj({'name': STRING, 'covers': STRING, 'status': STRING, 'ran': BOOL, 'passed': INT, 'failed': INT, 'ignored': INT, 'skipped': array(skip), 'not_run': array(STRING), 'targets': array(target), 'enable_skipped_with': STRING, 'commands': array(STRING), 'log': STRING, 'reason': STRING, 'enable_with': STRING}, ['name', 'status', 'ran'])
+    unexecuted_area = obj({'name': STRING, 'reason': STRING, 'enable_with': STRING}, ['name', 'reason', 'enable_with'])
     preparation = obj({'client': STRING, 'expected': {'type':['string','null']}, 'observed': {'type':['string','null']}, 'status': STRING, 'reason': STRING, 'source': {'enum':['installed','ci-pin','latest']}, 'host_installed': {'type':['string','null']}, 'host_mismatch': BOOL}, ['client','expected','observed','status','reason','source','host_installed','host_mismatch'])
-    components['Verification'] = obj({'schema': {'const':'link-assistant-router/verification/v1'}, 'router_version': STRING, 'commit': {'type':['string','null']}, 'generated_at_unix': INT, 'complete': BOOL, 'parity': BOOL, 'failed': BOOL, 'skipped': INT, 'areas_not_run': array(STRING), 'targets_not_run': array(STRING), 'areas': array(area), 'client_preparation': array(preparation)}, ['schema','router_version','commit','generated_at_unix','complete','parity','failed','skipped','areas_not_run','targets_not_run','areas','client_preparation'])
+    components['Verification'] = obj({'schema': {'const':'link-assistant-router/verification/v1'}, 'router_version': nullable(STRING), 'commit': {'type':['string','null']}, 'generated_at_unix': INT, 'complete': BOOL, 'parity': BOOL, 'failed': BOOL, 'skipped': INT, 'areas_not_run': array(unexecuted_area), 'targets_not_run': array(STRING), 'areas': array(area), 'client_preparation': array(preparation)}, ['schema','router_version','commit','generated_at_unix','complete','parity','failed','skipped','areas_not_run','targets_not_run','areas','client_preparation'])
     response_types = {
         ('Usage','GET'):ref('UsageSnapshot'), ('CredentialStatus','GET'):obj({'credentials':array(ref('CredentialAcceptanceReport'))}, ['credentials']),
         ('AuthDiagnostics','GET'):obj({'diagnostics':ref('AuthDiagnosticsSnapshot'),'emergency_auth':ref('EmergencyStatus')}, ['diagnostics','emergency_auth']),
@@ -159,9 +160,12 @@ def generate(catalog):
     response_types[('AggregateModels','GET')] = ref('AggregateModels')
     request_types = {'Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
     paths = {}
+    any_methods = {}
     for route in catalog['routes']:
         path = route['path'].replace('{*', '{')
-        methods = ['GET','POST','PUT','PATCH','DELETE','OPTIONS','HEAD'] if route['method']=='ANY' else [route['method']]
+        methods = ['GET','POST','PUT','PATCH','DELETE','OPTIONS','HEAD','TRACE'] if route['method']=='ANY' else ['GET','HEAD'] if route['method']=='GET' else [route['method']]
+        if route['method']=='ANY':
+            any_methods[path] = {'description':'The native catch-all accepts any valid HTTP method with the referenced authentication and response contracts. Successful CONNECT has no body; its explicit contract is below.', '$ref':'#/paths/'+path.replace('~','~0').replace('/','~1')+'/get'}
         for method in methods:
             success = response_types.get((route['name'],method), ref('ManagementReport') if route['class']=='Management' else ref('OpaqueVendorPayload'))
             if route['name'].endswith('Models') and route['name'] != 'AggregateModels':
@@ -178,10 +182,21 @@ def generate(catalog):
                 op['requestBody']={'required':False,'content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
             if '/realtime' in path or path.endswith('/responses') and method=='GET': op['x-router-websocket']={'upgrade':'websocket','events':ref('OpaqueVendorPayload')}
             if route['auth']=='Client': op['security'] += [{'RouterApiKey':[]},{'RouterGoogleKey':[]}]
+            if method=='HEAD':
+                for response in op['responses'].values(): response.pop('content', None)
             paths.setdefault(path,{})[method.lower()] = op
+        if route['method']=='ANY':
+            connect = copy.deepcopy(paths[path]['get'])
+            connect['operationId'] = connect['operationId'].replace('get_', 'connect_', 1)
+            connect['responses']['200'].pop('content')
+            any_methods[path]['connect'] = connect
     # The admin listener has an embedded asset fallback instead of the public 404.
     paths['/']={'get':{'operationId':'get_admin_ui','summary':'Admin UI entry point','security':[],'responses':{'200':{'description':'Embedded UI','content':{'text/html':{'schema':STRING}}}}, 'x-router-listeners':['Admin']}}
+    paths['/']['head'] = copy.deepcopy(paths['/']['get'])
+    paths['/']['head']['operationId'] = 'head_admin_ui'
+    paths['/']['head']['responses']['200'].pop('content')
     spec = {'openapi':'3.1.0','jsonSchemaDialect':DRAFT,'info':{'title':'Link.Assistant.Router HTTP API','version':catalog['version']},'servers':[{'url':'http://127.0.0.1:8080'}], 'paths':paths,'components':{'schemas':components,'securitySchemes':{'RouterBearer':{'type':'http','scheme':'bearer','bearerFormat':'la_sk JWT'},'AdminBearer':{'type':'http','scheme':'bearer','description':'Admin scoped JWT or provisioned TOKEN_ADMIN_KEY'},'RouterApiKey':{'type':'apiKey','in':'header','name':'x-api-key'},'RouterGoogleKey':{'type':'apiKey','in':'header','name':'x-goog-api-key'}}}, 'x-router-streams':{'sse':{'framing':'UTF-8 event/data records separated by a blank line','events':['message_start','content_block_start','content_block_delta','content_block_stop','message_delta','message_stop','error','response.created','response.output_text.delta','response.completed','response.failed','[DONE]']},'websocket':{'framing':'JSON text frames; native vendor event payloads','upgradeStatus':101}}}
+    spec['x-router-any-methods'] = any_methods
     write('openapi/router.yaml',spec)
     embedded = ['//! Generated offline contracts; regenerate with scripts/generate-contracts.py.', '#[rustfmt::skip]', 'pub(super) const CLI_SCHEMAS: &[(&str, &str)] = &[']
     for operation in catalog['operations'] + [{'name':'cli-error'}]:

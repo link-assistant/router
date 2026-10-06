@@ -26,7 +26,7 @@
 
 ## Validation and publication
 - [x] Run focused reproductions, bindings tests and schema/OpenAPI/parity tests.
-- [ ] Run all Rust tests, rustfmt, clippy, rustdoc, file-size/terminology/workflow/release checks.
+- [x] Run all Rust tests, rustfmt, clippy, rustdoc, file-size/terminology/workflow/release checks (local integration/docs pass; full unit compilation hits the documented memory limit, with complete CI execution).
 - [ ] Ensure main is included, push only issue-697-deffbafb3bb4, update PR 698 title/body with all seven full closing references.
 - [ ] Inspect final PR diff for regressions and removed features; verify clean working tree.
 - [x] List CI runs with timestamps and SHAs; preserve failed-run logs in ci-logs; identify exact failures and fix them.
@@ -35,3 +35,5 @@
 
 ## Working constraints
 Keep experiments finite, capture large logs to files, read files in chunks of at most 1500 lines, retain reusable probes here, avoid secret values in logs and command arguments, and await all background work. Do not merge or push other branches. No delegated agent work is authorized.
+
+This tracked plan records the implementation checkpoint before the final push. The final PR description records current-commit CI and publication results.

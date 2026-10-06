@@ -61,7 +61,7 @@ pub(crate) fn bound_client_token(
     account: Option<&str>,
 ) -> String {
     let principal = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
-    state
+    let token = state
         .token_manager
         .issue_with_id(&crate::token::IssueRequest {
             ttl_hours: 1,
@@ -77,7 +77,14 @@ pub(crate) fn bound_client_token(
             principal_id: Some(principal),
         })
         .unwrap()
-        .0
+        .0;
+    // An invalid fixture must fail before a request waits for an upstream
+    // barrier that authentication would prevent it from ever reaching.
+    state
+        .token_manager
+        .validate_token(&token)
+        .expect("fixture client credential must validate before upstream synchronization");
+    token
 }
 
 #[allow(clippy::redundant_pub_crate)]
@@ -86,7 +93,7 @@ pub(crate) fn bound_client_token_with_model_policy(
     client: crate::clients::ClientKind,
     policy: &crate::model_contract::ModelAccessPolicy,
 ) -> String {
-    state
+    let token = state
         .token_manager
         .issue_with_model_policy(
             &crate::token::IssueRequest {
@@ -99,7 +106,12 @@ pub(crate) fn bound_client_token_with_model_policy(
             },
             policy,
         )
-        .unwrap()
+        .unwrap();
+    state
+        .token_manager
+        .validate_token(&token)
+        .expect("pinned fixture credential must validate before upstream synchronization");
+    token
 }
 
 pub(super) fn opencode_headers(state: &AppState, account: Option<&str>) -> HeaderMap {

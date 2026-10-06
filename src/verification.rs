@@ -487,7 +487,12 @@ fn git_commit() -> Option<String> {
 }
 
 fn router_version() -> Option<String> {
-    let manifest = std::fs::read_to_string("Cargo.toml").ok()?;
+    let manifest = std::fs::read_to_string(
+        crate::operation_context::current_dir()
+            .ok()?
+            .join("Cargo.toml"),
+    )
+    .ok()?;
     manifest
         .lines()
         .find_map(|line| line.strip_prefix("version = "))
@@ -544,6 +549,11 @@ pub fn run_cli(arguments: Vec<String>) -> ExitCode {
             return ExitCode::from(2);
         }
     }
+    if output.is_relative()
+        && let Some(context) = crate::operation_context::current()
+    {
+        output = context.working_directory.join(output);
+    }
     let directory = output
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty())
@@ -585,11 +595,17 @@ pub fn run_cli(arguments: Vec<String>) -> ExitCode {
         .iter()
         .any(|item| item["status"] == "not-proven");
     // Persist discovery even when compilation is refused or preparation fails.
-    std::fs::write(
-        directory.join("clients.json"),
+    let client_evidence = directory.join("clients.json");
+    if let Err(error) = std::fs::write(
+        &client_evidence,
         serde_json::to_string_pretty(&preparation).expect("JSON"),
-    )
-    .expect("write client preparation");
+    ) {
+        eprintln!(
+            "error: could not write {}: {error}",
+            client_evidence.display()
+        );
+        return ExitCode::from(2);
+    }
     let areas: Vec<Value> = AREAS
         .iter()
         .filter(|area| selected.is_empty() || selected.iter().any(|name| name == area.name))

@@ -92,10 +92,11 @@ test('native verifier returns its saved versioned document using vendor fixtures
   const { verifyContracts } = await import('../testing.js');
   const home = await temporaryHome();
   const stub = await vendorStub({ name: 'codex', version: '0.158.0' });
-  const router = new Router({ binary, allowDownload: false, env: { ...home.env, ...stub.env }, cwd: resolve('../..') });
+  const router = new Router({ binary, allowDownload: false, env: { ...home.env, ...stub.env }, cwd: home.home });
   try {
     const response = await router.verify({ arguments: ['--prepare-clients', '--client', 'codex', '--output', join(home.home, 'result.json')] });
     assert.equal(response.data.schema, 'link-assistant-router/verification/v1');
+    assert.equal(response.data.router_version, null);
     const preparation = response.data.client_preparation[0];
     if (process.platform === 'darwin') {
       assert.equal(preparation.observed, null);

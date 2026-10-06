@@ -22,6 +22,8 @@ python3 experiments/issue-697/test_contract_compatibility.py
 python3 experiments/issue-697/test_remote_json_consumers.py
 python3 experiments/issue-697/test_upgrade_seed.py
 cargo test --locked --test operations_api_test --test contract_inventory_test --test tagged_release_test
+cargo test --locked --test deployment_api_test --test verification_api_test
+cargo test --locked --test token_clock_test
 python3 scripts/generate-contracts.py --check
 python3 scripts/generate-bindings.py --check
 python3 scripts/check-contract-compatibility.py --base origin/main
@@ -83,3 +85,42 @@ opt-in; fixture and native tests do not claim paid-provider proof.
 container and inconsistent-state status. All three failed before the structured
 report because data contained only human output lines. The real-host integration
 also checks the serving PID, port, convergence and absence of secret values.
+
+# Public operation facades and verification evidence
+
+`tests/deployment_api_test.rs` calls each deployment facade directly, verifies
+pure planning and read-only host status, and preserves project data, OAuth
+exclusion and existing client-token metadata during checkpoints and recovery.
+Docker and vendor dependencies are injected; no Router binary is spawned.
+
+`tests/verification_api_test.rs` injects bounded Cargo/vendor results to check
+saved evidence, compile failures, incomplete parity, preparation-only runs and
+I/O refusals. These fixtures test verifier semantics without claiming live
+vendor compatibility. Its relative-root case failed before the fix: the verifier
+read the process manifest instead of the caller's manifest and saved relative
+evidence outside the injected directory.
+Two further regressions reproduce a panic on blocked client-evidence writes and
+contract rejection of refused vendor areas. The fixes return typed I/O errors
+and preserve explanatory objects, including an absent manifest, across the
+published schemas and generated language types.
+
+The mutation gate also exposed missing expiry-boundary/fact assertions.
+`tests/token_clock_test.rs` validates equality rejection, one-second live sliding
+expiry, revocation and precise expiry diagnostics using an injected clock and
+already-aged signed fixtures. No sleeps or expensive stress inputs are needed.
+
+`python3 experiments/issue-697/analyze_coverage.py` analyzes the retained
+`target/issue-697-coverage/` CI artifact. See `CI-investigation.md` for the exact
+coverage-gate failure and the added facade coverage; no baseline was lowered.
+
+The native-method inventory fixture also fails before the fix because Axum's
+implicit HEAD route is absent from OpenAPI. All 349 standard HTTP operations
+now include HEAD and catch-all TRACE; a published reference extension covers
+CONNECT and arbitrary native methods. The fixture exercises HEAD's empty body,
+TRACE/CONNECT/custom success and authentication errors, with all generated
+HTTP-client methods compiled and checked for parity.
+
+The signed-expiry test first failed because the JWT decoder read wall-clock time
+even inside an injected operation context. It now verifies the same inclusive
+leeway with injected time while preserving signature validation. The before log
+is `logs/token-signed-clock-before.log`; wrong-issuer rejection is also tested.

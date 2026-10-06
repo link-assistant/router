@@ -17,6 +17,77 @@ The earlier placeholder run failed its changelog-fragment check; the minor
 release fragment addresses that separately. Docker, real-client capture, fuzz,
 soak, benchmarks and Rust semver checks passed on the first implementation run.
 
+The next run used `0a5a80b8d955c3471f6bfe52663d9c2643c40d7b` at 01:54 UTC.
+Its complete Linux, macOS and Windows suites passed, as did downstream packages,
+generated clients, upgrade fixtures, Keychain, Docker, capture, fuzz, soak and
+benchmarks. Coverage job 112070698764 in run 37401553037 failed only its gate:
+`coverage-37401553037.log:7521` reports 85.65% against the unchanged 86.03%
+committed/default-branch baseline. All coverage test assertions passed.
+
+The retained `rust-lcov` artifact reports 72,763 covered of 84,952 lines.
+`analyze_coverage.py` identifies 104 unexercised lines in public deployment
+facades and 215 in verifier execution. Direct library tests now exercise pure
+plans, all deployment facades, snapshots, typed refusals, monitoring, auth import,
+administrator recovery, the verification catalog and evidence/parity failures.
+These tests use injected dependencies and isolated roots; the coverage baseline
+and CI gate remain unchanged.
+
+The verifier-root regression first failed in
+`logs/verification-roots-before.log`: an injected manifest version `9.8.7`
+returned the process-directory version `1.16.1`. Relative evidence also went to
+the process directory. The verifier now resolves both against the injected
+working directory, with a failing-before/passing-after test in
+`tests/verification_api_test.rs`.
+
+The same facade tests reproduce a panic when `clients.json` cannot be written.
+Client evidence now returns the typed I/O failure before Cargo runs. Review also
+found that refused vendor areas produce explanatory objects while the initial
+schema incorrectly declared strings and omitted the refusal fields. The failing
+contract fixture preserves those objects and a missing manifest; regenerated
+Rust, OpenAPI, JS/TS and Python contracts/types now match the actual verifier.
+
+Mutation shard 2 in run 37401553073 reports two surviving mutants at
+`mutants2-37401553073.log:988,990`: changing the sliding-expiry comparison from
+`>` to `>=`, and returning no expiry facts. The existing suite asserted only
+generic expiry errors. `tests/token_clock_test.rs` now checks the exact injected
+expiry boundary, the live one-second boundary, revocation and original signed
+expiry facts/elapsed time. It uses finite 2020 JWT timestamps and a fixed operation
+clock, without wall-clock waits.
+Shard 1 reports two more survivors at `mutants1-37401553073.log:988,990`:
+weakening either conjunction in the same sliding-expiry predicate. The exact-time
+rejection test also detects both, while the live-boundary case proves the valid
+sliding path remains accepted.
+
+Shard 0 completed at 02:53 UTC with four timeouts, not surviving assertions:
+`mutants0-37401553073.log:988–991` replaces token issuance with bogus success
+values. The downloaded report's `log/src__token.rs_line_434_col_9.log:4797–4800`
+names four model-routing evidence tests waiting indefinitely for mock-upstream
+barriers or a server join. Invalid client credentials prevent dispatch from ever
+reaching those upstreams. The same report contains many failed assertions, but
+the four waits prevent the unit process from returning its failure status.
+Both shared model-routing token fixtures now validate the issued token before
+upstream synchronization, so invalid fixture issuance fails immediately. Neither
+the mutation timeout multiplier nor the security gate is relaxed.
+The same audit found a later subscription-usage fixture waiting for a provider
+notification after issuing an unchecked token; its shared issuer now validates
+before synchronization too. Other token-dependent synchronization fixtures reuse
+the checked model-routing helper.
+
+The signed-expiry clock regression subsequently failed at
+`logs/token-signed-clock-before.log:16`: a token valid at injected time was
+rejected against the wall clock. The JWT decoder does not provide an injectable
+clock. Signature and claim validation remain enabled; scoped expiry checks now
+use the same inclusive default leeway with injected time. The regression checks
+validity, the precise leeway boundary, expiry immediately afterward and rejection
+under a different issuer secret.
+
+The native-method regression fails in `logs/native-methods-before.log:19`
+because the implicit HEAD contract is absent. The full inventory now contains
+349 standard HTTP operations and referenced catch-all contracts for CONNECT and
+custom methods. Native Axum fixtures check empty HEAD/CONNECT success bodies,
+TRACE/custom JSON, dialect errors and method classification. All generated SDK
+methods are rebuilt and compared with the complete inventory.
+
 Local builds use one Cargo job and omit debug information to fit the workspace's
 3 GiB memory limit. The combined 2,140-test library compiler exceeded that limit,
 including with 1,024 code generation units and serialized LLVM work. This is a

@@ -85,10 +85,11 @@ class BindingTests(unittest.TestCase):
     def test_verification_document(self):
         from link_assistant_router.testing import verify_contracts
         home=temporary_home(); stub=vendor_stub(name='codex',version='0.158.0')
-        router=Router(binary=BINARY,allow_download=False,env={**home.env,**stub.env})
+        router=Router(binary=BINARY,allow_download=False,env={**home.env,**stub.env},cwd=home.home)
         try:
             result=router.verify(arguments=['--prepare-clients','--client','codex','--output',str(home.home/'result.json')])['data']
             self.assertEqual(result['schema'],'link-assistant-router/verification/v1')
+            self.assertIsNone(result['router_version'])
             preparation=result['client_preparation'][0]
             if platform.system()=='Darwin':
                 self.assertIsNone(preparation['observed'])

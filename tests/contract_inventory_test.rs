@@ -30,10 +30,15 @@ fn openapi_covers_every_served_route_and_method() {
     assert_eq!(spec["openapi"], "3.1.0");
     let mut expected = std::collections::BTreeSet::new();
     expected.insert(("/".to_owned(), "get".to_owned()));
+    expected.insert(("/".to_owned(), "head".to_owned()));
     for route in contracts::routes() {
         let path = route["path"].as_str().unwrap().replace("{*", "{");
         let methods = if route["method"] == "ANY" {
-            vec!["get", "post", "put", "patch", "delete", "options", "head"]
+            vec![
+                "get", "post", "put", "patch", "delete", "options", "head", "trace",
+            ]
+        } else if route["method"] == "GET" {
+            vec!["get", "head"]
         } else {
             vec![]
         };
@@ -60,6 +65,94 @@ fn openapi_covers_every_served_route_and_method() {
         })
         .collect();
     assert_eq!(actual, expected);
+}
+
+#[tokio::test]
+async fn native_axum_methods_are_published_and_validated() {
+    use axum::{
+        Router,
+        body::Body,
+        http::{Method, Request, StatusCode},
+        routing::{any, get},
+    };
+    use tower::ServiceExt;
+
+    let wildcard = contracts::routes()
+        .into_iter()
+        .find(|route| route["method"] == "ANY")
+        .unwrap();
+    let path = wildcard["path"].as_str().unwrap().replace("{*", "{");
+    let concrete = path.split('{').next().unwrap().to_owned() + "fixture";
+    let app = Router::new()
+        .route(
+            "/api/management/tokens",
+            get(|| async { axum::Json(serde_json::json!({"data":[]})) }),
+        )
+        .route(
+            wildcard["path"].as_str().unwrap(),
+            any(|| async { axum::Json(serde_json::json!({"fixture":true})) }),
+        )
+        .layer(axum::middleware::from_fn(
+            contracts::validation::response_contract,
+        ));
+    let head = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::HEAD)
+                .uri("/api/management/tokens")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(head.status(), StatusCode::OK);
+    assert!(
+        axum::body::to_bytes(head.into_body(), 1024)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+
+    let spec: Value = serde_json::from_str(include_str!("../openapi/router.yaml")).unwrap();
+    assert!(spec["paths"]["/api/health"]["head"].is_object());
+    assert!(
+        link_assistant_router::route_contract::route_for_path(&Method::HEAD, "/api/health")
+            .is_some()
+    );
+    for method in [
+        Method::TRACE,
+        Method::CONNECT,
+        Method::from_bytes(b"PROPFIND").unwrap(),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method.clone())
+                    .uri(&concrete)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = axum::body::to_bytes(response.into_body(), 1024)
+            .await
+            .unwrap();
+        if method == Method::CONNECT {
+            assert!(bytes.is_empty());
+            assert!(
+                contracts::validation::http(&method, &concrete, 200, &serde_json::json!({}))
+                    .is_err()
+            );
+        } else {
+            let document: Value = serde_json::from_slice(&bytes).unwrap();
+            contracts::validation::http(&method, &concrete, 200, &document).unwrap();
+        }
+        let error = serde_json::json!({"message":"missing token"});
+        contracts::validation::http(&method, &concrete, 401, &error).unwrap();
+    }
 }
 
 #[test]

@@ -19,6 +19,9 @@
               "enable_skipped_with": {
                 "type": "string"
               },
+              "enable_with": {
+                "type": "string"
+              },
               "failed": {
                 "type": "integer"
               },
@@ -42,6 +45,9 @@
               },
               "ran": {
                 "type": "boolean"
+              },
+              "reason": {
+                "type": "string"
               },
               "skipped": {
                 "items": {
@@ -112,7 +118,24 @@
         },
         "areas_not_run": {
           "items": {
-            "type": "string"
+            "additionalProperties": false,
+            "properties": {
+              "enable_with": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "reason",
+              "enable_with"
+            ],
+            "type": "object"
           },
           "type": "array"
         },
@@ -191,7 +214,14 @@
           "type": "boolean"
         },
         "router_version": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "schema": {
           "const": "link-assistant-router/verification/v1"

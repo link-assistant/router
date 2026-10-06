@@ -46,7 +46,16 @@ pub fn http(
     let spec: Value =
         serde_json::from_str(super::generated::HTTP).map_err(|error| error.to_string())?;
     let template = route.template.replace("{*", "{");
-    let operation = &spec["paths"][&template][method.as_str().to_lowercase()];
+    let mut operation = &spec["paths"][&template][method.as_str().to_lowercase()];
+    if method == axum::http::Method::CONNECT {
+        operation = &spec["x-router-any-methods"][&template]["connect"];
+    } else if operation.is_null() && route.method == crate::route_contract::RouteMethod::Any {
+        operation = spec["x-router-any-methods"][&template]["$ref"]
+            .as_str()
+            .and_then(|reference| reference.strip_prefix('#'))
+            .and_then(|pointer| spec.pointer(pointer))
+            .ok_or_else(|| format!("undocumented catch-all response {method} {path}"))?;
+    }
     let response = if status < 400 {
         &operation["responses"]["200"]
     } else {
@@ -89,7 +98,9 @@ pub async fn response_contract(
     let path = request.uri().path().to_owned();
     let response = next.run(request).await;
     // Explicit test-only handlers are not part of the served Router surface.
-    if path.starts_with("/test/")
+    if method == axum::http::Method::HEAD
+        || method == axum::http::Method::CONNECT && response.status().is_success()
+        || path.starts_with("/test/")
         || response.status().as_u16() == 404
             && crate::route_contract::route_for_path(&method, &path).is_none()
         || !response
