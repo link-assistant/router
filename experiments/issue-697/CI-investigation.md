@@ -88,6 +88,28 @@ custom methods. Native Axum fixtures check empty HEAD/CONNECT success bodies,
 TRACE/custom JSON, dialect errors and method classification. All generated SDK
 methods are rebuilt and compared with the complete inventory.
 
+The final whole-codebase wall-clock audit found seven `SystemTime::now` calls
+outside the shared operation context. `logs/system-clock-before.log:7–11`
+records all five regression failures: administrator claim expiry/confirmation,
+usage observations, deployment handover and client-backup timestamps. They now
+use the injected clock through one adapter. Backup names include a unique suffix
+so repeated writes at fixed time preserve every original; pre-epoch observations
+retain zero clamping. Monotonic process deadlines are unchanged.
+
+Run 37407216248 at commit `1f8c52a` passed every coverage assertion and raised
+line coverage to 73,229 / 84,992, or 86.159874%. Its remaining coverage failure
+is the reviewable-ratchet requirement at
+`ci-logs/job-112088231266-37407216248.log:8138,8164`: the measured increase must be
+committed in `coverage-baseline.txt`. The baseline advances from 86.029112%.
+The same run's macOS job failed the new relative-root assertion at
+`ci-logs/job-112088231357-37407216248.log:7165–7166`. The verifier correctly
+canonicalizes its evidence directory; macOS resolves temporary `/var` paths
+under `/private/var`. Windows reports the same assertion at
+`ci-logs/job-112088231349-37407216248.log:49744–49745`, because canonical paths
+carry the extended-length prefix. The test now compares filesystem paths
+against the canonical home, preserving the root-isolation assertion on every
+platform.
+
 Local builds use one Cargo job and omit debug information to fit the workspace's
 3 GiB memory limit. The combined 2,140-test library compiler exceeded that limit,
 including with 1,024 code generation units and serialized LLVM work. This is a

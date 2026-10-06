@@ -27,7 +27,7 @@
 ## Validation and publication
 - [x] Run focused reproductions, bindings tests and schema/OpenAPI/parity tests.
 - [x] Run all Rust tests, rustfmt, clippy, rustdoc, file-size/terminology/workflow/release checks (local integration/docs pass; full unit compilation hits the documented memory limit, with complete CI execution).
-- [ ] Ensure main is included, push only issue-697-deffbafb3bb4, update PR 698 title/body with all seven full closing references.
+- [x] Ensure main is included, push only issue-697-deffbafb3bb4, update PR 698 title/body with all seven full closing references.
 - [ ] Inspect final PR diff for regressions and removed features; verify clean working tree.
 - [x] List CI runs with timestamps and SHAs; preserve failed-run logs in ci-logs; identify exact failures and fix them.
 - [ ] Wait for all current-head CI runs; verify all checks pass; mark PR 698 ready.

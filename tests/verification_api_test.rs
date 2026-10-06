@@ -419,10 +419,8 @@ async fn relative_verification_evidence_and_metadata_use_the_injected_directory(
         serde_json::from_slice(&std::fs::read(home.path().join(relative)).unwrap()).unwrap();
     assert_eq!(saved, result.data);
     assert!(
-        result.data["areas"][0]["log"]
-            .as_str()
-            .unwrap()
-            .starts_with(home.path().to_str().unwrap())
+        Path::new(result.data["areas"][0]["log"].as_str().unwrap())
+            .starts_with(home.path().canonicalize().unwrap())
     );
 }
 
