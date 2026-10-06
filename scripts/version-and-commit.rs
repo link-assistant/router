@@ -20,7 +20,7 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::{exit, Command};
+use std::process::{Command, exit};
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -296,14 +296,19 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
         }
     }
 
-    println!("Collected and removed {} changelog fragment(s)", files.len());
+    println!(
+        "Collected and removed {} changelog fragment(s)",
+        files.len()
+    );
 }
 
 fn main() {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
-            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]");
+            eprintln!(
+                "Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]"
+            );
             exit(1);
         }
     };
@@ -375,6 +380,26 @@ fn main() {
         }
     };
 
+    // Synchronize every official package and publication before the immutable tag.
+    let has_contracts = std::path::Path::new("schemas/operation-catalog.v1.json").exists();
+    if has_contracts {
+        for arguments in [
+            vec![
+                "scripts/generate-contracts.py",
+                "--catalog",
+                "schemas/operation-catalog.v1.json",
+                "--version",
+                &new_version,
+            ],
+            vec!["scripts/generate-bindings.py"],
+        ] {
+            if let Err(error) = exec("python3", &arguments) {
+                eprintln!("Error synchronizing release contracts: {error}");
+                exit(1);
+            }
+        }
+    }
+
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
@@ -389,6 +414,15 @@ fn main() {
     let mut release_files = vec!["add", &cargo_toml, &changelog_file, &changelog_dir];
     if lock_updated {
         release_files.push(&cargo_lock);
+    }
+    if has_contracts {
+        release_files.extend([
+            "schemas",
+            "openapi",
+            "packages",
+            "docs/integration/operations.md",
+            "src/contracts/generated.rs",
+        ]);
     }
     if let Err(e) = exec("git", &release_files) {
         eprintln!("Error staging release files: {e}");
@@ -482,12 +516,14 @@ version = "1.2.3"
         )
         .expect("fixture should be writable");
 
-        assert!(update_cargo_lock(
-            lock.to_str().expect("temporary path should be UTF-8"),
-            "link-assistant-router",
-            "0.29.0",
-        )
-        .expect("lock update should succeed"));
+        assert!(
+            update_cargo_lock(
+                lock.to_str().expect("temporary path should be UTF-8"),
+                "link-assistant-router",
+                "0.29.0",
+            )
+            .expect("lock update should succeed")
+        );
 
         let updated = fs::read_to_string(&lock).expect("updated fixture should be readable");
         assert!(updated.contains("name = \"link-assistant-router\"\nversion = \"0.29.0\""));
@@ -502,12 +538,14 @@ version = "1.2.3"
         let content = "[[package]]\nname = \"link-assistant-router\"\nversion = \"0.29.0\"\n";
         fs::write(&lock, content).expect("fixture should be writable");
 
-        assert!(!update_cargo_lock(
-            lock.to_str().expect("temporary path should be UTF-8"),
-            "link-assistant-router",
-            "0.29.0",
-        )
-        .expect("idempotent update should succeed"));
+        assert!(
+            !update_cargo_lock(
+                lock.to_str().expect("temporary path should be UTF-8"),
+                "link-assistant-router",
+                "0.29.0",
+            )
+            .expect("idempotent update should succeed")
+        );
         assert_eq!(
             fs::read_to_string(&lock).expect("fixture should be readable"),
             content
@@ -552,8 +590,11 @@ version = "1.2.3"
         let fragments = root.join("changelog.d");
         fs::create_dir_all(&fragments).expect("create the fragment directory");
         let changelog = root.join("CHANGELOG.md");
-        fs::write(&changelog, "# Changelog\n\n## [0.1.0] - 2020-01-01\n\nold\n")
-            .expect("seed the changelog");
+        fs::write(
+            &changelog,
+            "# Changelog\n\n## [0.1.0] - 2020-01-01\n\nold\n",
+        )
+        .expect("seed the changelog");
         fs::write(
             fragments.join("20260101_000000_first.md"),
             "---\nbump: minor\n---\n\n### Added\n- a first thing\n",

@@ -33,6 +33,9 @@ COPY docs/provider-evidence/anthropic-adaptive-thinking.json docs/provider-evide
 # .dockerignore excludes build output and local state from this layer.
 COPY . .
 
+ARG ROUTER_SOURCE_COMMIT=unknown
+ENV ROUTER_SOURCE_COMMIT=${ROUTER_SOURCE_COMMIT}
+
 # Touch files to invalidate cache for source changes
 RUN python3 /tmp/docker-cache-targets.py --touch && \
     cargo build --release --locked --bins

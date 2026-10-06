@@ -8,14 +8,8 @@
 //! the commit against the published image configs, the release checksum files, and the
 //! build provenance attestations of the downloadable archives.
 //!
-//! Image labels are written by the workflow, so they carry the release commit exactly.
-//! Attestations are not: `actions/attest-build-provenance` reads the source commit from
-//! the Actions context, so the SLSA predicate always names `github.sha` — the commit the
-//! run started from — and no workflow change can make it name a commit that did not yet
-//! exist. The release commit is created on top of that commit by the same run, so the
-//! honest check is that the attested commit is the release tag's *parent* (issue #195's
-//! sibling: a release built from an unrelated commit is still rejected). Anything else —
-//! a commit that is not the tag's parent, or a missing attestation — fails.
+//! Publishing is dispatched at the immutable tag, so provenance must name the
+//! exact tag ref and commit. The pre-release merge commit is never acceptable.
 //!
 //! Usage:
 //!   rust-script scripts/check-release-provenance.rs \
@@ -84,7 +78,9 @@ fn parse_arguments(arguments: &[String]) -> Result<Options, String> {
     }
     if let Some(commit) = &options.expected_commit {
         if !is_commit_sha(commit) {
-            return Err(format!("--expected-commit is not a full commit SHA: {commit}"));
+            return Err(format!(
+                "--expected-commit is not a full commit SHA: {commit}"
+            ));
         }
     }
     Ok(options)
@@ -142,7 +138,9 @@ fn verify_image_labels(
             Some(revision) => failures.push(format!(
                 "{image} ({platform}) has {REVISION_LABEL}={revision}, expected {expected_commit}"
             )),
-            None => failures.push(format!("{image} ({platform}) has no {REVISION_LABEL} label")),
+            None => failures.push(format!(
+                "{image} ({platform}) has no {REVISION_LABEL} label"
+            )),
         }
         match label_value(config, VERSION_LABEL) {
             Some(version) if version == release_version => {}
@@ -260,33 +258,13 @@ fn run(command: &mut Command, description: &str) -> Result<String, String> {
         .map_err(|error| format!("{description} returned non-UTF-8 output: {error}"))
 }
 
-/// Decide whether an attestation's source commits are acceptable for this release.
-///
-/// `expected` (the release tag commit) is always accepted. `parent` — the commit the
-/// release commit was built on top of, which is what the Actions context recorded — is
-/// accepted only when it is genuinely the tag's parent, so an artifact attesting some
-/// unrelated commit is still rejected.
+/// Only the exact release commit is acceptable; no predecessor exception.
 fn attested_commit_is_acceptable(
     commits: &BTreeSet<String>,
     expected: &str,
-    parent: Option<&str>,
+    _parent: Option<&str>,
 ) -> bool {
-    if commits.contains(expected) {
-        return true;
-    }
-    parent.is_some_and(|parent| commits.contains(parent))
-}
-
-/// The first parent of the release tag commit, when a checkout is available.
-fn resolve_tag_parent(release_version: &str) -> Option<String> {
-    let reference = format!("refs/tags/v{release_version}^{{commit}}^1");
-    let commit = run(
-        Command::new("git").args(["rev-parse", &reference]),
-        &format!("git rev-parse {reference}"),
-    )
-    .ok()?;
-    let commit = commit.trim().to_string();
-    is_commit_sha(&commit).then_some(commit)
+    commits.contains(expected)
 }
 
 fn resolve_tag_commit(release_version: &str) -> Result<String, String> {
@@ -318,7 +296,12 @@ fn inspect_image_config(image: &str) -> Result<String, String> {
     )
 }
 
-fn attestation_json(artifact: &Path, repository: &str) -> Result<String, String> {
+fn attestation_json(
+    artifact: &Path,
+    repository: &str,
+    version: &str,
+    commit: &str,
+) -> Result<String, String> {
     run(
         Command::new("gh").args([
             "attestation",
@@ -326,6 +309,10 @@ fn attestation_json(artifact: &Path, repository: &str) -> Result<String, String>
             &artifact.to_string_lossy(),
             "--repo",
             repository,
+            "--source-ref",
+            &format!("refs/tags/v{version}"),
+            "--source-digest",
+            commit,
             "--format",
             "json",
         ]),
@@ -388,14 +375,6 @@ fn main() {
         options.release_version
     );
 
-    // Attestations record the commit the run started from, never the release commit the
-    // run creates. Resolving the tag's parent lets the guard accept exactly that commit
-    // and nothing else.
-    let tag_parent = resolve_tag_parent(&options.release_version);
-    if let Some(parent) = &tag_parent {
-        println!("Attestations may name the release commit's parent {parent}");
-    }
-
     for image in &options.images {
         match inspect_image_config(image).and_then(|raw| {
             verify_image_labels(image, &raw, &expected_commit, &options.release_version)
@@ -428,12 +407,9 @@ fn main() {
                     Ok(names) => println!("Verified {file_name} lists {}", names.join(", ")),
                     Err(error) => failures.push(error),
                 }
-                continue;
             }
 
-            if !(file_name.ends_with(".tar.gz") || file_name.ends_with(".cdx.json"))
-                || options.skip_attestations
-            {
+            if options.skip_attestations {
                 continue;
             }
 
@@ -444,24 +420,16 @@ fn main() {
                 continue;
             };
 
-            match attestation_json(path, repository).and_then(|raw| git_commits_in_attestation(&raw))
+            match attestation_json(path, repository, &options.release_version, &expected_commit)
+                .and_then(|raw| git_commits_in_attestation(&raw))
             {
-                Ok(commits)
-                    if attested_commit_is_acceptable(
-                        &commits,
-                        &expected_commit,
-                        tag_parent.as_deref(),
-                    ) =>
-                {
+                Ok(commits) if attested_commit_is_acceptable(&commits, &expected_commit, None) => {
                     println!("Verified {file_name} attests {}", commits_summary(&commits))
                 }
                 Ok(commits) => failures.push(format!(
                     "{file_name} attests source commit(s) {}, expected {expected_commit}{}",
                     commits_summary(&commits),
-                    match &tag_parent {
-                        Some(parent) => format!(" or its parent {parent}"),
-                        None => String::new(),
-                    }
+                    String::new()
                 )),
                 Err(error) => failures.push(error),
             }
@@ -504,8 +472,7 @@ mod tests {
     #[test]
     fn rejects_the_pre_release_merge_commit_recorded_for_v0_77_0() {
         let raw = image_config(PREVIOUS_MERGE, "0.77.0");
-        let error =
-            verify_image_labels("example:0.77.0", &raw, TAG_COMMIT, "0.77.0").unwrap_err();
+        let error = verify_image_labels("example:0.77.0", &raw, TAG_COMMIT, "0.77.0").unwrap_err();
         assert!(error.contains(PREVIOUS_MERGE), "{error}");
         assert!(error.contains(TAG_COMMIT), "{error}");
     }
@@ -514,7 +481,10 @@ mod tests {
     fn rejects_images_without_a_revision_label() {
         let raw = r#"{"linux/amd64": {"config": {"Labels": {}}}, "linux/arm64": {"config": {"Labels": {}}}}"#;
         let error = verify_image_labels("example:0.77.0", raw, TAG_COMMIT, "0.77.0").unwrap_err();
-        assert!(error.contains("no org.opencontainers.image.revision label"), "{error}");
+        assert!(
+            error.contains("no org.opencontainers.image.revision label"),
+            "{error}"
+        );
     }
 
     #[test]
@@ -530,7 +500,10 @@ mod tests {
             r#"{{"config": {{"Labels": {{"org.opencontainers.image.revision": "{TAG_COMMIT}", "org.opencontainers.image.version": "0.77.0"}}}}, "rootfs": {{}}}}"#
         );
         let error = verify_image_labels("example:0.77.0", &raw, TAG_COMMIT, "0.77.0").unwrap_err();
-        assert!(error.contains("not a multi-platform manifest list"), "{error}");
+        assert!(
+            error.contains("not a multi-platform manifest list"),
+            "{error}"
+        );
     }
 
     #[test]
@@ -555,7 +528,10 @@ mod tests {
 
     #[test]
     fn rejects_checksum_files_that_keep_the_dist_prefix() {
-        let contents = format!("{}  dist/link-assistant-router-0.77.0-arm64.tar.gz\n", "a".repeat(64));
+        let contents = format!(
+            "{}  dist/link-assistant-router-0.77.0-arm64.tar.gz\n",
+            "a".repeat(64)
+        );
         let error = verify_checksum_paths("release.sha256", &contents).unwrap_err();
         assert!(error.contains("flat file name"), "{error}");
         assert!(error.contains("dist/"), "{error}");
@@ -595,9 +571,9 @@ mod tests {
     /// The v0.83.0 regression: `attest-build-provenance` records `github.sha`, which is
     /// the commit the release commit was built on top of.
     #[test]
-    fn accepts_an_attestation_naming_the_release_commits_parent() {
+    fn rejects_an_attestation_naming_the_release_commits_parent() {
         let commits = commit_set(&[PREVIOUS_MERGE]);
-        assert!(attested_commit_is_acceptable(
+        assert!(!attested_commit_is_acceptable(
             &commits,
             TAG_COMMIT,
             Some(PREVIOUS_MERGE)
@@ -669,10 +645,15 @@ mod tests {
 
     #[test]
     fn rejects_a_short_expected_commit() {
-        let arguments: Vec<String> = ["--release-version", "0.77.0", "--expected-commit", "c36818b"]
-            .iter()
-            .map(|value| value.to_string())
-            .collect();
+        let arguments: Vec<String> = [
+            "--release-version",
+            "0.77.0",
+            "--expected-commit",
+            "c36818b",
+        ]
+        .iter()
+        .map(|value| value.to_string())
+        .collect();
         let error = parse_arguments(&arguments).unwrap_err();
         assert!(error.contains("full commit SHA"), "{error}");
     }
