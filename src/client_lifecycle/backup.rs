@@ -20,7 +20,7 @@ use crate::clients::ClientKind;
 
 mod restore;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct Entry {
     client: String,
     scope: String,
@@ -35,7 +35,7 @@ struct Entry {
     mode: Option<u32>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct StoreRecord {
     client: String,
     scope: String,
@@ -43,8 +43,8 @@ struct StoreRecord {
     source: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Manifest {
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
+pub(crate) struct Manifest {
     version: u32,
     id: String,
     created: String,
@@ -407,7 +407,7 @@ pub fn create_unlocked(
     let mut manifest = Manifest {
         version: 1,
         id: id.clone(),
-        created: chrono::Utc::now().to_rfc3339(),
+        created: crate::operation_context::now().to_rfc3339(),
         credentials_included: include_credentials,
         stores: Vec::new(),
         entries: Vec::new(),

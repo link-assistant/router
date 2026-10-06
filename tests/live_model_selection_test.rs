@@ -85,7 +85,8 @@ fn document(output: &std::process::Output) -> Value {
     let start = text
         .find('{')
         .unwrap_or_else(|| panic!("no JSON document in the router output"));
-    serde_json::from_str(&text[start..]).expect("the router document parses")
+    link_assistant_router::contracts::validation::cli_payload(text[start..].as_bytes())
+        .expect("the router document parses")
 }
 
 /// Install the live provider, reading the key from stdin so it never reaches

@@ -130,7 +130,7 @@ impl HostRuntime for System {
         let error_log = log
             .try_clone()
             .map_err(|error| format!("could not open {}: {error}", launch.log.display()))?;
-        let mut command = Command::new(launch.executable);
+        let mut command = crate::operation_context::command(launch.executable);
         command
             .arg("serve")
             .current_dir(launch.data_dir)
@@ -160,7 +160,7 @@ impl HostRuntime for System {
                 .env("CLAUDE_CONFIG_DIR", home);
         }
         detach(&mut command);
-        let child = command.spawn().map_err(|error| {
+        let child = crate::operation_context::spawn_process(&mut command).map_err(|error| {
             format!(
                 "could not start {} serve: {error}",
                 launch.executable.display()
@@ -178,15 +178,18 @@ impl HostRuntime for System {
         if self.exited(pid) {
             return false;
         }
-        Command::new("ps")
-            .args(["-p", &pid.to_string(), "-o", "command="])
-            .output()
-            .is_ok_and(|output| {
-                let command = String::from_utf8_lossy(&output.stdout);
-                output.status.success()
-                    && command.contains(&executable.display().to_string())
-                    && command.split_whitespace().any(|word| word == "serve")
-            })
+        crate::operation_context::process_output(crate::operation_context::command("ps").args([
+            "-p",
+            &pid.to_string(),
+            "-o",
+            "command=",
+        ]))
+        .is_ok_and(|output| {
+            let command = String::from_utf8_lossy(&output.stdout);
+            output.status.success()
+                && command.contains(&executable.display().to_string())
+                && command.split_whitespace().any(|word| word == "serve")
+        })
     }
 
     fn terminate(&self, pid: u32) -> Result<(), String> {
@@ -240,7 +243,10 @@ impl HostRuntime for System {
     }
 
     fn user_id(&self) -> Option<u32> {
-        let output = Command::new("id").arg("-u").output().ok()?;
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command("id").arg("-u"),
+        )
+        .ok()?;
         String::from_utf8_lossy(&output.stdout).trim().parse().ok()
     }
 
@@ -264,13 +270,14 @@ impl HostRuntime for System {
     }
 
     fn token_inventory(&self, executable: &Path, data_dir: &Path) -> Result<String, String> {
-        let output = Command::new(executable)
-            .args(["tokens", "list", "--json"])
-            .env("DATA_DIR", data_dir)
-            .env("STORAGE_POLICY", "text")
-            .stdin(Stdio::null())
-            .output()
-            .map_err(|error| format!("could not list tokens: {error}"))?;
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command(executable)
+                .args(["tokens", "list", "--json"])
+                .env("DATA_DIR", data_dir)
+                .env("STORAGE_POLICY", "text")
+                .stdin(Stdio::null()),
+        )
+        .map_err(|error| format!("could not list tokens: {error}"))?;
         if !output.status.success() {
             return Err(format!(
                 "`router tokens list` failed: {}",
@@ -309,7 +316,7 @@ fn open_log(path: &Path) -> Result<std::fs::File, String> {
     let _ = writeln!(
         file,
         "--- router deploy --mode host {}",
-        chrono::Utc::now().to_rfc3339()
+        crate::operation_context::now().to_rfc3339()
     );
     Ok(file)
 }
@@ -327,17 +334,20 @@ const fn detach(_command: &mut Command) {}
 
 fn signal(name: &str, pid: u32) {
     #[cfg(unix)]
-    let _ = Command::new("kill")
-        .args([&format!("-{name}"), &pid.to_string()])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status();
+    let _ = crate::operation_context::process_output(
+        crate::operation_context::command("kill")
+            .args([&format!("-{name}"), &pid.to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null()),
+    )
+    .map(|output| output.status);
     #[cfg(windows)]
     let _ = (
         name,
-        Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/F"])
-            .status(),
+        crate::operation_context::process_output(
+            crate::operation_context::command("taskkill").args(["/PID", &pid.to_string(), "/F"]),
+        )
+        .map(|output| output.status),
     );
 }
 
@@ -347,21 +357,28 @@ fn alive(pid: u32) -> bool {
     // succeeds for it, `ps` reports state `Z`.
     #[cfg(unix)]
     {
-        Command::new("ps")
-            .args(["-p", &pid.to_string(), "-o", "stat="])
-            .output()
-            .is_ok_and(|output| {
-                let state = String::from_utf8_lossy(&output.stdout);
-                let state = state.trim();
-                output.status.success() && !state.is_empty() && !state.starts_with('Z')
-            })
+        crate::operation_context::process_output(crate::operation_context::command("ps").args([
+            "-p",
+            &pid.to_string(),
+            "-o",
+            "stat=",
+        ]))
+        .is_ok_and(|output| {
+            let state = String::from_utf8_lossy(&output.stdout);
+            let state = state.trim();
+            output.status.success() && !state.is_empty() && !state.starts_with('Z')
+        })
     }
     #[cfg(windows)]
     {
-        Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .is_ok_and(|output| String::from_utf8_lossy(&output.stdout).contains(&pid.to_string()))
+        crate::operation_context::process_output(
+            &mut crate::operation_context::command("tasklist").args([
+                "/FI",
+                &format!("PID eq {pid}"),
+                "/NH",
+            ]),
+        )
+        .is_ok_and(|output| String::from_utf8_lossy(&output.stdout).contains(&pid.to_string()))
     }
 }
 

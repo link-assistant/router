@@ -137,7 +137,7 @@ pub struct Candidate {
 }
 
 /// Which credential model the active admin credential uses.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CredentialKind {
     /// Nothing is claimed and no key was provisioned.
@@ -157,7 +157,7 @@ pub enum CredentialKind {
 /// reported as flags rather than collapsed into an enum the client would have
 /// to re-expand.
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, schemars::JsonSchema)]
 pub struct AdminStatus {
     /// Whether an admin credential exists (claimed or provisioned).
     pub claimed: bool,
@@ -178,7 +178,7 @@ pub struct AdminStatus {
 }
 
 /// Persisted form of an activated claim. The token value is never stored.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default, schemars::JsonSchema)]
 struct ClaimFile {
     /// Digest of a legacy opaque credential. Empty for JWT claims.
     #[serde(default)]
@@ -445,7 +445,7 @@ impl AdminClaim {
             token_sha256: sha256_hex(&token),
             token_id,
             ttl_hours,
-            expires_at: SystemTime::now() + self.candidate_ttl,
+            expires_at: crate::operation_context::system_time() + self.candidate_ttl,
         });
         Ok(Candidate {
             claim_id,
@@ -703,10 +703,9 @@ impl AdminClaim {
     }
 
     fn expire_candidate(state: &mut ClaimState) {
-        let expired = state
-            .candidate
-            .as_ref()
-            .is_some_and(|candidate| candidate.expires_at <= SystemTime::now());
+        let expired = state.candidate.as_ref().is_some_and(|candidate| {
+            candidate.expires_at <= crate::operation_context::system_time()
+        });
         if expired {
             state.candidate = None;
         }
@@ -758,7 +757,7 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 }
 
 fn unix_secs() -> u64 {
-    SystemTime::now()
+    crate::operation_context::system_time()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_secs())
 }
@@ -766,3 +765,16 @@ fn unix_secs() -> u64 {
 #[cfg(test)]
 #[path = "admin_tests.rs"]
 mod tests;
+
+/// Recover a locally owned administrator, sharing `tokens recover-admin`.
+/// ```no_run
+/// # async fn example(args: link_assistant_router::cli::TokenOp) -> Result<(), Box<dyn std::error::Error>> {
+/// link_assistant_router::admin::recover(Default::default(), args).await?;
+/// # Ok(()) }
+/// ```
+pub async fn recover(
+    context: crate::operation_context::OperationContext,
+    op: crate::cli::TokenOp,
+) -> Result<crate::operations::OperationResult, crate::operations::OperationError> {
+    crate::operations::request(context, crate::cli::Command::Tokens { op }).await
+}

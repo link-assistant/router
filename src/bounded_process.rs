@@ -1,6 +1,6 @@
 //! Deadlines and process ownership for diagnostic commands.
 
-use std::io::{Read, Result};
+use std::io::{Error, ErrorKind, Read, Result};
 use std::process::{Command, ExitStatus, Output, Stdio};
 use std::time::{Duration, Instant};
 
@@ -88,19 +88,39 @@ fn drain(mut reader: impl Read) -> Result<Vec<u8>> {
 }
 
 /// Run a diagnostic with a deadline, draining both pipes concurrently.
+///
 /// Terminate the owned Unix process group or Windows job on every exit path.
+/// Retry transient executable write locks within the same execution deadline.
 pub fn output(command: &mut Command, deadline: Duration) -> Result<Output> {
+    let end = Instant::now() + deadline;
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt as _;
         command.process_group(0);
     }
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut child = Owned::spawn(command)?;
+    let mut child = loop {
+        match Owned::spawn(command) {
+            Err(error) if error.kind() == ErrorKind::ExecutableFileBusy => {
+                // Another thread may fork while a newly written executable is
+                // still open. Its inherited writer closes only at exec, even
+                // after our writer was dropped (rust-lang/rust#114554).
+                let remaining = end.saturating_duration_since(Instant::now());
+                if remaining.is_zero() {
+                    return Err(Error::new(
+                        ErrorKind::TimedOut,
+                        "diagnostic deadline exceeded while executable is busy",
+                    ));
+                }
+                tracing::debug!("retrying diagnostic launch while executable is open for writing");
+                std::thread::sleep(remaining.min(Duration::from_millis(20)));
+            }
+            result => break result?,
+        }
+    };
     let (stdout, stderr) = child.pipes();
     let stdout = std::thread::spawn(move || drain(stdout));
     let stderr = std::thread::spawn(move || drain(stderr));
-    let end = Instant::now() + deadline;
     let status = loop {
         if let Some(status) = child.try_wait()? {
             break Some(status);

@@ -283,7 +283,7 @@ fn a_mapping_without_a_host_address_is_not_a_candidate() {
 fn the_configured_router_port_leads_the_candidates() {
     let candidates = local_candidate_ports();
 
-    if let Some(configured) = std::env::var("ROUTER_PORT")
+    if let Some(configured) = crate::operation_context::var("ROUTER_PORT")
         .ok()
         .and_then(|value| value.trim().parse::<u16>().ok())
         .filter(|port| *port != 0)

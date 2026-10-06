@@ -214,7 +214,7 @@ pub async fn credential_status_endpoint(
 /// ones. `refreshable` already distinguishes "expired but recoverable" from
 /// dead, which is the distinction the empty array was destroying.
 fn single_account_view(state: &AppState) -> serde_json::Value {
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let credentials: Vec<serde_json::Value> = state
         .subscription_readers
         .iter()

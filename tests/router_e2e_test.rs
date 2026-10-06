@@ -262,7 +262,9 @@ impl TestRouter {
             state.openai_compatible.models = vec!["gpt-5".into()];
             state.openai_compatible.supported_clients = vec!["opencode".into(), "codex".into()];
         }
-        let app = test_app(state);
+        let app = test_app(state).layer(axum::middleware::from_fn(
+            link_assistant_router::contracts::validation::response_contract,
+        ));
         let (url, router_task) = spawn(app).await;
 
         Self {

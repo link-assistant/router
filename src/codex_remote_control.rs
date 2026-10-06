@@ -650,7 +650,7 @@ async fn continuation_request(state: AppState, request: Request, operation: Oper
     let record = match state
         .provider_store
         .codex_remote_control()
-        .resolve(token, chrono::Utc::now().timestamp())
+        .resolve(token, crate::operation_context::now().timestamp())
     {
         Ok(Some(record)) => record,
         Ok(None) => {
@@ -799,7 +799,7 @@ fn enrollment_response(
     let expires_at = chrono::DateTime::parse_from_rfc3339(&expires)
         .map_err(|_| unavailable("remote-control enrollment response has an invalid expiry"))?
         .timestamp();
-    if expires_at <= chrono::Utc::now().timestamp() {
+    if expires_at <= crate::operation_context::now().timestamp() {
         return Err(unavailable(
             "remote-control enrollment response is already expired",
         ));

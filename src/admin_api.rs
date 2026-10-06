@@ -136,7 +136,7 @@ pub async fn rotate_credential(
 }
 
 /// Optional body carrying an administrator-chosen credential lifetime.
-#[derive(Debug, Default, serde::Deserialize)]
+#[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
 pub struct TtlRequest {
     /// Requested lifetime in hours; clamped by the claim.
     #[serde(default)]
@@ -197,7 +197,7 @@ fn claim_error_response(error: ClaimError) -> Response {
 }
 
 /// Body of `POST /api/management/admin/bootstrap/confirm`.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 pub struct ConfirmRequest {
     /// The `claim_id` returned by the mint call.
     pub claim_id: String,

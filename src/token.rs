@@ -8,7 +8,7 @@
 //! restarts. The default ([`TokenManager::new`]) keeps everything in memory
 //! for backwards compatibility with the legacy server boot path.
 
-use chrono::{Duration, Utc};
+use chrono::Duration;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -441,7 +441,7 @@ impl TokenManager {
         let label = request.label;
         let account = request.account;
         let max_requests = request.max_requests;
-        let now = Utc::now();
+        let now = crate::operation_context::now();
         let exp = now + Duration::hours(ttl_hours);
         let client_kind = request
             .client_kind
@@ -539,34 +539,34 @@ impl TokenManager {
         if crate::emergency_auth::is_synthetic_id(token_id) {
             return Ok(());
         }
-        let verdict =
-            match self
-                .store
-                .try_admit_request_reserving(token_id, Utc::now().timestamp(), reserve)
-            {
-                Ok(RequestAdmission::Admitted) => Ok(()),
-                // The counts are in the record the store just compared against,
-                // so the rejection can say how far over the bound the caller is
-                // rather than only that they are (issue #355).
-                Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded(
-                    self.budget_facts(token_id, |record| {
-                        record.max_requests.map(|limit| BudgetFacts {
-                            used: record.used_requests,
-                            limit,
-                        })
-                    }),
-                )),
-                Ok(RequestAdmission::TokenLimitExceeded) => Err(TokenError::TokenLimitExceeded(
-                    self.budget_facts(token_id, |record| {
-                        record.max_tokens.map(|limit| BudgetFacts {
-                            used: record.used_tokens,
-                            limit,
-                        })
-                    }),
-                )),
-                Ok(RequestAdmission::RateLimitExceeded) => Err(TokenError::RateLimitExceeded),
-                Err(e) => Err(TokenError::Storage(e.to_string())),
-            };
+        let verdict = match self.store.try_admit_request_reserving(
+            token_id,
+            crate::operation_context::now().timestamp(),
+            reserve,
+        ) {
+            Ok(RequestAdmission::Admitted) => Ok(()),
+            // The counts are in the record the store just compared against,
+            // so the rejection can say how far over the bound the caller is
+            // rather than only that they are (issue #355).
+            Ok(RequestAdmission::RequestLimitExceeded) => Err(TokenError::LimitExceeded(
+                self.budget_facts(token_id, |record| {
+                    record.max_requests.map(|limit| BudgetFacts {
+                        used: record.used_requests,
+                        limit,
+                    })
+                }),
+            )),
+            Ok(RequestAdmission::TokenLimitExceeded) => Err(TokenError::TokenLimitExceeded(
+                self.budget_facts(token_id, |record| {
+                    record.max_tokens.map(|limit| BudgetFacts {
+                        used: record.used_tokens,
+                        limit,
+                    })
+                }),
+            )),
+            Ok(RequestAdmission::RateLimitExceeded) => Err(TokenError::RateLimitExceeded),
+            Err(e) => Err(TokenError::Storage(e.to_string())),
+        };
         verdict.inspect_err(|error| self.diagnostics.record_error(error, None))
     }
 
@@ -692,7 +692,7 @@ impl TokenManager {
             .is_some_and(|record| {
                 record.sliding_window_seconds.is_some()
                     && !record.revoked
-                    && record.expires_at > Utc::now().timestamp()
+                    && record.expires_at > crate::operation_context::now().timestamp()
             })
     }
 
@@ -724,7 +724,9 @@ impl TokenManager {
         Some(ExpiryFacts {
             issued_at,
             expires_at,
-            ago_seconds: Utc::now().timestamp().saturating_sub(expires_at),
+            ago_seconds: crate::operation_context::now()
+                .timestamp()
+                .saturating_sub(expires_at),
         })
     }
 
@@ -748,7 +750,7 @@ impl TokenManager {
     /// this to decide whether a deployment already has a way in before
     /// minting a bootstrap credential.
     pub fn has_active_admin_token(&self) -> Result<bool, TokenError> {
-        let now = Utc::now().timestamp();
+        let now = crate::operation_context::now().timestamp();
         Ok(self.list_tokens()?.iter().any(|record| {
             record.scope == ADMIN_SCOPE && !record.revoked && record.expires_at > now
         }))
@@ -823,7 +825,9 @@ impl TokenManager {
         // Remaining lifetime is preserved when no new TTL is requested, so a
         // rotation is not a silent extension of the credential's validity.
         let remaining_hours = || {
-            let remaining = record.expires_at.saturating_sub(Utc::now().timestamp());
+            let remaining = record
+                .expires_at
+                .saturating_sub(crate::operation_context::now().timestamp());
             (remaining / 3600).max(1)
         };
         let request = IssueRequest {
@@ -889,7 +893,7 @@ impl TokenManager {
     ///
     /// Propagates store failures from listing or revoking.
     pub fn revoke_other_admin_tokens(&self, keep_id: &str) -> Result<Vec<String>, TokenError> {
-        let now = Utc::now().timestamp();
+        let now = crate::operation_context::now().timestamp();
         let stale: Vec<String> = self
             .list_tokens()?
             .into_iter()

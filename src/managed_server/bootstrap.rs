@@ -1,12 +1,12 @@
 //! Recovery of the router-generated managed bootstrap administrator.
 
-use std::process::Command;
-
 use super::{AnyError, check_docker_output};
 
 pub(super) fn read_token(container: &str) -> Result<String, AnyError> {
     const MARKER: &str = "Admin token (shown once, store it now):";
-    let output = Command::new("docker").args(["logs", container]).output()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args(["logs", container]),
+    )?;
     check_docker_output(&output)?;
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);

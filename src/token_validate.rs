@@ -19,12 +19,26 @@ impl TokenManager {
             return Err(TokenError::IssuerSecretUnset);
         }
         let jwt = token_jwt(token).ok_or(TokenError::InvalidPrefix)?;
-
+        let injected_time = crate::operation_context::current().and_then(|context| context.now);
+        let mut validation = Validation::default();
+        let leeway = i64::try_from(validation.leeway).unwrap_or(i64::MAX);
+        // The decoder has no injectable clock. Keep signature/claim validation,
+        // and enforce its same inclusive expiry leeway against the caller's time.
+        validation.validate_exp = injected_time.is_none();
         let token_data = decode::<TokenClaims>(
             jwt,
             &DecodingKey::from_secret(self.secret.as_bytes()),
-            &Validation::default(),
+            &validation,
         )
+        .and_then(|data| {
+            if injected_time
+                .is_some_and(|now| data.claims.exp < now.timestamp().saturating_sub(leeway))
+            {
+                Err(jsonwebtoken::errors::ErrorKind::ExpiredSignature.into())
+            } else {
+                Ok(data)
+            }
+        })
         .or_else(|e| match e.kind() {
             // The decoder enforces the `exp` the token was signed with, which
             // a sliding token outgrows: the store holds the extended expiry,

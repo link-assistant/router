@@ -290,7 +290,7 @@ async fn configure_one(
         },
         token_id: credential.id(),
         label: Some(format!("configure-{client}")),
-        issued_at: Some(chrono::Utc::now().timestamp()),
+        issued_at: Some(crate::operation_context::now().timestamp()),
         router: Some(server.base_url.clone()),
         management_server: Some(server.management_url.clone()),
         principal_id: Some(crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()),
@@ -518,8 +518,8 @@ fn admin_token_for(args: &ConfigureArgs, router: &str) -> Option<String> {
     if let Some(token) = args.token.clone() {
         return Some(token);
     }
-    if let Ok(token) = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
-        .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
+    if let Ok(token) = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TOKEN")
+        .or_else(|_| crate::operation_context::var("LINK_ASSISTANT_TOKEN"))
     {
         return Some(token);
     }

@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 #[test]
 fn persistent_windows_bridge_inherits_only_required_runtime_environment() {
     let actual = crate::codex_loopback_bridge::select_windows_runtime_environment(|name| {
-        std::env::var_os(name)
+        crate::operation_context::var_os(name)
     });
     assert!(
         actual

@@ -240,7 +240,7 @@ impl Coordinator<'_> {
                     // not this deployment and only matters if it holds the port.
                     Err(_)
                         if self.state.active()?.is_none()
-                            && !self.docker.owned(&RELAY, self.root, "relay") => {}
+                            && !self.docker.owned(&RELAY.value(), self.root, "relay") => {}
                     Err(error) => plan.block("inconsistent-state", error, false),
                 }
             } else if self.state.current()?.is_some()
@@ -332,7 +332,7 @@ impl Coordinator<'_> {
                 .docker
                 .listeners_on(self.port)?
                 .into_iter()
-                .filter(|name| name != &*RELAY)
+                .filter(|name| name != &RELAY.value())
                 .collect::<Vec<_>>();
             if !foreign.is_empty() {
                 plan.block(
@@ -427,8 +427,9 @@ impl Coordinator<'_> {
     /// A live run's next request would meet a closed listener during the
     /// swap, so live runs refuse the move unless it is forced.
     fn assess_runs(plan: &mut Plan, rendered: Result<String, String>) {
-        let inventory = rendered
-            .and_then(|rendered| Inventory::from_json(&rendered, chrono::Utc::now().timestamp()));
+        let inventory = rendered.and_then(|rendered| {
+            Inventory::from_json(&rendered, crate::operation_context::now().timestamp())
+        });
         match inventory {
             Ok(inventory) => {
                 for run in &inventory.runs {
@@ -468,6 +469,42 @@ impl Coordinator<'_> {
     }
 
     fn print_host_plan(&self, plan: &Plan) {
+        let mut report = self.status_report("host", "planned");
+        report["host_router"] = serde_json::json!({"executable": plan.executable, "version": link_assistant_router::VERSION});
+        report["host_process"] = plan
+            .record
+            .as_ref()
+            .map_or(serde_json::Value::Null, |record| {
+                serde_json::json!({
+                    "pid": record.pid, "port": record.port, "version": record.router_version,
+                    "executable": record.executable, "serving": plan.record_serving,
+                })
+            });
+        report["converged"] = if plan.secret_unknown {
+            serde_json::Value::Null
+        } else {
+            plan.converged.into()
+        };
+        report["token_secret"] = plan.secret.as_str().into();
+        report["rollback_command"] = ROLLBACK_COMMAND.into();
+        report["runs"] = plan
+            .inventory
+            .as_ref()
+            .map_or(serde_json::Value::Null, |inventory| {
+                serde_json::json!(inventory.runs)
+            });
+        report["blockers"] = serde_json::json!(
+            plan.blockers
+                .iter()
+                .map(|blocker| super::status_report::blocker(
+                    blocker.name,
+                    &blocker.reason,
+                    blocker.forceable
+                ))
+                .collect::<Vec<_>>()
+        );
+        report["force_update_interrupts"] =
+            plan.blockers.iter().any(|blocker| blocker.forceable).into();
         println!("mode=host");
         println!("deployment_root={}", self.root.display());
         println!(
@@ -490,21 +527,23 @@ impl Coordinator<'_> {
         println!("token_secret={}", plan.secret.as_str());
         match &plan.from {
             Some(active) => {
+                let backend_running = self.docker.running(&active.backend).unwrap_or(false);
+                let relay_running = self.docker.running(&RELAY.value()).unwrap_or(false);
+                let connections = self.connection_count(&active.backend).ok();
+                report["backend"] = serde_json::json!({"name": active.backend, "image": active.image_ref, "running": backend_running});
+                report["relay"] = serde_json::json!({"name": RELAY.value(), "port": active.port, "running": relay_running});
+                report["connections"] = serde_json::json!(connections);
                 println!(
                     "container_backend={} image={} running={}",
-                    active.backend,
-                    active.image_ref,
-                    self.docker.running(&active.backend).unwrap_or(false)
+                    active.backend, active.image_ref, backend_running
                 );
                 println!(
                     "relay={RELAY} running={} port={}",
-                    self.docker.running(&RELAY).unwrap_or(false),
-                    active.port
+                    relay_running, active.port
                 );
                 println!(
                     "connections={}",
-                    self.connection_count(&active.backend)
-                        .map_or_else(|_| "unknown".to_string(), |count| count.to_string())
+                    connections.map_or_else(|| "unknown".to_string(), |count| count.to_string())
                 );
             }
             None => println!(
@@ -553,6 +592,7 @@ impl Coordinator<'_> {
         println!("{}", plan.convergence());
         self.print_provider_exhaustion();
         println!("status_is_read_only=true");
+        crate::operation_output::record(report);
     }
 
     /// One `provider_exhausted` line per z.ai plan the serving process saw

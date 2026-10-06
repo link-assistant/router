@@ -231,7 +231,7 @@ async fn catalog_refresh_uses_an_in_memory_refreshed_token() {
         SubscriptionToken {
             access_token: "fresh-token".into(),
             refresh_token: Some("refresh".into()),
-            expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 60_000),
+            expires_at_ms: Some(crate::operation_context::now().timestamp_millis() + 60_000),
             account_id: None,
             resource_url: Some(format!("http://{address}")),
         },

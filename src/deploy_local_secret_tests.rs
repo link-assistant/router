@@ -44,7 +44,7 @@ fn serving(root: &Path) -> String {
 
 /// A client token issued by a backend signing with `secret`.
 fn client_token(secret: &str) -> String {
-    let now = chrono::Utc::now().timestamp();
+    let now = crate::operation_context::now().timestamp();
     let claims = link_assistant_router::token::TokenClaims {
         sub: "laptop".into(),
         iat: now,

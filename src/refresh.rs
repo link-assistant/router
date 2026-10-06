@@ -172,7 +172,9 @@ fn oauth_client(
     provider: SubscriptionProvider,
     config: RefreshConfig,
 ) -> Result<(String, Option<String>), RefreshError> {
-    oauth_client_from(provider, config, |name| std::env::var(name).ok())
+    oauth_client_from(provider, config, |name| {
+        crate::operation_context::var(name).ok()
+    })
 }
 
 fn oauth_client_from(
@@ -196,7 +198,7 @@ fn oauth_client_from(
 
 fn refresh_token_url(provider: SubscriptionProvider) -> String {
     #[cfg(debug_assertions)]
-    if let Ok(url) = std::env::var("LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL") {
+    if let Ok(url) = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL") {
         return url;
     }
     refresh_config(provider).token_url.to_string()

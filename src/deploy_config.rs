@@ -110,7 +110,7 @@ impl SecretSource {
     /// Names the source (never a value) when it is missing or unreadable.
     pub fn read(&self) -> Result<String, String> {
         let value = match self {
-            Self::Env(name) => std::env::var(name)
+            Self::Env(name) => crate::operation_context::var(name)
                 .map_err(|_| format!("environment variable {name} is not set or not UTF-8"))?,
             Self::File(path) => {
                 let mut text = std::fs::read_to_string(path)

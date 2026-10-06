@@ -277,7 +277,7 @@ async fn subscription_snapshot_for_account(
             provider,
             account,
             baseline.clone(),
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await?;
     if state.subscription_cache.evidence_for(provider, account)

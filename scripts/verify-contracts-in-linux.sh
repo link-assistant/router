@@ -14,7 +14,7 @@
 #
 # Requirements: Docker Desktop (or any `docker`-compatible runtime) on the host.
 # Nothing else is installed on the host; the vendor CLIs are installed into the
-# container from npm at the pinned versions CI uses.
+# container from npm at the host versions by default (or explicit CI/latest policy).
 #
 # Forwarded only when set on the host (values are never printed):
 #   ROUTER_LIVE_ZAI_API_KEY, ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST,
@@ -27,9 +27,85 @@ set -euo pipefail
 repository="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output="${repository}/target/verification-linux"
 image="${ROUTER_VERIFY_LINUX_IMAGE:-rust:1.98.1-slim-trixie}"
-claude="${ROUTER_REAL_CLIENT_CLAUDE_VERSION:-2.1.265}"
-codex="${ROUTER_REAL_CLIENT_CODEX_VERSION:-0.154.0}"
-opencode="${ROUTER_REAL_CLIENT_OPENCODE_VERSION:-1.18.29}"
+policy=installed
+arguments=()
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --client-versions)
+            [ "$#" -ge 2 ] || { echo "error: --client-versions needs ci|installed|latest" >&2; exit 2; }
+            policy="$2"; shift 2 ;;
+        --client-versions=*) policy="${1#*=}"; shift ;;
+        *) arguments+=("$1"); shift ;;
+    esac
+done
+case "${policy}" in installed|ci|latest) ;; *) echo "error: invalid client version policy: ${policy}" >&2; exit 2 ;; esac
+set -- "${arguments[@]}"
+
+# Only --version is run on the host. Bound a broken executable, and never pass
+# credentials or launch an interactive session. Failed discovery is an error;
+# only an absent executable qualifies for the documented CI-pin fallback.
+discover_version() {
+    local client="$1" file pid guard status=0
+    command -v "${client}" >/dev/null 2>&1 || return 0
+    file="$(mktemp)"
+    "${client}" --version >"${file}" 2>&1 & pid=$!
+    (
+        sleep 15 & timer=$!
+        trap 'kill "$timer" 2>/dev/null || true; exit 0' TERM
+        wait "$timer" || true
+        kill -KILL "${pid}" 2>/dev/null || true
+    ) >/dev/null 2>&1 & guard=$!
+    wait "${pid}" || status=$?
+    kill "${guard}" 2>/dev/null || true
+    wait "${guard}" 2>/dev/null || true
+    if [ "${status}" -ne 0 ]; then
+        rm -f "${file}"
+        echo "error: ${client} --version failed or exceeded its 15-second deadline" >&2
+        return 2
+    fi
+    sed -nE 's/^[^0-9]*([0-9]+\.[0-9]+\.[0-9]+).*$/\1/p' "${file}" | head -n 1
+    rm -f "${file}"
+}
+
+forwarded=(--env ROUTER_REAL_CLIENT_TESTS=1
+    --env "ROUTER_VERIFY_HOST_UID=$(id -u)")
+clients=(claude codex opencode)
+pins=(2.1.265 0.154.0 1.18.29)
+variables=(ROUTER_REAL_CLIENT_CLAUDE ROUTER_REAL_CLIENT_CODEX ROUTER_REAL_CLIENT_OPENCODE)
+for index in 0 1 2; do
+    client="${clients[$index]}"
+    prefix="${variables[$index]}"
+    host_version="$(discover_version "${client}")"
+    if command -v "${client}" >/dev/null 2>&1 && [ -z "${host_version}" ]; then
+        echo "error: ${client} returned no semantic version" >&2; exit 2
+    fi
+    version_variable="${prefix}_VERSION"
+    override="${!version_variable:-}"
+    source=ci-pin
+    version="${pins[$index]}"
+    if [ "${policy}" = latest ]; then
+        source=latest; version=latest
+    elif [ "${policy}" = installed ] && [ -n "${host_version}" ]; then
+        source=installed; version="${host_version}"
+    elif [ "${policy}" = installed ]; then
+        echo "warning: ${client} not installed on host; falling back to CI pin ${version}" >&2
+    fi
+    if [ -n "${override}" ]; then
+        version="${override}"
+        if [ "${version}" = latest ]; then source=latest
+        elif [ "${version}" = "${host_version}" ]; then source=installed
+        else source=ci-pin; fi
+    fi
+    if [ "${version}" != latest ] && ! [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "error: invalid version for ${client}" >&2; exit 2
+    fi
+    echo "verify ${client}: selected=${version} source=${source} host=${host_version:-absent}" >&2
+    if [ -n "${host_version}" ] && [ "${version}" != "${host_version}" ]; then
+        echo "warning: ${client} proven selection ${version} differs from host ${host_version}" >&2
+    fi
+    forwarded+=(--env "${prefix}_VERSION=${version}" --env "${prefix}_SOURCE=${source}"
+        --env "${prefix}_HOST_VERSION=${host_version}")
+done
 
 if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
     echo "error: a running Docker runtime is required; start Docker Desktop and retry" >&2
@@ -42,11 +118,6 @@ fi
 
 mkdir -p "${output}"
 
-forwarded=(--env ROUTER_REAL_CLIENT_TESTS=1
-    --env "ROUTER_VERIFY_HOST_UID=$(id -u)"
-    --env "ROUTER_REAL_CLIENT_CLAUDE_VERSION=${claude}"
-    --env "ROUTER_REAL_CLIENT_CODEX_VERSION=${codex}"
-    --env "ROUTER_REAL_CLIENT_OPENCODE_VERSION=${opencode}")
 for name in ROUTER_LIVE_ZAI_API_KEY ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST \
     ROUTER_HOST_CLI_TESTS ROUTER_HOST_CLI_URL ROUTER_HOST_CLI_TOKEN; do
     if [ -n "${!name:-}" ]; then
@@ -88,7 +159,9 @@ docker run --rm --init \
             PATH="/home/verifier/.cargo/bin:${PATH}" bash -euo pipefail -c "
             cargo install rust-script --version 0.36.0 --locked --quiet
             git config --global init.defaultBranch main
-            tar -C /source --exclude=./target --exclude=./ui/node_modules -cf - . | tar -xf -
+            tar -C /source --exclude=./target --exclude=./ui/node_modules \
+                --exclude='./packages/*/node_modules' --exclude=./experiments/issue-697/venv \
+                --exclude=./experiments/issue-697/tools -cf - . | tar -xf -
             rust-script scripts/verify-contracts.rs --output /output/result.json \"\$@\"
         " verify-contracts-in-linux "$@"
     ' verify-contracts-in-linux "$@"

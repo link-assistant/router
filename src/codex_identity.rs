@@ -9,7 +9,8 @@ pub const ORIGINATOR: &str = "codex_cli_rs";
 /// discovery and inference.
 #[must_use]
 pub fn client_version() -> String {
-    std::env::var("CODEX_CLIENT_VERSION").unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
+    crate::operation_context::var("CODEX_CLIENT_VERSION")
+        .unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
 }
 
 fn sanitized_token(value: &str) -> String {
@@ -41,9 +42,12 @@ fn versioned(name: &str, version: Option<String>) -> String {
 }
 
 fn tmux_value(format: &str) -> Option<String> {
-    let output = std::process::Command::new("tmux")
-        .args(["display-message", "-p", format])
-        .output()
+    let output =
+        crate::operation_context::process_output(crate::operation_context::command("tmux").args([
+            "display-message",
+            "-p",
+            format,
+        ]))
         .ok()?;
     if !output.status.success() {
         return None;
@@ -119,7 +123,10 @@ where
 
 /// Match the terminal token used by the supported Codex release.
 fn terminal_user_agent() -> String {
-    terminal_user_agent_from(|name| std::env::var(name).ok(), process_tmux_client_info)
+    terminal_user_agent_from(
+        |name| crate::operation_context::var(name).ok(),
+        process_tmux_client_info,
+    )
 }
 
 fn user_agent_for(os_type: &str, os_version: &str, architecture: &str, terminal: &str) -> String {

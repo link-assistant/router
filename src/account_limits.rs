@@ -47,7 +47,7 @@ pub const STATE_FILE: &str = "account-limits.json";
 const MODEL_FAMILIES: [&str; 3] = ["opus", "sonnet", "haiku"];
 
 /// What the vendor said about one window.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LimitStatus {
     Allowed,
@@ -78,7 +78,7 @@ impl LimitStatus {
 }
 
 /// One vendor rate-limit window as last reported.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct WindowLimit {
     /// `overall` for the credential-wide pair, otherwise the header infix
     /// (`5h`, `7d`, `7d_opus`, ...), lowercased.
@@ -189,7 +189,7 @@ pub fn parse_unified(headers: &HeaderMap) -> UnifiedLimits {
 /// Seconds since the unix epoch, now.
 #[must_use]
 pub fn now_unix() -> u64 {
-    SystemTime::now()
+    crate::operation_context::system_time()
         .duration_since(SystemTime::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs())
 }
@@ -343,7 +343,7 @@ pub fn threshold_decision(windows: &[WindowLimit], percent: u8, now: u64) -> Thr
 }
 
 /// Why an account is paused.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PauseKind {
     /// An operator paused it through the accounts API.
@@ -353,7 +353,7 @@ pub enum PauseKind {
 }
 
 /// An active pause.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Pause {
     pub kind: PauseKind,
     /// When the pause lifts on its own; `None` for a manual pause that lasts
@@ -364,7 +364,7 @@ pub struct Pause {
 }
 
 /// The vendor-limit state Router keeps for one account.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct AccountLimitState {
     /// Credential-wide cooldown taken from a vendor reset time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -445,7 +445,7 @@ impl AccountLimitState {
 }
 
 /// The persisted file: provider plus state by account name.
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, schemars::JsonSchema)]
 struct PersistedLimits {
     #[serde(default)]
     provider: String,

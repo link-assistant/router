@@ -846,7 +846,9 @@ fn conditional_import_json_reports_already_present_without_credential_material()
         .expect("router CLI should run");
 
     assert!(output.status.success(), "{output:?}");
-    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    let result: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout)
+            .expect("JSON result");
     assert_eq!(result["schema_version"], 1);
     assert_eq!(result["results"][0]["provider"], "qwen");
     assert_eq!(result["results"][0]["outcome"], "already_present");
@@ -887,7 +889,9 @@ fn missing_resume_transaction_is_a_structured_failure() {
         .expect("router CLI should run");
 
     assert!(!output.status.success(), "{output:?}");
-    let result: serde_json::Value = serde_json::from_slice(&output.stdout).expect("JSON result");
+    let result: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout)
+            .expect("JSON result");
     assert_eq!(result["results"][0]["provider"], serde_json::Value::Null);
     assert_eq!(result["results"][0]["outcome"], "not_attempted");
     assert_eq!(result["results"][0]["phase"], "preflight");

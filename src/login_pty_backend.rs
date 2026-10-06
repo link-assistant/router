@@ -37,7 +37,7 @@ pub fn spawn_and_wait_for_url(
     if let Some(cache) = &config.package_cache {
         command.env("BUN_INSTALL_CACHE_DIR", cache);
     }
-    if let Ok(path) = std::env::var("PATH") {
+    if let Ok(path) = crate::operation_context::var("PATH") {
         command.env("PATH", path);
     }
 

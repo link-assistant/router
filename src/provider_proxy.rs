@@ -745,7 +745,7 @@ pub(crate) async fn live_openai_compatible_catalog(
             );
         }
         if restrictions.is_empty() || restrictions.iter().any(|allowed| allowed == &id) {
-            let fetched_at = chrono::Utc::now().to_rfc3339();
+            let fetched_at = crate::operation_context::now().to_rfc3339();
             raw.insert(
                 "router_source_url".into(),
                 serde_json::Value::String(url.clone()),
@@ -801,7 +801,7 @@ pub fn openai_compatible_models(state: &AppState) -> serde_json::Value {
     let provider = resolve_openai_compatible_provider(state)
         .ok()
         .unwrap_or_else(|| state.openai_compatible.resolve());
-    let now = chrono::Utc::now().timestamp();
+    let now = crate::operation_context::now().timestamp();
     let ResolvedProvider {
         name: owner,
         default_model,

@@ -397,7 +397,7 @@ pub(crate) async fn fetch_catalog(
         provider.base_url.trim_end_matches('/'),
         CATALOG_PATH
     );
-    let fetched_at = chrono::Utc::now().to_rfc3339();
+    let fetched_at = crate::operation_context::now().to_rfc3339();
     let mut seen = HashSet::new();
     let mut models = Vec::with_capacity(entries.len());
     for entry in entries {

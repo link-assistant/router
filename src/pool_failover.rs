@@ -101,7 +101,11 @@ impl PoolPolicy {
     #[must_use]
     pub fn from_env() -> Self {
         let defaults = Self::default();
-        let var = |name: &str| std::env::var(name).ok().filter(|v| !v.trim().is_empty());
+        let var = |name: &str| {
+            crate::operation_context::var(name)
+                .ok()
+                .filter(|v| !v.trim().is_empty())
+        };
         let failover = var("POOL_FAILOVER").map_or(defaults.failover, |value| {
             FailoverMode::parse(&value).unwrap_or_else(|error| {
                 tracing::warn!("POOL_FAILOVER ignored: {error}");
@@ -162,13 +166,13 @@ fn account_http_from_env() -> crate::account_http::AccountHttpPolicy {
         DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS, parse_egress_proxies,
     };
     let secs = |name: &str, default: u64| {
-        std::env::var(name)
+        crate::operation_context::var(name)
             .ok()
             .and_then(|value| value.trim().parse::<u64>().ok())
             .unwrap_or(default)
     };
     // An unreadable setting must not silently send every account direct.
-    let (proxies, proxy_error) = std::env::var("ACCOUNT_EGRESS_PROXY").map_or_else(
+    let (proxies, proxy_error) = crate::operation_context::var("ACCOUNT_EGRESS_PROXY").map_or_else(
         |_| (std::collections::BTreeMap::new(), None),
         |raw| match parse_egress_proxies(&raw) {
             Ok(proxies) => (proxies, None),

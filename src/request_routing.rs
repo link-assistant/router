@@ -77,7 +77,7 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
     }
     let retry_at = chrono::DateTime::parse_from_rfc2822(value).ok()?;
     let seconds = retry_at
-        .signed_duration_since(chrono::Utc::now())
+        .signed_duration_since(crate::operation_context::now())
         .num_seconds()
         .max(0);
     Some(bounded_retry_after(Duration::from_secs(

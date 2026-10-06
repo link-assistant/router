@@ -219,7 +219,8 @@ fn recovered_token(output: &std::process::Output) -> String {
         .find(|line| line.trim_start().starts_with('{'))
         .unwrap_or_else(|| panic!("recovery should print a JSON envelope: {stdout}"));
     let value: serde_json::Value =
-        serde_json::from_str(line).unwrap_or_else(|error| panic!("JSON ({error}): {line}"));
+        link_assistant_router::contracts::validation::cli_payload(line.as_bytes())
+            .unwrap_or_else(|error| panic!("JSON ({error}): {line}"));
     assert_eq!(value["recovered"], serde_json::Value::Bool(true));
     value["token"]
         .as_str()

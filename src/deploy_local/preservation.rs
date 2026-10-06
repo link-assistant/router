@@ -89,7 +89,7 @@ impl Coordinator<'_> {
                 .map_err(|_| "previous issued-token inventory is invalid")?;
         let records: Vec<_> = all_records
             .iter()
-            .filter(|record| usable(record, chrono::Utc::now().timestamp()))
+            .filter(|record| usable(record, crate::operation_context::now().timestamp()))
             .cloned()
             .collect();
         if records.len() > 512 {

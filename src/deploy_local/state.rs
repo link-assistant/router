@@ -193,7 +193,7 @@ impl State {
         let path = self.directory.join("active");
         let aside = self.directory.join(format!(
             "active.corrupt-{}",
-            chrono::Utc::now().format("%Y%m%dT%H%M%S%.fZ")
+            crate::operation_context::now().format("%Y%m%dT%H%M%S%.fZ")
         ));
         std::fs::rename(&path, &aside)
             .map_err(|error| format!("could not set aside {}: {error}", path.display()))?;

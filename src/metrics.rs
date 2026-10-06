@@ -52,7 +52,7 @@ pub struct Metrics {
 }
 
 /// Per-token usage accumulated by [`Metrics::record_token_request`].
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, schemars::JsonSchema)]
 pub struct TokenUsage {
     /// Label the token was issued with (empty when none was given).
     pub label: String,
@@ -135,7 +135,7 @@ pub enum Surface {
 }
 
 /// JSON-serialisable snapshot of [`Metrics`] for `/api/management/usage`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, schemars::JsonSchema)]
 pub struct UsageSnapshot {
     pub requests_total: u64,
     pub errors_total: u64,

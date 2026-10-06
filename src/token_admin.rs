@@ -436,7 +436,7 @@ pub async fn rotate_client_token(
 
 /// Request body for [`rotate_client_token`]. Every constraint is optional and
 /// omitting one preserves the stored value.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 pub struct RotateClientTokenRequest {
     /// Id of the token to reissue.
     pub id: String,
@@ -455,7 +455,7 @@ pub struct RotateClientTokenRequest {
 }
 
 /// Request body for the token issuance endpoint.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 pub struct IssueTokenRequest {
     /// Time-to-live in hours (default: 24).
     pub ttl_hours: Option<i64>,
@@ -488,7 +488,7 @@ pub struct IssueTokenRequest {
 }
 
 /// Request body for the managed client-token issuance endpoint.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct IssueClientTokenRequest {
     pub client_kind: String,
@@ -518,7 +518,7 @@ pub struct IssueClientTokenRequest {
 }
 
 /// Request body for the admin rotation endpoint. All fields are optional.
-#[derive(serde::Deserialize, Default)]
+#[derive(serde::Deserialize, Default, schemars::JsonSchema)]
 pub struct RotateTokenRequest {
     /// TTL of the replacement token in hours (default: 24).
     pub ttl_hours: Option<i64>,
@@ -527,7 +527,7 @@ pub struct RotateTokenRequest {
 }
 
 /// Request body for the token revocation endpoint.
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 pub struct RevokeTokenRequest {
     pub id: String,
 }

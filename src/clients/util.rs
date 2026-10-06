@@ -62,7 +62,7 @@ pub(super) fn read_claude_base_url(path: &Path) -> Result<Option<String>, Client
 }
 
 pub(super) fn command_exists(command: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|path| {
+    crate::operation_context::var_os("PATH").is_some_and(|path| {
         std::env::split_paths(&path).any(|directory| directory.join(command).is_file())
     })
 }

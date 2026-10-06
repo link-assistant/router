@@ -99,7 +99,7 @@ impl OpenAiStreamTranslator {
         Self {
             decoder: SseJsonDecoder::default(),
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
-            created: chrono::Utc::now().timestamp(),
+            created: crate::operation_context::now().timestamp(),
             model: String::new(),
             role_emitted: false,
             done: false,
@@ -314,7 +314,7 @@ impl ResponsesStreamTranslator {
         Self {
             decoder: SseJsonDecoder::default(),
             id: format!("resp_{}", uuid::Uuid::new_v4()),
-            created: chrono::Utc::now().timestamp(),
+            created: crate::operation_context::now().timestamp(),
             model: String::new(),
             started: false,
             done: false,

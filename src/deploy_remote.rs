@@ -7,7 +7,7 @@
 
 use std::ffi::OsStr;
 use std::io::Write as _;
-use std::process::{Command, ExitCode, Stdio};
+use std::process::{ExitCode, Stdio};
 
 use base64::Engine as _;
 use link_assistant_router::cli::DeployArgs;
@@ -302,7 +302,7 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
         &agent_arguments(args, mode, &cookie),
         prepared.payload.is_some(),
     );
-    let mut command = Command::new(ssh);
+    let mut command = crate::operation_context::command(ssh);
     command
         .args(["-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes"])
         .args(session::ssh_options(
@@ -320,7 +320,7 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
     }
     let started = std::time::Instant::now();
-    let mut child = match command.spawn() {
+    let mut child = match crate::operation_context::spawn_process(&mut command) {
         Ok(child) => child,
         Err(error) => {
             eprintln!("transport error: could not start OpenSSH: {error}");
@@ -362,7 +362,11 @@ fn run_with_ssh(args: &DeployArgs, token_secret: &str, ssh: &OsStr, merged: &Mer
             stdin.write_all(AGENT.as_bytes())
         })
     });
-    let deadline = merged.ssh.deadline_secs.map(std::time::Duration::from_secs);
+    let deadline = merged
+        .ssh
+        .deadline_secs
+        .map(std::time::Duration::from_secs)
+        .or_else(|| crate::operation_context::current().map(|context| context.process_deadline));
     let waited = session::wait(&mut child, deadline);
     let write_result = writer.map_or_else(
         || Err(std::io::Error::other("SSH stdin was not available")),
@@ -443,6 +447,7 @@ fn exit_number(code: ExitCode) -> u8 {
 }
 
 /// Run the target-side deployment agent and preserve transport/lease identity.
+#[must_use]
 pub fn run(args: &DeployArgs, token_secret: &str, merged: &Merged) -> ExitCode {
     run_with_ssh(args, token_secret, OsStr::new("ssh"), merged)
 }

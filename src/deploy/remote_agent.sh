@@ -561,7 +561,9 @@ preservation_catalogs() {
 const {spawnSync}=require("node:child_process");const {createHmac}=require("node:crypto");
 const inventory=spawnSync("router",["tokens","list","--json"],{encoding:"utf8",timeout:15000});
 if(inventory.status!==0)throw Error("issued-token inventory unavailable");
-const now=Math.floor(Date.now()/1000);const records=JSON.parse(inventory.stdout).filter(t=>!t.revoked&&t.expires_at>now&&t.client_kind&&t.principal_id);
+const report=JSON.parse(inventory.stdout);const rows=Array.isArray(report)?report:report.success===true&&report.operation==="tokens.list"?report.data:null;
+if(!Array.isArray(rows))throw Error("issued-token inventory contract invalid");
+const now=Math.floor(Date.now()/1000);const records=rows.filter(t=>!t.revoked&&t.expires_at>now&&t.client_kind&&t.principal_id);
 if(records.length>512)throw Error("issued-token inventory exceeds bounded verification budget");const catalogs=[];
 for(const t of records){const claims={sub:t.id,iat:t.issued_at,exp:t.expires_at,label:t.label,scope:t.scope||"",github_repos:t.github_repos||[],client_kind:t.client_kind,principal_id:t.principal_id};
 const header=Buffer.from(JSON.stringify({alg:"HS256",typ:"JWT"})).toString("base64url");const body=Buffer.from(JSON.stringify(claims)).toString("base64url");const payload=header+"."+body;

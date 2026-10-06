@@ -9,7 +9,6 @@
 // enums would diverge from the CLI/env variable names that ship as public API.
 #![allow(clippy::struct_excessive_bools)]
 
-use std::env;
 use std::net::{IpAddr, SocketAddr, ToSocketAddrs as _};
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -363,55 +362,77 @@ impl Config {
     /// The binary's CLI entrypoint layers command-line flags and `.lenv`
     /// overrides onto this environment configuration.
     pub fn from_env() -> Result<Self, ConfigError> {
-        let port = env::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
-        let host = env::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-        let token_secret = crate::token_secret::or_from_file(env::var("TOKEN_SECRET").ok())
-            .map_err(ConfigError::TokenSecretFile)?;
-        let claude_code_home = env::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
-            let home = env::var("HOME").unwrap_or_else(|_| "/root".to_string());
-            format!("{home}/.claude")
-        });
-        let codex_home = SubscriptionProvider::Codex
-            .resolve_home(&env::var("HOME").unwrap_or_else(|_| "/root".to_string()));
-        let upstream_base_url = env::var("UPSTREAM_BASE_URL")
+        let port =
+            crate::operation_context::var("ROUTER_PORT").unwrap_or_else(|_| "8080".to_string());
+        let host =
+            crate::operation_context::var("ROUTER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+        let token_secret =
+            crate::token_secret::or_from_file(crate::operation_context::var("TOKEN_SECRET").ok())
+                .map_err(ConfigError::TokenSecretFile)?;
+        let claude_code_home =
+            crate::operation_context::var("CLAUDE_CODE_HOME").unwrap_or_else(|_| {
+                let home =
+                    crate::operation_context::var("HOME").unwrap_or_else(|_| "/root".to_string());
+                format!("{home}/.claude")
+            });
+        let codex_home = SubscriptionProvider::Codex.resolve_home(
+            &crate::operation_context::var("HOME").unwrap_or_else(|_| "/root".to_string()),
+        );
+        let upstream_base_url = crate::operation_context::var("UPSTREAM_BASE_URL")
             .unwrap_or_else(|_| "https://api.anthropic.com".to_string());
-        let verbose = env::var("VERBOSE").is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
-        let max_proxy_request_bytes = env::var("MAX_PROXY_REQUEST_BYTES")
+        let verbose = crate::operation_context::var("VERBOSE")
+            .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let max_proxy_request_bytes = crate::operation_context::var("MAX_PROXY_REQUEST_BYTES")
             .ok()
             .and_then(|value| value.parse().ok())
             .unwrap_or(DEFAULT_MAX_PROXY_REQUEST_BYTES);
-        let api_format = env::var("UPSTREAM_API_FORMAT")
+        let api_format = crate::operation_context::var("UPSTREAM_API_FORMAT")
             .ok()
             .and_then(|s| ApiFormat::from_str_opt(&s));
-        let routing_mode = env::var("ROUTING_MODE")
+        let routing_mode = crate::operation_context::var("ROUTING_MODE")
             .ok()
             .and_then(|s| RoutingMode::from_str_opt(&s))
             .unwrap_or_default();
-        let storage_policy = env::var("STORAGE_POLICY")
+        let storage_policy = crate::operation_context::var("STORAGE_POLICY")
             .ok()
             .and_then(|s| StoragePolicy::from_str_opt(&s))
             .unwrap_or_default();
-        let data_dir = env::var("DATA_DIR").map_or_else(|_| default_data_dir(), PathBuf::from);
-        let claude_cli_bin = env::var("CLAUDE_CLI_BIN").ok().map(PathBuf::from);
-        let codex_cli_bin = env::var("CODEX_CLI_BIN").ok().map(PathBuf::from);
-        let upstream_provider = env::var("UPSTREAM_PROVIDER")
+        let data_dir = crate::operation_context::var("DATA_DIR")
+            .map_or_else(|_| default_data_dir(), PathBuf::from);
+        let claude_cli_bin = crate::operation_context::var("CLAUDE_CLI_BIN")
+            .ok()
+            .map(PathBuf::from);
+        let codex_cli_bin = crate::operation_context::var("CODEX_CLI_BIN")
+            .ok()
+            .map(PathBuf::from);
+        let upstream_provider = crate::operation_context::var("UPSTREAM_PROVIDER")
             .ok()
             .and_then(|s| UpstreamProvider::from_str_opt(&s))
             .unwrap_or_default();
-        let gonka_private_key = env::var("GONKA_PRIVATE_KEY").ok().filter(|s| !s.is_empty());
-        let gonka_api_key = env::var("GONKA_API_KEY").ok().filter(|s| !s.is_empty());
-        let gonka_source_url = env::var("GONKA_SOURCE_URL").ok().filter(|s| !s.is_empty());
-        let gonka_model = env::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
-        let bridge_model = env::var("ANTHROPIC_BRIDGE_MODEL")
+        let gonka_private_key = crate::operation_context::var("GONKA_PRIVATE_KEY")
             .ok()
             .filter(|s| !s.is_empty());
-        let bridge_model_policy = env::var("BRIDGE_MODEL_POLICY")
+        let gonka_api_key = crate::operation_context::var("GONKA_API_KEY")
             .ok()
             .filter(|s| !s.is_empty());
-        let audit_log = env::var("AUDIT_LOG").ok().filter(|s| !s.is_empty());
-        let activitypub_actor_base_url = env::var("ACTIVITYPUB_ACTOR_BASE_URL")
-            .unwrap_or_else(|_| format!("http://{host}:{port}"));
-        let crater_actor = env::var("CRATER_FORGEFED_ACTOR")
+        let gonka_source_url = crate::operation_context::var("GONKA_SOURCE_URL")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let gonka_model =
+            crate::operation_context::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
+        let bridge_model = crate::operation_context::var("ANTHROPIC_BRIDGE_MODEL")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let bridge_model_policy = crate::operation_context::var("BRIDGE_MODEL_POLICY")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let audit_log = crate::operation_context::var("AUDIT_LOG")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let activitypub_actor_base_url =
+            crate::operation_context::var("ACTIVITYPUB_ACTOR_BASE_URL")
+                .unwrap_or_else(|_| format!("http://{host}:{port}"));
+        let crater_actor = crate::operation_context::var("CRATER_FORGEFED_ACTOR")
             .ok()
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| {
@@ -421,53 +442,56 @@ impl Config {
                 )
             });
         let crater = crate::crater::CraterConfig::new(
-            env::var("CRATER_FORGEFED_INBOX")
+            crate::operation_context::var("CRATER_FORGEFED_INBOX")
                 .ok()
                 .filter(|s| !s.is_empty()),
             &crater_actor,
-            env::var("CRATER_FORGEFED_TARGET")
+            crate::operation_context::var("CRATER_FORGEFED_TARGET")
                 .ok()
                 .filter(|s| !s.is_empty()),
             Duration::from_millis(parse_u64_env("CRATER_POLL_INTERVAL_MS", 1000)),
             Duration::from_secs(parse_u64_env("CRATER_POLL_TIMEOUT_SECS", 120)),
         );
         let openai_compatible = crate::providers::OpenAICompatibleConfig {
-            provider_name: env::var("OPENAI_COMPATIBLE_PROVIDER_NAME")
+            provider_name: crate::operation_context::var("OPENAI_COMPATIBLE_PROVIDER_NAME")
                 .unwrap_or_else(|_| "litellm".to_string()),
-            base_url: env::var("OPENAI_COMPATIBLE_BASE_URL")
+            base_url: crate::operation_context::var("OPENAI_COMPATIBLE_BASE_URL")
                 .unwrap_or_else(|_| default_openai_compatible_base_url()),
-            api_key: env::var("OPENAI_COMPATIBLE_API_KEY")
+            api_key: crate::operation_context::var("OPENAI_COMPATIBLE_API_KEY")
                 .ok()
                 .filter(|s| !s.is_empty()),
-            api_key_env: env::var("OPENAI_COMPATIBLE_API_KEY_ENV")
+            api_key_env: crate::operation_context::var("OPENAI_COMPATIBLE_API_KEY_ENV")
                 .ok()
                 .filter(|s| !s.is_empty()),
-            default_model: env::var("OPENAI_COMPATIBLE_MODEL")
+            default_model: crate::operation_context::var("OPENAI_COMPATIBLE_MODEL")
                 .ok()
                 .filter(|s| !s.is_empty()),
-            models: env::var("OPENAI_COMPATIBLE_MODELS")
+            models: crate::operation_context::var("OPENAI_COMPATIBLE_MODELS")
                 .ok()
                 .map(|raw| parse_csv(&raw))
                 .unwrap_or_default(),
-            supported_clients: env::var("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS")
+            supported_clients: crate::operation_context::var("OPENAI_COMPATIBLE_SUPPORTED_CLIENTS")
                 .ok()
                 .map(|raw| parse_csv(&raw))
                 .unwrap_or_default(),
         };
-        let activitypub_public_key_pem = env::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
-            .unwrap_or_else(|_| default_activitypub_public_key_pem());
-        let enable_openai_api = env::var("ENABLE_OPENAI_API").map_or(true, |v| {
+        let activitypub_public_key_pem =
+            crate::operation_context::var("ACTIVITYPUB_PUBLIC_KEY_PEM")
+                .unwrap_or_else(|_| default_activitypub_public_key_pem());
+        let enable_openai_api = crate::operation_context::var("ENABLE_OPENAI_API")
+            .map_or(true, |v| {
+                !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+            });
+        let enable_anthropic_api = crate::operation_context::var("ENABLE_ANTHROPIC_API")
+            .map_or(true, |v| {
+                !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
+            });
+        let enable_metrics = crate::operation_context::var("ENABLE_METRICS").map_or(true, |v| {
             !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
         });
-        let enable_anthropic_api = env::var("ENABLE_ANTHROPIC_API").map_or(true, |v| {
-            !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
-        });
-        let enable_metrics = env::var("ENABLE_METRICS").map_or(true, |v| {
-            !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
-        });
-        let inference_only = env::var("INFERENCE_ONLY")
+        let inference_only = crate::operation_context::var("INFERENCE_ONLY")
             .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON"));
-        let listeners = env::var("LISTENERS")
+        let listeners = crate::operation_context::var("LISTENERS")
             .ok()
             .map(|raw| {
                 raw.split(';')
@@ -477,7 +501,7 @@ impl Config {
                     .collect()
             })
             .unwrap_or_default();
-        let additional_account_dirs = env::var("ADDITIONAL_ACCOUNT_DIRS")
+        let additional_account_dirs = crate::operation_context::var("ADDITIONAL_ACCOUNT_DIRS")
             .ok()
             .map(|raw| {
                 raw.split(',')
@@ -487,37 +511,43 @@ impl Config {
                     .collect()
             })
             .unwrap_or_default();
-        let account_routing_strategy = match env::var("ACCOUNT_ROUTING_STRATEGY") {
-            Ok(value) => SelectionStrategy::from_str_opt(&value)
-                .ok_or(ConfigError::InvalidAccountRoutingStrategy)?,
-            Err(_) => SelectionStrategy::default(),
-        };
+        let account_routing_strategy =
+            match crate::operation_context::var("ACCOUNT_ROUTING_STRATEGY") {
+                Ok(value) => SelectionStrategy::from_str_opt(&value)
+                    .ok_or(ConfigError::InvalidAccountRoutingStrategy)?,
+                Err(_) => SelectionStrategy::default(),
+            };
         let account_cooldown_secs = parse_u64_env("ACCOUNT_COOLDOWN_SECS", 60);
         let session_affinity_ttl_secs = parse_u64_env("SESSION_AFFINITY_TTL_SECS", 3600);
-        let account_request_limits = env::var("ACCOUNT_REQUEST_LIMITS")
+        let account_request_limits = crate::operation_context::var("ACCOUNT_REQUEST_LIMITS")
             .ok()
             .map(|raw| parse_usize_csv(&raw))
             .transpose()?
             .unwrap_or_default();
-        let experimental_compatibility = env::var("EXPERIMENTAL_COMPATIBILITY")
-            .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
-        let subscription_bridge_overrides = env::var("SUBSCRIPTION_BRIDGE_OVERRIDES")
+        let experimental_compatibility =
+            crate::operation_context::var("EXPERIMENTAL_COMPATIBILITY")
+                .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
+        let subscription_bridge_overrides =
+            crate::operation_context::var("SUBSCRIPTION_BRIDGE_OVERRIDES")
+                .ok()
+                .map(|raw| parse_csv(&raw))
+                .unwrap_or_default();
+        let proxied_client_overrides = crate::operation_context::var("PROXIED_CLIENT_OVERRIDES")
             .ok()
             .map(|raw| parse_csv(&raw))
             .unwrap_or_default();
-        let proxied_client_overrides = env::var("PROXIED_CLIENT_OVERRIDES")
+        let admin_key = crate::operation_context::var("TOKEN_ADMIN_KEY")
             .ok()
-            .map(|raw| parse_csv(&raw))
-            .unwrap_or_default();
-        let admin_key = env::var("TOKEN_ADMIN_KEY").ok().filter(|s| !s.is_empty());
-        let allow_anonymous_admin = env::var("ALLOW_ANONYMOUS_ADMIN")
+            .filter(|s| !s.is_empty());
+        let allow_anonymous_admin = crate::operation_context::var("ALLOW_ANONYMOUS_ADMIN")
             .is_ok_and(|v| v == "1" || v.eq_ignore_ascii_case("true"));
         let login = crate::login::LoginConfig {
-            enabled: env::var("ENABLE_LOGIN_API").map_or(true, |v| {
+            enabled: crate::operation_context::var("ENABLE_LOGIN_API").map_or(true, |v| {
                 !matches!(v.as_str(), "0" | "false" | "FALSE" | "off")
             }),
-            command: env::var("LOGIN_CLI_COMMAND").unwrap_or_else(|_| "claude".to_string()),
-            args: env::var("LOGIN_CLI_ARGS")
+            command: crate::operation_context::var("LOGIN_CLI_COMMAND")
+                .unwrap_or_else(|_| "claude".to_string()),
+            args: crate::operation_context::var("LOGIN_CLI_ARGS")
                 .ok()
                 .filter(|raw| !raw.trim().is_empty())
                 .map_or_else(Vec::new, |raw| parse_csv(&raw)),
@@ -527,12 +557,16 @@ impl Config {
             ..crate::login::LoginConfig::default()
         };
         let mpp = crate::mpp::MppConfig {
-            enabled: env::var("MPP_ENABLE")
+            enabled: crate::operation_context::var("MPP_ENABLE")
                 .is_ok_and(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "on" | "ON")),
-            amount: env::var("MPP_AMOUNT").unwrap_or_else(|_| "0.00".to_string()),
-            currency: env::var("MPP_CURRENCY").unwrap_or_else(|_| "USD".to_string()),
-            recipient: env::var("MPP_RECIPIENT").unwrap_or_default(),
-            method: env::var("MPP_METHOD").ok().filter(|s| !s.is_empty()),
+            amount: crate::operation_context::var("MPP_AMOUNT")
+                .unwrap_or_else(|_| "0.00".to_string()),
+            currency: crate::operation_context::var("MPP_CURRENCY")
+                .unwrap_or_else(|_| "USD".to_string()),
+            recipient: crate::operation_context::var("MPP_RECIPIENT").unwrap_or_default(),
+            method: crate::operation_context::var("MPP_METHOD")
+                .ok()
+                .filter(|s| !s.is_empty()),
         };
 
         let admin_ui = admin_ui_from_env()?;
@@ -643,7 +677,7 @@ impl Config {
             routing_mode: args.routing_mode,
             storage_policy: args.storage_policy,
             data_dir: args.data_dir,
-            client_home: env::var_os("HOME")
+            client_home: crate::operation_context::var_os("HOME")
                 .filter(|home| !home.is_empty())
                 .map_or_else(|| PathBuf::from("."), PathBuf::from),
             isolated_client_home: false,
@@ -803,10 +837,11 @@ pub fn default_mpp_config() -> crate::mpp::MppConfig {
 /// Compute the default data directory: `$DATA_DIR` or `<claude_home>/router-data`.
 #[must_use]
 pub fn default_data_dir() -> PathBuf {
-    if let Ok(d) = env::var("DATA_DIR") {
+    if let Ok(d) = crate::operation_context::var("DATA_DIR") {
         return PathBuf::from(d);
     }
-    let home = env::var("HOME").unwrap_or_else(|_| "/var/lib/link-assistant-router".to_string());
+    let home = crate::operation_context::var("HOME")
+        .unwrap_or_else(|_| "/var/lib/link-assistant-router".to_string());
     PathBuf::from(home).join(".link-assistant-router")
 }
 
@@ -831,7 +866,7 @@ fn parse_csv(raw: &str) -> Vec<String> {
 }
 
 pub(crate) fn parse_u64_env(name: &str, default: u64) -> u64 {
-    env::var(name)
+    crate::operation_context::var(name)
         .ok()
         .and_then(|value| value.parse().ok())
         .unwrap_or(default)

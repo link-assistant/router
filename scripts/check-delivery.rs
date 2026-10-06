@@ -5,6 +5,7 @@
 //! [dependencies]
 //! serde_json = "1"
 //! tempfile = "3"
+//! tracing = "0.1"
 //! [target.'cfg(windows)'.dependencies]
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
@@ -79,6 +80,13 @@ fn required_assets(version: &str) -> Vec<String> {
                     format!("link-assistant-router-{version}-{platform}.{extension}")
                 })
         })
+        .chain([
+            format!("link-assistant-router-{version}.tgz"),
+            format!("link_assistant_router-{version}-py3-none-any.whl"),
+            format!("link_assistant_router-{version}.tar.gz"),
+            format!("router-contracts-{version}.tar.gz"),
+            format!("router-integrations-{version}.sha256"),
+        ])
         .collect()
 }
 
@@ -115,7 +123,7 @@ fn validate_downloads(directory: &std::path::Path, version: &str) -> Result<Valu
                 return Err("published checksum verification failed".into());
             }
         }
-        if name.ends_with(".tar.gz") {
+        if name.starts_with("link-assistant-router-") && name.ends_with(".tar.gz") {
             let names = command("tar", &["-tzf", path])?;
             for binary in ["router", "link-assistant-router", "with-router"] {
                 if !names
@@ -130,7 +138,11 @@ fn validate_downloads(directory: &std::path::Path, version: &str) -> Result<Valu
     Ok(json!(digests))
 }
 
-fn verify_native_versions(directory: &std::path::Path, version: &str) -> Result<(), String> {
+fn verify_native_versions(
+    directory: &std::path::Path,
+    version: &str,
+    commit: &str,
+) -> Result<(), String> {
     let platform = match (std::env::consts::OS, std::env::consts::ARCH) {
         ("linux", "x86_64") => "linux-amd64",
         ("linux", "aarch64") => "linux-arm64",
@@ -165,6 +177,94 @@ fn verify_native_versions(directory: &std::path::Path, version: &str) -> Result<
         if !actual.split_whitespace().any(|part| part == version) {
             return Err("published native binary version differs from release identity".into());
         }
+        if binary != "with-router" {
+            let response: Value = serde_json::from_str(&command(
+                path.to_str().ok_or("binary path")?,
+                &["version", "--json"],
+            )?)
+            .map_err(|_| "published binary version contract invalid")?;
+            if response["data"]["source_commit"] != commit {
+                return Err(
+                    "published binary source commit differs from immutable release tag".into(),
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_registry_metadata(
+    npm: &Value,
+    python: &Value,
+    version: &str,
+    npm_digest: &str,
+    digests: &Value,
+) -> Result<(), String> {
+    if npm["version"] != version || npm["dist"]["shasum"] != npm_digest {
+        return Err(
+            "npm distribution version or checksum differs from verified release asset".into(),
+        );
+    }
+    if python["info"]["version"] != version {
+        return Err("PyPI version differs from verified release identity".into());
+    }
+    for name in [
+        format!("link_assistant_router-{version}-py3-none-any.whl"),
+        format!("link_assistant_router-{version}.tar.gz"),
+    ] {
+        let file = python["urls"]
+            .as_array()
+            .and_then(|files| files.iter().find(|file| file["filename"] == name))
+            .ok_or_else(|| format!("PyPI distribution missing: {name}"))?;
+        if file["digests"]["sha256"] != digests[&name] {
+            return Err(format!(
+                "PyPI checksum differs from verified release asset: {name}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn verify_registries(
+    directory: &std::path::Path,
+    version: &str,
+    digests: &Value,
+) -> Result<(), String> {
+    let npm: Value = serde_json::from_str(&command(
+        "curl",
+        &[
+            "-fsSL",
+            &format!("https://registry.npmjs.org/@link-assistant%2Frouter/{version}"),
+        ],
+    )?)
+    .map_err(|_| "npm registry response invalid")?;
+    let python: Value = serde_json::from_str(&command(
+        "curl",
+        &[
+            "-fsSL",
+            &format!("https://pypi.org/pypi/link-assistant-router/{version}/json"),
+        ],
+    )?)
+    .map_err(|_| "PyPI registry response invalid")?;
+    let package = directory.join(format!("link-assistant-router-{version}.tgz"));
+    let digest = command("sha1sum", &[package.to_str().ok_or("npm asset path")?])?;
+    validate_registry_metadata(
+        &npm,
+        &python,
+        version,
+        digest.split_whitespace().next().ok_or("npm digest")?,
+        digests,
+    )?;
+    let crate_metadata: Value = serde_json::from_str(&command(
+        "curl",
+        &[
+            "-fsSL",
+            &format!("https://crates.io/api/v1/crates/link-assistant-router/{version}"),
+        ],
+    )?)
+    .map_err(|_| "crate registry response invalid")?;
+    if crate_metadata["version"]["num"] != version {
+        return Err("crate publication missing or wrong version".into());
     }
     Ok(())
 }
@@ -246,8 +346,10 @@ fn inspect(repository: &str, source: &str, verify: bool) -> Result<Value, String
                 "--image", &immutable, "--asset-dir", dir]);
             let output = bounded_process::output(&mut guard, Duration::from_secs(900)).map_err(|error| error.to_string())?;
             if !output.status.success() { return Err("binary/checksum/attestation or image revision/version/platform verification failed".into()); }
-            asset_digests = Some(validate_downloads(directory.path(), version)?);
-            verify_native_versions(directory.path(), version)?;
+            let digests = validate_downloads(directory.path(), version)?;
+            verify_native_versions(directory.path(), version, revision.as_deref().expect("tag"))?;
+            verify_registries(directory.path(), version, &digests)?;
+            asset_digests = Some(digests);
             image_digest = Some(digest.to_owned());
             Ok(())
         });
@@ -316,6 +418,22 @@ mod tests {
         assert!(complete_assets(&assets, "1.2.3").is_ok());
         assets.pop();
         assert!(complete_assets(&assets, "1.2.3").is_err());
+    }
+    #[test]
+    fn registries_must_contain_the_exact_verified_distributions() {
+        let npm = json!({"version":"1.2.3", "dist":{"shasum":"npm-sha1"}});
+        let python = json!({"info":{"version":"1.2.3"}, "urls":[
+            {"filename":"link_assistant_router-1.2.3-py3-none-any.whl", "digests":{"sha256":"wheel-sha"}},
+            {"filename":"link_assistant_router-1.2.3.tar.gz", "digests":{"sha256":"sdist-sha"}}]});
+        let digests = json!({"link_assistant_router-1.2.3-py3-none-any.whl":"wheel-sha", "link_assistant_router-1.2.3.tar.gz":"sdist-sha"});
+        assert!(validate_registry_metadata(&npm, &python, "1.2.3", "npm-sha1", &digests).is_ok());
+        assert!(validate_registry_metadata(&npm, &python, "1.2.3", "other-sha", &digests).is_err());
+        let mut missing = python.clone();
+        missing["urls"].as_array_mut().unwrap().pop();
+        assert!(validate_registry_metadata(&npm, &missing, "1.2.3", "npm-sha1", &digests).is_err());
+        let mut wrong = python;
+        wrong["urls"][0]["digests"]["sha256"] = json!("other-wheel");
+        assert!(validate_registry_metadata(&npm, &wrong, "1.2.3", "npm-sha1", &digests).is_err());
     }
     #[test]
     fn a_green_pr_or_old_release_cannot_prove_delivery() {

@@ -25,7 +25,7 @@ fn safety_for(os: &str) -> Result<(), &'static str> {
 
 /// Strip inherited tokens, profile paths, IPC addresses and proxy credentials.
 pub fn environment(command: &mut Command, home: &Path) {
-    let path = std::env::var_os("PATH").unwrap_or_default();
+    let path = crate::operation_context::var_os("PATH").unwrap_or_default();
     command
         .env_clear()
         .env("PATH", path)
@@ -67,7 +67,7 @@ pub const CLIENTS: &[(&str, &str)] = &[
 pub fn prepare(clients: &[&str]) -> (Vec<Value>, Vec<(String, String)>) {
     prepare_using(
         clients,
-        |variable| std::env::var(variable).ok(),
+        |variable| crate::operation_context::var(variable).ok(),
         |client| {
             if let Err(reason) = safety() {
                 return Err(std::io::Error::new(
@@ -76,10 +76,10 @@ pub fn prepare(clients: &[&str]) -> (Vec<Value>, Vec<(String, String)>) {
                 ));
             }
             tempfile::tempdir().and_then(|home| {
-                let mut command = Command::new(client);
+                let mut command = crate::operation_context::command(client);
                 environment(&mut command, home.path());
                 command.arg("--version");
-                crate::bounded_process::output(&mut command, Duration::from_secs(15))
+                crate::operation_context::bounded_output(&mut command, Duration::from_secs(15))
             })
         },
     )
@@ -125,7 +125,7 @@ fn prepare_using(
                 "failed",
                 "version discovery returned an invalid version or exit status",
             ),
-            (_, Some(actual), Some(wanted)) if actual != wanted => {
+            (_, Some(actual), Some(wanted)) if wanted != "latest" && actual != wanted => {
                 ("failed", "expected and installed client versions differ")
             }
             _ => (
@@ -139,7 +139,22 @@ fn prepare_using(
                 observed.clone().expect("prepared version"),
             ));
         }
-        report.push(json!({"client":client,"expected":expected,"observed":observed,"status":status,"reason":reason}));
+        let prefix = variable.trim_end_matches("_VERSION");
+        let source = expected_version(&format!("{prefix}_SOURCE")).unwrap_or_else(|| {
+            if expected.is_some() {
+                "ci-pin"
+            } else {
+                "installed"
+            }
+            .into()
+        });
+        let host =
+            expected_version(&format!("{prefix}_HOST_VERSION")).filter(|value| !value.is_empty());
+        let mismatch = host
+            .as_ref()
+            .zip(observed.as_ref())
+            .is_some_and(|(host, proven)| host != proven);
+        report.push(json!({"client":client,"expected":expected,"observed":observed,"source":source,"host_installed":host,"host_mismatch":mismatch,"status":status,"reason":reason}));
     }
     (report, variables)
 }
@@ -210,7 +225,7 @@ mod tests {
 
     #[test]
     fn private_environment_clears_inherited_profile_and_credential_variables() {
-        let mut command = Command::new("fixture");
+        let mut command = crate::operation_context::command("fixture");
         command
             .env("ANTHROPIC_API_KEY", "inherited-secret")
             .env("CODEX_HOME", "/original");

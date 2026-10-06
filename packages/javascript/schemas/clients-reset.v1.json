@@ -1,0 +1,113 @@
+{
+  "$defs": {
+    "ResetRow": {
+      "additionalProperties": false,
+      "properties": {
+        "ambient_overrides": {},
+        "backup_id": {},
+        "categories": {},
+        "checked": {},
+        "client": {},
+        "dry_run": {},
+        "full": {},
+        "mode": {},
+        "preserved": {},
+        "profile": {},
+        "reason": {},
+        "status": {},
+        "targets": {}
+      },
+      "required": [
+        "client",
+        "profile",
+        "status"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/clients-reset/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ResetRow"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "clients.reset"
+    },
+    "schema": {
+      "const": "link-assistant-router/clients-reset/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

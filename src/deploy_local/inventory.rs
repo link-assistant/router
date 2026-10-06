@@ -54,7 +54,7 @@ pub(super) struct Inventory {
 
 impl Inventory {
     pub(super) fn from_json(rendered: &str, now: i64) -> Result<Self, String> {
-        let records: Vec<TokenRecord> = serde_json::from_str(rendered)
+        let records: Vec<TokenRecord> = crate::operations::decode_payload(rendered.as_bytes())
             .map_err(|error| format!("token inventory was not valid JSON: {error}"))?;
         let runs = records
             .into_iter()

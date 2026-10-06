@@ -14,7 +14,7 @@ use super::{
 };
 
 /// Who owns the routing configuration currently effective for a client.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum OwnershipState {
     Unconfigured,
@@ -37,7 +37,7 @@ impl fmt::Display for OwnershipState {
 }
 
 /// Highest-precedence source selecting the endpoint.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum ConfigSource {
     AmbientEnvironment,
@@ -47,7 +47,7 @@ pub enum ConfigSource {
 }
 
 /// Secret-free observation of one allowed client/Router-owned file.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ObservedFile {
     pub path: PathBuf,
     pub exists: bool,
@@ -57,7 +57,7 @@ pub struct ObservedFile {
 }
 
 /// Complete ownership decision used by status, doctor, with, and repair.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
 pub struct ClientConfigAnalysis {
     pub client: ClientKind,
     pub state: OwnershipState,

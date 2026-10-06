@@ -73,7 +73,11 @@ pub fn generated_subject_names(configured: &str) -> Vec<String> {
 /// misconfiguration whose silent fallback to plaintext would be the opposite of
 /// what was asked for — or when generation fails.
 pub fn from_env(data_dir: &Path) -> Result<TlsSetup, String> {
-    let read = |name: &str| std::env::var(name).ok().filter(|value| !value.is_empty());
+    let read = |name: &str| {
+        crate::operation_context::var(name)
+            .ok()
+            .filter(|value| !value.is_empty())
+    };
     resolve(
         data_dir,
         read("TLS_CERT_FILE"),

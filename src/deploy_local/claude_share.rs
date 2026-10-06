@@ -27,6 +27,7 @@ use link_assistant_router::env_paths::from_value;
 const CREDENTIAL_FILE: &str = ".credentials.json";
 
 /// Preserve credential refusals before checking a default container image.
+#[must_use]
 pub fn preflight(args: &DeployArgs, root: &Path) -> Option<std::process::ExitCode> {
     let mode = args.claude_credentials?;
     if args.status || args.down {
@@ -66,8 +67,8 @@ impl Provision {
     pub(super) fn assess(mode: ClaudeCredentials, data: &Path) -> Self {
         Self::assess_in(
             mode,
-            std::env::var_os("CLAUDE_CONFIG_DIR"),
-            std::env::var_os("HOME"),
+            crate::operation_context::var_os("CLAUDE_CONFIG_DIR"),
+            crate::operation_context::var_os("HOME"),
             data,
             link_assistant_router::platform_keychain::has_entry,
         )

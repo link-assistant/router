@@ -97,8 +97,8 @@ impl Mode {
     #[must_use]
     pub fn from_env() -> Self {
         Self::from_values(
-            std::env::var(RECORD_ENV).ok().as_deref(),
-            std::env::var(REPLAY_ENV).ok().as_deref(),
+            crate::operation_context::var(RECORD_ENV).ok().as_deref(),
+            crate::operation_context::var(REPLAY_ENV).ok().as_deref(),
         )
     }
 

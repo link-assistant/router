@@ -1,0 +1,441 @@
+src/server_router.rs:53:    app.fallback(not_found)
+src/server_router.rs:68:    Router::new().route(route_template(RouteId::Health), get(proxy::health))
+src/server_router.rs:77:        .route(
+src/server_router.rs:81:        .route(
+src/server_router.rs:85:        .route(
+src/server_router.rs:90:        .route(
+src/server_router.rs:94:        .route(
+src/server_router.rs:98:        .route(
+src/server_router.rs:102:        .route(
+src/server_router.rs:106:        .route(
+src/server_router.rs:110:        .route(
+src/server_router.rs:114:        .route(
+src/server_router.rs:118:        .route(
+src/server_router.rs:122:        .route(
+src/server_router.rs:126:        .route(
+src/server_router.rs:130:        .route(
+src/server_router.rs:134:        .route(
+src/server_router.rs:138:        .route(
+src/server_router.rs:142:        .route(
+src/server_router.rs:149:            .route(route_template(RouteId::Login), post(login_api::begin_login))
+src/server_router.rs:150:            .route(
+src/server_router.rs:154:            .route(
+src/server_router.rs:161:            .route(route_template(RouteId::Usage), get(proxy::usage_endpoint))
+src/server_router.rs:162:            .route(
+src/server_router.rs:166:            .route(
+src/server_router.rs:170:            .route(
+src/server_router.rs:174:            .route(
+src/server_router.rs:179:    open_routes.merge(routes.route_layer(from_fn_with_state(state, authenticate_admin_route)))
+src/server_router.rs:184:        .route(
+src/server_router.rs:188:        .route(
+src/server_router.rs:192:        .route(
+src/server_router.rs:196:        .route(
+src/server_router.rs:202:            .route(
+src/server_router.rs:206:            .route(
+src/server_router.rs:210:            .route(
+src/server_router.rs:214:            .route(
+src/server_router.rs:218:            .route(
+src/server_router.rs:222:            .route(
+src/server_router.rs:226:            .route(
+src/server_router.rs:230:            .route(
+src/server_router.rs:237:            .route(
+src/server_router.rs:241:            .route(
+src/server_router.rs:245:            .route(
+src/server_router.rs:249:            .route(
+src/server_router.rs:253:            .route(
+src/server_router.rs:259:            .route(
+src/server_router.rs:263:            .route(
+src/server_router.rs:267:            .route(
+src/server_router.rs:272:            .route(
+src/server_router.rs:276:            .route(
+src/server_router.rs:280:            .route(
+src/server_router.rs:284:            .route(
+src/server_router.rs:290:            .route(
+src/server_router.rs:294:            .route(
+src/server_router.rs:298:            .route(
+src/server_router.rs:302:            .route(
+src/server_router.rs:306:            .route(
+src/server_router.rs:310:            .route(
+src/server_router.rs:316:            .route(
+src/server_router.rs:320:            .route(
+src/server_router.rs:324:            .route(
+src/server_router.rs:329:            .route(
+src/server_router.rs:333:            .route(
+src/server_router.rs:337:            .route(
+src/server_router.rs:341:            .route(
+src/server_router.rs:347:            .route(
+src/server_router.rs:351:            .route(
+src/server_router.rs:355:            .route(
+src/server_router.rs:359:            .route(
+src/server_router.rs:363:            .route(
+src/server_router.rs:367:            .route(
+src/server_router.rs:373:            .route(
+src/server_router.rs:377:            .route(
+src/server_router.rs:382:            .route(
+src/server_router.rs:387:            .route(
+src/server_router.rs:391:            .route(
+src/server_router.rs:395:            .route(
+src/server_router.rs:399:            .route(
+src/server_router.rs:405:            .route(
+src/server_router.rs:409:            .route(
+src/server_router.rs:413:            .route(
+src/server_router.rs:417:            .route(
+src/server_router.rs:421:            .route(
+src/server_router.rs:425:            .route(
+src/server_router.rs:429:            .route(
+src/server_router.rs:434:    routes.route_layer(from_fn_with_state(
+src/server_router.rs:442:        .route(
+src/server_router.rs:446:        .route(
+src/server_router.rs:450:        .route(
+src/server_router.rs:454:        .route(
+src/server_router.rs:458:        .route(
+src/server_router.rs:470:        .route(
+src/server_router.rs:474:        .route(
+src/server_router.rs:478:        .route(route_template(RouteId::Git), any(crate::git_proxy::proxy))
+src/server_router.rs:479:        .route_layer(from_fn_with_state(state, authenticate_client_route))
+src/server_router.rs:487:        .route(
+src/server_router.rs:491:        .route(
+src/server_router.rs:495:        .route(
+src/server_router.rs:499:        .route_layer(from_fn_with_state(state, authenticate_client_route))
+src/server_router.rs:505:        .fallback(not_found)
+src/admin.rs:394:        // a fallback — that would resurrect a revoked or expired credential.
+src/auth.rs:323:            .route(CODEX_CALLBACK_PATH, get(callback))
+src/auth.rs:715:            .route("/api/accounts/deviceauth/usercode", post(issue_device_code))
+src/auth.rs:716:            .route("/api/accounts/deviceauth/token", post(poll_device_code))
+src/auth.rs:717:            .route("/oauth/token", post(exchange_device_code))
+src/auth.rs:718:            .route("/models", get(codex_catalog))
+src/auth_native_acceptance_tests.rs:82:    let app = Router::new().fallback(any(|request: Request| async move {
+src/auth_native_acceptance_tests.rs:130:    let app = Router::new().route(
+src/auth_import.rs:528:    // fallback to a drifting copy becomes a refusal that names the obstacle —
+src/codex_loopback_bridge.rs:157:        .fallback(bridge_request)
+src/codex_loopback_bridge.rs:238:        .fallback(bridge_request)
+src/accounts_limits.rs:185:                    let fallback = observed
+src/accounts_limits.rs:189:                    let until = until.unwrap_or_else(|| now.saturating_add(fallback.as_secs()));
+src/client_lifecycle.rs:116:    let selected = |name: &str, fallback: PathBuf| {
+src/client_lifecycle.rs:118:            fallback
+src/client_lifecycle.rs:120:            env(name).unwrap_or(fallback)
+src/codex_catalog.rs:18:/// to use its built-in fallback without inventing model-specific behavior.
+src/managed_server_tests.rs:166:/// The case the original fallback defends: with no owner declared, the router
+src/managed_server_tests.rs:420:        .route(
+src/managed_server_tests.rs:424:        .route(
+src/managed_server_tests.rs:433:        .route(
+src/managed_server_tests.rs:442:        .route(
+src/managed_server_tests.rs:505:            .route(
+src/managed_server_tests.rs:509:            .route(
+src/managed_server_tests.rs:517:        axum::Router::new().route(
+src/managed_server_tests.rs:593:    let app = axum::Router::new().route(
+src/managed_server_tests.rs:604:        axum::Router::new().route(
+src/model_contract.rs:277:/// turning on the broader fallback/substitution setting. Unknown selectors are
+src/model_routing_tests.rs:128:    assert_eq!(empty["using_fallback"], false);
+src/model_routing_tests.rs:244:        .route("/api/services/anthropic/v1/models", get(models))
+src/model_routing_tests.rs:300:        .route("/api/services/anthropic/v1/models", get(models))
+src/model_routing_tests.rs:301:        .route("/api/services/codex/v1/models", get(models))
+src/model_routing_tests.rs:349:        .route(
+src/model_routing_tests.rs:387:        .route("/api/services/anthropic/v1/models", get(models))
+src/auth_import_tests.rs:83:        .fallback(any(candidate_vendor))
+src/on_demand_cli.rs:50:                "Claude CLI fallback needs bun (preferred) or node/npm's npx in PATH".into(),
+src/on_demand_cli.rs:124:    fn fallback_runs_the_dedicated_subscription_login_command() {
+src/platform_keychain.rs:15://! a per-platform probe with the file as the fallback rather than a macOS
+src/accounts.rs:708:            // as a fallback instead of being treated as unlimited.
+src/provider_acceptance_tests.rs:62:    let app = axum::Router::new().route(
+src/provider_acceptance_tests.rs:393:    let app = axum::Router::new().route(
+src/provider_acceptance_tests.rs:442:    let app = axum::Router::new().route(
+src/admin_api.rs:40:        .fallback(crate::admin_ui::serve_asset)
+src/providers.rs:784:                "Lefine fallback models must be unique non-empty exact ids".into(),
+src/providers.rs:796:                "Lefine default_model must occur in configured fallback models".into(),
+src/proxy_tests.rs:344:    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+src/proxy_tests.rs:454:    let upstream = axum::Router::new().fallback(move || {
+src/refresh_inference_evidence_tests.rs:23:    let app = axum::Router::new().fallback(|| async {
+src/credential_recovery_store.rs:1://! Durable fallback storage for refreshed subscription credentials.
+src/credential_recovery_store.rs:435:            store.persist(&fresh).expect("fallback persistence");
+src/credential_recovery_store.rs:482:            .expect("fallback persistence");
+src/credential_recovery_store.rs:516:                .expect("fallback persistence");
+src/anthropic_bridge.rs:679:    // No source-code fallback: when the live catalog cannot name a model the
+src/auth_cli.rs:633:            eprintln!("error: --code requires --flow code; the CLI fallback starts its own login");
+src/auth_cli.rs:636:        return run_claude_cli_fallback(config, login_config, code).await;
+src/auth_cli.rs:643:            eprintln!("Trying a disposable Claude Code CLI fallback…");
+src/auth_cli.rs:644:            run_claude_cli_fallback(config, login_config, None).await
+src/auth_cli.rs:721:async fn run_claude_cli_fallback(
+src/auth_cli.rs:726:    let (_disposable, fallback_config) =
+src/auth_cli.rs:734:    let manager = LoginManager::new_with_data_dir(fallback_config, config.data_dir.clone());
+src/request_log_private_tests.rs:119:    let upstream = axum::Router::new().fallback(move |request: Request| {
+src/auth_remote.rs:42:/// unreachable *selected* server is an error rather than a silent fallback:
+src/auth_remote_tests.rs:193:/// An unreachable router is an error, never a quiet local fallback.
+src/codex_remote_control_tests.rs:144:    let upstream = axum::Router::new().fallback(move |request: Request| {
+src/codex_remote_control_tests.rs:419:    let upstream = axum::Router::new().fallback(move |request: Request| {
+src/codex_remote_control_tests.rs:556:    let upstream = axum::Router::new().route(
+src/server_router.rs:53:    app.fallback(not_found)
+src/server_router.rs:68:    Router::new().route(route_template(RouteId::Health), get(proxy::health))
+src/server_router.rs:77:        .route(
+src/server_router.rs:81:        .route(
+src/server_router.rs:85:        .route(
+src/server_router.rs:90:        .route(
+src/server_router.rs:94:        .route(
+src/server_router.rs:98:        .route(
+src/server_router.rs:102:        .route(
+src/server_router.rs:106:        .route(
+src/server_router.rs:110:        .route(
+src/server_router.rs:114:        .route(
+src/server_router.rs:118:        .route(
+src/server_router.rs:122:        .route(
+src/server_router.rs:126:        .route(
+src/server_router.rs:130:        .route(
+src/server_router.rs:134:        .route(
+src/server_router.rs:138:        .route(
+src/server_router.rs:142:        .route(
+src/server_router.rs:149:            .route(route_template(RouteId::Login), post(login_api::begin_login))
+src/server_router.rs:150:            .route(
+src/server_router.rs:154:            .route(
+src/server_router.rs:161:            .route(route_template(RouteId::Usage), get(proxy::usage_endpoint))
+src/server_router.rs:162:            .route(
+src/server_router.rs:166:            .route(
+src/server_router.rs:170:            .route(
+src/server_router.rs:174:            .route(
+src/server_router.rs:179:    open_routes.merge(routes.route_layer(from_fn_with_state(state, authenticate_admin_route)))
+src/server_router.rs:184:        .route(
+src/server_router.rs:188:        .route(
+src/server_router.rs:192:        .route(
+src/server_router.rs:196:        .route(
+src/server_router.rs:202:            .route(
+src/server_router.rs:206:            .route(
+src/server_router.rs:210:            .route(
+src/server_router.rs:214:            .route(
+src/server_router.rs:218:            .route(
+src/server_router.rs:222:            .route(
+src/server_router.rs:226:            .route(
+src/server_router.rs:230:            .route(
+src/server_router.rs:237:            .route(
+src/server_router.rs:241:            .route(
+src/server_router.rs:245:            .route(
+src/server_router.rs:249:            .route(
+src/server_router.rs:253:            .route(
+src/server_router.rs:259:            .route(
+src/server_router.rs:263:            .route(
+src/server_router.rs:267:            .route(
+src/server_router.rs:272:            .route(
+src/server_router.rs:276:            .route(
+src/server_router.rs:280:            .route(
+src/server_router.rs:284:            .route(
+src/server_router.rs:290:            .route(
+src/server_router.rs:294:            .route(
+src/server_router.rs:298:            .route(
+src/server_router.rs:302:            .route(
+src/server_router.rs:306:            .route(
+src/server_router.rs:310:            .route(
+src/server_router.rs:316:            .route(
+src/server_router.rs:320:            .route(
+src/server_router.rs:324:            .route(
+src/server_router.rs:329:            .route(
+src/server_router.rs:333:            .route(
+src/server_router.rs:337:            .route(
+src/server_router.rs:341:            .route(
+src/server_router.rs:347:            .route(
+src/server_router.rs:351:            .route(
+src/server_router.rs:355:            .route(
+src/server_router.rs:359:            .route(
+src/server_router.rs:363:            .route(
+src/server_router.rs:367:            .route(
+src/server_router.rs:373:            .route(
+src/server_router.rs:377:            .route(
+src/server_router.rs:382:            .route(
+src/server_router.rs:387:            .route(
+src/server_router.rs:391:            .route(
+src/server_router.rs:395:            .route(
+src/server_router.rs:399:            .route(
+src/server_router.rs:405:            .route(
+src/server_router.rs:409:            .route(
+src/server_router.rs:413:            .route(
+src/server_router.rs:417:            .route(
+src/server_router.rs:421:            .route(
+src/server_router.rs:425:            .route(
+src/server_router.rs:429:            .route(
+src/server_router.rs:434:    routes.route_layer(from_fn_with_state(
+src/server_router.rs:442:        .route(
+src/server_router.rs:446:        .route(
+src/server_router.rs:450:        .route(
+src/server_router.rs:454:        .route(
+src/server_router.rs:458:        .route(
+src/server_router.rs:470:        .route(
+src/server_router.rs:474:        .route(
+src/server_router.rs:478:        .route(route_template(RouteId::Git), any(crate::git_proxy::proxy))
+src/server_router.rs:479:        .route_layer(from_fn_with_state(state, authenticate_client_route))
+src/server_router.rs:487:        .route(
+src/server_router.rs:491:        .route(
+src/server_router.rs:495:        .route(
+src/server_router.rs:499:        .route_layer(from_fn_with_state(state, authenticate_client_route))
+src/server_router.rs:505:        .fallback(not_found)
+src/lefine.rs:140:            "Lefine live catalog is unavailable and no exact fallback models are configured",
+src/lefine.rs:153:                    serde_json::Value::String("configured_fallback".into()),
+src/clients_tests.rs:61:/// These paths are derived from the client name, so without the fallback an
+src/clients_tests.rs:95:/// fallback cannot silently miss one.
+src/clients_tests.rs:148:    // wrong owner stops being invisible: the fallback picks the first entry,
+src/clients_tests.rs:440:/// Issue #563: the fallback took the first z.ai entry in catalog order, so a
+src/emergency_auth.rs:366:        // The `at-` prefix is only a fallback: the carrier and user agent say
+src/vendor_cli_refresh_tests.rs:190:fn the_fallback_record_reproduces_the_request_without_its_secrets() {
+src/codex_loopback_bridge_tests.rs:76:    let upstream = axum::Router::new().fallback(move |request: Request| {
+src/gonka.rs:678:        let app = axum::Router::new().route(
+src/gonka.rs:836:            .route(
+src/gonka.rs:843:            .route(
+src/logging.rs:63:/// verbosity as a fallback only.
+src/logging.rs:66:    let fallback = if verbose { "debug" } else { "info" };
+src/logging.rs:70:        .unwrap_or_else(|| EnvFilter::new(fallback))
+src/model_catalog.rs:409:                    let fallback = (account != crate::credential_recovery_store::PRIMARY_ACCOUNT)
+src/model_catalog.rs:419:                    (fallback, crate::credential_recovery_store::PRIMARY_ACCOUNT)
+src/model_catalog.rs:687:    // This is deliberately a raw, insert-if-absent fallback. Production has
+src/model_resource_tests.rs:13:    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+src/model_routing_native_catalog_tests.rs:23:        "using_fallback": false,
+src/model_routing_native_catalog_tests.rs:47:        "using_fallback",
+src/native_service_tests_codex_accounts.rs:11:    let upstream = axum::Router::new().fallback(move || {
+src/subscription_tests.rs:698:/// fallbacks and cannot shadow the canonical login.
+src/refresh_journal.rs:57:/// Built from the same configuration `refresh_at` uses, so a fallback record
+src/credential_status.rs:112:        let app = axum::Router::new().fallback(move || async move { (status, body) });
+src/model_command.rs:267:        let app = Router::new().route(
+src/model_routing_aggregate.rs:50:        "using_fallback",
+src/model_routing_aggregate.rs:676:    fn configured_fallback_is_inventory_not_capability_evidence() {
+src/model_routing_aggregate.rs:681:                "catalog_source": "configured_fallback",
+src/credential_acceptance_tests.rs:78:    let app = Router::new().fallback(any(vendor)).with_state(Vendor {
+src/subscription_usage_http_tests.rs:13:        .route("/api/usage", get(usage))
+src/subscription_usage_http_tests.rs:14:        .route("/api/usage/{provider}", get(usage_provider))
+src/subscription_usage_http_tests.rs:84:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_http_tests.rs:204:            let vendor = axum::Router::new().fallback(move || {
+src/subscription_usage_http_tests.rs:385:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_http_tests.rs:553:    let vendor = axum::Router::new().fallback(move |_request: AxumRequest| {
+src/subscription_usage_http_tests.rs:618:    let vendor = axum::Router::new().fallback(move |_request: AxumRequest| {
+src/subscription_usage_http_tests.rs:686:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_http_tests.rs:783:        let vendor = axum::Router::new().fallback(move || {
+src/tls.rs:57:    for fallback in ["localhost", "127.0.0.1"] {
+src/tls.rs:58:        if !names.iter().any(|name| name == fallback) {
+src/tls.rs:59:            names.push(fallback.to_string());
+src/tls.rs:73:/// misconfiguration whose silent fallback to plaintext would be the opposite of
+src/encoded_request_body.rs:401:        let upstream = axum::Router::new().fallback(move |request: axum::extract::Request| {
+src/request_log_tests.rs:58:        .route("/", get(upstream))
+src/vendor_cli_refresh.rs:16://! These OAuth endpoints are undocumented and change; the fallback is only
+src/output_limit_tests.rs:272:fn provider_dynamic_alias_preserves_concrete_stream_identity_without_fallback_opt_in() {
+src/gonka_timeout_tests.rs:16:    let app = axum::Router::new().route(
+src/provider_proxy_tests.rs:164:    let app = axum::Router::new().route(
+src/provider_proxy_tests.rs:386:        .expect("configured Lefine fallback");
+src/provider_proxy_tests.rs:398:            .all(|model| model.raw["catalog_source"] == "configured_fallback")
+src/zai_coding_plan_tests.rs:130:    let app = axum::Router::new().fallback(|| async {
+src/zai_coding_plan_tests.rs:391:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/zai_coding_plan_tests.rs:434:    let app = axum::Router::new().fallback(|request: Request<Body>| async move {
+src/zai_coding_plan_tests.rs:487:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/zai_coding_plan_tests.rs:912:            "using_fallback",
+src/login.rs:5://! driver remains available as a compatibility fallback. This module exposes
+src/login.rs:74:    /// Optional disposable package cache exposed only to the fallback runner.
+src/native_service_tests_resources.rs:449:    let upstream = axum::Router::new().fallback(
+src/native_service_tests_resources.rs:573:    let upstream = axum::Router::new().fallback(
+src/resource_lifecycle_tests.rs:22:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/primary_listener.rs:287:            axum::Router::new().route("/health", axum::routing::get(|| async { "ok" })),
+src/proxied_codex_tests.rs:10:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/subscription_proxy_tests.rs:374:    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+src/subscription_proxy_tests.rs:490:    let upstream = axum::Router::new().fallback(move |request: Request<Body>| {
+src/token_admin_tests.rs:56:        .route(path, axum::routing::post(issue_client_token))
+src/model_routing.rs:607:    // credential has stopped working. There is no bundled fallback to fall back
+src/model_routing.rs:671:        // longer ships a fallback catalog, so it is always false.
+src/model_routing.rs:672:        "using_fallback": false,
+src/model_routing_provider_tests.rs:106:    let app = axum::Router::new().route(
+src/model_routing_provider_tests.rs:135:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/model_routing_provider_tests.rs:199:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/model_routing_provider_tests.rs:237:            models: Some(vec!["configured/fallback".into()]),
+src/model_routing_provider_tests.rs:639:            models: Some(vec!["configured/fallback".into()]),
+src/managed_server.rs:371:    // silent fallback -- using a different router than the one the operator
+src/unix_listener_tests.rs:161:    let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
+src/model_routing_health_tests.rs:19:        .fallback(move || async move { (status, r#"{"object":"list","data":[{"id":"glm-5"}]}"#) });
+src/model_routing_health_tests.rs:49:        .route(
+src/model_routing_health_tests.rs:77:        .route("/api/services/anthropic/v1/models", get(models))
+src/model_routing_health_tests.rs:97:        .route("/metrics", get(crate::monitoring_api::metrics_endpoint))
+src/model_routing_health_tests.rs:120:        .route("/health", get(crate::proxy::health))
+src/model_routing_health_tests.rs:599:        .route(
+src/model_routing_health_tests.rs:624:        .route("/health", get(crate::proxy::health))
+src/model_routing_health_tests.rs:642:        .route(
+src/model_routing_health_tests.rs:699:        .route("/metrics", get(crate::monitoring_api::metrics_endpoint))
+src/model_routing_health_tests.rs:747:        .route(
+src/model_routing_health_tests.rs:772:        .route(
+src/model_routing_health_tests.rs:861:        .route("/api/services/anthropic/v1/models", get(models))
+src/lefine_tests.rs:25:    let app = axum::Router::new().route(
+src/lefine_tests.rs:59:fn configured_fallback_preserves_exact_ids_without_inventing_a_model() {
+src/lefine_tests.rs:75:    let app = axum::Router::new().route(
+src/zai_coding_plan_exhaustion_tests.rs:19:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/subscription_install_tests.rs:209:/// block fallback parsing and keep shadowing the validated candidate.
+src/subscription_install_tests.rs:250:    let fallback = crate::credential_recovery_store::RecoverableCredentialStore::new(
+src/subscription_install_tests.rs:258:    fallback
+src/subscription_install_tests.rs:286:/// A fallback recovery record is a live destination even when the vendor home
+src/subscription_usage_cli_tests.rs:232:    let app = axum::Router::new().fallback(move |request: Request| {
+src/subscription_usage_cli_tests.rs:282:        let app = axum::Router::new().fallback(move || async move {
+src/refresh_cache.rs:104:    /// caller instead of being collapsed into a caller-provided fallback.
+src/refresh_cache.rs:432:        let fallback = disk_token.clone();
+src/refresh_cache.rs:440:                fallback
+src/model_catalog_tests.rs:55:    let app = Router::new().route(
+src/model_catalog_tests.rs:176:        .route("/models", get(handler))
+src/model_catalog_tests.rs:212:    let app = Router::new().route("/v1/models", get(handler));
+src/model_catalog_tests.rs:455:    let app = Router::new().route("/v1/models", get(handler));
+src/model_catalog_tests.rs:499:    let app = Router::new().route("/v1/models", get(handler));
+src/model_catalog_tests.rs:542:    let app = Router::new().route("/v1/models", get(handler));
+src/model_catalog_tests.rs:762:        .route("/v1/models", get(handler))
+src/model_catalog_tests.rs:834:    let app = Router::new().route("/v1/models", get(handler));
+src/model_catalog_tests.rs:883:    let app = Router::new().route("/v1beta/models", get(handler));
+src/responses_websocket_tests.rs:239:        .route(
+src/responses_websocket_tests.rs:243:        .route("/v1/responses", get(upstream_websocket))
+src/responses_websocket_tests.rs:244:        .route("/responses", get(upstream_websocket));
+src/responses_websocket_tests.rs:266:        .route("/api/services/openai/v1/responses", get(openai))
+src/responses_websocket_tests.rs:669:        .route("/api/services/codex/v1/responses", get(codex))
+src/responses_websocket_tests.rs:785:        .route(
+src/responses_websocket_tests.rs:789:        .route("/v1/responses", get(|| async { "not a websocket" }));
+src/responses_websocket_tests.rs:800:        .route("/api/services/openai/v1/responses", get(openai))
+src/responses_websocket_tests.rs:832:        .route("/api/services/openai/v1/responses", get(openai))
+src/provider_proxy.rs:605:/// outage fallback after provisioning has already established the key.
+src/native_service_tests_relay.rs:84:    let upstream = axum::Router::new().fallback(move || {
+src/native_service_tests_relay.rs:195:    let upstream = axum::Router::new().fallback(move || {
+src/native_service_tests_relay.rs:294:    let upstream = axum::Router::new().fallback(move || {
+src/native_service_tests_relay.rs:351:    let upstream = axum::Router::new().route(
+src/native_service_tests_relay.rs:376:    let router = axum::Router::new().route(
+src/native_service_tests_relay.rs:432:    let upstream = axum::Router::new().route(
+src/native_service_tests_relay.rs:461:    let router = axum::Router::new().route(
+src/native_service_tests_relay.rs:572:    let upstream = axum::Router::new().fallback(|| async {
+src/storage_tests.rs:134:        .expect("the fallback decoder error must be retained");
+src/with_command_model_policy_tests.rs:285:fn launch_diagnostic_names_every_request_source_and_uses_safe_fallbacks() {
+src/native_service_tests_codex_apps.rs:124:    let upstream = axum::Router::new().fallback(
+src/native_service_tests_codex_apps.rs:225:    let upstream = axum::Router::new().fallback(move |method: Method, uri: axum::http::Uri| {
+src/model_routing_native_http_tests.rs:33:        "using_fallback",
+src/with_command.rs:319:/// the directory isolation provides. That is a fallback rather than an error:
+src/with_command.rs:520:                // A pin Router supplies is a *fallback* for a client that
+src/with_command_tests.rs:607:/// A fallback rather than an error: the user did not ask for isolation, they
+src/tls_tests.rs:242:    let app = axum::Router::new().route("/health", axum::routing::get(|| async { "ok" }));
+src/with_command_presentation_tests.rs:182:/// A pin Router supplies is a fallback for a client that cannot resolve its own
+src/with_command_presentation_tests.rs:223:    // With no selection at all Router supplies the fallback, and it is the
+src/with_command_presentation_tests.rs:284:    // delegates main and subagent selection to Router's exact live fallback.
+src/with_command_presentation_tests.rs:304:    // A profile that saves no model is not a selection, so the fallback still
+src/subscription_usage_tests.rs:111:        .route("/fixed", get(fixed))
+src/subscription_usage_tests.rs:112:        .route("/chunked", get(chunked));
+src/subscription_usage_tests.rs:231:        .route("/ok", get(ok))
+src/subscription_usage_tests.rs:232:        .route("/unauthorized", get(unauthorized))
+src/subscription_usage_tests.rs:233:        .route("/limited", get(limited))
+src/subscription_usage_tests.rs:234:        .route("/malformed", get(malformed));
+src/subscription_usage_tests.rs:403:        .route("/api/usage/{provider}", get(usage_provider))
+src/subscription_usage_tests.rs:445:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_tests.rs:546:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_tests.rs:599:        .route("/api/usage", get(usage))
+src/subscription_usage_tests.rs:600:        .route("/api/usage/{provider}", get(usage_provider))
+src/subscription_usage_tests.rs:662:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_tests.rs:711:    let app = axum::Router::new().fallback(move || {
+src/subscription_usage_tests.rs:753:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/subscription_usage_tests.rs:859:    let vendor = axum::Router::new().fallback(move |request: AxumRequest| {
+src/zai_coding_plan_catalog_tests.rs:75:        "using_fallback",
+src/zai_coding_plan_catalog_tests.rs:114:            axum::Router::new().fallback(|| async { (StatusCode::BAD_GATEWAY, "private body") }),
+src/zai_coding_plan_catalog_tests.rs:138:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/zai_coding_plan_catalog_tests.rs:278:    let app = axum::Router::new().fallback(move |request: Request<Body>| {
+src/model_routing_evidence_tests.rs:32:    let app = axum::Router::new().fallback(|| async {
+src/model_routing_evidence_tests.rs:49:    let app = axum::Router::new().fallback(move || {
+src/model_routing_evidence_tests.rs:236:    let app = axum::Router::new().fallback(
+src/model_routing_evidence_tests.rs:502:    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+src/model_routing_evidence_tests.rs:763:    let app = axum::Router::new().fallback(move |headers: HeaderMap| {
+src/with_command_claude_settings.rs:52:    // z.ai-only catalog, Router's main/subagent fallback is how that semantic
+src/model_routing_pool_tests.rs:39:        let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+src/model_routing_pool_tests.rs:554:        axum::Router::new().fallback(move |request: axum::http::Request<axum::body::Body>| {
+src/model_routing_snapshot_tests.rs:111:    let stub = axum::Router::new().fallback(move || {
+src/model_routing_snapshot_tests.rs:256:    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+src/model_routing_snapshot_tests.rs:434:    let refresh = axum::Router::new().fallback(|| async {
+src/model_routing_snapshot_tests.rs:522:    let refresh = axum::Router::new().fallback(|| async {
+src/model_routing_snapshot_tests.rs:716:    let stub = axum::Router::new().fallback(move || {
+src/model_routing_snapshot_tests.rs:798:    let stub = axum::Router::new().fallback(move |headers: HeaderMap| {
+src/model_routing_snapshot_tests.rs:887:    let stub = axum::Router::new().fallback(move || {

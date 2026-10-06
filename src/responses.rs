@@ -225,7 +225,7 @@ pub fn response_to_chat_completion(response: &Value, _requested_model: &str) -> 
     let created = response
         .get("created_at")
         .and_then(Value::as_i64)
-        .unwrap_or_else(|| chrono::Utc::now().timestamp());
+        .unwrap_or_else(|| crate::operation_context::now().timestamp());
 
     let mut content = String::new();
     let mut refusal = String::new();
@@ -408,7 +408,7 @@ impl ResponsesChatStreamTranslator {
         Self {
             model: String::new(),
             id: format!("chatcmpl-{}", uuid::Uuid::new_v4()),
-            created: chrono::Utc::now().timestamp(),
+            created: crate::operation_context::now().timestamp(),
             buffer: Vec::new(),
             sent_role: false,
             sent_final: false,

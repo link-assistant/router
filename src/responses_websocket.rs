@@ -541,7 +541,7 @@ async fn subscription_target(
                 provider,
                 &selected.name,
                 selected.token,
-                chrono::Utc::now().timestamp_millis(),
+                crate::operation_context::now().timestamp_millis(),
             )
             .await
             .map_err(|message| {

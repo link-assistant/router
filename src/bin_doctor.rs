@@ -161,7 +161,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     match primary.discover_credential_path() {
         Some(path) => {
             let status = primary.read_token().map_or("found, NO TOKEN", |token| {
-                if token.is_expired(chrono::Utc::now().timestamp_millis()) {
+                if token.is_expired(crate::operation_context::now().timestamp_millis()) {
                     "found, token EXPIRED on disk"
                 } else {
                     "found, token OK"

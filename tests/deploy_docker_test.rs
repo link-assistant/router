@@ -220,7 +220,8 @@ if (response.status !== 200) throw new Error(`${response.status}: ${await respon
         .args(["exec", legacy, "router", "tokens", "list", "--json"])
         .output()
         .unwrap();
-    let records: Vec<serde_json::Value> = serde_json::from_slice(&records.stdout).unwrap();
+    let records: Vec<serde_json::Value> =
+        link_assistant_router::contracts::validation::cli_payload(&records.stdout).unwrap();
     let run_id = records
         .iter()
         .find(|record| record["label"] == "pre-policy-wrapper")

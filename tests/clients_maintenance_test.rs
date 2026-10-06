@@ -18,7 +18,8 @@ fn maintenance_dry_run_reports_each_client_without_mutation() {
         &[("PATH", empty_path.path().to_str().unwrap())],
     );
     assert!(!output.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout).unwrap();
     assert_eq!(plans.as_array().unwrap().len(), 8);
     assert!(
         plans
@@ -94,7 +95,8 @@ fn npm_maintenance_verifies_versions_and_preserves_profiles() {
         "{}",
         String::from_utf8_lossy(&preview.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&preview.stdout).unwrap();
     assert_eq!(plans[0]["method"], "npm");
     assert_eq!(plans[0]["status"], "planned");
     assert_eq!(plans[0]["command"][3], "@openai/codex@latest");
@@ -110,7 +112,8 @@ fn npm_maintenance_verifies_versions_and_preserves_profiles() {
         "{}",
         String::from_utf8_lossy(&updated.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&updated.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&updated.stdout).unwrap();
     assert_eq!(plans[0]["status"], "completed");
     assert_eq!(plans[0]["version_before"], "codex 1.0");
     assert_eq!(plans[0]["version_after"], "codex 2.0");
@@ -125,7 +128,8 @@ fn npm_maintenance_verifies_versions_and_preserves_profiles() {
         &env,
     );
     assert!(unchanged.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&unchanged.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&unchanged.stdout).unwrap();
     assert_eq!(plans[0]["status"], "current");
 
     let failed = router_with_env(
@@ -134,7 +138,8 @@ fn npm_maintenance_verifies_versions_and_preserves_profiles() {
         &[env.as_slice(), &[("MOCK_NPM_FAIL", "yes")]].concat(),
     );
     assert!(!failed.status.success());
-    let plans: serde_json::Value = serde_json::from_slice(&failed.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&failed.stdout).unwrap();
     assert_eq!(plans[0]["status"], "failed");
     assert_eq!(fs::read_to_string(&version).unwrap(), "codex 2.0\n");
 
@@ -155,7 +160,8 @@ fn npm_maintenance_verifies_versions_and_preserves_profiles() {
         "{}",
         String::from_utf8_lossy(&reinstalled.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&reinstalled.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&reinstalled.stdout).unwrap();
     assert_eq!(plans[0]["status"], "completed");
     assert_eq!(plans[0]["version_after"], "codex 3.0");
     let id = plans[0]["backup_id"].as_str().unwrap();
@@ -225,7 +231,8 @@ fn native_claude_update_and_reinstall_keep_sessions_and_login() {
         "{}",
         String::from_utf8_lossy(&preview.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&preview.stdout).unwrap();
     assert_eq!(plans[0]["method"], "native");
     assert_eq!(plans[0]["channel"], "stable");
     assert_eq!(plans[0]["command"][1], "install");
@@ -242,7 +249,8 @@ fn native_claude_update_and_reinstall_keep_sessions_and_login() {
         "{}",
         String::from_utf8_lossy(&updated.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&updated.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&updated.stdout).unwrap();
     assert_eq!(plans[0]["status"], "completed");
     assert_eq!(plans[0]["version_after"], "claude 2.0");
     assert_eq!(fs::read_to_string(&invocation).unwrap(), "update\n");
@@ -265,7 +273,8 @@ fn native_claude_update_and_reinstall_keep_sessions_and_login() {
         "{}",
         String::from_utf8_lossy(&reinstalled.stderr)
     );
-    let plans: serde_json::Value = serde_json::from_slice(&reinstalled.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&reinstalled.stdout).unwrap();
     assert_eq!(plans[0]["status"], "completed");
     assert_eq!(plans[0]["version_after"], "claude 3.0");
     assert_eq!(fs::read_to_string(&invocation).unwrap(), "install stable\n");

@@ -143,7 +143,7 @@ pub fn classify(body: &[u8]) -> Option<ZaiExhaustion> {
         code,
         reason,
         request_id,
-        observed_at: SystemTime::now(),
+        observed_at: crate::operation_context::system_time(),
     })
 }
 

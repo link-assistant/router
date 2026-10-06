@@ -112,9 +112,10 @@ impl Coordinator<'_> {
     }
 
     fn issued_client_tokens(&self, backend: &str) -> Option<usize> {
-        let now = chrono::Utc::now().timestamp();
+        let now = crate::operation_context::now().timestamp();
         let rendered = self.docker.token_inventory(backend).ok()?;
-        let records: Vec<TokenRecord> = serde_json::from_str(&rendered).ok()?;
+        let records: Vec<TokenRecord> =
+            crate::operations::decode_payload(rendered.as_bytes()).ok()?;
         Some(
             records
                 .iter()
@@ -182,7 +183,7 @@ impl Coordinator<'_> {
     }
 
     pub(super) fn probe_token(&self) -> Result<String, String> {
-        let now = chrono::Utc::now().timestamp();
+        let now = crate::operation_context::now().timestamp();
         let claims = link_assistant_router::token::TokenClaims {
             sub: format!("deploy-probe-{}", uuid::Uuid::new_v4().simple()),
             iat: now,

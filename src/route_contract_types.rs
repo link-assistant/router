@@ -65,7 +65,7 @@ impl RouteMethod {
         self == Self::Any
             || matches!(
                 (self, method),
-                (Self::Get, &Method::GET)
+                (Self::Get, &Method::GET | &Method::HEAD)
                     | (Self::Post, &Method::POST)
                     | (Self::Put, &Method::PUT)
                     | (Self::Patch, &Method::PATCH)

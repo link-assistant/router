@@ -141,7 +141,8 @@ fn local_and_remote_unfiltered_json_are_identical_and_use_the_environment_token(
         );
     }
     assert_eq!(remote.stdout, local.stdout);
-    let answer: serde_json::Value = serde_json::from_slice(&local.stdout).unwrap();
+    let answer: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&local.stdout).unwrap();
     assert_eq!(answer["subscriptions"].as_array().unwrap().len(), 6);
     assert_eq!(answer["subscriptions"][3]["state"], "unavailable");
     let captured = captured.lock().unwrap();

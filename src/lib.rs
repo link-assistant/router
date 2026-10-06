@@ -4,6 +4,12 @@
 //! supports Claude MAX OAuth sessions, and provides multi-tenant
 //! access via custom-issued tokens.
 
+// Existing renderers use these scoped sinks. A library operation captures them;
+// the human CLI adapter renders normally. No global stdout redirection is used.
+#[macro_use]
+mod operation_output;
+extern crate self as link_assistant_router;
+
 pub mod account_http;
 pub mod account_limits;
 pub mod accounts;
@@ -54,6 +60,7 @@ mod codex_remote_control;
 pub mod config;
 pub mod config_defaults;
 pub mod configure;
+pub mod contracts;
 pub mod conversation_record;
 pub mod conversations;
 pub mod crater;
@@ -107,6 +114,8 @@ mod native_service;
 pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;
+pub mod operation_context;
+pub mod operations;
 pub mod output_limit;
 pub mod platform_keychain;
 pub mod pool_failover;
@@ -128,6 +137,7 @@ pub mod responses;
 pub mod responses_lifecycle;
 pub mod responses_websocket;
 pub mod route_contract;
+pub mod runtime;
 mod safety_identifier;
 pub mod security_headers;
 pub mod server_command;
@@ -153,6 +163,7 @@ pub mod token_report;
 pub mod token_reservation;
 pub mod token_secret;
 pub mod tokens_remote;
+pub mod verification;
 // Unix domain sockets do not exist on Windows, and `tokio::net::UnixListener`
 // is gated accordingly.
 pub mod tunnel_command;
@@ -206,3 +217,39 @@ mod zai_coding_plan_tests;
 
 /// Package version (matches Cargo.toml version).
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Shared operational implementation for `auth_cli`.
+pub mod auth_cli;
+
+/// Shared operational implementation for `auth_import`.
+pub mod auth_import;
+
+/// Shared operational implementation for `bin_doctor`.
+pub mod bin_doctor;
+
+/// Shared operational implementation for `deploy_cli`.
+pub mod deploy_cli;
+
+/// Shared operational implementation for `deploy_image`.
+pub mod deploy_image;
+
+/// Shared operational implementation for `deploy_local`.
+pub mod deploy_local;
+
+/// Shared operational implementation for `deploy_remote`.
+pub mod deploy_remote;
+
+/// Shared operational implementation for `logs_cli`.
+pub mod logs_cli;
+
+/// Shared operational implementation for `recover_admin_cli`.
+pub mod recover_admin_cli;
+
+/// Shared operational implementation for `shutdown`.
+pub mod shutdown;
+
+/// Source commit embedded at build time.
+pub const SOURCE_COMMIT: &str = env!("ROUTER_SOURCE_COMMIT");
+
+/// Importable request-log operations.
+pub mod logs;

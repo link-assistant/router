@@ -7,8 +7,8 @@
 //! way a changed image does. Without `--env` the specification is exactly
 //! what it was before passthrough existed.
 //!
-//! The settings are chosen once per process by `deploy_cli`, before the
-//! coordinator runs; a deployment command manages one deployment.
+//! Library settings belong to the operation context. Native CLI settings are
+//! selected once by `deploy_cli`, before the coordinator runs.
 
 use std::sync::OnceLock;
 
@@ -32,14 +32,27 @@ static SETTINGS: OnceLock<LocalSettings> = OnceLock::new();
 
 /// Choose this process's local settings. Later calls are ignored.
 pub fn configure(settings: LocalSettings) {
-    let _ = SETTINGS.set(settings);
+    if let Some(context) = crate::operation_context::current() {
+        *context
+            .deployment_settings
+            .lock()
+            .expect("deployment settings lock") = settings;
+    } else {
+        let _ = SETTINGS.set(settings);
+    }
 }
 
-pub(super) fn current() -> &'static LocalSettings {
-    static EMPTY: OnceLock<LocalSettings> = OnceLock::new();
-    SETTINGS
-        .get()
-        .unwrap_or_else(|| EMPTY.get_or_init(LocalSettings::default))
+pub(super) fn current() -> LocalSettings {
+    crate::operation_context::current().map_or_else(
+        || SETTINGS.get().cloned().unwrap_or_default(),
+        |context| {
+            context
+                .deployment_settings
+                .lock()
+                .expect("deployment settings lock")
+                .clone()
+        },
+    )
 }
 
 /// The fingerprint a backend launched now would carry, if any.
@@ -96,6 +109,16 @@ mod tests {
             env: vec![("UPSTREAM_REGION".into(), "eu-west".into())],
             tokens: TokenPolicy::default(),
         }
+    }
+
+    #[test]
+    fn library_settings_do_not_leak_between_contexts() {
+        let first = crate::operation_context::OperationContext::default();
+        let second = crate::operation_context::OperationContext::default();
+        first.scope(|| configure(settings()));
+        second.scope(|| configure(LocalSettings::default()));
+        first.scope(|| assert_eq!(current().env, settings().env));
+        second.scope(|| assert!(current().env.is_empty()));
     }
 
     #[test]

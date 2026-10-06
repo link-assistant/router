@@ -251,7 +251,7 @@ async fn repair_one(
             .then(|| format!("client-repair-{client}")),
         issued_at: candidate
             .was_minted()
-            .then(|| chrono::Utc::now().timestamp()),
+            .then(|| crate::operation_context::now().timestamp()),
         router: Some(server.base_url.clone()),
         management_server: Some(server.management_url.clone()),
         principal_id: candidate

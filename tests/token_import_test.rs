@@ -269,7 +269,8 @@ fn the_cli_merges_by_default_replaces_only_when_asked_and_refuses_unknown_ids() 
         serving.path(),
         &["tokens", "import", "--from", from, "--dry-run", "--json"],
     );
-    let report: serde_json::Value = serde_json::from_slice(&dry.stdout).unwrap();
+    let report: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&dry.stdout).unwrap();
     assert_eq!(report["added"], serde_json::json!(["run"]));
     assert_eq!(
         dry.status.code(),

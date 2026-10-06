@@ -555,7 +555,7 @@ async fn persist_codex_auth(
             "access_token": tokens.access_token,
             "refresh_token": tokens.refresh_token,
         },
-        "last_refresh": chrono::Utc::now().to_rfc3339(),
+        "last_refresh": crate::operation_context::now().to_rfc3339(),
     });
     let document = serde_json::to_string_pretty(&value).map_err(|error| error.to_string())?;
     let reader = crate::subscription::SubscriptionReader::new(
@@ -987,3 +987,6 @@ mod tests {
         );
     }
 }
+
+/// Provider-aware credential import operations.
+pub mod import;

@@ -22,7 +22,9 @@ use crate::provider_acceptance::{ProviderInstallMode, ProviderInstallResult};
 pub use crate::provider_config::OpenAICompatibleConfig;
 
 /// Supported persisted provider kinds.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, schemars::JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum ProviderKind {
     /// Generic OpenAI-compatible upstream such as `LiteLLM`.
@@ -61,7 +63,7 @@ impl ProviderKind {
 }
 
 /// One persisted upstream provider record.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, schemars::JsonSchema)]
 pub struct ProviderRecord {
     /// Stable provider key, for example `litellm`.
     pub name: String,
@@ -147,7 +149,7 @@ impl ProviderRecord {
 }
 
 /// Provider record shape safe to print or return over the API.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, schemars::JsonSchema)]
 pub struct RedactedProviderRecord {
     pub name: String,
     pub kind: ProviderKind,
@@ -168,7 +170,7 @@ pub struct RedactedProviderRecord {
 
 /// API / CLI input for creating or replacing a provider. Serialization keeps
 /// remote `providers add` identical to the endpoint shape (issue #294).
-#[derive(Debug, Clone, Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct ProviderUpsert {
     pub name: String,
     #[serde(default)]
@@ -529,7 +531,7 @@ impl ProviderStore {
         let api_key = record
             .api_key_env
             .as_deref()
-            .and_then(|env_name| std::env::var(env_name).ok())
+            .and_then(|env_name| crate::operation_context::var(env_name).ok())
             .filter(|s| !s.is_empty())
             .map(Ok)
             .or_else(|| {

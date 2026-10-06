@@ -4,7 +4,7 @@ use std::fs::{self};
 use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
 use std::path::PathBuf;
-use std::process::{Child, Command, ExitCode, Stdio};
+use std::process::{Child, ExitCode, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -255,15 +255,16 @@ pub async fn resolve(
     } else {
         load_persisted()?
     };
-    let environment_server = std::env::var("LINK_ASSISTANT_ROUTER_URL")
-        .or_else(|_| std::env::var("ROUTER_URL"))
+    let environment_server = crate::operation_context::var("LINK_ASSISTANT_ROUTER_URL")
+        .or_else(|_| crate::operation_context::var("ROUTER_URL"))
         .ok();
-    let environment_token = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
-        .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
+    let environment_token = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TOKEN")
+        .or_else(|_| crate::operation_context::var("LINK_ASSISTANT_TOKEN"))
         .ok();
-    let environment_management_server = std::env::var("LINK_ASSISTANT_ROUTER_MANAGEMENT_URL")
-        .or_else(|_| std::env::var("ROUTER_MANAGEMENT_URL"))
-        .ok();
+    let environment_management_server =
+        crate::operation_context::var("LINK_ASSISTANT_ROUTER_MANAGEMENT_URL")
+            .or_else(|_| crate::operation_context::var("ROUTER_MANAGEMENT_URL"))
+            .ok();
     let (base_url, management_url, source) = if let Some(server) = explicit_server {
         let base_url = normalize_server(server)?;
         let management_url = explicit_management_server
@@ -760,9 +761,9 @@ pub fn remove_managed(yes: bool) -> Result<(), AnyError> {
         "absent" => {}
         other => return Err(format!("unexpected managed container state: {other}").into()),
     }
-    let output = Command::new("docker")
-        .args(["volume", "rm", VOLUME])
-        .output()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args(["volume", "rm", VOLUME]),
+    )?;
     if !output.status.success()
         && !String::from_utf8_lossy(&output.stderr).contains("No such volume")
     {
@@ -844,13 +845,14 @@ fn spawn_reaper(pid: u32) -> Result<Child, AnyError> {
             std::env::consts::EXE_SUFFIX
         ))
     };
-    Command::new(executable)
-        .args(["server", "reap", &pid.to_string()])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|error| format!("could not start managed-server crash reaper: {error}").into())
+    crate::operation_context::spawn_process(
+        crate::operation_context::command(executable)
+            .args(["server", "reap", &pid.to_string()])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null()),
+    )
+    .map_err(|error| format!("could not start managed-server crash reaper: {error}").into())
 }
 
 fn ensure_container_running(state: &ManagedState) -> Result<(), AnyError> {
@@ -863,31 +865,32 @@ fn ensure_container_running(state: &ManagedState) -> Result<(), AnyError> {
         "absent" => {
             let port_mapping = format!("127.0.0.1:{}:8080", state.port);
             let volume = format!("{VOLUME}:/data");
-            let output = Command::new("docker")
-                .env("TOKEN_SECRET", &state.token_secret)
-                .args([
-                    "run",
-                    "-d",
-                    "--name",
-                    CONTAINER,
-                    "--label",
-                    MANAGED_LABEL,
-                    "-p",
-                    &port_mapping,
-                    "-e",
-                    "TOKEN_SECRET",
-                    "-e",
-                    "DATA_DIR=/data/router",
-                    "-e",
-                    "STORAGE_POLICY=text",
-                    "-e",
-                    "CLAUDE_CODE_HOME=/data/claude",
-                    "-v",
-                    &volume,
-                    IMAGE,
-                    "serve",
-                ])
-                .output()?;
+            let output = crate::operation_context::process_output(
+                crate::operation_context::command("docker")
+                    .env("TOKEN_SECRET", &state.token_secret)
+                    .args([
+                        "run",
+                        "-d",
+                        "--name",
+                        CONTAINER,
+                        "--label",
+                        MANAGED_LABEL,
+                        "-p",
+                        &port_mapping,
+                        "-e",
+                        "TOKEN_SECRET",
+                        "-e",
+                        "DATA_DIR=/data/router",
+                        "-e",
+                        "STORAGE_POLICY=text",
+                        "-e",
+                        "CLAUDE_CODE_HOME=/data/claude",
+                        "-v",
+                        &volume,
+                        IMAGE,
+                        "serve",
+                    ]),
+            )?;
             check_docker_output(&output)?;
         }
         other => {
@@ -905,11 +908,11 @@ fn wait_for_health(port: u16) -> Result<(), AnyError> {
         }
         thread::sleep(Duration::from_millis(100));
     }
-    let logs = Command::new("docker")
-        .args(["logs", "--tail", "20", CONTAINER])
-        .output()
-        .map(|output| String::from_utf8_lossy(&output.stderr).into_owned())
-        .unwrap_or_default();
+    let logs = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args(["logs", "--tail", "20", CONTAINER]),
+    )
+    .map(|output| String::from_utf8_lossy(&output.stderr).into_owned())
+    .unwrap_or_default();
     Err(format!(
         "managed router container did not become healthy on 127.0.0.1:{port}: {}",
         compact(&logs)

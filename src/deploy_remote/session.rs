@@ -184,26 +184,34 @@ pub fn collect<R: Read + Send + 'static>(
     sink: Arc<Mutex<Collected>>,
     echo: Echo,
 ) -> JoinHandle<()> {
+    let context = crate::operation_context::current();
     std::thread::spawn(move || {
-        for line in BufReader::new(stream).lines() {
-            let Ok(line) = line else { break };
-            if let Some(event) = line.strip_prefix(EVENT_PREFIX) {
-                if let Ok(value) = serde_json::from_str::<Value>(event)
-                    && let Ok(mut collected) = sink.lock()
-                {
-                    collected.events.push(value);
-                }
-            } else {
-                match echo {
-                    Echo::Keep => {
-                        if let Ok(mut collected) = sink.lock() {
-                            collected.output.push(line);
-                        }
+        let collect = || {
+            for line in BufReader::new(stream).lines() {
+                let Ok(line) = line else { break };
+                if let Some(event) = line.strip_prefix(EVENT_PREFIX) {
+                    if let Ok(value) = serde_json::from_str::<Value>(event)
+                        && let Ok(mut collected) = sink.lock()
+                    {
+                        collected.events.push(value);
                     }
-                    Echo::Stdout => println!("{line}"),
-                    Echo::Stderr => eprintln!("{line}"),
+                } else {
+                    match echo {
+                        Echo::Keep => {
+                            if let Ok(mut collected) = sink.lock() {
+                                collected.output.push(line);
+                            }
+                        }
+                        Echo::Stdout => println!("{line}"),
+                        Echo::Stderr => eprintln!("{line}"),
+                    }
                 }
             }
+        };
+        if let Some(context) = context {
+            context.scope(collect);
+        } else {
+            collect();
         }
     })
 }

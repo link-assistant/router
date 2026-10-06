@@ -125,7 +125,7 @@ fn list(context: &CommandContext<'_>) -> Reply {
 fn token_state(record: &TokenRecord) -> &'static str {
     if record.revoked {
         "revoked"
-    } else if record.expires_at <= Utc::now().timestamp() {
+    } else if record.expires_at <= crate::operation_context::now().timestamp() {
         "expired"
     } else {
         "active"

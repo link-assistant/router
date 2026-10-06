@@ -176,7 +176,7 @@ pub async fn start_ephemeral(upstream_origin: &str) -> Result<EphemeralBridge, S
 
 /// Recognize only the complete environment passed to an owned bridge child.
 pub fn daemon_request_from_env() -> Result<Option<DaemonRequest>, String> {
-    if std::env::var_os(DAEMON_MARKER_ENV).is_none() {
+    if crate::operation_context::var_os(DAEMON_MARKER_ENV).is_none() {
         return Ok(None);
     }
     let upstream_origin = required_daemon_env(DAEMON_UPSTREAM_ENV)?;
@@ -201,7 +201,7 @@ pub fn daemon_request_from_env() -> Result<Option<DaemonRequest>, String> {
 }
 
 fn required_daemon_env(name: &str) -> Result<String, String> {
-    std::env::var(name)
+    crate::operation_context::var(name)
         .ok()
         .filter(|value| !value.is_empty())
         .ok_or_else(|| "incomplete Codex bridge startup request".to_string())
@@ -353,7 +353,7 @@ async fn spawn_daemon(
     let nonce = uuid::Uuid::new_v4().simple().to_string();
     let executable = std::env::current_exe()
         .map_err(|error| format!("could not locate the Router executable: {error}"))?;
-    let mut command = std::process::Command::new(executable);
+    let mut command = crate::operation_context::command(executable);
     // A custom Windows environment block must retain its system root, and the
     // standard/runtime temporary-directory APIs need TEMP or TMP. Keep only
     // those OS values rather than inheriting credentials into the daemon.
@@ -379,8 +379,7 @@ async fn spawn_daemon(
         use std::os::unix::process::CommandExt as _;
         command.process_group(0);
     }
-    let mut child = command
-        .spawn()
+    let mut child = crate::operation_context::spawn_process(&mut command)
         .map_err(|error| format!("could not start the Codex bridge: {error}"))?;
     let mut child_stderr = child.stderr.take();
     let deadline = tokio::time::Instant::now() + START_TIMEOUT;
@@ -416,7 +415,7 @@ async fn spawn_daemon(
 
 #[cfg(windows)]
 fn windows_runtime_environment() -> Vec<(&'static str, std::ffi::OsString)> {
-    select_windows_runtime_environment(|name| std::env::var_os(name))
+    select_windows_runtime_environment(|name| crate::operation_context::var_os(name))
 }
 
 #[cfg(not(windows))]
@@ -475,10 +474,11 @@ async fn stop_state(state_path: &Path, state: &PersistentState) -> Result<(), St
 
 #[cfg(unix)]
 fn signal_terminate(pid: u32) -> Result<(), String> {
-    let status = std::process::Command::new("/bin/kill")
-        .args(["-TERM", &pid.to_string()])
-        .status()
-        .map_err(|error| format!("could not stop the owned Codex bridge: {error}"))?;
+    let status = crate::operation_context::process_output(
+        crate::operation_context::command("/bin/kill").args(["-TERM", &pid.to_string()]),
+    )
+    .map(|output| output.status)
+    .map_err(|error| format!("could not stop the owned Codex bridge: {error}"))?;
     if status.success() {
         Ok(())
     } else {
@@ -489,10 +489,11 @@ fn signal_terminate(pid: u32) -> Result<(), String> {
 #[cfg(windows)]
 fn signal_terminate(pid: u32) -> Result<(), String> {
     let arguments = windows_terminate_arguments(pid);
-    let status = std::process::Command::new("taskkill")
-        .args(arguments)
-        .status()
-        .map_err(|error| format!("could not stop the owned Codex bridge: {error}"))?;
+    let status = crate::operation_context::process_output(
+        crate::operation_context::command("taskkill").args(arguments),
+    )
+    .map(|output| output.status)
+    .map_err(|error| format!("could not stop the owned Codex bridge: {error}"))?;
     if status.success() {
         Ok(())
     } else {

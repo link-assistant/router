@@ -196,7 +196,8 @@ pub fn profiles(
     scope: ProfileSelection,
 ) -> Result<Vec<Profile>, String> {
     let (normal, router) = inventory(home, client, &directory, &|name| {
-        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))
+        crate::operation_context::current_dir()
+            .map_err(|error| format!("cannot resolve {name}: {error}"))
     })?;
     let mut result = Vec::new();
     if scope != ProfileSelection::Router {
@@ -252,10 +253,10 @@ pub fn owner_directory(path: &Path) -> Result<(), String> {
 
 #[cfg(windows)]
 fn owner_directory_windows(path: &Path) -> Result<(), String> {
-    let identity = std::process::Command::new("whoami")
-        .args(["/user", "/fo", "csv", "/nh"])
-        .output()
-        .map_err(|error| format!("cannot identify Windows account: {error}"))?;
+    let identity = crate::operation_context::process_output(
+        crate::operation_context::command("whoami").args(["/user", "/fo", "csv", "/nh"]),
+    )
+    .map_err(|error| format!("cannot identify Windows account: {error}"))?;
     let identity_text = String::from_utf8_lossy(&identity.stdout);
     let sid = parse_windows_sid(&identity_text).ok_or("cannot identify Windows account SID")?;
     if !identity.status.success() {
@@ -266,13 +267,15 @@ fn owner_directory_windows(path: &Path) -> Result<(), String> {
         vec!["/inheritance:r".to_string()],
         vec!["/grant:r".to_string(), format!("*{sid}:(OI)(CI)F")],
     ] {
-        let status = std::process::Command::new("icacls")
-            .arg(path)
-            .args(arguments)
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status()
-            .map_err(|error| format!("cannot make Windows backup directory private: {error}"))?;
+        let status = crate::operation_context::process_output(
+            crate::operation_context::command("icacls")
+                .arg(path)
+                .args(arguments)
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null()),
+        )
+        .map(|output| output.status)
+        .map_err(|error| format!("cannot make Windows backup directory private: {error}"))?;
         if !status.success() {
             return Err("cannot make Windows backup directory private with icacls".into());
         }

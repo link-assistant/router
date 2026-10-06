@@ -438,7 +438,7 @@ async fn probe_oauth_loaded_at(
     if matches!(provider, UsageProvider::Gemini | UsageProvider::Qwen) {
         return ProbeResult::Usage(Box::new(live_limits_unavailable(provider)));
     }
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let Ok(token) = state
         .subscription_cache
         .get_fresh_loaded(&state.client, subscription, principal, loaded, now_ms)
@@ -678,7 +678,7 @@ async fn probe_zai_provider(
     // Their unrestricted bodies are deliberately discarded: only normalized,
     // named limits from the quota response are public.
     let mut partial = false;
-    let now = chrono::Utc::now();
+    let now = crate::operation_context::now();
     let start = (now - chrono::Duration::days(1))
         .format("%Y-%m-%d %H:00:00")
         .to_string();

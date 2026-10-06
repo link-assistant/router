@@ -403,7 +403,7 @@ fn clear_api_key_provider(
     // An environment-supplied key outlives the record: the router reads it from
     // the process environment, so removing the row does not withdraw it.
     if let Some(variable) = record.api_key_env.as_deref()
-        && std::env::var(variable).is_ok_and(|value| !value.is_empty())
+        && crate::operation_context::var(variable).is_ok_and(|value| !value.is_empty())
     {
         println!(
             "{name:<8} note: {variable} still holds a key in this environment; unset it there \
@@ -854,7 +854,7 @@ mod tests {
     /// long the credential lasts, and whether it can be renewed at all.
     #[test]
     fn an_imported_credential_describes_its_lifetime_and_renewability() {
-        let now = chrono::Utc::now().timestamp_millis();
+        let now = crate::operation_context::now().timestamp_millis();
         let renewable = link_assistant_router::subscription::SubscriptionToken {
             access_token: "a".into(),
             refresh_token: Some("r".into()),

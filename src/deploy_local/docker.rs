@@ -1,7 +1,6 @@
 //! Auditable Docker command boundary for the local rolling coordinator.
 
 use std::path::Path;
-use std::process::Command;
 
 use super::claude_share::{LABEL_SUFFIX, Provision};
 use super::secret::{self, fingerprint};
@@ -29,7 +28,7 @@ impl CommandRunner for ProcessRunner {
         arguments: &[String],
         environment: &[(&str, &str)],
     ) -> Result<CommandOutput, String> {
-        let mut command = Command::new("docker");
+        let mut command = crate::operation_context::command("docker");
         command.args(arguments).envs(environment.iter().copied());
         let seconds = if arguments
             .first()
@@ -39,7 +38,7 @@ impl CommandRunner for ProcessRunner {
         } else {
             30
         };
-        let output = link_assistant_router::bounded_process::output(
+        let output = crate::operation_context::bounded_output(
             &mut command,
             std::time::Duration::from_secs(seconds),
         )
@@ -249,7 +248,7 @@ impl Docker {
     }
 
     pub(super) fn relay_connection_count(&self, backend: &str) -> Result<String, String> {
-        if !self.exists(&RELAY) || !self.running(&RELAY)? {
+        if !self.exists(&RELAY.value()) || !self.running(&RELAY.value())? {
             // Restarting or stopping the relay necessarily closes all of the
             // TCP connections it owned, even if its last durable count was
             // nonzero.
@@ -257,7 +256,7 @@ impl Docker {
         }
         let path = format!("/deploy-state/connections/{backend}");
         self.exec(
-            &RELAY,
+            &RELAY.value(),
             &[
                 "sh",
                 "-c",
@@ -350,10 +349,10 @@ impl Docker {
         let mut arguments =
             backend_arguments(name, image, root, claude, &fingerprint(token_secret));
         let runtime = super::runtime_env::current();
-        super::runtime_env::insert(&mut arguments, runtime, token_secret);
+        super::runtime_env::insert(&mut arguments, &runtime, token_secret);
         let output = self.command(
             &arguments,
-            &super::runtime_env::environment(runtime, token_secret),
+            &super::runtime_env::environment(&runtime, token_secret),
         )?;
         if output.success {
             Ok(())

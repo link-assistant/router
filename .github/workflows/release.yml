@@ -17,6 +17,7 @@ on:
           - instant
           - changelog-pr
           - recover
+          - publish
       bump_type:
         description: 'Version bump type'
         required: true
@@ -775,7 +776,7 @@ jobs:
   publish-docker-images:
     name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})
     needs: [create-github-release]
-    if: always() && !cancelled() && needs.create-github-release.result == 'success'
+    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
     strategy:
       fail-fast: false
       matrix:
@@ -861,6 +862,7 @@ jobs:
         with:
           context: .
           target: ${{ matrix.target }}
+          build-args: ROUTER_SOURCE_COMMIT=${{ env.RELEASE_COMMIT }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.image-labels.outputs.labels }}
           outputs: type=image,"name=ghcr.io/${{ github.repository }},${{ env.DOCKERHUB_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
@@ -892,7 +894,7 @@ jobs:
       - name: Verify published image attestation
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh attestation verify "oci://ghcr.io/${{ github.repository }}@${{ steps.build-image.outputs.digest }}" --repo "${{ github.repository }}"
+        run: gh attestation verify "oci://ghcr.io/${{ github.repository }}@${{ steps.build-image.outputs.digest }}" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "${RELEASE_COMMIT}"
 
       - name: Export image digest
         env:
@@ -1038,18 +1040,24 @@ jobs:
     if: |
       always() && !cancelled() && (
         (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') ||
-        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true')
+        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'publish' && startsWith(github.ref, 'refs/tags/v'))
       )
     outputs:
-      release-version: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+      release-version: ${{ steps.tag-commit.outputs.version }}
       release-commit: ${{ steps.tag-commit.outputs.commit }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
+      actions: write
     env:
       RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
     steps:
+      - name: Resolve publishing version from tag context
+        if: github.event.inputs.release_mode == 'publish'
+        shell: bash
+        run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: refs/tags/v${{ env.RELEASE_VERSION }}
@@ -1069,6 +1077,7 @@ jobs:
             exit 1
           fi
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
           echo "v${RELEASE_VERSION} -> $commit" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Rust
@@ -1099,10 +1108,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rust-script scripts/check-github-releases.rs --repository "${{ github.repository }}" --default-branch main --release-version "${{ env.RELEASE_VERSION }}" --historical-orphans warn
 
+      - name: Dispatch publishing with the release tag as source
+        if: github.event.inputs.release_mode != 'publish'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh workflow run release.yml --repo "${{ github.repository }}"
+          --ref "v${RELEASE_VERSION}" -f release_mode=publish -f bump_type=patch
+
   publish-release-artifacts:
     name: Publish attested binaries (${{ matrix.os }}-${{ matrix.arch }})
     needs: [create-github-release]
-    if: always() && !cancelled() && needs.create-github-release.result == 'success'
+    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
     strategy:
       fail-fast: false
       matrix:
@@ -1229,7 +1246,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for artifact in dist/*; do
-            gh attestation verify "$artifact" --repo "${{ github.repository }}"
+            gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "${RELEASE_COMMIT}"
           done
           assets="$(gh release view "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
           for expected in \
@@ -1245,13 +1262,64 @@ jobs:
   # that commit against what was actually published: the labels on both platform
   # manifests in both registries, and the attestations of the downloadable archives.
   # It also runs the consumer's own `sha256sum -c` in the download directory.
+  publish-integration-artifacts:
+    name: Build and attest official integrations
+    needs: [create-github-release]
+    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.create-github-release.outputs.release-commit }}
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.98.1
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.10'
+      - name: Verify immutable release source and package versions
+        run: |
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+          cargo build --locked --bins
+          python3 scripts/generate-contracts.py --check
+          python3 scripts/generate-bindings.py --check
+      - run: npm ci && npm test && npm run typecheck
+        working-directory: packages/javascript
+      - run: python3 -m pip install -e packages/python build
+      - run: python3 -m unittest discover -s packages/python/tests -v
+      - run: python3 scripts/package-integrations.py --output dist-integrations
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-path: dist-integrations/*
+      - name: Verify and attach integrations and language-neutral contracts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for artifact in dist-integrations/*; do
+            gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
+          done
+          gh release upload "v${RELEASE_VERSION}" dist-integrations/* --repo "${{ github.repository }}"
+
   verify-release-provenance:
     name: Verify published release provenance
-    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts]
+    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, publish-integration-artifacts]
     if: |
       always() && !cancelled() &&
       needs.publish-docker-manifests.result == 'success' &&
-      needs.publish-release-artifacts.result == 'success'
+      needs.publish-release-artifacts.result == 'success' &&
+      needs.publish-integration-artifacts.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1289,13 +1357,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-      # The guard resolves the release tag and its parent locally: the tag is created
-      # after this run started, so a plain checkout does not have it yet.
+      # Resolve the immutable tag before verifying its exact source identity.
       - name: Fetch the release tag
         run: |
           git fetch --force --tags --quiet
           git rev-parse "refs/tags/v${RELEASE_VERSION}^{commit}" >/dev/null
-          git rev-parse "refs/tags/v${RELEASE_VERSION}^{commit}^1" >/dev/null
 
       - name: Download the published release assets
         env:
@@ -1316,6 +1382,27 @@ jobs:
           fi
           for checksum in "${checksums[@]}"; do
             sha256sum -c "$checksum"
+          done
+
+      - name: Download architecture digests for strict attestation verification
+        env:
+          NODE_OPTIONS: --no-deprecation
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: runtime-*
+          path: image-digests
+          merge-multiple: true
+
+      - name: Verify tagged source of every published asset and image architecture
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for artifact in published/*; do
+            gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "${RELEASE_COMMIT}"
+          done
+          for digest in image-digests/*; do
+            gh attestation verify "oci://ghcr.io/${{ github.repository }}@sha256:${digest##*/}" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "${RELEASE_COMMIT}"
           done
 
       - name: Verify every artifact points at the release tag commit
@@ -1406,16 +1493,70 @@ jobs:
         run: cargo test --locked --test host_client_lifecycle_test -- --nocapture
 
   # === STABLE PUBLICATION ===
+  publish-npm:
+    name: Publish verified npm package
+    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle]
+    if: always() && !cancelled() && needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - name: Download and verify exact tagged package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --pattern "link-assistant-router-${RELEASE_VERSION}.tgz"
+          gh attestation verify "link-assistant-router-${RELEASE_VERSION}.tgz" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
+      - run: npm publish "link-assistant-router-${RELEASE_VERSION}.tgz" --access public --provenance
+      - run: test "$(npm view "@link-assistant/router@${RELEASE_VERSION}" version)" = "$RELEASE_VERSION"
+
+  publish-python:
+    name: Publish verified Python package
+    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle]
+    if: always() && !cancelled() && needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+    steps:
+      - name: Download and verify exact tagged Python distributions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --pattern "link_assistant_router-${RELEASE_VERSION}*" --dir dist
+          for artifact in dist/*; do
+            gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
+          done
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        with:
+          packages-dir: dist
+
   finalize-release:
     name: Publish complete stable release
-    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle]
+    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle, publish-npm, publish-python]
     if: |
       always() && !cancelled() &&
       needs.create-github-release.result == 'success' &&
       needs.publish-docker-manifests.result == 'success' &&
       needs.publish-release-artifacts.result == 'success' &&
       needs.verify-release-provenance.result == 'success' &&
-      needs.verify-macos-client-lifecycle.result == 'success'
+      needs.verify-macos-client-lifecycle.result == 'success' &&
+      needs.publish-npm.result == 'success' &&
+      needs.publish-python.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

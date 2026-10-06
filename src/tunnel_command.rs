@@ -13,7 +13,7 @@
 //! tunnel. The token is sent as a header only; it is never in any argv.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode, Stdio};
+use std::process::{ExitCode, Stdio};
 use std::time::Duration;
 
 use clap::{Args, Subcommand, ValueEnum};
@@ -117,7 +117,7 @@ pub fn tunnel_name(server: &str, local_port: u16) -> String {
 }
 
 fn state_dir() -> Result<PathBuf, String> {
-    std::env::var_os("HOME")
+    crate::operation_context::var_os("HOME")
         .filter(|home| !home.is_empty())
         .map(|home| {
             PathBuf::from(home)
@@ -284,12 +284,12 @@ fn is_supervisor(pid: u32, name: &str) -> bool {
             .split(|byte| *byte == 0)
             .any(|argument| argument == name.as_bytes());
     }
-    match Command::new("ps")
-        .args(["-o", "args=", "-p", &pid.to_string()])
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .output()
-    {
+    match crate::operation_context::process_output(
+        crate::operation_context::command("ps")
+            .args(["-o", "args=", "-p", &pid.to_string()])
+            .stdin(Stdio::null())
+            .stderr(Stdio::null()),
+    ) {
         Ok(output) if output.status.success() => {
             String::from_utf8_lossy(&output.stdout).contains(name)
         }
@@ -300,11 +300,12 @@ fn is_supervisor(pid: u32, name: &str) -> bool {
 }
 
 fn output(program: &str, arguments: &[String]) -> Result<String, String> {
-    let output = Command::new(program)
-        .args(arguments)
-        .stdin(Stdio::null())
-        .output()
-        .map_err(|error| format!("could not run {program}: {error}"))?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command(program)
+            .args(arguments)
+            .stdin(Stdio::null()),
+    )
+    .map_err(|error| format!("could not run {program}: {error}"))?;
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     } else {
@@ -320,11 +321,13 @@ fn alive(record: &Record) -> bool {
     match record.via {
         Via::Ssh => record.pid.is_some_and(|pid| {
             is_supervisor(pid, &tunnel_name(&record.server, record.local_port))
-                && Command::new("kill")
-                    .args(["-0", &pid.to_string()])
-                    .stderr(Stdio::null())
-                    .status()
-                    .is_ok_and(|status| status.success())
+                && crate::operation_context::process_output(
+                    crate::operation_context::command("kill")
+                        .args(["-0", &pid.to_string()])
+                        .stderr(Stdio::null()),
+                )
+                .map(|output| output.status)
+                .is_ok_and(|status| status.success())
         }),
         Via::Docker => record.container.as_ref().is_some_and(|name| {
             output(
@@ -369,7 +372,7 @@ fn start(target: &TunnelTarget, name: &str, directory: &Path) -> Result<Record, 
             let arguments = ssh_arguments(target)?;
             let log = std::fs::File::create(directory.join(format!("{name}.log")))
                 .map_err(|error| format!("could not open the tunnel log: {error}"))?;
-            let mut command = Command::new("sh");
+            let mut command = crate::operation_context::command("sh");
             // `$0` names the tunnel, so `down` can recognise the process.
             command
                 .args(["-c", SUPERVISOR, name, "ssh"])
@@ -379,8 +382,7 @@ fn start(target: &TunnelTarget, name: &str, directory: &Path) -> Result<Record, 
                 .stderr(log);
             #[cfg(unix)]
             std::os::unix::process::CommandExt::process_group(&mut command, 0);
-            let child = command
-                .spawn()
+            let child = crate::operation_context::spawn_process(&mut command)
                 .map_err(|error| format!("could not start ssh: {error}"))?;
             record.pid = Some(child.id());
         }
@@ -394,10 +396,12 @@ fn stop(record: &Record) {
             if is_supervisor(pid, &tunnel_name(&record.server, record.local_port)) =>
         {
             // The supervisor leads its own process group: end it and its ssh.
-            let _ = Command::new("kill")
-                .args(["-TERM", "--", &format!("-{pid}")])
-                .stderr(Stdio::null())
-                .status();
+            let _ = crate::operation_context::process_output(
+                crate::operation_context::command("kill")
+                    .args(["-TERM", "--", &format!("-{pid}")])
+                    .stderr(Stdio::null()),
+            )
+            .map(|output| output.status);
         }
         (Via::Docker, _, Some(name)) => {
             let _ = output(
@@ -455,7 +459,7 @@ async fn check(port: u16, wait: u64) -> Checked {
     if health != Some(200) {
         return Checked::Unreachable;
     }
-    let token = std::env::var(TOKEN_ENV)
+    let token = crate::operation_context::var(TOKEN_ENV)
         .ok()
         .filter(|token| !token.is_empty());
     let Some(token) = token else {

@@ -448,7 +448,7 @@ pub fn anthropic_to_chat_completion(anthropic: &Value, _resolved_model: &str) ->
     let mut response = json!({
         "id": id,
         "object": "chat.completion",
-        "created": chrono::Utc::now().timestamp(),
+        "created": crate::operation_context::now().timestamp(),
         "model": served_model,
         "choices": [
             {
@@ -570,7 +570,7 @@ pub fn map_model(requested: &str) -> String {
 /// advertises nothing.
 #[must_use]
 pub fn list_models_from(models: &[String], owner: &str) -> Value {
-    let now = chrono::Utc::now().timestamp();
+    let now = crate::operation_context::now().timestamp();
     let data: Vec<Value> = models
         .iter()
         .map(|id| {

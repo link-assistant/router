@@ -1,0 +1,112 @@
+{
+  "$defs": {
+    "LogAnomaly": {
+      "additionalProperties": false,
+      "properties": {
+        "correlation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "detail",
+        "correlation_ids"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/logs-anomalies/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/LogAnomaly"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "logs.anomalies"
+    },
+    "schema": {
+      "const": "link-assistant-router/logs-anomalies/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

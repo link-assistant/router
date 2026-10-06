@@ -1,0 +1,9 @@
+# Integration compatibility
+
+Rust, JavaScript/TypeScript (Node 20+ and Bun), and Python 3.10+ expose the canonical operation catalog. PHP, Go and Java HTTP clients are generated, compiled and exercised in CI from OpenAPI 3.1. Their HTTP surface includes every management and model route; use an official operations package for process orchestration.
+
+Responses use versioned JSON Schema identifiers. An additive field requires a minor release. Removing or renaming a field, narrowing accepted values, or removing a route requires a new contract version. Keep the previous schema files for at least one minor release. `scripts/check-contract-compatibility.py` compares each PR with its base and rejects incompatible edits to existing versions. Bindings reject undocumented Router-owned fields. Native vendor payloads explicitly allow extensions.
+
+`cargo-semver-checks` compares every PR with its base. This initial library expansion explicitly permits adding the `Version`, `Contracts` and `Verify` variants to the existing public CLI parser enum. Exhaustive downstream matches must add these cases; this exception is reviewed with the initial minor integration release. The `enum_variant_added` exception in Cargo.toml is limited to that lint; all other API changes remain checked. Future removals and signature changes require a major release or a separately documented exception.
+
+Official package versions must equal Cargo.toml, the catalog and the release tag. Release preparation regenerates metadata before committing and tagging; packaging runs with the tag as the Actions source ref. Published archives, contracts and packages are attested and verified against the exact tag and commit before stable promotion. npm and PyPI trusted publishers must be configured for this repository's `release.yml`; missing registry authorization fails the gate instead of marking a partially published release delivered.

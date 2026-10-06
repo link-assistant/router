@@ -181,9 +181,9 @@ impl VendorCli {
     fn probe_args(&self) -> Vec<String> {
         // Most specific first: a per-provider override beats the global one,
         // which beats the built-in probe.
-        std::env::var(probe_args_env_for(self.provider))
+        crate::operation_context::var(probe_args_env_for(self.provider))
             .ok()
-            .or_else(|| std::env::var(PROBE_ARGS_ENV).ok())
+            .or_else(|| crate::operation_context::var(PROBE_ARGS_ENV).ok())
             .filter(|value| !value.trim().is_empty())
             .map_or_else(
                 || self.probe.iter().map(|arg| (*arg).to_string()).collect(),
@@ -213,7 +213,7 @@ impl VendorCli {
             args.join(" ")
         );
 
-        let mut command = tokio::process::Command::new(&self.binary);
+        let mut command = crate::operation_context::command(&self.binary);
         if provider == SubscriptionProvider::Claude {
             // Claude Code reads its home from either name depending on version;
             // scoped to Claude so a Codex run is not handed a Claude variable.
@@ -232,21 +232,36 @@ impl VendorCli {
             .stderr(std::process::Stdio::piped());
 
         let started = std::time::Instant::now();
-        let outcome = match tokio::time::timeout(self.timeout, command.output()).await {
+        let deadline = self.timeout;
+        let context = crate::operation_context::current();
+        let outcome = tokio::task::spawn_blocking(move || {
+            let mut run = || crate::operation_context::bounded_output(&mut command, deadline);
+            if let Some(context) = context {
+                context.scope(run)
+            } else {
+                run()
+            }
+        })
+        .await;
+        let outcome = match outcome {
             Ok(Ok(output)) => output,
-            Ok(Err(error)) => {
+            Ok(Err(error)) if error.kind() != std::io::ErrorKind::TimedOut => {
                 tracing::warn!(
                     "the {provider} vendor client at {} could not be run: {error}",
                     self.binary.display()
                 );
                 return None;
             }
-            Err(_) => {
+            Ok(Err(_)) => {
                 tracing::warn!(
                     "the {provider} vendor client did not finish within {:?}; the credential was \
                      left as it was",
                     self.timeout
                 );
+                return None;
+            }
+            Err(error) => {
+                tracing::warn!("the {provider} vendor client worker failed: {error}");
                 return None;
             }
         };

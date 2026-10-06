@@ -116,7 +116,7 @@ impl Default for LoginConfig {
 }
 
 /// Lifecycle state of a login session.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LoginStatus {
     /// The URL was returned; the router is waiting for the human's code.
@@ -134,7 +134,7 @@ pub enum LoginStatus {
 }
 
 /// Public view of a login session.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
 pub struct LoginView {
     /// Identifier used to address this session.
     pub login_id: String,
@@ -391,7 +391,7 @@ impl LoginManager {
             provider,
             url,
             user_code: None,
-            deadline: Utc::now()
+            deadline: crate::operation_context::now()
                 + chrono::Duration::from_std(self.config.session_ttl)
                     .unwrap_or_else(|_| chrono::Duration::seconds(900)),
             state: Mutex::new(SessionState {
@@ -426,7 +426,7 @@ impl LoginManager {
             provider: SubscriptionProvider::Codex,
             url: login.verification_url().to_string(),
             user_code: Some(login.user_code().to_string()),
-            deadline: Utc::now()
+            deadline: crate::operation_context::now()
                 + chrono::Duration::from_std(self.config.session_ttl)
                     .unwrap_or_else(|_| chrono::Duration::seconds(900)),
             state: Mutex::new(SessionState {
@@ -457,7 +457,7 @@ impl LoginManager {
                     state.error = None;
                 }
                 Err(error) => {
-                    state.status = if Utc::now() >= task_session.deadline {
+                    state.status = if crate::operation_context::now() >= task_session.deadline {
                         LoginStatus::Expired
                     } else {
                         LoginStatus::Failed
@@ -465,7 +465,7 @@ impl LoginManager {
                     state.error = Some(error);
                 }
             }
-            state.settled_at = Some(Utc::now());
+            state.settled_at = Some(crate::operation_context::now());
         });
         session
             .state
@@ -569,7 +569,7 @@ impl LoginManager {
     /// entry used to live as long as the process, so anyone who could call
     /// `begin` repeatedly could grow the map for the lifetime of the router.
     pub fn sweep(&self) {
-        let now = Utc::now();
+        let now = crate::operation_context::now();
         let sessions: Vec<Arc<Session>> = self.lock_sessions().values().map(Arc::clone).collect();
         let mut evict = Vec::new();
         for session in sessions {
@@ -630,7 +630,7 @@ impl LoginManager {
         state.pty = None;
         state.claude_login = None;
         state.auth_task = None;
-        state.settled_at = Some(Utc::now());
+        state.settled_at = Some(crate::operation_context::now());
     }
 
     fn release(session: &Arc<Session>) {

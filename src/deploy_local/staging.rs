@@ -4,7 +4,7 @@ use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode};
+use std::process::ExitCode;
 use std::time::{Duration, Instant};
 
 use super::docker::Docker;
@@ -75,7 +75,7 @@ fn objects(docker: &Docker, owner: &str) -> Result<Vec<String>, String> {
 
 fn free_disk(root: &Path) -> Result<u64, String> {
     #[cfg(not(windows))]
-    let mut command = Command::new("df");
+    let mut command = crate::operation_context::command("df");
     #[cfg(not(windows))]
     command.args(["-Pk"]).arg(root);
     #[cfg(windows)]
@@ -90,7 +90,7 @@ fn free_disk(root: &Path) -> Result<u64, String> {
             Prefix::Disk(letter) | Prefix::VerbatimDisk(letter) => letter,
             _ => return Err("staging disk volume is unverifiable".into()),
         };
-        let mut command = Command::new("powershell");
+        let mut command = crate::operation_context::command("powershell");
         command
             .args([
                 "-NoProfile",
@@ -101,9 +101,8 @@ fn free_disk(root: &Path) -> Result<u64, String> {
             .env("ROUTER_STAGE_DRIVE", char::from(letter).to_string());
         command
     };
-    let output =
-        link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(5))
-            .map_err(|error| error.to_string())?;
+    let output = crate::operation_context::bounded_output(&mut command, Duration::from_secs(5))
+        .map_err(|error| error.to_string())?;
     #[cfg(not(windows))]
     let free = String::from_utf8_lossy(&output.stdout)
         .lines()
@@ -116,7 +115,9 @@ fn free_disk(root: &Path) -> Result<u64, String> {
         .parse::<u64>()
         .ok()
         .map(|bytes| bytes / 1024);
-    if std::env::var_os("ROUTER_DEPLOY_TRACE").as_deref() == Some(std::ffi::OsStr::new("1")) {
+    if crate::operation_context::var_os("ROUTER_DEPLOY_TRACE").as_deref()
+        == Some(std::ffi::OsStr::new("1"))
+    {
         eprintln!(
             "staging disk probe: status={}, available_kib={free:?}, stdout_bytes={}",
             output.status,
@@ -252,7 +253,7 @@ fn execute_with_disk(
     let root: PathBuf = if requested_root.is_absolute() {
         requested_root.into()
     } else {
-        std::env::current_dir()
+        crate::operation_context::current_dir()
             .map_err(|error| error.to_string())?
             .join(requested_root)
     };
@@ -388,7 +389,7 @@ fn execute_with_disk(
         }
         let secret =
             fs::read_to_string(root.join("token-secret")).map_err(|error| error.to_string())?;
-        let key = std::env::var("ROUTER_STAGING_ZAI_API_KEY").unwrap_or_default();
+        let key = crate::operation_context::var("ROUTER_STAGING_ZAI_API_KEY").unwrap_or_default();
         let result = docker.command(
             &arguments(&name, owner, &root, image, args.port()),
             &[
@@ -472,6 +473,7 @@ fn execute_with_disk(
     )
 }
 
+#[must_use]
 pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
     let result = namespace(args.staging.as_deref().expect("staging dispatch")).and_then(|_| {
         // Status/verification report existing state without planning a start.

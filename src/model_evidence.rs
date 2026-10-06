@@ -9,7 +9,7 @@ pub fn annotate_live_catalog(
     account: &str,
     protocols: &[&str],
 ) {
-    let fetched_at = chrono::Utc::now().to_rfc3339();
+    let fetched_at = crate::operation_context::now().to_rfc3339();
     raw.insert("router_source_url".into(), Value::String(source_url.into()));
     raw.insert("router_endpoint".into(), Value::String(endpoint.into()));
     raw.insert("router_account".into(), Value::String(account.into()));

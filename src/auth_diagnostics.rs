@@ -69,7 +69,7 @@ impl TokenError {
 }
 
 /// One remembered failure.
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, schemars::JsonSchema)]
 pub struct AuthFailure {
     /// Unix second of the failure.
     pub at: i64,
@@ -91,7 +91,7 @@ pub struct AuthDiagnostics {
 }
 
 /// Snapshot served by the protected diagnostics endpoint.
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, schemars::JsonSchema)]
 pub struct AuthDiagnosticsSnapshot {
     pub failures_by_reason: BTreeMap<&'static str, u64>,
     pub recent_failures: Vec<AuthFailure>,
@@ -117,7 +117,7 @@ impl AuthDiagnostics {
                 recent.pop_front();
             }
             recent.push_back(AuthFailure {
-                at: chrono::Utc::now().timestamp(),
+                at: crate::operation_context::now().timestamp(),
                 reason,
                 fingerprint,
                 token_id,

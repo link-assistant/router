@@ -900,7 +900,7 @@ fn a_named_source_does_not_consult_the_platform_store() {
 /// change), so the reader is built against whatever home this run really has.
 #[test]
 fn the_vendor_default_home_still_consults_the_platform_store() {
-    let Ok(home) = std::env::var("HOME") else {
+    let Ok(home) = crate::operation_context::var("HOME") else {
         // Nothing to assert about a default home that cannot be resolved.
         return;
     };

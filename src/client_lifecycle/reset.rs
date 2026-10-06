@@ -93,7 +93,7 @@ fn ambient(client: ClientKind) -> Vec<&'static str> {
     names
         .iter()
         .copied()
-        .filter(|name| std::env::var_os(name).is_some())
+        .filter(|name| crate::operation_context::var_os(name).is_some())
         .collect()
 }
 

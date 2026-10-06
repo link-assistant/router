@@ -33,7 +33,7 @@ fn the_default_label_carries_no_directory_name() {
     let label = format!("with-{}-{}", ClientKind::ClaudeCode, super::run_suffix());
 
     assert!(label.starts_with("with-claude-"), "{label}");
-    let cwd = std::env::current_dir().expect("cwd");
+    let cwd = crate::operation_context::current_dir().expect("cwd");
     let name = cwd
         .file_name()
         .expect("directory name")

@@ -126,7 +126,8 @@ fn text(output: &Output) -> String {
 }
 
 fn report(output: &Output) -> Value {
-    serde_json::from_slice(&output.stdout).unwrap_or_else(|_| panic!("{}", text(output)))
+    link_assistant_router::contracts::validation::cli_payload(&output.stdout)
+        .unwrap_or_else(|_| panic!("{}", text(output)))
 }
 
 fn mode(path: &Path) -> u32 {

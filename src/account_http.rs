@@ -55,7 +55,7 @@ pub enum SecretRef {
 impl SecretRef {
     fn read(&self) -> Result<String, String> {
         let value = match self {
-            Self::Env(name) => std::env::var(name)
+            Self::Env(name) => crate::operation_context::var(name)
                 .map_err(|_| format!("environment variable {name} is not set"))?,
             Self::File(path) => std::fs::read_to_string(path)
                 .map_err(|error| format!("cannot read {}: {error}", path.display()))?,

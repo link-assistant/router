@@ -7,7 +7,6 @@
 //! The whole feature is off unless a bot token is present, so an upgrade adds
 //! no new behaviour to an existing deployment.
 
-use std::env;
 use std::time::Duration;
 
 use crate::chat_admin::{ChatAdminConfig, DEFAULT_RATE_LIMIT_PER_MINUTE, DEFAULT_SECRET_TTL_SECS};
@@ -20,7 +19,7 @@ use crate::config::{ConfigError, parse_u64_env};
 /// Returns [`ConfigError::InvalidPort`] when `VK_GROUP_ID` is not a number —
 /// the nearest existing variant for "a numeric setting did not parse".
 pub fn chat_admin_from_env() -> Result<ChatAdminConfig, ConfigError> {
-    let vk_group_id = env::var("VK_GROUP_ID")
+    let vk_group_id = crate::operation_context::var("VK_GROUP_ID")
         .ok()
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
@@ -28,8 +27,8 @@ pub fn chat_admin_from_env() -> Result<ChatAdminConfig, ConfigError> {
         .transpose()
         .map_err(|_| ConfigError::InvalidPort)?;
     Ok(chat_admin_config(
-        env::var("TELEGRAM_BOT_TOKEN").ok(),
-        env::var("VK_BOT_TOKEN").ok(),
+        crate::operation_context::var("TELEGRAM_BOT_TOKEN").ok(),
+        crate::operation_context::var("VK_BOT_TOKEN").ok(),
         vk_group_id,
         parse_u64_env("CHAT_ADMIN_SECRET_TTL_SECS", DEFAULT_SECRET_TTL_SECS),
         parse_u64_env(

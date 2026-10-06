@@ -69,3 +69,11 @@ sweep.timestamp
 # `nix build` symlinks its output here.
 /result
 /result-*
+
+# Official language package dependency/build trees.
+packages/**/node_modules/
+packages/python/build/
+packages/python/dist/
+packages/python/*.egg-info/
+# Reproducible tool downloads are verified by the checked-in generator script.
+experiments/issue-697/tools/

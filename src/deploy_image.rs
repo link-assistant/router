@@ -1,10 +1,7 @@
 //! Read-only default image preflight before a deployment plan (#687).
 
 use std::ffi::OsStr;
-use std::process::Command;
 use std::time::Duration;
-
-use link_assistant_router::bounded_process;
 
 /// Verify a cached default image or registry manifest before deployment planning.
 pub fn ensure_default(image: &str, version: &str) -> Result<(), String> {
@@ -13,15 +10,15 @@ pub fn ensure_default(image: &str, version: &str) -> Result<(), String> {
 
 fn inspect_with(docker: &OsStr, image: &str, version: &str) -> Result<(), String> {
     // An immutable image already cached on the target is usable offline.
-    let local = bounded_process::output(
-        Command::new(docker).args(["image", "inspect", image]),
+    let local = crate::operation_context::bounded_output(
+        crate::operation_context::command(docker).args(["image", "inspect", image]),
         Duration::from_secs(30),
     );
     if local.as_ref().is_ok_and(|output| output.status.success()) {
         return Ok(());
     }
-    let output = bounded_process::output(
-        Command::new(docker).args(["manifest", "inspect", image]),
+    let output = crate::operation_context::bounded_output(
+        crate::operation_context::command(docker).args(["manifest", "inspect", image]),
         Duration::from_secs(30),
     )
         .map_err(|error| format!("image-unavailable: could not check default image {image}: {error}; pass --image RELEASE_TAG_OR_DIGEST or --build DIR"))?;
@@ -78,8 +75,8 @@ mod tests {
     #[test]
     fn an_auth_or_network_failure_is_not_reported_as_an_unpublished_release() {
         let error = inspect("echo 'unauthorized' >&2; exit 1").unwrap_err();
-        assert!(error.contains("image-unavailable"));
-        assert!(error.contains("unauthorized"));
+        assert!(error.contains("image-unavailable"), "{error}");
+        assert!(error.contains("unauthorized"), "{error}");
     }
 
     #[test]

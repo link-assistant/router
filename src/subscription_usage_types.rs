@@ -2,7 +2,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::subscription::SubscriptionProvider;
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize, clap::ValueEnum)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Deserialize,
+    Eq,
+    Hash,
+    PartialEq,
+    Serialize,
+    clap::ValueEnum,
+    schemars::JsonSchema,
+)]
 pub enum UsageProvider {
     #[value(name = "anthropic")]
     #[serde(rename = "anthropic")]
@@ -57,13 +68,13 @@ impl UsageProvider {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct UsageEnvelope {
     pub schema_version: u8,
     pub subscriptions: Vec<SubscriptionUsage>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct SubscriptionUsage {
     pub provider: UsageProvider,
     pub state: UsageState,
@@ -101,7 +112,7 @@ pub struct SubscriptionUsage {
     pub retry_after_seconds: Option<u64>,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum UsageState {
     Available,
@@ -109,7 +120,7 @@ pub enum UsageState {
     Unverified,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct UsagePool {
     pub configured_accounts: usize,
     pub contributing_accounts: usize,
@@ -126,7 +137,7 @@ pub struct UsagePool {
     pub model_cooldowns: Option<usize>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct UsageWindow {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -147,7 +158,7 @@ pub struct UsageWindow {
     pub reset_times: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct NamedLimit {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -172,7 +183,7 @@ pub struct NamedLimit {
     pub limit: Option<f64>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Credits {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub balance: Option<String>,
@@ -188,7 +199,7 @@ pub struct Credits {
     pub approximate_cloud_messages: Option<u64>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct ExtraUsage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_enabled: Option<bool>,
@@ -206,7 +217,7 @@ pub struct ExtraUsage {
     pub resets_at: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct SpendControl {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reached: Option<bool>,
@@ -214,7 +225,7 @@ pub struct SpendControl {
     pub individual_limit: Option<SpendLimit>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct SpendLimit {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,

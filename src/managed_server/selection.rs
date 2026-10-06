@@ -22,8 +22,8 @@ const TRUST_DIRECTORY: &str = "server-trust";
 /// anything. A command that can only act locally uses it to refuse honestly
 /// rather than acting on a router the operator did not name (issue #296).
 pub fn selected_server() -> Result<Option<String>, AnyError> {
-    if let Some(selected) = std::env::var("LINK_ASSISTANT_ROUTER_URL")
-        .or_else(|_| std::env::var("ROUTER_URL"))
+    if let Some(selected) = crate::operation_context::var("LINK_ASSISTANT_ROUTER_URL")
+        .or_else(|_| crate::operation_context::var("ROUTER_URL"))
         .ok()
         .filter(|value| !value.trim().is_empty())
     {
@@ -238,10 +238,10 @@ pub fn load_persisted() -> Result<Option<PersistedServer>, AnyError> {
 }
 
 pub fn configured_source() -> Result<String, AnyError> {
-    if let Ok(value) = std::env::var("LINK_ASSISTANT_ROUTER_URL") {
+    if let Ok(value) = crate::operation_context::var("LINK_ASSISTANT_ROUTER_URL") {
         return Ok(format!("environment: {}", normalize_server(&value)?));
     }
-    if let Ok(value) = std::env::var("ROUTER_URL") {
+    if let Ok(value) = crate::operation_context::var("ROUTER_URL") {
         return Ok(format!("environment: {}", normalize_server(&value)?));
     }
     if let Some(config) = load_persisted()? {

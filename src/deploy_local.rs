@@ -9,7 +9,9 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::deploy::instance::InstanceName;
 
+mod checkpoint;
 mod claude_share;
+pub use checkpoint::capture_checkpoint;
 mod data_backup;
 mod deploy_token;
 mod diagnose;
@@ -25,6 +27,7 @@ mod secret;
 pub mod service;
 pub mod staging;
 mod state;
+mod status_report;
 #[cfg(test)]
 #[path = "deploy_local_tests.rs"]
 mod tests;
@@ -97,16 +100,16 @@ impl Coordinator<'_> {
                 ));
             }
             let expected_port = active.port.to_string();
-            if self.docker.exists(&RELAY)
-                && (!self.docker.owned(&RELAY, self.root, "relay")
+            if self.docker.exists(&RELAY.value())
+                && (!self.docker.owned(&RELAY.value(), self.root, "relay")
                     || self
                         .docker
-                        .label(&RELAY, &format!("{LABEL_KEY}.spec"))
+                        .label(&RELAY.value(), &format!("{LABEL_KEY}.spec"))
                         .as_deref()
                         != Some(SPEC_VERSION)
                     || self
                         .docker
-                        .label(&RELAY, &format!("{LABEL_KEY}.port"))
+                        .label(&RELAY.value(), &format!("{LABEL_KEY}.port"))
                         .as_deref()
                         != Some(expected_port.as_str()))
             {
@@ -114,7 +117,7 @@ impl Coordinator<'_> {
             }
             return Ok(Existing::Managed(active));
         }
-        if self.docker.exists(&RELAY) {
+        if self.docker.exists(&RELAY.value()) {
             return Err(format!(
                 "{RELAY} exists without a durable active deployment record"
             ));
@@ -132,7 +135,7 @@ impl Coordinator<'_> {
         let rendered = self.docker.token_inventory(backend).map_err(|error| {
             format!("could not inventory run credentials in {backend}: {error}")
         })?;
-        Inventory::from_json(&rendered, chrono::Utc::now().timestamp())
+        Inventory::from_json(&rendered, crate::operation_context::now().timestamp())
     }
 
     fn connection_count(&self, backend: &str) -> Result<u64, String> {
@@ -143,149 +146,11 @@ impl Coordinator<'_> {
             .map_err(|error| format!("relay connection count for {backend} is invalid: {error}"))
     }
 
-    fn print_status(&self, existing: &Existing) -> Result<bool, String> {
-        println!("deployment_root={}", self.root.display());
-        println!("candidate_image={}", self.image);
-        println!("listener=127.0.0.1:{}", self.port);
-        println!(
-            "credential_ownership=shared-data durable-per-credential-locks single-refresh-writer"
-        );
-        println!("{}", self.claude.status_line(self.root));
-        self.print_provider_exhaustion();
-        match data_backup::checkpoint_status(self.root) {
-            Ok(line) => println!("{line}"),
-            Err(reason) => println!(
-                "blocker=data-checkpoint forceable=false reason={}",
-                serde_json::to_string(&reason).unwrap_or_default()
-            ),
-        }
-        match existing {
-            Existing::Absent => {
-                println!("old_backend=absent");
-                println!("candidate_backend=not-started image={}", self.image);
-                println!("connections=0");
-                println!("run_inventory live=0 stale=0 blockers=0");
-                println!("force_update_interrupts=false");
-                Ok(false)
-            }
-            Existing::Legacy => {
-                println!("old_backend={LEGACY} topology=legacy-direct");
-                println!("candidate_backend=not-started image={}", self.image);
-                println!("connections=unknown");
-                let inventory = self.inventory(LEGACY);
-                let inventory_known = inventory.is_ok();
-                if let Ok(inventory) = &inventory {
-                    inventory.print();
-                } else if let Err(error) = &inventory {
-                    println!("run_inventory=unknown blockers=unknown reason={error}");
-                }
-                println!("blocker=legacy-direct-front-door has unknown established connections");
-                self.print_secret(LEGACY);
-                if let Ok(inventory) = inventory {
-                    for run in &inventory.runs {
-                        println!(
-                            "force_impact run_id={} label={} state={}",
-                            run.id,
-                            serde_json::to_string(&run.label).unwrap_or_else(|_| "null".into()),
-                            run.state.as_str()
-                        );
-                    }
-                }
-                println!("force_update_interrupts=true");
-                Ok(self.docker.running(LEGACY)? && inventory_known)
-            }
-            Existing::Managed(active) => {
-                let backend_running = self.docker.running(&active.backend)?;
-                let relay_running = self.docker.running(&RELAY).unwrap_or(false);
-                println!("old_backend={} image={}", active.backend, active.image_ref);
-                println!(
-                    "old_backend_claude_credentials={}",
-                    self.claude_label(&active.backend)
-                );
-                println!("candidate_backend=not-started image={}", self.image);
-                println!("connections={}", self.connection_count(&active.backend)?);
-                println!("backend_running={backend_running}");
-                println!("relay={RELAY} running={relay_running} port={}", active.port);
-                let inventory = self.inventory(&active.backend);
-                let force_interrupts = match &inventory {
-                    Ok(inventory) => {
-                        inventory.print();
-                        for blocker in inventory.blockers() {
-                            println!(
-                                "blocker=legacy-unpinned run_id={} label={}",
-                                blocker.id,
-                                serde_json::to_string(&blocker.label)
-                                    .unwrap_or_else(|_| "null".into())
-                            );
-                        }
-                        inventory.blockers().next().is_some() || active.port != self.port
-                    }
-                    Err(error) => {
-                        println!("run_inventory=unknown blockers=unknown reason={error}");
-                        true
-                    }
-                };
-                if active.port != self.port {
-                    println!(
-                        "blocker=stable-listener-change old_port={} candidate_port={}",
-                        active.port, self.port
-                    );
-                }
-                let force_interrupts = self.print_secret(&active.backend) || force_interrupts;
-                println!("force_update_interrupts={force_interrupts}");
-                // Mixed images are never reported as converged (issue #627).
-                let versions_match = self.print_versions(active)?;
-                let converged = backend_running && relay_running && versions_match;
-                println!("converged={converged}");
-                Ok(converged && inventory.is_ok())
-            }
-        }
-    }
-
-    fn print_interrupted(&self, transaction: &Transaction) -> Result<(), String> {
-        println!("deployment_root={}", self.root.display());
-        println!("transaction_phase={:?}", transaction.phase);
-        println!(
-            "old_backend={}",
-            transaction.previous.as_deref().unwrap_or("absent")
-        );
-        println!("candidate_backend={}", transaction.candidate);
-        println!("candidate_image={}", transaction.image_ref);
-        println!(
-            "relay_pointer={}",
-            self.state.current()?.as_deref().unwrap_or("absent")
-        );
-        if transaction.previous_kind == PreviousKind::Managed
-            && let Some(previous) = transaction.previous.as_deref()
-        {
-            println!("old_connections={}", self.connection_count(previous)?);
-        } else if transaction.previous_kind == PreviousKind::Legacy {
-            println!("old_connections=unknown");
-        }
-        println!(
-            "candidate_connections={}",
-            self.connection_count(&transaction.candidate)?
-        );
-        let inventory_backend = self
-            .state
-            .current()?
-            .or_else(|| transaction.previous.clone())
-            .unwrap_or_else(|| transaction.candidate.clone());
-        match self.inventory(&inventory_backend) {
-            Ok(inventory) => inventory.print(),
-            Err(error) => println!("run_inventory=unknown blockers=unknown reason={error}"),
-        }
-        println!(
-            "credential_ownership=shared-data durable-per-credential-locks single-refresh-writer"
-        );
-        println!("recovery_required=true status_is_read_only=true");
-        Ok(())
-    }
-
     fn preflight(&self, existing: &Existing) -> Result<Option<Inventory>, String> {
+        let relay = RELAY.value();
         let allowed_holder = match existing {
             Existing::Legacy => Some(LEGACY),
-            Existing::Managed(active) if active.port == self.port => Some(&*RELAY),
+            Existing::Managed(active) if active.port == self.port => Some(relay.as_str()),
             Existing::Absent | Existing::Managed(_) => None,
         };
         let foreign = self
@@ -434,13 +299,13 @@ impl Coordinator<'_> {
     }
 
     fn remove_relay(&self) -> Result<(), String> {
-        if !self.docker.exists(&RELAY) {
+        if !self.docker.exists(&RELAY.value()) {
             return Ok(());
         }
-        if !self.docker.owned(&RELAY, self.root, "relay") {
+        if !self.docker.owned(&RELAY.value(), self.root, "relay") {
             return Err(format!("refusing to remove unowned relay {RELAY}"));
         }
-        self.docker.remove(&RELAY)
+        self.docker.remove(&RELAY.value())
     }
 
     fn finish_accepted(&self, transaction: &Transaction) -> Result<(), String> {
@@ -592,15 +457,15 @@ impl Coordinator<'_> {
             println!("restored backend={}", active.backend);
             true
         };
-        if !self.docker.exists(&RELAY) {
+        if !self.docker.exists(&RELAY.value()) {
             self.docker
                 .run_relay(&active.image_ref, self.root, active.port)?;
             println!("restored relay={RELAY}");
             changed = true;
-        } else if !self.docker.owned(&RELAY, self.root, "relay") {
+        } else if !self.docker.owned(&RELAY.value(), self.root, "relay") {
             return Err(format!("refusing unowned relay {RELAY}"));
-        } else if !self.docker.running(&RELAY)? {
-            self.docker.start(&RELAY)?;
+        } else if !self.docker.running(&RELAY.value())? {
+            self.docker.start(&RELAY.value())?;
             println!("restored relay={RELAY}");
             changed = true;
         }
@@ -610,8 +475,8 @@ impl Coordinator<'_> {
 
     fn topology_needs_repair(&self, active: &Active) -> Result<bool, String> {
         Ok(!self.docker.running(&active.backend)?
-            || !self.docker.exists(&RELAY)
-            || !self.docker.running(&RELAY)?)
+            || !self.docker.exists(&RELAY.value())
+            || !self.docker.running(&RELAY.value())?)
     }
 
     fn deploy(&self, existing: &Existing) -> Result<(), String> {
@@ -770,6 +635,7 @@ impl Coordinator<'_> {
     }
 }
 
+#[must_use]
 pub fn run(args: &DeployArgs, root: &Path, image: &str, token_secret: &str) -> ExitCode {
     run_with_docker(args, root, image, token_secret, Docker::default())
 }

@@ -345,7 +345,7 @@ async fn near_expiry_external_credential_is_refused_without_any_vendor_request()
         "claudeAiOauth": {
             "accessToken":"native-secret-access",
             "refreshToken":"native-secret-refresh",
-            "expiresAt": chrono::Utc::now().timestamp_millis()
+            "expiresAt": crate::operation_context::now().timestamp_millis()
         }
     })
     .to_string();

@@ -315,7 +315,7 @@ impl PtySession {
             // only its leader leaves wrapper/vendor grandchildren alive.
             #[cfg(unix)]
             if let Some(pid) = guard.process_id() {
-                let _ = std::process::Command::new("/bin/kill")
+                let _ = crate::operation_context::command("/bin/kill")
                     .args(["-KILL", "--", &format!("-{pid}")])
                     .stdout(std::process::Stdio::null())
                     .stderr(std::process::Stdio::null())

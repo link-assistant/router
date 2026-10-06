@@ -77,7 +77,7 @@ pub fn anthropic_to_response(anthropic: &Value, _resolved_model: &str) -> Value 
     let mut response = json!({
         "id": id,
         "object": "response",
-        "created_at": chrono::Utc::now().timestamp(),
+        "created_at": crate::operation_context::now().timestamp(),
         "model": served_model,
         "status": stop.response_status,
         "output": output,

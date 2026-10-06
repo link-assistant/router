@@ -470,7 +470,7 @@ impl AccountRouter {
         &self,
         refreshes: Option<&crate::refresh::TokenCache>,
     ) -> Vec<AccountHealth> {
-        let now_ms = chrono::Utc::now().timestamp_millis();
+        let now_ms = crate::operation_context::now().timestamp_millis();
         self.inner
             .accounts
             .iter()

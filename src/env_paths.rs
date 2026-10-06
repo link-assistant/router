@@ -20,7 +20,7 @@ use std::path::{Path, PathBuf};
 /// can actually fire.
 #[must_use]
 pub fn directory(name: &str) -> Option<PathBuf> {
-    from_value(std::env::var_os(name))
+    from_value(crate::operation_context::var_os(name))
 }
 
 /// Configuration root used by persistent `router with` client homes.
@@ -48,7 +48,8 @@ pub fn router_client_config_root_in(
 /// profile operations never write through a changing process directory.
 pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String> {
     qwen_directory_in(&directory, name, home, || {
-        std::env::current_dir().map_err(|error| format!("cannot resolve {name}: {error}"))
+        crate::operation_context::current_dir()
+            .map_err(|error| format!("cannot resolve {name}: {error}"))
     })
 }
 

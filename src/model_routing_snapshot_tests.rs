@@ -297,7 +297,7 @@ async fn pinned_serving_uses_a_recovery_only_authoritative_token() {
         .persist(&crate::subscription::SubscriptionToken {
             access_token: "recovered-access".into(),
             refresh_token: Some("recovered-refresh".into()),
-            expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 3_600_000),
+            expires_at_ms: Some(crate::operation_context::now().timestamp_millis() + 3_600_000),
             account_id: Some("recovered-account".into()),
             resource_url: None,
         })
@@ -439,7 +439,7 @@ async fn refreshed_access_with_an_unchanged_link_remains_dispatchable() {
     let refresh_task = tokio::spawn(async move {
         axum::serve(listener, refresh).await.unwrap();
     });
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let baseline = reader.read_token().unwrap();
     let fresh = crate::refresh::test_support::refresh_against(
         &state.subscription_cache,
@@ -500,7 +500,7 @@ async fn writable_codex_rotation_with_a_lossy_expiry_remains_dispatchable() {
         vec!["account-a-model".into()],
     );
     let baseline = reader.read_token().unwrap();
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let selected = crate::subscription::SubscriptionToken {
         access_token: "fresh-access".into(),
         refresh_token: Some("rotated-link".into()),
@@ -605,7 +605,7 @@ async fn cached_access_with_an_unchanged_disk_baseline_remains_dispatchable() {
         crate::subscription::SubscriptionToken {
             access_token: "cached-access".into(),
             refresh_token: Some("same-link".into()),
-            expires_at_ms: Some(chrono::Utc::now().timestamp_millis() + 3_600_000),
+            expires_at_ms: Some(crate::operation_context::now().timestamp_millis() + 3_600_000),
             account_id: Some("account-a".into()),
             resource_url: None,
         },

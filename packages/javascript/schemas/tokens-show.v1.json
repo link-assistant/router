@@ -1,0 +1,269 @@
+{
+  "$defs": {
+    "TokenRecord": {
+      "additionalProperties": false,
+      "description": "One persisted token record.\n\n`id` is the JWT `sub` (a UUID); the JWT itself is NOT stored \u2014 only the\nmetadata required to list/expire/revoke.",
+      "properties": {
+        "account": {
+          "default": null,
+          "description": "Optional account identifier the token is bound to (multi-account mode).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "client_kind": {
+          "default": null,
+          "description": "Canonical managed client adapter; absent on legacy/manual tokens.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ephemeral": {
+          "default": false,
+          "description": "Whether this credential belongs only to a wrapper run.\n\nDead ephemeral records are compacted as part of the next issuance so\nrepeated `router with` runs cannot grow durable storage forever.",
+          "type": "boolean"
+        },
+        "expires_at": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "github_repos": {
+          "description": "Repositories this token may reach through the GitHub proxy; empty is\nunrestricted (issue #262).\n\n`serde(default)` so a store written before this field keeps loading,\nand an existing token keeps the access it was issued with.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "issued_at": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "max_requests": {
+          "default": null,
+          "description": "Optional cap on the number of upstream requests this token may make.\n`None` means unlimited. Used to bound how much a task can consume.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "max_tokens": {
+          "default": null,
+          "description": "Optional cap on tokens reported by successful upstream responses.\n`None` means unlimited.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "model_policy": {
+          "$ref": "#/$defs/TokenRecord_ModelAccessPolicy",
+          "description": "Exact model authority attached to this credential. Empty is the\nbackwards-compatible unpinned policy used by manually issued tokens."
+        },
+        "principal_id": {
+          "default": null,
+          "description": "Subscriber identity paired with `client_kind`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rate_limit_per_minute": {
+          "default": null,
+          "description": "Optional fixed-window request rate limit. `None` means unlimited.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rate_window_requests": {
+          "default": 0,
+          "description": "Requests admitted during the current rate-limit window.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "rate_window_started_at": {
+          "default": 0,
+          "description": "Unix timestamp at which the current rate-limit window began.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "reserved_tokens": {
+          "default": 0,
+          "description": "Tokens reserved by requests that have been admitted but have not yet\nreported their actual usage.\n\nA hard `max_tokens` cap cannot be enforced from `used_tokens` alone:\nusage is only known *after* a response completes, so a single large\nanswer could push the persisted total arbitrarily far past the cap\n(issue #195). Admission therefore reserves the request's declared output\nbudget up front and counts it against the cap; settlement swaps the\nreservation for the real figure. Requests still in flight after a crash\nleave a stale reservation, which [`TokenStore::release_stale_reservations`]\nclears.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "revoked": {
+          "type": "boolean"
+        },
+        "run_lease_expires_at": {
+          "default": null,
+          "description": "Expiry of the wrapper process's renewable liveness lease.\n\n`None` is deliberately not treated as live: records written before run\nleases existed cannot prove whether their wrapper still exists.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "scope": {
+          "default": "",
+          "description": "Privilege scope carried by the token. Empty (the default) means an\nordinary client token that may only proxy inference; `\"admin\"` marks a\ncredential that also unlocks the administrative endpoints. See\n[`crate::token::ADMIN_SCOPE`].",
+          "type": "string"
+        },
+        "sliding_window_seconds": {
+          "default": null,
+          "description": "How long, in seconds, an active token's expiry slides ahead of now.\n\n`None` is a fixed clock: the expiry set at issue time is final, which\nis what every token did before. `Some(window)` means a request served\nwith this token pushes `expires_at` to `now + window`, so a session in\ncontinuous use never expires while one abandoned for longer than the\nwindow still does -- which is the behaviour the bound is for. A\nday-long session died mid-work against the fixed 24-hour clock twice\n(issue #354).",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "used_requests": {
+          "default": 0,
+          "description": "Number of upstream requests already made with this token.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "used_tokens": {
+          "default": 0,
+          "description": "Total input and output tokens reported for this credential.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "issued_at",
+        "expires_at",
+        "revoked"
+      ],
+      "title": "TokenRecord",
+      "type": "object"
+    },
+    "TokenRecord_ModelAccessPolicy": {
+      "additionalProperties": false,
+      "description": "Model authority attached to one router-issued credential.\n\nAn empty allow-list preserves the historical unpinned behavior. A\nnon-empty list contains every exact selector the holder may request;\nmultiple entries therefore represent an explicit switching grant.",
+      "properties": {
+        "allow_substitution": {
+          "description": "Permit a provider to serve a different concrete model than requested.\nThis never widens `allowed_models` at request time.",
+          "type": "boolean"
+        },
+        "allowed_models": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "substitution_source": {
+          "description": "User-controlled setting that enabled substitution, when enabled.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/tokens-show/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TokenRecord"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "tokens.show"
+    },
+    "schema": {
+      "const": "link-assistant-router/tokens-show/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

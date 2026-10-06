@@ -5,7 +5,7 @@
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::UNIX_EPOCH;
 
 use serde_json::{Value, json};
 
@@ -159,7 +159,7 @@ pub(super) const fn unchanged(path: PathBuf) -> SetupResult {
 }
 
 pub(super) fn backup_file(path: &Path) -> Result<PathBuf, ClientError> {
-    let stamp = SystemTime::now()
+    let stamp = crate::operation_context::system_time()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_nanos();
@@ -167,7 +167,11 @@ pub(super) fn backup_file(path: &Path) -> Result<PathBuf, ClientError> {
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| ClientError::message("config file name is not valid UTF-8"))?;
-    let backup = path.with_file_name(format!("{file_name}.link-assistant-router.{stamp}.bak"));
+    // A frozen or low-resolution clock must not overwrite a prior safety copy.
+    let nonce = uuid::Uuid::new_v4().simple();
+    let backup = path.with_file_name(format!(
+        "{file_name}.link-assistant-router.{stamp}.{nonce}.bak"
+    ));
     // Client configs can contain vendor credentials. A process umask must not
     // decide whether the timestamped safety copy is world-readable.
     atomic_write(&backup, &fs::read(path)?)?;

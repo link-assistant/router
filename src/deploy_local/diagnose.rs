@@ -43,13 +43,13 @@ impl Coordinator<'_> {
                 "pointer backend {backend} has an unknown launch specification"
             ));
         }
-        if !self.docker.owned(&RELAY, self.root, "relay")
-            || self.label(&RELAY, "spec").as_deref() != Some(SPEC_VERSION)
+        if !self.docker.owned(&RELAY.value(), self.root, "relay")
+            || self.label(&RELAY.value(), "spec").as_deref() != Some(SPEC_VERSION)
         {
             return Err(format!("{RELAY} is absent or not owned by this root"));
         }
         let port = self
-            .label(&RELAY, "port")
+            .label(&RELAY.value(), "port")
             .and_then(|port| port.parse().ok())
             .ok_or_else(|| format!("{RELAY} has no published port label"))?;
         Ok(Active {
@@ -68,6 +68,13 @@ impl Coordinator<'_> {
 
     /// Print the diagnosis for a status run; never a success.
     pub(super) fn diagnose(&self, error: &str) -> ExitCode {
+        let mut report = self.status_report("container", "inconsistent");
+        report["blockers"] = serde_json::json!([super::status_report::blocker(
+            "inconsistent-state",
+            error,
+            false
+        )]);
+        crate::operation_output::record(report);
         eprintln!("warning: local deployment state is inconsistent: {error}");
         for line in self.diagnosis(error) {
             println!("{line}");
@@ -102,10 +109,12 @@ impl Coordinator<'_> {
         for container in &containers {
             lines.push(self.describe_container(container, pointer.as_deref()));
         }
-        if self.docker.exists(&RELAY) && !containers.iter().any(|name| name == &*RELAY) {
+        if self.docker.exists(&RELAY.value())
+            && !containers.iter().any(|name| name == &RELAY.value())
+        {
             lines.push(format!(
                 "container={RELAY} owner=foreign root={}",
-                self.label(&RELAY, "root")
+                self.label(&RELAY.value(), "root")
                     .as_deref()
                     .unwrap_or("unlabelled")
             ));

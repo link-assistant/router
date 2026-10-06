@@ -683,7 +683,7 @@ mod tests {
 
         // Contention is exercised from another process: two lock attempts on
         // the same descriptor within one process would not exclude each other.
-        let mut holder = std::process::Command::new("sh")
+        let mut holder = crate::operation_context::command("sh")
             .arg("-c")
             .arg(format!(
                 "exec 9>>'{}'; flock 9 && touch '{}' && sleep 5",

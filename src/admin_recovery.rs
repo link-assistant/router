@@ -138,7 +138,7 @@ pub fn recover(
 
 /// Ids of unexpired, unrevoked admin tokens currently in the store.
 fn admin_token_ids(store: &Arc<dyn TokenStore>) -> Result<Vec<String>, String> {
-    let now = chrono::Utc::now().timestamp();
+    let now = crate::operation_context::now().timestamp();
     let records = store
         .list()
         .map_err(|error| format!("could not read the token store: {error}"))?;

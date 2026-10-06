@@ -105,7 +105,7 @@ pub(super) fn from_chat(chat: &Value, _requested_model: &str, finish: Finish) ->
         "id": format!("resp_{response_id}"),
         "object": "response",
         "created_at": chat.get("created").and_then(Value::as_i64)
-            .unwrap_or_else(|| chrono::Utc::now().timestamp()),
+            .unwrap_or_else(|| crate::operation_context::now().timestamp()),
         "status": finish.status(),
         "model": chat.get("model").and_then(Value::as_str).unwrap_or_default(),
         "output": output,

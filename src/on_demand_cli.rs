@@ -70,7 +70,7 @@ impl Drop for DisposableCli {
 }
 
 fn command_exists(command: &str) -> bool {
-    std::env::var_os("PATH").is_some_and(|paths| {
+    crate::operation_context::var_os("PATH").is_some_and(|paths| {
         std::env::split_paths(&paths).any(|directory| {
             let candidate = directory.join(command);
             candidate.is_file()

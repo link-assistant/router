@@ -175,7 +175,8 @@ pub struct ClientIntegration {
 /// error taught a name the user's shell does not have (issue #220). The
 /// invariant that keeps the two in step is asserted in the tests below: every
 /// variant's canonical string equals its [`ClientIntegration::command`].
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum, schemars::JsonSchema)]
+#[schemars(with = "String")]
 pub enum ClientKind {
     Codex,
     #[value(name = "claude", alias = "claude-code")]
@@ -531,7 +532,7 @@ impl ClientManager {
     /// Read a process environment variable unless this root is isolated.
     pub(super) fn environment_var(&self, name: &str) -> Option<String> {
         self.respect_environment
-            .then(|| std::env::var(name).ok())
+            .then(|| crate::operation_context::var(name).ok())
             .flatten()
     }
 

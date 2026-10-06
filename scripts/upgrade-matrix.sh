@@ -39,7 +39,9 @@ usage() {
 run() {
   local router="$1" state="$2"
   shift 2
-  HOME="$state/home" XDG_CONFIG_HOME="$state/home/.config" \
+  # This fixture deliberately uses a loopback upstream. Released versions
+  # with the provider address guard require this explicit, fixture-only opt-in.
+  HOME="$state/home" XDG_CONFIG_HOME="$state/home/.config" UPSTREAM_ALLOW_PRIVATE_NETWORKS=loopback \
     "$router" --data-dir "$state/data" "$@"
 }
 
@@ -165,6 +167,7 @@ verify() {
   #    management API, the revoked one is refused everywhere.
   port="$(free_port)"
   HOME="$state/home" XDG_CONFIG_HOME="$state/home/.config" UPSTREAM_PROVIDER=anthropic \
+    UPSTREAM_ALLOW_PRIVATE_NETWORKS=loopback \
     "$new" --data-dir "$state/data" --host 127.0.0.1 --port "$port" serve \
     >"$state/serve.log" 2>&1 &
   pid=$!

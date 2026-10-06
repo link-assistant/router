@@ -1,0 +1,996 @@
+// Link.Assistant.Router binary entry point, shared by the `router` and
+// `link-assistant-router` targets. Plain comments rather than `//!`: the second
+// target is `src/bin/link-assistant-router.rs`, which `include!`s this file, and
+// an included file cannot carry inner attributes (issue #648).
+//
+// Parses the [`Cli`](link_assistant_router::cli::Cli) (lino-arguments + clap), then either:
+//
+// 1. Runs the HTTP server (default — `Command::Serve` or no subcommand), or
+// 2. Dispatches a CLI subcommand (`tokens`, `accounts`, `providers`, `clients`,
+//    `auth`, `usage`, `logs`, `tls`, `doctor`, `configure`, `with`) and exits without
+//    binding a port. Those that read or change router state act on the router
+//    this machine is pointed at, which may be a remote deployment (issue
+//    #294); `configure`, `clients` and `auth --local` act here.
+//
+// Shared services are constructed together so the CLI subcommands operate on the
+// exact same backing state the HTTP server would.
+
+use std::process::ExitCode;
+use std::sync::Arc;
+
+use crate::{auth_cli, bin_doctor, deploy_cli, logs_cli, recover_admin_cli, shutdown};
+
+use axum::middleware::from_fn_with_state;
+use link_assistant_router::accounts::AccountRouter;
+use link_assistant_router::cli::{AccountOp, Command, TokenOp};
+use link_assistant_router::config::{Config, RoutingMode};
+use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
+use link_assistant_router::login::LoginManager;
+use link_assistant_router::metrics::Metrics;
+use link_assistant_router::oauth::OAuthProvider;
+use link_assistant_router::providers::ProviderStore;
+use link_assistant_router::proxy::AppState;
+use link_assistant_router::storage::{TokenStore, build_token_store};
+use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
+use log_lazy::LogLazy;
+use tower_http::trace::TraceLayer;
+
+type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
+type AnyError = Box<dyn std::error::Error>;
+
+/// Run the process adapter, including daemon modes.
+pub async fn run_from_environment() -> ExitCode {
+    match link_assistant_router::deploy_relay::run_from_env().await {
+        Ok(Some(())) => return ExitCode::SUCCESS,
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
+    match link_assistant_router::codex_loopback_bridge::daemon_request_from_env() {
+        Ok(Some(request)) => {
+            return match link_assistant_router::codex_loopback_bridge::run_persistent_daemon(
+                request,
+            )
+            .await
+            {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::from(1)
+                }
+            };
+        }
+        Ok(None) => {}
+        Err(error) => {
+            eprintln!("error: {error}");
+            return ExitCode::from(1);
+        }
+    }
+    let arguments =
+        link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
+    crate::operations::run_arguments(arguments).await
+}
+
+/// Execute a parsed request without spawning the Router binary.
+pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
+    // The wrapper and managed-server commands do not start a router and must
+    // not require server-only configuration or pollute client stdout with
+    // router startup logs.
+    match cli.command.as_ref() {
+        Some(Command::Version) => {
+            crate::operation_output::record(
+                serde_json::json!({"version": crate::VERSION, "source_commit": crate::SOURCE_COMMIT}),
+            );
+            println!("router {} ({})", crate::VERSION, crate::SOURCE_COMMIT);
+            return ExitCode::SUCCESS;
+        }
+        Some(Command::Contracts) => {
+            println!("{}", crate::contracts::document());
+            return ExitCode::SUCCESS;
+        }
+        Some(Command::Verify(args)) => return crate::verification::run_cli(args.arguments.clone()),
+        Some(Command::With(args)) => {
+            return link_assistant_router::with_command::run(args).await;
+        }
+        Some(Command::Server { op }) => {
+            return link_assistant_router::server_command::run(op).await;
+        }
+        // Permanent client setup mints its credential from the router it is
+        // pointing the client at, over that router's admin API. It never signs
+        // a token here, so the local signing secret is not its to hold — the
+        // same reasoning as the remote commands in issue #294.
+        Some(Command::Configure(args)) => {
+            return link_assistant_router::configure::run_with_home(args, cli.home.as_deref())
+                .await;
+        }
+        Some(Command::Models { op }) => {
+            return link_assistant_router::model_command::run(op).await;
+        }
+        Some(Command::Tunnel(args)) => {
+            return link_assistant_router::tunnel_command::run(args).await;
+        }
+        _ => {}
+    }
+
+    let verbose = cli.verbose;
+    let request_log = cli.request_log.clone();
+    let request_log_max_bytes = cli.request_log_max_bytes;
+    let request_log_max_total_bytes = cli.request_log_max_total_bytes;
+
+    let logger = link_assistant_router::logging::build_lazy(verbose);
+
+    tracing::info!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
+    if verbose {
+        tracing::info!("Verbose logging enabled");
+    }
+
+    // `TOKEN_SECRET` is required where signing happens, not per command family
+    // (issues #300, #308).
+    let cli = link_assistant_router::remote_command::relax_token_secret_for_cli(cli);
+
+    let config = match cli.into_config() {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Configuration error: {e}");
+            return ExitCode::from(2);
+        }
+    };
+
+    if let Some(command) = cli.command.as_ref()
+        && let Some(code) = link_assistant_router::remote_command::refuse_managed(command)
+    {
+        return code;
+    }
+    // One targeting rule for every command that reads or changes router state:
+    // act on the router this machine is pointed at (issue #294).
+    if let Some(command) = cli.command.as_ref()
+        && link_assistant_router::remote_command::may_be_remote(command)
+        && let Some(target) = link_assistant_router::remote_command::target_of(command)
+        // `--data-dir` and `--claude-code-home` name this machine's state, so
+        // a discovered router must not answer for them; an explicit `--server`
+        // still wins.
+        && (target.server.is_some()
+            || !link_assistant_router::remote_command::names_local_state(&cli))
+    {
+        match link_assistant_router::remote_command::resolve(target).await {
+            Ok(link_assistant_router::remote_command::Target::Remote(server)) => {
+                return run_remote_command(&server, command).await;
+            }
+            Ok(link_assistant_router::remote_command::Target::Local) => {}
+            Err(code) => return code,
+        }
+    }
+
+    match cli.command.as_ref() {
+        None | Some(Command::Serve) => match run_server(
+            config,
+            logger,
+            request_log.as_deref(),
+            request_log_max_bytes,
+            request_log_max_total_bytes,
+        )
+        .await
+        {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(e) => {
+                tracing::error!("server error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        Some(Command::Tokens { op }) => run_tokens(&config, op),
+        Some(Command::Accounts { op }) => run_accounts(&config, op),
+        Some(Command::Providers { op }) => {
+            link_assistant_router::providers_cli::run(&config, op).await
+        }
+        Some(Command::Clients { op }) => {
+            link_assistant_router::client_command::run(&config, cli.home.as_deref(), op).await
+        }
+        Some(
+            Command::With(_)
+            | Command::Server { .. }
+            | Command::Configure(_)
+            | Command::Models { .. }
+            | Command::Tunnel(_)
+            | Command::Version
+            | Command::Contracts
+            | Command::Verify(_),
+        ) => {
+            unreachable!("handled before config")
+        }
+        Some(Command::Auth { op }) => {
+            auth_cli::run(
+                &config,
+                op,
+                link_assistant_router::remote_command::names_local_state(&cli),
+            )
+            .await
+        }
+        Some(Command::Usage(args)) => {
+            let token = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TOKEN")
+                .or_else(|_| crate::operation_context::var("LINK_ASSISTANT_TOKEN"))
+                .ok();
+            let base_url = format!("http://{}", config.listen_addr);
+            link_assistant_router::subscription_usage_cli::run(
+                &base_url,
+                token.as_deref(),
+                args.provider,
+                args.json,
+            )
+            .await
+        }
+        Some(Command::Deploy(args)) => deploy_cli::run(&config, args),
+        Some(Command::Doctor { .. }) => bin_doctor::run_doctor(&config).await,
+        Some(Command::Tls { op }) => link_assistant_router::tls_cli::run(&config, op),
+        Some(Command::Logs { op }) => logs_cli::run(&config, request_log.as_deref(), op),
+    }
+}
+
+/// Construct the persistent token store and the optional multi-account router
+/// for the given [`Config`]. Both are needed by both the server and the CLI
+/// subcommands.
+fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
+    if !config.data_dir.exists() {
+        std::fs::create_dir_all(&config.data_dir)?;
+    }
+    let store = build_token_store(config.storage_policy, &config.data_dir)?;
+    let account_router =
+        if config.additional_account_dirs.is_empty() && config.account_request_limits.is_empty() {
+            None
+        } else {
+            let (provider, primary) = config.subscription_pool();
+            let options = config.account_router_options();
+            Some(AccountRouter::new_for_provider(
+                primary,
+                &config.additional_account_dirs,
+                provider,
+                options,
+            ))
+        };
+    Ok((store, account_router))
+}
+
+/// TTL of the admin token minted on first start, in hours (one year).
+const BOOTSTRAP_ADMIN_TTL_HOURS: i64 = 24 * 365;
+
+/// Label recorded on the auto-generated bootstrap admin token.
+const BOOTSTRAP_ADMIN_LABEL: &str = "bootstrap-admin";
+
+/// Make sure the deployment starts with a closed, reachable admin surface.
+///
+/// A fresh deployment that configures no admin credential would otherwise
+/// have to choose between "open to everyone" and "impossible to administer".
+/// Instead we mint one admin-scoped token and print it once — the pattern used
+/// by most self-hosted services. Nothing is minted when the operator already
+/// provisioned a credential externally (`TOKEN_ADMIN_KEY`), when a usable
+/// admin token already exists in the store, or when anonymous admin access was
+/// explicitly opted into.
+fn announce_admin_access(config: &Config, token_manager: &TokenManager) {
+    if config.allow_anonymous_admin {
+        tracing::warn!(
+            "--allow-anonymous-admin is set: /api/management/tokens*, /api/management/providers* and /api/management/login* accept unauthenticated requests"
+        );
+        return;
+    }
+    if config.admin_key.is_some() {
+        tracing::info!("Admin access: TOKEN_ADMIN_KEY configured (bootstrap credential)");
+        return;
+    }
+    match token_manager.has_active_admin_token() {
+        Ok(true) => {
+            tracing::info!("Admin access: existing admin token found in the token store");
+            return;
+        }
+        Ok(false) => {}
+        Err(e) => {
+            tracing::warn!("could not inspect the token store for admin tokens: {e}");
+            return;
+        }
+    }
+    match token_manager.issue_admin_token(BOOTSTRAP_ADMIN_TTL_HOURS, BOOTSTRAP_ADMIN_LABEL) {
+        Ok(token) => {
+            // Printed to stdout as well as the log: this value is shown once
+            // and never recoverable afterwards (only its metadata is stored).
+            println!("─────────────────────────────────────────────────────────────");
+            println!("Admin token (shown once, store it now): {token}");
+            println!("Use it as: Authorization: Bearer <token>");
+            println!("Rotate it with: link-assistant-router tokens rotate <id>");
+            println!("─────────────────────────────────────────────────────────────");
+            tracing::info!("Generated a bootstrap admin token; admin endpoints are closed");
+        }
+        Err(e) => tracing::error!("failed to generate a bootstrap admin token: {e}"),
+    }
+}
+
+async fn run_server(
+    config: Config,
+    logger: LogLazy,
+    request_log: Option<&std::path::Path>,
+    request_log_max_bytes: u64,
+    request_log_max_total_bytes: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // Refuse an exposed emergency any-token mode before anything is bound
+    // (issue #645).
+    let emergency_listeners: Vec<std::net::SocketAddr> = if config.listeners.is_empty() {
+        vec![config.listen_addr]
+    } else {
+        config
+            .listeners
+            .iter()
+            .map(|listener| listener.address)
+            .collect()
+    };
+    config
+        .emergency_auth
+        .check(&emergency_listeners)
+        .map_err(|error| -> AnyError { error.into() })?;
+    tracing::info!("Upstream: {}", config.upstream_base_url);
+    tracing::info!("Upstream provider: {:?}", config.upstream_provider);
+    let (subscription_provider, subscription_home) = config.subscription_pool();
+    tracing::info!(
+        "Subscription home ({subscription_provider}): {}",
+        subscription_home.display()
+    );
+    tracing::info!("Routing mode: {:?}", config.routing_mode);
+    tracing::info!("Storage policy: {:?}", config.storage_policy);
+    // Pool failover, the pause threshold and warmup interception (#676, #677).
+    link_assistant_router::pool_failover::install(config.pool.clone());
+    if config.routing_mode == RoutingMode::Cli || config.routing_mode == RoutingMode::Hybrid {
+        tracing::warn!(
+            "RoutingMode::{:?} is configured but the CLI backend is not yet wired; falling back to direct.",
+            config.routing_mode
+        );
+    }
+
+    let (store, account_router) = build_shared_state(&config)?;
+    if let Some(router) = account_router.as_ref() {
+        tracing::info!("Multi-account routing enabled ({} accounts)", router.len());
+    }
+
+    let token_manager = TokenManager::with_store(&config.token_secret, store);
+    // Requests in flight when the previous process stopped never settled their
+    // spend reservations. Nothing is in flight yet, so any reservation still on
+    // disk is stale and would otherwise pin budget against the cap forever.
+    match token_manager.release_stale_reservations() {
+        Ok(0) => {}
+        Ok(cleared) => tracing::info!("released {cleared} stale token spend reservation(s)"),
+        Err(error) => tracing::warn!("failed to release stale token reservations: {error}"),
+    }
+    token_manager.emergency().start(&config.emergency_auth);
+    announce_admin_access(&config, &token_manager);
+    let oauth_provider = OAuthProvider::new(&config.claude_code_home);
+    let metrics = Arc::new(Metrics::default());
+    let provider_store = ProviderStore::open(&config.data_dir, &config.token_secret)?;
+    provider_store
+        .set_subscription_entitlement_policy(config.subscription_entitlement_policy.clone())?;
+    for accepted in config.subscription_entitlement_policy.overrides() {
+        tracing::warn!(
+            "consumer-subscription bridge override enabled for exact cell {accepted}; operator accepted intermediary and provider-terms risk"
+        );
+    }
+    for client in config.subscription_entitlement_policy.proxied_clients() {
+        tracing::warn!(
+            client = client.canonical_name(),
+            "proxied-client request evidence enabled; a trusted intermediary may use this native client identity only on its reviewed canonical routes"
+        );
+    }
+
+    let client = link_assistant_router::upstream_client::build_upstream_client()?;
+    let crater_provider =
+        if config.upstream_provider == link_assistant_router::config::UpstreamProvider::Crater {
+            Some(Arc::new(ForgeFedTaskProvider::new(
+                client.clone(),
+                config.crater.clone(),
+            )) as Arc<dyn TaskProvider>)
+        } else {
+            None
+        };
+
+    // Keep readers for every vendor so automatic routing can discover all
+    // mounted subscriptions, using the exact roots selected during parsing.
+    let subscription_readers = config.subscription_readers();
+    for reader in &subscription_readers {
+        tracing::info!(
+            "Subscription provider {}: reading credentials from {}",
+            reader.provider(),
+            reader.home().display()
+        );
+    }
+    let subscription_reader = link_assistant_router::subscription::active_subscription_reader(
+        config.upstream_provider,
+        &subscription_readers,
+    );
+    let model_catalogs = Arc::new(
+        link_assistant_router::model_catalog::ModelCatalogCache::persistent(&config.data_dir),
+    );
+
+    // The admin credential: a deploy-time key when provided, otherwise the
+    // persisted first-visitor claim (unclaimed until someone confirms one).
+    // The claim mints its credential through the shared token manager, so a
+    // first-visitor administrator holds the same admin-scoped `la_sk_` JWT the
+    // CLI and the bootstrap path hand out — one credential model, one store.
+    let admin_claim = Arc::new(
+        link_assistant_router::admin::AdminClaim::load(
+            config.admin_key.clone(),
+            &config.data_dir,
+            config.admin_ui.candidate_ttl,
+        )
+        .with_token_manager(token_manager.clone()),
+    );
+
+    let state = AppState {
+        client,
+        token_manager,
+        oauth_provider,
+        account_router,
+        subscription_reader,
+        subscription_base_url: None,
+        subscription_readers,
+        model_catalogs: Arc::clone(&model_catalogs),
+        subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
+        upstream_base_url: config.upstream_base_url.clone(),
+        upstream_provider: config.upstream_provider,
+        gonka: link_assistant_router::gonka::GonkaConfig::new(
+            config.gonka_api_key.clone(),
+            config.gonka_source_url.as_deref(),
+            config.gonka_model.clone(),
+        ),
+        bridge_model: config.bridge_model.clone(),
+        bridge_model_policy: config.bridge_model_policy,
+        audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
+            config.audit_log.as_deref(),
+        )),
+        request_log: link_assistant_router::logging::request_log(
+            &config.data_dir,
+            request_log,
+            request_log_max_bytes,
+            request_log_max_total_bytes,
+        ),
+        crater: crater_provider,
+        openai_compatible: config.openai_compatible.clone(),
+        provider_store,
+        logger,
+        max_proxy_request_bytes: config.max_proxy_request_bytes,
+        admin: Arc::clone(&admin_claim),
+        admin_key: config.admin_key.clone(),
+        allow_anonymous_admin: config.allow_anonymous_admin,
+        metrics: Arc::clone(&metrics),
+        activitypub_actor_base_url: config.activitypub_actor_base_url.clone(),
+        activitypub_public_key_pem: config.activitypub_public_key_pem.clone(),
+        mpp: config.mpp.clone(),
+        login_manager: LoginManager::new_with_data_dir(
+            config.login.clone(),
+            config.data_dir.clone(),
+        ),
+        // The resolved directory, not `DATA_DIR`: clap merged the flag and the
+        // environment into `config.data_dir`, and only that value knows which
+        // one the operator used (issue #282).
+        github: link_assistant_router::github_proxy::GitHubProxyConfig::from_env_with_data_dir(
+            Some(config.data_dir.as_path()),
+        )
+        .map_err(std::io::Error::other)?,
+    };
+
+    state.register_credential_recovery_in(
+        &config.data_dir,
+        &link_assistant_router::app_state::VendorClis {
+            claude: config.claude_cli_bin.as_deref(),
+            codex: config.codex_cli_bin.as_deref(),
+        },
+    );
+    // Persist terminal refusals so the CLI — a separate short-lived process
+    // that performs no refresh — can report a revoked chain too (issue #245).
+    state
+        .subscription_cache
+        .persist_rejections_in(&config.data_dir);
+
+    let mut catalog_readers = state
+        .subscription_readers
+        .iter()
+        .filter(|reader| {
+            state
+                .account_router
+                .as_ref()
+                .is_none_or(|router| router.provider() != reader.provider())
+        })
+        .cloned()
+        .map(|reader| {
+            (
+                link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT.to_string(),
+                reader,
+            )
+        })
+        .collect::<Vec<_>>();
+    if let Some(router) = state.account_router.as_ref() {
+        catalog_readers.extend(router.subscription_readers());
+    }
+    let catalog_refresh = link_assistant_router::model_catalog::refresh_catalogs_from_startup(
+        state.client.clone(),
+        catalog_readers,
+        Arc::clone(&state.subscription_cache),
+        Arc::clone(&state.model_catalogs),
+        link_assistant_router::model_catalog::INITIAL_REFRESH_TIMEOUT,
+    )
+    .await;
+
+    // Opt-in, and announced: a deployment that is recording every client
+    // exchange to a file, or answering from one instead of a provider, must say
+    // so in its own output rather than leave it to be deduced from a file
+    // appearing on disk (issue #566). A replay that cannot load its recording
+    // aborts startup instead of falling through to the live path, because
+    // silently reaching a provider is the one outcome a replay must not have.
+    let record_mode = link_assistant_router::conversation_record::Mode::from_env();
+    if let Some(announcement) = record_mode.announcement() {
+        tracing::info!("{announcement}");
+    }
+    let record_session = link_assistant_router::conversation_record::Session::from_mode(
+        &record_mode,
+        config.upstream_provider.as_str(),
+    )
+    .map_err(|error| -> AnyError { error.to_string().into() })?
+    .map(Arc::new);
+    if let Some(session) = record_session.as_ref().filter(|_| record_mode.is_replay()) {
+        tracing::info!(
+            "Replaying {} recorded turn(s) made by Router {} against provider {}",
+            session.turn_count(),
+            session.provenance().router_version,
+            session.provenance().provider
+        );
+    }
+
+    // Installed before listener preparation starts, so a signal arriving
+    // during startup is not missed (issue #334).
+    let shutdown = shutdown::Shutdown::listening();
+    let legacy_kind = if config.inference_only {
+        link_assistant_router::route_contract::ListenerKind::InferenceOnly
+    } else {
+        link_assistant_router::route_contract::ListenerKind::Combined
+    };
+    let tls_setup = link_assistant_router::tls::from_env(&config.data_dir)
+        .map_err(|error| -> AnyError { error.into() })?;
+    let primary_configs = if config.listeners.is_empty() {
+        vec![
+            link_assistant_router::primary_listener::PrimaryListenerConfig {
+                address: config.listen_addr,
+                kind: legacy_kind,
+                transport: if tls_setup.is_enabled() {
+                    link_assistant_router::primary_listener::ListenerTransport::Tls
+                } else {
+                    link_assistant_router::primary_listener::ListenerTransport::Http
+                },
+            },
+        ]
+    } else {
+        tracing::info!(
+            "Explicit --listener/LISTENERS configuration replaces the legacy primary listener"
+        );
+        config.listeners.clone()
+    };
+    // Binding is deliberately complete before the first serve future starts:
+    // one unavailable or colliding address cannot leave a partial deployment.
+    let primary_listeners =
+        link_assistant_router::primary_listener::bind_all(&primary_configs, &tls_setup)
+            .await
+            .map_err(|error| -> AnyError { error.into() })?;
+
+    let admin_listener = if config.admin_ui.enabled {
+        let admin_addr = config.admin_ui.listen_addr;
+        let admin_listener = tokio::net::TcpListener::bind(admin_addr).await?;
+        tracing::info!("Admin UI listening on {admin_addr}");
+        if admin_claim.is_claimed() {
+            tracing::info!("Admin credential present; bootstrap is closed");
+        } else {
+            tracing::warn!(
+                "Admin is unclaimed: the first visitor to {admin_addr} that confirms a claim becomes admin"
+            );
+        }
+        Some(admin_listener)
+    } else {
+        tracing::info!("Admin UI disabled (set --admin-port / ADMIN_PORT to enable)");
+        None
+    };
+
+    // A unix socket is the one plaintext route `gh` accepts, so it reaches the
+    // proxy without a certificate it has no way to trust (issue #265).
+    // Unix domain sockets do not exist on Windows, so the listener is compiled
+    // only where it can be served.
+    #[cfg(unix)]
+    let socket_server = link_assistant_router::unix_listener::serve_configured(
+        link_assistant_router::server_router::github_adapter_router(state.clone()),
+        shutdown.notified(),
+    )
+    .await?;
+    #[cfg(not(unix))]
+    let socket_server: Option<tokio::task::JoinHandle<()>> = None;
+
+    let admin_server = admin_listener.map(|listener| {
+        let app = observed_http_app(
+            state.clone(),
+            link_assistant_router::admin_api::router_with_config(state.clone(), &config),
+        );
+        let admin_shutdown = shutdown.notified();
+        tokio::spawn(async move {
+            if let Err(error) = axum::serve(listener, app)
+                .with_graceful_shutdown(admin_shutdown)
+                .await
+            {
+                tracing::error!("admin UI server error: {error}");
+            }
+        })
+    });
+    let chat_channels = spawn_chat_channels(&config, &state, Arc::clone(&admin_claim));
+    let servers = primary_listeners.into_iter().map(|listener| {
+        // Record-or-replay wraps the observed app rather than sitting inside it:
+        // a replayed turn must not reach routing, credential loading or the
+        // upstream client at all (issue #566). The admin UI surface above is
+        // deliberately left out — a recording is of a client conversation.
+        let app = link_assistant_router::conversation_record::layer(
+            observed_http_app(
+                state.clone(),
+                link_assistant_router::server_router::router_for_listener(
+                    state.clone(),
+                    &config,
+                    listener.config().kind,
+                ),
+            ),
+            record_session.clone(),
+        );
+        let listener_shutdown = shutdown.notified();
+        async move { listener.serve(app, listener_shutdown).await }
+    });
+    let primary_result = futures_util::future::try_join_all(servers).await;
+    if let Some(handle) = socket_server {
+        handle.abort();
+    }
+    if let Some(handle) = admin_server {
+        handle.abort();
+    }
+    for handle in chat_channels {
+        handle.abort();
+    }
+    catalog_refresh.abort();
+    primary_result
+        .map(|_| ())
+        .map_err(|error| -> AnyError { error.to_string().into() })
+}
+
+/// Apply the same redacted exchange log and tracing span to every TCP surface.
+fn observed_http_app(state: AppState, app: axum::Router) -> axum::Router {
+    app.layer(from_fn_with_state(
+        state,
+        link_assistant_router::request_log::log_http_exchange,
+    ))
+    .layer(TraceLayer::new_for_http().make_span_with(
+        |request: &axum::http::Request<axum::body::Body>| {
+            let uri =
+                link_assistant_router::request_log::safe_http_uri(request.method(), request.uri());
+            tracing::debug_span!(
+                "http request",
+                method = %request.method(),
+                uri = %uri,
+                version = ?request.version()
+            )
+        },
+    ))
+}
+
+/// Start the optional Telegram and VK admin channels.
+///
+/// Both are off unless a bot token is configured, so an upgrade adds no new
+/// behaviour; when they do run they share the *same*
+/// [`link_assistant_router::admin::AdminClaim`] as the web
+/// UI, which is what makes the first-admin claim system-wide rather than one
+/// per channel.
+fn spawn_chat_channels(
+    config: &Config,
+    state: &AppState,
+    admin_claim: Arc<link_assistant_router::admin::AdminClaim>,
+) -> Vec<tokio::task::JoinHandle<()>> {
+    let chat_config = config.chat_admin.clone();
+    if !chat_config.telegram_enabled() && !chat_config.vk_enabled() {
+        tracing::info!(
+            "Chat admin channels disabled (set TELEGRAM_BOT_TOKEN and/or VK_BOT_TOKEN to enable)"
+        );
+        return Vec::new();
+    }
+    let chat = Arc::new(
+        link_assistant_router::chat_admin::ChatAdmin::new(
+            admin_claim,
+            state.token_manager.clone(),
+            config.admin_key.clone(),
+            chat_config.clone(),
+        )
+        .with_status(Arc::new(state.clone())),
+    );
+    let mut handles = Vec::new();
+    if chat_config.telegram_enabled() {
+        let chat = Arc::clone(&chat);
+        let client = state.client.clone();
+        handles.push(tokio::spawn(async move {
+            link_assistant_router::telegram::run(chat, client).await;
+        }));
+    }
+    if chat_config.vk_enabled() {
+        let chat = Arc::clone(&chat);
+        let client = state.client.clone();
+        handles.push(tokio::spawn(async move {
+            link_assistant_router::vk::run(chat, client).await;
+        }));
+    }
+    if chat.admin_claim().is_claimed() {
+        tracing::info!("Chat admin: a credential exists; /start will ask for one");
+    } else {
+        tracing::warn!(
+            "Chat admin: unclaimed — the first private-chat user to confirm a /start becomes admin"
+        );
+    }
+    handles
+}
+
+/// Run a state-touching command against the *selected* router.
+///
+/// Where the deployment already answers the operation over its admin API, it
+/// is honoured. Where it does not, the command says so and names the target,
+/// which is the shape issue #284 gave `auth gh` — an error naming the real
+/// target is honest, where one describing local state as though it were the
+/// target is not (issue #294).
+async fn run_remote_command(
+    server: &link_assistant_router::managed_server::ResolvedServer,
+    command: &Command,
+) -> ExitCode {
+    use link_assistant_router::remote_command::{no_remote_form, refuse};
+
+    match command {
+        // The routes exist and are admin-gated; only the wiring was missing.
+        Command::Tokens { op } => link_assistant_router::tokens_remote::run(server, op).await,
+        Command::Accounts { op } => {
+            link_assistant_router::accounts_cli::run_remote(server, op).await
+        }
+        Command::Providers { op } => {
+            link_assistant_router::providers_cli::run_remote(server, op).await
+        }
+        Command::Usage(args) => {
+            link_assistant_router::subscription_usage_cli::run_selected(
+                server,
+                args.provider,
+                args.json,
+            )
+            .await
+        }
+        // The request log is written to the deployment's own disk and no
+        // endpoint serves it back, so there is nothing to ask for. Saying that
+        // beats answering from this machine's log, which is a different
+        // deployment's traffic.
+        Command::Logs { .. } => refuse(no_remote_form(
+            "logs",
+            server,
+            "the request log lives on that deployment's disk and no endpoint serves it; \
+             run `router logs` there",
+        )),
+        // `doctor` reports on the machine it runs on — its files, config and
+        // credentials. `auth status` already answers the credential half for a
+        // remote deployment.
+        Command::Doctor { .. } => refuse(no_remote_form(
+            "doctor",
+            server,
+            "run `router doctor` on that deployment; `router auth status` reports its \
+             credentials from here",
+        )),
+        // The certificate and its key live on the deployment's own disk, and
+        // no endpoint serves either. Printing this machine's PEM instead would
+        // not be a wrong report — it would be trust in the wrong key, which is
+        // why silence was the one unacceptable answer here (issue #308).
+        Command::Tls { .. } => refuse(no_remote_form(
+            "tls",
+            server,
+            "the certificate is generated on the deployment that serves it; run `router tls` \
+             there and distribute the PEM it prints",
+        )),
+        // Never reached: `target_of` returns `None` for every other command.
+        _ => ExitCode::from(1),
+    }
+}
+
+fn run_tokens(config: &Config, op: &TokenOp) -> ExitCode {
+    let (store, _account_router) = match build_shared_state(config) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    // Required where signing happens, not per family. `list`, `show` and
+    // `revoke` read and edit the store; none of them mints or validates a
+    // token, and refusing to *start* without a secret they never use only
+    // taught operators to keep a deployment's signing secret exported in their
+    // shell (issue #308). Issuing and rotating still sign, so they still need
+    // it — and `TokenManager` refuses the stand-in at the point of use anyway.
+    if matches!(
+        op,
+        TokenOp::Issue { .. } | TokenOp::Rotate { .. } | TokenOp::RecoverAdmin { .. }
+    ) && let Err(error) = link_assistant_router::token_secret::ensure_real(&config.token_secret)
+    {
+        eprintln!("error: {error}");
+        return ExitCode::from(2);
+    }
+    let mgr = TokenManager::with_store(&config.token_secret, store);
+    match op {
+        TokenOp::Issue {
+            ttl_hours,
+            label,
+            account,
+            max_requests,
+            max_tokens,
+            rate_limit_per_minute,
+            admin,
+            github_repo,
+            allowed_model,
+            ..
+        } => {
+            let request = IssueRequest {
+                ttl_hours: *ttl_hours,
+                label,
+                account: account.as_deref(),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                scope: if *admin { ADMIN_SCOPE } else { "" },
+                github_repos: github_repo.clone(),
+                sliding_window_seconds: None,
+                client_kind: None,
+                principal_id: None,
+            };
+            // Shared with the HTTP and chat surfaces (issue #194).
+            if let Err(message) = request.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
+            }
+            let model_policy = link_assistant_router::model_contract::ModelAccessPolicy {
+                allowed_models: allowed_model.clone(),
+                ..Default::default()
+            };
+            if let Err(message) = model_policy.validate() {
+                eprintln!("error: {message}");
+                return ExitCode::from(2);
+            }
+            match mgr.issue_with_model_policy(&request, &model_policy) {
+                Ok(t) => {
+                    crate::operation_output::record(serde_json::json!({"token": t}));
+                    println!("{t}");
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    ExitCode::from(1)
+                }
+            }
+        }
+        TokenOp::Rotate {
+            id,
+            ttl_hours,
+            label,
+            max_requests,
+            max_tokens,
+            rate_limit_per_minute,
+            account,
+            ..
+        } => match mgr.rotate_token_with(
+            id,
+            &link_assistant_router::token::RotateOverrides {
+                label: (!label.is_empty()).then_some(label.as_str()),
+                ttl_hours: Some(*ttl_hours),
+                max_requests: *max_requests,
+                max_tokens: *max_tokens,
+                rate_limit_per_minute: *rate_limit_per_minute,
+                account: account.as_deref(),
+            },
+        ) {
+            Ok(t) => {
+                crate::operation_output::record(serde_json::json!({"token": t}));
+                println!("{t}");
+                eprintln!("revoked {id}");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        TokenOp::List { json, .. } => match mgr.list_tokens() {
+            Ok(records) => {
+                // Rendered by the shared printer, so the local and remote
+                // tables cannot drift: an operator reading one has no way to
+                // tell which machine answered (issue #293).
+                let rows: Vec<serde_json::Value> = records
+                    .into_iter()
+                    .map(|record| serde_json::to_value(record).unwrap_or_default())
+                    .collect();
+                if *json {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&rows).unwrap_or_else(|_| "[]".to_string())
+                    );
+                } else {
+                    link_assistant_router::token_report::print_table(&rows);
+                }
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        TokenOp::Revoke { id, .. } | TokenOp::Expire { id, .. } => match mgr.revoke_token(id) {
+            Ok(()) => {
+                println!("revoked {id}");
+                ExitCode::SUCCESS
+            }
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+        TokenOp::RecoverAdmin {
+            revoke_others,
+            ttl_hours,
+            label,
+            json,
+            ..
+        } => recover_admin_cli::run(&mgr, *revoke_others, *ttl_hours, label, *json),
+        TokenOp::Import {
+            from,
+            ids,
+            replace,
+            dry_run,
+            json,
+            ..
+        } => link_assistant_router::token_import::run_cli(
+            mgr.store().as_ref(),
+            &config.data_dir,
+            &link_assistant_router::token_import::ImportCommand {
+                from,
+                ids,
+                replace: *replace,
+                dry_run: *dry_run,
+                json: *json,
+            },
+        ),
+        TokenOp::Show { id, .. } => match mgr.list_tokens() {
+            Ok(records) => records.into_iter().find(|r| r.id == *id).map_or_else(
+                || {
+                    eprintln!("not found: {id}");
+                    ExitCode::from(2)
+                },
+                |r| {
+                    println!("{}", serde_json::to_string_pretty(&r).unwrap_or_default());
+                    ExitCode::SUCCESS
+                },
+            ),
+            Err(e) => {
+                eprintln!("error: {e}");
+                ExitCode::from(1)
+            }
+        },
+    }
+}
+
+fn run_accounts(config: &Config, op: &AccountOp) -> ExitCode {
+    let router = match build_shared_state(config) {
+        Ok((_, Some(r))) => r,
+        Ok((_, None)) => {
+            // Single-account mode: synthesise a one-account router for inspection.
+            let (provider, primary) = config.subscription_pool();
+            AccountRouter::new_for_provider(primary, &[], provider, config.account_router_options())
+        }
+        Err(e) => {
+            eprintln!("error: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    // The CLI performs no refresh of its own, so it reads what a running
+    // router recorded rather than guessing from the file alone (issue #245).
+    let refreshes = link_assistant_router::refresh::TokenCache::new();
+    refreshes.persist_rejections_in(&config.data_dir);
+    link_assistant_router::accounts_cli::run(&router, Some(&refreshes), op)
+}

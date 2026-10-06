@@ -1,0 +1,228 @@
+{
+  "$defs": {
+    "BackupManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "created": {
+          "type": "string"
+        },
+        "credentials_included": {
+          "type": "boolean"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/BackupManifest_Entry"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "omitted_credentials": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "stores": {
+          "items": {
+            "$ref": "#/$defs/BackupManifest_StoreRecord"
+          },
+          "type": "array"
+        },
+        "unavailable": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "version": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "id",
+        "created",
+        "credentials_included",
+        "stores",
+        "entries",
+        "unavailable",
+        "omitted_credentials"
+      ],
+      "title": "Manifest",
+      "type": "object"
+    },
+    "BackupManifest_Entry": {
+      "additionalProperties": false,
+      "properties": {
+        "backup_link": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "client": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "link": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "size": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "store": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "client",
+        "scope",
+        "store",
+        "path",
+        "kind",
+        "size"
+      ],
+      "type": "object"
+    },
+    "BackupManifest_StoreRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "client": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "store": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "client",
+        "scope",
+        "store",
+        "source"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/clients-backup-list/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/BackupManifest"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "clients.backup.list"
+    },
+    "schema": {
+      "const": "link-assistant-router/clients-backup-list/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

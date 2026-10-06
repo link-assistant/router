@@ -53,7 +53,7 @@ struct Document {
 /// or under `fallback` (the data directory) when `HOME` is unset.
 #[must_use]
 pub fn path(fallback: &Path) -> PathBuf {
-    std::env::var_os("HOME")
+    crate::operation_context::var_os("HOME")
         .filter(|home| !home.is_empty())
         .map_or_else(
             || fallback.join(FILE),
