@@ -4,15 +4,37 @@ use link_assistant_router::{
     deploy,
     operation_context::{OperationContext, ProcessRunner},
 };
-use std::{path::Path, process::Output, sync::Arc, time::Duration};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    process::Output,
+    sync::Arc,
+    time::Duration,
+};
 
-struct NoDependencies;
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt as _;
+#[cfg(windows)]
+use std::os::windows::process::ExitStatusExt as _;
+
+struct NoDependencies {
+    daemon: PathBuf,
+}
 impl ProcessRunner for NoDependencies {
     fn output(
         &self,
         command: &mut std::process::Command,
         _deadline: Duration,
     ) -> std::io::Result<Output> {
+        if command.get_program() == self.daemon.as_os_str()
+            && command.get_args().eq([OsStr::new("--version")])
+        {
+            return Ok(Output {
+                status: std::process::ExitStatus::from_raw(0),
+                stdout: b"router 9.8.7\n".to_vec(),
+                stderr: Vec::new(),
+            });
+        }
         Err(std::io::Error::other(format!(
             "fixture dependency unavailable: {}",
             command.get_program().to_string_lossy()
@@ -28,7 +50,11 @@ fn context(root: &Path) -> OperationContext {
     context.environment.retain(|key, _| key == "PATH");
     context.set_env("HOME", root);
     context.set_env("TOKEN_SECRET", "deployment-api-fixture-secret");
-    context.process_runner = Some(Arc::new(NoDependencies));
+    let daemon = Path::new(env!("CARGO_BIN_EXE_router"))
+        .canonicalize()
+        .unwrap();
+    context.daemon_executable = Some(daemon.clone());
+    context.process_runner = Some(Arc::new(NoDependencies { daemon }));
     context.working_directory = root.into();
     context
 }
@@ -228,6 +254,16 @@ async fn every_deployment_facade_preserves_status_and_refusals_without_spawning(
         assert_eq!(report.data["status"], "planned");
         assert_eq!(report.data["status_is_read_only"], true);
         assert_eq!(report.data["blockers"], serde_json::json!([]));
+        assert_eq!(report.data["host_router"]["version"], "9.8.7");
+        assert_eq!(
+            report.data["host_router"]["executable"],
+            context
+                .daemon_executable
+                .as_ref()
+                .unwrap()
+                .to_string_lossy()
+                .as_ref()
+        );
     }
     for response in [apply, status, remote, remote_status, staging, restore] {
         let error = response.unwrap_err();

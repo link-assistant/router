@@ -161,6 +161,15 @@ published domain reports and preserves pre-existing JSON payload fields. The
 same integration test reproduces the failure locally; the doctor regression
 also checks that the new domain reports retain their human rendering.
 
+The completed Windows log reached a second outdated fixture in
+`tests/deployment_api_test.rs`: its dependency runner rejected the new daemon
+version probe (combined workflow log lines 40698–40706). The same assertion
+fails on Linux when run independently. The fixture now selects the actual
+Router binary explicitly, mocks only that executable's `--version` response
+and continues to refuse every other dependency and background launch. Its
+status assertions additionally verify the selected path and a daemon version
+different from the importing library's version.
+
 ### Local compiler memory boundary
 
 The workspace has a 3 GiB memory limit. Compiling the combined 2,142-test
