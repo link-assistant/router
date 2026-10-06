@@ -4,7 +4,11 @@
 #[test]
 fn renamed_router_cli_validates_its_actual_daemon_version() {
     let root = tempfile::tempdir().unwrap();
-    let binary = root.path().join("router-installed-under-another-name");
+    let installation = root.path().join("installation");
+    std::fs::create_dir(&installation).unwrap();
+    let installation_alias = root.path().join("installation-alias");
+    std::os::unix::fs::symlink(&installation, &installation_alias).unwrap();
+    let binary = installation_alias.join("router-installed-under-another-name");
     std::fs::copy(env!("CARGO_BIN_EXE_router"), &binary).unwrap();
     let output = std::process::Command::new(&binary)
         .args(["deploy", "--mode", "host", "--status", "--json", "--root"])
@@ -26,7 +30,7 @@ fn renamed_router_cli_validates_its_actual_daemon_version() {
     let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(
         report["data"]["host_router"]["executable"],
-        binary.to_str().unwrap()
+        binary.canonicalize().unwrap().to_str().unwrap()
     );
     assert_eq!(
         report["data"]["host_router"]["version"],

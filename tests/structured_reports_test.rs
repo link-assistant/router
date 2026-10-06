@@ -139,10 +139,40 @@ async fn absent_auth_and_client_probes_expose_their_state() {
     let providers = auth.data["credentials"].as_array().unwrap();
     assert!(!providers.is_empty());
     assert!(providers.iter().all(|entry| entry["state"] == "absent"));
+    let target = cli::AuthTarget {
+        local: true,
+        server: None,
+        management_server: None,
+        managed: false,
+    };
+    let typed_auth = link_assistant_router::operation_reports::auth_status(context.clone(), target)
+        .await
+        .unwrap();
+    assert_eq!(
+        serde_json::to_value(typed_auth.data).unwrap(),
+        auth.data,
+        "the Rust facade exposes the same domain facts as the untyped operation"
+    );
     let client = execute(&context, &["clients", "doctor", "codex"]).await;
     assert!(!client.success);
     assert_eq!(client.data["client"]["configured"], false);
     assert_eq!(client.data["reachable"], false);
+    let typed_client = link_assistant_router::operation_reports::client_doctor(
+        context,
+        link_assistant_router::clients::ClientKind::Codex,
+    )
+    .await
+    .unwrap_err()
+    .result
+    .typed::<link_assistant_router::operation_reports::ClientDoctorReport>()
+    .unwrap();
+    assert!(!typed_client.success);
+    assert!(!typed_client.data.client.configured);
+    assert!(!typed_client.data.reachable);
+    assert_eq!(
+        serde_json::to_value(typed_client.data).unwrap(),
+        client.data
+    );
 }
 
 #[tokio::test]
@@ -166,6 +196,137 @@ async fn log_records_are_filtered_and_decoded_in_the_payload() {
     assert_eq!(records.len(), 1);
     assert_eq!(records[0]["status"], 201);
     assert_eq!(records[0]["correlation_id"], "chosen");
+    let typed = link_assistant_router::operation_reports::log_records(
+        context,
+        "chosen".into(),
+        None,
+        cli::AuthTarget {
+            local: true,
+            server: None,
+            management_server: None,
+            managed: false,
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(typed.data.correlation_id, "chosen");
+    assert_eq!(typed.data.records.len(), 1);
+    assert_eq!(serde_json::to_value(typed.data).unwrap(), report.data);
+}
+
+#[tokio::test]
+async fn typed_model_and_tunnel_facades_preserve_identity_and_failure_facts() {
+    use axum::{Json, Router, routing::get};
+    use link_assistant_router::{clients::ClientKind, operation_reports};
+    let root = tempfile::tempdir().unwrap();
+    let mut context = OperationContext::isolated(root.path());
+    context.set_env("LINK_ASSISTANT_ROUTER_TOKEN", "synthetic-facade-token");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let target = cli::AuthTarget {
+        local: false,
+        server: Some(format!("http://{}", listener.local_addr().unwrap())),
+        management_server: None,
+        managed: false,
+    };
+    let app = Router::new()
+        .route(
+            "/api/health",
+            get(|| async {
+                Json(serde_json::json!({
+                    "status":"ok", "version":link_assistant_router::VERSION
+                }))
+            }),
+        )
+        .route(
+            "/api/models",
+            get(|| async {
+                Json(serde_json::json!({"data":[{
+                    "id":"facade-exact-model", "selector_kind":"exact"
+                }]}))
+            }),
+        );
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let known = operation_reports::model_explanation(
+        context.clone(),
+        "facade-exact-model".into(),
+        ClientKind::Codex,
+        target.clone(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(known.data.requested_selector, "facade-exact-model");
+    assert_eq!(known.data.routing.state, "unique");
+    assert_eq!(known.data.routing.candidate_count, 1);
+    assert_eq!(
+        known
+            .data
+            .model_descriptor
+            .upstream_request_model
+            .as_deref(),
+        Some("facade-exact-model")
+    );
+    let unknown = operation_reports::model_explanation(
+        context.clone(),
+        "absent-model".into(),
+        ClientKind::Codex,
+        target,
+    )
+    .await
+    .unwrap_err()
+    .result
+    .typed::<operation_reports::ModelExplanationReport>()
+    .unwrap();
+    assert!(!unknown.success);
+    assert_eq!(unknown.data.routing.state, "unknown");
+    assert_eq!(unknown.data.routing.candidate_count, 0);
+    assert!(
+        unknown
+            .data
+            .model_descriptor
+            .upstream_request_model
+            .is_none()
+    );
+    server.abort();
+    assert!(server.await.unwrap_err().is_cancelled());
+
+    #[cfg(unix)]
+    {
+        let command = context
+            .scope(|| {
+                cli::try_parse_arguments(
+                    [
+                        "router",
+                        "tunnel",
+                        "status",
+                        "--server",
+                        "fixture@invalid.example",
+                    ]
+                    .map(Into::into)
+                    .to_vec(),
+                )
+            })
+            .unwrap()
+            .command
+            .unwrap();
+        let cli::Command::Tunnel(args) = command else {
+            panic!("expected tunnel command")
+        };
+        let link_assistant_router::tunnel_command::TunnelOp::Status(target) = args.op else {
+            panic!("expected tunnel status")
+        };
+        let stopped = operation_reports::tunnel_status(context, target)
+            .await
+            .unwrap_err()
+            .result
+            .typed::<operation_reports::TunnelStatusReport>()
+            .unwrap();
+        assert!(!stopped.success);
+        assert!(!stopped.data.running);
+        assert_eq!(stopped.data.server, "fixture@invalid.example");
+        assert!(stopped.data.health_status.is_none());
+        assert!(stopped.data.models_status.is_none());
+        assert!(!stopped.data.models_checked);
+    }
 }
 
 #[tokio::test]

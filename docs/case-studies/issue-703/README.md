@@ -170,6 +170,20 @@ and continues to refuse every other dependency and background launch. Its
 status assertions additionally verify the selected path and a daemon version
 different from the importing library's version.
 
+Run 37448485801 passed the Linux suite and exposed a macOS path assertion in
+the renamed-executable regression (macOS log lines 6586–6590): the daemon
+correctly canonicalized `/var/...` to `/private/var/...`, while the assertion
+expected the original spelling. A directory-symlink installation reproduces
+the same mismatch on Linux. The regression now exercises that symlink and
+compares the reported executable with the canonical installed path.
+
+The same run measured 86.104872% coverage against the 86.159874% baseline
+(coverage log lines 8281–8296). The downloaded LCOV artifact identified 80
+uncovered lines in the new public Rust facade helpers. Direct facade tests now
+verify auth/client/log parity, exact and absent model identity, and stopped
+tunnel failure facts, including decoding typed payloads from unsuccessful
+operations. The coverage floor and default-branch ratchet remain enforced.
+
 ### Local compiler memory boundary
 
 The workspace has a 3 GiB memory limit. Compiling the combined 2,142-test
