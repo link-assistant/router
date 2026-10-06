@@ -116,3 +116,63 @@ including with 1,024 code generation units and serialized LLVM work. This is a
 compiler resource failure, not a failed assertion. Integration targets and quality checks are run
 sequentially. Final PR validation distinguishes local results from complete CI
 unit-suite execution.
+
+## Auto-restart: mutation baseline race (2026-10-06)
+
+Fresh run 37412920767 started at 04:16:22 UTC, after commit `b366948` at
+04:16:15 UTC, and used exactly `b366948cf0520844779c515dd05885f7530b2659`.
+All other current-head workflows and mutation shards 0–2 passed. Shard 3 failed
+its unmutated baseline, so this is not a surviving mutation:
+
+- `ci-logs/mutants-37412920767.log:3636`: failed unmutated baseline.
+- Lines 9889–9890: `deploy_image::tests::an_auth_or_network_failure_is_not_reported_as_an_unpublished_release`
+  failed `error.contains("unauthorized")` at `src/deploy_image.rs:79`.
+- Line 9897: 2,139 units passed; one failed.
+- Line 9903: cargo-mutants exited with code 4.
+
+The bounded 8-thread × 128-call probe in `reproduce_executable_busy.rs` reproduced
+one incorrect Docker preflight error: `Text file busy (os error 26)`, replacing
+`unauthorized`. Its before log is `ci-logs/executable-busy-stress-before.log:1`.
+Holding a script's write handle deterministically produces the same native
+launch error. Before the fix, the focused Cargo run failed all four initial
+cases (`ci-logs/bounded-process-before.log`); a direct run failed three and passed
+the negative-control case (`ci-logs/bounded-process-direct-before.log`). The
+fourth Cargo failure is the same transient race immediately after that control
+closes its writer. Every release thread was joined before assertions.
+
+The shared bounded runner retries only `ExecutableFileBusy`, using the same
+monotonic deadline for launch retries and command execution. Existing cleanup,
+pipe draining, output caps, injected runners and failure exit statuses are
+preserved. Persistent locks return a typed timeout, and debug tracing reveals
+retries without exposing argv, environment or captured output. The original
+preflight assertion now includes its error message for future diagnosis.
+
+`tests/bounded_process_test.rs` contains five deterministic regressions. They
+run on Linux, where the write-lock mechanism is reproducible. The standalone
+`preflight_unit_tests.rs` harness also imports the unchanged preflight unit
+fixtures and the real library process boundary, allowing local validation
+without compiling all 2,140 units in this memory-constrained workspace.
+
+The whole-codebase include audit found two release scripts that compile the shared
+runner directly: `check-delivery.rs` and `upload-release-assets.rs`. Their embedded
+Cargo manifests now include `tracing`, so both standalone script tests compile
+with the disabled-by-default retry diagnostics. An initial parallel local build
+was killed by this workspace's memory limit; local builds are rerun sequentially,
+and complete unit-suite results are checked in final-head CI.
+
+After the fix, the focused Cargo suites pass all 16 cases (five launch regressions,
+five deployment facades and six scoped-operation tests). The original three
+preflight unit fixtures pass against the real library boundary, and the finite
+1,024-call parallel probe reports zero incorrect errors. Both standalone release
+script suites pass, including their existing pipe-draining and descendant-deadline
+cases (six delivery tests and three upload tests). Retained logs are
+`ci-logs/bounded-process-after-sequential.log`, `preflight-units-after.log`,
+`executable-busy-stress-after.log`, `repair-check-delivery.log` and
+`repair-upload-assets.log`.
+
+Strict all-target/all-feature Clippy, formatting, file-size and terminology
+checks pass. Contract regeneration, binding parity and compatibility with
+`origin/main` pass, as do the retained ownership, client-version, remote-consumer
+and compatibility reproductions. Full local integration and script suites are
+rerun sequentially after pushing; complete unit and mutation results are verified
+against the new head SHA in CI rather than inferred from an earlier run.

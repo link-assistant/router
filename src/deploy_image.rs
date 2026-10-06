@@ -75,8 +75,8 @@ mod tests {
     #[test]
     fn an_auth_or_network_failure_is_not_reported_as_an_unpublished_release() {
         let error = inspect("echo 'unauthorized' >&2; exit 1").unwrap_err();
-        assert!(error.contains("image-unavailable"));
-        assert!(error.contains("unauthorized"));
+        assert!(error.contains("image-unavailable"), "{error}");
+        assert!(error.contains("unauthorized"), "{error}");
     }
 
     #[test]

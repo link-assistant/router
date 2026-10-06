@@ -82,3 +82,40 @@ All six issues and their comments were read on 2026-10-05. None is already resol
 - The first route expansion omitted implicit HEAD and catch-all TRACE, CONNECT and custom methods. A native Axum fixture reproduces the missing HEAD contract. The generator now publishes all eight OpenAPI methods where applicable and documents arbitrary catch-all methods through a referenced extension; validation uses that same response contract. [OpenAPI 3.1 Path Item fields](https://spec.openapis.org/oas/v3.1.0#path-item-object) and [Axum any](https://docs.rs/axum/0.8.9/axum/routing/fn.any.html) describe the method support and representation limit.
 - JWT decoding also bypassed the operation clock. Its failing-before fixture now checks signed expiry and inclusive leeway at injected time, including invalid signatures; native clock behavior retains the decoder's validation.
 - A complete wall-clock audit found seven further calls bypassing injection in administrator claim expiry/timestamps, deployment credential handover, usage observations and client backups. Five failing-before regressions now verify the scoped clock, exact expiry boundary, pre-epoch clamping and distinct preserved backups when the clock is frozen. Native monotonic deadlines remain unchanged.
+
+## 2026-10-06 CI repair and requirement revalidation
+
+The parent, all six child issues and every issue/PR comment were reread. The
+requirement table above still covers the complete scope; no new functional
+requirement or review request was added. Latest `main` is already an ancestor
+of this branch. Regeneration checks still match all 61 CLI operations and 223
+HTTP route entries, binding exports/types match the catalog, and compatibility
+checks retain published schema versions. Library ownership, installed-version
+selection, remote JSON consumers and the original compatibility reproductions
+pass. Existing release, semver and generated-client gates remain in place.
+
+Mutation shard 3 failed its **unmutated baseline**, before evaluating mutations.
+A finite parallel probe reproduced the same Docker preflight assertion because
+native spawning returned `ExecutableFileBusy` instead of the registry error.
+[Rust issue #114554](https://github.com/rust-lang/rust/issues/114554) describes
+how an unrelated fork temporarily inherits a newly written executable's writer,
+even after the parent closes it. Linux documents this as
+[`execve`'s ETXTBSY](https://www.man7.org/linux/man-pages/man2/execve.2.html).
+
+Possible repairs were a fixture-only retry, invoking the shell interpreter
+explicitly, or retrying the shared diagnostic command launch. The shared runner
+is used by Docker, vendor discovery/refresh, verification and client diagnostics,
+so it now retries only this launch error under the original monotonic deadline.
+Commands that actually run and return failure are executed once. Missing commands
+and other launch errors are returned directly; a persistent writer times out.
+The existing `tracing` dependency records retries at debug level without command
+arguments, environment or output. No additional component is needed: Rust's
+[`ErrorKind::ExecutableFileBusy`](https://doc.rust-lang.org/std/io/enum.ErrorKind.html#variant.ExecutableFileBusy)
+is stable since Rust 1.83, below Router's 1.89 minimum. Skipping the baseline is
+inappropriate because cargo-mutants requires passing baseline tests for meaningful
+results ([baseline documentation](https://mutants.rs/baseline.html)).
+
+Five Linux regressions verify temporary and persistent write locks, preserved
+exit status/stdout/stderr, Docker error classification, a deadline shared by
+launch and execution, and single execution of real failures. The finite probe
+and exact CI evidence are retained under `experiments/issue-697/`.

@@ -133,3 +133,35 @@ now supplies scoped `SystemTime` values while preserving native precision.
 Repeated writes at a frozen clock retain distinct backups and their original
 contents. Pre-epoch observation timestamps still clamp to zero. Elapsed-time
 deadlines continue to use the native monotonic clock.
+
+# Parallel executable write locks
+
+The CI baseline failure is reproduced by `tests/bounded_process_test.rs` before
+the shared runner fix. Run its five bounded Linux cases with:
+
+```sh
+CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 cargo test --locked --test bounded_process_test
+```
+
+A finite stress probe uses the actual Router library and the same freshly written
+Docker fixture as the failing unit. It performs 1,024 preflights with eight threads
+and no network access. Compile against the rlibs from the command above:
+
+```sh
+router_rlib=$(ls -t target/debug/deps/liblink_assistant_router-*.rlib | head -1)
+tempfile_rlib=$(ls -t target/debug/deps/libtempfile-*.rlib | head -1)
+rustc --edition=2024 experiments/issue-697/reproduce_executable_busy.rs \
+  --extern link_assistant_router="$router_rlib" --extern tempfile="$tempfile_rlib" \
+  -L dependency=target/debug/deps -o target/issue-697-executable-busy
+(ulimit -v 524288; ulimit -s 2048; target/issue-697-executable-busy)
+rustc --edition=2024 --test experiments/issue-697/preflight_unit_tests.rs \
+  --extern link_assistant_router="$router_rlib" --extern tempfile="$tempfile_rlib" \
+  -L dependency=target/debug/deps -o target/issue-697-preflight-units
+target/issue-697-preflight-units --nocapture
+```
+
+The stress probe failed before the fix with `Text file busy` replacing the
+registry's `unauthorized` error. It complements deterministic tests; scheduling
+can change how often the stress race appears. See `CI-investigation.md` for
+fresh CI timestamps, SHA, errors and line numbers. No baseline is skipped and
+mutation/coverage/security gates are unchanged.

@@ -8,5 +8,6 @@ bump: minor
 - Generated PHP, Go and Java HTTP clients, contract compatibility and Rust semver checks.
 
 ### Fixed
+- Diagnostic subprocesses retry transient executable write locks within their existing deadline, preserving Docker preflight errors during parallel tests and vendor updates.
 - Linux verification proves installed host client versions by default and records explicit installed/CI/latest policies and host drift.
 - Releases build and attest from the exact tag context, enforce tagged source digests, include source commits and gate all official packages before stable promotion.

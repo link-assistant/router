@@ -3,6 +3,7 @@
 //! ```cargo
 //! [dependencies]
 //! serde_json = "1"
+//! tracing = "0.1"
 //! [target.'cfg(windows)'.dependencies]
 //! process-wrap = { version = "10.0.1", default-features = false, features = ["std", "job-object"] }
 //! ```
