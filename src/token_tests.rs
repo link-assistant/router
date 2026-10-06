@@ -636,7 +636,7 @@ fn rotate_preserves_constraints_and_remaining_lifetime() {
     assert_eq!(new.rate_limit_per_minute, Some(2));
     assert_eq!(new.account.as_deref(), Some("primary"));
     // The remaining lifetime is preserved rather than silently extended.
-    assert!(new.expires_at <= chrono::Utc::now().timestamp() + 48 * 3600);
+    assert!(new.expires_at <= crate::operation_context::now().timestamp() + 48 * 3600);
 }
 
 #[test]
@@ -862,7 +862,7 @@ fn a_slid_token_is_accepted_after_its_signed_expiry() {
 
     // The record is pushed a week out, as activity would.
     let mut record = manager.store().get(&id).expect("get").expect("record");
-    record.expires_at = chrono::Utc::now().timestamp() + 7 * 24 * 3_600;
+    record.expires_at = crate::operation_context::now().timestamp() + 7 * 24 * 3_600;
     manager.store().put(record).expect("put");
 
     // Now make the signed `exp` stale by issuing one that is already past.
@@ -888,7 +888,7 @@ fn a_slid_token_is_accepted_after_its_signed_expiry() {
         .expect("decode")
         .sub;
     let mut record = manager.store().get(&aged_id).expect("get").expect("record");
-    record.expires_at = chrono::Utc::now().timestamp() + 3_600;
+    record.expires_at = crate::operation_context::now().timestamp() + 3_600;
     manager.store().put(record).expect("put");
     assert!(
         manager.validate_token(&aged).is_ok(),

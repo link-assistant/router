@@ -68,7 +68,9 @@ const inventory = spawnSync('router', ['tokens', 'list', '--json'], {
   encoding: 'utf8', timeout: 10000, maxBuffer: 8 * 1024 * 1024
 });
 if (inventory.status !== 0) throw Error('checkpoint token inventory unavailable');
-const records = JSON.parse(inventory.stdout);
+const report = JSON.parse(inventory.stdout);
+const records = Array.isArray(report) ? report :
+  report.success === true && report.operation === 'tokens.list' ? report.data : null;
 if (!Array.isArray(records)) throw Error('checkpoint token inventory invalid');
 save('tokens.json', Buffer.from(JSON.stringify(records)));
 for (const relative of ['providers.lenv', 'projects', 'sessions']) {

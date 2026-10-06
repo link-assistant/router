@@ -230,13 +230,13 @@ async fn serve_binding(
 ///
 /// `Ok(None)` means this is an ordinary Router invocation.
 pub async fn run_from_env() -> Result<Option<()>, String> {
-    let Some(state) = std::env::var_os(STATE_ENV) else {
+    let Some(state) = crate::operation_context::var_os(STATE_ENV) else {
         return Ok(None);
     };
     let state = PathBuf::from(state);
     // Fail before binding a public port if the state is missing or malformed.
     read_backend(&state)?;
-    let raw = std::env::var(LISTENERS_ENV)
+    let raw = crate::operation_context::var(LISTENERS_ENV)
         .map_err(|_| format!("{LISTENERS_ENV} is required in deployment relay mode"))?;
     let bindings = parse_bindings(&raw)?;
     let connections = Arc::new(Mutex::new(Connections::new(&state)?));

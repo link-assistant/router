@@ -8,7 +8,7 @@ use crate::refresh::TokenCache;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Stable provider-verified credential state used by CLI and management APIs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum CredentialAcceptanceState {
     Usable,
@@ -33,7 +33,7 @@ impl CredentialAcceptanceState {
 }
 
 /// One provider's accepted state and exact local credential root.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 pub struct CredentialAcceptanceReport {
     pub provider: SubscriptionProvider,
     pub home: String,
@@ -49,7 +49,7 @@ pub async fn evaluate(
     readers: &[SubscriptionReader],
     catalog_base_override: Option<(SubscriptionProvider, &str)>,
 ) -> Vec<CredentialAcceptanceReport> {
-    let now = chrono::Utc::now().timestamp_millis();
+    let now = crate::operation_context::now().timestamp_millis();
     let mut reports = Vec::with_capacity(readers.len());
     for reader in readers {
         let provider = reader.provider();

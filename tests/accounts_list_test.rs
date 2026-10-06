@@ -234,7 +234,9 @@ fn pause_and_resume_change_the_reported_state() {
     assert!(String::from_utf8_lossy(&paused.stdout).contains("paused primary until"));
 
     let listed = accounts_cli(&home, &data, &["list", "--json"]);
-    let rows: serde_json::Value = serde_json::from_slice(&listed.stdout).expect("JSON rows");
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&listed.stdout)
+            .expect("JSON rows");
     let primary = &rows[0];
     assert_eq!(primary["name"], "primary");
     assert_eq!(primary["paused"], true, "{primary}");
@@ -246,7 +248,9 @@ fn pause_and_resume_change_the_reported_state() {
     let resumed = accounts_cli(&home, &data, &["resume", "primary"]);
     assert!(String::from_utf8_lossy(&resumed.stdout).contains("resumed primary"));
     let listed = accounts_cli(&home, &data, &["list", "--json"]);
-    let rows: serde_json::Value = serde_json::from_slice(&listed.stdout).expect("JSON rows");
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&listed.stdout)
+            .expect("JSON rows");
     assert_eq!(rows[0]["paused"], false, "{}", rows[0]);
 
     let unknown = accounts_cli(&home, &data, &["pause", "nobody"]);

@@ -18,7 +18,6 @@
 
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +36,7 @@ pub enum Manager {
 
 impl Manager {
     fn detect() -> Result<Self, String> {
-        match std::env::var(MANAGER_ENV).ok().as_deref() {
+        match crate::operation_context::var(MANAGER_ENV).ok().as_deref() {
             Some("systemd") => Ok(Self::Systemd),
             Some("launchd") => Ok(Self::Launchd),
             Some(other) => Err(format!(
@@ -78,7 +77,7 @@ pub struct Unit {
 }
 
 fn home() -> Result<PathBuf, String> {
-    std::env::var_os("HOME")
+    crate::operation_context::var_os("HOME")
         .filter(|home| !home.is_empty())
         .map(PathBuf::from)
         .ok_or_else(|| "HOME is not set; the service location is unknown".to_string())
@@ -100,7 +99,7 @@ fn names(manager: Manager) -> (String, String) {
 
 fn unit_path(manager: Manager, file: &str) -> Result<PathBuf, String> {
     Ok(match manager {
-        Manager::Systemd => std::env::var_os("XDG_CONFIG_HOME")
+        Manager::Systemd => crate::operation_context::var_os("XDG_CONFIG_HOME")
             .filter(|path| !path.is_empty())
             .map_or_else(
                 || home().map(|home| home.join(".config")),
@@ -238,10 +237,10 @@ pub fn launchd_plist(unit: &Unit, label: &str) -> String {
 }
 
 fn run(program: &str, args: &[&str]) -> Result<(), String> {
-    let output = Command::new(program)
-        .args(args)
-        .output()
-        .map_err(|error| format!("could not run {program}: {error}"))?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command(program).args(args),
+    )
+    .map_err(|error| format!("could not run {program}: {error}"))?;
     if output.status.success() {
         Ok(())
     } else {
@@ -254,10 +253,9 @@ fn run(program: &str, args: &[&str]) -> Result<(), String> {
 }
 
 fn launchd_domain() -> Result<String, String> {
-    let output = Command::new("id")
-        .arg("-u")
-        .output()
-        .map_err(|error| format!("could not run id -u: {error}"))?;
+    let output =
+        crate::operation_context::process_output(crate::operation_context::command("id").arg("-u"))
+            .map_err(|error| format!("could not run id -u: {error}"))?;
     let uid = String::from_utf8_lossy(&output.stdout).trim().to_string();
     if uid.is_empty() || !uid.bytes().all(|byte| byte.is_ascii_digit()) {
         return Err("could not determine the user id for launchctl".to_string());

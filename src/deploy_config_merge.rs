@@ -58,7 +58,7 @@ pub fn merge(args: &DeploySettingsArgs, remote: bool) -> Result<Merged, String> 
         .transpose()?
         .unwrap_or_default();
     let section = file.section_for(remote);
-    let cwd = std::env::current_dir().ok();
+    let cwd = crate::operation_context::current_dir().ok();
     let base: Option<&Path> = cwd.as_deref();
 
     let instance = args.instance.clone().or_else(|| section.instance.clone());

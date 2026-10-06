@@ -116,15 +116,15 @@ impl RequestLog {
     /// `<data-dir>/requests`.
     #[must_use]
     pub fn from_data_dir(data_dir: &Path) -> Self {
-        let path = std::env::var_os("REQUEST_LOG")
+        let path = crate::operation_context::var_os("REQUEST_LOG")
             .filter(|value| !value.is_empty())
             .map_or_else(|| data_dir.join("requests"), PathBuf::from);
-        let max_bytes = std::env::var("REQUEST_LOG_MAX_BYTES")
+        let max_bytes = crate::operation_context::var("REQUEST_LOG_MAX_BYTES")
             .ok()
             .and_then(|value| value.parse().ok())
             .filter(|value| *value > 0)
             .unwrap_or(DEFAULT_MAX_BYTES);
-        let max_total_bytes = std::env::var("REQUEST_LOG_MAX_TOTAL_BYTES")
+        let max_total_bytes = crate::operation_context::var("REQUEST_LOG_MAX_TOTAL_BYTES")
             .ok()
             .and_then(|value| value.parse().ok())
             .unwrap_or(DEFAULT_MAX_TOTAL_BYTES);
@@ -184,7 +184,7 @@ impl RequestLog {
         let mut event = Map::new();
         event.insert(
             "time".into(),
-            Value::String(chrono::Utc::now().to_rfc3339()),
+            Value::String(crate::operation_context::now().to_rfc3339()),
         );
         event.insert(
             "correlation_id".into(),
@@ -215,7 +215,7 @@ impl RequestLog {
         if line.len() as u64 > self.max_bytes {
             let omitted = line.len();
             line = crate::lino_json::encode_line(&json!({
-                "time": chrono::Utc::now().to_rfc3339(),
+                "time": crate::operation_context::now().to_rfc3339(),
                 "correlation_id": correlation_id,
                 "phase": phase,
                 "token_hash": identity.hash,
@@ -239,7 +239,7 @@ impl RequestLog {
         let mut event = Map::new();
         event.insert(
             "time".into(),
-            Value::String(chrono::Utc::now().to_rfc3339()),
+            Value::String(crate::operation_context::now().to_rfc3339()),
         );
         event.insert(
             "correlation_id".into(),
@@ -955,7 +955,7 @@ mod private_tests;
 /// beginning of a session — the end compaction removes first (issue #322).
 fn discard_marker(discarded_bytes: u64, retained_bytes: Option<usize>) -> Vec<u8> {
     let mut line = crate::lino_json::encode_line(&json!({
-        "time": chrono::Utc::now().to_rfc3339(),
+        "time": crate::operation_context::now().to_rfc3339(),
         "phase": "log_compaction",
         "body": retained_bytes.map_or_else(
             || format!(

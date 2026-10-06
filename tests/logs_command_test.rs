@@ -68,8 +68,8 @@ fn summary_json_is_machine_readable() {
 
     let output = router(data.path(), &["logs", "summary", "--json"]);
     assert!(output.status.success());
-    let parsed: Value =
-        serde_json::from_slice(&output.stdout).expect("summary --json emits valid JSON");
+    let parsed: Value = link_assistant_router::contracts::validation::cli_payload(&output.stdout)
+        .expect("summary --json emits valid JSON");
     assert_eq!(parsed["exchanges"], 1);
     assert_eq!(parsed["incomplete_streams"], 1);
     assert_eq!(parsed["statuses"]["200"], 1);
@@ -141,7 +141,9 @@ fn anomaly_ids_are_capped_on_the_console_but_complete_in_json() {
     );
 
     let structured = router(data.path(), &["logs", "anomalies", "--json"]);
-    let parsed: Value = serde_json::from_slice(&structured.stdout).expect("valid JSON");
+    let parsed: Value =
+        link_assistant_router::contracts::validation::cli_payload(&structured.stdout)
+            .expect("valid JSON");
     let ids = parsed[0]["correlation_ids"].as_array().expect("ids");
     assert_eq!(ids.len(), 20, "--json carries every id");
 }
@@ -199,7 +201,8 @@ fn a_single_token_can_be_analysed_alone() {
         data.path(),
         &["logs", "summary", "--json", "--token", "aaaa1111"],
     );
-    let parsed: Value = serde_json::from_slice(&output.stdout).expect("valid JSON");
+    let parsed: Value = link_assistant_router::contracts::validation::cli_payload(&output.stdout)
+        .expect("valid JSON");
     assert_eq!(parsed["exchanges"], 1, "only the requested token is read");
     assert_eq!(parsed["incomplete_streams"], 1);
 }
@@ -250,7 +253,8 @@ fn a_complete_non_streamed_exchange_is_healthy() {
     );
 
     let summary = router(data.path(), &["logs", "summary", "--json"]);
-    let parsed: Value = serde_json::from_slice(&summary.stdout).expect("valid JSON");
+    let parsed: Value = link_assistant_router::contracts::validation::cli_payload(&summary.stdout)
+        .expect("valid JSON");
     assert_eq!(parsed["streamed"], 0, "{parsed}");
     assert_eq!(parsed["non_streamed"], 1, "{parsed}");
     assert_eq!(parsed["unterminated_streams"], 0, "{parsed}");

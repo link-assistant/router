@@ -204,7 +204,8 @@ fn a_client_running_under_another_home_does_not_block_a_fixture() {
         &["update", "--all", "--dry-run", "--json"],
         &path,
     );
-    let plans: serde_json::Value = serde_json::from_slice(&update.stdout).unwrap();
+    let plans: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&update.stdout).unwrap();
     for plan in plans.as_array().unwrap() {
         assert_ne!(plan["status"], "blocked", "{plan}");
     }
@@ -241,7 +242,8 @@ fn a_client_writing_the_fixture_still_blocks_it() {
             &path,
         );
         claude.assert_alive("the update dry-run");
-        let plans: serde_json::Value = serde_json::from_slice(&update.stdout).unwrap();
+        let plans: serde_json::Value =
+            link_assistant_router::contracts::validation::cli_payload(&update.stdout).unwrap();
         assert_eq!(
             plans[0]["status"],
             "blocked",

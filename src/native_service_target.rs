@@ -699,7 +699,7 @@ async fn selected_subscription_with_account(
             provider,
             &selected.name,
             selected.token,
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await
         .map_err(|_| unavailable("the native subscription credential cannot refresh"))?;

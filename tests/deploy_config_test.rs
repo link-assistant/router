@@ -259,7 +259,9 @@ exit 0"#,
     for secret in [SECRET, PROVIDER_KEY, ENV_VALUE] {
         assert!(!stdout.contains(secret), "a value reached the document");
     }
-    let document: serde_json::Value = serde_json::from_str(&stdout).expect("one JSON document");
+    let document: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(stdout.as_bytes())
+            .expect("one JSON document");
     assert_eq!(document["schema"], "link-assistant-router/deploy/v1");
     assert_eq!(document["status"], "succeeded");
     assert_eq!(document["env"]["names"][0], "DEPLOY_TEST_RUNTIME");
@@ -322,7 +324,6 @@ fn remote_only_settings_are_refused_for_a_local_deploy() {
         &["--provider-key", "zai=env:DEPLOY_TEST_PROVIDER_KEY"][..],
         &["--ssh-port", "2222"][..],
         &["--public-port", "8443"][..],
-        &["--json"][..],
     ] {
         let output = fake.deploy(args);
         assert_eq!(

@@ -129,8 +129,8 @@ fn resolve_supplied_token(
     if let Some(token) = token {
         return Ok(Some(token));
     }
-    Ok(std::env::var(CLIENT_TOKEN_ENV)
-        .or_else(|_| std::env::var(CLIENT_TOKEN_ENV_ALIAS))
+    Ok(crate::operation_context::var(CLIENT_TOKEN_ENV)
+        .or_else(|_| crate::operation_context::var(CLIENT_TOKEN_ENV_ALIAS))
         .ok()
         .map(|token| token.trim().to_string())
         .filter(|token| !token.is_empty()))
@@ -375,7 +375,7 @@ async fn setup(
                     source: TokenSource::Minted,
                     token_id: Some(id),
                     label: Some(format!("client-{client}")),
-                    issued_at: Some(chrono::Utc::now().timestamp()),
+                    issued_at: Some(crate::operation_context::now().timestamp()),
                     router: Some(base_url.clone()),
                     management_server: None,
                     principal_id: Some(
@@ -583,7 +583,7 @@ async fn setup_remote(
         },
         token_id: candidate.id(),
         label: Some(format!("client-{client}")),
-        issued_at: Some(chrono::Utc::now().timestamp()),
+        issued_at: Some(crate::operation_context::now().timestamp()),
         router: Some(server.base_url.clone()),
         management_server: Some(server.management_url.clone()),
         principal_id: Some(candidate.principal_id().to_string()),
@@ -822,8 +822,8 @@ async fn revoke_managed_credential(
 /// Find authority for a previously selected remote Router without persisting
 /// it in per-client metadata. Environment credentials deliberately win.
 fn remote_revocation_token(router: &str) -> Option<String> {
-    std::env::var(CLIENT_TOKEN_ENV)
-        .or_else(|_| std::env::var(CLIENT_TOKEN_ENV_ALIAS))
+    crate::operation_context::var(CLIENT_TOKEN_ENV)
+        .or_else(|_| crate::operation_context::var(CLIENT_TOKEN_ENV_ALIAS))
         .ok()
         .or_else(|| {
             crate::managed_server::load_persisted()

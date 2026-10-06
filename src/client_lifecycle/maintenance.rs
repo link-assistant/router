@@ -2,7 +2,7 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode, Stdio};
+use std::process::{ExitCode, Stdio};
 
 use serde::Serialize;
 
@@ -11,8 +11,8 @@ use super::{backup_root, clients, lock_operations, profiles};
 use crate::cli::MaintenanceArgs;
 use crate::clients::ClientKind;
 
-#[derive(Serialize)]
-struct Plan {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(crate) struct Plan {
     client: String,
     operation: String,
     status: String,
@@ -28,7 +28,7 @@ struct Plan {
 }
 
 fn binary(name: &str) -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
+    let path = crate::operation_context::var_os("PATH")?;
     for directory in std::env::split_paths(&path) {
         let candidate = directory.join(name);
         if candidate.is_file() {
@@ -48,11 +48,12 @@ fn binary(name: &str) -> Option<PathBuf> {
 }
 
 fn version(path: &Path) -> Option<String> {
-    let output = Command::new(path)
-        .arg("--version")
-        .stderr(Stdio::null())
-        .output()
-        .ok()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command(path)
+            .arg("--version")
+            .stderr(Stdio::null()),
+    )
+    .ok()?;
     if !output.status.success() {
         return None;
     }
@@ -61,11 +62,12 @@ fn version(path: &Path) -> Option<String> {
 }
 
 fn npm_root() -> Option<PathBuf> {
-    let output = Command::new(binary("npm")?)
-        .args(["root", "-g"])
-        .stderr(Stdio::null())
-        .output()
-        .ok()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command(binary("npm")?)
+            .args(["root", "-g"])
+            .stderr(Stdio::null()),
+    )
+    .ok()?;
     output
         .status
         .success()
@@ -405,7 +407,9 @@ fn plan(home: Option<&Path>, operation: &str, client: ClientKind, args: &Mainten
             result.reason = Some(error);
         }
     }
-    if client == ClientKind::ClaudeCode && std::env::var_os("DISABLE_UPDATES").is_some() {
+    if client == ClientKind::ClaudeCode
+        && crate::operation_context::var_os("DISABLE_UPDATES").is_some()
+    {
         result.status = "blocked".into();
         result.reason = Some("DISABLE_UPDATES is set; unset it for this operation".into());
     }
@@ -469,7 +473,10 @@ pub fn run(home: Option<&Path>, operation: &str, args: &MaintenanceArgs) -> Exit
             }
             let executable = &plan.command[0];
             let executable = binary(executable).unwrap_or_else(|| PathBuf::from(executable));
-            let status = Command::new(&executable).args(&plan.command[1..]).status();
+            let status = crate::operation_context::process_output(
+                crate::operation_context::command(&executable).args(&plan.command[1..]),
+            )
+            .map(|output| output.status);
             if !status.is_ok_and(|status| status.success()) {
                 let after = binary(client.command());
                 let after_version = after.as_deref().and_then(version);

@@ -32,7 +32,7 @@ fn local_candidate_ports() -> Vec<u16> {
     };
     // `ROUTER_PORT` is what a locally started router binds, so it is the most
     // specific thing this machine knows about where one would be.
-    if let Some(port) = std::env::var("ROUTER_PORT")
+    if let Some(port) = crate::operation_context::var("ROUTER_PORT")
         .ok()
         .and_then(|value| value.trim().parse::<u16>().ok())
     {
@@ -58,11 +58,11 @@ fn local_candidate_ports() -> Vec<u16> {
 /// Best-effort: no Docker, no daemon, or no containers all yield an empty list
 /// and leave the conventional ports as the only candidates.
 fn published_container_ports() -> Vec<u16> {
-    let Ok(output) = std::process::Command::new("docker")
-        .args(["ps", "--format", "{{.Ports}}"])
-        .stderr(std::process::Stdio::null())
-        .output()
-    else {
+    let Ok(output) = crate::operation_context::process_output(
+        crate::operation_context::command("docker")
+            .args(["ps", "--format", "{{.Ports}}"])
+            .stderr(std::process::Stdio::null()),
+    ) else {
         return Vec::new();
     };
     if !output.status.success() {
@@ -164,8 +164,8 @@ fn port_accepts(port: u16) -> bool {
 /// authorization failure by the endpoint it tries, naming the remedy.
 pub async fn discovered_local_router() -> Option<ResolvedServer> {
     let base_url = discover_local_router(false).await?;
-    let token = std::env::var("LINK_ASSISTANT_ROUTER_TOKEN")
-        .or_else(|_| std::env::var("LINK_ASSISTANT_TOKEN"))
+    let token = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TOKEN")
+        .or_else(|_| crate::operation_context::var("LINK_ASSISTANT_TOKEN"))
         .ok();
     Some(ResolvedServer::at(
         base_url,

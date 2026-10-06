@@ -10,8 +10,8 @@ use serde_json::{Value, json};
 
 /// This user's home: the vendor clients' conventional homes live under it.
 fn user_home() -> Result<std::path::PathBuf, String> {
-    std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
+    crate::operation_context::var_os("HOME")
+        .or_else(|| crate::operation_context::var_os("USERPROFILE"))
         .filter(|home| !home.is_empty())
         .map(std::path::PathBuf::from)
         .ok_or_else(|| "--seed-credential: HOME is not set".to_string())

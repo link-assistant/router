@@ -114,7 +114,7 @@ pub(crate) async fn destination_for_claims(
             provider,
             &account,
             token,
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await
         .map_err(|_| unavailable("the exact subscription account cannot refresh"))?;

@@ -187,7 +187,11 @@ impl NetworkPolicy {
         if let Some(policy) = PROCESS_POLICY.get() {
             return *policy;
         }
-        Self::parse(std::env::var(ALLOW_PRIVATE_NETWORKS_ENV).ok().as_deref())
+        Self::parse(
+            crate::operation_context::var(ALLOW_PRIVATE_NETWORKS_ENV)
+                .ok()
+                .as_deref(),
+        )
     }
 
     /// Whether `class` is allowed by this policy.

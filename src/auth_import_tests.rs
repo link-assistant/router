@@ -137,7 +137,7 @@ fn candidate_document(provider: SubscriptionProvider) -> String {
 /// can save it, which is what an operator needs to know before relying on it.
 #[test]
 fn a_credential_reports_its_expiry_and_whether_it_can_renew() {
-    let now = chrono::Utc::now().timestamp_millis();
+    let now = crate::operation_context::now().timestamp_millis();
     let live = link_assistant_router::subscription::SubscriptionToken {
         access_token: "a".into(),
         refresh_token: Some("r".into()),
@@ -155,7 +155,7 @@ fn a_credential_reports_its_expiry_and_whether_it_can_renew() {
 /// An expired credential says so plainly rather than reporting a negative wait.
 #[test]
 fn an_expired_credential_is_named_as_expired() {
-    let now = chrono::Utc::now().timestamp_millis();
+    let now = crate::operation_context::now().timestamp_millis();
     let dead = link_assistant_router::subscription::SubscriptionToken {
         access_token: "a".into(),
         refresh_token: None,
@@ -370,7 +370,7 @@ async fn fresh_import_refuses_near_expiry_before_any_vendor_request() {
         std::fs::create_dir_all(&destination_home).expect("destination home");
         let mut document: serde_json::Value =
             serde_json::from_str(&candidate_document(provider)).expect("candidate JSON");
-        let expired = chrono::Utc::now().timestamp_millis();
+        let expired = crate::operation_context::now().timestamp_millis();
         if provider == SubscriptionProvider::Claude {
             document["claudeAiOauth"]["expiresAt"] = expired.into();
         } else {

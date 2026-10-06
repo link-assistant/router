@@ -62,19 +62,25 @@ fn marker_process_alive(pid: u32) -> Result<bool, String> {
     }
     #[cfg(all(unix, not(target_os = "linux")))]
     {
-        let output = std::process::Command::new("ps")
-            .args(["-p", &pid.to_string(), "-o", "pid="])
-            .output()
-            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command("ps").args(["-p", &pid.to_string(), "-o", "pid="]),
+        )
+        .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
         Ok(output.status.success() && !output.stdout.is_empty())
     }
     #[cfg(windows)]
     {
         let expected = pid.to_string();
-        let output = std::process::Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {expected}"), "/NH", "/FO", "CSV"])
-            .output()
-            .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command("tasklist").args([
+                "/FI",
+                &format!("PID eq {expected}"),
+                "/NH",
+                "/FO",
+                "CSV",
+            ]),
+        )
+        .map_err(|error| format!("cannot inspect Router-launched Claude PID: {error}"))?;
         if !output.status.success() {
             return Err("cannot inspect Router-launched Claude PID".into());
         }
@@ -129,11 +135,12 @@ fn refuse_active_claude_marker(home: Option<&Path>) -> Result<(), String> {
 /// Running processes named like `client`, as PIDs.
 #[cfg(unix)]
 fn matching_processes(client: ClientKind) -> Result<Vec<String>, String> {
-    let output = std::process::Command::new("pgrep")
-        .args(["-x", client.command()])
-        .stderr(Stdio::null())
-        .output()
-        .map_err(|error| format!("cannot check active {client} processes: {error}"))?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("pgrep")
+            .args(["-x", client.command()])
+            .stderr(Stdio::null()),
+    )
+    .map_err(|error| format!("cannot check active {client} processes: {error}"))?;
     if !output.status.success() && output.status.code() != Some(1) {
         return Err(format!("cannot check active {client} processes"));
     }
@@ -217,10 +224,10 @@ fn process_environment(pid: &str) -> Option<Environment> {
 /// processes (issue #610).
 #[cfg(all(unix, not(target_os = "linux")))]
 fn process_environment(pid: &str) -> Option<Environment> {
-    let output = match std::process::Command::new("ps")
-        .args(["-E", "-ww", "-o", "stat=", "-o", "command=", "-p", pid])
-        .output()
-    {
+    let output = match crate::operation_context::process_output(
+        crate::operation_context::command("ps")
+            .args(["-E", "-ww", "-o", "stat=", "-o", "command=", "-p", pid]),
+    ) {
         Ok(output) => output,
         Err(error) => {
             return Some(Environment::Unknown(format!(
@@ -419,11 +426,12 @@ pub fn refuse_active(profile: &Profile, home: Option<&Path>) -> Result<(), Strin
     }
     #[cfg(windows)]
     {
-        let output = std::process::Command::new("tasklist")
-            .args(["/FI", &format!("IMAGENAME eq {}.exe", client.command())])
-            .stderr(Stdio::null())
-            .output()
-            .map_err(|error| format!("cannot check active client: {error}"))?;
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command("tasklist")
+                .args(["/FI", &format!("IMAGENAME eq {}.exe", client.command())])
+                .stderr(Stdio::null()),
+        )
+        .map_err(|error| format!("cannot check active client: {error}"))?;
         if String::from_utf8_lossy(&output.stdout)
             .to_ascii_lowercase()
             .contains(&format!("{}.exe", client.command()))

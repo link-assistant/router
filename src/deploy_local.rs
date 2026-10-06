@@ -9,7 +9,9 @@ use std::time::Duration;
 use link_assistant_router::cli::DeployArgs;
 use link_assistant_router::deploy::instance::InstanceName;
 
+mod checkpoint;
 mod claude_share;
+pub use checkpoint::capture_checkpoint;
 mod data_backup;
 mod deploy_token;
 mod diagnose;
@@ -97,16 +99,16 @@ impl Coordinator<'_> {
                 ));
             }
             let expected_port = active.port.to_string();
-            if self.docker.exists(&RELAY)
-                && (!self.docker.owned(&RELAY, self.root, "relay")
+            if self.docker.exists(&RELAY.value())
+                && (!self.docker.owned(&RELAY.value(), self.root, "relay")
                     || self
                         .docker
-                        .label(&RELAY, &format!("{LABEL_KEY}.spec"))
+                        .label(&RELAY.value(), &format!("{LABEL_KEY}.spec"))
                         .as_deref()
                         != Some(SPEC_VERSION)
                     || self
                         .docker
-                        .label(&RELAY, &format!("{LABEL_KEY}.port"))
+                        .label(&RELAY.value(), &format!("{LABEL_KEY}.port"))
                         .as_deref()
                         != Some(expected_port.as_str()))
             {
@@ -114,7 +116,7 @@ impl Coordinator<'_> {
             }
             return Ok(Existing::Managed(active));
         }
-        if self.docker.exists(&RELAY) {
+        if self.docker.exists(&RELAY.value()) {
             return Err(format!(
                 "{RELAY} exists without a durable active deployment record"
             ));
@@ -132,7 +134,7 @@ impl Coordinator<'_> {
         let rendered = self.docker.token_inventory(backend).map_err(|error| {
             format!("could not inventory run credentials in {backend}: {error}")
         })?;
-        Inventory::from_json(&rendered, chrono::Utc::now().timestamp())
+        Inventory::from_json(&rendered, crate::operation_context::now().timestamp())
     }
 
     fn connection_count(&self, backend: &str) -> Result<u64, String> {
@@ -196,7 +198,7 @@ impl Coordinator<'_> {
             }
             Existing::Managed(active) => {
                 let backend_running = self.docker.running(&active.backend)?;
-                let relay_running = self.docker.running(&RELAY).unwrap_or(false);
+                let relay_running = self.docker.running(&RELAY.value()).unwrap_or(false);
                 println!("old_backend={} image={}", active.backend, active.image_ref);
                 println!(
                     "old_backend_claude_credentials={}",
@@ -283,9 +285,10 @@ impl Coordinator<'_> {
     }
 
     fn preflight(&self, existing: &Existing) -> Result<Option<Inventory>, String> {
+        let relay = RELAY.value();
         let allowed_holder = match existing {
             Existing::Legacy => Some(LEGACY),
-            Existing::Managed(active) if active.port == self.port => Some(&*RELAY),
+            Existing::Managed(active) if active.port == self.port => Some(relay.as_str()),
             Existing::Absent | Existing::Managed(_) => None,
         };
         let foreign = self
@@ -434,13 +437,13 @@ impl Coordinator<'_> {
     }
 
     fn remove_relay(&self) -> Result<(), String> {
-        if !self.docker.exists(&RELAY) {
+        if !self.docker.exists(&RELAY.value()) {
             return Ok(());
         }
-        if !self.docker.owned(&RELAY, self.root, "relay") {
+        if !self.docker.owned(&RELAY.value(), self.root, "relay") {
             return Err(format!("refusing to remove unowned relay {RELAY}"));
         }
-        self.docker.remove(&RELAY)
+        self.docker.remove(&RELAY.value())
     }
 
     fn finish_accepted(&self, transaction: &Transaction) -> Result<(), String> {
@@ -592,15 +595,15 @@ impl Coordinator<'_> {
             println!("restored backend={}", active.backend);
             true
         };
-        if !self.docker.exists(&RELAY) {
+        if !self.docker.exists(&RELAY.value()) {
             self.docker
                 .run_relay(&active.image_ref, self.root, active.port)?;
             println!("restored relay={RELAY}");
             changed = true;
-        } else if !self.docker.owned(&RELAY, self.root, "relay") {
+        } else if !self.docker.owned(&RELAY.value(), self.root, "relay") {
             return Err(format!("refusing unowned relay {RELAY}"));
-        } else if !self.docker.running(&RELAY)? {
-            self.docker.start(&RELAY)?;
+        } else if !self.docker.running(&RELAY.value())? {
+            self.docker.start(&RELAY.value())?;
             println!("restored relay={RELAY}");
             changed = true;
         }
@@ -610,8 +613,8 @@ impl Coordinator<'_> {
 
     fn topology_needs_repair(&self, active: &Active) -> Result<bool, String> {
         Ok(!self.docker.running(&active.backend)?
-            || !self.docker.exists(&RELAY)
-            || !self.docker.running(&RELAY)?)
+            || !self.docker.exists(&RELAY.value())
+            || !self.docker.running(&RELAY.value())?)
     }
 
     fn deploy(&self, existing: &Existing) -> Result<(), String> {
@@ -770,6 +773,7 @@ impl Coordinator<'_> {
     }
 }
 
+#[must_use]
 pub fn run(args: &DeployArgs, root: &Path, image: &str, token_secret: &str) -> ExitCode {
     run_with_docker(args, root, image, token_secret, Docker::default())
 }

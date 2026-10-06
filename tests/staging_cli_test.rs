@@ -28,7 +28,8 @@ fn absent_staging_status_and_verification_are_read_only_without_docker() {
             "{}",
             String::from_utf8_lossy(&output.stderr)
         );
-        let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        let report: serde_json::Value =
+            link_assistant_router::contracts::validation::cli_payload(&output.stdout).unwrap();
         assert_eq!(report["namespace"], "router-stage-disposable");
         assert_eq!(report["status"], "absent");
         assert_eq!(report["parity"], false);
@@ -44,7 +45,8 @@ fn invalid_staging_identity_reports_refusal_before_any_files_are_created() {
         &["deploy", "--staging", "../primary", "--json"],
     );
     assert!(!output.status.success());
-    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let report: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout).unwrap();
     assert_eq!(report["status"], "refused");
     assert_eq!(report["parity"], false);
     assert!(report["reason"].as_str().unwrap().contains("staging NAME"));

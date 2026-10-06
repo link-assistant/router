@@ -92,7 +92,7 @@ impl OpenAIStreamTranslator {
             // emitted as though it were the model that actually served.
             served_model: String::new(),
             id: format!("{prefix}-{}", uuid::Uuid::new_v4()),
-            created: chrono::Utc::now().timestamp(),
+            created: crate::operation_context::now().timestamp(),
             buffer: Vec::new(),
             sent_chat_role: false,
             sent_response_created: false,

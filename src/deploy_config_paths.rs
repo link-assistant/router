@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 
 /// Expand the current user's `~` or `~/` without evaluating shell expressions.
 pub fn expand_home(value: &str) -> Result<PathBuf, String> {
-    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"));
+    let home = crate::operation_context::var_os("HOME")
+        .or_else(|| crate::operation_context::var_os("USERPROFILE"));
     expand_with_home(value, home.as_deref().map(Path::new))
 }
 

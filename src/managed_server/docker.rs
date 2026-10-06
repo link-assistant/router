@@ -1,19 +1,17 @@
 //! Docker command boundary for managed Router lifecycle operations.
 
 use std::ffi::OsStr;
-use std::process::Command;
 
 use super::{AnyError, CONTAINER, compact};
 
 pub(super) fn docker_container_state() -> Result<String, AnyError> {
-    let output = Command::new("docker")
+    let output = crate::operation_context::process_output(crate::operation_context::command("docker")
         .args([
             "inspect",
             "--format",
             "{{if .State.Running}}running{{else}}stopped{{end}} {{index .Config.Labels \"com.link-assistant.router.managed\"}}",
             CONTAINER,
-        ])
-        .output();
+        ]));
     let output = match output {
         Ok(output) => output,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -48,9 +46,15 @@ pub(super) fn docker_container_state() -> Result<String, AnyError> {
 }
 
 pub(super) fn docker_subscription_status() -> String {
-    let output = Command::new("docker")
-        .args(["exec", CONTAINER, "link-assistant-router", "auth", "status"])
-        .output();
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args([
+            "exec",
+            CONTAINER,
+            "link-assistant-router",
+            "auth",
+            "status",
+        ]),
+    );
     match output {
         Ok(output) if output.status.success() => compact(&String::from_utf8_lossy(&output.stdout)),
         Ok(output) => format!(
@@ -62,9 +66,13 @@ pub(super) fn docker_subscription_status() -> String {
 }
 
 pub(super) fn ensure_docker() -> Result<(), AnyError> {
-    let output = Command::new("docker")
-        .args(["info", "--format", "{{.ServerVersion}}"])
-        .output();
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args([
+            "info",
+            "--format",
+            "{{.ServerVersion}}",
+        ]),
+    );
     let output = match output {
         Ok(output) => output,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -92,7 +100,9 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let output = Command::new("docker").args(args).output()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("docker").args(args),
+    )?;
     check_docker_output(&output)
 }
 

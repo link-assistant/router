@@ -643,7 +643,7 @@ fn retry_after_delta_seconds_is_used_for_account_cooldown() {
 
 #[test]
 fn retry_after_http_date_is_used_for_account_cooldown() {
-    let retry_at = chrono::Utc::now() + chrono::Duration::seconds(120);
+    let retry_at = crate::operation_context::now() + chrono::Duration::seconds(120);
     let mut headers = HeaderMap::new();
     headers.insert(
         "retry-after",
@@ -667,7 +667,7 @@ fn retry_after_is_bounded_for_maximum_delta_and_far_future_date() {
         Some(crate::request_routing::MAX_RETRY_AFTER)
     );
 
-    let retry_at = chrono::Utc::now() + chrono::Duration::days(3650);
+    let retry_at = crate::operation_context::now() + chrono::Duration::days(3650);
     headers.insert(
         "retry-after",
         HeaderValue::from_str(&retry_at.to_rfc2822()).unwrap(),

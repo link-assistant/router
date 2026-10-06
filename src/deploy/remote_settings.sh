@@ -230,7 +230,9 @@ deploy_token_step() {
     mark deploy-token
     if docker exec "$CANDIDATE" sh -c 'router tokens list --json' 2>/dev/null |
         docker exec -i "$CANDIDATE" bun -e '
-const rows=JSON.parse(await Bun.stdin.text());
+const report=JSON.parse(await Bun.stdin.text());
+const rows=Array.isArray(report)?report:report.success===true&&report.operation==="tokens.list"?report.data:null;
+if(!Array.isArray(rows))throw Error("issued-token inventory contract invalid");
 process.exit(rows.some(r=>r.label==="deploy"&&!r.revoked)?0:1)' >/dev/null 2>&1; then
         event '{"event":"token","action":"present"}'
         return 0

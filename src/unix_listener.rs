@@ -137,9 +137,15 @@ impl SocketSetup {
 /// Returns a message when the configured mode cannot be honoured.
 pub fn from_env() -> Result<SocketSetup, String> {
     resolve(
-        std::env::var("LISTEN_UNIX_SOCKET").ok().as_deref(),
-        std::env::var("LISTEN_UNIX_SOCKET_MODE").ok().as_deref(),
-        std::env::var("LISTEN_UNIX_SOCKET_GROUP").ok().as_deref(),
+        crate::operation_context::var("LISTEN_UNIX_SOCKET")
+            .ok()
+            .as_deref(),
+        crate::operation_context::var("LISTEN_UNIX_SOCKET_MODE")
+            .ok()
+            .as_deref(),
+        crate::operation_context::var("LISTEN_UNIX_SOCKET_GROUP")
+            .ok()
+            .as_deref(),
     )
 }
 

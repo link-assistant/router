@@ -6,8 +6,8 @@
 //! An instance name suffixes every such object. Without one the names are the
 //! historical ones, so an existing deployment is found exactly as before.
 //!
-//! The instance is chosen once per process, before the first name is read:
-//! a deployment command manages exactly one instance.
+//! Library operations select an instance within their operation context. Native
+//! CLI commands keep the historical once-per-process selection.
 
 use std::fmt;
 use std::ops::Deref;
@@ -48,6 +48,13 @@ pub fn validate(name: &str) -> Result<(), String> {
 /// Refuses an invalid name, or a second, different selection.
 pub fn select(name: &str) -> Result<(), String> {
     validate(name)?;
+    if let Some(context) = crate::operation_context::current() {
+        *context
+            .deployment_instance
+            .lock()
+            .expect("deployment instance lock") = Some(name.into());
+        return Ok(());
+    }
     let selected = INSTANCE.get_or_init(|| name.to_string());
     if selected == name {
         Ok(())
@@ -64,10 +71,25 @@ pub fn selected() -> Option<&'static str> {
     INSTANCE.get().map(String::as_str)
 }
 
+/// Owned selection from the current operation, or the native CLI selection.
+#[must_use]
+pub fn selected_name() -> Option<String> {
+    crate::operation_context::current().map_or_else(
+        || selected().map(str::to_owned),
+        |context| {
+            context
+                .deployment_instance
+                .lock()
+                .expect("deployment instance lock")
+                .clone()
+        },
+    )
+}
+
 /// The historical name with the instance suffix, when one is selected.
 #[must_use]
 pub fn qualify(base: &str) -> String {
-    selected().map_or_else(|| base.to_string(), |instance| format!("{base}-{instance}"))
+    selected_name().map_or_else(|| base.to_string(), |instance| format!("{base}-{instance}"))
 }
 
 /// A deployment object name that carries the selected instance.
@@ -100,7 +122,13 @@ impl InstanceName {
         }
     }
 
-    /// The resolved name.
+    /// Name resolved within the active operation; never cached process-wide.
+    #[must_use]
+    pub fn value(&self) -> String {
+        format!("{}{}", qualify(self.base), self.trailer)
+    }
+
+    /// The resolved name for native CLI callers.
     #[must_use]
     pub fn as_str(&self) -> &str {
         self.resolved
@@ -124,13 +152,13 @@ impl AsRef<str> for InstanceName {
 
 impl fmt::Display for InstanceName {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(self.as_str())
+        formatter.write_str(&self.value())
     }
 }
 
 impl fmt::Debug for InstanceName {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self.as_str(), formatter)
+        fmt::Debug::fmt(&self.value(), formatter)
     }
 }
 

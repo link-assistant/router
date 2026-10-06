@@ -64,7 +64,7 @@ pub async fn begin_login(
 
 /// Optional body for [`begin_login`]. An empty request remains Claude for
 /// compatibility with the original endpoint.
-#[derive(Default, serde::Deserialize)]
+#[derive(Default, serde::Deserialize, schemars::JsonSchema)]
 pub struct BeginLoginRequest {
     /// Subscription provider (`claude` or `codex`).
     pub provider: Option<String>,
@@ -152,7 +152,7 @@ pub async fn cancel_login(
 }
 
 /// Request body for [`submit_code`].
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, schemars::JsonSchema)]
 pub struct SubmitCodeRequest {
     /// The authorization code the human pasted from the browser.
     pub code: String,

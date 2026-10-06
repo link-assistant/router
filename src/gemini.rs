@@ -46,7 +46,7 @@ pub fn code_assist_envelope(model: &str, request: &Value) -> Value {
         "model": model,
         "request": request,
     });
-    if let Ok(project) = std::env::var(PROJECT_ENV)
+    if let Ok(project) = crate::operation_context::var(PROJECT_ENV)
         && !project.is_empty()
     {
         envelope["project"] = Value::String(project);
@@ -120,7 +120,7 @@ pub fn gemini_response_to_chat(resp: &Value, _model: &str) -> Value {
     json!({
         "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         "object": "chat.completion",
-        "created": chrono::Utc::now().timestamp(),
+        "created": crate::operation_context::now().timestamp(),
         "model": served_model,
         "choices": [{
             "index": 0,
@@ -458,7 +458,7 @@ async fn route_gemini_token(
     let token = if validated.is_some() {
         selected.token
     } else {
-        let now_ms = chrono::Utc::now().timestamp_millis();
+        let now_ms = crate::operation_context::now().timestamp_millis();
         state
             .subscription_cache
             .get_fresh_loaded(

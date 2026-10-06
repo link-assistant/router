@@ -411,7 +411,7 @@ pub fn chat_completion_response(result: &CraterTaskResult) -> Value {
     json!({
         "id": format!("chatcmpl-{}", uuid::Uuid::new_v4()),
         "object": "chat.completion",
-        "created": chrono::Utc::now().timestamp(),
+        "created": crate::operation_context::now().timestamp(),
         "model": result.model,
         "choices": [{
             "index": 0,
@@ -429,7 +429,7 @@ pub fn chat_completion_response(result: &CraterTaskResult) -> Value {
 #[must_use]
 pub fn chat_completion_stream_frames(model: &str, content: &str) -> Vec<String> {
     let id = format!("chatcmpl-{}", uuid::Uuid::new_v4());
-    let created = chrono::Utc::now().timestamp();
+    let created = crate::operation_context::now().timestamp();
     vec![
         sse_frame(&json!({
             "id": id,

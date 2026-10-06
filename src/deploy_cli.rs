@@ -28,6 +28,7 @@ fn default_image() -> String {
 ///
 /// With `--instance NAME` the default is `deploy-NAME`, so two instances on
 /// one host never share state. Without one it is the historical `deploy`.
+#[must_use]
 pub fn default_root(data_dir: &Path) -> PathBuf {
     data_dir.join(link_assistant_router::deploy::instance::qualify("deploy"))
 }
@@ -40,7 +41,7 @@ fn resolved_root(args: &DeployArgs, data_dir: &Path) -> Result<PathBuf, String> 
     if root.is_absolute() {
         Ok(root)
     } else {
-        std::env::current_dir()
+        crate::operation_context::current_dir()
             .map(|directory| directory.join(root))
             .map_err(|error| format!("could not resolve deployment root: {error}"))
     }
@@ -114,9 +115,6 @@ fn apply_section(args: &mut DeployArgs, merged: &Merged, remote: bool) -> Result
 
 /// Refuse combinations of flags that only make sense for one target.
 fn check_target(args: &DeployArgs, remote: bool) -> Result<(), String> {
-    if args.json && args.staging.is_none() && !remote {
-        return Err("--json needs --staging, --server or --remote".to_string());
-    }
     if remote && (args.install_service || args.uninstall_service) {
         return Err(
             "--install-service supervises a local host deployment; it needs no --server"
@@ -157,15 +155,12 @@ fn check_target(args: &DeployArgs, remote: bool) -> Result<(), String> {
 }
 
 /// Merge `--config` with the flags into the arguments a run uses.
-fn resolve(args: &DeployArgs) -> Result<(DeployArgs, Merged, bool), String> {
+pub(crate) fn resolve(args: &DeployArgs) -> Result<(DeployArgs, Merged, bool), String> {
     let remote = args.server.is_some() || args.settings.remote;
     let merged = merge(&args.settings, remote)?;
     let mut resolved = args.clone();
     apply_section(&mut resolved, &merged, remote)?;
     check_target(&resolved, remote)?;
-    if let Some(instance) = &merged.instance {
-        link_assistant_router::deploy::instance::select(instance)?;
-    }
     if !remote
         && (!merged.provider_keys.is_empty()
             || merged.verification.is_some()
@@ -211,6 +206,12 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    if let Some(instance) = &merged.instance
+        && let Err(error) = link_assistant_router::deploy::instance::select(instance)
+    {
+        eprintln!("error: {error}");
+        return ExitCode::from(2);
+    }
     let args = &args;
     let deploying = !args.down && !args.status && !args.uninstall_service;
     if remote {
@@ -365,8 +366,8 @@ fn record_in_registry(args: &DeployArgs, root: &Path, data_dir: &Path) {
                 root: root.to_path_buf(),
                 mode: if host { "host" } else { "container" }.to_string(),
                 port: args.port(),
-                instance: link_assistant_router::deploy::instance::selected().map(str::to_string),
-                registered_at: chrono::Utc::now().timestamp(),
+                instance: link_assistant_router::deploy::instance::selected_name(),
+                registered_at: crate::operation_context::now().timestamp(),
             },
         )
     };
@@ -429,7 +430,7 @@ mod tests {
 
     #[test]
     fn the_default_root_lives_under_the_data_directory() {
-        let data_dir = std::env::current_dir()
+        let data_dir = crate::operation_context::current_dir()
             .unwrap()
             .join("var")
             .join("lib")

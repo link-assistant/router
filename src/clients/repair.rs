@@ -36,7 +36,7 @@ const fn transaction_checkpoint(_stage: &'static str) -> Result<(), ClientError>
 
 /// A secret-free repair preview. Constructing it performs no writes or I/O to
 /// the selected Router.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
 pub struct RepairPlan {
     pub client: ClientKind,
     pub state: OwnershipState,
@@ -46,7 +46,7 @@ pub struct RepairPlan {
 }
 
 /// Result of a committed local repair transaction.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, schemars::JsonSchema)]
 pub struct RepairResult {
     pub client: ClientKind,
     pub before: OwnershipState,
@@ -57,7 +57,7 @@ pub struct RepairResult {
     pub backup_id: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct SnapshotManifest {
     version: u8,
     id: String,
@@ -65,7 +65,7 @@ struct SnapshotManifest {
     entries: Vec<SnapshotEntry>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 struct SnapshotEntry {
     path: PathBuf,
     existed: bool,

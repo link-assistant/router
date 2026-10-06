@@ -102,13 +102,15 @@ pub fn has_entry(service: &str) -> bool {
 fn generic_password_exists(service: &str) -> bool {
     // No `-w`: attributes are readable without the item's ACL; the password
     // is not.
-    std::process::Command::new("/usr/bin/security")
-        .args(["find-generic-password", "-s", service])
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .is_ok_and(|status| status.success())
+    crate::operation_context::process_output(
+        crate::operation_context::command("/usr/bin/security")
+            .args(["find-generic-password", "-s", service])
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null()),
+    )
+    .map(|output| output.status)
+    .is_ok_and(|status| status.success())
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -135,10 +137,15 @@ pub fn lookup(provider: SubscriptionProvider) -> Option<String> {
 /// and the file remains the source, which is exactly the pre-existing behaviour.
 #[cfg(target_os = "macos")]
 fn read_generic_password(service: &str) -> Option<String> {
-    let output = std::process::Command::new("/usr/bin/security")
-        .args(["find-generic-password", "-s", service, "-w"])
-        .output()
-        .ok()?;
+    let output = crate::operation_context::process_output(
+        crate::operation_context::command("/usr/bin/security").args([
+            "find-generic-password",
+            "-s",
+            service,
+            "-w",
+        ]),
+    )
+    .ok()?;
     if !output.status.success() {
         // An absent entry is the ordinary case on a machine that logged in with
         // an older client; it is not worth an operator-facing warning.

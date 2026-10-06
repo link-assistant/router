@@ -881,7 +881,7 @@ pub async fn route_provider(
         &state.client,
         &state.subscription_readers,
         &state.subscription_cache,
-        chrono::Utc::now().timestamp_millis(),
+        crate::operation_context::now().timestamp_millis(),
     )
     .await;
     let reader = state

@@ -363,7 +363,7 @@ pub(super) async fn resolve_upstream_credentials(
         let sel = router
             .select_subscription_where_authoritative(context, &state.subscription_cache, |_| true)
             .await?;
-        let now_ms = chrono::Utc::now().timestamp_millis();
+        let now_ms = crate::operation_context::now().timestamp_millis();
         // The refresh leaves through the account's own egress as well.
         let client = router
             .http_client(&sel.name, CookieMode::None)
@@ -393,7 +393,7 @@ pub(super) async fn resolve_upstream_credentials(
                 &state.client,
                 SubscriptionProvider::Claude,
                 crate::credential_recovery_store::PRIMARY_ACCOUNT,
-                chrono::Utc::now().timestamp_millis(),
+                crate::operation_context::now().timestamp_millis(),
             )
             .await
             .map_err(std::io::Error::other)?;

@@ -118,7 +118,7 @@ async fn filtered_http_contract_preserves_schema_types_timestamps_and_no_secrets
         json!({"claudeAiOauth": {
             "accessToken": "vendor-access-sentinel",
             "refreshToken": "vendor-refresh-sentinel",
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000,
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000,
             "subscriptionType": "max"
         }})
         .to_string(),
@@ -216,7 +216,7 @@ async fn empty_and_error_shaped_successes_are_unverified_over_http() {
                     credential_home.join(".credentials.json"),
                     json!({"claudeAiOauth": {
                         "accessToken": format!("{provider}-access"),
-                        "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+                        "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000
                     }})
                     .to_string(),
                 )
@@ -370,7 +370,7 @@ fn write_claude_pool_credential(home: &std::path::Path, access_token: &str) {
         json!({"claudeAiOauth": {
             "accessToken": access_token,
             "refreshToken": format!("refresh-{access_token}"),
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000,
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000,
             "subscriptionType": "max"
         }})
         .to_string(),
@@ -636,7 +636,7 @@ async fn rate_limited_usage_is_cached_with_the_vendor_retry_hint() {
         claude_home.join(".credentials.json"),
         json!({"claudeAiOauth": {
             "accessToken": "rate-limited-access",
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000
         }})
         .to_string(),
     )
@@ -710,7 +710,7 @@ async fn concurrent_identical_usage_requests_share_one_provider_probe() {
         claude_home.join(".credentials.json"),
         json!({"claudeAiOauth": {
             "accessToken": "coalesced-access",
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000
         }})
         .to_string(),
     )

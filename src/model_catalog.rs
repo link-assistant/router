@@ -262,7 +262,10 @@ impl ModelCatalogCache {
         let path = invalidation_path(&directory, provider, router_account);
         crate::durable_file::atomic_write_owner_only(
             &path,
-            chrono::Utc::now().timestamp_millis().to_string().as_bytes(),
+            crate::operation_context::now()
+                .timestamp_millis()
+                .to_string()
+                .as_bytes(),
         )
         .map_err(|error| {
             format!(
@@ -477,7 +480,7 @@ impl ModelCatalogCache {
     ) {
         models.sort();
         models.dedup();
-        let fetched_at = chrono::Utc::now().timestamp();
+        let fetched_at = crate::operation_context::now().timestamp();
         let record_account = account.as_deref().unwrap_or(router_account);
         let records = models
             .iter()
@@ -516,7 +519,7 @@ impl ModelCatalogCache {
                 models,
                 records,
                 account,
-                refreshed_at: Some(chrono::Utc::now().timestamp()),
+                refreshed_at: Some(crate::operation_context::now().timestamp()),
                 last_error: None,
                 discovered: true,
                 credential_healthy: true,
@@ -676,7 +679,7 @@ pub async fn refresh_catalogs_for_accounts(
     token_cache: &crate::refresh::TokenCache,
     cache: &ModelCatalogCache,
 ) {
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     // Tell the token cache where each credential lives before anything is
     // exchanged. Without a store it can only reason about the token it was
     // handed: it cannot notice that another holder rotated the chain forward,
@@ -858,7 +861,7 @@ pub async fn fetch_provider_catalog_records(
     let base_url =
         reqwest::Url::parse(&url).map_err(|error| format!("invalid catalog URL: {error}"))?;
     let account = token.account_id.clone().unwrap_or_else(|| "primary".into());
-    let fetched_at = chrono::Utc::now().timestamp();
+    let fetched_at = crate::operation_context::now().timestamp();
     let generation = format!("{provider}:{account}:{}", uuid::Uuid::new_v4());
     let mut cursor: Option<(String, String)> = None;
     let mut visited = HashSet::new();

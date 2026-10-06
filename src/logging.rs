@@ -37,7 +37,7 @@ pub fn init(verbose: bool) {
         .with_writer(std::io::stderr)
         .with_env_filter(env_filter(
             verbose,
-            std::env::var("RUST_LOG").ok().as_deref(),
+            crate::operation_context::var("RUST_LOG").ok().as_deref(),
         ))
         .init();
 }

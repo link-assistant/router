@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn selector_kind_requires_exact_live_catalog_metadata() {
         let cache = ModelCatalogCache::new();
-        let fetched_at = chrono::Utc::now().timestamp();
+        let fetched_at = crate::operation_context::now().timestamp();
         let records = [
             ("plain-auto-looking-name", serde_json::Map::new()),
             (

@@ -46,7 +46,11 @@ impl GitHubProxyConfig {
     /// Returns an operator-readable message when a named credential file or
     /// policy file cannot be read.
     pub fn from_env() -> Result<Self, String> {
-        Self::from_env_with_data_dir(std::env::var_os("DATA_DIR").as_deref().map(Path::new))
+        Self::from_env_with_data_dir(
+            crate::operation_context::var_os("DATA_DIR")
+                .as_deref()
+                .map(Path::new),
+        )
     }
 
     /// Load the proxy, reading a stored credential from `data_dir`.
@@ -66,15 +70,15 @@ impl GitHubProxyConfig {
     /// Returns an operator-readable message when a named credential file or
     /// policy file cannot be read.
     pub fn from_env_with_data_dir(data_dir: Option<&Path>) -> Result<Self, String> {
-        let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
+        let base_url = crate::operation_context::var("GITHUB_PROXY_BASE_URL")
             .unwrap_or_else(|_| "https://api.github.com".into())
             .trim_end_matches('/')
             .to_string();
-        let mut token = std::env::var("GITHUB_PROXY_TOKEN")
+        let mut token = crate::operation_context::var("GITHUB_PROXY_TOKEN")
             .ok()
             .filter(|token| !token.is_empty());
         if token.is_none()
-            && let Ok(path) = std::env::var("GITHUB_PROXY_TOKEN_FILE")
+            && let Ok(path) = crate::operation_context::var("GITHUB_PROXY_TOKEN_FILE")
             && !path.is_empty()
         {
             token = Some(
@@ -86,9 +90,9 @@ impl GitHubProxyConfig {
             .filter(|token| !token.is_empty());
         }
         token = token.or_else(|| {
-            std::env::var("GITHUB_PROXY_TOKEN_ENV")
+            crate::operation_context::var("GITHUB_PROXY_TOKEN_ENV")
                 .ok()
-                .and_then(|name| std::env::var(name).ok())
+                .and_then(|name| crate::operation_context::var(name).ok())
                 .filter(|token| !token.is_empty())
         });
         let credential_host = github_credential_host(&base_url);
@@ -99,7 +103,7 @@ impl GitHubProxyConfig {
                 credential_host.as_deref(),
             )
         });
-        let policy = std::env::var("GITHUB_PROXY_POLICY")
+        let policy = crate::operation_context::var("GITHUB_PROXY_POLICY")
             .ok()
             .filter(|path| !path.is_empty())
             .map(|path| GitHubPolicy::from_path(Path::new(&path)))
@@ -608,12 +612,12 @@ pub fn stored_credential(data_dir: &Path) -> Option<String> {
 /// a container needs no router-specific variable.
 #[must_use]
 pub fn gh_config_directory() -> Option<PathBuf> {
-    if let Ok(dir) = std::env::var("GH_CONFIG_DIR")
+    if let Ok(dir) = crate::operation_context::var("GH_CONFIG_DIR")
         && !dir.is_empty()
     {
         return Some(PathBuf::from(dir));
     }
-    std::env::var("HOME")
+    crate::operation_context::var("HOME")
         .ok()
         .filter(|home| !home.is_empty())
         .map(|home| PathBuf::from(home).join(".config/gh"))
@@ -661,7 +665,7 @@ fn github_credential_host(base_url: &str) -> Option<String> {
 /// Host whose `gh` credential matches the configured GitHub API origin.
 #[must_use]
 pub fn configured_credential_host() -> Option<String> {
-    let base_url = std::env::var("GITHUB_PROXY_BASE_URL")
+    let base_url = crate::operation_context::var("GITHUB_PROXY_BASE_URL")
         .unwrap_or_else(|_| "https://api.github.com".to_string());
     github_credential_host(&base_url)
 }

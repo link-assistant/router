@@ -560,7 +560,7 @@ impl SubscriptionReader {
     /// A directory named explicitly on the command line is neither, which is
     /// what keeps "this credential from *there*" meaning exactly that (#285).
     fn is_vendor_default_home(&self) -> bool {
-        let conventional = std::env::var("HOME")
+        let conventional = crate::operation_context::var("HOME")
             .is_ok_and(|home| self.provider.conventional_home(&home) == self.home);
         conventional || self.provider.named_home() == Some(self.home.clone())
     }
@@ -748,7 +748,8 @@ fn merge_refreshed_token(
             let target = &mut document["tokens"];
             set(target, "access_token", Some(token.access_token.clone()));
             set(target, "refresh_token", token.refresh_token.clone());
-            document["last_refresh"] = serde_json::Value::String(chrono::Utc::now().to_rfc3339());
+            document["last_refresh"] =
+                serde_json::Value::String(crate::operation_context::now().to_rfc3339());
         }
         SubscriptionProvider::Gemini | SubscriptionProvider::Qwen => {
             set(document, "access_token", Some(token.access_token.clone()));

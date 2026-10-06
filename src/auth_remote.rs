@@ -96,8 +96,9 @@ pub async fn target_for(
 /// Only an explicit selection counts. The managed local container is started on
 /// demand by `with`, and a plain `auth` must not boot one.
 fn has_selection() -> bool {
-    if std::env::var_os("LINK_ASSISTANT_ROUTER_URL").is_some_and(|value| !value.is_empty())
-        || std::env::var_os("ROUTER_URL").is_some_and(|value| !value.is_empty())
+    if crate::operation_context::var_os("LINK_ASSISTANT_ROUTER_URL")
+        .is_some_and(|value| !value.is_empty())
+        || crate::operation_context::var_os("ROUTER_URL").is_some_and(|value| !value.is_empty())
     {
         return true;
     }

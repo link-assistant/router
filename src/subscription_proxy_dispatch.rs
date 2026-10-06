@@ -316,7 +316,7 @@ async fn send_attempt(
                 provider,
                 account,
                 token,
-                chrono::Utc::now().timestamp_millis(),
+                crate::operation_context::now().timestamp_millis(),
             )
             .await
     {
@@ -457,7 +457,7 @@ async fn select_account(
             provider,
             &selected.name,
             selected.token,
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await
         .map_err(|error| {

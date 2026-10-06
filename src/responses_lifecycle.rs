@@ -279,7 +279,7 @@ pub(crate) async fn forward_subscription(
             provider,
             account,
             token,
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await
         .map_err(|_| unavailable("the response's exact subscription account cannot refresh"))?;
@@ -330,7 +330,7 @@ pub(crate) async fn forward_subscription(
                 provider,
                 account,
                 token,
-                chrono::Utc::now().timestamp_millis(),
+                crate::operation_context::now().timestamp_millis(),
             )
             .await
     {

@@ -171,10 +171,9 @@ fn claude_gateway_version_supported(output: &str) -> bool {
 /// Fail with an actionable diagnostic when an installed Claude is too old.
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) fn require_claude_gateway_version() -> Result<(), ClientError> {
-    let Ok(output) = std::process::Command::new("claude")
-        .arg("--version")
-        .output()
-    else {
+    let Ok(output) = crate::operation_context::process_output(
+        crate::operation_context::command("claude").arg("--version"),
+    ) else {
         return Ok(());
     };
     let version = format!(

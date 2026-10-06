@@ -85,7 +85,7 @@ fn resolve_in_path(command: &str) -> Option<std::path::PathBuf> {
     if candidate.is_absolute() {
         return candidate.is_file().then(|| candidate.to_path_buf());
     }
-    std::env::var_os("PATH").and_then(|paths| {
+    crate::operation_context::var_os("PATH").and_then(|paths| {
         std::env::split_paths(&paths)
             .map(|directory| directory.join(command))
             .find(|path| path.is_file())
@@ -195,7 +195,7 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
         },
         |data_dir| crate::refresh::TokenCache::registered_for(&readers, data_dir),
     );
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let mut catalog_error = false;
     for reader in readers {
         let provider = reader.provider();
@@ -328,6 +328,25 @@ pub async fn subscription_catalog_diagnostics_in(
     data_dir: &std::path::Path,
 ) -> bool {
     subscription_catalog_diagnostics(active_provider, claude_home, user_home, Some(data_dir)).await
+}
+
+/// Return the complete doctor operation without printing or exiting.
+/// ```no_run
+/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let report = link_assistant_router::doctor::report(Default::default()).await?;
+/// assert_eq!(report.operation, "doctor");
+/// # Ok(()) }
+/// ```
+pub async fn report(
+    context: crate::operation_context::OperationContext,
+) -> Result<crate::operations::OperationResult, crate::operations::OperationError> {
+    crate::operations::request(
+        context,
+        crate::cli::Command::Doctor {
+            target: crate::cli::AuthTarget::default(),
+        },
+    )
+    .await
 }
 
 #[cfg(test)]

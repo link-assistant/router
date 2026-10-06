@@ -8,7 +8,7 @@ use serde::Serialize;
 
 /// Public import outcomes. These serialized spellings are a compatibility
 /// contract for automation and must not be inferred from diagnostic prose.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub(super) enum ImportOutcome {
     NotAttempted,
@@ -22,7 +22,7 @@ pub(super) enum ImportOutcome {
 }
 
 /// The last import phase reached before the reported outcome.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub(super) enum ImportPhase {
     Preflight,
@@ -34,7 +34,7 @@ pub(super) enum ImportPhase {
 
 /// The only fields emitted as JSON. Deliberately excludes diagnostic strings,
 /// paths, source documents, and tokens.
-#[derive(Debug, PartialEq, Eq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, schemars::JsonSchema)]
 pub(super) struct ImportReport {
     pub(super) provider: Option<String>,
     pub(super) outcome: ImportOutcome,
@@ -43,8 +43,8 @@ pub(super) struct ImportReport {
     pub(super) transaction_id: Option<String>,
 }
 
-#[derive(Serialize)]
-struct ImportEnvelope<'a> {
+#[derive(Serialize, schemars::JsonSchema)]
+pub(super) struct ImportEnvelope<'a> {
     schema_version: u8,
     results: Vec<&'a ImportReport>,
 }

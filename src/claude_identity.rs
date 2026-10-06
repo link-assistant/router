@@ -14,7 +14,8 @@ pub const DEFAULT_CLIENT_VERSION: &str = "2.1.265";
 /// client upgrades.
 #[must_use]
 pub fn client_version() -> String {
-    std::env::var("CLAUDE_CLIENT_VERSION").unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
+    crate::operation_context::var("CLAUDE_CLIENT_VERSION")
+        .unwrap_or_else(|_| DEFAULT_CLIENT_VERSION.to_string())
 }
 
 /// User-Agent emitted by Claude Code's OAuth account endpoints.

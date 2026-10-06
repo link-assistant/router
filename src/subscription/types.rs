@@ -1,7 +1,17 @@
 use std::path::PathBuf;
 
 /// A subscription-backed upstream that authenticates with vendor OAuth tokens.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum SubscriptionProvider {
     /// Anthropic Claude (Pro/Max) via Claude Code — `~/.claude`.
@@ -114,12 +124,12 @@ impl SubscriptionProvider {
     #[must_use]
     pub fn named_home(self) -> Option<PathBuf> {
         let official_gemini_root = (self == Self::Gemini)
-            .then(|| std::env::var_os("GEMINI_CLI_HOME"))
+            .then(|| crate::operation_context::var_os("GEMINI_CLI_HOME"))
             .flatten();
         Self::named_home_from(
             self,
             official_gemini_root,
-            std::env::var_os(self.home_env()),
+            crate::operation_context::var_os(self.home_env()),
         )
     }
 
@@ -169,7 +179,9 @@ impl std::fmt::Display for SubscriptionProvider {
 }
 
 /// A normalized subscription token plus the metadata the proxy needs to route.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 pub struct SubscriptionToken {
     /// OAuth bearer access token sent as `Authorization: Bearer <token>`.
     pub access_token: String,

@@ -497,7 +497,7 @@ async fn refresh_rejects_mismatched_identity_then_rotates_without_replaying() {
         state
             .provider_store
             .codex_remote_control()
-            .resolve(&old, chrono::Utc::now().timestamp())
+            .resolve(&old, crate::operation_context::now().timestamp())
             .unwrap()
             .is_some()
     );
@@ -514,7 +514,7 @@ async fn refresh_rejects_mismatched_identity_then_rotates_without_replaying() {
         state
             .provider_store
             .codex_remote_control()
-            .resolve(&old, chrono::Utc::now().timestamp())
+            .resolve(&old, crate::operation_context::now().timestamp())
             .unwrap()
             .is_none()
     );
@@ -522,7 +522,7 @@ async fn refresh_rejects_mismatched_identity_then_rotates_without_replaying() {
         state
             .provider_store
             .codex_remote_control()
-            .resolve(new, chrono::Utc::now().timestamp())
+            .resolve(new, crate::operation_context::now().timestamp())
             .unwrap()
             .unwrap()
             .upstream_token,

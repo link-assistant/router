@@ -240,7 +240,7 @@ impl Coordinator<'_> {
                     // not this deployment and only matters if it holds the port.
                     Err(_)
                         if self.state.active()?.is_none()
-                            && !self.docker.owned(&RELAY, self.root, "relay") => {}
+                            && !self.docker.owned(&RELAY.value(), self.root, "relay") => {}
                     Err(error) => plan.block("inconsistent-state", error, false),
                 }
             } else if self.state.current()?.is_some()
@@ -332,7 +332,7 @@ impl Coordinator<'_> {
                 .docker
                 .listeners_on(self.port)?
                 .into_iter()
-                .filter(|name| name != &*RELAY)
+                .filter(|name| name != &RELAY.value())
                 .collect::<Vec<_>>();
             if !foreign.is_empty() {
                 plan.block(
@@ -427,8 +427,9 @@ impl Coordinator<'_> {
     /// A live run's next request would meet a closed listener during the
     /// swap, so live runs refuse the move unless it is forced.
     fn assess_runs(plan: &mut Plan, rendered: Result<String, String>) {
-        let inventory = rendered
-            .and_then(|rendered| Inventory::from_json(&rendered, chrono::Utc::now().timestamp()));
+        let inventory = rendered.and_then(|rendered| {
+            Inventory::from_json(&rendered, crate::operation_context::now().timestamp())
+        });
         match inventory {
             Ok(inventory) => {
                 for run in &inventory.runs {
@@ -498,7 +499,7 @@ impl Coordinator<'_> {
                 );
                 println!(
                     "relay={RELAY} running={} port={}",
-                    self.docker.running(&RELAY).unwrap_or(false),
+                    self.docker.running(&RELAY.value()).unwrap_or(false),
                     active.port
                 );
                 println!(

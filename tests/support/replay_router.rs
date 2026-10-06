@@ -436,6 +436,9 @@ fn app(state: AppState) -> Router {
         )
         .route("/api/services/openai/v1/models", get(proxy::openai_models))
         .with_state(state)
+        .layer(axum::middleware::from_fn(
+            link_assistant_router::contracts::validation::response_contract,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             logging_state,
             link_assistant_router::request_log::log_http_exchange,

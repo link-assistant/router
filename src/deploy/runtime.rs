@@ -11,7 +11,6 @@
 //! container is restored", which need many runs from many starting states. A
 //! suite that can only express them against a real daemon expresses few of them.
 
-use std::process::Command;
 use std::time::Duration;
 
 /// What a container is doing, as far as the runtime can tell.
@@ -110,7 +109,9 @@ pub struct Docker;
 
 impl Docker {
     fn docker(arguments: &[&str]) -> Result<String, String> {
-        let output = Command::new("docker").args(arguments).output();
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command("docker").args(arguments),
+        );
         let output = match output {
             Ok(output) => output,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -223,12 +224,13 @@ impl ContainerRuntime for Docker {
     }
 
     fn run(&self, spec: &RunSpec) -> Result<(), String> {
-        let mut command = Command::new("docker");
+        let mut command = crate::operation_context::command("docker");
         command.args(run_arguments(spec));
         for (key, value) in &spec.env {
             command.env(key, value);
         }
-        let output = command.output().map_err(|error| error.to_string())?;
+        let output = crate::operation_context::process_output(&mut command)
+            .map_err(|error| error.to_string())?;
         if output.status.success() {
             Ok(())
         } else {

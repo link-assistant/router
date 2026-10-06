@@ -171,7 +171,8 @@ fn foreign_repair_validates_then_commits_is_idempotent_and_rolls_back() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(!stdout.contains("la_sk_selected"));
     assert!(!stdout.contains("z.ai-secret"));
-    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let value: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout).unwrap();
     let id = value["results"][0]["backup_id"]
         .as_str()
         .expect("backup id")

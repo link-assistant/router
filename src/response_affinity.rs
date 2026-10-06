@@ -227,7 +227,7 @@ impl ResponseAffinityStore {
             owner,
             destination,
             None,
-            chrono::Utc::now().timestamp(),
+            crate::operation_context::now().timestamp(),
         )
     }
 
@@ -246,7 +246,7 @@ impl ResponseAffinityStore {
             owner,
             destination,
             Some(parent_id.to_string()),
-            chrono::Utc::now().timestamp(),
+            crate::operation_context::now().timestamp(),
         )
     }
 
@@ -319,7 +319,7 @@ impl ResponseAffinityStore {
             namespace,
             response_id,
             owner,
-            chrono::Utc::now().timestamp(),
+            crate::operation_context::now().timestamp(),
         )
     }
 
@@ -373,7 +373,10 @@ impl ResponseAffinityStore {
             crate::durable_file::recover_transactional_write(&self.path)?;
             let mut file = self.load()?;
             let before = file.records.len();
-            prune(&mut file.records, chrono::Utc::now().timestamp());
+            prune(
+                &mut file.records,
+                crate::operation_context::now().timestamp(),
+            );
             let found = file
                 .records
                 .iter()
@@ -442,7 +445,10 @@ impl ResponseAffinityStore {
             crate::durable_file::recover_transactional_write(&self.path)?;
             let mut file = self.load()?;
             let before = file.records.len();
-            prune(&mut file.records, chrono::Utc::now().timestamp());
+            prune(
+                &mut file.records,
+                crate::operation_context::now().timestamp(),
+            );
             let found = file
                 .records
                 .iter()

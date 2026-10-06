@@ -93,7 +93,7 @@ impl EmergencyAuthConfig {
     #[must_use]
     pub fn from_env() -> Self {
         let truthy = |name: &str| {
-            std::env::var(name).is_ok_and(|value| {
+            crate::operation_context::var(name).is_ok_and(|value| {
                 matches!(
                     value.trim().to_ascii_lowercase().as_str(),
                     "1" | "true" | "yes" | "on"
@@ -103,7 +103,7 @@ impl EmergencyAuthConfig {
         Self {
             enabled: truthy(ENV),
             allow_non_loopback: truthy(ALLOW_NON_LOOPBACK_ENV),
-            duration_minutes: std::env::var(DURATION_ENV)
+            duration_minutes: crate::operation_context::var(DURATION_ENV)
                 .ok()
                 .and_then(|value| value.trim().parse().ok())
                 .unwrap_or(DEFAULT_DURATION_MINUTES),
@@ -152,7 +152,7 @@ pub struct EmergencyAuth {
 }
 
 /// Point-in-time view of the mode for diagnostics.
-#[derive(Clone, Debug, Default, serde::Serialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, schemars::JsonSchema)]
 pub struct EmergencyAuthStatus {
     pub active: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -373,7 +373,7 @@ fn infer_client(token: &str, headers: &HeaderMap) -> Option<ClientKind> {
 }
 
 fn now() -> i64 {
-    chrono::Utc::now().timestamp()
+    crate::operation_context::now().timestamp()
 }
 
 #[cfg(test)]

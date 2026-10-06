@@ -1,0 +1,129 @@
+{
+  "$defs": {
+    "LogSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "bytes": {
+          "type": "integer"
+        },
+        "exchanges": {
+          "type": "integer"
+        },
+        "incomplete_streams": {
+          "type": "integer"
+        },
+        "non_streamed": {
+          "type": "integer"
+        },
+        "records": {
+          "type": "integer"
+        },
+        "statuses": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "streamed": {
+          "type": "integer"
+        },
+        "undecodable_bodies": {
+          "type": "integer"
+        },
+        "unparsable_records": {
+          "type": "integer"
+        },
+        "unterminated_streams": {
+          "type": "integer"
+        },
+        "unverifiable_streams": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/logs-summary/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LogSummary"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "logs.summary"
+    },
+    "schema": {
+      "const": "link-assistant-router/logs-summary/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

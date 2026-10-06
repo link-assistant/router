@@ -192,7 +192,7 @@ impl OAuthProvider {
         // then fall back to the flat `accessToken`/`oauthToken` fields.
         if let Some(token) = creds.into_subscription_token() {
             if let Some(exp_ms) = token.expires_at_ms {
-                let now_ms = chrono::Utc::now().timestamp_millis();
+                let now_ms = crate::operation_context::now().timestamp_millis();
                 if exp_ms <= now_ms {
                     if token.refresh_token.is_some() {
                         tracing::debug!(
@@ -286,7 +286,7 @@ impl OAuthProvider {
             Err(e) => return self.get_token().map_err(|_| e),
         };
 
-        let now_ms = chrono::Utc::now().timestamp_millis();
+        let now_ms = crate::operation_context::now().timestamp_millis();
         let fresh = cache
             .get_fresh(
                 client,

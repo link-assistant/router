@@ -535,7 +535,7 @@ async fn usage_api_filters_by_signed_client_and_never_calls_inference() {
         json!({"claudeAiOauth": {
             "accessToken": "vendor-access-secret",
             "refreshToken": "vendor-refresh-secret",
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000,
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000,
             "subscriptionType": "max"
         }})
         .to_string(),
@@ -706,7 +706,7 @@ async fn openai_usage_uses_the_official_codex_headers_and_account() {
 
 #[tokio::test]
 async fn usage_retry_after_accepts_an_http_date() {
-    let retry_at = chrono::Utc::now() + chrono::Duration::seconds(90);
+    let retry_at = crate::operation_context::now() + chrono::Duration::seconds(90);
     let retry_after = retry_at.to_rfc2822();
     let app = axum::Router::new().fallback(move || {
         let retry_after = retry_after.clone();
@@ -740,7 +740,7 @@ async fn cached_authentication_failure_is_invalidated_by_credential_repair() {
             claude_home.join(".credentials.json"),
             json!({"claudeAiOauth": {
                 "accessToken": access,
-                "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+                "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000
             }})
             .to_string(),
         )
@@ -848,7 +848,7 @@ async fn rejected_usage_token_is_refreshed_and_retried_once() {
         json!({"claudeAiOauth": {
             "accessToken": "rejected-access",
             "refreshToken": "unspent-refresh",
-            "expiresAt": chrono::Utc::now().timestamp_millis() + 3_600_000
+            "expiresAt": crate::operation_context::now().timestamp_millis() + 3_600_000
         }})
         .to_string(),
     )

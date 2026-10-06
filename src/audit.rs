@@ -187,7 +187,7 @@ pub fn event(
 ) -> AuditEvent {
     let mut event = AuditEvent {
         phase: "request_authorized".to_string(),
-        time: chrono::Utc::now().to_rfc3339(),
+        time: crate::operation_context::now().to_rfc3339(),
         token_id: token_id.to_string(),
         label: label.to_string(),
         provider: provider.to_string(),

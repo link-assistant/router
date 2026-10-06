@@ -163,7 +163,8 @@ pub fn token_records(container: &str) -> std::collections::BTreeMap<String, serd
         .output()
         .unwrap();
     assert!(output.status.success(), "tokens list failed in {container}");
-    let records: Vec<serde_json::Value> = serde_json::from_slice(&output.stdout).unwrap();
+    let records: Vec<serde_json::Value> =
+        link_assistant_router::contracts::validation::cli_payload(&output.stdout).unwrap();
     records
         .into_iter()
         .map(|record| (record["id"].as_str().unwrap().to_string(), record))

@@ -8,7 +8,7 @@ license = "Unlicense"
 keywords = ["proxy", "anthropic", "claude", "gateway", "oauth"]
 categories = ["web-programming::http-server"]
 repository = "https://github.com/link-assistant/router"
-documentation = "https://github.com/link-assistant/router"
+documentation = "https://docs.rs/link-assistant-router"
 rust-version = "1.89"
 exclude = ["dev/log/**"]
 
@@ -43,6 +43,8 @@ cookie_store = "0.22.1"
 url = "2.5"
 tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync", "net"] }
 serde = { version = "1.0", features = ["derive"] }
+schemars = { version = "1.2", features = ["chrono04"] }
+jsonschema = { version = "0.33", default-features = false }
 serde_json = "1.0"
 toml_edit = "0.25"
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
@@ -64,7 +66,7 @@ lino-objects-codec = "0.7.0"
 links-notation = "0.22.0"
 doublets = "0.5.0"
 link-cli = "0.2.10"
-clap = { version = "4", features = ["derive", "env"] }
+clap = { version = "4", features = ["derive", "env", "string"] }
 base64 = "0.23"
 async-trait = "0.1"
 sha2 = "0.11"
@@ -131,3 +133,9 @@ strip = true
 lto = false
 codegen-units = 16
 strip = false
+
+# The CLI parser enum adds Version/Contracts/Verify in this initial API expansion.
+# Exception documented in docs/integration/compatibility.md; operational APIs
+# and all other semver lints remain checked against every PR base.
+[package.metadata.cargo-semver-checks.lints]
+enum_variant_added = { level = "allow" }

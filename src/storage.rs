@@ -49,7 +49,7 @@ mod model_policy;
 ///
 /// `id` is the JWT `sub` (a UUID); the JWT itself is NOT stored — only the
 /// metadata required to list/expire/revoke.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, schemars::JsonSchema)]
 pub struct TokenRecord {
     pub id: String,
     pub label: String,

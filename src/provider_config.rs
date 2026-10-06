@@ -21,7 +21,7 @@ impl OpenAICompatibleConfig {
         let api_key = self.api_key.clone().or_else(|| {
             self.api_key_env
                 .as_deref()
-                .and_then(|name| std::env::var(name).ok())
+                .and_then(|name| crate::operation_context::var(name).ok())
                 .filter(|value| !value.is_empty())
         });
         ResolvedProvider {

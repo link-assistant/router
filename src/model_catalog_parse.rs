@@ -15,7 +15,7 @@ pub(super) fn parse_catalog(
         provider,
         body,
         "primary",
-        chrono::Utc::now().timestamp(),
+        crate::operation_context::now().timestamp(),
         "test",
         0,
     )

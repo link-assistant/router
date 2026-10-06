@@ -1,6 +1,5 @@
 //! Construction of the shared HTTP client used for every upstream call.
 
-use std::env;
 use std::sync::LazyLock;
 use std::time::Duration;
 
@@ -54,8 +53,8 @@ pub fn parse_upstream_read_timeout(value: Option<&str>) -> Option<Duration> {
 /// `UPSTREAM_READ_TIMEOUT_SECS` it is an alias of.
 #[must_use]
 pub fn upstream_idle_timeout() -> Option<Duration> {
-    let value = env::var("UPSTREAM_IDLE_TIMEOUT_SECS")
-        .or_else(|_| env::var("UPSTREAM_READ_TIMEOUT_SECS"))
+    let value = crate::operation_context::var("UPSTREAM_IDLE_TIMEOUT_SECS")
+        .or_else(|_| crate::operation_context::var("UPSTREAM_READ_TIMEOUT_SECS"))
         .ok();
     parse_upstream_read_timeout(value.as_deref())
 }
@@ -64,7 +63,9 @@ pub fn upstream_idle_timeout() -> Option<Duration> {
 #[must_use]
 pub fn upstream_connect_timeout() -> Option<Duration> {
     parse_timeout_secs(
-        env::var("UPSTREAM_CONNECT_TIMEOUT_SECS").ok().as_deref(),
+        crate::operation_context::var("UPSTREAM_CONNECT_TIMEOUT_SECS")
+            .ok()
+            .as_deref(),
         DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS,
     )
 }
@@ -73,7 +74,9 @@ pub fn upstream_connect_timeout() -> Option<Duration> {
 #[must_use]
 pub fn upstream_first_byte_timeout() -> Option<Duration> {
     parse_timeout_secs(
-        env::var("UPSTREAM_FIRST_BYTE_TIMEOUT_SECS").ok().as_deref(),
+        crate::operation_context::var("UPSTREAM_FIRST_BYTE_TIMEOUT_SECS")
+            .ok()
+            .as_deref(),
         DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS,
     )
 }

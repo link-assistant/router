@@ -337,7 +337,8 @@ fn full_reset_removes_selected_profile_after_complete_backup() {
     );
     assert!(!profile.join("projects/session.jsonl").exists());
     assert!(!profile.join(".credentials.json").exists());
-    let rows: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&result.stdout).unwrap();
     let id = rows[0]["backup_id"].as_str().unwrap();
     let verified = router(home.path(), &["clients", "backup", "verify", id]);
     assert!(
@@ -760,7 +761,8 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
         "{}",
         String::from_utf8_lossy(&preview.stderr)
     );
-    let rows: serde_json::Value = serde_json::from_slice(&preview.stdout).unwrap();
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&preview.stdout).unwrap();
     assert_eq!(rows[0]["status"], "planned");
     assert_eq!(Path::new(rows[0]["targets"][0].as_str().unwrap()), settings);
     assert!(settings.exists(), "a dry run must not remove settings");
@@ -771,7 +773,8 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
         "{}",
         String::from_utf8_lossy(&reset.stderr)
     );
-    let rows: serde_json::Value = serde_json::from_slice(&reset.stdout).unwrap();
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&reset.stdout).unwrap();
     assert_eq!(rows[0]["status"], "reset");
     assert_eq!(Path::new(rows[0]["targets"][0].as_str().unwrap()), settings);
     assert!(rows[0]["backup_id"].is_string());
@@ -789,7 +792,8 @@ fn router_owned_gemini_settings_reset_removes_the_file_gemini_reads() {
     // is reported rather than a reset; the profile is still backed up first.
     let again = router(home.path(), &args);
     assert!(again.status.success());
-    let rows: serde_json::Value = serde_json::from_slice(&again.stdout).unwrap();
+    let rows: serde_json::Value =
+        link_assistant_router::contracts::validation::cli_payload(&again.stdout).unwrap();
     assert_eq!(rows[0]["status"], "unchanged");
     assert_eq!(rows[0]["targets"], serde_json::json!([]));
     assert!(rows[0]["backup_id"].is_string());

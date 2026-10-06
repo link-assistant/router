@@ -35,6 +35,7 @@ fn failure_envelope(error: &str) -> serde_json::Value {
 }
 
 /// Mint a replacement administrator for a store this machine owns (issue #573).
+#[must_use]
 pub fn run(
     manager: &TokenManager,
     revoke_others: bool,

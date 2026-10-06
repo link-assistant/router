@@ -415,7 +415,7 @@ async fn import_provider(
 fn import_catalog_base_url_override() -> Option<String> {
     #[cfg(debug_assertions)]
     {
-        std::env::var("LINK_ASSISTANT_ROUTER_TEST_CATALOG_BASE_URL")
+        crate::operation_context::var("LINK_ASSISTANT_ROUTER_TEST_CATALOG_BASE_URL")
             .ok()
             .filter(|value| !value.trim().is_empty())
     }
@@ -884,10 +884,11 @@ async fn install_candidate(
 }
 
 /// What an operator needs to know about a credential at import time.
+#[must_use]
 pub fn describe_credential(
     token: &link_assistant_router::subscription::SubscriptionToken,
 ) -> String {
-    let now = chrono::Utc::now().timestamp_millis();
+    let now = crate::operation_context::now().timestamp_millis();
     let expiry = token.expires_at_ms.map_or_else(
         || String::from("no recorded expiry"),
         |expires_at| {
@@ -914,6 +915,7 @@ pub fn describe_credential(
 /// Truncating to whole hours reported a credential with 119 minutes left as
 /// "1 hours", which understates it enough to matter when the question being
 /// asked is whether to re-authenticate now.
+#[must_use]
 pub fn humanize_minutes(minutes: i64) -> String {
     if minutes < 90 {
         return format!("{minutes} minutes");
@@ -926,6 +928,7 @@ pub fn humanize_minutes(minutes: i64) -> String {
 }
 
 /// The credential home this deployment reads `provider` from.
+#[must_use]
 pub fn provider_home(
     config: &link_assistant_router::config::Config,
     provider: SubscriptionProvider,
@@ -937,3 +940,8 @@ pub fn provider_home(
 #[cfg(test)]
 #[path = "auth_import_tests.rs"]
 mod tests;
+
+/// Offline JSON Schema for the credential-safe import report.
+pub(crate) fn result_schema() -> schemars::Schema {
+    schemars::schema_for!(import_result::ImportEnvelope<'static>)
+}

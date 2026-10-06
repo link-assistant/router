@@ -20,6 +20,7 @@ pub struct Shutdown(tokio::sync::watch::Sender<bool>);
 
 impl Shutdown {
     /// Start listening for the signals that ask this process to stop.
+    #[must_use]
     pub fn listening() -> Self {
         let (sender, _) = tokio::sync::watch::channel(false);
         let notifier = sender.clone();

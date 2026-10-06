@@ -435,7 +435,7 @@ async fn replacing_a_rejected_pool_credential_makes_it_immediately_eligible() {
             SubscriptionProvider::Codex,
             "primary",
             original,
-            chrono::Utc::now().timestamp_millis(),
+            crate::operation_context::now().timestamp_millis(),
         )
         .await
         .unwrap();

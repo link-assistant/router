@@ -192,7 +192,8 @@ fn host_clients_complete_setup_doctor_launch_and_remove() {
 fn parse_status(stdout: &[u8]) -> serde_json::Value {
     let text = String::from_utf8_lossy(stdout);
     let start = text.find('{').expect("show should print a JSON object");
-    serde_json::from_str(&text[start..]).expect("show should print valid JSON")
+    link_assistant_router::contracts::validation::cli_payload(text[start..].as_bytes())
+        .expect("show should print valid JSON")
 }
 
 fn client_command(client: &str) -> &'static str {

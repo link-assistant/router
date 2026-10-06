@@ -27,14 +27,14 @@ impl TokenManager {
         // An emergency-bypassed wrapper keeps its heartbeat answered without
         // any record being created or extended (issue #645).
         if crate::emergency_auth::is_synthetic_id(token_id) {
-            return Ok(chrono::Utc::now()
+            return Ok(crate::operation_context::now()
                 .timestamp()
                 .saturating_add(RUN_LEASE_TTL_SECONDS));
         }
         self.store
             .renew_run_lease(
                 token_id,
-                chrono::Utc::now().timestamp(),
+                crate::operation_context::now().timestamp(),
                 RUN_LEASE_TTL_SECONDS,
             )
             .map_err(|error| TokenError::Storage(error.to_string()))?

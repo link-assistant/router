@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 /// `router with` reject the whole catalog (issue #620). A spelling this
 /// build does not know is `Unknown`, never a parse failure: an older wrapper
 /// must degrade to "no alias evidence", not to "no models".
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ModelSelectorKind {
     Concrete,
@@ -76,7 +76,7 @@ impl ModelSelectorKind {
 }
 
 /// Exact routing scope for one model observation or exchange.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ModelRouteScope {
     pub provider: Option<String>,
     pub account: Option<String>,
@@ -88,7 +88,7 @@ pub struct ModelRouteScope {
 ///
 /// `None` is intentionally serialized as JSON `null`: it means unknown, not
 /// that Router may fill the field from a nearby selector.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ModelTruthDescriptor {
     pub requested_selector: Option<String>,
     pub selector_kind: ModelSelectorKind,
@@ -112,7 +112,7 @@ const fn is_false(value: &bool) -> bool {
 /// An empty allow-list preserves the historical unpinned behavior. A
 /// non-empty list contains every exact selector the holder may request;
 /// multiple entries therefore represent an explicit switching grant.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ModelAccessPolicy {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub allowed_models: Vec<String>,
@@ -181,7 +181,7 @@ impl ModelAccessPolicy {
 }
 
 /// Stable machine-readable refusal for a request outside a token grant.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ModelAccessError {
     pub code: String,
     pub requested_model: String,
@@ -229,7 +229,7 @@ impl std::fmt::Display for ModelAccessError {
 impl std::error::Error for ModelAccessError {}
 
 /// Stable refusal when an upstream response does not prove what served it.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct ServedModelError {
     pub code: String,
     pub requested_model: String,

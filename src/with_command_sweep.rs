@@ -126,12 +126,13 @@ pub(super) fn process_alive(pid: u32) -> bool {
     }
     #[cfg(unix)]
     {
-        let signalled = std::process::Command::new("kill")
-            .args(["-0", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .is_ok_and(|status| status.success());
+        let signalled = crate::operation_context::process_output(
+            crate::operation_context::command("kill")
+                .args(["-0", &pid.to_string()])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null()),
+        )
+        .is_ok_and(|output| output.status.success());
         if signalled {
             return true;
         }
@@ -139,28 +140,33 @@ pub(super) fn process_alive(pid: u32) -> bool {
         // owned by somebody else. `ps` answers the question that was actually
         // asked — does this pid exist — for any owner, so `EPERM` can no
         // longer read as "dead" (issue #313).
-        std::process::Command::new("ps")
-            .args(["-p", &pid.to_string()])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .output()
-            .is_ok_and(|output| {
-                String::from_utf8_lossy(&output.stdout)
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .count()
-                    > 1
-            })
+        crate::operation_context::process_output(
+            crate::operation_context::command("ps")
+                .args(["-p", &pid.to_string()])
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null()),
+        )
+        .is_ok_and(|output| {
+            String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                .count()
+                > 1
+        })
     }
     #[cfg(windows)]
     {
-        std::process::Command::new("tasklist")
-            .args(["/FI", &format!("PID eq {pid}"), "/NH"])
-            .output()
-            .is_ok_and(|output| {
-                output.status.success()
-                    && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
-            })
+        crate::operation_context::process_output(
+            crate::operation_context::command("tasklist").args([
+                "/FI",
+                &format!("PID eq {pid}"),
+                "/NH",
+            ]),
+        )
+        .is_ok_and(|output| {
+            output.status.success()
+                && String::from_utf8_lossy(&output.stdout).contains(&pid.to_string())
+        })
     }
 }
 

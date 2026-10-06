@@ -165,7 +165,9 @@ impl ClaudeLogin {
         let pending = PendingLogin {
             code_verifier: login.code_verifier.clone(),
             state: login.state.clone(),
-            expires_at: chrono::Utc::now().timestamp_millis().saturating_add(ttl),
+            expires_at: crate::operation_context::now()
+                .timestamp_millis()
+                .saturating_add(ttl),
         };
         write_pending(&login.config.claude_home, &pending)?;
         Ok(login)
@@ -174,7 +176,7 @@ impl ClaudeLogin {
     /// Atomically consume the PKCE state created by [`Self::begin_persisted`].
     pub fn resume(config: ClaudeAuthConfig) -> Result<Self, String> {
         let pending = take_pending(&config.claude_home)?;
-        if pending.expires_at <= chrono::Utc::now().timestamp_millis() {
+        if pending.expires_at <= crate::operation_context::now().timestamp_millis() {
             return Err(
                 "pending Claude authorization expired; run `router auth claude --flow code` again"
                     .to_string(),
@@ -303,7 +305,7 @@ async fn persist(
     token: TokenResponse,
     data_dir: &Path,
 ) -> Result<PathBuf, String> {
-    let now = chrono::Utc::now().timestamp_millis();
+    let now = crate::operation_context::now().timestamp_millis();
     // Fall back to what this login actually asked for, so a narrow
     // `setup-token` credential is not recorded as carrying full scopes.
     let scopes = token.scope.as_deref().map_or_else(

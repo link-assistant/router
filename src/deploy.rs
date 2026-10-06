@@ -542,3 +542,29 @@ pub fn down(runtime: &dyn ContainerRuntime, confirmed: bool) -> Result<String, S
         }
     }
 }
+
+#[path = "deploy/operations.rs"]
+mod operations;
+/// Local deployment planning, convergence and status.
+pub mod local {
+    pub use super::operations::{LocalPlan, apply, plan, status};
+}
+/// Native host deployment.
+pub mod host {
+    pub use super::operations::host as apply;
+    pub use super::operations::host_status as status;
+}
+/// Remote SSH deployment.
+pub mod remote {
+    pub use super::operations::remote as apply;
+    pub use super::operations::remote_status as status;
+}
+/// Isolated staging deployments.
+pub mod staging {
+    pub use super::operations::staging as apply;
+}
+/// Logical deployment checkpoints, with secrets excluded and validated restore.
+pub mod checkpoint {
+    pub use super::operations::restore;
+    pub use crate::deploy_local::capture_checkpoint as capture;
+}

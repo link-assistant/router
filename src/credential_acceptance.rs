@@ -349,7 +349,7 @@ async fn accept_candidate_with_timeout_mode(
         .map_err(|_| {
             AcceptanceFailure::not_attempted("could not initialize candidate validation")
         })?;
-    let now_ms = chrono::Utc::now().timestamp_millis();
+    let now_ms = crate::operation_context::now().timestamp_millis();
     let refreshed = if rotate_candidate {
         let refresh_result = match token_url_override {
             Some(token_url) => {

@@ -54,7 +54,7 @@ impl ImportMode {
 }
 
 /// One record both sides hold with different contents.
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq, schemars::JsonSchema)]
 pub struct Conflict {
     pub id: String,
     /// The record fields whose values differ.
@@ -62,7 +62,7 @@ pub struct Conflict {
 }
 
 /// The outcome of one import, printed as the command's result.
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq, schemars::JsonSchema)]
 pub struct ImportReport {
     pub mode: &'static str,
     pub dry_run: bool,
@@ -315,7 +315,7 @@ fn write_backup(
 ) -> Result<PathBuf, String> {
     let path = directory.join(format!(
         "tokens-{}-{}.json",
-        chrono::Utc::now().format("%Y%m%dT%H%M%SZ"),
+        crate::operation_context::now().format("%Y%m%dT%H%M%SZ"),
         &uuid::Uuid::new_v4().simple().to_string()[..8]
     ));
     let records: Vec<&TokenRecord> = records.values().collect();

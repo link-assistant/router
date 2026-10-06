@@ -50,6 +50,11 @@ pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerK
     if listener == ListenerKind::GitHubAdapter {
         app = app.merge(github_adapter_routes(state.clone()));
     }
+    if crate::operation_context::var("ROUTER_VALIDATE_HTTP_CONTRACTS").as_deref() == Ok("1") {
+        app = app.layer(axum::middleware::from_fn(
+            crate::contracts::validation::response_contract,
+        ));
+    }
     app.fallback(not_found)
         .layer(axum::middleware::from_fn(scope_auth_outcomes))
         .with_state(state)

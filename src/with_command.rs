@@ -176,7 +176,7 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         None
     };
-    let user_claude_model = std::env::var("ANTHROPIC_MODEL")
+    let user_claude_model = crate::operation_context::var("ANTHROPIC_MODEL")
         .ok()
         .filter(|value| !value.trim().is_empty());
     let user_claude_settings = (args.client == ClientKind::ClaudeCode && args.extend_global_config)
@@ -462,7 +462,7 @@ impl TemporaryClient {
             }
         }
         let integration = client.integration();
-        let mut command = Command::new(integration.command);
+        let mut command = crate::operation_context::command(integration.command);
         if extends_user_configuration(client, isolated_config, extend_user_configuration) {
             // Layer the router's connection settings on top of the user's own
             // configuration rather than replacing it, so sessions and settings
@@ -574,7 +574,7 @@ impl TemporaryClient {
                     .any(|model| model.owned_by == crate::clients::ANTHROPIC_MODEL_OWNER);
                 if replaces_family_rows && let Some(gateway_model) = gateway_model.as_deref() {
                     for key in crate::clients::CLAUDE_DEFAULT_ROW_ENV {
-                        let inherited = std::env::var(key).ok();
+                        let inherited = crate::operation_context::var(key).ok();
                         let authorized = inherited
                             .as_deref()
                             .filter(|value| models.iter().any(|model| model.id == *value));
@@ -654,6 +654,27 @@ impl TemporaryClient {
         debug_assert!(directory.path().is_dir());
         self.command.args(arguments);
         let program = self.command.get_program().to_string_lossy().into_owned();
+        if let Some(context) = crate::operation_context::current() {
+            if let Some(profile) = profile {
+                profile.commit_launch(std::process::id())?;
+            }
+            let output = tokio::task::spawn_blocking(move || {
+                context.scope(|| {
+                    crate::operation_context::bounded_output(
+                        &mut self.command,
+                        context.process_deadline,
+                    )
+                })
+            })
+            .await??;
+            crate::operation_output::record(json!({
+                "client_exit_code": output.status.code(),
+                "stdout": String::from_utf8_lossy(&output.stdout),
+                "stderr": String::from_utf8_lossy(&output.stderr)
+            }));
+            drop(directory);
+            return Ok(output.status);
+        }
         let mut child = tokio::process::Command::from(self.command)
             .kill_on_drop(true)
             .spawn()
@@ -696,7 +717,7 @@ impl TemporaryClient {
 /// #551).
 fn apply_claude_privacy_overlay(command: &mut Command) {
     for key in CLAUDE_PRIVACY_DEFAULT_ENV {
-        if std::env::var_os(key).is_none() {
+        if crate::operation_context::var_os(key).is_none() {
             command.env(key, "1");
         }
     }
@@ -704,7 +725,7 @@ fn apply_claude_privacy_overlay(command: &mut Command) {
     let blockers = CLAUDE_FEATURE_FLAG_BLOCKING_ENV
         .into_iter()
         .filter(|key| {
-            std::env::var_os(key).is_some_and(|value| {
+            crate::operation_context::var_os(key).is_some_and(|value| {
                 if *key == "DO_NOT_TRACK" {
                     value == "1" || value.eq_ignore_ascii_case("true")
                 } else {
@@ -811,11 +832,13 @@ async fn interrupt_child(
 ) -> Result<std::process::ExitStatus, AnyError> {
     #[cfg(unix)]
     if let Some(pid) = child.id() {
-        let _ = std::process::Command::new("kill")
-            .args(["-INT", &pid.to_string()])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
+        let _ = crate::operation_context::process_output(
+            crate::operation_context::command("kill")
+                .args(["-INT", &pid.to_string()])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null()),
+        )
+        .map(|output| output.status);
     }
     #[cfg(windows)]
     child.start_kill()?;

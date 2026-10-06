@@ -101,7 +101,7 @@ pub fn or_from_file(secret: Option<String>) -> Result<Option<String>, String> {
     if secret.as_deref().is_some_and(|secret| !secret.is_empty()) {
         return Ok(secret);
     }
-    std::env::var_os(FILE_ENV)
+    crate::operation_context::var_os(FILE_ENV)
         .filter(|path| !path.is_empty())
         .map_or(Ok(secret), |path| {
             read_file(std::path::Path::new(&path)).map(Some)
