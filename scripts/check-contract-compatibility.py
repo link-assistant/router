@@ -14,7 +14,13 @@ def compare(old,new,path=''):
                 for name,value in old[key].items():
                     if name not in new.get(key,{}):errors.append(path+'/'+key+'/'+name+' removed')
                     else:errors+=compare(value,new[key][name],path+'/'+key+'/'+name)
-        if not set(new.get('required',[])).issubset(old.get('required',[])):errors.append(path+' gained required fields')
+        before_required=old.get('required',[]);after_required=new.get('required',[])
+        if isinstance(before_required,bool) or isinstance(after_required,bool):
+            # OpenAPI parameters/request bodies use a boolean; JSON Schema uses a list.
+            before_required=old.get('required',False);after_required=new.get('required',False)
+            if not isinstance(before_required,bool) or not isinstance(after_required,bool):errors.append(path+'/required changed type')
+            elif after_required and not before_required:errors.append(path+' became required')
+        elif not set(after_required).issubset(before_required):errors.append(path+' gained required fields')
         for key in ['items','anyOf','oneOf','allOf','schema','requestBody','parameters']:
             if key in old:errors+=compare(old[key],new.get(key),path+'/'+key)
     elif isinstance(old,list) and isinstance(new,list):

@@ -84,9 +84,10 @@ impl Coordinator<'_> {
                 self.preservation_failure(&format!("credential/data source differs or is unavailable at {destination}; preserving bytes elsewhere does not preserve the source connection"))?;
             }
         }
-        let all_records: Vec<TokenRecord> =
-            serde_json::from_str(&self.docker.token_inventory(backend)?)
-                .map_err(|_| "previous issued-token inventory is invalid")?;
+        let all_records: Vec<TokenRecord> = crate::operations::decode_token_inventory(
+            self.docker.token_inventory(backend)?.as_bytes(),
+        )
+        .map_err(|_| "previous issued-token inventory is invalid")?;
         let records: Vec<_> = all_records
             .iter()
             .filter(|record| usable(record, crate::operation_context::now().timestamp()))

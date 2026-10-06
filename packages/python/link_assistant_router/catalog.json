@@ -56002,6 +56002,287 @@
       "title": "ImportEnvelope",
       "type": "object"
     },
+    "AuthStatusReport": {
+      "$defs": {
+        "CredentialAcceptanceReport": {
+          "description": "One provider's accepted state and exact local credential root.",
+          "properties": {
+            "detail": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "home": {
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/SubscriptionProvider"
+            },
+            "state": {
+              "$ref": "#/$defs/CredentialAcceptanceState"
+            }
+          },
+          "required": [
+            "provider",
+            "home",
+            "state"
+          ],
+          "type": "object"
+        },
+        "CredentialAcceptanceState": {
+          "description": "Stable provider-verified credential state used by CLI and management APIs.",
+          "enum": [
+            "usable",
+            "rejected",
+            "unverified",
+            "refresh-failed",
+            "absent"
+          ],
+          "type": "string"
+        },
+        "CredentialSource": {
+          "description": "How a deployment holds one provider's credential.",
+          "oneOf": [
+            {
+              "description": "Nothing is installed for this provider.",
+              "properties": {
+                "kind": {
+                  "const": "absent",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "Router's own credential file, which Router alone rotates.\n\nThe ordinary case for a credential obtained by `auth claude` here: there\nis no second holder, so there is no chain to share.",
+              "properties": {
+                "kind": {
+                  "const": "owned",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "A reference to a vendor client's file that both processes advance.\n\nOne chain, one refresher: whichever process refreshes writes the\nsuccessor where the other will read it.",
+              "properties": {
+                "kind": {
+                  "const": "followed",
+                  "type": "string"
+                },
+                "present": {
+                  "description": "Whether that file is currently readable.\n\nA followed home that has been removed must be named as such: falling\nback to a stale copy is what makes a deployment drift into\n`invalid_grant` while the CLI beside it stays healthy.",
+                  "type": "boolean"
+                },
+                "source": {
+                  "description": "The vendor file being followed.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "source",
+                "present"
+              ],
+              "type": "object"
+            },
+            {
+              "description": "A credential owned elsewhere that Router must not rotate.\n\nMarked `refresh_owner: external` without identifying a writable source,\nso Router can read it but must never spend the refresh token.",
+              "properties": {
+                "kind": {
+                  "const": "externally-owned",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "ProviderKind": {
+          "description": "Supported persisted provider kinds.",
+          "oneOf": [
+            {
+              "const": "openai-compatible",
+              "description": "Generic OpenAI-compatible upstream such as `LiteLLM`.",
+              "type": "string"
+            },
+            {
+              "const": "lefine",
+              "description": "Lefine `OpenAI` Chat Completions API with live catalog validation.",
+              "type": "string"
+            },
+            {
+              "const": "zai-coding-plan",
+              "description": "Personal z.ai GLM Coding Plan with client/subscriber policy gates.",
+              "type": "string"
+            }
+          ]
+        },
+        "RedactedProviderRecord": {
+          "description": "Provider record shape safe to print or return over the API.",
+          "properties": {
+            "api_key_env": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "base_url": {
+              "type": "string"
+            },
+            "default_model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "has_encrypted_api_key": {
+              "type": "boolean"
+            },
+            "intermediary_risk_acknowledged": {
+              "type": "boolean"
+            },
+            "kind": {
+              "$ref": "#/$defs/ProviderKind"
+            },
+            "models": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": {
+              "type": "string"
+            },
+            "subscriber_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "supported_clients": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "unsupported_clients": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "name",
+            "kind",
+            "base_url",
+            "models",
+            "supported_clients",
+            "has_encrypted_api_key",
+            "enabled",
+            "intermediary_risk_acknowledged",
+            "unsupported_clients"
+          ],
+          "type": "object"
+        },
+        "SourceReport": {
+          "description": "One provider's holding, for `auth status`.",
+          "properties": {
+            "provider": {
+              "$ref": "#/$defs/SubscriptionProvider"
+            },
+            "source": {
+              "$ref": "#/$defs/CredentialSource"
+            }
+          },
+          "required": [
+            "provider",
+            "source"
+          ],
+          "type": "object"
+        },
+        "SubscriptionProvider": {
+          "description": "A subscription-backed upstream that authenticates with vendor OAuth tokens.",
+          "oneOf": [
+            {
+              "const": "claude",
+              "description": "Anthropic Claude (Pro/Max) via Claude Code \u2014 `~/.claude`.",
+              "type": "string"
+            },
+            {
+              "const": "codex",
+              "description": "`OpenAI` Codex / `ChatGPT` subscription via the Codex CLI \u2014 `~/.codex`.",
+              "type": "string"
+            },
+            {
+              "const": "gemini",
+              "description": "Google Gemini Code Assist via the Gemini CLI \u2014 `~/.gemini`.",
+              "type": "string"
+            },
+            {
+              "const": "qwen",
+              "description": "Alibaba Qwen via the qwen-code CLI \u2014 `~/.qwen`.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "api_key_providers": {
+          "items": {
+            "$ref": "#/$defs/RedactedProviderRecord"
+          },
+          "type": "array"
+        },
+        "credentials": {
+          "items": {
+            "$ref": "#/$defs/CredentialAcceptanceReport"
+          },
+          "type": "array"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "server": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/SourceReport"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "credentials",
+        "sources",
+        "api_key_providers",
+        "output"
+      ],
+      "title": "AuthStatusReport",
+      "type": "object"
+    },
     "BackupManifest": {
       "$defs": {
         "Entry": {
@@ -56141,6 +56422,30 @@
       "title": "Manifest",
       "type": "object"
     },
+    "BackupVerificationReport": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "verified": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "verified",
+        "output"
+      ],
+      "title": "BackupVerificationReport",
+      "type": "object"
+    },
     "BeginLoginRequest": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "Optional body for [`begin_login`]. An empty request remains Claude for\ncompatibility with the original endpoint.",
@@ -56161,6 +56466,155 @@
         }
       },
       "title": "BeginLoginRequest",
+      "type": "object"
+    },
+    "ClientDoctorReport": {
+      "$defs": {
+        "ClientState": {
+          "properties": {
+            "base_url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "client": {
+              "type": "string"
+            },
+            "config_path": {
+              "type": "string"
+            },
+            "configured": {
+              "type": "boolean"
+            },
+            "conflicts": {
+              "description": "Routing-critical key names which disagree; values are never retained.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "dialect": {
+              "type": "string"
+            },
+            "effective_source": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ConfigSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Highest-precedence source which currently selects the endpoint."
+            },
+            "installed": {
+              "type": "boolean"
+            },
+            "ownership_state": {
+              "$ref": "#/$defs/OwnershipState",
+              "description": "Router ownership of the effective routing configuration."
+            },
+            "token_env": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "token_env_set": {
+              "type": "boolean"
+            },
+            "unreadable": {
+              "description": "Why this client's configuration could not be read, if it could not.\n\nA damaged file is a property of one row, not of the listing: propagating\nit ended the table at that client and silently hid every client after\nit, while the error named a *different* client than the one missing\n(issue #304).",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "unsupported": {
+              "description": "Why the router cannot manage this client at all, if it cannot.\n\n`configured: false` is indistinguishable from a real answer for a\nclient whose reader is a hardcoded `None` (issue #303).",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "client",
+            "installed",
+            "configured",
+            "config_path",
+            "dialect",
+            "token_env_set",
+            "ownership_state",
+            "conflicts"
+          ],
+          "type": "object"
+        },
+        "ConfigSource": {
+          "description": "Highest-precedence source selecting the endpoint.",
+          "enum": [
+            "ambient-environment",
+            "public-config",
+            "managed-environment",
+            "ownership-metadata"
+          ],
+          "type": "string"
+        },
+        "OwnershipState": {
+          "description": "Who owns the routing configuration currently effective for a client.",
+          "enum": [
+            "unconfigured",
+            "foreign",
+            "managed-intact",
+            "managed-drifted",
+            "ambiguous"
+          ],
+          "type": "string"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "client": {
+          "$ref": "#/$defs/ClientState"
+        },
+        "http_status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "reachable": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "client",
+        "reachable",
+        "output"
+      ],
+      "title": "ClientDoctorReport",
       "type": "object"
     },
     "ClientStatus": {
@@ -56349,6 +56803,226 @@
         "state"
       ],
       "title": "CredentialAcceptanceReport",
+      "type": "object"
+    },
+    "DoctorReport": {
+      "$defs": {
+        "Check": {
+          "properties": {
+            "detail": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "state"
+          ],
+          "type": "object"
+        },
+        "DeploymentHealth": {
+          "properties": {
+            "deployment": {
+              "$ref": "#/$defs/Entry"
+            },
+            "present": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "deployment",
+            "present"
+          ],
+          "type": "object"
+        },
+        "Entry": {
+          "description": "One registered deployment.",
+          "properties": {
+            "instance": {
+              "description": "The `--instance` it was deployed as, when any.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "mode": {
+              "description": "`container` or `host`.",
+              "type": "string"
+            },
+            "port": {
+              "description": "The loopback port it serves on.",
+              "format": "uint16",
+              "maximum": 65535,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "registered_at": {
+              "description": "Unix seconds of the last successful deploy.",
+              "format": "int64",
+              "type": "integer"
+            },
+            "root": {
+              "description": "The absolute deployment root.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "root",
+            "mode",
+            "port",
+            "registered_at"
+          ],
+          "type": "object"
+        },
+        "ModelRecommendation": {
+          "properties": {
+            "model": {
+              "type": "string"
+            },
+            "provider": {
+              "$ref": "#/$defs/SubscriptionProvider"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "model",
+            "reason"
+          ],
+          "type": "object"
+        },
+        "ProviderHealth": {
+          "properties": {
+            "credential_root": {
+              "type": "string"
+            },
+            "detail": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "models": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "provider": {
+              "$ref": "#/$defs/SubscriptionProvider"
+            },
+            "state": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "credential_root",
+            "state",
+            "models"
+          ],
+          "type": "object"
+        },
+        "SubscriptionProvider": {
+          "description": "A subscription-backed upstream that authenticates with vendor OAuth tokens.",
+          "oneOf": [
+            {
+              "const": "claude",
+              "description": "Anthropic Claude (Pro/Max) via Claude Code \u2014 `~/.claude`.",
+              "type": "string"
+            },
+            {
+              "const": "codex",
+              "description": "`OpenAI` Codex / `ChatGPT` subscription via the Codex CLI \u2014 `~/.codex`.",
+              "type": "string"
+            },
+            {
+              "const": "gemini",
+              "description": "Google Gemini Code Assist via the Gemini CLI \u2014 `~/.gemini`.",
+              "type": "string"
+            },
+            {
+              "const": "qwen",
+              "description": "Alibaba Qwen via the qwen-code CLI \u2014 `~/.qwen`.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/Check"
+          },
+          "type": "array"
+        },
+        "data_dir": {
+          "type": "string"
+        },
+        "deployments": {
+          "items": {
+            "$ref": "#/$defs/DeploymentHealth"
+          },
+          "type": "array"
+        },
+        "forwarded_headers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "listen_addr": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "providers": {
+          "items": {
+            "$ref": "#/$defs/ProviderHealth"
+          },
+          "type": "array"
+        },
+        "recommended_models": {
+          "items": {
+            "$ref": "#/$defs/ModelRecommendation"
+          },
+          "type": "array"
+        },
+        "status": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "version",
+        "checks",
+        "providers",
+        "deployments",
+        "recommended_models",
+        "data_dir",
+        "listen_addr",
+        "forwarded_headers",
+        "output"
+      ],
+      "title": "DoctorReport",
       "type": "object"
     },
     "EmergencyStatus": {
@@ -56552,6 +57226,32 @@
       "title": "IssueTokenRequest",
       "type": "object"
     },
+    "LogRecordsReport": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "correlation_id": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "records": {
+          "description": "Vendor and request records retain their open-ended fields.",
+          "items": true,
+          "type": "array"
+        }
+      },
+      "required": [
+        "correlation_id",
+        "records",
+        "output"
+      ],
+      "title": "LogRecordsReport",
+      "type": "object"
+    },
     "LoginView": {
       "$defs": {
         "LoginStatus": {
@@ -56747,6 +57447,227 @@
         "preserved_profiles"
       ],
       "title": "Plan",
+      "type": "object"
+    },
+    "ModelExplanationReport": {
+      "$defs": {
+        "ClientRepresentation": {
+          "properties": {
+            "advertisements": {
+              "items": true,
+              "type": "array"
+            },
+            "client": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "client",
+            "advertisements"
+          ],
+          "type": "object"
+        },
+        "ModelHealth": {
+          "properties": {
+            "degraded_providers": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "degraded_reasons": true,
+            "healthy_providers": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "starting_providers": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "healthy_providers",
+            "starting_providers",
+            "degraded_providers",
+            "degraded_reasons"
+          ],
+          "type": "object"
+        },
+        "ModelRouteScope": {
+          "description": "Exact routing scope for one model observation or exchange.",
+          "properties": {
+            "account": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "endpoint": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "protocols": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "protocols"
+          ],
+          "type": "object"
+        },
+        "ModelRouting": {
+          "properties": {
+            "candidate_count": {
+              "format": "uint",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "catalog_conflicts": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "state": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "state",
+            "candidate_count",
+            "catalog_conflicts"
+          ],
+          "type": "object"
+        },
+        "ModelSelectorKind": {
+          "description": "Kind of selector a caller supplied. Dynamic aliases are factual only when\nthe authenticated provider catalog advertised that exact spelling.\n\nThis is the one wire contract for `selector_kind`: every producer\nserializes the canonical `snake_case` spelling, and every consumer \u2014\ncatalog projection, `router model` diagnostics and the wrapper's typed\ncatalog rows \u2014 reads through [`Self::from_wire`]. Router once emitted\n`provider_advertised_exact_id` for live z.ai rows while the wrapper's\nderived parser accepted only the canonical names, so one such row made\n`router with` reject the whole catalog (issue #620). A spelling this\nbuild does not know is `Unknown`, never a parse failure: an older wrapper\nmust degrade to \"no alias evidence\", not to \"no models\".",
+          "enum": [
+            "concrete",
+            "provider_dynamic_alias",
+            "operator_alias",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "ModelTruthDescriptor": {
+          "description": "Canonical truth descriptor used by model diagnostics and boundary logs.\n\n`None` is intentionally serialized as JSON `null`: it means unknown, not\nthat Router may fill the field from a nearby selector.",
+          "properties": {
+            "allow_substitution": {
+              "type": "boolean"
+            },
+            "capabilities": true,
+            "capability_provenance": true,
+            "requested_selector": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "route": {
+              "$ref": "#/$defs/ModelRouteScope"
+            },
+            "selector_kind": {
+              "$ref": "#/$defs/ModelSelectorKind"
+            },
+            "substitution_source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "upstream_request_model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "upstream_served_model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "selector_kind",
+            "route",
+            "capabilities",
+            "capability_provenance",
+            "allow_substitution"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "capability_provenance": true,
+        "client_representation": {
+          "$ref": "#/$defs/ClientRepresentation"
+        },
+        "contract_version": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "health": {
+          "$ref": "#/$defs/ModelHealth"
+        },
+        "model_descriptor": {
+          "$ref": "#/$defs/ModelTruthDescriptor"
+        },
+        "model_policy": true,
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requested_selector": {
+          "type": "string"
+        },
+        "route_scope": true,
+        "routing": {
+          "$ref": "#/$defs/ModelRouting"
+        },
+        "selector_kind": {
+          "type": "string"
+        },
+        "served_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "model_descriptor",
+        "requested_selector",
+        "selector_kind",
+        "client_representation",
+        "route_scope",
+        "capability_provenance",
+        "model_policy",
+        "health",
+        "routing",
+        "output"
+      ],
+      "title": "ModelExplanationReport",
       "type": "object"
     },
     "OperationResult": {
@@ -57100,6 +58021,102 @@
       "title": "RotateTokenRequest",
       "type": "object"
     },
+    "ServerStatusReport": {
+      "$defs": {
+        "ManagedServerStatus": {
+          "properties": {
+            "administrator_claimed": {
+              "type": "boolean"
+            },
+            "container": {
+              "type": "string"
+            },
+            "detail": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "keep_running": {
+              "type": "boolean"
+            },
+            "present": {
+              "type": "boolean"
+            },
+            "state": {
+              "type": "string"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "users": {
+              "format": "uint",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "volume": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "present",
+            "state",
+            "container",
+            "volume",
+            "administrator_claimed",
+            "users",
+            "keep_running"
+          ],
+          "type": "object"
+        },
+        "ServerSelection": {
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "token_configured": {
+              "type": "boolean"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "source",
+            "token_configured"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "managed": {
+          "$ref": "#/$defs/ManagedServerStatus"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "selection": {
+          "$ref": "#/$defs/ServerSelection"
+        }
+      },
+      "required": [
+        "selection",
+        "managed",
+        "output"
+      ],
+      "title": "ServerStatusReport",
+      "type": "object"
+    },
     "SubmitCodeRequest": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "description": "Request body for [`submit_code`].",
@@ -57423,6 +58440,70 @@
         }
       },
       "title": "TtlRequest",
+      "type": "object"
+    },
+    "TunnelStatusReport": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "health_status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "local_port": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "models_checked": {
+          "type": "boolean"
+        },
+        "models_status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "remote_port": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string"
+        },
+        "via": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "running",
+        "via",
+        "server",
+        "local_port",
+        "remote_port",
+        "models_checked",
+        "output"
+      ],
+      "title": "TunnelStatusReport",
       "type": "object"
     },
     "UsageEnvelope": {

@@ -43,6 +43,7 @@ struct Blocker {
 /// What a host migration starts from, gathered without changing anything.
 struct Plan {
     executable: PathBuf,
+    router_version: String,
     login: ClaudeLogin,
     /// The managed container deployment host mode replaces.
     from: Option<Active>,
@@ -195,9 +196,11 @@ impl Coordinator<'_> {
 
     fn host_plan(&self, record: Option<Host>, runtime: &dyn HostRuntime) -> Result<Plan, String> {
         let executable = runtime.executable()?;
+        let router_version = runtime.version(&executable)?;
         let data = self.root.join("data");
         let mut plan = Plan {
             executable,
+            router_version,
             login: runtime.claude_login(),
             from: None,
             record_serving: record.as_ref().is_some_and(|record| {
@@ -279,7 +282,7 @@ impl Coordinator<'_> {
             && plan.record_serving
             && plan.record.as_ref().is_some_and(|record| {
                 Path::new(&record.executable) == plan.executable
-                    && record.router_version == link_assistant_router::VERSION
+                    && record.router_version == plan.router_version
                     && record.port == self.port
             });
         plan.converged = serving_this
@@ -381,14 +384,13 @@ impl Coordinator<'_> {
                 );
             }
             let outdated = Path::new(&record.executable) != plan.executable
-                || record.router_version != link_assistant_router::VERSION;
+                || record.router_version != plan.router_version;
             if plan.record_serving && outdated {
                 plan.block(
                     "host-restart",
                     format!(
                         "replacing the running host Router {} with {} closes its open connections",
-                        record.router_version,
-                        link_assistant_router::VERSION
+                        record.router_version, plan.router_version
                     ),
                     true,
                 );
@@ -470,7 +472,8 @@ impl Coordinator<'_> {
 
     fn print_host_plan(&self, plan: &Plan) {
         let mut report = self.status_report("host", "planned");
-        report["host_router"] = serde_json::json!({"executable": plan.executable, "version": link_assistant_router::VERSION});
+        report["host_router"] =
+            serde_json::json!({"executable": plan.executable, "version": plan.router_version});
         report["host_process"] = plan
             .record
             .as_ref()
@@ -510,7 +513,7 @@ impl Coordinator<'_> {
         println!(
             "host_router={} version={}",
             plan.executable.display(),
-            link_assistant_router::VERSION
+            plan.router_version
         );
         println!(
             "data_dir={} preserved=token-store,signing-secret,request-logs,provider-configuration",

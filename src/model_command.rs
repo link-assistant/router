@@ -72,6 +72,11 @@ async fn explain_at(
     }
     let catalog: Value = serde_json::from_str(&text)?;
     let (diagnostic, found) = diagnostic(id, client, &catalog);
+    let mut report = diagnostic.clone();
+    report["output"] = json!([]);
+    crate::operation_output::report(serde_json::from_value::<
+        crate::operation_reports::ModelExplanationReport,
+    >(report)?);
     println!("{}", serde_json::to_string_pretty(&diagnostic)?);
     Ok(found)
 }

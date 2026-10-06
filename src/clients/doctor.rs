@@ -19,6 +19,15 @@ pub const DOCTOR_EVIDENCE_VALUE: &str = "reachability";
 impl ClientManager {
     /// Exercise the same URL and token variable configured for the client.
     pub async fn doctor(&self, client: ClientKind) -> Result<String, ClientError> {
+        let client_status = self.status(client)?;
+        crate::operation_output::report(crate::operation_reports::ClientDoctorReport {
+            client: serde_json::from_value(serde_json::to_value(&client_status)?)?,
+            reachable: false,
+            url: client_status.base_url.clone(),
+            http_status: None,
+            model: None,
+            output: Vec::new(),
+        });
         if let Some(limitation) = client.setup_limitation() {
             return Err(ClientError::message(limitation));
         }
@@ -80,6 +89,14 @@ impl ClientManager {
                 ClientError::message(format!("router is not reachable at {url}: {error}"))
             })?;
         let code = response.status();
+        crate::operation_output::report(crate::operation_reports::ClientDoctorReport {
+            client: serde_json::from_value(serde_json::to_value(&client_status)?)?,
+            reachable: true,
+            url: Some(url.clone()),
+            http_status: Some(code.as_u16()),
+            model: Some(model.to_owned()),
+            output: Vec::new(),
+        });
         let response_body = response.text().await.unwrap_or_default();
         if code.is_success() {
             return Ok(format!(

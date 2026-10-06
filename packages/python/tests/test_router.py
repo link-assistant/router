@@ -9,6 +9,45 @@ from link_assistant_router.testing import temporary_home, mock_upstream, vendor_
 
 BINARY = str(Path(os.environ.get('ROUTER_TEST_BIN','target/debug/router')).resolve())
 class BindingTests(unittest.TestCase):
+    def test_domain_reports_follow_real_state_changes(self):
+        import base64
+        home=temporary_home(); accepted=[True]
+        claims=base64.urlsafe_b64encode(json.dumps({'sub':'fixture','client_kind':'codex','principal_id':'primary'}).encode()).decode().rstrip('=')
+        token=f'la_sk_e30.{claims}.signature'
+        def handler(request):
+            body=({'status':'ok','version':__version__} if request['path'].endswith('/health') else
+                  {'data':[{'id':'fixture-model','owned_by':'openai','selector_kind':'exact'}]} if request['path'].endswith('/models') else
+                  {'choices':[{'message':{'content':'OK'}}]})
+            return {'status':403 if request['method']=='POST' and not accepted[0] else 200,'body':body}
+        upstream=mock_upstream(handler)
+        router=Router(binary=BINARY,allow_download=False,env={**home.env,'TOKEN_SECRET':'domain-report-fixture-secret',
+            'STORAGE_POLICY':'text','LINK_ASSISTANT_ROUTER_TOKEN':'la_sk_fixture','UPSTREAM_ALLOW_PRIVATE_NETWORKS':'loopback'})
+        try:
+            doctor=router.doctor(local=True)['data']
+            self.assertEqual(doctor['status'],'healthy')
+            self.assertTrue(any(check['name']=='subscription-catalogs' for check in doctor['checks']))
+            self.assertTrue(all(provider['state']=='absent' for provider in doctor['providers']))
+            self.assertEqual(router.auth.status(local=True)['data']['api_key_providers'],[])
+            router.providers.add(name='fixture',base_url=upstream.origin,api_key_stdin=True,stdin='fixture-secret\n')
+            self.assertEqual(router.auth.status(local=True)['data']['api_key_providers'][0]['name'],'fixture')
+            router.clients.setup(client='codex',base_url=upstream.origin,token_stdin=True,stdin=token+'\n')
+            client=router.clients.doctor(client='codex')['data']
+            self.assertTrue(client['client']['configured']); self.assertTrue(client['reachable'])
+            self.assertEqual(client['http_status'],200); self.assertEqual(client['model'],'fixture-model')
+            accepted[0]=False
+            with self.assertRaises(RouterError) as error: router.clients.doctor(client='codex')
+            self.assertEqual(error.exception.result['data']['http_status'],403)
+            model=router.models.explain(id='fixture-model',client='codex',server=upstream.origin)['data']
+            self.assertEqual(model['requested_selector'],'fixture-model'); self.assertEqual(model['routing']['state'],'unique')
+            with self.assertRaises(RouterError) as error: router.models.explain(id='absent-model',client='codex',server=upstream.origin)
+            self.assertEqual(error.exception.result['data']['routing']['state'],'unknown')
+            records=Path(home.env['DATA_DIR'])/'requests'/'fixture'; records.mkdir(parents=True,exist_ok=True)
+            (records/'requests.jsonl').write_text('{"correlation_id":"report","status":201}\n')
+            self.assertEqual(router.logs.show(correlation_id='report',local=True)['data']['records'][0]['status'],201)
+            selected=router.server.status(env={'ROUTER_URL':upstream.origin})['data']['selection']
+            self.assertEqual(selected['url'],upstream.origin); self.assertEqual(selected['source'],'environment')
+        finally: upstream.close(); home.close()
+
     def test_catalog_parity(self):
         router = Router(binary=BINARY, allow_download=False)
         for operation in operation_names:

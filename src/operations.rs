@@ -18,7 +18,7 @@ use std::process::ExitCode;
 /// Versioned result returned by every operation and CLI JSON adapter.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct OperationResult {
+pub struct OperationResult<T = Value> {
     /// Published schema identifier.
     pub schema: String,
     /// Canonical operation name from the generated catalog.
@@ -28,7 +28,7 @@ pub struct OperationResult {
     /// Exact process-compatible exit status, including specialized deploy statuses.
     pub exit_code: u8,
     /// Structured operation data. Legacy reports retain typed output lines.
-    pub data: Value,
+    pub data: T,
     /// Diagnostic messages, kept separate from operation data.
     pub diagnostics: Vec<String>,
 }
@@ -60,11 +60,18 @@ fn exit_number(code: ExitCode) -> u8 {
 
 fn result(operation: String, code: ExitCode, output: CapturedOutput) -> OperationResult {
     let exit_code = exit_number(code);
-    let data = output.data.unwrap_or_else(|| {
+    let data = if let Some(mut data) = output.data {
+        // Domain reports publish facts before their separate human rendering.
+        if let Some(lines) = data.get_mut("output") {
+            *lines = serde_json::json!(output.stdout.lines().collect::<Vec<_>>());
+        }
+        data
+    } else {
+        // Existing JSON documents already own their output field.
         serde_json::from_str(&output.stdout).unwrap_or_else(
             |_| serde_json::json!({"output": output.stdout.lines().collect::<Vec<_>>()}),
         )
-    });
+    };
     OperationResult {
         schema: format!("link-assistant-router/{}/v1", operation.replace('.', "-")),
         operation,
@@ -258,4 +265,41 @@ pub fn decode_payload<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T,
         value
     };
     serde_json::from_value(payload).map_err(|error| error.to_string())
+}
+
+/// Decode token inventory from either a legacy array or a validated v1 envelope.
+/// Failed or unrelated operations cannot be mistaken for an empty inventory.
+pub fn decode_token_inventory(bytes: &[u8]) -> Result<Vec<crate::storage::TokenRecord>, String> {
+    let value: Value = serde_json::from_slice(bytes).map_err(|error| error.to_string())?;
+    if value.is_object() && value["operation"] != "tokens.list" {
+        return Err("token inventory envelope must describe tokens.list".into());
+    }
+    decode_payload(bytes)
+}
+
+impl OperationResult {
+    /// Read the published domain report using its generated Rust type.
+    pub fn typed<T: serde::de::DeserializeOwned>(
+        self,
+    ) -> Result<OperationResult<T>, OperationError> {
+        match serde_json::from_value(self.data.clone()) {
+            Ok(data) => Ok(OperationResult {
+                schema: self.schema,
+                operation: self.operation,
+                success: self.success,
+                exit_code: self.exit_code,
+                data,
+                diagnostics: self.diagnostics,
+            }),
+            Err(error) => {
+                let mut result = self;
+                result.success = false;
+                result.exit_code = 1;
+                result
+                    .diagnostics
+                    .push(format!("domain report decoding failed: {error}"));
+                Err(OperationError { result })
+            }
+        }
+    }
 }

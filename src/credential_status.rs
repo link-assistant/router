@@ -1,6 +1,6 @@
 //! Shared local/remote subscription credential acceptance checks.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::credential_recovery_store::PRIMARY_ACCOUNT;
 use crate::model_catalog::{CatalogAcceptance, classify_catalog_acceptance};
@@ -8,7 +8,7 @@ use crate::refresh::TokenCache;
 use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 
 /// Stable provider-verified credential state used by CLI and management APIs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum CredentialAcceptanceState {
     Usable,
@@ -33,7 +33,7 @@ impl CredentialAcceptanceState {
 }
 
 /// One provider's accepted state and exact local credential root.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, schemars::JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct CredentialAcceptanceReport {
     pub provider: SubscriptionProvider,
     pub home: String,

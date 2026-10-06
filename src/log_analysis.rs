@@ -726,8 +726,12 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
 }
 
 /// Render one exchange's records in order.
-pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::Result<String> {
-    let mut out = String::new();
+pub fn show_records(
+    root: &Path,
+    token: Option<&str>,
+    correlation_id: &str,
+) -> std::io::Result<Vec<Value>> {
+    let mut out = Vec::new();
     for path in log_files(root, token)? {
         // The encoding is declared on the response record, which may arrive
         // after the bodies it describes, so the whole exchange is read before
@@ -760,19 +764,29 @@ pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::
             .unwrap_or_default();
         for (index, mut record) in records.into_iter().enumerate() {
             render_decoded_body(&mut record, index, first_body, decoded.as_ref());
-            // Rendered as indented JSON on purpose. This is a display surface,
-            // not a store: the record is being read by a person, and the
-            // stored form is one line precisely so it is not shaped for that.
-            // The file itself is links notation either way (issue #346).
-            out.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
-            out.push('\n');
+            out.push(record);
         }
     }
-    if out.is_empty() {
-        use std::fmt::Write as _;
-        let _ = writeln!(out, "no records for correlation id {correlation_id}");
-    }
     Ok(out)
+}
+
+/// Render one exchange using the same decoded records as the operation API.
+pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::Result<String> {
+    let records = show_records(root, token, correlation_id)?;
+    crate::operation_output::report(crate::operation_reports::LogRecordsReport {
+        correlation_id: correlation_id.into(),
+        records: records.clone(),
+        output: Vec::new(),
+    });
+    if records.is_empty() {
+        return Ok(format!("no records for correlation id {correlation_id}\n"));
+    }
+    let mut rendered = String::new();
+    for record in records {
+        rendered.push_str(&serde_json::to_string_pretty(&record).unwrap_or_default());
+        rendered.push('\n');
+    }
+    Ok(rendered)
 }
 
 #[cfg(test)]

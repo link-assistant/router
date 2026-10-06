@@ -1,5 +1,102 @@
 {
-  "$defs": {},
+  "$defs": {
+    "ServerStatusReport": {
+      "additionalProperties": false,
+      "properties": {
+        "managed": {
+          "$ref": "#/$defs/ServerStatusReport_ManagedServerStatus"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "selection": {
+          "$ref": "#/$defs/ServerStatusReport_ServerSelection"
+        }
+      },
+      "required": [
+        "selection",
+        "managed",
+        "output"
+      ],
+      "title": "ServerStatusReport",
+      "type": "object"
+    },
+    "ServerStatusReport_ManagedServerStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_claimed": {
+          "type": "boolean"
+        },
+        "container": {
+          "type": "string"
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "keep_running": {
+          "type": "boolean"
+        },
+        "present": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "users": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "volume": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "present",
+        "state",
+        "container",
+        "volume",
+        "administrator_claimed",
+        "users",
+        "keep_running"
+      ],
+      "type": "object"
+    },
+    "ServerStatusReport_ServerSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "token_configured": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "token_configured"
+      ],
+      "type": "object"
+    }
+  },
   "$id": "link-assistant-router/server-status/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +158,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/ServerStatusReport"
         }
       ]
     },

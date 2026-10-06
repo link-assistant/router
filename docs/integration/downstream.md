@@ -56,4 +56,23 @@ node examples/maintain-host.mjs project.json --apply --verify
 
 Rust callers use [`OperationContext`](https://docs.rs/link-assistant-router/latest/link_assistant_router/operation_context/struct.OperationContext.html) with typed `cli::Command` requests, or the documented `deploy::{local,host,remote,staging,checkpoint}`, `auth::import`, `logs::read`, `doctor::report`, `admin::recover`, and `verification::run` facades. Environment, clock, roots and dependency process runner are injectable. Operations capture their diagnostics and return typed results without printing or exiting. See [the executable Rust example](../../examples/library_operations.rs) and each facade's rustdoc example.
 
+`operation_reports` provides typed Rust facades for doctor, authentication,
+client probes, server/tunnel status, model explanations and decoded log records.
+The same fields are generated into TypeScript and Python declarations. Human
+rendering remains available in `data.output`; application decisions use the
+domain fields. Unsuccessful probes retain these facts in the error result.
+
+An embedding Rust program must set `context.daemon_executable` to an installed
+Router CLI, or set `ROUTER_BIN` in the context's environment, before deploying
+host mode. Router validates that executable's `--version` response and uses its
+actual version in status, convergence and saved service state. Without explicit
+selection, only a running Router CLI supplies its own executable. The
+[independent consumer example](../../examples/host_library_consumer.rs) rejects
+Router CLI arguments itself and exercises real plan/apply/status/stop:
+
+```sh
+cargo build --locked --bins
+cargo test --locked --example host_library_consumer
+```
+
 Contracts and package exports are regenerated from Rust and checked in CI. See the [compatibility policy](compatibility.md), [requirement matrix and component research](issue-697-requirements.md), and [testing tiers](../testing-tiers.md). Registry publication and all downloadable integrations share the exact-tag provenance and complete-delivery release gate.

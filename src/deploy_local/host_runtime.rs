@@ -40,8 +40,9 @@ impl ClaudeLogin {
 }
 
 pub(super) trait HostRuntime {
-    /// The Router binary a host deployment runs: this one.
+    /// The explicitly selected Router daemon binary.
     fn executable(&self) -> Result<PathBuf, String>;
+    fn version(&self, executable: &Path) -> Result<String, String>;
     fn spawn(&self, launch: &Launch<'_>) -> Result<u32, String>;
     /// Whether `pid` is still a `serve` process of `executable`, so a reused
     /// pid is never mistaken for the deployment or signalled.
@@ -120,9 +121,49 @@ pub(super) struct System {
 
 impl HostRuntime for System {
     fn executable(&self) -> Result<PathBuf, String> {
-        std::env::current_exe()
-            .and_then(|path| path.canonicalize())
+        let selected = crate::operation_context::current()
+            .and_then(|context| context.daemon_executable)
+            .or_else(|| crate::operation_context::var_os("ROUTER_BIN").map(PathBuf::from))
+            // Validate the CLI contract below, rather than assuming a filename:
+            // installed Router binaries can be renamed by their users.
+            .or_else(|| std::env::current_exe().ok())
+            .ok_or("host deployment requires OperationContext.daemon_executable or ROUTER_BIN pointing to a Router CLI binary")?;
+        let selected = if selected.is_absolute() {
+            selected
+        } else {
+            crate::operation_context::current().map_or_else(
+                || selected.clone(),
+                |context| context.working_directory.join(&selected),
+            )
+        };
+        selected
+            .canonicalize()
             .map_err(|error| format!("could not resolve the Router executable: {error}"))
+    }
+
+    fn version(&self, executable: &Path) -> Result<String, String> {
+        let output = crate::operation_context::process_output(
+            crate::operation_context::command(executable).arg("--version"),
+        )
+        .map_err(|error| format!("could not validate Router executable: {error}"))?;
+        let text = String::from_utf8_lossy(&output.stdout);
+        let mut words = text.split_whitespace();
+        let name = words.next();
+        let version = words.next().unwrap_or_default();
+        let core = version.split(['-', '+']).next().unwrap_or_default();
+        let components: Vec<_> = core.split('.').collect();
+        if !output.status.success()
+            || !matches!(name, Some("router" | "link-assistant-router"))
+            || words.next().is_some()
+            || components.len() != 3
+            || components.iter().any(|part| part.parse::<u64>().is_err())
+        {
+            return Err(
+                "selected daemon executable is not a Router CLI (`--version` validation failed); set OperationContext.daemon_executable or ROUTER_BIN"
+                    .into(),
+            );
+        }
+        Ok(version.to_owned())
     }
 
     fn spawn(&self, launch: &Launch<'_>) -> Result<u32, String> {

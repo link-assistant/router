@@ -186,6 +186,24 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
     data_dir: Option<&std::path::Path>,
     token_url: Option<(SubscriptionProvider, &str)>,
 ) -> bool {
+    catalog_report_with_token_url(readers, data_dir, token_url)
+        .await
+        .0
+}
+
+/// Exact credential acceptance and model inventory used by the doctor report.
+pub async fn subscription_catalog_report(
+    readers: Vec<SubscriptionReader>,
+    data_dir: Option<&std::path::Path>,
+) -> (bool, Vec<crate::operation_reports::ProviderHealth>) {
+    catalog_report_with_token_url(readers, data_dir, None).await
+}
+
+async fn catalog_report_with_token_url(
+    readers: Vec<SubscriptionReader>,
+    data_dir: Option<&std::path::Path>,
+    token_url: Option<(SubscriptionProvider, &str)>,
+) -> (bool, Vec<crate::operation_reports::ProviderHealth>) {
     let client = reqwest::Client::new();
     let token_cache = data_dir.map_or_else(
         || {
@@ -197,8 +215,16 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
     );
     let now_ms = crate::operation_context::now().timestamp_millis();
     let mut catalog_error = false;
+    let mut providers = Vec::new();
     for reader in readers {
         let provider = reader.provider();
+        let mut report = crate::operation_reports::ProviderHealth {
+            provider,
+            credential_root: reader.home().display().to_string(),
+            state: "absent".into(),
+            models: Vec::new(),
+            detail: None,
+        };
         let label = format!("{provider} subscription");
         let path = reader
             .discover_credential_path()
@@ -213,6 +239,7 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
             Ok(Some(token)) => token,
             Ok(None) => {
                 println!("{label:<23}: {} (MISSING)", reader.home().display());
+                providers.push(report);
                 continue;
             }
             Err(_) => {
@@ -222,6 +249,9 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
                     format!("{provider} catalog")
                 );
                 catalog_error = true;
+                report.state = "unreadable".into();
+                report.detail = Some("credential is unreadable".into());
+                providers.push(report);
                 continue;
             }
         };
@@ -264,6 +294,9 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
                 format!("{provider} catalog")
             );
             catalog_error = true;
+            report.state = "refresh-failed".into();
+            report.detail = Some(detail);
+            providers.push(report);
             continue;
         };
         if let Some(detail) = token_cache
@@ -280,6 +313,9 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
                 format!("{provider} catalog")
             );
             catalog_error = true;
+            report.state = "refresh-failed".into();
+            report.detail = Some(detail);
+            providers.push(report);
             continue;
         }
         // `expiresAt` is a hint, so a still-expired token is probed rather than
@@ -297,6 +333,18 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
             "{label:<23}: {location} ({status}, store: {})",
             origin.label()
         );
+        report.state = match acceptance {
+            CatalogAcceptance::Accepted => "usable",
+            CatalogAcceptance::MissingSubscription => "missing-subscription",
+            CatalogAcceptance::CredentialRejected => "rejected",
+            CatalogAcceptance::Unverified => "unverified",
+        }
+        .into();
+        match &catalog {
+            Ok(models) => report.models.clone_from(models),
+            Err(error) => report.detail = Some(error.clone()),
+        }
+        providers.push(report);
         match (acceptance, catalog) {
             (CatalogAcceptance::Accepted, Ok(models)) => println!(
                 "{:<23}: OK ({} live model(s))",
@@ -317,7 +365,7 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
             _ => unreachable!("catalog classification matches its result"),
         }
     }
-    catalog_error
+    (catalog_error, providers)
 }
 
 /// Data-directory-backed variant of [`subscription_catalog_diagnostics`].

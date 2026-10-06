@@ -3,6 +3,7 @@
 //! Split from `main.rs` to keep that file within the repository's 1000-line
 //! limit.
 
+use crate::operation_reports::{Check, DeploymentHealth, DoctorReport, ModelRecommendation};
 use link_assistant_router::config::{Config, StoragePolicy};
 use link_assistant_router::subscription::SubscriptionReader;
 use std::process::ExitCode;
@@ -190,12 +191,11 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
         }
     }
 
-    let catalog_error =
-        link_assistant_router::doctor::subscription_catalog_diagnostics_for_readers(
-            config.subscription_readers(),
-            Some(&config.data_dir),
-        )
-        .await;
+    let (catalog_error, providers) = link_assistant_router::doctor::subscription_catalog_report(
+        config.subscription_readers(),
+        Some(&config.data_dir),
+    )
+    .await;
 
     // Probe data dir.
     if config.data_dir.exists() {
@@ -259,7 +259,63 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     let (limits, _) = link_assistant_router::account_limits::doctor_report(&data_dirs);
     print!("{limits}");
 
-    if catalog_error || found {
+    let failed = catalog_error || found;
+    let deployments =
+        crate::deploy::registry::read(&crate::deploy::registry::path(&config.data_dir))
+            .into_iter()
+            .map(|deployment| DeploymentHealth {
+                present: deployment.root.join("data").is_dir(),
+                deployment,
+            })
+            .collect();
+    let recommended_models = providers
+        .iter()
+        .filter(|provider| provider.state == "usable")
+        .filter_map(|provider| {
+            provider.models.first().map(|model| ModelRecommendation {
+                provider: provider.provider,
+                model: model.clone(),
+                reason: "first exact model returned by the accepted live provider catalog".into(),
+            })
+        })
+        .collect();
+    crate::operation_output::report(DoctorReport {
+        status: if failed { "unhealthy" } else { "healthy" }.into(),
+        version: crate::VERSION.into(),
+        data_dir: config.data_dir.clone(),
+        listen_addr: config.listen_addr.to_string(),
+        forwarded_headers: crate::proxy::forwarded_client_headers()
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect(),
+        checks: vec![
+            Check {
+                name: "subscription-catalogs".into(),
+                state: if catalog_error { "failed" } else { "passed" }.into(),
+                detail: None,
+            },
+            Check {
+                name: "provider-exhaustion".into(),
+                state: if found { "failed" } else { "passed" }.into(),
+                detail: None,
+            },
+            Check {
+                name: "data-directory".into(),
+                state: if config.data_dir.exists() {
+                    "present"
+                } else {
+                    "absent"
+                }
+                .into(),
+                detail: None,
+            },
+        ],
+        providers,
+        deployments,
+        recommended_models,
+        output: Vec::new(),
+    });
+    if failed {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

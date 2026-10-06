@@ -42,6 +42,9 @@ pub struct OperationContext {
     pub process_runner: Option<Arc<dyn ProcessRunner>>,
     /// Finite deadline for noninteractive external dependencies.
     pub process_deadline: Duration,
+    /// Router daemon used by host deployments. Libraries must select a real CLI binary.
+    /// When absent, scoped `ROUTER_BIN` or the running Router CLI is used.
+    pub daemon_executable: Option<PathBuf>,
     pub(crate) output: Arc<Mutex<CapturedOutput>>,
     pub(crate) deployment_instance: Arc<Mutex<Option<String>>>,
     pub(crate) deployment_settings: Arc<Mutex<crate::deploy_local::runtime_env::LocalSettings>>,
@@ -57,6 +60,7 @@ impl Default for OperationContext {
             now: None,
             process_runner: None,
             process_deadline: Duration::from_secs(60),
+            daemon_executable: None,
             output: Arc::new(Mutex::new(CapturedOutput::default())),
             deployment_instance: Arc::default(),
             deployment_settings: Arc::default(),

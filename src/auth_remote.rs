@@ -270,6 +270,20 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
     .await
     {
         Ok(body) => {
+            let credentials = match serde_json::from_value(body["credentials"].clone()) {
+                Ok(credentials) => credentials,
+                Err(error) => {
+                    eprintln!("error: invalid remote credential report: {error}");
+                    return ExitCode::from(1);
+                }
+            };
+            crate::operation_output::report(crate::operation_reports::AuthStatusReport {
+                server: Some(server.base_url.clone()),
+                credentials,
+                sources: Vec::new(),
+                api_key_providers: Vec::new(),
+                output: Vec::new(),
+            });
             println!("server: {} ({})", server.base_url, server.source);
             if report_status_credentials(&body) {
                 ExitCode::from(1)

@@ -14,7 +14,9 @@ use super::{
 };
 
 /// Who owns the routing configuration currently effective for a client.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, schemars::JsonSchema)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum OwnershipState {
     Unconfigured,
@@ -37,7 +39,9 @@ impl fmt::Display for OwnershipState {
 }
 
 /// Highest-precedence source selecting the endpoint.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, schemars::JsonSchema)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum ConfigSource {
     AmbientEnvironment,

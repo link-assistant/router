@@ -1,5 +1,70 @@
 {
-  "$defs": {},
+  "$defs": {
+    "TunnelStatusReport": {
+      "additionalProperties": false,
+      "properties": {
+        "health_status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "local_port": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "models_checked": {
+          "type": "boolean"
+        },
+        "models_status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "remote_port": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "running": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string"
+        },
+        "via": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "running",
+        "via",
+        "server",
+        "local_port",
+        "remote_port",
+        "models_checked",
+        "output"
+      ],
+      "title": "TunnelStatusReport",
+      "type": "object"
+    }
+  },
   "$id": "link-assistant-router/tunnel-status/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +126,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/TunnelStatusReport"
         }
       ]
     },

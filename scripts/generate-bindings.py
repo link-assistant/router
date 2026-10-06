@@ -18,6 +18,7 @@ def main():
     spec=json.loads((ROOT/'openapi/router.yaml').read_text())
     components=spec['components']['schemas']
     def ts(schema):
+        if isinstance(schema,bool): return 'JsonValue' if schema else 'never'
         if '$ref' in schema: return schema['$ref'].split('/')[-1]
         if 'const' in schema: return json.dumps(schema['const'])
         if 'enum' in schema: return ' | '.join(json.dumps(value) for value in schema['enum'])
@@ -45,11 +46,12 @@ def main():
         declarations.append(f'export type {name} = {ts(schema)};')
     tree={}; pytrees={}
     py=['# Generated operation signatures, with Python keyword aliases.',
-        'from typing import Any, Callable, Literal, Mapping, TypedDict', 'from pathlib import Path',
+        'from typing import Any, Callable, Literal, Mapping, NoReturn, TypedDict', 'from pathlib import Path',
         'class OperationResult(TypedDict):','    schema: str','    operation: str','    success: bool','    exit_code: int','    data: Any','    diagnostics: list[str]',
         'class RouterError(RuntimeError):','    code: str','    exit_code: int | None','    stderr: str','    result: OperationResult | None',
         '__version__: str','operation_names: tuple[str, ...]','catalog: dict[str, Any]']
     def pytype(schema):
+        if isinstance(schema,bool): return 'Any' if schema else 'NoReturn'
         if '$ref' in schema: return schema['$ref'].split('/')[-1]
         if 'const' in schema: return 'Literal['+repr(schema['const'])+']'
         if 'enum' in schema: return 'Literal['+', '.join(repr(value) for value in schema['enum'])+']'
@@ -67,7 +69,8 @@ def main():
         else: py.append(name+' = '+pytype(schema))
     for op in catalog['operations']:
         schema=json.loads((ROOT/'schemas'/ (op['name'].replace('.','-')+'.v1.json')).read_text())
-        payload=schema['properties']['data']['anyOf'][0]
+        variants=schema['properties']['data']['anyOf']
+        payload=variants[-1] if len(variants)>2 else variants[0]
         # Published payload names match the HTTP components used above.
         shape=ts(json.loads(json.dumps(payload).replace('#/$defs/','#/components/schemas/')))
         typename=''.join(part.title().replace('-','') for part in op['name'].split('.'))+'Options'
@@ -91,7 +94,7 @@ def main():
     declarations+=['export class Router {','  constructor(options?: RouterOptions);','  invoke(name: string, options?: Record<string, unknown>, invocation?: Invocation): Promise<Result>;']
     for name,node in tree.items():
         typ=tree_type(node) if isinstance(node,dict) else node
-        if name=='logs':typ+=' & ((options?: LogsShowOptions, invocation?: Invocation) => Promise<Result<Output>>)'
+        if name=='logs':typ+=' & ((options?: LogsShowOptions, invocation?: Invocation) => Promise<Result<LogRecordsReport>>)'
         if name=='with':typ='('+typ+') & ((client: string, args: readonly string[], options?: WithOptions, invocation?: Invocation) => Promise<Result<{ client_exit_code: number | null; stdout: string; stderr: string }>>)'
         declarations.append('  '+name+': '+typ+';')
     declarations.append('  deployStatus(options?: DeployOptions, invocation?: Invocation): ReturnType<Router["deploy"]>;')

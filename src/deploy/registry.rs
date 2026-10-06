@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 pub const FILE: &str = "deployments.json";
 
 /// One registered deployment.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, schemars::JsonSchema)]
 pub struct Entry {
     /// The absolute deployment root.
     pub root: PathBuf,

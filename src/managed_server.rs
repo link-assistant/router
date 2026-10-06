@@ -25,6 +25,7 @@ mod origin;
 mod process;
 mod run_lease;
 mod selection;
+pub(crate) mod status;
 
 use diagnostics::compact;
 use discovery::discover_local_router;
@@ -641,35 +642,7 @@ use token_helpers::exact_token_binding;
 pub(crate) use token_helpers::{token_client_binding, token_subject};
 
 pub fn managed_status() -> Result<String, AnyError> {
-    let lock = lock_state()?;
-    let mut state = load_managed()?;
-    if let Some(state) = state.as_mut() {
-        prune_references(state);
-        save_managed(state)?;
-    }
-    drop(lock);
-    let lifecycle =
-        docker_container_state().unwrap_or_else(|error| format!("unavailable ({error})"));
-    Ok(match state {
-        Some(state) => {
-            let subscriptions = if lifecycle == "running" {
-                docker_subscription_status()
-            } else {
-                "not queried while stopped".to_string()
-            };
-            format!(
-                "{lifecycle}; administrator={}; container={CONTAINER}; volume={VOLUME}; url=http://127.0.0.1:{}; users={}; subscriptions={subscriptions}",
-                if state.claimed {
-                    "claimed"
-                } else {
-                    "unclaimed"
-                },
-                state.port,
-                state.references.len()
-            )
-        }
-        None => format!("absent; container={CONTAINER}; volume={VOLUME}"),
-    })
+    status::managed().map(|(_, human)| human)
 }
 
 /// Explain a managed-container disappearance after a client-side failure.

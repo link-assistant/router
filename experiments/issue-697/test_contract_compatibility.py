@@ -22,5 +22,14 @@ class CompatibilityTests(unittest.TestCase):
         self.assertTrue(module.compare({'security':[{'ClientBearer':[]}]}, {'security':[{'AdminBearer':[]}]}))
     def test_definition_removal_is_breaking(self):
         self.assertTrue(module.compare({'$defs':{'Client':{'type':'string'}}}, {'$defs':{}}))
+    def test_openapi_required_boolean_is_supported(self):
+        for required in (True, False):
+            with self.subTest(required=required):
+                self.assertEqual(module.compare({'required':required}, {'required':required}), [])
+        self.assertTrue(module.compare({'required':False}, {'required':True}))
+        self.assertEqual(module.compare({'required':True}, {'required':False}), [])
+    def test_required_keyword_type_changes_are_breaking(self):
+        self.assertTrue(module.compare({'required':['id']}, {'required':True}))
+        self.assertTrue(module.compare({'required':False}, {'required':['id']}))
 
 if __name__ == '__main__': unittest.main()

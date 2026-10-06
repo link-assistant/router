@@ -1,5 +1,292 @@
 {
-  "$defs": {},
+  "$defs": {
+    "AuthStatusReport": {
+      "additionalProperties": false,
+      "properties": {
+        "api_key_providers": {
+          "items": {
+            "$ref": "#/$defs/AuthStatusReport_RedactedProviderRecord"
+          },
+          "type": "array"
+        },
+        "credentials": {
+          "items": {
+            "$ref": "#/$defs/AuthStatusReport_CredentialAcceptanceReport"
+          },
+          "type": "array"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "server": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/AuthStatusReport_SourceReport"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "credentials",
+        "sources",
+        "api_key_providers",
+        "output"
+      ],
+      "title": "AuthStatusReport",
+      "type": "object"
+    },
+    "AuthStatusReport_CredentialAcceptanceReport": {
+      "additionalProperties": false,
+      "description": "One provider's accepted state and exact local credential root.",
+      "properties": {
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "home": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/AuthStatusReport_SubscriptionProvider"
+        },
+        "state": {
+          "$ref": "#/$defs/AuthStatusReport_CredentialAcceptanceState"
+        }
+      },
+      "required": [
+        "provider",
+        "home",
+        "state"
+      ],
+      "type": "object"
+    },
+    "AuthStatusReport_CredentialAcceptanceState": {
+      "description": "Stable provider-verified credential state used by CLI and management APIs.",
+      "enum": [
+        "usable",
+        "rejected",
+        "unverified",
+        "refresh-failed",
+        "absent"
+      ],
+      "type": "string"
+    },
+    "AuthStatusReport_CredentialSource": {
+      "description": "How a deployment holds one provider's credential.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "description": "Nothing is installed for this provider.",
+          "properties": {
+            "kind": {
+              "const": "absent",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Router's own credential file, which Router alone rotates.\n\nThe ordinary case for a credential obtained by `auth claude` here: there\nis no second holder, so there is no chain to share.",
+          "properties": {
+            "kind": {
+              "const": "owned",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A reference to a vendor client's file that both processes advance.\n\nOne chain, one refresher: whichever process refreshes writes the\nsuccessor where the other will read it.",
+          "properties": {
+            "kind": {
+              "const": "followed",
+              "type": "string"
+            },
+            "present": {
+              "description": "Whether that file is currently readable.\n\nA followed home that has been removed must be named as such: falling\nback to a stale copy is what makes a deployment drift into\n`invalid_grant` while the CLI beside it stays healthy.",
+              "type": "boolean"
+            },
+            "source": {
+              "description": "The vendor file being followed.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "source",
+            "present"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "A credential owned elsewhere that Router must not rotate.\n\nMarked `refresh_owner: external` without identifying a writable source,\nso Router can read it but must never spend the refresh token.",
+          "properties": {
+            "kind": {
+              "const": "externally-owned",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "AuthStatusReport_ProviderKind": {
+      "description": "Supported persisted provider kinds.",
+      "oneOf": [
+        {
+          "const": "openai-compatible",
+          "description": "Generic OpenAI-compatible upstream such as `LiteLLM`.",
+          "type": "string"
+        },
+        {
+          "const": "lefine",
+          "description": "Lefine `OpenAI` Chat Completions API with live catalog validation.",
+          "type": "string"
+        },
+        {
+          "const": "zai-coding-plan",
+          "description": "Personal z.ai GLM Coding Plan with client/subscriber policy gates.",
+          "type": "string"
+        }
+      ]
+    },
+    "AuthStatusReport_RedactedProviderRecord": {
+      "additionalProperties": false,
+      "description": "Provider record shape safe to print or return over the API.",
+      "properties": {
+        "api_key_env": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "base_url": {
+          "type": "string"
+        },
+        "default_model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "has_encrypted_api_key": {
+          "type": "boolean"
+        },
+        "intermediary_risk_acknowledged": {
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/AuthStatusReport_ProviderKind"
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "subscriber_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "supported_clients": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "unsupported_clients": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "base_url",
+        "models",
+        "supported_clients",
+        "has_encrypted_api_key",
+        "enabled",
+        "intermediary_risk_acknowledged",
+        "unsupported_clients"
+      ],
+      "type": "object"
+    },
+    "AuthStatusReport_SourceReport": {
+      "additionalProperties": false,
+      "description": "One provider's holding, for `auth status`.",
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/AuthStatusReport_SubscriptionProvider"
+        },
+        "source": {
+          "$ref": "#/$defs/AuthStatusReport_CredentialSource"
+        }
+      },
+      "required": [
+        "provider",
+        "source"
+      ],
+      "type": "object"
+    },
+    "AuthStatusReport_SubscriptionProvider": {
+      "description": "A subscription-backed upstream that authenticates with vendor OAuth tokens.",
+      "oneOf": [
+        {
+          "const": "claude",
+          "description": "Anthropic Claude (Pro/Max) via Claude Code \u2014 `~/.claude`.",
+          "type": "string"
+        },
+        {
+          "const": "codex",
+          "description": "`OpenAI` Codex / `ChatGPT` subscription via the Codex CLI \u2014 `~/.codex`.",
+          "type": "string"
+        },
+        {
+          "const": "gemini",
+          "description": "Google Gemini Code Assist via the Gemini CLI \u2014 `~/.gemini`.",
+          "type": "string"
+        },
+        {
+          "const": "qwen",
+          "description": "Alibaba Qwen via the qwen-code CLI \u2014 `~/.qwen`.",
+          "type": "string"
+        }
+      ]
+    }
+  },
   "$id": "link-assistant-router/auth-status/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +348,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/AuthStatusReport"
         }
       ]
     },
