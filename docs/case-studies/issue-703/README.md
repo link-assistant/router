@@ -63,6 +63,13 @@ there were no comments when this investigation started.
   describes `/model` selection and full model IDs. Exact identity assertions
   remain part of the compatibility proof.
 
+| Requirement group | Possible solutions | Selected plan |
+| --- | --- | --- |
+| #699, every report and language facade | Parse CLI text in each binding; write independent payload definitions; derive shared domain reports from Rust. | Record the facts in each existing operation, derive contracts with Schemars, generate binding types, and test the same transitions through Rust and both official language bindings. Keep the old rendering and accepted schema alternatives for compatibility. |
+| #700, selector readiness and identity | Increase sleeps; retry a failing selector; interpret the terminal and wait for visible input/selection state. | Add a `vt100` screen beside the existing transcript, wait for `/model` input and exact visible IDs within existing deadlines, retain outbound identity and withdrawal tests, and repeat pinned 2.1.291 capture in CI. |
+| #701, every inventory/preservation consumer | Unwrap `data` without validation; retain separate array/envelope parsers at each site; reuse canonical schema validation with typed inventory decoding. | Accept complete legacy token arrays or successful `tokens.list` envelopes, validate before extracting data, update all six consumers, exercise refusals in ordinary tests, and rerun the real previous-container round trip. |
+| #702, launch selection and version ownership | Require consumers to implement Router CLI; remap process calls; implement an in-process managed daemon; select an explicit validated daemon executable. | Add a context path with scoped environment fallback, validate `--version` through the existing injectable runner/deadline, persist that actual version, and exercise plan/apply/status/stop from a distinct importing application. |
+
 ## Initial evidence
 
 Main is already merged into the prepared branch. The most recent related work
@@ -88,7 +95,7 @@ than the selected daemon version.
 - [x] Implement typed reports and regenerate all published contracts/bindings.
 - [x] Fix terminal reconstruction/readiness and repeat affected client capture.
 - [ ] Run local checks, full test suite and real previous-image migration.
-- [ ] Prepare minor release/changelog, review full PR diff, commit and push.
+- [x] Prepare minor release/changelog, review full PR diff, commit and push.
 - [ ] Update PR description, verify current-head CI and mark ready.
 
 ## Reproduction and completed verification
@@ -136,3 +143,11 @@ including a current-process fallback, must pass the Router version contract
 before planning or launch. A separate regression preserves valid renamed CLI
 installations rather than treating the filename as proof of the executable's
 identity.
+
+The first implementation's Linux CI unit run passed 2,141 tests and exposed
+one incomplete historical test fixture: `token_issue_failure_does_not_undo_a_verified_deployment`
+supplied only `label` and `revoked`, which the typed decoder correctly rejected.
+The preserved job log has the assertion at lines 6227–6230. Its replacement
+uses a complete token record and checks both legacy and enveloped inventories
+without allowing duplicate token issuance; the original deployment-preservation
+assertion remains intact.

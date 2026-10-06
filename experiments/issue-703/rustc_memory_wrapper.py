@@ -17,7 +17,7 @@ import sys
 
 arguments = sys.argv[1:]
 if "--test" in arguments and "link_assistant_router" in arguments:
-    arguments += ["-Zno-parallel-backend", "-Zfewer-names=yes", "-Zmir-strip-debuginfo=all"]
+    arguments += ["-Zno-parallel-backend", "-Zfewer-names=yes", "-Zmir-strip-debuginfo=all-locals"]
     os.environ["RUSTC_BOOTSTRAP"] = "1"
     os.environ["MALLOC_ARENA_MAX"] = "1"
     os.environ["MALLOC_TRIM_THRESHOLD_"] = "65536"

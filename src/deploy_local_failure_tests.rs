@@ -44,7 +44,6 @@ fn token_issue_failure_does_not_undo_a_verified_deployment() {
     {
         let mut world = runner.0.lock().unwrap();
         world.fail_token_issue = false;
-        world.token_inventory = r#"[{"label":"deploy","revoked":false}]"#.into();
     }
     let issued_before = runner
         .0
@@ -54,16 +53,27 @@ fn token_issue_failure_does_not_undo_a_verified_deployment() {
         .iter()
         .filter(|command| command.iter().any(|argument| argument == "issue"))
         .count();
-    coordinator.ensure_deploy_token("already-provisioned");
-    let issued_after = runner
-        .0
-        .lock()
-        .unwrap()
-        .commands
-        .iter()
-        .filter(|command| command.iter().any(|argument| argument == "issue"))
-        .count();
-    assert_eq!(issued_after, issued_before);
+    let records = serde_json::json!([{
+        "id":"deploy-fixture", "label":"deploy", "revoked":false,
+        "issued_at":1, "expires_at":4_102_444_800_i64
+    }]);
+    let envelope = serde_json::json!({
+        "schema":"link-assistant-router/tokens-list/v1", "operation":"tokens.list",
+        "success":true, "exit_code":0, "data":records, "diagnostics":[]
+    });
+    for inventory in [records, envelope] {
+        runner.0.lock().unwrap().token_inventory = inventory.to_string();
+        coordinator.ensure_deploy_token("already-provisioned");
+        let issued_after = runner
+            .0
+            .lock()
+            .unwrap()
+            .commands
+            .iter()
+            .filter(|command| command.iter().any(|argument| argument == "issue"))
+            .count();
+        assert_eq!(issued_after, issued_before, "inventory: {inventory}");
+    }
 }
 
 #[test]
