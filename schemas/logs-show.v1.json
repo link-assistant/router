@@ -1,5 +1,32 @@
 {
-  "$defs": {},
+  "$defs": {
+    "LogRecordsReport": {
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "records": {
+          "description": "Vendor and request records retain their open-ended fields.",
+          "items": true,
+          "type": "array"
+        }
+      },
+      "required": [
+        "correlation_id",
+        "records",
+        "output"
+      ],
+      "title": "LogRecordsReport",
+      "type": "object"
+    }
+  },
   "$id": "link-assistant-router/logs-show/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +88,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/LogRecordsReport"
         }
       ]
     },

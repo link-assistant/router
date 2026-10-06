@@ -746,7 +746,21 @@ pub fn run(home: Option<&Path>, op: &BackupOp) -> ExitCode {
         }
         BackupOp::Verify { id, destination } => {
             backup_root(home, destination.as_deref()).and_then(|root| {
+                crate::operation_output::report(
+                    crate::operation_reports::BackupVerificationReport {
+                        id: id.clone(),
+                        verified: false,
+                        output: Vec::new(),
+                    },
+                );
                 load(&root, id)?;
+                crate::operation_output::report(
+                    crate::operation_reports::BackupVerificationReport {
+                        id: id.clone(),
+                        verified: true,
+                        output: Vec::new(),
+                    },
+                );
                 println!("verified {id}");
                 Ok(())
             })

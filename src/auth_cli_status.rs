@@ -45,6 +45,13 @@ pub(super) async fn status(config: &Config) -> ExitCode {
     // from "a copy taken at time T" — nor see that a followed home had been
     // removed, which is the state that looks healthy and is not.
     let sources = link_assistant_router::credential_source::report(&readers);
+    crate::operation_output::report(crate::operation_reports::AuthStatusReport {
+        server: None,
+        credentials: reports.clone(),
+        sources: sources.clone(),
+        api_key_providers: stored_api_key_providers(config),
+        output: Vec::new(),
+    });
     for report in reports {
         if let Some(detail) = report.detail.as_deref() {
             eprintln!(

@@ -444,6 +444,10 @@ enum Checked {
 
 /// Check the Router through the tunnel.
 async fn check(port: u16, wait: u64) -> Checked {
+    checked_status(port, wait).await.0
+}
+
+async fn checked_status(port: u16, wait: u64) -> (Checked, Option<u16>, Option<u16>, bool) {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(wait);
     let health = loop {
         let status = probe(port, "/api/health", None).await;
@@ -457,25 +461,30 @@ async fn check(port: u16, wait: u64) -> Checked {
         health.map_or_else(|| "unreachable".to_string(), |status| status.to_string())
     );
     if health != Some(200) {
-        return Checked::Unreachable;
+        return (Checked::Unreachable, health, None, false);
     }
     let token = crate::operation_context::var(TOKEN_ENV)
         .ok()
         .filter(|token| !token.is_empty());
     let Some(token) = token else {
         println!("models=skipped (set {TOKEN_ENV} to check an authorized /v1/models)");
-        return Checked::Usable;
+        return (Checked::Usable, health, None, false);
     };
     let models = probe(port, "/v1/models", Some(&token)).await;
     println!(
         "models={}",
         models.map_or_else(|| "unreachable".to_string(), |status| status.to_string())
     );
-    if models == Some(200) {
-        Checked::Usable
-    } else {
-        Checked::Refused
-    }
+    (
+        if models == Some(200) {
+            Checked::Usable
+        } else {
+            Checked::Refused
+        },
+        health,
+        models,
+        true,
+    )
 }
 
 /// Run `router tunnel`.
@@ -514,7 +523,23 @@ pub async fn run(args: &TunnelArgs) -> ExitCode {
                 "tunnel={} via={via} {described}",
                 if running { "running" } else { "stopped" }
             );
-            if running && check(target.local_port, 0).await == Checked::Usable {
+            let (checked, health_status, models_status, models_checked) = if running {
+                checked_status(target.local_port, 0).await
+            } else {
+                (Checked::Unreachable, None, None, false)
+            };
+            crate::operation_output::report(crate::operation_reports::TunnelStatusReport {
+                running,
+                via: via.into(),
+                server: target.server.clone(),
+                local_port: target.local_port,
+                remote_port: target.remote_port,
+                health_status,
+                models_status,
+                models_checked,
+                output: Vec::new(),
+            });
+            if running && checked == Checked::Usable {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::from(1)

@@ -77,3 +77,7 @@ packages/python/dist/
 packages/python/*.egg-info/
 # Reproducible tool downloads are verified by the checked-in generator script.
 experiments/issue-697/tools/
+
+# Isolated vendor installation for issue #703 verification.
+experiments/issue-703/tools/
+ci-logs/

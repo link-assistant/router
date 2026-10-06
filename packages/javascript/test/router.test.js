@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Router, RouterError, catalog, operationNames, version, runProcess } from '../index.js';
@@ -14,6 +14,50 @@ async function fixture(body) {
   return { path, close: () => rm(dir, { recursive: true, force: true }) };
 }
 const versionProbe = `if(process.argv.includes('version')) { console.log(JSON.stringify({schema:'link-assistant-router/version/v1',operation:'version',success:true,exit_code:0,data:{version:'${version}',source_commit:'${'a'.repeat(40)}'},diagnostics:[]}));process.exit(0); }`;
+
+test('domain reports expose actual state changes through the official binding', { timeout: 30_000 }, async () => {
+  const home = await temporaryHome();
+  let accepted = true;
+  const token = `la_sk_e30.${Buffer.from(JSON.stringify({ sub: 'fixture', client_kind: 'codex', principal_id: 'primary' })).toString('base64url')}.signature`;
+  const upstream = await mockUpstream(request => ({ status: request.method === 'POST' && !accepted ? 403 : 200, body:
+    request.path.endsWith('/health') ? { status: 'ok', version } :
+    request.path.endsWith('/models') ? { data: [{ id: 'fixture-model', owned_by: 'openai', selector_kind: 'exact' }] } :
+    { choices: [{ message: { content: 'OK' } }] }
+  }));
+  const router = new Router({ binary, allowDownload: false, env: { ...home.env,
+    TOKEN_SECRET: 'domain-report-fixture-secret', STORAGE_POLICY: 'text',
+    LINK_ASSISTANT_ROUTER_TOKEN: 'la_sk_fixture', UPSTREAM_ALLOW_PRIVATE_NETWORKS: 'loopback' } });
+  try {
+    const doctor = (await router.doctor({ local: true })).data;
+    assert.equal(doctor.status, 'healthy');
+    assert.ok(doctor.checks.some(check => check.name === 'subscription-catalogs'));
+    assert.ok(doctor.providers.every(provider => provider.state === 'absent'));
+    assert.equal((await router.auth.status({ local: true })).data.api_key_providers.length, 0);
+    await router.providers.add({ name: 'fixture', baseUrl: upstream.origin, apiKeyStdin: true }, { stdin: 'fixture-secret\n' });
+    assert.equal((await router.auth.status({ local: true })).data.api_key_providers[0].name, 'fixture');
+    await router.clients.setup({ client: 'codex', baseUrl: upstream.origin, tokenStdin: true }, { stdin: `${token}\n` });
+    const client = (await router.clients.doctor({ client: 'codex' })).data;
+    assert.equal(client.client.configured, true);
+    assert.equal(client.reachable, true);
+    assert.equal(client.http_status, 200);
+    assert.equal(client.model, 'fixture-model');
+    accepted = false;
+    await assert.rejects(router.clients.doctor({ client: 'codex' }), error =>
+      error.result.data.http_status === 403 && error.result.data.reachable === true);
+    const model = (await router.models.explain({ id: 'fixture-model', client: 'codex', server: upstream.origin })).data;
+    assert.equal(model.requested_selector, 'fixture-model');
+    assert.equal(model.routing.state, 'unique');
+    await assert.rejects(router.models.explain({ id: 'absent-model', client: 'codex', server: upstream.origin }), error =>
+      error.result.data.routing.state === 'unknown');
+    const records = join(home.env.DATA_DIR, 'requests', 'fixture');
+    await mkdir(records, { recursive: true });
+    await writeFile(join(records, 'requests.jsonl'), '{"correlation_id":"report","status":201}\n');
+    assert.equal((await router.logs.show({ correlationId: 'report', local: true })).data.records[0].status, 201);
+    const selected = await router.server.status({}, { env: { ROUTER_URL: upstream.origin } });
+    assert.equal(selected.data.selection.url, upstream.origin);
+    assert.equal(selected.data.selection.source, 'environment');
+  } finally { await upstream.close(); await home.close(); }
+});
 
 test('every catalog operation is exported with its published schema', async () => {
   const router = new Router({ binary, allowDownload: false });

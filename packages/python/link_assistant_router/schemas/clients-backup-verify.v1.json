@@ -1,5 +1,30 @@
 {
-  "$defs": {},
+  "$defs": {
+    "BackupVerificationReport": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "verified": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "verified",
+        "output"
+      ],
+      "title": "BackupVerificationReport",
+      "type": "object"
+    }
+  },
   "$id": "link-assistant-router/clients-backup-verify/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +86,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/BackupVerificationReport"
         }
       ]
     },

@@ -12,3 +12,13 @@ function refusalReason(result: Verification): string | undefined {
 }
 void refusalReason;
 void version; void tokens;
+const doctor = (await router.doctor({ local: true })).data;
+const check: string | undefined = doctor.checks[0]?.state;
+const provider: string | undefined = doctor.providers[0]?.state;
+const auth = (await router.auth.status({ local: true })).data;
+const credential: string | undefined = auth.credentials[0]?.state;
+const server = (await router.server.status()).data;
+const url: string | null | undefined = server.selection.url;
+const logs = (await router.logs.show({ correlationId: 'fixture' })).data;
+const record = logs.records[0];
+void check; void provider; void credential; void url; void record;

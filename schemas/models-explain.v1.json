@@ -1,5 +1,230 @@
 {
-  "$defs": {},
+  "$defs": {
+    "ModelExplanationReport": {
+      "additionalProperties": false,
+      "properties": {
+        "capability_provenance": true,
+        "client_representation": {
+          "$ref": "#/$defs/ModelExplanationReport_ClientRepresentation"
+        },
+        "contract_version": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "health": {
+          "$ref": "#/$defs/ModelExplanationReport_ModelHealth"
+        },
+        "model_descriptor": {
+          "$ref": "#/$defs/ModelExplanationReport_ModelTruthDescriptor"
+        },
+        "model_policy": true,
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "requested_selector": {
+          "type": "string"
+        },
+        "route_scope": true,
+        "routing": {
+          "$ref": "#/$defs/ModelExplanationReport_ModelRouting"
+        },
+        "selector_kind": {
+          "type": "string"
+        },
+        "served_identity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "contract_version",
+        "model_descriptor",
+        "requested_selector",
+        "selector_kind",
+        "client_representation",
+        "route_scope",
+        "capability_provenance",
+        "model_policy",
+        "health",
+        "routing",
+        "output"
+      ],
+      "title": "ModelExplanationReport",
+      "type": "object"
+    },
+    "ModelExplanationReport_ClientRepresentation": {
+      "additionalProperties": false,
+      "properties": {
+        "advertisements": {
+          "items": true,
+          "type": "array"
+        },
+        "client": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "client",
+        "advertisements"
+      ],
+      "type": "object"
+    },
+    "ModelExplanationReport_ModelHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "degraded_providers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "degraded_reasons": true,
+        "healthy_providers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "starting_providers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "healthy_providers",
+        "starting_providers",
+        "degraded_providers",
+        "degraded_reasons"
+      ],
+      "type": "object"
+    },
+    "ModelExplanationReport_ModelRouteScope": {
+      "additionalProperties": false,
+      "description": "Exact routing scope for one model observation or exchange.",
+      "properties": {
+        "account": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocols": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "protocols"
+      ],
+      "type": "object"
+    },
+    "ModelExplanationReport_ModelRouting": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_count": {
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "catalog_conflicts": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "candidate_count",
+        "catalog_conflicts"
+      ],
+      "type": "object"
+    },
+    "ModelExplanationReport_ModelSelectorKind": {
+      "description": "Kind of selector a caller supplied. Dynamic aliases are factual only when\nthe authenticated provider catalog advertised that exact spelling.\n\nThis is the one wire contract for `selector_kind`: every producer\nserializes the canonical `snake_case` spelling, and every consumer \u2014\ncatalog projection, `router model` diagnostics and the wrapper's typed\ncatalog rows \u2014 reads through [`Self::from_wire`]. Router once emitted\n`provider_advertised_exact_id` for live z.ai rows while the wrapper's\nderived parser accepted only the canonical names, so one such row made\n`router with` reject the whole catalog (issue #620). A spelling this\nbuild does not know is `Unknown`, never a parse failure: an older wrapper\nmust degrade to \"no alias evidence\", not to \"no models\".",
+      "enum": [
+        "concrete",
+        "provider_dynamic_alias",
+        "operator_alias",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "ModelExplanationReport_ModelTruthDescriptor": {
+      "additionalProperties": false,
+      "description": "Canonical truth descriptor used by model diagnostics and boundary logs.\n\n`None` is intentionally serialized as JSON `null`: it means unknown, not\nthat Router may fill the field from a nearby selector.",
+      "properties": {
+        "allow_substitution": {
+          "type": "boolean"
+        },
+        "capabilities": true,
+        "capability_provenance": true,
+        "requested_selector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "route": {
+          "$ref": "#/$defs/ModelExplanationReport_ModelRouteScope"
+        },
+        "selector_kind": {
+          "$ref": "#/$defs/ModelExplanationReport_ModelSelectorKind"
+        },
+        "substitution_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "upstream_request_model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "upstream_served_model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "selector_kind",
+        "route",
+        "capabilities",
+        "capability_provenance",
+        "allow_substitution"
+      ],
+      "type": "object"
+    }
+  },
   "$id": "link-assistant-router/models-explain/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
@@ -61,6 +286,9 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/ModelExplanationReport"
         }
       ]
     },

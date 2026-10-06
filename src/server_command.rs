@@ -5,8 +5,8 @@ use std::process::ExitCode;
 
 use crate::cli::ServerOp;
 use crate::managed_server::{
-    PersistedServer, claim_managed, clear_persisted, managed_status, remove_managed,
-    save_persisted_with_trust, start_managed, stop_managed,
+    PersistedServer, claim_managed, clear_persisted, remove_managed, save_persisted_with_trust,
+    start_managed, stop_managed,
 };
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
@@ -131,11 +131,15 @@ fn configure(selection: Selection<'_>) -> Result<(), AnyError> {
 }
 
 async fn status() -> Result<(), AnyError> {
-    println!(
-        "effective server: {}",
-        crate::managed_server::effective_source().await?
-    );
-    println!("managed server: {}", managed_status()?);
+    let (selection, selection_text) = crate::managed_server::status::selection().await?;
+    let (managed, managed_text) = crate::managed_server::status::managed()?;
+    crate::operation_output::report(crate::operation_reports::ServerStatusReport {
+        selection,
+        managed,
+        output: Vec::new(),
+    });
+    println!("effective server: {selection_text}");
+    println!("managed server: {managed_text}");
     Ok(())
 }
 

@@ -233,7 +233,12 @@ def generate(catalog):
         elif name=='logs.anomalies': data=array(ref('LogAnomaly'))
         elif name=='deploy': data={'anyOf':[ref('DeploymentEvent'), ref('RemoteDeployment'), ref('LocalDeployment'), OUTPUT]}
 
-        schema={'$schema':DRAFT,'$id':operation['schema'], **obj({'schema':{'const':operation['schema']},'operation':{'const':name},'success':BOOL,'exit_code':{'type':'integer','minimum':0,'maximum':255},'data':{'anyOf':[data,OUTPUT]},'diagnostics':array(STRING)}, ['schema','operation','success','exit_code','data','diagnostics']), '$defs':components, 'allOf':[{'if':{'properties':{'success':{'const':True}}},'then':{'properties':{'exit_code':{'const':0}}},'else':{'properties':{'exit_code':{'type':'integer','minimum':1}}}}]}
+        reports = {'doctor': 'DoctorReport', 'auth.status': 'AuthStatusReport', 'clients.doctor': 'ClientDoctorReport', 'logs.show': 'LogRecordsReport', 'tunnel.status': 'TunnelStatusReport', 'server.status': 'ServerStatusReport', 'models.explain': 'ModelExplanationReport', 'clients.backup.verify': 'BackupVerificationReport'}
+        variants = [data, OUTPUT]
+        if name in reports: variants.append(ref(reports[name]))
+        if name == 'clients.backup.list': variants.append(array(STRING))
+
+        schema={'$schema':DRAFT,'$id':operation['schema'], **obj({'schema':{'const':operation['schema']},'operation':{'const':name},'success':BOOL,'exit_code':{'type':'integer','minimum':0,'maximum':255},'data':{'anyOf':variants},'diagnostics':array(STRING)}, ['schema','operation','success','exit_code','data','diagnostics']), '$defs':components, 'allOf':[{'if':{'properties':{'success':{'const':True}}},'then':{'properties':{'exit_code':{'const':0}}},'else':{'properties':{'exit_code':{'type':'integer','minimum':1}}}}]}
         # JSON Schema has $defs, while OpenAPI has components. Keep only
         # reachable definitions to avoid shipping the whole HTTP API per operation.
         schema = json.loads(json.dumps(schema).replace('#/components/schemas/', '#/$defs/'))

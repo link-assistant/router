@@ -36,7 +36,7 @@ impl Coordinator<'_> {
             } else {
                 runtime.token_inventory(&plan.executable, &self.root.join("data"))?
             };
-            serde_json::from_str::<Vec<link_assistant_router::storage::TokenRecord>>(&rendered)
+            crate::operations::decode_token_inventory(rendered.as_bytes())
                 .map_err(|_| "old token inventory is invalid")?
         } else {
             let store = link_assistant_router::storage::build_token_store_read_only(
@@ -194,7 +194,7 @@ impl Coordinator<'_> {
             pid,
             port: self.port,
             executable: plan.executable.display().to_string(),
-            router_version: link_assistant_router::VERSION.to_string(),
+            router_version: plan.router_version.clone(),
             token_secret: fingerprint(self.token_secret),
             runtime_env: super::super::runtime_env::fingerprint(self.token_secret),
             previous_backend: previous_backend.map(str::to_string),
@@ -340,7 +340,7 @@ impl Coordinator<'_> {
         let records = if serving {
             let rendered =
                 runtime.token_inventory(Path::new(&record.executable), &self.root.join("data"))?;
-            serde_json::from_str::<Vec<link_assistant_router::storage::TokenRecord>>(&rendered)
+            crate::operations::decode_token_inventory(rendered.as_bytes())
                 .map_err(|_| "host token inventory is invalid")?
                 .into_iter()
                 .filter(|record| {

@@ -174,9 +174,22 @@ fn ssh_forward_comes_up_on_loopback_with_a_pinned_key_and_checks_the_router() {
         text(&status)
     );
 
+    let structured = harness.tunnel(&[&["status", "--json"][..], &target].concat());
+    let data: serde_json::Value = serde_json::from_slice(&structured.stdout).unwrap();
+    assert!(structured.status.success(), "{}", text(&structured));
+    assert_eq!(data["data"]["running"], true);
+    assert_eq!(data["data"]["via"], "ssh");
+    assert_eq!(data["data"]["health_status"], 200);
+    assert_eq!(data["data"]["models_status"], 200);
+    assert_eq!(data["data"]["models_checked"], true);
+
     let down = harness.tunnel(&[&["down"][..], &target].concat());
     assert!(down.status.success(), "{}", text(&down));
     let status = harness.tunnel(&[&["status"][..], &target].concat());
+    let structured = harness.tunnel(&[&["status", "--json"][..], &target].concat());
+    let data: serde_json::Value = serde_json::from_slice(&structured.stdout).unwrap();
+    assert_eq!(data["data"]["running"], false);
+    assert_eq!(data["data"]["models_checked"], false);
     assert_eq!(status.status.code(), Some(1), "{}", text(&status));
     assert!(
         text(&status).contains("tunnel=stopped"),

@@ -157,6 +157,15 @@ pub fn operation_name(command: Option<&Command>) -> String {
 pub fn types() -> Value {
     json!({
         "OperationResult":schemars::schema_for!(crate::operations::OperationResult),
+        "BackupVerificationReport":schemars::schema_for!(crate::operation_reports::BackupVerificationReport),
+        "DoctorReport":schemars::schema_for!(crate::operation_reports::DoctorReport),
+        "AuthStatusReport":schemars::schema_for!(crate::operation_reports::AuthStatusReport),
+        "ClientDoctorReport":schemars::schema_for!(crate::operation_reports::ClientDoctorReport),
+        "LogRecordsReport":schemars::schema_for!(crate::operation_reports::LogRecordsReport),
+        "TunnelStatusReport":schemars::schema_for!(crate::operation_reports::TunnelStatusReport),
+        "ServerStatusReport":schemars::schema_for!(crate::operation_reports::ServerStatusReport),
+        "ModelExplanationReport":schemars::schema_for!(crate::operation_reports::ModelExplanationReport),
+
         "ClientStatus":schemars::schema_for!(crate::clients::ClientStatus),
         "MaintenancePlan":schemars::schema_for!(crate::client_lifecycle::maintenance::Plan),
         "BackupManifest":schemars::schema_for!(crate::client_lifecycle::backup::Manifest),

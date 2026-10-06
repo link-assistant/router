@@ -13,15 +13,13 @@ impl Coordinator<'_> {
             .docker
             .token_inventory(backend)
             .ok()
-            .and_then(|rendered| serde_json::from_str::<Vec<serde_json::Value>>(&rendered).ok())
+            .and_then(|rendered| {
+                crate::operations::decode_token_inventory(rendered.as_bytes()).ok()
+            })
             .is_some_and(|records| {
-                records.iter().any(|record| {
-                    record.get("label").and_then(serde_json::Value::as_str) == Some("deploy")
-                        && !record
-                            .get("revoked")
-                            .and_then(serde_json::Value::as_bool)
-                            .unwrap_or(false)
-                })
+                records
+                    .iter()
+                    .any(|record| record.label == "deploy" && !record.revoked)
             });
         if !present {
             let policy = runtime_env::current().tokens.issue_arguments();

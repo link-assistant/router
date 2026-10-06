@@ -1,5 +1,5 @@
 # Generated operation signatures, with Python keyword aliases.
-from typing import Any, Callable, Literal, Mapping, TypedDict
+from typing import Any, Callable, Literal, Mapping, NoReturn, TypedDict
 from pathlib import Path
 class OperationResult(TypedDict):
     schema: str
@@ -32,11 +32,24 @@ AuthImportReport = TypedDict('AuthImportReport', {'results': 'list[AuthImportRep
 AuthImportReport_ImportOutcome = Literal['not_attempted', 'exchange_rejected', 'exchange_uncertain', 'persistence_uncertain', 'successor_retained', 'promoted', 'promotion_cleanup_pending', 'already_present']
 AuthImportReport_ImportPhase = Literal['preflight', 'exchange', 'persistence', 'catalog', 'promotion']
 AuthImportReport_ImportReport = TypedDict('AuthImportReport_ImportReport', {'outcome': 'AuthImportReport_ImportOutcome', 'phase': 'AuthImportReport_ImportPhase', 'previous_credential_safe': 'bool', 'provider': 'str | None', 'transaction_id': 'str | None'}, total=False)
+AuthStatusReport = TypedDict('AuthStatusReport', {'api_key_providers': 'list[AuthStatusReport_RedactedProviderRecord]', 'credentials': 'list[AuthStatusReport_CredentialAcceptanceReport]', 'output': 'list[str]', 'server': 'str | None', 'sources': 'list[AuthStatusReport_SourceReport]'}, total=False)
+AuthStatusReport_CredentialAcceptanceReport = TypedDict('AuthStatusReport_CredentialAcceptanceReport', {'detail': 'str | None', 'home': 'str', 'provider': 'AuthStatusReport_SubscriptionProvider', 'state': 'AuthStatusReport_CredentialAcceptanceState'}, total=False)
+AuthStatusReport_CredentialAcceptanceState = Literal['usable', 'rejected', 'unverified', 'refresh-failed', 'absent']
+AuthStatusReport_CredentialSource = dict[str, Any] | dict[str, Any] | dict[str, Any] | dict[str, Any]
+AuthStatusReport_ProviderKind = Literal['openai-compatible'] | Literal['lefine'] | Literal['zai-coding-plan']
+AuthStatusReport_RedactedProviderRecord = TypedDict('AuthStatusReport_RedactedProviderRecord', {'api_key_env': 'str | None', 'base_url': 'str', 'default_model': 'str | None', 'enabled': 'bool', 'has_encrypted_api_key': 'bool', 'intermediary_risk_acknowledged': 'bool', 'kind': 'AuthStatusReport_ProviderKind', 'models': 'list[str]', 'name': 'str', 'subscriber_id': 'str | None', 'supported_clients': 'list[str]', 'unsupported_clients': 'list[str]'}, total=False)
+AuthStatusReport_SourceReport = TypedDict('AuthStatusReport_SourceReport', {'provider': 'AuthStatusReport_SubscriptionProvider', 'source': 'AuthStatusReport_CredentialSource'}, total=False)
+AuthStatusReport_SubscriptionProvider = Literal['claude'] | Literal['codex'] | Literal['gemini'] | Literal['qwen']
 BackupManifest = TypedDict('BackupManifest', {'created': 'str', 'credentials_included': 'bool', 'entries': 'list[BackupManifest_Entry]', 'id': 'str', 'omitted_credentials': 'int', 'stores': 'list[BackupManifest_StoreRecord]', 'unavailable': 'list[str]', 'version': 'int'}, total=False)
 BackupManifest_Entry = TypedDict('BackupManifest_Entry', {'backup_link': 'str | None', 'client': 'str', 'kind': 'str', 'link': 'str | None', 'mode': 'int | None', 'path': 'str', 'scope': 'str', 'sha256': 'str | None', 'size': 'int', 'store': 'str'}, total=False)
 BackupManifest_StoreRecord = TypedDict('BackupManifest_StoreRecord', {'client': 'str', 'scope': 'str', 'source': 'str', 'store': 'str'}, total=False)
+BackupVerificationReport = TypedDict('BackupVerificationReport', {'id': 'str', 'output': 'list[str]', 'verified': 'bool'}, total=False)
 BeginLoginRequest = TypedDict('BeginLoginRequest', {'mode': 'str | None', 'provider': 'str | None'}, total=False)
 Bootstrap = TypedDict('Bootstrap', {'claim_id': 'str', 'confirm_url': 'str', 'expires_in_secs': 'int', 'token': 'str', 'ttl_hours': 'int'}, total=False)
+ClientDoctorReport = TypedDict('ClientDoctorReport', {'client': 'ClientDoctorReport_ClientState', 'http_status': 'int | None', 'model': 'str | None', 'output': 'list[str]', 'reachable': 'bool', 'url': 'str | None'}, total=False)
+ClientDoctorReport_ClientState = TypedDict('ClientDoctorReport_ClientState', {'base_url': 'str | None', 'client': 'str', 'config_path': 'str', 'configured': 'bool', 'conflicts': 'list[str]', 'dialect': 'str', 'effective_source': 'ClientDoctorReport_ConfigSource | None', 'installed': 'bool', 'ownership_state': 'ClientDoctorReport_OwnershipState', 'token_env': 'str | None', 'token_env_set': 'bool', 'unreadable': 'str | None', 'unsupported': 'str | None'}, total=False)
+ClientDoctorReport_ConfigSource = Literal['ambient-environment', 'public-config', 'managed-environment', 'ownership-metadata']
+ClientDoctorReport_OwnershipState = Literal['unconfigured', 'foreign', 'managed-intact', 'managed-drifted', 'ambiguous']
 ClientRotated = TypedDict('ClientRotated', {'revoked': 'str', 'token': 'str'}, total=False)
 ClientStatus = TypedDict('ClientStatus', {'base_url': 'str | None', 'client': 'str', 'config_path': 'str', 'configured': 'bool', 'conflicts': 'list[str]', 'dialect': 'str', 'effective_source': 'ClientStatus_ConfigSource | None', 'installed': 'bool', 'ownership_state': 'ClientStatus_OwnershipState', 'token_env': 'str | None', 'token_env_set': 'bool', 'unreadable': 'str | None', 'unsupported': 'str | None'}, total=False)
 ClientStatus_ConfigSource = Literal['ambient-environment', 'public-config', 'managed-environment', 'ownership-metadata']
@@ -49,6 +62,13 @@ CredentialAcceptanceReport_CredentialAcceptanceState = Literal['usable', 'reject
 CredentialAcceptanceReport_SubscriptionProvider = Literal['claude'] | Literal['codex'] | Literal['gemini'] | Literal['qwen']
 Deleted = TypedDict('Deleted', {'deleted': 'str'}, total=False)
 DeploymentEvent = TypedDict('DeploymentEvent', {'access_loss_explicitly_accepted': 'Any', 'active_port_owners': 'Any', 'blocker': 'Any', 'catalog_comparison': 'Any', 'catalogs': 'Any', 'checkpoint': 'Any', 'checkpoint_scope': 'Any', 'cleanup_scope': 'Any', 'control_health': 'Any', 'credential_source': 'Any', 'credentials_copied': 'Any', 'data_restore_proven': 'Any', 'data_retained': 'Any', 'global_atomic_snapshot': 'Any', 'issued_bound_tokens': 'Any', 'mode': 'Any', 'namespace': 'Any', 'oauth_copied': 'Any', 'oauth_ownership': 'Any', 'oauth_restored': 'Any', 'origin': 'Any', 'parity': 'Any', 'port_ownership': 'Any', 'previous_checkpoint': 'Any', 'primary_preservation': 'Any', 'profiles_projects_sessions': 'Any', 'real_claude_models_and_picker': 'Any', 'reason': 'Any', 'resource_limits': 'Any', 'rollback_scope': 'Any', 'root': 'Any', 'schema': 'Any', 'serving_health': 'Any', 'status': 'Any'}, total=False)
+DoctorReport = TypedDict('DoctorReport', {'checks': 'list[DoctorReport_Check]', 'data_dir': 'str', 'deployments': 'list[DoctorReport_DeploymentHealth]', 'forwarded_headers': 'list[str]', 'listen_addr': 'str', 'output': 'list[str]', 'providers': 'list[DoctorReport_ProviderHealth]', 'recommended_models': 'list[DoctorReport_ModelRecommendation]', 'status': 'str', 'version': 'str'}, total=False)
+DoctorReport_Check = TypedDict('DoctorReport_Check', {'detail': 'str | None', 'name': 'str', 'state': 'str'}, total=False)
+DoctorReport_DeploymentHealth = TypedDict('DoctorReport_DeploymentHealth', {'deployment': 'DoctorReport_Entry', 'present': 'bool'}, total=False)
+DoctorReport_Entry = TypedDict('DoctorReport_Entry', {'instance': 'str | None', 'mode': 'str', 'port': 'int', 'registered_at': 'int', 'root': 'str'}, total=False)
+DoctorReport_ModelRecommendation = TypedDict('DoctorReport_ModelRecommendation', {'model': 'str', 'provider': 'DoctorReport_SubscriptionProvider', 'reason': 'str'}, total=False)
+DoctorReport_ProviderHealth = TypedDict('DoctorReport_ProviderHealth', {'credential_root': 'str', 'detail': 'str | None', 'models': 'list[str]', 'provider': 'DoctorReport_SubscriptionProvider', 'state': 'str'}, total=False)
+DoctorReport_SubscriptionProvider = Literal['claude'] | Literal['codex'] | Literal['gemini'] | Literal['qwen']
 EmergencyStatus = TypedDict('EmergencyStatus', {'active': 'bool', 'bypassed_by_reason': 'dict[str, Any]', 'bypassed_requests': 'int', 'expires_at': 'int | None'}, total=False)
 GeminiError = TypedDict('GeminiError', {'error': 'dict[str, Any]'}, total=False)
 GitHubError = TypedDict('GitHubError', {'message': 'str'}, total=False)
@@ -57,12 +77,20 @@ IssueClientTokenRequest = TypedDict('IssueClientTokenRequest', {'allow_model_sub
 IssueTokenRequest = TypedDict('IssueTokenRequest', {'account': 'str | None', 'allowed_models': 'list[str] | None', 'github_repos': 'list[str] | None', 'label': 'str | None', 'max_requests': 'int | None', 'max_tokens': 'int | None', 'rate_limit_per_minute': 'int | None', 'scope': 'str | None', 'sliding_expiry': 'bool | None', 'ttl_hours': 'int | None'}, total=False)
 LocalDeployment = TypedDict('LocalDeployment', {'backend': 'dict[str, Any] | None', 'blockers': 'list[dict[str, Any]]', 'candidate_image': 'str', 'connections': 'int | None', 'converged': 'bool | None', 'deployment_root': 'str', 'force_update_interrupts': 'bool', 'host_process': 'dict[str, Any] | None', 'host_router': 'dict[str, Any] | None', 'listener': 'dict[str, Any]', 'mode': "Literal['host', 'container']", 'relay': 'dict[str, Any] | None', 'rollback_command': 'str | None', 'runs': 'list[dict[str, Any]] | None', 'schema': "Literal['link-assistant-router/local-deployment/v1']", 'status': "Literal['absent', 'legacy', 'managed', 'planned', 'inconsistent', 'interrupted']", 'status_is_read_only': 'bool', 'token_secret': 'str | None', 'transaction': 'dict[str, Any] | None'}, total=False)
 LogAnomaly = TypedDict('LogAnomaly', {'correlation_ids': 'list[str]', 'detail': 'str', 'kind': 'str'}, total=False)
+LogRecordsReport = TypedDict('LogRecordsReport', {'correlation_id': 'str', 'output': 'list[str]', 'records': 'list[Any]'}, total=False)
 LogSummary = TypedDict('LogSummary', {'bytes': 'int', 'exchanges': 'int', 'incomplete_streams': 'int', 'non_streamed': 'int', 'records': 'int', 'statuses': 'dict[str, Any]', 'streamed': 'int', 'undecodable_bodies': 'int', 'unparsable_records': 'int', 'unterminated_streams': 'int', 'unverifiable_streams': 'int'}, total=False)
 LoginView = TypedDict('LoginView', {'error': 'str | None', 'expires_at': 'int | None', 'login_id': 'str', 'provider': 'LoginView_SubscriptionProvider', 'session_expires_at': 'str', 'status': 'LoginView_LoginStatus', 'url': 'str | None', 'user_code': 'str | None'}, total=False)
 LoginView_LoginStatus = Literal['awaiting_code'] | Literal['awaiting_callback'] | Literal['awaiting_device'] | Literal['authorized'] | Literal['failed'] | Literal['expired']
 LoginView_SubscriptionProvider = Literal['claude'] | Literal['codex'] | Literal['gemini'] | Literal['qwen']
 MaintenancePlan = TypedDict('MaintenancePlan', {'backup_id': 'str | None', 'binary': 'str | None', 'channel': 'str | None', 'client': 'str', 'command': 'list[str]', 'method': 'str', 'operation': 'str', 'preserved_profiles': 'list[str]', 'reason': 'str | None', 'status': 'str', 'version_after': 'str | None', 'version_before': 'str | None'}, total=False)
 ManagementReport = TypedDict('ManagementReport', {'accounts': 'Any', 'auth_url': 'Any', 'by_provider': 'Any', 'by_token': 'Any', 'code': 'Any', 'counters': 'Any', 'credential_kind': 'Any', 'credentials': 'Any', 'disabled': 'Any', 'duration_minutes': 'Any', 'enabled': 'Any', 'error': 'Any', 'expires_at': 'Any', 'expires_in': 'Any', 'failures': 'Any', 'id': 'Any', 'last_failure': 'Any', 'message': 'Any', 'mode': 'Any', 'output': 'Any', 'provider': 'Any', 'providers': 'Any', 'reason': 'Any', 'recent': 'Any', 'refresh': 'Any', 'remaining_seconds': 'Any', 'session_id': 'Any', 'started_at': 'Any', 'status': 'Any', 'surfaces': 'Any', 'tokens': 'Any', 'total': 'Any', 'total_cached_tokens': 'Any', 'total_cost_usd': 'Any', 'total_input_tokens': 'Any', 'total_output_tokens': 'Any', 'total_requests': 'Any', 'total_tokens': 'Any', 'uptime_seconds': 'Any', 'url': 'Any', 'user_code': 'Any', 'verification_uri': 'Any'}, total=False)
+ModelExplanationReport = TypedDict('ModelExplanationReport', {'capability_provenance': 'Any', 'client_representation': 'ModelExplanationReport_ClientRepresentation', 'contract_version': 'int', 'health': 'ModelExplanationReport_ModelHealth', 'model_descriptor': 'ModelExplanationReport_ModelTruthDescriptor', 'model_policy': 'Any', 'output': 'list[str]', 'requested_selector': 'str', 'route_scope': 'Any', 'routing': 'ModelExplanationReport_ModelRouting', 'selector_kind': 'str', 'served_identity': 'str | None'}, total=False)
+ModelExplanationReport_ClientRepresentation = TypedDict('ModelExplanationReport_ClientRepresentation', {'advertisements': 'list[Any]', 'client': 'str'}, total=False)
+ModelExplanationReport_ModelHealth = TypedDict('ModelExplanationReport_ModelHealth', {'degraded_providers': 'list[str]', 'degraded_reasons': 'Any', 'healthy_providers': 'list[str]', 'starting_providers': 'list[str]'}, total=False)
+ModelExplanationReport_ModelRouteScope = TypedDict('ModelExplanationReport_ModelRouteScope', {'account': 'str | None', 'endpoint': 'str | None', 'protocols': 'list[str]', 'provider': 'str | None'}, total=False)
+ModelExplanationReport_ModelRouting = TypedDict('ModelExplanationReport_ModelRouting', {'candidate_count': 'int', 'catalog_conflicts': 'list[str]', 'state': 'str'}, total=False)
+ModelExplanationReport_ModelSelectorKind = Literal['concrete', 'provider_dynamic_alias', 'operator_alias', 'unknown']
+ModelExplanationReport_ModelTruthDescriptor = TypedDict('ModelExplanationReport_ModelTruthDescriptor', {'allow_substitution': 'bool', 'capabilities': 'Any', 'capability_provenance': 'Any', 'requested_selector': 'str | None', 'route': 'ModelExplanationReport_ModelRouteScope', 'selector_kind': 'ModelExplanationReport_ModelSelectorKind', 'substitution_source': 'str | None', 'upstream_request_model': 'str | None', 'upstream_served_model': 'str | None'}, total=False)
 Models = TypedDict('Models', {'catalog_conflict_candidates': 'Any', 'catalog_conflicts': 'Any', 'data': 'list[dict[str, Any]]', 'degraded_providers': 'Any', 'degraded_reasons': 'Any', 'first_id': 'str | None', 'has_more': 'bool', 'healthy_providers': 'Any', 'last_id': 'str | None', 'model_policy': 'TokenRecord_ModelAccessPolicy', 'object': 'str', 'starting_providers': 'Any', 'using_fallback': 'Any'}, total=False)
 NativeModels = TypedDict('NativeModels', {'models': 'list[dict[str, Any]]'}, total=False)
 OpaqueVendorPayload = Any
@@ -83,6 +111,9 @@ RotateClientTokenRequest = TypedDict('RotateClientTokenRequest', {'account': 'st
 RotateTokenRequest = TypedDict('RotateTokenRequest', {'label': 'str | None', 'ttl_hours': 'int | None'}, total=False)
 Rotated = TypedDict('Rotated', {'label': 'str', 'revoked': 'str', 'scope': 'str', 'token': 'str', 'ttl_hours': 'int'}, total=False)
 RunLease = TypedDict('RunLease', {'run_lease_expires_at': 'int'}, total=False)
+ServerStatusReport = TypedDict('ServerStatusReport', {'managed': 'ServerStatusReport_ManagedServerStatus', 'output': 'list[str]', 'selection': 'ServerStatusReport_ServerSelection'}, total=False)
+ServerStatusReport_ManagedServerStatus = TypedDict('ServerStatusReport_ManagedServerStatus', {'administrator_claimed': 'bool', 'container': 'str', 'detail': 'str | None', 'keep_running': 'bool', 'present': 'bool', 'state': 'str', 'url': 'str | None', 'users': 'int', 'volume': 'str'}, total=False)
+ServerStatusReport_ServerSelection = TypedDict('ServerStatusReport_ServerSelection', {'source': 'str', 'token_configured': 'bool', 'url': 'str | None'}, total=False)
 SubmitCodeRequest = TypedDict('SubmitCodeRequest', {'code': 'str'}, total=False)
 SubscriptionHealth = TypedDict('SubscriptionHealth', {'degraded_providers': 'list[dict[str, Any]]', 'healthy_providers': 'list[str]', 'starting_providers': 'list[str]', 'status': 'str'}, total=False)
 TokenImportReport = TypedDict('TokenImportReport', {'added': 'list[str]', 'backup': 'str | None', 'conflicts': 'list[TokenImportReport_Conflict]', 'dry_run': 'bool', 'kept_revoked': 'list[str]', 'missing_from_source': 'list[str]', 'mode': 'str', 'replaced': 'list[TokenImportReport_Conflict]', 'source_records': 'int', 'target_records_before': 'int', 'unchanged': 'list[str]'}, total=False)
@@ -91,6 +122,7 @@ TokenIssued = TypedDict('TokenIssued', {'account': 'Any', 'label': 'Any', 'max_r
 TokenRecord = TypedDict('TokenRecord', {'account': 'str | None', 'client_kind': 'str | None', 'ephemeral': 'bool', 'expires_at': 'int', 'github_repos': 'list[str]', 'id': 'str', 'issued_at': 'int', 'label': 'str', 'max_requests': 'int | None', 'max_tokens': 'int | None', 'model_policy': 'TokenRecord_ModelAccessPolicy', 'principal_id': 'str | None', 'rate_limit_per_minute': 'int | None', 'rate_window_requests': 'int', 'rate_window_started_at': 'int', 'reserved_tokens': 'int', 'revoked': 'bool', 'run_lease_expires_at': 'int | None', 'scope': 'str', 'sliding_window_seconds': 'int | None', 'used_requests': 'int', 'used_tokens': 'int'}, total=False)
 TokenRecord_ModelAccessPolicy = TypedDict('TokenRecord_ModelAccessPolicy', {'allow_substitution': 'bool', 'allowed_models': 'list[str]', 'substitution_source': 'str | None'}, total=False)
 TtlRequest = TypedDict('TtlRequest', {'ttl_hours': 'int | None'}, total=False)
+TunnelStatusReport = TypedDict('TunnelStatusReport', {'health_status': 'int | None', 'local_port': 'int', 'models_checked': 'bool', 'models_status': 'int | None', 'output': 'list[str]', 'remote_port': 'int', 'running': 'bool', 'server': 'str', 'via': 'str'}, total=False)
 UsageEnvelope = TypedDict('UsageEnvelope', {'schema_version': 'int', 'subscriptions': 'list[UsageEnvelope_SubscriptionUsage]'}, total=False)
 UsageEnvelope_Credits = TypedDict('UsageEnvelope_Credits', {'approximate_cloud_messages': 'int | None', 'approximate_local_messages': 'int | None', 'balance': 'str | None', 'has_credits': 'bool | None', 'overage_limit_reached': 'bool | None', 'unlimited': 'bool | None'}, total=False)
 UsageEnvelope_ExtraUsage = TypedDict('UsageEnvelope_ExtraUsage', {'currency': 'str | None', 'is_enabled': 'bool | None', 'monthly_limit': 'float | None', 'remaining_credits': 'float | None', 'resets_at': 'str | None', 'used_credits': 'float | None', 'utilization': 'float | None'}, total=False)
@@ -168,7 +200,7 @@ class AuthStatusResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: AuthStatusReport
 class ClientsBackupCreateResult(TypedDict):
     schema: str
     operation: str
@@ -182,7 +214,7 @@ class ClientsBackupListResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: list[BackupManifest]
+    data: list[str]
 class ClientsBackupRestoreResult(TypedDict):
     schema: str
     operation: str
@@ -196,14 +228,14 @@ class ClientsBackupVerifyResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: BackupVerificationReport
 class ClientsDoctorResult(TypedDict):
     schema: str
     operation: str
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: ClientDoctorReport
 class ClientsInstallResult(TypedDict):
     schema: str
     operation: str
@@ -294,7 +326,7 @@ class DoctorResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: DoctorReport
 class LogsAnomaliesResult(TypedDict):
     schema: str
     operation: str
@@ -308,7 +340,7 @@ class LogsShowResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: LogRecordsReport
 class LogsSummaryResult(TypedDict):
     schema: str
     operation: str
@@ -322,7 +354,7 @@ class ModelsExplainResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: ModelExplanationReport
 class ProvidersAddResult(TypedDict):
     schema: str
     operation: str
@@ -399,7 +431,7 @@ class ServerStatusResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: ServerStatusReport
 class ServerStopResult(TypedDict):
     schema: str
     operation: str
@@ -497,7 +529,7 @@ class TunnelStatusResult(TypedDict):
     success: bool
     exit_code: int
     diagnostics: list[str]
-    data: dict[str, Any]
+    data: TunnelStatusReport
 class TunnelUpResult(TypedDict):
     schema: str
     operation: str

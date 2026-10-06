@@ -83,7 +83,9 @@ impl Deployment {
             self.root.path().join("state").display().to_string(),
         ];
         arguments.extend(extra.iter().map(|value| (*value).to_string()));
-        let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
+        let binary = std::env::var_os("ROUTER_DEPLOY_TEST_BINARY")
+            .unwrap_or_else(|| env!("CARGO_BIN_EXE_link-assistant-router").into());
+        let mut command = Command::new(binary);
         command
             .args(&arguments)
             .env("TOKEN_SECRET", "deploy-docker-test-secret")

@@ -115,6 +115,7 @@ pub mod oauth;
 pub mod on_demand_cli;
 pub mod openai;
 pub mod operation_context;
+pub mod operation_reports;
 pub mod operations;
 pub mod output_limit;
 pub mod platform_keychain;

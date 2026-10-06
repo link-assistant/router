@@ -192,6 +192,12 @@
             "output"
           ],
           "type": "object"
+        },
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       ]
     },

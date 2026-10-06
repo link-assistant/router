@@ -38,6 +38,8 @@ struct HostWorld {
     probes: usize,
     /// Another program already answering on the stable port.
     foreign_listener: bool,
+    daemon_version: Option<String>,
+    inventory_failure: bool,
 }
 
 #[derive(Default)]
@@ -52,6 +54,14 @@ impl FakeHost {
 impl HostRuntime for FakeHost {
     fn executable(&self) -> Result<PathBuf, String> {
         Ok(PathBuf::from(EXECUTABLE))
+    }
+
+    fn version(&self, _executable: &std::path::Path) -> Result<String, String> {
+        Ok(self
+            .world()
+            .daemon_version
+            .clone()
+            .unwrap_or_else(|| link_assistant_router::VERSION.into()))
     }
 
     fn spawn(&self, launch: &Launch<'_>) -> Result<u32, String> {
@@ -131,7 +141,9 @@ impl HostRuntime for FakeHost {
     }
 
     fn token_inventory(&self, _executable: &Path, _data_dir: &Path) -> Result<String, String> {
-        Ok("[]".to_string())
+        let failed = self.world().inventory_failure;
+        Ok(serde_json::json!({"schema":"link-assistant-router/tokens-list/v1", "operation":"tokens.list",
+            "success": !failed, "exit_code": i32::from(failed), "data":[], "diagnostics":[]}).to_string())
     }
 }
 
@@ -540,4 +552,48 @@ fn status_without_the_secret_reports_unknown_convergence_and_no_plan() {
     );
     assert_eq!(code, ExitCode::SUCCESS);
     assert_eq!(host.world().processes.len(), 1);
+}
+
+#[test]
+fn host_state_tracks_the_selected_daemon_version() {
+    let root = tempfile::tempdir().unwrap();
+    let runner = FakeRunner::default();
+    let host = FakeHost::default();
+    host.world().daemon_version = Some("9.8.7".into());
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+    assert_eq!(
+        State::new(root.path())
+            .host()
+            .unwrap()
+            .unwrap()
+            .router_version,
+        "9.8.7"
+    );
+    assert_eq!(
+        run(&runner, &host, root.path(), |args| args.status = true),
+        ExitCode::SUCCESS
+    );
+    assert_eq!(host.world().spawned_ports.len(), 1);
+}
+
+#[test]
+fn failed_host_inventory_refuses_restore_before_stopping_the_host() {
+    let root = tempfile::tempdir().unwrap();
+    let (runner, _) = installed(root.path());
+    let host = FakeHost::default();
+    assert_eq!(
+        run(&runner, &host, root.path(), host_mode),
+        ExitCode::SUCCESS
+    );
+    host.world().inventory_failure = true;
+    assert_ne!(
+        run(&runner, &host, root.path(), |args| args.mode =
+            Some(DeployMode::Container)),
+        ExitCode::SUCCESS
+    );
+    assert_eq!(host.world().processes.len(), 1);
+    assert!(State::new(root.path()).host().unwrap().is_some());
 }

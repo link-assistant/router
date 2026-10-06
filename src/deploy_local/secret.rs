@@ -115,7 +115,7 @@ impl Coordinator<'_> {
         let now = crate::operation_context::now().timestamp();
         let rendered = self.docker.token_inventory(backend).ok()?;
         let records: Vec<TokenRecord> =
-            crate::operations::decode_payload(rendered.as_bytes()).ok()?;
+            crate::operations::decode_token_inventory(rendered.as_bytes()).ok()?;
         Some(
             records
                 .iter()

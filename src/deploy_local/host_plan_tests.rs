@@ -9,6 +9,7 @@ const EXECUTABLE: &str = "/opt/router/bin/router";
 fn serving(secret: SecretMatch, converged: bool, secret_unknown: bool) -> Plan {
     Plan {
         executable: PathBuf::from(EXECUTABLE),
+        router_version: link_assistant_router::VERSION.into(),
         login: ClaudeLogin::Absent,
         from: None,
         record: Some(Host {

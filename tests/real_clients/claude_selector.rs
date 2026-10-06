@@ -294,7 +294,7 @@ fn selector_transcript(
     command.env("ALL_PROXY", "http://127.0.0.1:9");
     let session = PtySession::spawn(command).expect("start Claude TUI through Router");
     session
-        .wait_for(
+        .wait_for_screen(
             |text| text.contains('❯'),
             Duration::from_millis(250),
             Duration::from_secs(30),
@@ -302,11 +302,15 @@ fn selector_transcript(
         .unwrap_or_else(|error| panic!("Claude TUI was not ready: {error}"));
     session.send_text("/model").expect("type /model");
     session
-        .wait_idle(Duration::from_millis(200), Duration::from_secs(3))
+        .wait_for_screen(
+            |text| text.contains("/model"),
+            Duration::from_millis(100),
+            Duration::from_secs(3),
+        )
         .expect("settle /model input");
     session.send_key(Key::Enter).expect("open model selector");
     let transcript = session
-        .wait_for(
+        .wait_for_screen(
             |text| {
                 let compact = text
                     .chars()
@@ -365,7 +369,7 @@ fn choose_default_row_and_prompt(session: &PtySession, router: &MockRouter) {
     // Text typed while the selector is still closing is dropped, so wait for
     // Claude's confirmation, then for the prompt to reach the input.
     session
-        .wait_for(
+        .wait_for_screen(
             |text| compact(text).contains("Setmodelto"),
             Duration::from_millis(300),
             Duration::from_secs(10),
@@ -381,7 +385,7 @@ fn choose_default_row_and_prompt(session: &PtySession, router: &MockRouter) {
         .expect("type a prompt on the Default row");
     let typed = compact(PROMPT);
     session
-        .wait_for(
+        .wait_for_screen(
             |text| compact(text).contains(&typed),
             Duration::from_millis(200),
             Duration::from_secs(10),
@@ -428,20 +432,11 @@ fn assert_default_row_is_authorized(compact: &str, models: &[(&str, &str)]) {
             "z.ai-only Default row resolves to the unavailable {family} family: {described}"
         );
     }
-    // The transcript is the raw terminal stream, and Claude redraws a row by
-    // rewriting only the characters that changed, so a captured name can miss
-    // letters (`futu-glm-only` for `future-glm-only`). What is on screen must
-    // still be drawn from one advertised ID; the exact outbound model is
-    // asserted separately from the inference itself.
+    // The reconstructed screen preserves full identities through cursor redraws.
+    // Keep the displayed Default identity as exact as the outbound request.
     let shown = described.split(['[', ')']).next().unwrap_or_default();
-    let drawn_from = |model: &str| {
-        let mut remaining = model.chars();
-        shown
-            .chars()
-            .all(|character| remaining.any(|candidate| candidate == character))
-    };
     assert!(
-        shown.chars().count() >= 4 && models.iter().any(|(model, _)| drawn_from(model)),
+        models.iter().any(|(model, _)| shown == *model),
         "z.ai-only Default row does not name an advertised model: {described}"
     );
 }

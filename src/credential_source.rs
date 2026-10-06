@@ -45,7 +45,10 @@ const REFRESH_OWNER_KEY: &str = "refresh_owner";
 const EXTERNAL_REFRESH_OWNER: &str = "external";
 
 /// How a deployment holds one provider's credential.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum CredentialSource {
     /// Nothing is installed for this provider.
     Absent,
@@ -133,7 +136,9 @@ impl CredentialSource {
 }
 
 /// One provider's holding, for `auth status`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 pub struct SourceReport {
     pub provider: SubscriptionProvider,
     pub source: CredentialSource,

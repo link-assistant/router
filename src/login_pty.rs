@@ -64,6 +64,7 @@ pub struct PtySession {
 struct Output {
     bytes: Vec<u8>,
     last_write: Instant,
+    screen: vt100::Parser,
 }
 
 /// Why a [`PtySession::wait_for`] call gave up.
@@ -120,6 +121,7 @@ impl PtySession {
         let output = Arc::new(Mutex::new(Output {
             bytes: Vec::new(),
             last_write: Instant::now(),
+            screen: vt100::Parser::new(PTY_ROWS, PTY_COLS, 0),
         }));
         let eof = Arc::new(AtomicBool::new(false));
 
@@ -133,6 +135,7 @@ impl PtySession {
                     Ok(n) => {
                         if let Ok(mut guard) = thread_output.lock() {
                             guard.bytes.extend_from_slice(&buf[..n]);
+                            guard.screen.process(&buf[..n]);
                             guard.last_write = Instant::now();
                         }
                     }
@@ -196,9 +199,56 @@ impl PtySession {
     where
         F: Fn(&str) -> bool,
     {
+        self.wait_for_view(predicate, idle, timeout, false)
+    }
+
+    /// Current terminal screen after applying cursor motion and redraws.
+    #[must_use]
+    pub fn screen(&self) -> String {
+        self.output
+            .lock()
+            .map(|output| output.screen.screen().contents())
+            .unwrap_or_default()
+    }
+
+    /// Wait for a settled visible screen, without matching obsolete repaint history.
+    pub fn wait_for_screen<F>(
+        &self,
+        predicate: F,
+        idle: Duration,
+        timeout: Duration,
+    ) -> Result<String, WaitError>
+    where
+        F: Fn(&str) -> bool,
+    {
+        self.wait_for_view(predicate, idle, timeout, true)
+    }
+
+    fn wait_for_view<F>(
+        &self,
+        predicate: F,
+        idle: Duration,
+        timeout: Duration,
+        screen: bool,
+    ) -> Result<String, WaitError>
+    where
+        F: Fn(&str) -> bool,
+    {
         let deadline = Instant::now() + timeout;
         loop {
-            let (text, quiet_for) = self.snapshot();
+            let (text, quiet_for) = if screen {
+                self.output.lock().map_or_else(
+                    |_| (String::new(), Duration::ZERO),
+                    |output| {
+                        (
+                            output.screen.screen().contents(),
+                            output.last_write.elapsed(),
+                        )
+                    },
+                )
+            } else {
+                self.snapshot()
+            };
             if predicate(&text) && quiet_for >= idle {
                 return Ok(text);
             }

@@ -87,7 +87,7 @@ jobs:
   # selector -- against newer releases so client drift fails here, at the
   # operation that changed, rather than being hidden behind a version gate.
   claude-newer-release:
-    name: Claude Code ${{ matrix.claude }} (newer than baseline)
+    name: Claude Code ${{ matrix.claude }} (capture ${{ matrix.capture }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -96,7 +96,12 @@ jobs:
         # `latest` moves under every pull request; keep pull requests on a
         # pinned newer release and let push, nightly, and manual runs also
         # track the moving tag.
-        claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.284"]' || '["2.1.284", "latest"]') }}
+        claude: ${{ fromJSON(github.event_name == 'pull_request' && '["2.1.284", "2.1.291"]' || '["2.1.284", "2.1.291", "latest"]') }}
+        capture: [1]
+        include:
+          # The affected release previously passed once and failed its repeat.
+          - claude: '2.1.291'
+            capture: 2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
