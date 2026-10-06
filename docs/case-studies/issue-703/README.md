@@ -94,9 +94,10 @@ than the selected daemon version.
 - [x] Implement all inventory consumers and daemon launch boundary.
 - [x] Implement typed reports and regenerate all published contracts/bindings.
 - [x] Fix terminal reconstruction/readiness and repeat affected client capture.
-- [ ] Run local checks, full test suite and real previous-image migration.
 - [x] Prepare minor release/changelog, review full PR diff, commit and push.
-- [ ] Update PR description, verify current-head CI and mark ready.
+
+The final local verification results, current-head CI checks and readiness
+are recorded in [PR #704](https://github.com/link-assistant/router/pull/704).
 
 ## Reproduction and completed verification
 
@@ -151,3 +152,35 @@ The preserved job log has the assertion at lines 6227–6230. Its replacement
 uses a complete token record and checks both legacy and enveloped inventories
 without allowing duplicate token issuance; the original deployment-preservation
 assertion remains intact.
+
+The subsequent Linux run passed all 2,142 unit tests, then its existing remote
+deployment integration test caught a result-adapter regression at log lines
+6746–6756: an existing JSON document's `output` had been replaced by the JSON
+rendering itself. The adapter now attaches human rendering only to explicitly
+published domain reports and preserves pre-existing JSON payload fields. The
+same integration test reproduces the failure locally; the doctor regression
+also checks that the new domain reports retain their human rendering.
+
+### Local compiler memory boundary
+
+The workspace has a 3 GiB memory limit. Compiling the combined 2,142-test
+library target exceeded that limit even with one Cargo job, stripped compiler
+debug bookkeeping and a serialized backend. This is a compilation limit;
+the ordinary suite still runs unchanged on the larger CI runners.
+
+The reusable local workaround partitions test functions with Rust syntax-tree
+parsing in an ignored source copy, then compiles and runs eight shards
+sequentially. It preserves test bodies, assertions, production code and
+relative include paths. The runner checks the union of listed test names
+against all 2,142 tests, so shared macro-generated tests cannot conceal
+missing coverage. Integration, binary, example and documentation tests use
+the ordinary sources. Run from the repository root:
+
+```sh
+rust-script experiments/issue-703/shard-unit-tests.rs
+python3 experiments/issue-703/run-unit-shards.py
+```
+
+Each compiler/test process and its complete output is recorded separately in
+`ci-logs/unit-shard-*-list.log` and `ci-logs/unit-shard-*.log`. This workaround
+does not alter the CI workflow or reduce its test coverage.
