@@ -20,10 +20,13 @@ pub(super) struct State {
     root_modified: Option<SystemTime>,
     total_bytes: u64,
     directories: HashMap<String, Directory>,
+    #[cfg(test)]
+    pub(super) full_scans: usize,
 }
 
 impl State {
     fn load(root: &Path) -> Option<Self> {
+        tracing::debug!(root = %root.display(), "loading request-log total accounting");
         let entries = fs::read_dir(root).ok()?;
         let directories = entries
             .flatten()
@@ -37,6 +40,8 @@ impl State {
             root_modified: root_modified(root),
             total_bytes: directories.values().map(|entry| entry.bytes).sum(),
             directories,
+            #[cfg(test)]
+            full_scans: 1,
         })
     }
 
@@ -92,7 +97,13 @@ pub(super) fn enforce(root: &Path, max_total: u64, active: &str, cached: &Mutex<
         return;
     };
     if cached.as_ref().is_none_or(|state| state.root_changed(root)) {
+        #[cfg(test)]
+        let previous_scans = cached.as_ref().map_or(0, |state| state.full_scans);
         *cached = State::load(root);
+        #[cfg(test)]
+        if let Some(state) = cached.as_mut() {
+            state.full_scans += previous_scans;
+        }
     }
     let Some(state) = cached.as_mut() else {
         return;
@@ -140,6 +151,13 @@ pub(super) fn enforce(root: &Path, max_total: u64, active: &str, cached: &Mutex<
 }
 
 #[cfg(test)]
+impl State {
+    pub(super) const fn accounted_bytes(&self) -> u64 {
+        self.total_bytes
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::Arc;
@@ -183,5 +201,55 @@ mod tests {
         let temporary = tempfile::tempdir().unwrap();
 
         enforce(temporary.path(), 0, "active", &cached);
+    }
+}
+
+#[cfg(test)]
+mod invalidation_tests {
+    use super::*;
+
+    #[test]
+    fn directory_changes_reload_accounting_and_appends_refresh_only_the_active_log() {
+        use std::io::Write as _;
+        let root = tempfile::tempdir().unwrap();
+        let active = root.path().join("active");
+        fs::create_dir(&active).unwrap();
+        fs::write(active.join(LOG_FILE), b"first").unwrap();
+        let cached = Mutex::new(None);
+        enforce(root.path(), 1000, "active", &cached);
+        assert_eq!(cached.lock().unwrap().as_ref().unwrap().full_scans, 1);
+        fs::OpenOptions::new()
+            .append(true)
+            .open(active.join(LOG_FILE))
+            .unwrap()
+            .write_all(b"second")
+            .unwrap();
+        enforce(root.path(), 1000, "active", &cached);
+        assert_eq!(
+            cached.lock().unwrap().as_ref().unwrap().accounted_bytes(),
+            11
+        );
+        assert_eq!(cached.lock().unwrap().as_ref().unwrap().full_scans, 1);
+
+        let external = root.path().join("external");
+        fs::create_dir(&external).unwrap();
+        fs::write(external.join(LEGACY_LOG_FILE), b"external bytes").unwrap();
+        // Force the cached timestamp stale without relying on the filesystem's
+        // timestamp resolution or a wall-clock sleep.
+        cached.lock().unwrap().as_mut().unwrap().root_modified = Some(UNIX_EPOCH);
+        enforce(root.path(), 1000, "active", &cached);
+        assert_eq!(cached.lock().unwrap().as_ref().unwrap().full_scans, 2);
+        assert_eq!(
+            cached.lock().unwrap().as_ref().unwrap().accounted_bytes(),
+            25
+        );
+        fs::remove_dir_all(external).unwrap();
+        cached.lock().unwrap().as_mut().unwrap().root_modified = Some(UNIX_EPOCH);
+        enforce(root.path(), 1000, "active", &cached);
+        assert_eq!(cached.lock().unwrap().as_ref().unwrap().full_scans, 3);
+        assert_eq!(
+            cached.lock().unwrap().as_ref().unwrap().accounted_bytes(),
+            11
+        );
     }
 }
