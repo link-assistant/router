@@ -49,9 +49,10 @@ shards = project / 'target/local-unit-shards'
 if args.mode == 'clippy':
     library = shards / 'src/lib.rs'
     # AST rewriting removes test callers and reformats macro token streams.
-    # Exempt only the resulting unused-item and layout lints in these copies;
+    # Exempt only the resulting unused-item, unused-async and layout lints;
     # the original production sources and test targets remain fully linted.
     library.write_text('#![allow(dead_code, unused_imports, '
+                       'clippy::unused_async, '
                        'clippy::possible_missing_else, '
                        'clippy::suspicious_else_formatting, '
                        'clippy::semicolon_if_nothing_returned)]\n' + library.read_text())
