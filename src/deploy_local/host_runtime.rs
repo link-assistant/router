@@ -112,11 +112,20 @@ fn catalog_on_own_runtime(
 }
 
 /// The real host: processes, loopback HTTP and the platform secret store.
-#[derive(Default)]
 pub(super) struct System {
     /// Children started by this run, reaped on termination so a stopped
     /// candidate does not linger as a zombie that still answers `kill -0`.
     children: Mutex<Vec<Child>>,
+    keychain_presence: fn(&str) -> bool,
+}
+
+impl Default for System {
+    fn default() -> Self {
+        Self {
+            children: Mutex::default(),
+            keychain_presence: link_assistant_router::platform_keychain::has_entry,
+        }
+    }
 }
 
 impl HostRuntime for System {
@@ -292,22 +301,11 @@ impl HostRuntime for System {
     }
 
     fn claude_login(&self) -> ClaudeLogin {
-        // The secret is dropped here; only its presence is used.
-        if link_assistant_router::platform_keychain::lookup(
-            link_assistant_router::subscription::SubscriptionProvider::Claude,
+        claude_login_in(
+            crate::operation_context::var_os("CLAUDE_CONFIG_DIR"),
+            crate::operation_context::var_os("HOME"),
+            self.keychain_presence,
         )
-        .is_some()
-        {
-            return ClaudeLogin::Keychain;
-        }
-        let home = link_assistant_router::env_paths::directory("CLAUDE_CONFIG_DIR").or_else(|| {
-            link_assistant_router::env_paths::directory("HOME").map(|home| home.join(".claude"))
-        });
-        if home.is_some_and(|home| home.join(".credentials.json").is_file()) {
-            ClaudeLogin::File
-        } else {
-            ClaudeLogin::Absent
-        }
     }
 
     fn token_inventory(&self, executable: &Path, data_dir: &Path) -> Result<String, String> {
@@ -329,7 +327,38 @@ impl HostRuntime for System {
     }
 }
 
+/// Classify the selected login without retrieving any credential bytes.
+fn claude_login_in(
+    config_dir: Option<std::ffi::OsString>,
+    user_home: Option<std::ffi::OsString>,
+    has_entry: impl FnOnce(&str) -> bool,
+) -> ClaudeLogin {
+    use link_assistant_router::{env_paths::from_value, platform_keychain::claude_service_for};
+    let service = claude_service_for(config_dir.as_deref());
+    let home =
+        from_value(config_dir).or_else(|| from_value(user_home).map(|home| home.join(".claude")));
+    if has_entry(&service) {
+        ClaudeLogin::Keychain
+    } else if home.is_some_and(|home| home.join(".credentials.json").is_file()) {
+        ClaudeLogin::File
+    } else {
+        ClaudeLogin::Absent
+    }
+}
+
+#[cfg(test)]
+#[path = "host_login_tests.rs"]
+mod login_tests;
+
 impl System {
+    /// Fixture host processes never consult the workstation's Keychain.
+    #[cfg(test)]
+    pub(super) fn fixture() -> Self {
+        Self {
+            keychain_presence: |_| false,
+            ..Self::default()
+        }
+    }
     /// Whether a child this run started has exited, reaping it if so.
     fn exited(&self, pid: u32) -> bool {
         let mut children = self
