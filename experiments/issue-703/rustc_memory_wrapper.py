@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reduce combined unit-target compiler memory in a 3 GiB workspace.
+"""Reduce workspace library compiler memory in a 3 GiB workspace.
 
 Use for local verification, one Cargo command at a time:
 CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 \
@@ -13,11 +13,26 @@ preserve test logic, debug assertions and caller locations. CI uses the
 ordinary compiler on runners with enough memory for the combined target.
 """
 import os
+from pathlib import Path
 import sys
+import time
 
 arguments = sys.argv[1:]
-if "--test" in arguments and "link_assistant_router" in arguments:
-    arguments += ["-Zno-parallel-backend", "-Zfewer-names=yes", "-Zmir-strip-debuginfo=all-locals"]
+if "link_assistant_router" in arguments:
+    # Other issue workspaces share this cgroup. Opt in to waiting for their
+    # compilers to finish, counting anonymous memory rather than file cache.
+    limit = int(os.environ.get("ROUTER_LOCAL_MAX_BASELINE_ANON_BYTES", "0"))
+    statistics = Path("/sys/fs/cgroup/memory.stat")
+    announced = False
+    while limit and statistics.exists():
+        memory = dict(line.split() for line in statistics.read_text().splitlines())
+        if int(memory["anon"]) <= limit:
+            break
+        if not announced:
+            print("Waiting for shared compiler memory before local Router verification", file=sys.stderr)
+            announced = True
+        time.sleep(1)
+    arguments += ["-Ccodegen-units=1024", "-Zno-parallel-backend", "-Zfewer-names=yes", "-Zmir-strip-debuginfo=all-locals"]
     os.environ["RUSTC_BOOTSTRAP"] = "1"
     os.environ["MALLOC_ARENA_MAX"] = "1"
     os.environ["MALLOC_TRIM_THRESHOLD_"] = "65536"
