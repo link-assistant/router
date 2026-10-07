@@ -53,3 +53,5 @@ compiles the current integration tests without rebuilding the library. It prints
 binary build timestamps, resolves dependencies from Cargo fingerprints, and uses
 a bounded, serial linker. This can check draft binaries; use normal Cargo/CI
 builds to validate the final source revision.
+Optional arguments select test files, and `real_clients_test::claude_privacy`
+selects that file's privacy test when offline real-client testing is enabled.

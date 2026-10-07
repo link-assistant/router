@@ -76,9 +76,7 @@ fn mock_admin_claude_router_with_catalog(
     mock_claude_router_impl(catalog, true, "200 OK")
 }
 
-pub fn mock_claude_router_with_failure(
-    status: &str,
-) -> (String, thread::JoinHandle<Vec<String>>) {
+pub fn mock_claude_router_with_failure(status: &str) -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_impl(
         r#"{"error":{"message":"raw-response-secret-sentinel"}}"#,
         false,

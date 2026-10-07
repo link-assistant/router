@@ -16,6 +16,7 @@ fingerprints = root / "target/debug/.fingerprint"
 metadata = json.loads((fingerprints / library.name.removeprefix("lib").removesuffix(".rlib").replace("link_assistant_router", "link-assistant-router") / "lib-link_assistant_router.json").read_text())
 selected = {name: value.to_bytes(8, "little").hex() for _, name, _, value in metadata["deps"]}
 environment = os.environ.copy()
+environment["CARGO_MANIFEST_DIR"] = str(root)
 for name in ("router", "with-router", "link-assistant-router"):
     binary = root / "target/debug" / name
     assert binary.is_file(), f"Build {name} first"
@@ -23,7 +24,7 @@ for name in ("router", "with-router", "link-assistant-router"):
     print(f"Using {binary} (built {binary.stat().st_mtime})", flush=True)
 
 externs = []
-for name in ("link_assistant_router", "base64", "serde_json", "tempfile", "wait_timeout", "portable_pty"):
+for name in ("link_assistant_router", "base64", "serde_json", "tempfile", "wait_timeout", "portable_pty", "zstd"):
     candidates = []
     if name in selected:
         for fingerprint in fingerprints.glob(f"*/lib-{name}"):
@@ -41,11 +42,12 @@ def limits():
     resource.setrlimit(resource.RLIMIT_AS, (4 * 1024**3, 4 * 1024**3))
     resource.setrlimit(resource.RLIMIT_DATA, (1024**3, 1024**3))
 
-for name in sys.argv[1:] or ("operational_logging_test", "with_router_test", "shutdown_signal_test"):
+for specification in sys.argv[1:] or ("operational_logging_test", "with_router_test", "shutdown_signal_test"):
+    name, _, test_filter = specification.partition("::")
     output = root / "target" / f"issue-718-{name}"
     subprocess.run(["rustc", "--edition=2024", "--test", str(root / "tests" / f"{name}.rs"),
                     "-C", "debuginfo=0", "-C", "link-arg=-Wl,--threads=1",
                     "-L", f"dependency={dependencies}", *externs,
                     "-o", str(output)], env=environment, cwd=root, check=True, preexec_fn=limits)
-    subprocess.run([str(output), "--test-threads=2", "--nocapture"],
+    subprocess.run([str(output), "--test-threads=2", "--nocapture", test_filter],
                    env=environment, cwd=root, check=True, preexec_fn=limits)
