@@ -442,6 +442,16 @@ jobs:
         if: runner.os != 'Windows'
         run: cargo test --locked --all-features --verbose
 
+      - name: Repeat default-parallel wrapper sweep tests
+        if: runner.os != 'Windows'
+        timeout-minutes: 10
+        run: |
+          temporary_root="$(mktemp -d)"
+          trap 'rm -rf "$temporary_root"' EXIT
+          for attempt in {1..20}; do
+            TMPDIR="$temporary_root" cargo test --locked --all-features --lib with_command -- --nocapture
+          done
+
       # A running client must keep blocking backup and maintenance of the
       # profile it writes. On macOS that check reads other processes through
       # `ps -E`, which SIP and timing can both affect, so one green run proves
