@@ -18,22 +18,48 @@ struct Sharder {
     counts: Vec<usize>,
 }
 
+fn is_test(function: &syn::ItemFn) -> bool {
+    function.attrs.iter().any(|attribute| {
+        let parts: Vec<_> = attribute
+            .path()
+            .segments
+            .iter()
+            .map(|s| s.ident.to_string())
+            .collect();
+        parts == ["test"] || parts == ["tokio", "test"]
+    })
+}
+
+fn assignment(file: &str, name: &syn::Ident, shards: usize) -> usize {
+    let key = format!("{file}:{name}");
+    let hash = key.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3)
+    });
+    (hash % shards as u64) as usize
+}
+
+// A module with private items and no impls, macros or submodules cannot supply
+// helpers to another test module. Skip its helper bodies when none of its
+// tests belong to this shard; every test still runs in its assigned shard.
+fn private_items(items: &[syn::Item]) -> bool {
+    items.iter().all(|item| {
+        let visibility = match item {
+            syn::Item::Use(item) => &item.vis,
+            syn::Item::Fn(item) => &item.vis,
+            syn::Item::Struct(item) => &item.vis,
+            syn::Item::Enum(item) => &item.vis,
+            syn::Item::Type(item) => &item.vis,
+            syn::Item::Const(item) => &item.vis,
+            _ => return false,
+        };
+        matches!(visibility, syn::Visibility::Inherited)
+    })
+}
+
 impl VisitMut for Sharder {
     fn visit_item_fn_mut(&mut self, function: &mut syn::ItemFn) {
-        if function.attrs.iter().any(|attribute| {
-            let parts: Vec<_> = attribute
-                .path()
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect();
-            parts == ["test"] || parts == ["tokio", "test"]
-        }) {
-            let key = format!("{}:{}", self.file, function.sig.ident);
-            let hash = key.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
-                (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3)
-            });
-            let shard = (hash % self.counts.len() as u64) as usize;
+        if is_test(function) {
+            let shard = assignment(&self.file, &function.sig.ident, self.counts.len());
             let value = shard.to_string();
             function
                 .attrs
@@ -41,6 +67,74 @@ impl VisitMut for Sharder {
             self.counts[shard] += 1;
         }
         visit_mut::visit_item_fn_mut(self, function);
+    }
+
+    fn visit_item_mod_mut(&mut self, module: &mut syn::ItemMod) {
+        if module.attrs.iter().any(|attribute| {
+            attribute.path().is_ident("cfg")
+                && attribute
+                    .parse_args::<syn::Path>()
+                    .is_ok_and(|path| path.is_ident("test"))
+        }) {
+            let parsed;
+            let mut file = self.file.clone();
+            let items = if let Some((_, items)) = &module.content {
+                Some(items.as_slice())
+            } else if self.file == "src/lib.rs" {
+                let source = module
+                    .attrs
+                    .iter()
+                    .find_map(|attribute| {
+                        if attribute.path().is_ident("path") {
+                            if let syn::Meta::NameValue(value) = &attribute.meta {
+                                if let syn::Expr::Lit(value) = &value.value {
+                                    if let syn::Lit::Str(value) = &value.lit {
+                                        return Some(value.value());
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    })
+                    .unwrap_or_else(|| format!("{}.rs", module.ident));
+                file = format!("src/{source}");
+                parsed = std::fs::read_to_string(&file)
+                    .ok()
+                    .and_then(|text| syn::parse_file(&text).ok());
+                parsed.as_ref().map(|syntax| syntax.items.as_slice())
+            } else {
+                None
+            };
+            if let Some(items) = items.filter(|items| private_items(items)) {
+                let mut active = vec![false; self.counts.len()];
+                for item in items {
+                    if let syn::Item::Fn(function) = item {
+                        if is_test(function) {
+                            let shard = assignment(&file, &function.sig.ident, active.len());
+                            active[shard] = true;
+                        }
+                    }
+                }
+                let predicates = active
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, active)| {
+                        active.then(|| {
+                            let value = index.to_string();
+                            syn::parse_quote!(router_local_unit_shard = #value)
+                        })
+                    })
+                    .collect::<Vec<syn::Meta>>();
+                if let [predicate] = predicates.as_slice() {
+                    module.attrs.push(syn::parse_quote!(#[cfg(#predicate)]));
+                } else if !predicates.is_empty() {
+                    module
+                        .attrs
+                        .push(syn::parse_quote!(#[cfg(any(#(#predicates),*))]));
+                }
+            }
+        }
+        visit_mut::visit_item_mod_mut(self, module);
     }
 }
 

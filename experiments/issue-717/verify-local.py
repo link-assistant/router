@@ -67,6 +67,9 @@ if args.mode == 'clippy':
         wrapper.write_text(contents)
     for shard in range(args.start_shard, args.shards):
         print(f'Clippy unit shard {shard}', flush=True)
+        # Cargo does not fingerprint RUSTC_WRAPPER by its path. The copied
+        # library appears in rustc's dep-info; invalidate it for each shard.
+        library.touch()
         env = {**ENV, 'RUSTC_WRAPPER': str(shards / f'shard-{shard}.py')}
         targets = ['--all-targets'] if shard == 0 else ['--lib', '--tests']
         run(['cargo', 'clippy', '--locked', '--all-features', *targets,
