@@ -115,7 +115,10 @@ fn monitor_is_advertised(environment: &[(&str, &str)]) -> (bool, String) {
     let advertised = tool_names.contains(&"Monitor");
     (
         advertised,
-        format!("{diagnostics}\nadvertised tools: {tool_names:?}"),
+        format!(
+            "{diagnostics}\n{}\nadvertised tools: {tool_names:?}",
+            wrapper::launcher_diagnostics(home.path()),
+        ),
     )
 }
 

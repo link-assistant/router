@@ -780,7 +780,7 @@ fn remove_never_deletes_an_unowned_container() {
     );
 }
 
-/// An unreachable selected server says which one, and what to do.
+/// An unreachable selected server logs which one, and what to do.
 ///
 /// The report that prompted this got docker's words about an internal
 /// container it had never heard of. A refusal is the right answer -- silently
@@ -815,6 +815,8 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "absent")
         .env("TOKEN_SECRET", "managed-selection-test")
+        .env_remove("DATA_DIR")
+        .env_remove("VERBOSE")
         .env_remove("XDG_CONFIG_HOME")
         .env_remove("APPDATA")
         .env_remove("LINK_ASSISTANT_ROUTER_URL")
@@ -822,24 +824,27 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .output()
         .expect("run with");
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "an unreachable selection fails");
+    assert!(output.stdout.is_empty());
+    assert!(output.stderr.is_empty());
+    let diagnostics = fs::read_to_string(home.join(".link-assistant-router/launcher/launcher.log"))
+        .expect("read the persistent launcher diagnostics");
     assert!(
-        stderr.contains("127.0.0.1:1"),
-        "the message must name the server that is not answering: {stderr}"
+        diagnostics.contains("127.0.0.1:1"),
+        "the log must name the server that is not answering: {diagnostics}"
     );
     assert!(
-        stderr.contains("--local") && stderr.contains("--managed"),
-        "the message must name the ways out: {stderr}"
+        diagnostics.contains("--local") && diagnostics.contains("--managed"),
+        "the log must name the ways out: {diagnostics}"
     );
     assert!(
-        stderr.contains("router server use"),
-        "the message must name the command that changes the selection: {stderr}"
+        diagnostics.contains("router server use"),
+        "the log must name the command that changes the selection: {diagnostics}"
     );
     // The internal container name is not the user's problem.
     assert!(
-        !stderr.contains("link-assistant-router-managed"),
-        "an internal container name must not appear: {stderr}"
+        !diagnostics.contains("link-assistant-router-managed"),
+        "an internal container name must not appear: {diagnostics}"
     );
 }
 

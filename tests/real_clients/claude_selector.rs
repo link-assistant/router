@@ -854,9 +854,15 @@ fn current_claude_refuses_a_saved_choice_the_changed_catalog_no_longer_authorize
         .expect("the saved choice reaches inference");
     let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
     assert_eq!(body["model"], native);
+    let diagnostics = wrapper::launcher_diagnostics(home.path());
     assert!(
-        String::from_utf8_lossy(&served.stderr).contains("keeping your own Claude model selection"),
-        "Router pinned over the saved choice"
+        diagnostics.contains("keeping your own Claude model selection"),
+        "Router pinned over the saved choice: {diagnostics}"
+    );
+    assert!(
+        !String::from_utf8_lossy(&served.stderr)
+            .contains("keeping your own Claude model selection"),
+        "Router diagnostics reached Claude's terminal"
     );
 
     let changed =
@@ -869,11 +875,9 @@ fn current_claude_refuses_a_saved_choice_the_changed_catalog_no_longer_authorize
         None,
         &[PROMPT],
     );
-    let diagnostics = format!(
-        "{}{}",
-        String::from_utf8_lossy(&refused.stdout),
-        String::from_utf8_lossy(&refused.stderr)
-    );
+    assert!(refused.stdout.is_empty());
+    assert!(refused.stderr.is_empty());
+    let diagnostics = wrapper::launcher_diagnostics(home.path());
     assert!(
         !refused.status.success(),
         "a stale saved choice launched: {diagnostics}"
