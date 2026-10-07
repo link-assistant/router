@@ -162,8 +162,7 @@ impl Router {
 
     fn try_start(env: &[(&str, String)]) -> Option<Self> {
         let data = tempfile::tempdir().expect("data dir");
-        let log_path = data.path().join("router.log");
-        let log = std::fs::File::create(&log_path).expect("router log");
+        let log_path = data.path().join("logs/operational.log");
         // A Claude subscription for the Anthropic tests; unused otherwise.
         let claude = data.path().join("claude");
         std::fs::create_dir_all(&claude).expect("claude home");
@@ -180,6 +179,7 @@ impl Router {
             .env("ROUTER_HOST", "127.0.0.1")
             .env("ROUTER_PORT", "0")
             .env("RUST_LOG", "info")
+            .env_remove("VERBOSE")
             .env("STORAGE_POLICY", "text")
             .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
             .env("UPSTREAM_IDLE_TIMEOUT_SECS", "1")
@@ -190,8 +190,8 @@ impl Router {
             .env("CLAUDE_CONFIG_DIR", &claude)
             .env("CLAUDE_CODE_HOME", &claude)
             .env("DISABLE_LOGIN_API", "true")
-            .stdout(Stdio::from(log.try_clone().expect("clone router log")))
-            .stderr(Stdio::from(log));
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
         for (name, value) in env {
             command.env(name, value);
         }
