@@ -74,60 +74,17 @@ fn objects(docker: &Docker, owner: &str) -> Result<Vec<String>, String> {
 }
 
 fn free_disk(root: &Path) -> Result<u64, String> {
-    #[cfg(not(windows))]
-    let mut command = crate::operation_context::command("df");
-    #[cfg(not(windows))]
-    command.args(["-Pk"]).arg(root);
-    #[cfg(windows)]
-    let mut command = {
-        // Canonical Windows paths use a verbatim prefix. Resolve the volume
-        // directly instead of asking Get-Item to interpret that namespace.
-        use std::path::{Component, Prefix};
-        let Some(Component::Prefix(prefix)) = root.components().next() else {
-            return Err("staging disk volume is unverifiable".into());
-        };
-        let letter = match prefix.kind() {
-            Prefix::Disk(letter) | Prefix::VerbatimDisk(letter) => letter,
-            _ => return Err("staging disk volume is unverifiable".into()),
-        };
-        let mut command = crate::operation_context::command("powershell");
-        command
-            .args([
-                "-NoProfile",
-                "-NonInteractive",
-                "-Command",
-                "[UInt64](Get-PSDrive -Name $env:ROUTER_STAGE_DRIVE -PSProvider FileSystem -ErrorAction Stop).Free",
-            ])
-            .env("ROUTER_STAGE_DRIVE", char::from(letter).to_string());
-        command
-    };
-    let output = crate::operation_context::bounded_output(&mut command, Duration::from_secs(5))
-        .map_err(|error| error.to_string())?;
-    #[cfg(not(windows))]
-    let free = String::from_utf8_lossy(&output.stdout)
-        .lines()
-        .nth(1)
-        .and_then(|line| line.split_whitespace().nth(3))
-        .and_then(|value| value.parse::<u64>().ok());
-    #[cfg(windows)]
-    let free = String::from_utf8_lossy(&output.stdout)
-        .trim()
-        .parse::<u64>()
-        .ok()
-        .map(|bytes| bytes / 1024);
+    // Native filesystem queries avoid shell startup deadlines and localized
+    // output. Keep the lifecycle's existing KiB units and fail-closed refusal.
+    let free = fs2::available_space(root)
+        .map(|bytes| bytes / 1024)
+        .map_err(|error| format!("staging disk capacity is unverifiable: {error}"));
     if crate::operation_context::var_os("ROUTER_DEPLOY_TRACE").as_deref()
         == Some(std::ffi::OsStr::new("1"))
     {
-        eprintln!(
-            "staging disk probe: status={}, available_kib={free:?}, stdout_bytes={}",
-            output.status,
-            output.stdout.len()
-        );
+        eprintln!("staging disk probe: available_kib={free:?}");
     }
-    if !output.status.success() {
-        return Err("staging disk probe failed; capacity is unverifiable".into());
-    }
-    free.ok_or_else(|| "staging disk probe returned invalid capacity".into())
+    free
 }
 
 fn arguments(name: &str, owner: &str, root: &Path, image: &str, port: u16) -> Vec<String> {
@@ -506,6 +463,32 @@ pub fn run(args: &DeployArgs, root: &Path, image: &str) -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn disk_capacity_does_not_depend_on_a_shell_starting() {
+        struct UnavailableShell;
+        impl crate::operation_context::ProcessRunner for UnavailableShell {
+            fn output(
+                &self,
+                _command: &mut std::process::Command,
+                _deadline: Duration,
+            ) -> std::io::Result<std::process::Output> {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::TimedOut,
+                    "diagnostic deadline exceeded",
+                ))
+            }
+        }
+        let root = tempfile::tempdir().unwrap();
+        let canonical = root.path().canonicalize().unwrap();
+        let mut context = crate::operation_context::OperationContext::isolated(root.path());
+        context.process_runner = Some(std::sync::Arc::new(UnavailableShell));
+        let result = context.scope(|| free_disk(&canonical));
+        assert!(
+            result.is_ok(),
+            "shell startup prevented disk capacity: {result:?}"
+        );
+    }
+
     #[test]
     fn canonical_disk_probe_returns_capacity_without_requiring_spare_space() {
         let root = tempfile::tempdir().unwrap();

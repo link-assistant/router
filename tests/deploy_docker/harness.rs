@@ -89,6 +89,8 @@ impl Deployment {
         command
             .args(&arguments)
             .env("TOKEN_SECRET", "deploy-docker-test-secret")
+            .env("HOME", self.root.path().join("home"))
+            .env("CLAUDE_CONFIG_DIR", self.root.path().join("home/.claude"))
             .env("NO_COLOR", "1");
         command
     }
@@ -151,9 +153,23 @@ impl Deployment {
         if legacy_data.as_deref() == Some(data_home.as_str()) {
             let _ = Command::new("docker").args(["rm", "-f", legacy]).output();
         }
-        let _ = Command::new("docker")
-            .args(["network", "rm", link_assistant_router::deploy::NETWORK])
-            .output();
+        if let Ok(output) = Command::new("docker")
+            .args([
+                "network",
+                "ls",
+                "-q",
+                "--filter",
+                &format!(
+                    "label={}.root={root}",
+                    link_assistant_router::deploy::LABEL_KEY
+                ),
+            ])
+            .output()
+        {
+            for id in String::from_utf8_lossy(&output.stdout).split_whitespace() {
+                let _ = Command::new("docker").args(["network", "rm", id]).output();
+            }
+        }
     }
 }
 

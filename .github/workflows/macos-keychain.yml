@@ -16,6 +16,9 @@ on:
       - 'src/subscription.rs'
       - 'src/subscription/**'
       - 'src/deploy_local/claude_share.rs'
+      - 'src/deploy_local/host_runtime.rs'
+      - 'src/deploy_local/host_login_tests.rs'
+      - 'src/auth_cli.rs'
       - 'tests/macos_keychain_test.rs'
       - '.github/workflows/macos-keychain.yml'
   schedule:
@@ -103,6 +106,8 @@ jobs:
         run: |
           cargo test --locked --test macos_keychain_test -- --nocapture
           cargo test --locked --lib platform_keychain
+          cargo test --locked --lib deploy_local::host_runtime::login_tests
+          cargo test --locked --lib auth_cli::tests::clear_note_checks_only_scoped_keychain_presence
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

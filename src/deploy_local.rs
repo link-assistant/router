@@ -43,9 +43,6 @@ use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
 pub static RELAY: InstanceName = InstanceName::new(link_assistant_router::deploy::RELAY);
 /// Network name; carries `--instance`.
 pub static NETWORK: InstanceName = InstanceName::new(link_assistant_router::deploy::NETWORK);
-/// Backend name prefix; carries `--instance`.
-static BACKEND_PREFIX: InstanceName =
-    InstanceName::prefix(link_assistant_router::deploy::BACKEND_PREFIX);
 pub const LABEL_KEY: &str = link_assistant_router::deploy::LABEL_KEY;
 const LEGACY: &str = link_assistant_router::deploy::CONTAINER;
 pub const SPEC_VERSION: &str = "local-v1";
@@ -480,10 +477,11 @@ impl Coordinator<'_> {
     }
 
     fn deploy(&self, existing: &Existing) -> Result<(), String> {
+        let candidate =
+            link_assistant_router::deploy::instance::backend_name(uuid::Uuid::new_v4())?;
         let baseline = self.preservation_baseline(existing)?;
         let image_id = self.docker.ensure_image(self.image, self.build)?;
         self.docker.create_network(self.root)?;
-        let candidate = format!("{}{}", BACKEND_PREFIX, uuid::Uuid::new_v4().simple());
         let (previous, previous_kind, previous_port) = match &existing {
             Existing::Absent => (None, PreviousKind::None, None),
             Existing::Legacy => (

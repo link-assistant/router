@@ -340,8 +340,17 @@ fn clear_provider(
     // would log the user out of a client the router does not own. Naming it is
     // the honest middle, since the router will still read a credential from
     // there and report the provider as usable.
-    if let Some(service) = link_assistant_router::platform_keychain::service_name(provider)
-        && link_assistant_router::platform_keychain::lookup(provider).is_some()
+    if let Some(service) =
+        link_assistant_router::platform_keychain::service_name(provider).map(|base| {
+            if provider == SubscriptionProvider::Claude {
+                link_assistant_router::platform_keychain::claude_service_for(
+                    crate::operation_context::var_os("CLAUDE_CONFIG_DIR").as_deref(),
+                )
+            } else {
+                base.to_owned()
+            }
+        })
+        && link_assistant_router::platform_keychain::has_entry(&service)
     {
         println!(
             "{provider:<8} note: the {service:?} keychain entry still holds a credential; \
@@ -828,6 +837,57 @@ async fn run_codex_device(config: &Config, port: u16) -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn clear_note_checks_only_scoped_keychain_presence() {
+        use crate::operation_context::{OperationContext, ProcessRunner};
+        use std::os::unix::process::ExitStatusExt as _;
+        use std::process::{Command, Output};
+        use std::sync::{Arc, Mutex};
+        use std::time::Duration;
+
+        #[derive(Default)]
+        struct Presence(Mutex<Vec<Vec<String>>>);
+        impl ProcessRunner for Presence {
+            fn output(&self, command: &mut Command, _: Duration) -> std::io::Result<Output> {
+                assert_eq!(command.get_program(), "/usr/bin/security");
+                let args: Vec<_> = command
+                    .get_args()
+                    .map(|a| a.to_string_lossy().into_owned())
+                    .collect();
+                assert!(!args.iter().any(|a| a == "-w" || a == "-g"));
+                self.0.lock().unwrap().push(args);
+                Ok(Output {
+                    status: std::process::ExitStatus::from_raw(256),
+                    stdout: Vec::new(),
+                    stderr: Vec::new(),
+                })
+            }
+        }
+        let root = tempfile::tempdir().unwrap();
+        let profile = root.path().join("selected-profile");
+        let runner = Arc::new(Presence::default());
+        let mut context = OperationContext::isolated(root.path());
+        context.set_env("CLAUDE_CONFIG_DIR", profile.as_os_str());
+        context.set_env("TOKEN_SECRET", "clear-presence-fixture");
+        context.process_runner = Some(runner.clone());
+        context.scope(|| {
+            clear_provider(
+                &crate::config::Config::from_env().unwrap(),
+                SubscriptionProvider::Claude,
+            )
+            .unwrap()
+        });
+        assert_eq!(
+            *runner.0.lock().unwrap(),
+            [vec![
+                "find-generic-password".to_owned(),
+                "-s".to_owned(),
+                crate::platform_keychain::claude_service_for(Some(profile.as_os_str()))
+            ]]
+        );
+    }
 
     /// A duration an operator reads at a glance, at each boundary.
     ///

@@ -36,7 +36,7 @@ pub fn router_with_env(home: &std::path::Path, args: &[&str], env: &[(&str, &str
         .env("APPDATA", home.join(".config"))
         .env("LOCALAPPDATA", home.join(".local/share"))
         .env_remove("CODEX_HOME")
-        .env_remove("CLAUDE_CONFIG_DIR")
+        .env("CLAUDE_CONFIG_DIR", home.join(".claude"))
         .env_remove("XDG_CONFIG_HOME")
         .env_remove("QWEN_HOME")
         .env_remove("QWEN_RUNTIME_DIR")

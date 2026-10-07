@@ -18,6 +18,15 @@ on:
           - changelog-pr
           - recover
           - publish
+          - retry-registries
+      release_version:
+        description: 'Existing exact version for registry retry (e.g. 1.18.2)'
+        required: false
+        type: string
+      source_run:
+        description: 'Tagged source run with successful provenance and macOS lifecycle gates'
+        required: false
+        type: string
       bump_type:
         description: 'Version bump type'
         required: true
@@ -309,6 +318,8 @@ jobs:
           rust-script --test scripts/check-terminology.rs
           rust-script --test scripts/create-github-release.rs
           python3 experiments/issue-709/release-preparation.py
+          python3 experiments/issue-715/test-release-retry.py
+          python3 experiments/issue-715/check-remote-names.py
           rust-script --test scripts/check-delivery.rs
           rust-script --test scripts/upload-release-assets.rs
           rust-script --test scripts/check-release-needed.rs
@@ -1503,20 +1514,69 @@ jobs:
           ROUTER_HOST_CLI_TOKEN: ${{ secrets.ROUTER_HOST_CLI_TOKEN }}
         run: cargo test --locked --test host_client_lifecycle_test -- --nocapture
 
+  # Retry existing, attested distributions using current release logic. Never
+  # rebuild assets or rewrite the old tag to repair publisher configuration.
+  prepare-registry-retry:
+    name: Verify existing release for registry retry
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'retry-registries' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+    outputs:
+      release-version: ${{ steps.source.outputs.version }}
+      release-commit: ${{ steps.source.outputs.commit }}
+    env:
+      RELEASE_VERSION: ${{ inputs.release_version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Validate the exact source and successful existing delivery gates
+        id: source
+        env:
+          SOURCE_RUN: ${{ inputs.source_run }}
+        run: python3 scripts/prepare-registry-retry.py --repository "${{ github.repository }}" --version "$RELEASE_VERSION" --source-run "$SOURCE_RUN" --output "$GITHUB_OUTPUT"
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.98.1
+      - name: Install rust-script
+        run: cargo install rust-script --version 0.36.0 --locked
+      - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003
+      - name: Reverify existing assets and image provenance without rebuilding
+        env:
+          RELEASE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          mkdir published
+          gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --dir published
+          for artifact in published/*; do
+            gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
+          done
+          (cd published && sha256sum -c -- *.sha256)
+          rust-script scripts/check-release-provenance.rs \
+            --release-version "$RELEASE_VERSION" --expected-commit "$RELEASE_COMMIT" \
+            --repository "${{ github.repository }}" --asset-dir published \
+            --image "ghcr.io/${{ github.repository }}:${RELEASE_VERSION}" \
+            --image "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}"
+
   # === STABLE PUBLICATION ===
   publish-npm:
     name: Publish verified npm package
-    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle]
-    if: always() && !cancelled() && needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success'
+    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
+    if: always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
     env:
-      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
-      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version || needs.prepare-registry-retry.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '24'
@@ -1527,22 +1587,35 @@ jobs:
         run: |
           gh release download "v${RELEASE_VERSION}" --repo "${{ github.repository }}" --pattern "link-assistant-router-${RELEASE_VERSION}.tgz"
           gh attestation verify "link-assistant-router-${RELEASE_VERSION}.tgz" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
-      - run: npm publish "link-assistant-router-${RELEASE_VERSION}.tgz" --access public --provenance
-      - run: test "$(npm view "@link-assistant/router@${RELEASE_VERSION}" version)" = "$RELEASE_VERSION"
+      - name: Check for an already delivered identical npm distribution
+        id: registry
+        run: python3 scripts/registry-distributions.py npm --version "$RELEASE_VERSION" --assets . --probe >> "$GITHUB_OUTPUT"
+      - name: Publish the attested npm distribution
+        if: steps.registry.outputs.present != 'true'
+        # Optional approved bootstrap token. Ordinary releases use npm OIDC.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish "link-assistant-router-${RELEASE_VERSION}.tgz" --access public --provenance
+      - name: Verify npm hashes and ordinary exact-version install
+        run: python3 scripts/registry-distributions.py npm --version "$RELEASE_VERSION" --assets .
 
   publish-python:
     name: Publish verified Python package
-    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle]
-    if: always() && !cancelled() && needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success'
+    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
+    if: always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
     env:
-      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
-      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version || needs.prepare-registry-retry.outputs.release-version }}
+      RELEASE_COMMIT: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.10'
       - name: Download and verify exact tagged Python distributions
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1552,20 +1625,27 @@ jobs:
           for artifact in dist/*; do
             gh attestation verify "$artifact" --repo "${{ github.repository }}" --source-ref "refs/tags/v${RELEASE_VERSION}" --source-digest "$RELEASE_COMMIT"
           done
+      - name: Check for already delivered identical Python distributions
+        id: registry
+        run: python3 scripts/registry-distributions.py python --version "$RELEASE_VERSION" --assets dist --probe >> "$GITHUB_OUTPUT"
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        if: steps.registry.outputs.present != 'true'
         with:
           packages-dir: dist
+      - name: Verify PyPI hashes and ordinary exact-version install
+        run: python3 scripts/registry-distributions.py python --version "$RELEASE_VERSION" --assets dist
 
   finalize-release:
     name: Publish complete stable release
-    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle, publish-npm, publish-python]
+    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle, publish-npm, publish-python, prepare-registry-retry]
     if: |
       always() && !cancelled() &&
-      needs.create-github-release.result == 'success' &&
+      ((needs.create-github-release.result == 'success' &&
       needs.publish-docker-manifests.result == 'success' &&
       needs.publish-release-artifacts.result == 'success' &&
       needs.verify-release-provenance.result == 'success' &&
-      needs.verify-macos-client-lifecycle.result == 'success' &&
+      needs.verify-macos-client-lifecycle.result == 'success') ||
+      needs.prepare-registry-retry.result == 'success') &&
       needs.publish-npm.result == 'success' &&
       needs.publish-python.result == 'success'
     runs-on: ubuntu-24.04
@@ -1573,11 +1653,11 @@ jobs:
     permissions:
       contents: write
     env:
-      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version }}
+      RELEASE_VERSION: ${{ needs.create-github-release.outputs.release-version || needs.prepare-registry-retry.outputs.release-version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
           fetch-depth: 0
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable

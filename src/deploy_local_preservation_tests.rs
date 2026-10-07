@@ -192,7 +192,7 @@ fn owned_serving_deployments_refuse_restore_without_stopping_anything() {
             .restore_state(
                 &snapshot,
                 false,
-                &super::super::host_runtime::System::default()
+                &super::super::host_runtime::System::fixture()
             )
             .is_err()
     );
@@ -219,7 +219,7 @@ fn stopped_deployment_restore_checkpoints_current_state_and_keeps_new_data() {
         .restore_state(
             &snapshot,
             false,
-            &super::super::host_runtime::System::default(),
+            &super::super::host_runtime::System::fixture(),
         )
         .unwrap();
     assert_eq!(
@@ -243,7 +243,7 @@ fn stopped_deployment_restore_checkpoints_current_state_and_keeps_new_data() {
             .restore_state(
                 &snapshot,
                 true,
-                &super::super::host_runtime::System::default()
+                &super::super::host_runtime::System::fixture()
             )
             .unwrap_err()
             .contains("checksum mismatch")
@@ -279,7 +279,7 @@ fn pending_deployment_restore_refuses_without_recovering_the_transaction() {
             .restore_state(
                 &snapshot,
                 false,
-                &super::super::host_runtime::System::default()
+                &super::super::host_runtime::System::fixture()
             )
             .unwrap_err()
             .contains("pending deployment")

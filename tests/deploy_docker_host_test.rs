@@ -22,7 +22,7 @@ fn deploy(deployment: &Deployment, home: &std::path::Path, extra: &[&str]) -> Ou
     let output = deployment
         .command(extra)
         .env("HOME", home)
-        .env_remove("CLAUDE_CONFIG_DIR")
+        .env("CLAUDE_CONFIG_DIR", home.join(".claude"))
         .output()
         .expect("the router binary runs");
     println!(

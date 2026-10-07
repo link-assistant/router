@@ -207,34 +207,59 @@ fn a_zero_total_bound_leaves_the_store_uncapped() {
     }
 }
 
-/// The total cap costs nothing on a store that is inside it.
-///
-/// The check runs on every record, so it must not turn each append into a
-/// directory scan on a deployment that is nowhere near its bound.
+/// Repeated appends refresh only the active directory, regardless of scheduler
+/// and filesystem contention in the default-parallel suite (#711).
 #[test]
-fn a_store_inside_its_bound_is_not_rescanned_into_slowness() {
+fn a_store_inside_its_bound_is_not_rescanned_on_each_append() {
     let dir = tempfile::tempdir().expect("temporary directory");
-    let log =
-        RequestLog::new(dir.path().join("requests"), 1_000_000).with_total_limit(1_000_000_000);
-    // A substantial directory count exercises the per-record scan cost without
-    // relying on any deployment-specific measurements.
-    for token in 0..100 {
+    let root = dir.path().join("requests");
+    let log = RequestLog::new(root.clone(), 1_000_000).with_total_limit(1_000_000_000);
+    for token in 0..8 {
         let correlation = format!("seed-{token}");
-        log.route_request(
-            &correlation,
-            identity(&format!("seed-{token:03}"), "id", "label"),
-        );
+        log.route_request(&correlation, identity(&correlation, "id", "label"));
         log.record(&correlation, "test", json!({"seed": token}));
     }
     log.route_request("c", identity("hash", "id", "label"));
-    let started = std::time::Instant::now();
-    for sequence in 0..2_000 {
+    log.record("c", "test", json!({"sequence": 0}));
+    let scans = log
+        .total_limit_state
+        .lock()
+        .unwrap()
+        .as_ref()
+        .unwrap()
+        .full_scans;
+    for sequence in 1..32 {
         log.record("c", "test", json!({"sequence": sequence}));
     }
-    let elapsed = started.elapsed();
-    assert!(
-        elapsed < std::time::Duration::from_secs(10),
-        "2000 records took {elapsed:?}; the total-cap check must not dominate an append"
+    let accounted = {
+        let cached = log.total_limit_state.lock().unwrap();
+        let state = cached.as_ref().unwrap();
+        assert_eq!(
+            state.full_scans, scans,
+            "bounded appends must not rescan inactive directories"
+        );
+        let bytes = state.accounted_bytes();
+        drop(cached);
+        bytes
+    };
+    let actual: u64 = fs::read_dir(&root)
+        .unwrap()
+        .map(|entry| {
+            fs::metadata(entry.unwrap().path().join("requests.lino"))
+                .unwrap()
+                .len()
+        })
+        .sum();
+    assert_eq!(
+        accounted, actual,
+        "every append must update byte accounting"
+    );
+    assert_eq!(
+        fs::read_to_string(root.join("hash/requests.lino"))
+            .unwrap()
+            .lines()
+            .count(),
+        32
     );
 }
 

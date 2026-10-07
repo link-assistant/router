@@ -57,3 +57,5 @@ jobs:
           docker run --rm router:pr-test --version
           docker run --rm --entrypoint router router:pr-test --version
           docker run --rm --entrypoint with-router router:pr-test --help
+      - name: Verify long named instances through real Docker DNS and relay
+        run: python3 experiments/issue-715/reproduce-dns.py --fixed --image router:pr-test
