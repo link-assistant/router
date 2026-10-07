@@ -45,7 +45,12 @@ impl ValidatedSubscription {
         account: Option<&str>,
     ) -> Option<ModelRouteError> {
         self.required_model.as_deref().map(|model| {
-            account_unavailable_error(state, self.provider, model, account.or(self.account_name()))
+            account_unavailable_error(
+                state,
+                self.provider,
+                model,
+                account.or_else(|| self.account_name()),
+            )
         })
     }
 
