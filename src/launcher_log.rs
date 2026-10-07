@@ -1,7 +1,7 @@
 //! Scoped, private diagnostics for ordinary Claude launches (issue #717).
 
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, Write};
+use std::io::{self, Seek as _, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex};
@@ -134,6 +134,9 @@ impl DiagnosticLog {
             }
             file = private_file(&path)?;
         }
+        // Windows append-only handles lack the access required by file locks
+        // and sync_data. Seek while holding the lock on a read/write handle.
+        file.seek(SeekFrom::End(0))?;
         file.write_all(bytes)?;
         file.sync_data()
         // Dropping the lock releases it on success and on every error path.
@@ -164,7 +167,7 @@ fn reject_symlink(path: &Path) -> io::Result<()> {
 fn private_file(path: &Path) -> io::Result<File> {
     reject_symlink(path)?;
     let mut options = OpenOptions::new();
-    options.create(true).append(true);
+    options.create(true).read(true).write(true).truncate(false);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt as _;
