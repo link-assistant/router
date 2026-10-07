@@ -2,6 +2,35 @@
 
 use super::*;
 
+/// Each test owns a separate parent: default-parallel tests and other test
+/// processes must not sweep a dead-PID fixture before its lease is locked.
+struct SweepFixture {
+    root: tempfile::TempDir,
+    ours: std::path::PathBuf,
+}
+
+impl SweepFixture {
+    fn new() -> Self {
+        let root = tempfile::tempdir().expect("isolated sweep root");
+        let ours = root.path().join(format!(
+            "link-assistant-router-with-{}-self",
+            std::process::id()
+        ));
+        fs::create_dir(&ours).expect("create our directory");
+        Self { root, ours }
+    }
+
+    fn dead_run(&self, name: &str) -> std::path::PathBuf {
+        // A pid above every platform maximum, so it cannot be running.
+        let path = self
+            .root
+            .path()
+            .join(format!("link-assistant-router-with-4294967294-{name}"));
+        fs::create_dir(&path).expect("create the stale directory");
+        path
+    }
+}
+
 /// A pid the sweep cannot prove is gone counts as alive. `kill -0` fails both
 /// for "no such process" and for a live process owned by somebody else, and
 /// reading the second as the first deleted another user's working directory,
@@ -22,19 +51,11 @@ fn a_live_process_is_never_reported_dead() {
 /// claims about liveness.
 #[test]
 fn the_sweep_only_removes_this_users_directories() {
-    let temporary = std::env::temp_dir();
-    let ours = temporary.join(format!(
-        "link-assistant-router-with-{}-sweep-self",
-        std::process::id()
-    ));
-    // A pid above every platform maximum, so it cannot be running.
-    let stale = temporary.join("link-assistant-router-with-4294967294-sweep-stale");
-    let _ = fs::remove_dir_all(&ours);
-    let _ = fs::remove_dir_all(&stale);
-    fs::create_dir_all(&ours).expect("create our directory");
-    fs::create_dir_all(&stale).expect("create the stale directory");
+    let fixture = SweepFixture::new();
+    let ours = &fixture.ours;
+    let stale = fixture.dead_run("stale");
 
-    sweep_stale_directories(&ours);
+    sweep_stale_directories(ours);
 
     assert!(
         ours.is_dir(),
@@ -46,22 +67,13 @@ fn the_sweep_only_removes_this_users_directories() {
     );
     // Ownership is consulted at all: a path this user cannot own answers
     // differently, or the platform has no owners and the check is inert.
-    assert!(owner_of(&ours).is_some());
-    let _ = fs::remove_dir_all(&ours);
+    assert!(owner_of(ours).is_some());
 }
 
 #[test]
 fn the_sweep_keeps_a_leased_directory_even_if_its_name_claims_a_dead_pid() {
-    let temporary = std::env::temp_dir();
-    let ours = temporary.join(format!(
-        "link-assistant-router-with-{}-lease-sweep-self",
-        std::process::id()
-    ));
-    let leased = temporary.join("link-assistant-router-with-4294967294-lease-active");
-    let _ = fs::remove_dir_all(&ours);
-    let _ = fs::remove_dir_all(&leased);
-    fs::create_dir_all(&ours).expect("create our directory");
-    fs::create_dir_all(&leased).expect("create leased directory");
+    let fixture = SweepFixture::new();
+    let leased = fixture.dead_run("lease-active");
     let lease = fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -71,12 +83,41 @@ fn the_sweep_keeps_a_leased_directory_even_if_its_name_claims_a_dead_pid() {
         .expect("open lease");
     lease.lock().expect("hold lease");
 
-    sweep_stale_directories(&ours);
+    sweep_stale_directories(&fixture.ours);
     assert!(leased.is_dir(), "a live lease must prevent cleanup");
 
     lease.unlock().expect("release lease");
     drop(lease);
-    sweep_stale_directories(&ours);
+    sweep_stale_directories(&fixture.ours);
     assert!(!leased.exists(), "an abandoned lease can be cleaned");
-    let _ = fs::remove_dir_all(&ours);
+}
+
+#[test]
+fn a_concurrent_sweep_cannot_remove_another_fixtures_unlocked_directory() {
+    let fixture = SweepFixture::new();
+    let leased = fixture.dead_run("lease-not-yet-locked");
+    let competitor = SweepFixture::new();
+    let competing_stale = competitor.dead_run("stale");
+
+    // Force the problematic ordering rather than depending on scheduling:
+    // another fixture sweeps while this one has created no lease yet.
+    std::thread::spawn(move || {
+        sweep_stale_directories(&competitor.ours);
+        assert!(
+            !competing_stale.exists(),
+            "the competing sweep still cleans"
+        );
+    })
+    .join()
+    .expect("competing sweep completes");
+    assert!(
+        leased.is_dir(),
+        "an unrelated sweep cannot reach this fixture"
+    );
+
+    sweep_stale_directories(&fixture.ours);
+    assert!(
+        !leased.exists(),
+        "the owning fixture can still clean its stale run"
+    );
 }
