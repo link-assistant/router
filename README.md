@@ -1733,6 +1733,23 @@ removing the least recently written token directories first, so a deployment
 that has issued many short-lived tokens cannot grow past what the operator
 budgeted for the partition.
 
+Consumed local error responses are recorded as `client_response_body` too,
+including authentication, permission, and automatic-routing denials. Such
+exchanges have client phases only; upstream phases appear when an upstream is
+contacted. Body records follow consumption, so an abandoned response may have
+only headers or a partial body. The same credential, metadata, and safety
+identifier redaction applies to local responses. These diagnostic bodies stay
+in the request files.
+
+Automatic routing returns HTTP 503 / `account_unavailable` when a known
+subscription model has no usable provider credential. A rejected credential
+requires the operator to re-authenticate the provider account; replacing the
+credential clears old rejection evidence under the existing refresh rules. The
+requested model stays unchanged, and a healthy account in an allowed pool can
+serve it only if that account's live catalog contains the same model. Unknown
+models retain HTTP 404 / `not_found_error`, and invalid Router client tokens
+retain HTTP 401 / `authentication_error`.
+
 ## Docker Deployment
 
 On the current machine, `router deploy` creates a stable loopback relay in front

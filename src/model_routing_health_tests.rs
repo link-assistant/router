@@ -457,7 +457,7 @@ async fn credential_rotation_requires_discovery_for_the_current_account() {
         panic!("a previous account's catalog must not route the current credential");
     };
     assert!(
-        matches!(stale_route, ModelRouteError::NotFound(_)),
+        matches!(stale_route, ModelRouteError::AccountUnavailable(_)),
         "the account-mismatched model is unavailable: {stale_route}"
     );
     assert!(

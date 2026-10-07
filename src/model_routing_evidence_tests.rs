@@ -18,6 +18,9 @@ const MODEL: &str = "generation-evidence-model";
 #[path = "proxied_codex_tests.rs"]
 mod proxied_codex_tests;
 
+#[path = "model_routing_failure_tests.rs"]
+mod failure_tests;
+
 struct StreamDropSignal(Option<tokio::sync::oneshot::Sender<()>>);
 
 impl Drop for StreamDropSignal {
@@ -479,9 +482,7 @@ fn assert_rejected(state: &AppState, provider: SubscriptionProvider) {
     );
 }
 
-/// A validated request owns one credential decision for its entire lifetime.
-/// If account A reaches the upstream and is rejected, a later file rotation to
-/// account B must neither retry with B nor let A's delayed response poison B.
+/// Account A's delayed 401 must neither retry with nor poison replacement B.
 #[tokio::test]
 async fn validated_401_never_retries_or_poisons_a_post_dispatch_replacement() {
     let data = tempdir().unwrap();
