@@ -43,3 +43,9 @@ It limits compiler/test data memory to 1 GiB and virtual address space to 4 GiB
 (Rust dependencies need room for memory-mapped artifacts). The normal library
 test suite remains part of CI; this fallback verifies the new sink locally
 without duplicating its implementation.
+
+For existing process binaries, `python3 experiments/issue-718/test_processes.py`
+compiles the current integration tests without rebuilding the library. It prints
+binary build timestamps, resolves dependencies from Cargo fingerprints, and uses
+a bounded, serial linker. This can check draft binaries; use normal Cargo/CI
+builds to validate the final source revision.

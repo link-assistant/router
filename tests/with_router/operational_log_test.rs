@@ -70,7 +70,22 @@ fn nested_launcher_is_quiet_and_verbose_is_an_explicit_opt_in() {
 
 #[test]
 fn early_client_preflight_failure_is_quiet_and_durable() {
-    let (output, log, _) = launch(&[("FAKE_CLAUDE_VERSION", "2.1.252")], &[]);
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).unwrap();
+    fake_claude(&bin);
+    // Version preflight deliberately runs before any Router request.
+    let output = run_claude_with(
+        &home,
+        &bin,
+        &capture,
+        &["--server", "http://127.0.0.1:9", "claude"],
+        &[("FAKE_CLAUDE_VERSION", "2.1.252")],
+    );
+    let log = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("early preflight failure persists");
     assert!(!output.status.success());
     assert!(output.stdout.is_empty() && output.stderr.is_empty());
     assert!(log.contains("2.1.255 or newer"), "{log}");

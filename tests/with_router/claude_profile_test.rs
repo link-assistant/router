@@ -10,13 +10,27 @@ fn mock_claude_router_impl(
     catalog_status: &str,
 ) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock Claude router");
+    listener.set_nonblocking(true).unwrap();
     let port = listener.local_addr().expect("mock address").port();
     let catalog = catalog.to_string();
     let catalog_status = catalog_status.to_string();
     let handle = thread::spawn(move || {
         let mut paths = Vec::new();
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
         for _ in 0..if administrator { 5 } else { 3 } {
-            let (mut stream, _) = listener.accept().expect("accept wrapper request");
+            let (mut stream, _) = loop {
+                match listener.accept() {
+                    Ok(connection) => break connection,
+                    Err(error)
+                        if error.kind() == std::io::ErrorKind::WouldBlock
+                            && std::time::Instant::now() < deadline =>
+                    {
+                        thread::sleep(Duration::from_millis(20));
+                    }
+                    Err(error) => panic!("missing wrapper request after {paths:?}: {error}"),
+                }
+            };
+            stream.set_nonblocking(false).unwrap();
             let request = read_request(&mut stream);
             let path = request
                 .lines()
