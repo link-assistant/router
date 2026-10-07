@@ -209,6 +209,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.18.3] - 2026-10-07
+
+bump: patch
+
+### Fixed
+- Keep named local and remote deployment backend names within Docker DNS bounds for every accepted instance length.
+- Probe the selected Claude profile's Keychain presence without requesting its password during host status or planning, and isolate fixture probes.
+- Verify bounded request-log append accounting deterministically under parallel test contention.
+- Query staging disk capacity through the existing native filesystem dependency, avoiding shell startup deadlines on Windows.
+- Retry registry delivery using the existing attested release assets, verify registry distribution hashes and exact-version imports, and retain fail-closed stable promotion.
+
 ## [1.18.2] - 2026-10-07
 
 ### Fixed
