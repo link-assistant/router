@@ -685,6 +685,7 @@ impl TemporaryClient {
             drop(directory);
             return Ok(output.status);
         }
+        let shutdown = crate::shutdown::shutdown_signal();
         let mut child = tokio::process::Command::from(self.command)
             .kill_on_drop(true)
             .spawn()
@@ -707,7 +708,7 @@ impl TemporaryClient {
             }
             return Err(error);
         }
-        let status = crate::logging::supervise(&mut child).await;
+        let status = crate::logging::supervise(&mut child, shutdown).await;
         drop(directory);
         status
     }

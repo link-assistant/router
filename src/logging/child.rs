@@ -4,11 +4,12 @@ use std::time::Duration;
 
 pub async fn supervise(
     child: &mut tokio::process::Child,
+    shutdown: impl std::future::Future<Output = &'static str>,
 ) -> Result<ExitStatus, Box<dyn std::error::Error + Send + Sync>> {
     let pid = child.id();
     let status = tokio::select! {
         result = child.wait() => result?,
-        signal = crate::shutdown::shutdown_signal() => {
+        signal = shutdown => {
             #[cfg(unix)]
             if let Some(pid) = pid {
                 let _ = crate::operation_context::process_output(

@@ -24,8 +24,9 @@ impl Shutdown {
     pub fn listening() -> Self {
         let (sender, _) = tokio::sync::watch::channel(false);
         let notifier = sender.clone();
+        let signal = shutdown_signal();
         tokio::spawn(async move {
-            shutdown_signal().await;
+            signal.await;
             notifier.send_replace(true);
         });
         Self(sender)
@@ -56,7 +57,15 @@ impl Shutdown {
     }
 }
 
-pub(crate) async fn shutdown_signal() -> &'static str {
+pub(crate) fn shutdown_signal() -> impl std::future::Future<Output = &'static str> {
+    // Register synchronously: a child can start and signal its readiness before
+    // this future is polled. Signals received meanwhile remain queued.
+    #[cfg(unix)]
+    let interrupt = unix_signal(tokio::signal::unix::SignalKind::interrupt(), "SIGINT");
+    #[cfg(unix)]
+    let terminate = unix_signal(tokio::signal::unix::SignalKind::terminate(), "SIGTERM");
+
+    #[cfg(not(unix))]
     let interrupt = async {
         if tokio::signal::ctrl_c().await.is_err() {
             // A handler that cannot be installed must not take the process
@@ -66,27 +75,38 @@ pub(crate) async fn shutdown_signal() -> &'static str {
         }
     };
 
-    #[cfg(unix)]
-    let terminate = async {
-        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
-            Ok(mut signal) => {
-                signal.recv().await;
-            }
-            Err(error) => {
-                tracing::warn!("could not listen for SIGTERM: {error}");
-                std::future::pending::<()>().await;
-            }
-        }
-    };
     #[cfg(not(unix))]
     let terminate = std::future::pending::<()>();
 
-    let name = tokio::select! {
-        () = interrupt => "SIGINT",
-        () = terminate => "SIGTERM",
+    async move {
+        let name = tokio::select! {
+            () = interrupt => "SIGINT",
+            () = terminate => "SIGTERM",
+        };
+        crate::logging::event(format_args!("{name} received; starting graceful shutdown"));
+        name
+    }
+}
+
+#[cfg(unix)]
+fn unix_signal(
+    kind: tokio::signal::unix::SignalKind,
+    name: &str,
+) -> impl std::future::Future<Output = ()> {
+    let signal = match tokio::signal::unix::signal(kind) {
+        Ok(signal) => Some(signal),
+        Err(error) => {
+            tracing::warn!("could not listen for {name}: {error}");
+            None
+        }
     };
-    crate::logging::event(format_args!("{name} received; starting graceful shutdown"));
-    name
+    async move {
+        if let Some(mut signal) = signal {
+            signal.recv().await;
+        } else {
+            std::future::pending::<()>().await;
+        }
+    }
 }
 
 #[cfg(test)]
