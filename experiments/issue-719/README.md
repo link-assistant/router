@@ -22,9 +22,9 @@ python3 experiments/issue-719/reproduce.py
 
 The script copies `src` into a temporary project and disables unrelated test
 modules and entry points in that copy. Production code and fixture helpers are
-preserved; the repository's source is untouched. It reuses `target`, uses one build job,
-and omits debug information for Router alone. This focused run complements the
-full `cargo test --locked --all-features` suite.
+preserved; the repository's source is untouched. It reuses `target`, uses one
+build job, and omits debug information for Router alone. This focused run
+complements the full `cargo test --locked --all-features` suite.
 
 Before the fix, the known-model fixture returned 404 `not_found_error`, the
 strictly pinned rejected pool account returned 502 `api_error`, and consumed

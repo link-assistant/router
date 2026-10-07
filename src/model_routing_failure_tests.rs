@@ -161,7 +161,7 @@ impl FailureHarness {
         serde_json::from_slice(&bytes).unwrap()
     }
 
-    fn replace_credential(&self, home: &TempDir) {
+    fn replace_credential(home: &TempDir) {
         fs::write(home.path().join(".credentials.json"), json!({
             "claudeAiOauth": {"accessToken": "claude-access-b", "expiresAt": 9_999_999_999_999_i64}
         }).to_string()).unwrap();
@@ -272,7 +272,7 @@ async fn changed_credential_clears_rejection_and_preserves_requested_models() {
         StatusCode::UNAUTHORIZED
     );
     assert_rejected(&fixture.state, SubscriptionProvider::Claude);
-    fixture.replace_credential(&fixture.home);
+    FailureHarness::replace_credential(&fixture.home);
     assert_eq!(fixture.catalog().await["data"].as_array().unwrap().len(), 2);
     assert_ne!(
         fixture
@@ -304,7 +304,7 @@ async fn healthy_pool_account_serves_the_same_model_after_primary_rejection() {
         StatusCode::UNAUTHORIZED
     );
     let healthy = tempdir().unwrap();
-    fixture.replace_credential(&healthy);
+    FailureHarness::replace_credential(&healthy);
     let router = crate::accounts::AccountRouter::new_for_provider(
         fixture.home.path().to_path_buf(),
         &[healthy.path().to_path_buf()],

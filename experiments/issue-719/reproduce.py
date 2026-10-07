@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Run issue 719's hermetic fixture on machines unable to link all unit tests.
 
-The temporary source copy retains production code and test helpers. Only
-unrelated test entry points are disabled; ordinary cargo test remains the full
-validation command. Build dependencies reuse the repository's target cache.
+The temporary source copy retains production code and fixture helpers. Only
+unrelated test modules and entry points are disabled; ordinary cargo test remains
+the full validation command. Dependencies reuse the repository's target cache.
 """
 
 import os
