@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 struct Router {
     child: Child,
     port: u16,
-    _data_dir: tempfile::TempDir,
+    data_dir: tempfile::TempDir,
 }
 
 impl Drop for Router {
@@ -64,7 +64,7 @@ impl Router {
         let router = Self {
             child,
             port,
-            _data_dir: data_dir,
+            data_dir,
         };
         router.wait_until_ready();
         router
@@ -133,7 +133,7 @@ fn an_idle_router_stops_promptly_and_exits_zero() {
         status.success(),
         "an asked-for stop must exit 0, got {status:?}"
     );
-    let log = std::fs::read_to_string(router._data_dir.path().join("logs/operational.log"))
+    let log = std::fs::read_to_string(router.data_dir.path().join("logs/operational.log"))
         .expect("persistent operational log");
     for record in [
         "process_start",

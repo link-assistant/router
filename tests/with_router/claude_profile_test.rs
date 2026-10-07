@@ -76,7 +76,7 @@ fn mock_admin_claude_router_with_catalog(
     mock_claude_router_impl(catalog, true, "200 OK")
 }
 
-pub(super) fn mock_claude_router_with_failure(
+pub fn mock_claude_router_with_failure(
     status: &str,
 ) -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_impl(
@@ -86,14 +86,14 @@ pub(super) fn mock_claude_router_with_failure(
     )
 }
 
-pub(super) fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
+pub fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_with_catalog(
         r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
     )
 }
 
 #[allow(clippy::literal_string_with_formatting_args)] // POSIX shell parameter expansion.
-pub(super) fn fake_claude(bin_dir: &std::path::Path) {
+pub fn fake_claude(bin_dir: &std::path::Path) {
     fs::create_dir_all(bin_dir).expect("create fake client directory");
     let path = bin_dir.join("claude");
     fs::write(
@@ -147,7 +147,7 @@ exit "${FAKE_EXIT:-0}"
         .expect("make fake Claude executable");
 }
 
-pub(super) fn claude_command(
+pub fn claude_command(
     home: &std::path::Path,
     bin_dir: &std::path::Path,
     capture: &std::path::Path,
@@ -213,7 +213,7 @@ pub(super) fn claude_command(
     command
 }
 
-pub(super) fn run_claude_with(
+pub fn run_claude_with(
     home: &std::path::Path,
     bin: &std::path::Path,
     capture: &std::path::Path,

@@ -69,6 +69,20 @@ pub fn env_filter(verbose: bool, rust_log: Option<&str>) -> EnvFilter {
         .unwrap_or_else(|| EnvFilter::new(fallback))
 }
 
+/// Safe HTTP failure context without response body or headers.
+pub(crate) const fn http_failure(status: u16) -> &'static str {
+    match status {
+        401 | 403 | 407 => "authentication_or_authorization",
+        402 => "billing",
+        408 | 504 => "transport_timeout",
+        429 => "rate_limited",
+        400 | 422 => "invalid_request",
+        404 => "routing_not_found",
+        500..=599 => "upstream_server_error",
+        _ => "http_error",
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,19 +104,5 @@ mod tests {
             env_filter(true, Some("not a valid directive[[")).max_level_hint(),
             Some(LevelFilter::DEBUG)
         );
-    }
-}
-
-/// Safe HTTP failure context without response body or headers.
-pub(crate) const fn http_failure(status: u16) -> &'static str {
-    match status {
-        401 | 403 | 407 => "authentication_or_authorization",
-        402 => "billing",
-        408 | 504 => "transport_timeout",
-        429 => "rate_limited",
-        400 | 422 => "invalid_request",
-        404 => "routing_not_found",
-        500..=599 => "upstream_server_error",
-        _ => "http_error",
     }
 }
