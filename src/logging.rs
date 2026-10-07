@@ -7,7 +7,7 @@ mod process;
 pub(crate) mod redaction;
 pub(crate) use child::supervise;
 pub use process::run_launcher;
-pub(crate) use process::{FILE_DIAGNOSTICS, child_exit, diagnostic, event, run};
+pub(crate) use process::{FILE_DIAGNOSTICS, child_exit, data_dir, diagnostic, event, run};
 
 /// Construct and announce the bounded request-log destination.
 #[must_use]

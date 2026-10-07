@@ -24,7 +24,7 @@ for name in ("router", "with-router", "link-assistant-router"):
     print(f"Using {binary} (built {binary.stat().st_mtime})", flush=True)
 
 externs = []
-for name in ("link_assistant_router", "base64", "serde_json", "tempfile", "wait_timeout", "portable_pty", "zstd"):
+for name in ("link_assistant_router", "base64", "serde_json", "tempfile", "wait_timeout", "portable_pty", "zstd", "sha2", "url", "hex"):
     candidates = []
     if name in selected:
         for fingerprint in fingerprints.glob(f"*/lib-{name}"):

@@ -1,13 +1,21 @@
 //! Process adapter for persistent diagnostics and explicit console mirroring.
 use std::fmt::Arguments;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{ExitCode, ExitStatus};
 use std::sync::OnceLock;
 
 use crate::operational_log::OperationalLog;
 
 static LOG: OnceLock<OperationalLog> = OnceLock::new();
+static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 tokio::task_local! { pub(crate) static FILE_DIAGNOSTICS: bool; }
+
+pub fn data_dir() -> PathBuf {
+    DATA_DIR
+        .get()
+        .cloned()
+        .unwrap_or_else(crate::config::default_data_dir)
+}
 
 pub fn install(data_dir: &Path, verbose: bool, mut secrets: Vec<String>) -> std::io::Result<()> {
     if LOG.get().is_some() {
@@ -33,6 +41,7 @@ pub fn install(data_dir: &Path, verbose: bool, mut secrets: Vec<String>) -> std:
         ))
         .try_init()
         .map_err(std::io::Error::other)?;
+    let _ = DATA_DIR.set(data_dir.to_path_buf());
     let _ = LOG.set(log);
     Ok(())
 }
