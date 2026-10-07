@@ -10,7 +10,7 @@ use std::io::{Read as _, Write as _};
 use std::net::{TcpListener, TcpStream};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use link_assistant_router::config::StoragePolicy;
@@ -135,23 +135,6 @@ impl Drop for Router {
     }
 }
 
-/// An ephemeral port never handed out twice in this process (issue #368).
-fn free_port() -> u16 {
-    static HANDED_OUT: OnceLock<Mutex<std::collections::HashSet<u16>>> = OnceLock::new();
-    let seen = HANDED_OUT.get_or_init(|| Mutex::new(std::collections::HashSet::new()));
-    for _ in 0..4_000 {
-        let port = TcpListener::bind("127.0.0.1:0")
-            .expect("bind ephemeral")
-            .local_addr()
-            .expect("address")
-            .port();
-        if seen.lock().expect("port registry").insert(port) {
-            return port;
-        }
-    }
-    panic!("no unused ephemeral port")
-}
-
 /// Send one request and read until the router closes the connection.
 fn http(port: u16, request: &str) -> String {
     let Ok(mut stream) = TcpStream::connect(("127.0.0.1", port)) else {
@@ -167,19 +150,20 @@ fn http(port: u16, request: &str) -> String {
 }
 
 impl Router {
-    /// Start a router with `env`, retrying if a sibling binary won the port.
+    /// Start a router with `env`, using only the socket bound by that child.
     fn start(env: &[(&str, String)]) -> Self {
         for _ in 0..10 {
             if let Some(router) = Self::try_start(env) {
                 return router;
             }
         }
-        panic!("could not claim a port for the router in ten attempts");
+        panic!("could not start the router in ten attempts");
     }
 
     fn try_start(env: &[(&str, String)]) -> Option<Self> {
-        let port = free_port();
         let data = tempfile::tempdir().expect("data dir");
+        let log_path = data.path().join("router.log");
+        let log = std::fs::File::create(&log_path).expect("router log");
         // A Claude subscription for the Anthropic tests; unused otherwise.
         let claude = data.path().join("claude");
         std::fs::create_dir_all(&claude).expect("claude home");
@@ -191,23 +175,32 @@ impl Router {
         let mut command = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"));
         command
             .arg("serve")
+            .args(["--listener", "127.0.0.1:0=combined,http"])
             .env("TOKEN_SECRET", SECRET)
             .env("ROUTER_HOST", "127.0.0.1")
-            .env("ROUTER_PORT", port.to_string())
+            .env("ROUTER_PORT", "0")
+            .env("RUST_LOG", "info")
             .env("STORAGE_POLICY", "text")
             .env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "loopback")
             .env("UPSTREAM_IDLE_TIMEOUT_SECS", "1")
             .env("DATA_DIR", data.path())
             .env("REQUEST_LOG", data.path().join("requests"))
+            .env("HOME", data.path())
+            .env_remove("CODEX_HOME")
+            .env("CLAUDE_CONFIG_DIR", &claude)
             .env("CLAUDE_CODE_HOME", &claude)
             .env("DISABLE_LOGIN_API", "true")
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
+            .stdout(Stdio::from(log.try_clone().expect("clone router log")))
+            .stderr(Stdio::from(log));
         for (name, value) in env {
             command.env(name, value);
         }
         let child = command.spawn().expect("start router");
-        let mut router = Self { child, port, data };
+        let mut router = Self {
+            child,
+            port: 0,
+            data,
+        };
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
             match router.child.try_wait() {
@@ -215,17 +208,36 @@ impl Router {
                 Ok(None) => {}
                 Err(error) => panic!("cannot poll the router: {error}"),
             }
-            if http(
-                router.port,
-                "GET /api/health HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
-            )
-            .contains(" 200 ")
+            // A released probe port can be claimed by the redirect target
+            // before child startup. Read the child's actual bound address
+            // before issuing any readiness request (issue #715 CI evidence).
+            let output = std::fs::read_to_string(&log_path).unwrap_or_default();
+            if let Some(port) = output.lines().find_map(|line| {
+                line.split("Listening on http://127.0.0.1:")
+                    .nth(1)?
+                    .split_whitespace()
+                    .next()?
+                    .parse::<u16>()
+                    .ok()
+            }) {
+                router.port = port;
+            }
+            if router.port != 0
+                && http(
+                    router.port,
+                    "GET /api/health HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
+                )
+                .contains(" 200 ")
             {
                 return Some(router);
             }
             std::thread::sleep(Duration::from_millis(100));
         }
-        panic!("router never became healthy on port {}", router.port);
+        panic!(
+            "router never became healthy on port {}: {}",
+            router.port,
+            std::fs::read_to_string(log_path).unwrap_or_default()
+        );
     }
 
     fn token(&self, client_kind: &str) -> String {
@@ -252,6 +264,20 @@ impl Router {
             ),
         )
     }
+}
+
+/// Even an occupied legacy port must not receive the child's readiness probes.
+#[test]
+fn readiness_does_not_probe_an_occupied_legacy_port() {
+    let (occupied, hits) = spawn_redirect_target();
+    let (upstream, _) = spawn_upstream(Post::Redirect(307, "/unused".into()));
+    let router = Router::start(&[
+        ("ROUTER_PORT", occupied.to_string()),
+        ("UPSTREAM_PROVIDER", "anthropic".into()),
+        ("UPSTREAM_BASE_URL", format!("http://127.0.0.1:{upstream}")),
+    ]);
+    assert_ne!(router.port, occupied);
+    assert_eq!(hits.load(Ordering::SeqCst), 0);
 }
 
 fn openai_compatible(upstream: u16) -> Router {

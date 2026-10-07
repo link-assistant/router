@@ -5,7 +5,7 @@ Reuse the documented AST unit sharder; CI runs ordinary unsharded commands.
 Only compilation is split. Every production function and test body is intact,
 and each resulting test executable uses the default parallel test scheduler.
 """
-import json
+import argparse
 import os
 from pathlib import Path
 import re
@@ -29,9 +29,16 @@ def run(command, log, env=environment):
         subprocess.run(command, cwd=ROOT, env=env, stdout=output, stderr=output, check=True)
 
 
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--start-shard', type=int, choices=range(8), default=0,
+                    help='resume after preserved passing shards')
+args = parser.parse_args()
 run(['rust-script', 'experiments/issue-703/shard-unit-tests.rs'], '715-unit-prepare.log')
 inventory = set()
-for shard in range(8):
+for shard in range(args.start_shard):
+    assert re.search(r'test result: ok\.', (LOGS/f'715-unit-{shard}.log').read_text())
+    inventory.update(re.findall(r'^([\w:]+): test$', (LOGS/f'715-unit-{shard}-list.log').read_text(), re.MULTILINE))
+for shard in range(args.start_shard, 8):
     env = {**environment, 'RUSTC_WORKSPACE_WRAPPER': str(ROOT/f'target/local-unit-shards/shard-{shard}.py')}
     print(f'Run default-parallel unit shard {shard}', flush=True)
     command = ['cargo', 'test', '--locked', '--lib', '--all-features']
