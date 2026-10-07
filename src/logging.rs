@@ -2,6 +2,13 @@
 
 use tracing_subscriber::EnvFilter;
 
+mod child;
+mod process;
+pub(crate) mod redaction;
+pub(crate) use child::supervise;
+pub use process::run_launcher;
+pub(crate) use process::{FILE_DIAGNOSTICS, child_exit, diagnostic, event, run};
+
 /// Construct and announce the bounded request-log destination.
 #[must_use]
 pub fn request_log(
@@ -30,16 +37,8 @@ pub fn request_log(
 
 /// Install the process-wide tracing subscriber.
 pub fn init(verbose: bool) {
-    // Diagnostics go to stderr so a command's own output stays machine-readable
-    // on stdout: `logs summary --json` is the input to a monitoring check, and a
-    // startup line mixed into it made the JSON unparsable (issue #234).
-    tracing_subscriber::fmt()
-        .with_writer(std::io::stderr)
-        .with_env_filter(env_filter(
-            verbose,
-            crate::operation_context::var("RUST_LOG").ok().as_deref(),
-        ))
-        .init();
+    process::install(&crate::config::default_data_dir(), verbose, Vec::new())
+        .expect("install persistent operational logging");
 }
 
 /// Build the lazy compatibility logger used by existing proxy code.
@@ -91,5 +90,19 @@ mod tests {
             env_filter(true, Some("not a valid directive[[")).max_level_hint(),
             Some(LevelFilter::DEBUG)
         );
+    }
+}
+
+/// Safe HTTP failure context without response body or headers.
+pub(crate) const fn http_failure(status: u16) -> &'static str {
+    match status {
+        401 | 403 | 407 => "authentication_or_authorization",
+        402 => "billing",
+        408 | 504 => "transport_timeout",
+        429 => "rate_limited",
+        400 | 422 => "invalid_request",
+        404 => "routing_not_found",
+        500..=599 => "upstream_server_error",
+        _ => "http_error",
     }
 }

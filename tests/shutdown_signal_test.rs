@@ -39,12 +39,23 @@ impl Router {
             .port();
         let data_dir = tempfile::tempdir().expect("temporary data directory");
         let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+            .env_clear()
+            .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+            .env("HTTP_PROXY", "http://127.0.0.1:9")
+            .env("HTTPS_PROXY", "http://127.0.0.1:9")
+            .env("NO_PROXY", "127.0.0.1,localhost")
             .arg("serve")
             .env("TOKEN_SECRET", "shutdown-signal-test-secret")
+            .env("HOME", data_dir.path())
+            .env_remove("VERBOSE")
+            .env_remove("RUST_LOG")
             .env("ROUTER_HOST", "127.0.0.1")
             .env("ROUTER_PORT", port.to_string())
             .env("DATA_DIR", data_dir.path())
             .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
+            .env("CODEX_HOME", data_dir.path().join("codex"))
+            .env("GEMINI_HOME", data_dir.path().join("gemini"))
+            .env("QWEN_HOME", data_dir.path().join("qwen"))
             .env("DISABLE_LOGIN_API", "true")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -95,7 +106,11 @@ impl Router {
     }
 
     fn wait(&mut self) -> std::process::ExitStatus {
-        self.child.wait().expect("the router exits")
+        use wait_timeout::ChildExt as _;
+        self.child
+            .wait_timeout(Duration::from_secs(10))
+            .expect("wait for router")
+            .expect("router exits within its grace period")
     }
 }
 
@@ -118,6 +133,17 @@ fn an_idle_router_stops_promptly_and_exits_zero() {
         status.success(),
         "an asked-for stop must exit 0, got {status:?}"
     );
+    let log = std::fs::read_to_string(router._data_dir.path().join("logs/operational.log"))
+        .expect("persistent operational log");
+    for record in [
+        "process_start",
+        "status=200",
+        "SIGTERM",
+        "process_exit exit_code=0",
+    ] {
+        assert!(log.contains(record), "missing {record}: {log}");
+    }
+    assert!(!log.contains("shutdown-signal-test-secret"));
     assert!(
         elapsed < Duration::from_secs(5),
         "an idle router has nothing to drain and must not wait: took {elapsed:?}"

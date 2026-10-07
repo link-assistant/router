@@ -93,7 +93,7 @@ pub struct Cli {
     )]
     pub listeners: Vec<String>,
 
-    /// Verbose logging.
+    /// Mirror operational diagnostics to stderr and enable debug tracing.
     #[arg(long, env = "VERBOSE", global = true, value_parser = parse_truthy)]
     pub verbose: bool,
 

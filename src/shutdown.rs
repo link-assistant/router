@@ -56,7 +56,7 @@ impl Shutdown {
     }
 }
 
-async fn shutdown_signal() {
+pub(crate) async fn shutdown_signal() -> &'static str {
     let interrupt = async {
         if tokio::signal::ctrl_c().await.is_err() {
             // A handler that cannot be installed must not take the process
@@ -85,7 +85,8 @@ async fn shutdown_signal() {
         () = interrupt => "SIGINT",
         () = terminate => "SIGTERM",
     };
-    tracing::info!("{name} received; draining in-flight requests before exit");
+    crate::logging::event(format_args!("{name} received; starting graceful shutdown"));
+    name
 }
 
 #[cfg(test)]

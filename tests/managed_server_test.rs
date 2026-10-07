@@ -822,7 +822,9 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .output()
         .expect("run with");
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.stderr.is_empty());
+    let stderr = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("persistent discovery failure");
     assert!(!output.status.success(), "an unreachable selection fails");
     assert!(
         stderr.contains("127.0.0.1:1"),
