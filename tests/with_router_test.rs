@@ -662,6 +662,9 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
         .expect("attempt undo");
     assert!(!undone.status.success());
     assert!(String::from_utf8_lossy(&undone.stderr).contains("changed after it was configured"));
+    let log = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("explicit command failures persist alongside their results");
+    assert!(log.contains("changed after it was configured"), "{log}");
     assert!(
         fs::read_to_string(config)
             .expect("read edited config")

@@ -1735,7 +1735,9 @@ RUST_LOG=trace router serve
 Console tracing and server/launcher diagnostics are quiet by default. Client
 stdin/stdout/stderr remain inherited, including the interactive TUI. Requested
 command results, help/version and explicit `--json` output retain their output
-contracts. Host `state/host.log`, service journals and Docker output still
+contracts. Errors from explicit configuration and management commands also
+persist in the log while retaining their requested console/result channels.
+Host `state/host.log`, service journals and Docker output still
 capture command output, while operational records use this shared file sink;
 normal diagnostics are not duplicated into those external captures. If Router
 cannot open its operational log, it fails before discovery/preflight and prints

@@ -53,6 +53,14 @@ impl OperationalLog {
     }
 
     pub(crate) fn record(&self, message: &str) -> io::Result<()> {
+        self.record_with_console(message, self.console)
+    }
+
+    pub(crate) fn record_file(&self, message: &str) -> io::Result<()> {
+        self.record_with_console(message, false)
+    }
+
+    fn record_with_console(&self, message: &str, console: bool) -> io::Result<()> {
         let state = self
             .state
             .lock()
@@ -79,7 +87,7 @@ impl OperationalLog {
         let unlock = fs2::FileExt::unlock(&state.lock);
         drop(state);
         result.and(unlock)?;
-        if self.console {
+        if console {
             std::io::stderr().lock().write_all(record.as_bytes())?;
         }
         Ok(())

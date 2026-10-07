@@ -15,14 +15,18 @@ macro_rules! print {
 }
 
 pub fn write(stderr: bool, arguments: Arguments<'_>) {
-    use std::fmt::Write as _;
-    use std::io::Write as _;
     let file_diagnostics = crate::logging::FILE_DIAGNOSTICS
         .try_with(|active| *active)
-        .unwrap_or(false);
-    if stderr && file_diagnostics {
-        crate::logging::diagnostic(arguments);
+        .ok();
+    if stderr && let Some(quiet) = file_diagnostics {
+        crate::logging::diagnostic(arguments, quiet);
     }
+    write_transport(stderr, arguments, file_diagnostics.unwrap_or(false));
+}
+
+fn write_transport(stderr: bool, arguments: Arguments<'_>, quiet: bool) {
+    use std::fmt::Write as _;
+    use std::io::Write as _;
     if let Some(context) = crate::operation_context::current() {
         let mut output = context.output.lock().expect("operation output lock");
         let target = if stderr {
@@ -31,7 +35,7 @@ pub fn write(stderr: bool, arguments: Arguments<'_>) {
             &mut output.stdout
         };
         let _ = target.write_fmt(arguments);
-    } else if stderr && file_diagnostics {
+    } else if stderr && quiet {
         // Router diagnostics have already reached the file and optional console.
     } else if stderr {
         let _ = std::io::stderr().lock().write_fmt(arguments);
@@ -42,7 +46,7 @@ pub fn write(stderr: bool, arguments: Arguments<'_>) {
 
 /// Keep explicitly requested results and interactive prompts on their output channel.
 pub fn write_result(stderr: bool, arguments: Arguments<'_>) {
-    crate::logging::FILE_DIAGNOSTICS.sync_scope(false, || write(stderr, arguments));
+    write_transport(stderr, arguments, false);
 }
 
 /// Attach a domain report while retaining its separately rendered human output.

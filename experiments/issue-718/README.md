@@ -4,6 +4,9 @@ The pre-fix compiled launcher regression failed because stderr contained
 `router_model_launch` before `FAKE_CLAUDE_LAUNCHED`. The early-configuration
 failure returned nonzero but had no `data/logs/operational.log`; explicit JSON
 results likewise produced no persistent lifecycle record.
+An explicit local token-issuance error also reproduced a missing durable
+diagnostic; its regression checks persistence and a single console message
+with and without verbose output.
 
 Run the automated tests without vendor accounts or a credential store:
 
@@ -15,6 +18,7 @@ CARGO_BUILD_JOBS=1 cargo test --test with_router_test
 
 The real-process experiment inherits its terminal stdout/stderr, uses a temporary
 home and data directory, exercises a denied local request, and sends SIGTERM.
+It also checks persistent errors from explicit commands and their console output.
 It then reads the persistent startup/request/shutdown/exit records and checks
 permissions and synthetic-secret redaction. Its finite readiness and shutdown
 limits reap the process on failure:

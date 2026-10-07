@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import resource
 import subprocess
+import sys
 
 root = Path(__file__).resolve().parents[2]
 dependencies = root / "target/debug/deps"
@@ -40,7 +41,7 @@ def limits():
     resource.setrlimit(resource.RLIMIT_AS, (4 * 1024**3, 4 * 1024**3))
     resource.setrlimit(resource.RLIMIT_DATA, (1024**3, 1024**3))
 
-for name in ("operational_logging_test", "with_router_test", "shutdown_signal_test"):
+for name in sys.argv[1:] or ("operational_logging_test", "with_router_test", "shutdown_signal_test"):
     output = root / "target" / f"issue-718-{name}"
     subprocess.run(["rustc", "--edition=2024", "--test", str(root / "tests" / f"{name}.rs"),
                     "-C", "debuginfo=0", "-C", "link-arg=-Wl,--threads=1",

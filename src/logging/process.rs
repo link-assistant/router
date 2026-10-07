@@ -37,10 +37,16 @@ pub fn install(data_dir: &Path, verbose: bool, mut secrets: Vec<String>) -> std:
     Ok(())
 }
 
-pub fn diagnostic(arguments: Arguments<'_>) {
+pub fn diagnostic(arguments: Arguments<'_>, quiet: bool) {
     if let Some(log) = LOG.get() {
         let record = format!("{} WARN {}", chrono::Utc::now().to_rfc3339(), arguments);
-        if let Err(error) = log.record(&record) {
+        let result = if quiet {
+            log.record(&record)
+        } else {
+            // Explicit command diagnostics already retain their console channel.
+            log.record_file(&record)
+        };
+        if let Err(error) = result {
             std::eprintln!("operational log write failed: {error}");
         }
     }

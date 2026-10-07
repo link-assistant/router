@@ -32,6 +32,17 @@ with tempfile.TemporaryDirectory(prefix="router-operational-log-") as temporary:
         "ROUTER_HOST": "127.0.0.1", "ROUTER_PORT": str(port),
         "DISABLE_LOGIN_API": "true", "VERBOSE": "false", "RUST_LOG": "info",
     })
+    for verbose in (False, True):
+        arguments = [str(binary), "tokens", "issue", "--local"]
+        if verbose:
+            arguments.append("--verbose")
+        failure = subprocess.run(arguments, env={**environment, "TOKEN_SECRET": ""},
+                                 capture_output=True, text=True, check=False)
+        assert failure.returncode == 2
+        message = "TOKEN_SECRET environment variable is required"
+        assert failure.stderr.count(message) == 1, failure.stderr
+        assert message in (home / "data/logs/operational.log").read_text(), \
+            "Explicit command diagnostics must persist"
     # stdout/stderr are inherited; persistence must be Router's responsibility.
     process = subprocess.Popen([str(binary), "serve"], env=environment)
     try:
