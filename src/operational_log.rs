@@ -1,6 +1,6 @@
 //! Synchronous, owner-only operational records with bounded shared rotation.
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, Write};
+use std::io::{self, Seek as _, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -123,6 +123,8 @@ impl State {
             }
         }
         let mut file = open_private(&path)?;
+        // Rotation and this seek/write are protected by the shared lock.
+        file.seek(SeekFrom::End(0))?;
         file.write_all(bytes)?;
         // No asynchronous queue: an error/exit record is on disk before return.
         file.sync_data()
@@ -142,7 +144,9 @@ fn reject_symlink(path: &Path) -> io::Result<()> {
 fn open_private(path: &Path) -> io::Result<File> {
     reject_symlink(path)?;
     let mut options = OpenOptions::new();
-    options.create(true).append(true);
+    // Windows locking and FlushFileBuffers require generic read/write access;
+    // append-only handles do not have those rights. Seek under the shared lock.
+    options.create(true).truncate(false).read(true).write(true);
     #[cfg(unix)]
     {
         use std::os::unix::fs::OpenOptionsExt as _;
