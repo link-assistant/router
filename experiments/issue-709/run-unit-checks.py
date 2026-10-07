@@ -21,6 +21,9 @@ ENVIRONMENT = {
     "CARGO_PROFILE_TEST_CODEGEN_UNITS": "1024",
     "RUSTC_WRAPPER": str(ROOT / "experiments/issue-703/rustc_memory_wrapper.py"),
 }
+# CI has no agent-specific override; the fallback-home unit test requires its
+# absence. Sanitize only test subprocesses, preserving the parent environment.
+ENVIRONMENT.pop("CODEX_HOME", None)
 COMMAND = ["cargo", "test", "--locked", "--lib", "--all-features"]
 
 

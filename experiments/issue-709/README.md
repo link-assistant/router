@@ -76,6 +76,10 @@ every shard with default parallelism, and checks that the wrapper-only executabl
 contains every `with_command` test in the combined inventory. It then runs the
 whole wrapper suite 20 times sequentially and 20 times across four simultaneous
 processes sharing one temporary root, followed by the affected native verifier.
+The runner removes the inherited agent-specific `CODEX_HOME` override from test
+subprocesses to match CI: `resolve_home_uses_subdir` explicitly assumes that
+override is absent. A single-test control fails with the inherited override and
+passes without it; no production behavior or test assertion needs modification.
 Only ignored compiler inputs are generated; repository production sources and
 test assertions are preserved. CI retains ordinary unsharded suites and repeats
 the default-parallel wrapper tests 20 times on both Linux and macOS.
@@ -84,7 +88,7 @@ After the bounded runner has generated its wrapper, the remaining Cargo targets
 can use the same compiler settings:
 
 ```sh
-CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 \
+env -u CODEX_HOME CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 \
   CARGO_PROFILE_TEST_CODEGEN_UNITS=1024 \
   RUSTC_WRAPPER="$PWD/experiments/issue-703/rustc_memory_wrapper.py" \
   RUSTC_WORKSPACE_WRAPPER="$PWD/target/issue-709-with-command/with-command.py" \
