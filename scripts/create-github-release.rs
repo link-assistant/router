@@ -267,11 +267,25 @@ fn is_duplicate_release(stdout: &[u8]) -> bool {
         })
 }
 
+fn release_tag_endpoint(repository: &str, tag: &str) -> String {
+    use std::fmt::Write as _;
+
+    let mut encoded = String::new();
+    for byte in tag.bytes() {
+        if byte.is_ascii_alphanumeric() || b"-._~".contains(&byte) {
+            encoded.push(char::from(byte));
+        } else {
+            write!(encoded, "%{byte:02X}").expect("write tag to String");
+        }
+    }
+    format!("repos/{repository}/releases/tags/{encoded}")
+}
+
 /// Confirm the exact tag after a duplicate POST. This read preserves assets,
 /// notes and publication state, including an already-complete stable release.
 fn confirm_existing_release(repository: &str, tag: &str) -> Result<(), String> {
     let output = Command::new("gh")
-        .args(["api", &format!("repos/{repository}/releases/tags/{tag}")])
+        .args(["api", &release_tag_endpoint(repository, tag)])
         .output()
         .map_err(|error| format!("Release {tag} lookup failed: {error}"))?;
     if !output.status.success() {
@@ -455,6 +469,18 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn exact_tag_lookup_encodes_custom_prefixes_as_one_path_component() {
+        assert_eq!(
+            release_tag_endpoint("fixture/router", "release/v#%1.18.1"),
+            "repos/fixture/router/releases/tags/release%2Fv%23%251.18.1"
+        );
+        assert_eq!(
+            release_tag_endpoint("fixture/router", "v1.18.1"),
+            "repos/fixture/router/releases/tags/v1.18.1"
+        );
+    }
 
     #[test]
     fn only_structured_duplicate_tag_errors_are_reusable() {

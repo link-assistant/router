@@ -23,19 +23,21 @@ import json
 import os
 from pathlib import Path
 import sys
+from urllib.parse import quote
 
 root = Path(os.environ["RELEASE_FIXTURE"])
 config = json.loads((root / "config.json").read_text())
 args = sys.argv[1:]
+tag = config.get("tag_prefix", "v") + "1.18.1"
 post = ["api", "repos/fixture/router/releases", "-X", "POST", "--input", "-"]
-get = ["api", "repos/fixture/router/releases/tags/v1.18.1"]
+get = ["api", "repos/fixture/router/releases/tags/" + quote(tag, safe="")]
 assert args in [post, get], args
 with (root / "calls.jsonl").open("a") as calls:
     calls.write(json.dumps(args) + "\n")
 state = root / "release.json"
 if args == post:
     payload = json.load(sys.stdin)
-    assert payload["tag_name"] == "v1.18.1", payload
+    assert payload["tag_name"] == tag, payload
     assert payload["prerelease"] is True, payload
     assert payload["make_latest"] == "false", payload
     failure = config.get("post_error")
@@ -77,7 +79,7 @@ class ReleasePreparation(unittest.TestCase):
         return subprocess.run(
             [RUST_SCRIPT, str(ROOT / "scripts/create-github-release.rs"),
              "--release-version", "1.18.1", "--repository", "fixture/router",
-             "--prerelease", "true"],
+             "--prerelease", "true", "--tag-prefix", self.config.get("tag_prefix", "v")],
             cwd=self.directory, env=self.environment, capture_output=True, text=True,
             check=False,
         )
@@ -105,6 +107,15 @@ class ReleasePreparation(unittest.TestCase):
         result = self.prepare()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(state.read_bytes(), before)
+
+    def test_custom_tag_prefix_is_preserved_and_encoded_for_lookup(self):
+        self.config["tag_prefix"] = "release/v#%"
+        first = self.prepare()
+        self.assertEqual(first.returncode, 0, first.stderr)
+        before = (self.directory / "release.json").read_bytes()
+        second = self.prepare()
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual((self.directory / "release.json").read_bytes(), before)
 
     def test_ordinary_failures_never_count_as_duplicate_success(self):
         failures = [
