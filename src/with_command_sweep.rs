@@ -48,12 +48,17 @@ impl DisposableRunDirectory {
 ///
 /// `ours` is a directory this run just created, used as the reference for
 /// "mine": comparing owners needs no privileged call and no `unsafe`.
+/// Only its siblings are candidates. Production creates `ours` in `TMPDIR`;
+/// tests can use independent roots without changing the process environment.
 pub(super) fn sweep_stale_directories(ours: &Path) {
     const PREFIX: &str = "link-assistant-router-with-";
     let Some(uid) = owner_of(ours) else {
         return;
     };
-    let Ok(entries) = fs::read_dir(std::env::temp_dir()) else {
+    let Some(root) = ours.parent() else {
+        return;
+    };
+    let Ok(entries) = fs::read_dir(root) else {
         return;
     };
     for entry in entries.flatten() {
