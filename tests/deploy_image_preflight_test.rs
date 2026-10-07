@@ -5,6 +5,58 @@ use std::os::unix::fs::PermissionsExt as _;
 use std::process::Command;
 
 #[test]
+fn an_unrepresentable_instance_refuses_before_processes_or_state_mutations() {
+    let home = tempfile::tempdir().unwrap();
+    let calls = home.path().join("called");
+    for name in ["docker", "ssh"] {
+        let fake = home.path().join(name);
+        std::fs::write(
+            &fake,
+            "#!/bin/sh\ntouch \"$INSTANCE_REFUSAL_CALLS\"\nexit 99\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    for remote in [false, true] {
+        let root = home.path().join(if remote { "remote" } else { "local" });
+        let mut command = Command::new(env!("CARGO_BIN_EXE_router"));
+        command.args([
+            "deploy",
+            "--instance",
+            &"a".repeat(33),
+            "--root",
+            root.to_str().unwrap(),
+        ]);
+        if remote {
+            command.args(["--server", "fixture@example.test"]);
+        }
+        let output = command
+            .env("HOME", home.path())
+            .env("CLAUDE_CONFIG_DIR", home.path().join(".claude"))
+            .env("DATA_DIR", home.path().join("client-state"))
+            .env("TOKEN_SECRET", "instance-refusal-fixture")
+            .env("INSTANCE_REFUSAL_CALLS", &calls)
+            .env(
+                "PATH",
+                format!(
+                    "{}:{}",
+                    home.path().display(),
+                    std::env::var("PATH").unwrap()
+                ),
+            )
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("1-32"));
+        assert!(
+            !calls.exists(),
+            "refused instance invoked a deployment process"
+        );
+        assert!(!root.exists(), "refused instance created deployment state");
+    }
+}
+
+#[test]
 fn an_unpublished_default_image_refuses_local_and_staging_plans_without_writes() {
     let home = tempfile::tempdir().unwrap();
     let docker = home.path().join("docker");

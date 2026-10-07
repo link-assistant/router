@@ -92,6 +92,32 @@ pub fn qualify(base: &str) -> String {
     selected_name().map_or_else(|| base.to_string(), |instance| format!("{base}-{instance}"))
 }
 
+/// DNS-safe backend name retaining the full unique deployment nonce.
+///
+/// A named instance is represented by a digest so the accepted 32-character
+/// instance plus the UUID never exceeds DNS's 63-octet label limit (#714).
+/// Existing backend references in deployment state remain usable.
+pub fn backend_name(nonce: uuid::Uuid) -> Result<String, String> {
+    backend_name_in(selected_name().as_deref(), nonce)
+}
+
+fn backend_name_in(instance: Option<&str>, nonce: uuid::Uuid) -> Result<String, String> {
+    use sha2::Digest as _;
+    let prefix = crate::deploy::BACKEND_PREFIX;
+    let name = if let Some(instance) = instance {
+        validate(instance)?;
+        let digest = sha2::Sha256::digest(instance.as_bytes());
+        format!("{prefix}{}-{}", hex::encode(&digest[..4]), nonce.simple())
+    } else {
+        // Preserve the historical unnamed prefix, including its separator.
+        format!("{prefix}-{}", nonce.simple())
+    };
+    if name.len() > 63 {
+        return Err("generated deployment backend exceeds the 63-byte DNS label limit".into());
+    }
+    Ok(name)
+}
+
 /// A deployment object name that carries the selected instance.
 pub struct InstanceName {
     base: &'static str,
@@ -189,5 +215,33 @@ impl PartialEq<InstanceName> for String {
 impl PartialEq<InstanceName> for &str {
     fn eq(&self, other: &InstanceName) -> bool {
         *self == other.as_str()
+    }
+}
+
+#[cfg(test)]
+mod dns_tests {
+    use super::*;
+
+    #[test]
+    fn every_accepted_instance_length_retains_a_full_nonce_within_dns_bounds() {
+        let nonce = uuid::Uuid::new_v4();
+        let mut names = std::collections::HashSet::new();
+        for length in 1..=MAX_INSTANCE_LEN {
+            let instance = "a".repeat(length);
+            let name = backend_name_in(Some(&instance), nonce).unwrap();
+            assert!(name.len() <= 63, "{name}");
+            assert!(name.ends_with(&nonce.simple().to_string()));
+            assert!(names.insert(name));
+        }
+        assert_ne!(
+            backend_name_in(Some("instance-a"), nonce).unwrap(),
+            backend_name_in(Some("instance-b"), nonce).unwrap()
+        );
+        assert_ne!(
+            backend_name_in(Some("instance-a"), nonce).unwrap(),
+            backend_name_in(Some("instance-a"), uuid::Uuid::new_v4()).unwrap()
+        );
+        assert!(backend_name_in(Some(&"a".repeat(33)), nonce).is_err());
+        assert!(backend_name_in(None, nonce).unwrap().len() <= 63);
     }
 }

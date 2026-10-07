@@ -624,3 +624,76 @@ fn deploy_output_contains_no_secret_material() {
         "no credential is echoed: {combined}"
     );
 }
+
+/// Names accepted by the CLI must also resolve from the hostname-based relay.
+#[test]
+fn long_named_instances_resolve_from_backend_and_relay() {
+    if ready("long_named_instances_resolve_from_backend_and_relay").is_none() {
+        return;
+    }
+    for length in [
+        13,
+        link_assistant_router::deploy::instance::MAX_INSTANCE_LEN,
+    ] {
+        let deployment = Deployment::new();
+        let nonce = uuid::Uuid::new_v4().simple().to_string();
+        let instance = format!("n{}", &nonce[..length - 1]);
+        let output =
+            deployment.deploy(&["--instance", &instance, "--claude-credentials", "isolated"]);
+        assert!(
+            output.status.success(),
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let backend =
+            std::fs::read_to_string(deployment.root.path().join("state/current")).unwrap();
+        let backend = backend.trim();
+        assert!(backend.len() <= 63, "unresolvable DNS label: {backend}");
+        let relay = format!("{}-{instance}", link_assistant_router::deploy::RELAY);
+        for container in [backend, relay.as_str()] {
+            let script = format!(
+                "const r = await fetch('http://{backend}:8080/api/health'); if(r.status !== 200) throw new Error(String(r.status));"
+            );
+            let output = Command::new("docker")
+                .args(["exec", container, "bun", "-e", &script])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{container} cannot resolve {backend}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        assert!(
+            deployment.health(),
+            "relay forwarding failed for {length}-character instance"
+        );
+        let converged =
+            deployment.deploy(&["--instance", &instance, "--claude-credentials", "isolated"]);
+        assert!(converged.status.success());
+        assert_eq!(
+            std::fs::read_to_string(deployment.root.path().join("state/current"))
+                .unwrap()
+                .trim(),
+            backend
+        );
+        assert!(
+            deployment
+                .deploy(&["--instance", &instance, "--down", "--yes"])
+                .status
+                .success()
+        );
+        assert!(
+            Command::new("docker")
+                .args([
+                    "network",
+                    "rm",
+                    &format!("{}-{instance}", link_assistant_router::deploy::NETWORK)
+                ])
+                .status()
+                .unwrap()
+                .success()
+        );
+    }
+}

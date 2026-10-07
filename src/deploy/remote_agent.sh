@@ -48,6 +48,17 @@ NETWORK=router-deploy-network${INSTANCE:+-$INSTANCE}
 case "$COOKIE" in
     *[!A-Za-z0-9-]*|'') echo "error: invalid deployment cookie" >&2; exit 2 ;;
 esac
+# Validate and bound the routing label before acquiring state or mutating Docker.
+case "$INSTANCE" in
+    *[!a-z0-9-]*|-*|*-) echo "error: invalid deployment instance" >&2; exit 2 ;;
+esac
+[ "${#INSTANCE}" -le 32 ] || { echo "error: deployment instance exceeds 32 characters" >&2; exit 2; }
+INSTANCE_DNS=
+if [ -n "$INSTANCE" ]; then
+    INSTANCE_DNS=$(printf '%s' "$INSTANCE" | sha256sum | cut -c1-8)
+fi
+CANDIDATE=router-deploy-${INSTANCE_DNS:+$INSTANCE_DNS-}$COOKIE
+[ "${#CANDIDATE}" -le 63 ] || { echo "error: deployment backend exceeds the DNS label limit" >&2; exit 2; }
 case "$PUBLIC_NAME" in
     *[!A-Za-z0-9._:-]*|'') echo "error: invalid deployment public host name" >&2; exit 2 ;;
 esac
@@ -284,7 +295,6 @@ fi
 STATE=$ROOT/state
 RELEASES=$ROOT/releases
 RELEASE=$RELEASES/$COOKIE
-CANDIDATE=router-deploy-${INSTANCE:+$INSTANCE-}$COOKIE
 TRANSACTION=$STATE/transaction
 mkdir -p "$STATE" "$RELEASES" "$RELEASE/home" "$RELEASE/data"
 
