@@ -50,7 +50,7 @@ fn mock_claude_router_impl(
     (format!("http://127.0.0.1:{port}"), handle)
 }
 
-fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
+pub fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_impl(catalog, false)
 }
 
@@ -67,7 +67,7 @@ fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
 }
 
 #[allow(clippy::literal_string_with_formatting_args)] // POSIX shell parameter expansion.
-fn fake_claude(bin_dir: &std::path::Path) {
+pub fn fake_claude(bin_dir: &std::path::Path) {
     fs::create_dir_all(bin_dir).expect("create fake client directory");
     let path = bin_dir.join("claude");
     fs::write(
@@ -112,7 +112,7 @@ exit 0
         .expect("make fake Claude executable");
 }
 
-fn run_claude_with(
+pub fn run_claude_with(
     home: &std::path::Path,
     bin_dir: &std::path::Path,
     capture: &std::path::Path,
@@ -145,6 +145,9 @@ fn run_claude_with(
         .env("CAPTURE_ARGS", capture.join("args"))
         .env("CAPTURE_MODEL_ENV", capture.join("model-env"))
         .env("CAPTURE_PRIVACY_ENV", capture.join("privacy-env"))
+        .env_remove("DATA_DIR")
+        .env_remove("VERBOSE")
+        .env_remove("RUST_LOG")
         .env_remove("CLAUDE_CONFIG_DIR")
         .env_remove("ANTHROPIC_API_KEY")
         .env_remove("ANTHROPIC_MODEL")
@@ -381,7 +384,7 @@ fn authorized_claude_context_variant_reaches_the_client_unchanged() {
 }
 
 #[test]
-fn claude_launch_preserves_user_privacy_values_and_warns_before_spawn() {
+fn claude_launch_preserves_user_privacy_values_and_logs_warning_before_spawn() {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
     let bin = directory.path().join("bin");
@@ -425,21 +428,21 @@ DISABLE_AUTOUPDATER=keep-update-choice\n\
 DISABLE_FEEDBACK_COMMAND=keep-feedback-choice\n",
         "the child must inherit every explicit user-owned value byte-for-byte"
     );
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    let warning = stderr
-        .find("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY and DO_NOT_TRACK")
-        .unwrap_or_else(|| panic!("warning omitted the exact blockers: {stderr}"));
+    assert_eq!(output.stderr, b"FAKE_CLAUDE_LAUNCHED\n");
+    let diagnostics = super::launcher_logging_test::diagnostic_messages(&home);
     assert!(
-        stderr.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),
-        "warning omitted the user-facing consequence: {stderr}"
+        diagnostics.contains(
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY and DO_NOT_TRACK"
+        ),
+        "{diagnostics}"
     );
-    let launched = stderr
-        .find("FAKE_CLAUDE_LAUNCHED")
-        .expect("fake Claude launch marker");
     assert!(
-        warning < launched,
-        "warning must be emitted before launch: {stderr}"
+        diagnostics.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),
+        "{diagnostics}"
     );
+    let log =
+        fs::read_to_string(home.join(".link-assistant-router/launcher/launcher.log")).unwrap();
+    assert!(log.find("feature-flag-gated tools").unwrap() < log.find("child_starting").unwrap());
 }
 
 #[test]
@@ -600,7 +603,8 @@ fn assert_claude_ai_operation_fails_closed(version: &str) {
         &[("FAKE_CLAUDE_VERSION", version)],
     );
     assert!(!output.status.success(), "{version}: {output:?}");
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.stderr.is_empty());
+    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
     assert!(stderr.contains("Claude.ai"), "{stderr}");
     assert!(stderr.contains("no Router token was minted"), "{stderr}");
     assert!(
@@ -686,7 +690,8 @@ fn claude_below_the_gateway_alias_minimum_is_refused_before_router_access() {
         &[("FAKE_CLAUDE_VERSION", "2.1.252")],
     );
     assert!(!output.status.success(), "{output:?}");
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.stderr.is_empty());
+    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
     assert!(stderr.contains("2.1.255 or newer"), "{stderr}");
     assert!(stderr.contains("2.1.252"), "{stderr}");
     assert!(
@@ -724,7 +729,8 @@ fn exact_post_client_reset_keeps_sessions_and_requires_confirmation() {
     );
     assert!(!cancelled.status.success());
     assert!(
-        String::from_utf8_lossy(&cancelled.stderr).contains("requires interactive confirmation")
+        super::launcher_logging_test::diagnostic_messages(&home)
+            .contains("requires interactive confirmation")
     );
     assert_eq!(
         fs::read(profile.join("session.jsonl")).expect("session after cancellation"),
@@ -805,7 +811,8 @@ fn reset_keeps_session_when_a_required_local_command_is_unavailable() {
         &[("DELETE_AFTER_VERSION", "1"), ("ONLY_FAKE_PATH", "1")],
     );
     assert!(!output.status.success());
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.stderr.is_empty());
+    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
     assert!(
         stderr.contains("cannot check active") || stderr.contains("client executable `claude`"),
         "{stderr}"

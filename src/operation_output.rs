@@ -13,11 +13,14 @@ macro_rules! eprintln {
 macro_rules! print {
     ($($argument:tt)*) => { crate::operation_output::write(false, format_args!($($argument)*)) };
 }
-macro_rules! eprint {
-    ($($argument:tt)*) => { crate::operation_output::write(true, format_args!($($argument)*)) };
+pub fn write(stderr: bool, arguments: Arguments<'_>) {
+    if crate::launcher_log::capture(arguments) {
+        return;
+    }
+    write_passthrough(stderr, arguments);
 }
 
-pub fn write(stderr: bool, arguments: Arguments<'_>) {
+pub fn write_passthrough(stderr: bool, arguments: Arguments<'_>) {
     use std::fmt::Write as _;
     use std::io::Write as _;
     if let Some(context) = crate::operation_context::current() {

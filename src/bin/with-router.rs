@@ -12,6 +12,12 @@ use lino_arguments::Parser as LinoParser;
     about = "Run or permanently configure an agentic CLI against Link.Assistant.Router"
 )]
 struct Args {
+    /// Keep Router launcher diagnostics visible on stderr as well as in its log.
+    #[arg(long)]
+    verbose: bool,
+    /// Router state directory, including persistent launcher diagnostics.
+    #[arg(long, env = "DATA_DIR")]
+    data_dir: Option<std::path::PathBuf>,
     #[command(flatten)]
     with: WithArgs,
 }
@@ -36,5 +42,16 @@ async fn main() -> ExitCode {
         return link_assistant_router::operations::run_arguments(nested).await;
     }
     let args = <Args as lino_arguments::Parser>::parse_from(arguments);
-    link_assistant_router::with_command::run(&args.with).await
+    link_assistant_router::with_command::run_with_logging(
+        &args.with,
+        args.data_dir.as_deref(),
+        args.verbose
+            || std::env::var("VERBOSE").is_ok_and(|value| {
+                matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                )
+            }),
+    )
+    .await
 }

@@ -963,3 +963,6 @@ mod claude_profile_test;
 mod session_test;
 #[path = "with_router/zai_catalog_test.rs"]
 mod zai_catalog_test;
+
+#[path = "with_router/launcher_logging_test.rs"]
+mod launcher_logging_test;

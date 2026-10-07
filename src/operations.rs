@@ -182,7 +182,10 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
         }
     };
     if !json {
-        crate::logging::init(cli.verbose);
+        if !matches!(&cli.command, Some(Command::With(args)) if args.client == crate::clients::ClientKind::ClaudeCode && !args.global && !args.undo)
+        {
+            crate::logging::init(cli.verbose);
+        }
         return Box::pin(crate::runtime::dispatch(cli)).await;
     }
     let mut context = OperationContext::default();

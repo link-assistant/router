@@ -398,13 +398,26 @@ onboarding happens once and sessions started through Router remain resumable.
 Use `--extend-global-config` before `claude` to opt into the normal Claude
 profile, or `--isolated-config` for a disposable clean-room profile.
 
+Ordinary Claude launches hand the terminal directly to Claude: Router writes
+its launcher diagnostics to `$DATA_DIR/launcher/launcher.log`, defaulting to
+`~/.link-assistant-router/launcher/launcher.log`. Inspect it with
+`tail -n 50 ~/.link-assistant-router/launcher/launcher.log`. The log includes
+saved-model decisions, unavailable-model and billing reasons, privacy warnings,
+connection failures, and child startup/exit outcomes. It uses JSON Lines,
+redacts credentials, and has owner-only permissions on Unix. Each file is
+limited to 1 MiB with five rotated archives (`launcher.log.1` through `.5`).
+`--data-dir` selects a different state root. Put `--verbose` before `claude`
+to also show Router diagnostics on stderr; Claude's own output stays inherited.
+See [launcher diagnostics](docs/use-cases/with-router.md#launcher-diagnostics)
+for structured output and failure handling.
+
 For `router with claude`, Router defaults error reporting, automatic updates,
 and the feedback command off in the child process. It deliberately leaves
 `DISABLE_TELEMETRY`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, and
 `DO_NOT_TRACK` unset because Claude Code 2.1.265 also uses those controls to
 disable the feature evaluation needed by built-in tools such as `Monitor`.
-An inherited user value is never cleared; Router names each active blocker
-before launch and explains that gated tools may be unavailable. Claude Code
+An inherited user value is never cleared; Router records each active blocker
+in the launcher log and explains that gated tools may be unavailable. Claude Code
 currently provides no supported environment
 combination that both disables usage telemetry and guarantees freshly evaluated
 remote feature flags.
