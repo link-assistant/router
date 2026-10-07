@@ -242,6 +242,56 @@ fn missing_release_versions(tags: &str, releases: &str, tag_prefix: &str) -> Vec
         .collect()
 }
 
+/// gh writes the structured API response to stdout, and only a short HTTP
+/// diagnostic to stderr. Accept only duplicate tag errors, never a generic
+/// validation failure or an English phrase that could describe another error.
+fn is_duplicate_release(stdout: &[u8]) -> bool {
+    let Ok(response) = serde_json::from_slice::<serde_json::Value>(stdout) else {
+        return false;
+    };
+    // GitHub may include a string or numeric HTTP status in the body. If it
+    // does, contradictory authentication/server errors must not be reused.
+    if let Some(status) = response.get("status") {
+        if status != "422" && status != 422 {
+            return false;
+        }
+    }
+    let Some(errors) = response["errors"].as_array() else {
+        return false;
+    };
+    !errors.is_empty()
+        && errors.iter().all(|error| {
+            error["resource"] == "Release"
+                && error["code"] == "already_exists"
+                && error["field"] == "tag_name"
+        })
+}
+
+/// Confirm the exact tag after a duplicate POST. This read preserves assets,
+/// notes and publication state, including an already-complete stable release.
+fn confirm_existing_release(repository: &str, tag: &str) -> Result<(), String> {
+    let output = Command::new("gh")
+        .args(["api", &format!("repos/{repository}/releases/tags/{tag}")])
+        .output()
+        .map_err(|error| format!("Release {tag} lookup failed: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "Release {tag} lookup failed: {}\n{}",
+            String::from_utf8_lossy(&output.stderr),
+            String::from_utf8_lossy(&output.stdout)
+        ));
+    }
+    let release: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|error| format!("Release {tag} lookup returned invalid JSON: {error}"))?;
+    if release["tag_name"] != tag || release["id"].as_u64().is_none() {
+        return Err(format!(
+            "Release {tag} lookup did not return the exact-tag release"
+        ));
+    }
+    println!("Release {tag} already exists; preserving its assets and publication state");
+    Ok(())
+}
+
 /// Publish one version's release page, or report why it could not be.
 fn publish_release(
     version: &str,
@@ -309,12 +359,14 @@ fn publish_release(
         println!("Created GitHub release: {tag}");
         return Ok(());
     }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if stderr.contains("already exists") {
-        println!("Release {tag} already exists, skipping");
-        return Ok(());
+    if is_duplicate_release(&output.stdout) {
+        return confirm_existing_release(repository, &tag);
     }
-    Err(format!("Error creating release {tag}: {stderr}"))
+    Err(format!(
+        "Error creating release {tag}: {}\n{}",
+        String::from_utf8_lossy(&output.stderr),
+        String::from_utf8_lossy(&output.stdout)
+    ))
 }
 
 fn main() {
@@ -403,6 +455,34 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_structured_duplicate_tag_errors_are_reusable() {
+        let duplicate = serde_json::json!({
+            "resource": "Release", "code": "already_exists", "field": "tag_name"
+        });
+        let response = |errors| {
+            serde_json::to_vec(&serde_json::json!({
+                "message": "Validation Failed", "errors": errors
+            }))
+            .unwrap()
+        };
+        assert!(is_duplicate_release(&response(vec![duplicate.clone()])));
+        assert!(!is_duplicate_release(&response(
+            Vec::<serde_json::Value>::new()
+        )));
+        assert!(!is_duplicate_release(&response(vec![
+            duplicate,
+            serde_json::json!({"resource": "Release", "code": "invalid", "field": "body"})
+        ])));
+        for stdout in [
+            b"already exists".as_slice(),
+            b"not JSON",
+            br#"{"status":"422"}"#,
+        ] {
+            assert!(!is_duplicate_release(stdout));
+        }
+    }
 
     #[test]
     fn an_incomplete_release_is_a_prerelease_and_never_latest() {

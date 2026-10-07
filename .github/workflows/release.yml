@@ -308,6 +308,7 @@ jobs:
           rust-script --test scripts/check-release-provenance.rs
           rust-script --test scripts/check-terminology.rs
           rust-script --test scripts/create-github-release.rs
+          python3 experiments/issue-709/release-preparation.py
           rust-script --test scripts/check-delivery.rs
           rust-script --test scripts/upload-release-assets.rs
           rust-script --test scripts/check-release-needed.rs
