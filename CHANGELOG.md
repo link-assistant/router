@@ -208,6 +208,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.18.2] - 2026-10-07
+
+### Fixed
+- Exact-tag release preparation now verifies and reuses an existing release after a structured duplicate-tag response, preserving assets and publication state while rejecting other API failures.
+- Stale-run sweep tests use independent temporary roots, preventing parallel tests and concurrent test processes from deleting active-lease fixtures during setup.
+
 ## [1.18.1] - 2026-10-06
 
 ### Fixed
