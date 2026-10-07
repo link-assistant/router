@@ -653,7 +653,7 @@ fn long_named_instances_resolve_from_backend_and_relay() {
         let relay = format!("{}-{instance}", link_assistant_router::deploy::RELAY);
         for container in [backend, relay.as_str()] {
             let script = format!(
-                "const r = await fetch('http://{backend}:8080/api/health'); if(r.status !== 200) throw new Error(String(r.status));"
+                "const r = await fetch('http://{backend}:8080/api/health', {{signal: AbortSignal.timeout(5000)}}); if(r.status !== 200) throw new Error(String(r.status));"
             );
             let output = Command::new("docker")
                 .args(["exec", container, "bun", "-e", &script])
@@ -685,14 +685,15 @@ fn long_named_instances_resolve_from_backend_and_relay() {
                 .success()
         );
         assert!(
-            Command::new("docker")
+            !Command::new("docker")
                 .args([
                     "network",
-                    "rm",
+                    "inspect",
                     &format!("{}-{instance}", link_assistant_router::deploy::NETWORK)
                 ])
-                .status()
+                .output()
                 .unwrap()
+                .status
                 .success()
         );
     }
