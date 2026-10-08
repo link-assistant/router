@@ -210,6 +210,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.18.4] - 2026-10-08
+
+### Fixed
+- Persist server and launcher operational diagnostics, process lifecycle and supervised child exits by default in owner-only rotating files under the Router data directory. Keep ordinary client launches quiet, with `--verbose` as an explicit console opt-in, and forward SIGTERM to supervised clients.
+- Retain safe HTTP error status/classes without copying upstream error bodies or URL credentials into operational logs.
+
 ## [1.18.3] - 2026-10-07
 
 bump: patch
