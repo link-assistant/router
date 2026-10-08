@@ -47,6 +47,12 @@ symlinks. Token, OAuth, cookie, API-key, URL-credential, and known credential
 values are redacted before persistence, truncation, or verbose rendering.
 Vendor output and forwarded prompts are never copied into this diagnostic log.
 
+Process launches also retain these sanitized records in Router's shared
+`$DATA_DIR/logs/operational.log`, alongside process startup, shutdown signals,
+and child termination records. Its separate rotation keeps five files of up to
+2 MiB each. The launcher log opens first, so it can record an operational-log
+initialization failure without writing to Claude's terminal.
+
 `--verbose` (or `VERBOSE=1`) also sends Router diagnostics to stderr.
 `RUST_LOG` controls tracing detail in the file, including `debug` and `trace`;
 use `--verbose` to show that tracing in the terminal. Put wrapper options
@@ -59,7 +65,8 @@ unwritable log destination prevents launching an unlogged vendor; use
 configuration, explicitly requested reset confirmation, and `--json` operation
 results keep their existing output contracts. Structured results retain Router
 diagnostics and the requested captured child result, while the file log holds
-only Router diagnostics. Other clients retain their existing launcher output.
+only Router diagnostics. Other clients use the shared operational log and its
+quiet default; explicit command results and confirmations stay visible.
 
 ## Clients and configuration surfaces
 
@@ -177,7 +184,7 @@ native one-shot mode; a flag is an option passed to a session and does not.
 Streams that are not a terminal are one-shot, so CI and pipelines need no flag.
 `--interactive` and `--non-interactive` override the rule in either direction,
 and when the mode is inferred from flags alone the wrapper records its decision
-in Claude's launcher log (on stderr for other clients).
+in Claude's launcher log or the shared operational log for other clients.
 
 ```bash
 router with claude "fix the tests"     # one-shot: a prompt was given

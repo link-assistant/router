@@ -229,6 +229,9 @@ impl Drop for ManagedLease {
         // (and their coverage profiles) cannot outlive the wrapper.
         drop(self.reaper.stdin.take());
         let status = self.reaper.wait();
+        if let Ok(status) = status {
+            crate::logging::child_exit("managed_reaper", Some(self.reaper.id()), status);
+        }
         if !status.as_ref().is_ok_and(std::process::ExitStatus::success) {
             eprintln!("warning: managed router crash reaper failed: {status:?}");
         }
@@ -487,7 +490,7 @@ async fn prepare_credential(
             if !status.is_success() {
                 return Err(format!(
                     "per-run token minting failed at {issue_url} ({status}): {}",
-                    compact(&body)
+                    crate::logging::http_failure(status.as_u16())
                 )
                 .into());
             }

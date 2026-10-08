@@ -106,6 +106,13 @@ impl DiagnosticLog {
         if let Err(error) = self.append(format!("{record}\n").as_bytes()) {
             *self.failure.lock().expect("launcher failure lock") = Some(error.to_string());
         }
+        if let Err(error) = crate::logging::event_file(format_args!(
+            "launch_id={} {event} {}",
+            self.launch_id,
+            message.trim_end()
+        )) {
+            *self.failure.lock().expect("launcher failure lock") = Some(error.to_string());
+        }
     }
 
     fn append(&self, bytes: &[u8]) -> io::Result<()> {
@@ -182,6 +189,24 @@ fn private_file(path: &Path) -> io::Result<File> {
     Ok(file)
 }
 
+/// Open Claude diagnostics before the process-wide operational log or preflight.
+pub async fn run_process(
+    args: &crate::cli::WithArgs,
+    data_dir: &Path,
+    verbose: bool,
+    work: impl std::future::Future<Output = ExitCode>,
+) -> ExitCode {
+    if args.client == crate::clients::ClientKind::ClaudeCode && !args.global && !args.undo {
+        run(args, Some(data_dir), verbose, async { Ok(work.await) }).await
+    } else {
+        work.await
+    }
+}
+
+pub fn is_active() -> bool {
+    ACTIVE.try_with(|_| ()).is_ok()
+}
+
 /// Run a Claude invocation with logging already open before polling its work.
 pub async fn run(
     args: &crate::cli::WithArgs,
@@ -232,6 +257,9 @@ pub async fn run(
             async {
                 let code = match work.await {
                     Ok(code) => {
+                        if code != ExitCode::SUCCESS {
+                            record("launch_failed", &format!("launcher exit status: {code:?}"));
+                        }
                         record(
                             "launch_finished",
                             &format!("launcher exit status: {code:?}"),

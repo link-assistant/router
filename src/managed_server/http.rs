@@ -6,7 +6,6 @@ use std::time::Duration;
 
 use serde_json::Value;
 
-use super::diagnostics::compact;
 use super::{AnyError, load_persisted, normalize_server, same_origin, selection};
 
 /// Build a normal-verification client with one optional additional CA bundle.
@@ -71,7 +70,7 @@ pub(super) async fn verify_health_with_client(
     } else {
         Err(format!(
             "{url} did not identify a Link.Assistant.Router ({status}): {}",
-            compact(&body)
+            crate::logging::http_failure(status.as_u16())
         )
         .into())
     }

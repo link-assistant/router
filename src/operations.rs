@@ -181,26 +181,55 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
             return ExitCode::from(u8::try_from(error.exit_code()).unwrap_or(2));
         }
     };
-    if !json {
-        if !matches!(&cli.command, Some(Command::With(args)) if args.client == crate::clients::ClientKind::ClaudeCode && !args.global && !args.undo)
-        {
-            crate::logging::init(cli.verbose);
-        }
-        return Box::pin(crate::runtime::dispatch(cli)).await;
-    }
-    let mut context = OperationContext::default();
-    if matches!(cli.command, Some(Command::Verify(_))) {
-        context.process_deadline = std::time::Duration::from_secs(3600);
-    }
-    let response = match execute(context, cli).await {
-        Ok(result) => result,
-        Err(error) => error.result,
+    let data_dir = cli
+        .data_dir
+        .clone()
+        .unwrap_or_else(crate::config::default_data_dir);
+    let verbose = cli.verbose;
+    let operation = crate::contracts::operation_name(cli.command.as_ref());
+    let quiet = match &cli.command {
+        None | Some(Command::Serve) => true,
+        Some(Command::With(args)) => !args.global && !args.undo,
+        _ => false,
     };
-    std::println!(
-        "{}",
-        serde_json::to_string(&response).expect("JSON response")
-    );
-    ExitCode::from(response.exit_code)
+    let mut secrets: Vec<_> = cli.token_secret.clone().into_iter().collect();
+    if let Some(Command::With(args)) = &cli.command {
+        secrets.extend(args.token.clone());
+    }
+    let launcher = match &cli.command {
+        Some(Command::With(args)) if !json => Some(args.clone()),
+        _ => None,
+    };
+    let work = Box::pin(crate::logging::run(
+        &data_dir,
+        verbose,
+        &operation,
+        secrets,
+        quiet,
+        async move {
+            if !json {
+                return Box::pin(crate::runtime::dispatch(cli)).await;
+            }
+            let mut context = OperationContext::default();
+            if matches!(cli.command, Some(Command::Verify(_))) {
+                context.process_deadline = std::time::Duration::from_secs(3600);
+            }
+            let response = match execute(context, cli).await {
+                Ok(result) => result,
+                Err(error) => error.result,
+            };
+            std::println!(
+                "{}",
+                serde_json::to_string(&response).expect("JSON response")
+            );
+            ExitCode::from(response.exit_code)
+        },
+    ));
+    if let Some(args) = launcher {
+        crate::launcher_log::run_process(&args, &data_dir, verbose, work).await
+    } else {
+        work.await
+    }
 }
 
 const fn force_json(command: &mut Option<Command>) {

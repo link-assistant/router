@@ -12,14 +12,14 @@ use lino_arguments::Parser as LinoParser;
     about = "Run or permanently configure an agentic CLI against Link.Assistant.Router"
 )]
 struct Args {
-    /// Keep Router launcher diagnostics visible on stderr as well as in its log.
-    #[arg(long)]
-    verbose: bool,
-    /// Router state directory, including persistent launcher diagnostics.
-    #[arg(long, env = "DATA_DIR")]
-    data_dir: Option<std::path::PathBuf>,
     #[command(flatten)]
     with: WithArgs,
+    /// Mirror operational diagnostics to stderr and enable debug tracing.
+    #[arg(long, env = "VERBOSE", value_parser = clap::builder::BoolishValueParser::new())]
+    verbose: bool,
+    /// Persistent Router data, including operational logs.
+    #[arg(long, env = "DATA_DIR")]
+    data_dir: Option<std::path::PathBuf>,
 }
 
 #[tokio::main]
@@ -42,16 +42,8 @@ async fn main() -> ExitCode {
         return link_assistant_router::operations::run_arguments(nested).await;
     }
     let args = <Args as lino_arguments::Parser>::parse_from(arguments);
-    link_assistant_router::with_command::run_with_logging(
-        &args.with,
-        args.data_dir.as_deref(),
-        args.verbose
-            || std::env::var("VERBOSE").is_ok_and(|value| {
-                matches!(
-                    value.trim().to_ascii_lowercase().as_str(),
-                    "1" | "true" | "yes" | "on"
-                )
-            }),
-    )
-    .await
+    let data_dir = args
+        .data_dir
+        .unwrap_or_else(link_assistant_router::config::default_data_dir);
+    link_assistant_router::logging::run_launcher(&args.with, &data_dir, args.verbose).await
 }

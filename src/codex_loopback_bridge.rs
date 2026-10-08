@@ -360,6 +360,7 @@ async fn spawn_daemon(
     let runtime_environment = windows_runtime_environment();
     command
         .env_clear()
+        .env("DATA_DIR", crate::logging::data_dir())
         .env(DAEMON_MARKER_ENV, "1")
         .env(DAEMON_UPSTREAM_ENV, upstream_origin)
         .env(DAEMON_STATE_ENV, state_path)

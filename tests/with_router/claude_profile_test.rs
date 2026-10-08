@@ -7,14 +7,30 @@ use super::*;
 fn mock_claude_router_impl(
     catalog: &str,
     administrator: bool,
+    catalog_status: &str,
 ) -> (String, thread::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock Claude router");
+    listener.set_nonblocking(true).unwrap();
     let port = listener.local_addr().expect("mock address").port();
     let catalog = catalog.to_string();
+    let catalog_status = catalog_status.to_string();
     let handle = thread::spawn(move || {
         let mut paths = Vec::new();
+        let deadline = std::time::Instant::now() + Duration::from_secs(30);
         for _ in 0..if administrator { 5 } else { 3 } {
-            let (mut stream, _) = listener.accept().expect("accept wrapper request");
+            let (mut stream, _) = loop {
+                match listener.accept() {
+                    Ok(connection) => break connection,
+                    Err(error)
+                        if error.kind() == std::io::ErrorKind::WouldBlock
+                            && std::time::Instant::now() < deadline =>
+                    {
+                        thread::sleep(Duration::from_millis(20));
+                    }
+                    Err(error) => panic!("missing wrapper request after {paths:?}: {error}"),
+                }
+            };
+            stream.set_nonblocking(false).unwrap();
             let request = read_request(&mut stream);
             let path = request
                 .lines()
@@ -34,7 +50,7 @@ fn mock_claude_router_impl(
                     "200 OK",
                     r#"{"token":"la_sk_e30.eyJjbGllbnRfa2luZCI6ImNsYXVkZSIsInByaW5jaXBhbF9pZCI6InJ1bi1wcmluY2lwYWwiLCJzdWIiOiJydW4taWQifQ.signature"}"#,
                 ),
-                "/api/models" => ("200 OK", catalog.as_str()),
+                "/api/models" => (catalog_status.as_str(), catalog.as_str()),
                 "/api/management/tokens/revoke" => ("200 OK", r#"{"revoked":"run-id"}"#),
                 _ => ("404 Not Found", r#"{"error":"unexpected path"}"#),
             };
@@ -51,16 +67,24 @@ fn mock_claude_router_impl(
 }
 
 pub fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
-    mock_claude_router_impl(catalog, false)
+    mock_claude_router_impl(catalog, false, "200 OK")
 }
 
 fn mock_admin_claude_router_with_catalog(
     catalog: &str,
 ) -> (String, thread::JoinHandle<Vec<String>>) {
-    mock_claude_router_impl(catalog, true)
+    mock_claude_router_impl(catalog, true, "200 OK")
 }
 
-fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
+pub fn mock_claude_router_with_failure(status: &str) -> (String, thread::JoinHandle<Vec<String>>) {
+    mock_claude_router_impl(
+        r#"{"error":{"message":"raw-response-secret-sentinel"}}"#,
+        false,
+        status,
+    )
+}
+
+pub fn mock_claude_router() -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_with_catalog(
         r#"{"object":"list","data":[{"id":"claude-opus-5","owned_by":"anthropic"},{"id":"future-glm-alpha","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}},{"id":"future-glm-beta","owned_by":"z.ai","client_capabilities":{"claude":{"behaves_as":"claude-sonnet-5","source":"provider-protocol:z.ai-anthropic"}}}]}"#,
     )
@@ -104,7 +128,16 @@ fi
 if [ "${WRITE_SESSION:-}" = 1 ]; then
   printf '%s\n' 'Router session' > "$CLAUDE_CONFIG_DIR/session.jsonl"
 fi
-exit 0
+if [ "${FAKE_IGNORE_SIGNALS:-}" = 1 ]; then
+  trap '' INT TERM
+  printf '%s\n' ready > "$CAPTURE_CLAUDE_CONFIG_DIR.ready"
+  # Finite fallback even if the supervising test fails.
+  for n in 1 2 3 4 5 6 7 8; do /bin/sleep 1; done
+fi
+if [ "${FAKE_SIGNAL_EXIT:-}" = 1 ]; then
+  kill -KILL "$$"
+fi
+exit "${FAKE_EXIT:-0}"
 "#,
     )
     .expect("write fake Claude");
@@ -112,13 +145,13 @@ exit 0
         .expect("make fake Claude executable");
 }
 
-pub fn run_claude_with(
+pub fn claude_command(
     home: &std::path::Path,
     bin_dir: &std::path::Path,
     capture: &std::path::Path,
     arguments: &[&str],
     environment: &[(&str, &str)],
-) -> Output {
+) -> Command {
     let only_fake_path = environment
         .iter()
         .any(|(name, value)| *name == "ONLY_FAKE_PATH" && *value == "1");
@@ -131,11 +164,24 @@ pub fn run_claude_with(
         )
         .expect("compose PATH")
     };
-    let mut command = Command::new(env!("CARGO_BIN_EXE_with-router"));
+    let nested = environment
+        .iter()
+        .any(|(name, value)| *name == "USE_NESTED_ROUTER" && *value == "1");
+    let mut command = Command::new(if nested {
+        env!("CARGO_BIN_EXE_router")
+    } else {
+        env!("CARGO_BIN_EXE_with-router")
+    });
+    if nested {
+        command.arg("with");
+    }
     command
         .args(arguments)
         .stdin(Stdio::null())
         .env("HOME", home)
+        .env_remove("DATA_DIR")
+        .env_remove("VERBOSE")
+        .env("RUST_LOG", "off")
         .env("XDG_CONFIG_HOME", home.join(".config"))
         .env("PATH", path)
         .env(
@@ -145,9 +191,6 @@ pub fn run_claude_with(
         .env("CAPTURE_ARGS", capture.join("args"))
         .env("CAPTURE_MODEL_ENV", capture.join("model-env"))
         .env("CAPTURE_PRIVACY_ENV", capture.join("privacy-env"))
-        .env_remove("DATA_DIR")
-        .env_remove("VERBOSE")
-        .env_remove("RUST_LOG")
         .env_remove("CLAUDE_CONFIG_DIR")
         .env_remove("ANTHROPIC_API_KEY")
         .env_remove("ANTHROPIC_MODEL")
@@ -165,7 +208,19 @@ pub fn run_claude_with(
     for (name, value) in environment {
         command.env(name, value);
     }
-    command.output().expect("run Claude wrapper")
+    command
+}
+
+pub fn run_claude_with(
+    home: &std::path::Path,
+    bin: &std::path::Path,
+    capture: &std::path::Path,
+    arguments: &[&str],
+    environment: &[(&str, &str)],
+) -> Output {
+    claude_command(home, bin, capture, arguments, environment)
+        .output()
+        .expect("run Claude wrapper")
 }
 
 #[test]
@@ -299,7 +354,7 @@ fn released_zai_exact_rows_launch_claude_with_every_model_listed() {
         output.status.success(),
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
+        launcher_diagnostics(&home, &output)
     );
     assert_eq!(
         requests.join().expect("mock Router requests"),
@@ -361,7 +416,7 @@ fn authorized_claude_context_variant_reaches_the_client_unchanged() {
         output.status.success(),
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
+        launcher_diagnostics(&home, &output)
     );
     assert_eq!(
         requests.join().expect("mock Router requests"),
@@ -415,7 +470,7 @@ fn claude_launch_preserves_user_privacy_values_and_logs_warning_before_spawn() {
         output.status.success(),
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
+        launcher_diagnostics(&home, &output)
     );
     assert_eq!(requests.join().expect("mock Router requests").len(), 3);
     assert_eq!(
@@ -428,21 +483,22 @@ DISABLE_AUTOUPDATER=keep-update-choice\n\
 DISABLE_FEEDBACK_COMMAND=keep-feedback-choice\n",
         "the child must inherit every explicit user-owned value byte-for-byte"
     );
+    let stderr = launcher_diagnostics(&home, &output);
+    let warning = stderr
+        .find("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY and DO_NOT_TRACK")
+        .unwrap_or_else(|| panic!("warning omitted the exact blockers: {stderr}"));
+    assert!(
+        stderr.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),
+        "warning omitted the user-facing consequence: {stderr}"
+    );
     assert_eq!(output.stderr, b"FAKE_CLAUDE_LAUNCHED\n");
-    let diagnostics = super::launcher_logging_test::diagnostic_messages(&home);
+    let launched = stderr
+        .find("client_start")
+        .expect("durable pre-spawn record");
     assert!(
-        diagnostics.contains(
-            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC and DISABLE_TELEMETRY and DO_NOT_TRACK"
-        ),
-        "{diagnostics}"
+        warning < launched,
+        "warning must be emitted before launch: {stderr}"
     );
-    assert!(
-        diagnostics.contains("feature-flag-gated tools such as `Monitor` may be unavailable"),
-        "{diagnostics}"
-    );
-    let log =
-        fs::read_to_string(home.join(".link-assistant-router/launcher/launcher.log")).unwrap();
-    assert!(log.find("feature-flag-gated tools").unwrap() < log.find("child_starting").unwrap());
 }
 
 #[test]
@@ -477,7 +533,7 @@ fn claude_real_profile_extension_is_explicit() {
         &[],
     );
     assert!(output.status.success(), "{output:?}");
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(
         !stderr.contains("Claude.ai connectors")
             && !stderr.contains("Remote Control")
@@ -542,7 +598,7 @@ fn explicit_model_overrides_saved_model_when_extending_real_profile() {
         output.status.success(),
         "{}{}",
         String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
+        launcher_diagnostics(&home, &output)
     );
     assert_eq!(
         requests.join().expect("mock Router requests"),
@@ -603,8 +659,7 @@ fn assert_claude_ai_operation_fails_closed(version: &str) {
         &[("FAKE_CLAUDE_VERSION", version)],
     );
     assert!(!output.status.success(), "{version}: {output:?}");
-    assert!(output.stderr.is_empty());
-    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(stderr.contains("Claude.ai"), "{stderr}");
     assert!(stderr.contains("no Router token was minted"), "{stderr}");
     assert!(
@@ -646,7 +701,7 @@ fn newer_claude_release_is_not_rejected_by_version_alone() {
         ],
         &[("FAKE_CLAUDE_VERSION", "2.1.283")],
     );
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(output.status.success(), "{stderr}");
     assert!(
         !stderr.contains("is required"),
@@ -690,8 +745,7 @@ fn claude_below_the_gateway_alias_minimum_is_refused_before_router_access() {
         &[("FAKE_CLAUDE_VERSION", "2.1.252")],
     );
     assert!(!output.status.success(), "{output:?}");
-    assert!(output.stderr.is_empty());
-    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(stderr.contains("2.1.255 or newer"), "{stderr}");
     assert!(stderr.contains("2.1.252"), "{stderr}");
     assert!(
@@ -728,10 +782,7 @@ fn exact_post_client_reset_keeps_sessions_and_requires_confirmation() {
         &[],
     );
     assert!(!cancelled.status.success());
-    assert!(
-        super::launcher_logging_test::diagnostic_messages(&home)
-            .contains("requires interactive confirmation")
-    );
+    assert!(launcher_diagnostics(&home, &cancelled).contains("requires interactive confirmation"));
     assert_eq!(
         fs::read(profile.join("session.jsonl")).expect("session after cancellation"),
         b"previous session"
@@ -811,8 +862,7 @@ fn reset_keeps_session_when_a_required_local_command_is_unavailable() {
         &[("DELETE_AFTER_VERSION", "1"), ("ONLY_FAKE_PATH", "1")],
     );
     assert!(!output.status.success());
-    assert!(output.stderr.is_empty());
-    let stderr = super::launcher_logging_test::diagnostic_messages(&home);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(
         stderr.contains("cannot check active") || stderr.contains("client executable `claude`"),
         "{stderr}"

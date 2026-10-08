@@ -22,13 +22,18 @@ pub async fn run(args: &WithArgs) -> ExitCode {
 /// Claude launches persist diagnostics under `data_dir/launcher`; `None` uses
 /// the same `DATA_DIR`/`HOME` default as the other Router commands.
 pub async fn run_with_logging(args: &WithArgs, data_dir: Option<&Path>, verbose: bool) -> ExitCode {
-    if args.client == ClientKind::ClaudeCode && !args.global && !args.undo {
+    if args.client == ClientKind::ClaudeCode
+        && !args.global
+        && !args.undo
+        && !crate::launcher_log::is_active()
+    {
         let work = Box::pin(run_inner(args));
         return crate::launcher_log::run(args, data_dir, verbose, work).await;
     }
     match run_inner(args).await {
         Ok(code) => code,
         Err(error) => {
+            crate::launcher_log::record("launch_failed", &error.to_string());
             eprintln!("error: {error}");
             ExitCode::from(1)
         }

@@ -39,40 +39,7 @@ use tower_http::trace::TraceLayer;
 type SharedState = (Arc<dyn TokenStore>, Option<AccountRouter>);
 type AnyError = Box<dyn std::error::Error>;
 
-/// Run the process adapter, including daemon modes.
-pub async fn run_from_environment() -> ExitCode {
-    match link_assistant_router::deploy_relay::run_from_env().await {
-        Ok(Some(())) => return ExitCode::SUCCESS,
-        Ok(None) => {}
-        Err(error) => {
-            eprintln!("error: {error}");
-            return ExitCode::from(1);
-        }
-    }
-    match link_assistant_router::codex_loopback_bridge::daemon_request_from_env() {
-        Ok(Some(request)) => {
-            return match link_assistant_router::codex_loopback_bridge::run_persistent_daemon(
-                request,
-            )
-            .await
-            {
-                Ok(()) => ExitCode::SUCCESS,
-                Err(error) => {
-                    eprintln!("error: {error}");
-                    ExitCode::from(1)
-                }
-            };
-        }
-        Ok(None) => {}
-        Err(error) => {
-            eprintln!("error: {error}");
-            return ExitCode::from(1);
-        }
-    }
-    let arguments =
-        link_assistant_router::cli::protect_client_arguments(std::env::args_os().collect(), true);
-    crate::operations::run_arguments(arguments).await
-}
+pub use crate::process_adapter::run_from_environment;
 
 /// Execute a parsed request without spawning the Router binary.
 pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
@@ -122,7 +89,6 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
 
     let logger = link_assistant_router::logging::build_lazy(verbose);
 
-    tracing::info!("Link.Assistant.Router v{}", link_assistant_router::VERSION);
     if verbose {
         tracing::info!("Verbose logging enabled");
     }
@@ -176,7 +142,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
         {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
-                tracing::error!("server error: {e}");
+                eprintln!("server error: {e}");
                 ExitCode::from(1)
             }
         },

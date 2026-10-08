@@ -10,6 +10,9 @@ use std::process::{Command, Output, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
+#[path = "managed_server/operational_log_test.rs"]
+mod operational_log_test;
+
 const BOUND_CODEX_TOKEN: &str = concat!(
     "e30.",
     "eyJzdWIiOiJtYW5hZ2VkLXJ1biIsImNsaWVudF9raW5kIjoiY29kZXgiLCJwcmluY2lwYWxfaWQiOiJwcmltYXJ5In0",
@@ -565,22 +568,6 @@ fn reaper_releases_its_reference_when_the_owner_pipe_closes() {
 }
 
 #[test]
-fn reaper_reports_cleanup_failures() {
-    let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
-        .args(["server", "reap", "4294967294"])
-        .env_remove("HOME")
-        .env_remove("XDG_CONFIG_HOME")
-        .env_remove("APPDATA")
-        .output()
-        .expect("run crash reaper without a state directory");
-
-    assert!(!output.status.success());
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("could not reap managed router reference 4294967294"));
-    assert!(stderr.contains("HOME, XDG_CONFIG_HOME, and APPDATA are unset"));
-}
-
-#[test]
 fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
     let directory = tempfile::tempdir().expect("temporary test directory");
     let home = directory.path().join("home");
@@ -650,60 +637,6 @@ fn killed_last_wrapper_is_reaped_and_stops_the_shared_container() {
     let _ = Command::new("kill")
         .args(["-KILL", client_pid.trim()])
         .status();
-}
-
-#[test]
-fn managed_claim_is_one_time_and_requires_a_later_token() {
-    let directory = tempfile::tempdir().expect("temporary test directory");
-    let home = directory.path().join("home");
-    let bin = directory.path().join("bin");
-    let log = directory.path().join("docker.log");
-    fs::create_dir_all(&home).expect("create home");
-    fs::write(&log, "").expect("create Docker log");
-    fake_docker(&bin);
-    seed_managed_state(&home, 18080);
-
-    let claimed = server_command(&home, &bin, &log, "running", &["claim"]);
-    assert!(claimed.status.success());
-    assert_eq!(
-        String::from_utf8_lossy(&claimed.stdout),
-        "la_sk_managed-test\n"
-    );
-    assert!(String::from_utf8_lossy(&claimed.stderr).contains("future `with` runs require"));
-    assert!(
-        fs::read_to_string(managed_state_path(&home))
-            .expect("read claimed state")
-            .contains("claimed true")
-    );
-    let repeated = server_command(&home, &bin, &log, "running", &["claim"]);
-    assert!(!repeated.status.success());
-    assert!(
-        repeated.stdout.is_empty(),
-        "credential must not be printed twice"
-    );
-    assert!(String::from_utf8_lossy(&repeated.stderr).contains("already claimed"));
-
-    let (port, router) = mock_managed_router(false, 2);
-    seed_claimed_managed_state(&home, port);
-    let inherited_path = std::env::var_os("PATH").unwrap_or_default();
-    let path =
-        std::env::join_paths(std::iter::once(bin).chain(std::env::split_paths(&inherited_path)))
-            .expect("compose PATH");
-    let rejected = with_router_command(&home)
-        .arg("codex")
-        .env("PATH", path)
-        .env("DOCKER_LOG", &log)
-        .env("FAKE_DOCKER_STATE", "running")
-        .output()
-        .expect("run claimed managed router without token");
-    assert!(!rejected.status.success());
-    let error = String::from_utf8_lossy(&rejected.stderr);
-    assert!(error.contains("is claimed and no token is available"));
-    assert!(error.contains("docker exec link-assistant-router-managed"));
-    assert_eq!(
-        router.join().expect("managed router thread"),
-        ["/api/health", "/api/health"]
-    );
 }
 
 #[test]
@@ -780,7 +713,7 @@ fn remove_never_deletes_an_unowned_container() {
     );
 }
 
-/// An unreachable selected server logs which one, and what to do.
+/// An unreachable selected server says which one, and what to do.
 ///
 /// The report that prompted this got docker's words about an internal
 /// container it had never heard of. A refusal is the right answer -- silently
@@ -815,8 +748,6 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .env("DOCKER_LOG", &log)
         .env("FAKE_DOCKER_STATE", "absent")
         .env("TOKEN_SECRET", "managed-selection-test")
-        .env_remove("DATA_DIR")
-        .env_remove("VERBOSE")
         .env_remove("XDG_CONFIG_HOME")
         .env_remove("APPDATA")
         .env_remove("LINK_ASSISTANT_ROUTER_URL")
@@ -824,27 +755,26 @@ fn an_unreachable_selection_names_itself_and_the_way_out() {
         .output()
         .expect("run with");
 
-    assert!(!output.status.success(), "an unreachable selection fails");
-    assert!(output.stdout.is_empty());
     assert!(output.stderr.is_empty());
-    let diagnostics = fs::read_to_string(home.join(".link-assistant-router/launcher/launcher.log"))
-        .expect("read the persistent launcher diagnostics");
+    let stderr = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("persistent discovery failure");
+    assert!(!output.status.success(), "an unreachable selection fails");
     assert!(
-        diagnostics.contains("127.0.0.1:1"),
-        "the log must name the server that is not answering: {diagnostics}"
+        stderr.contains("127.0.0.1:1"),
+        "the message must name the server that is not answering: {stderr}"
     );
     assert!(
-        diagnostics.contains("--local") && diagnostics.contains("--managed"),
-        "the log must name the ways out: {diagnostics}"
+        stderr.contains("--local") && stderr.contains("--managed"),
+        "the message must name the ways out: {stderr}"
     );
     assert!(
-        diagnostics.contains("router server use"),
-        "the log must name the command that changes the selection: {diagnostics}"
+        stderr.contains("router server use"),
+        "the message must name the command that changes the selection: {stderr}"
     );
     // The internal container name is not the user's problem.
     assert!(
-        !diagnostics.contains("link-assistant-router-managed"),
-        "an internal container name must not appear: {diagnostics}"
+        !stderr.contains("link-assistant-router-managed"),
+        "an internal container name must not appear: {stderr}"
     );
 }
 

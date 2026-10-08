@@ -930,7 +930,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--max-proxy-request-bytes` / `MAX_PROXY_REQUEST_BYTES` | `67108864` (64 MiB) | No | Deliberate proxy request-body ceiling; independent of request-log capture and returns HTTP 413 when exceeded. Native Anthropic Files and Skills multipart uploads are bounded and spooled to temporary disk before relay; set this to `524288000` to permit Claude's full 500 MiB upload maximum, with matching free disk space |
 | `CONVERSATION_RECORD` | (disabled) | No | Record complete client exchanges to this file as links notation — ordered streamed events, thinking blocks, signatures, tool calls and results — with credentials redacted at record time, so a recording is safe to commit next to the tests that use it |
 | `CONVERSATION_REPLAY` | (disabled) | No | Answer from a recording instead of a provider. Turns are served in order and a request that does not match the recorded one for that turn fails the replay, naming the turn and the difference. Needs no credential and makes no upstream call; an unreadable recording aborts startup rather than reaching a provider |
-| `--verbose` / `VERBOSE` | `false` | No | Verbose tracing |
+| `--verbose` / `VERBOSE` | `false` | No | Mirror operational diagnostics to stderr and enable debug tracing |
 
 ### GitHub API credential proxy
 
@@ -1715,21 +1715,56 @@ locations, recovery steps, profile coverage, and maintenance limitations.
 
 ### Logging
 
-The router uses `tracing` with the `RUST_LOG` environment variable:
+Router opens a persistent operational log before server discovery, credential
+refresh or client preflight. The location is `<data-dir>/logs/operational.log`:
+`--data-dir` takes precedence over `DATA_DIR`; the default data directory is
+`$HOME/.link-assistant-router`. `with-router` uses the same location and accepts
+`--data-dir` too. Startup/version, selected endpoints, launcher/model decisions,
+request statuses, safe upstream error classes, signals, child termination and
+process exit remain available after the terminal closes or the process exits.
+
+The active file is capped at 2 MiB and rotates into `operational.log.1` through
+`operational.log.4` (newest first), keeping at most 10 MiB of operational records.
+Processes sharing a data directory serialize appends and rotation. Writes are
+synchronous, with no background queue to lose the last exit record. Unix log
+directories use `0700`; logs and the rotation lock use `0600`. Known credentials
+and URL credentials/query values are redacted before writing. HTTP failures
+record status and a stable class rather than raw upstream error bodies.
 
 ```bash
-# Default: info level
-RUST_LOG=info ./target/release/link-assistant-router
+# Inspect the default log; use your --data-dir / DATA_DIR override if set.
+tail -n 100 "$HOME/.link-assistant-router/logs/operational.log"
+tail -f "$HOME/.link-assistant-router/logs/operational.log"
 
-# Debug level for detailed request tracing
-RUST_LOG=debug ./target/release/link-assistant-router
+# Explicitly mirror Router diagnostics to stderr while retaining file logs.
+router --verbose serve
+router --verbose with claude
+with-router --verbose claude
 
-# Trace level for maximum verbosity
-RUST_LOG=trace ./target/release/link-assistant-router
+# Increase file tracing without adding terminal output.
+RUST_LOG=trace router serve
 ```
 
-`RUST_LOG` overrides the default `info` level (or the `debug` fallback selected
-by `--verbose`). Every HTTP request also writes a structured exchange to
+Console tracing and server/launcher diagnostics are quiet by default. Client
+stdin/stdout/stderr remain inherited, including the interactive TUI. Requested
+command results, help/version and explicit `--json` output retain their output
+contracts. Errors from explicit configuration and management commands also
+persist in the log while retaining their requested console/result channels.
+Host `state/host.log`, service journals and Docker output still
+capture command output, while operational records use this shared file sink;
+normal diagnostics are not duplicated into those external captures. If Router
+cannot open its operational log, it fails before discovery/preflight. Ordinary
+Claude launches record that failure in the launcher log and stay silent;
+`--verbose` and other explicit commands display the logging failure on stderr.
+
+`RUST_LOG` controls tracing levels, overriding the default `info` level or the
+`debug` fallback from `--verbose`. Process lifecycle and launcher diagnostics
+are recorded independently of this filter. A supervising launcher records its
+child's exit status or Unix signal, including a forced kill after the five-second
+shutdown grace period. A process killed with SIGKILL cannot record its own exit;
+its supervisor records termination when it remains running to observe it.
+
+Every HTTP request also writes a structured exchange to
 `$DATA_DIR/requests/<token-hash>/requests.lino` by default. Client and upstream
 phases share an `x-request-id`/`correlation_id` and carry the token hash, id,
 and label. Missing or invalid credentials use the explicit `unauthenticated`

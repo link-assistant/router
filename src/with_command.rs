@@ -4,10 +4,7 @@ use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
-#[cfg(unix)]
-use std::process::Stdio;
 use std::process::{Command, ExitCode};
-use std::time::Duration;
 
 use serde_json::json;
 
@@ -118,6 +115,10 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         "server_resolved",
         &format!("{} selected from {}", server.base_url, server.source),
     );
+    crate::logging::event(format_args!(
+        "selected_endpoint endpoint={} source={}",
+        server.base_url, server.source
+    ));
     // The label travels to the router and is stored there. It used to be the
     // name of the directory the run was launched from, so a deployment — which
     // may be someone else's machine, or a team's, or a provider's —
@@ -173,7 +174,10 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         if args.reset_to_default_configuration
             && let Some(id) = crate::client_lifecycle::reset::reset_router_claude_for_with()?
         {
-            eprintln!("Router-owned Claude settings reset; verified backup: {id}");
+            crate::operation_output::write_result(
+                true,
+                format_args!("Router-owned Claude settings reset; verified backup: {id}\n"),
+            );
         }
         let path = persistent_profile_path(args.client, None)?;
         match crate::claude_profile::ProfileSession::prepare(path.clone(), false).await {
@@ -651,6 +655,7 @@ impl TemporaryClient {
             &format!("starting vendor executable {program}"),
         );
         crate::launcher_log::check()?;
+        crate::logging::event(format_args!("client_start program={program}"));
         if let Some(context) = crate::operation_context::current() {
             if let Some(profile) = profile {
                 profile.commit_launch(std::process::id())?;
@@ -668,6 +673,7 @@ impl TemporaryClient {
                 })
             })
             .await??;
+            crate::logging::child_exit("client", None, output.status);
             crate::operation_output::record(json!({
                 "client_exit_code": output.status.code(),
                 "stdout": String::from_utf8_lossy(&output.stdout),
@@ -680,6 +686,7 @@ impl TemporaryClient {
             drop(directory);
             return Ok(output.status);
         }
+        let shutdown = crate::shutdown::shutdown_signal();
         let mut child = tokio::process::Command::from(self.command)
             .kill_on_drop(true)
             .spawn()
@@ -701,16 +708,12 @@ impl TemporaryClient {
             && let Err(error) = profile.commit_launch(child.id().unwrap_or_else(std::process::id))
         {
             let _ = child.start_kill();
-            let _ = child.wait().await;
+            if let Ok(status) = child.wait().await {
+                crate::logging::child_exit("client", child.id(), status);
+            }
             return Err(error);
         }
-        let status = tokio::select! {
-            result = child.wait() => result.map_err(Into::into),
-            signal = tokio::signal::ctrl_c() => {
-                signal.map_err(|error| format!("could not listen for Ctrl-C: {error}"))?;
-                interrupt_child(&mut child).await
-            }
-        };
+        let status = crate::logging::supervise(&mut child, shutdown).await;
         match &status {
             Ok(status) => crate::launcher_log::record(
                 "child_exited",
@@ -846,29 +849,6 @@ fn configured_codex_reasoning_effort() -> Result<Option<String>, AnyError> {
             )
         })?;
     Ok(Some(effort.to_string()))
-}
-
-async fn interrupt_child(
-    child: &mut tokio::process::Child,
-) -> Result<std::process::ExitStatus, AnyError> {
-    #[cfg(unix)]
-    if let Some(pid) = child.id() {
-        let _ = crate::operation_context::process_output(
-            crate::operation_context::command("kill")
-                .args(["-INT", &pid.to_string()])
-                .stdout(Stdio::null())
-                .stderr(Stdio::null()),
-        )
-        .map(|output| output.status);
-    }
-    #[cfg(windows)]
-    child.start_kill()?;
-    if let Ok(result) = tokio::time::timeout(Duration::from_secs(5), child.wait()).await {
-        result.map_err(Into::into)
-    } else {
-        child.start_kill()?;
-        child.wait().await.map_err(Into::into)
-    }
 }
 
 fn configure_isolation(

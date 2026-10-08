@@ -86,9 +86,14 @@ fn monitor_is_advertised(environment: &[(&str, &str)]) -> (bool, String) {
         environment,
     );
     let diagnostics = format!(
-        "{}{}",
+        "{}{}{}",
         String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
+        String::from_utf8_lossy(&output.stderr),
+        std::fs::read_to_string(
+            home.path()
+                .join(".link-assistant-router/logs/operational.log")
+        )
+        .expect("persistent launcher privacy diagnostics")
     );
     assert!(
         output.status.success(),

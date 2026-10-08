@@ -4,11 +4,12 @@ use super::{Cli, Command};
 /// Parse the CLI, hiding options that cannot affect the subcommand shown.
 ///
 /// `with` and `configure` return before the server configuration is built, so
-/// none of the binary's ~28 global options — `--host`, `--port`,
-/// `--storage-policy`, `--upstream-base-url` and the rest — reaches them.
+/// server globals such as `--host`, `--port`, `--storage-policy` and
+/// `--upstream-base-url` do not reach them. `--verbose` and `--data-dir`
+/// do control their operational logging.
 /// Clap lists a global under every subcommand, so `with --help` advertised
-/// them as options of `with`: `--verbose` was accepted and produced no
-/// logging, and `--port` written after the client name went to the client
+/// ineffective options as options of `with`, and `--port` written after
+/// the client name went to the client
 /// (issue #312). Listing options that cannot work is worse than omitting them.
 ///
 /// Only the *help* changes. A global still parses wherever it always did, so
@@ -23,7 +24,9 @@ pub fn try_parse_arguments(arguments: Vec<std::ffi::OsString>) -> Result<Cli, cl
     // still lists them, because there they work.
     if names_a_client_launcher(&arguments) {
         command = command.mut_args(|argument| {
-            if argument.is_global_set() {
+            if argument.is_global_set()
+                && !matches!(argument.get_id().as_str(), "verbose" | "data_dir")
+            {
                 argument.hide(true)
             } else {
                 argument

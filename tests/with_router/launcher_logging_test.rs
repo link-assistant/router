@@ -10,18 +10,6 @@ fn launcher_log(home: &std::path::Path) -> String {
         .expect("durable launcher diagnostic log")
 }
 
-/// Read human diagnostics from JSON Lines, preserving existing message contracts.
-pub fn diagnostic_messages(home: &std::path::Path) -> String {
-    launcher_log(home)
-        .lines()
-        .map(|line| {
-            let value: serde_json::Value = serde_json::from_str(line).expect("JSON log record");
-            value["message"].as_str().unwrap_or("").to_string()
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
 #[test]
 fn ordinary_claude_is_quiet_and_persists_saved_model_and_unavailability() {
     let directory = tempfile::tempdir().expect("fixture root");
@@ -33,7 +21,8 @@ fn ordinary_claude_is_quiet_and_persists_saved_model_and_unavailability() {
     fs::create_dir_all(&profile).expect("Router-owned profile");
     fs::write(profile.join("settings.json"), br#"{"model":"glm-5.3"}"#).expect("saved model");
     fake_claude(&bin);
-    let (server, requests) = mock_claude_router_with_catalog(CATALOG);
+    let catalog = CATALOG.replace("code 1113)", "code 1113) api_key=unavailable-reason-secret");
+    let (server, requests) = mock_claude_router_with_catalog(&catalog);
     let token = bound_client_token("claude");
     let output = run_claude_with(
         &home,
@@ -70,6 +59,7 @@ fn ordinary_claude_is_quiet_and_persists_saved_model_and_unavailability() {
         assert!(log.contains(expected), "missing {expected}: {log}");
     }
     assert!(!log.contains(&token), "credential leaked");
+    assert!(!log.contains("unavailable-reason-secret"), "{log}");
     assert!(
         !log.contains("FAKE_CLAUDE_LAUNCHED"),
         "vendor stderr was logged"
@@ -90,6 +80,26 @@ fn ordinary_claude_is_quiet_and_persists_saved_model_and_unavailability() {
             & 0o777,
         0o600
     );
+    let operational = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("shared operational diagnostics remain available");
+    for expected in [
+        "router_model_launch",
+        "1113",
+        "child_exited",
+        "process_exit",
+    ] {
+        assert!(
+            operational.contains(expected),
+            "missing {expected}: {operational}"
+        );
+    }
+    for secret in [
+        &token[..],
+        "unavailable-reason-secret",
+        "FAKE_CLAUDE_LAUNCHED",
+    ] {
+        assert!(!operational.contains(secret), "{operational}");
+    }
 }
 
 #[test]
@@ -150,6 +160,107 @@ fn prelaunch_connection_and_catalog_failures_are_silent_and_durable() {
 }
 
 #[test]
+fn operational_log_initialization_failure_is_quiet_and_has_launcher_diagnostics() {
+    for binary in [
+        env!("CARGO_BIN_EXE_router"),
+        env!("CARGO_BIN_EXE_with-router"),
+    ] {
+        for verbose in [false, true] {
+            let directory = tempfile::tempdir().unwrap();
+            fs::write(directory.path().join("logs"), "user-owned file").unwrap();
+            let mut command = Command::new(binary);
+            command.env_clear().env("HOME", directory.path());
+            command.arg("--data-dir").arg(directory.path());
+            if verbose {
+                command.arg("--verbose");
+            }
+            if binary == env!("CARGO_BIN_EXE_router") {
+                command.arg("with");
+            }
+            command.args(["--server", "http://127.0.0.1:0", "claude"]);
+            let output = link_assistant_router::bounded_process::output(
+                &mut command,
+                Duration::from_secs(10),
+            )
+            .unwrap();
+            assert_eq!(output.status.code(), Some(1), "{output:?}");
+            assert!(output.stdout.is_empty(), "{output:?}");
+            if verbose {
+                assert_eq!(
+                    String::from_utf8_lossy(&output.stderr)
+                        .matches("cannot initialize operational log")
+                        .count(),
+                    1,
+                    "{output:?}"
+                );
+            } else {
+                assert!(output.stderr.is_empty(), "{output:?}");
+            }
+            let log = fs::read_to_string(directory.path().join("launcher/launcher.log")).unwrap();
+            assert!(log.contains("cannot initialize operational log"), "{log}");
+            assert!(log.contains("launch_failed"), "{log}");
+            assert_eq!(
+                fs::read_to_string(directory.path().join("logs")).unwrap(),
+                "user-owned file"
+            );
+        }
+    }
+}
+
+#[test]
+fn operational_log_write_failure_is_quiet_and_retained_before_vendor_startup() {
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path().join("home");
+    let bin = directory.path().join("bin");
+    let capture = directory.path().join("capture");
+    fs::create_dir_all(&capture).unwrap();
+    fake_claude(&bin);
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let server = format!("http://{}", listener.local_addr().unwrap());
+    listener.set_nonblocking(true).unwrap();
+    let log_path = home.join(".link-assistant-router/logs/operational.log");
+    let requests = thread::spawn(move || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let mut stream = loop {
+            match listener.accept() {
+                Ok((stream, _)) => break stream,
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    assert!(std::time::Instant::now() < deadline, "no health request");
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("health fixture: {error}"),
+            }
+        };
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        let mut bytes = [0; 4096];
+        let count = stream.read(&mut bytes).unwrap();
+        assert!(String::from_utf8_lossy(&bytes[..count]).starts_with("GET /api/health"));
+        // Logging opened successfully; subsequent writes now fail.
+        fs::remove_file(&log_path).unwrap();
+        fs::create_dir(&log_path).unwrap();
+        stream
+            .write_all(b"HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            .unwrap();
+    });
+    let output = run_claude_with(&home, &bin, &capture, &["--server", &server, "claude"], &[]);
+    requests.join().unwrap();
+    assert_eq!(output.status.code(), Some(1), "{output:?}");
+    assert!(
+        output.stdout.is_empty() && output.stderr.is_empty(),
+        "{output:?}"
+    );
+    assert!(
+        !capture.join("args").exists(),
+        "vendor launched after failure"
+    );
+    let log = launcher_log(&home);
+    assert!(log.contains("operational log write failed"), "{log}");
+    assert!(log.contains("launch_failed"), "{log}");
+}
+
+#[test]
 fn launcher_opens_the_private_log_before_connecting_and_redacts_failure_bodies() {
     let directory = tempfile::tempdir().expect("fixture root");
     let home = directory.path().join("home");
@@ -196,7 +307,12 @@ fn launcher_opens_the_private_log_before_connecting_and_redacts_failure_bodies()
         "{output:?}"
     );
     let log = launcher_log(&home);
-    assert!(log.contains("fixture failure"), "{log}");
+    assert!(log.contains("502 Bad Gateway"), "{log}");
+    assert!(log.contains("upstream_server_error"), "{log}");
+    assert!(
+        !log.contains("fixture failure"),
+        "raw HTTP failure body was logged"
+    );
     for secret in [
         "oauth-secret-value",
         "private-cookie-value",
@@ -333,6 +449,7 @@ fn explicit_verbose_keeps_diagnostics_on_stderr_and_in_the_log() {
     assert!(
         stderr.find("router_model_launch").unwrap() < stderr.find("FAKE_CLAUDE_LAUNCHED").unwrap()
     );
+    assert_eq!(stderr.matches("router_model_launch").count(), 1, "{stderr}");
     assert!(launcher_log(&home).contains("router_model_launch"));
     assert!(!stderr.contains(&token));
 }

@@ -27,6 +27,15 @@ fn bound_foreign_token(id: &str) -> String {
     foreign_token(id, Some("opencode"), Some("primary"))
 }
 
+fn assert_no_token_store(home: &std::path::Path) {
+    // Refused commands retain operational diagnostics without credential state.
+    let entries = fs::read_dir(home.join("router-data"))
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<Vec<_>>();
+    assert_eq!(entries, [std::ffi::OsString::from("logs")]);
+}
+
 /// Parse the JSON status `show` prints after the startup log lines.
 fn parse_status(stdout: &[u8]) -> serde_json::Value {
     let text = String::from_utf8_lossy(stdout);
@@ -165,7 +174,7 @@ fn a_non_router_token_is_rejected_from_every_input_without_echoing_it() {
 }
 
 #[test]
-fn rejected_managed_bindings_leave_no_files_or_token_store() {
+fn rejected_managed_bindings_leave_no_credentials_or_token_store() {
     for (name, token) in [
         ("generic", foreign_token("generic", None, None)),
         (
@@ -187,10 +196,7 @@ fn rejected_managed_bindings_leave_no_files_or_token_store() {
             &["clients", "setup", "codex", "--token", &token],
         );
         assert!(!output.status.success(), "{name} binding was accepted");
-        assert!(
-            !home.path().join("router-data").exists(),
-            "{name} rejection created the token store"
-        );
+        assert_no_token_store(home.path());
         assert!(
             !home.path().join(".config").exists(),
             "{name} rejection created managed-client files: {:?}",
@@ -205,7 +211,7 @@ fn rejected_managed_bindings_leave_no_files_or_token_store() {
 }
 
 #[test]
-fn an_unprovable_foreign_binding_writes_nothing() {
+fn an_unprovable_foreign_binding_leaves_no_credential_state() {
     let home = tempfile::tempdir().expect("temp home");
     let listener = TcpListener::bind("127.0.0.1:0").expect("reserve port");
     let base_url = format!("http://{}", listener.local_addr().unwrap());
@@ -224,7 +230,7 @@ fn an_unprovable_foreign_binding_writes_nothing() {
         ],
     );
     assert!(!output.status.success(), "unreachable issuer was trusted");
-    assert!(!home.path().join("router-data").exists());
+    assert_no_token_store(home.path());
     assert!(!home.path().join(".config").exists());
 }
 
