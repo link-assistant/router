@@ -131,6 +131,11 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                     break;
                 }
                 Err(error) => {
+                    if let Some(error) = request.subscription.and_then(|subscription| {
+                        subscription.unavailable_error(state, context.pinned_account.as_deref())
+                    }) {
+                        return Err(crate::model_routing::model_route_error_response(&error));
+                    }
                     tracing::error!("Failed to resolve upstream credentials: {error}");
                     return Err(error_response(
                         StatusCode::BAD_GATEWAY,

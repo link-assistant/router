@@ -134,6 +134,15 @@ and completion content. It partially masks long credentials and fully masks
 short ones, but operators with access to `$DATA_DIR/requests` can read message
 content and should protect and retain that directory accordingly.
 
+Consumed local denials also retain their redacted `client_response_body`, so
+the file preserves Router's explanation when routing stops before upstream I/O.
+A known subscription model with unusable provider credentials returns HTTP 503 /
+`account_unavailable`; a model absent from the catalogs returns HTTP 404 /
+`not_found_error`, and an invalid Router token returns HTTP 401 /
+`authentication_error`. Only contacted upstreams have upstream phases. Response
+body records reflect what the caller consumed, including partial consumption;
+metadata and safety identifiers remain redacted alongside credentials.
+
 ### Rotation
 
 Each write re-opens the file in append mode, so an external rotator

@@ -16,8 +16,10 @@ use crate::subscription::{SubscriptionProvider, SubscriptionReader};
 pub enum ModelRouteError {
     /// The request did not identify a model to route.
     ModelRequired,
-    /// The requested model is unknown or its owning provider is unavailable.
+    /// The requested model is unknown.
     NotFound(String),
+    /// The model is known, but no eligible provider credential can serve it.
+    AccountUnavailable(String),
     /// A live exact model id has more than one owning provider.
     Conflict(String),
     /// The model exists, but this request may not reach its provider.
@@ -51,9 +53,10 @@ impl std::fmt::Display for ModelRouteError {
             Self::ModelRequired => {
                 formatter.write_str("model is required when UPSTREAM_PROVIDER=auto")
             }
-            Self::NotFound(message) | Self::Conflict(message) | Self::Forbidden(message) => {
-                formatter.write_str(message)
-            }
+            Self::NotFound(message)
+            | Self::AccountUnavailable(message)
+            | Self::Conflict(message)
+            | Self::Forbidden(message) => formatter.write_str(message),
         }
     }
 }
@@ -64,6 +67,9 @@ pub(crate) fn model_route_error_response(error: &ModelRouteError) -> Response {
         ModelRouteError::ModelRequired => (StatusCode::BAD_REQUEST, "invalid_request_error"),
         ModelRouteError::Conflict(_) => (StatusCode::CONFLICT, "invalid_provider_state"),
         ModelRouteError::NotFound(_) => (StatusCode::NOT_FOUND, "not_found_error"),
+        ModelRouteError::AccountUnavailable(_) => {
+            (StatusCode::SERVICE_UNAVAILABLE, "account_unavailable")
+        }
         ModelRouteError::Forbidden(_) => (StatusCode::FORBIDDEN, "permission_error"),
     };
     crate::proxy::error_response(status, error_type, &error.to_string())
@@ -242,8 +248,10 @@ pub fn available_provider_for_model(
                      rejected upstream)"
                 )
             });
-            ModelRouteError::NotFound(format!(
-                "model '{model}' has no healthy {provider} credential: {cause}"
+            ModelRouteError::AccountUnavailable(format!(
+                "model '{model}' has no healthy {provider} credential: {cause}; \
+                 re-authenticate the {provider} account or restore an eligible healthy credential \
+                 and refresh its model catalog, then retry the same model"
             ))
         })
 }
