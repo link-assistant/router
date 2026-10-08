@@ -381,10 +381,13 @@ experimental_realtime_webrtc_call_base_url = \"https://user.example/calls\"\n";
     let token = bound_client_token("codex");
     let state_path = home.join(".config/link-assistant-router/clients/codex.loopback-bridge.json");
     let _bridge_cleanup = BridgeCleanup(state_path.clone());
+    let log_data = home.join("selected-log-data");
 
     let configured = router(
         &home,
         &[
+            "--data-dir",
+            log_data.to_str().expect("log directory"),
             "configure",
             "codex",
             "--server",
@@ -437,6 +440,16 @@ experimental_realtime_webrtc_call_base_url = \"https://user.example/calls\"\n";
             .expect("bridge state JSON");
     assert_eq!(state["upstream_origin"], server);
     assert!(state["pid"].as_u64().is_some());
+    let records = fs::read_to_string(log_data.join("logs/operational.log"))
+        .expect("parent and bridge share the selected operational log");
+    assert!(
+        records.lines().any(|line| {
+            line.starts_with(&format!("pid={} ", state["pid"].as_u64().unwrap()))
+                && line.contains("process_start")
+                && line.contains("operation=daemon")
+        }),
+        "missing bridge startup in {records}"
+    );
     assert_eq!(
         fs::metadata(&state_path)
             .expect("state metadata")

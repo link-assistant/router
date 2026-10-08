@@ -14,6 +14,12 @@ use lino_arguments::Parser as LinoParser;
 struct Args {
     #[command(flatten)]
     with: WithArgs,
+    /// Mirror operational diagnostics to stderr and enable debug tracing.
+    #[arg(long, env = "VERBOSE", value_parser = clap::builder::BoolishValueParser::new())]
+    verbose: bool,
+    /// Persistent Router data, including operational logs.
+    #[arg(long, env = "DATA_DIR")]
+    data_dir: Option<std::path::PathBuf>,
 }
 
 #[tokio::main]
@@ -36,5 +42,8 @@ async fn main() -> ExitCode {
         return link_assistant_router::operations::run_arguments(nested).await;
     }
     let args = <Args as lino_arguments::Parser>::parse_from(arguments);
-    link_assistant_router::with_command::run(&args.with).await
+    let data_dir = args
+        .data_dir
+        .unwrap_or_else(link_assistant_router::config::default_data_dir);
+    link_assistant_router::logging::run_launcher(&args.with, &data_dir, args.verbose).await
 }

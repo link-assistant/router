@@ -236,6 +236,14 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
             }
         };
         let status = response.status().as_u16();
+        if status >= 400 {
+            tracing::warn!(
+                request_id = request.correlation_id,
+                upstream_status = status,
+                error_class = crate::logging::http_failure(status),
+                "upstream request rejected"
+            );
+        }
         let retry_after = retry_after_duration(response.headers());
         crate::request_routing::record_claude_evidence(
             state,

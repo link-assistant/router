@@ -115,7 +115,7 @@ fn catalog_on_own_runtime(
 pub(super) struct System {
     /// Children started by this run, reaped on termination so a stopped
     /// candidate does not linger as a zombie that still answers `kill -0`.
-    children: Mutex<Vec<Child>>,
+    children: Mutex<Vec<(Child, bool)>>,
     keychain_presence: fn(&str) -> bool,
 }
 
@@ -220,7 +220,7 @@ impl HostRuntime for System {
         self.children
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .push(child);
+            .push((child, false));
         Ok(pid)
     }
 
@@ -367,8 +367,18 @@ impl System {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         children
             .iter_mut()
-            .find(|child| child.id() == pid)
-            .is_some_and(|child| matches!(child.try_wait(), Ok(Some(_))))
+            .find(|(child, _)| child.id() == pid)
+            .is_some_and(|(child, recorded)| {
+                if let Ok(Some(status)) = child.try_wait() {
+                    if !*recorded {
+                        crate::logging::child_exit("host_router", Some(pid), status);
+                        *recorded = true;
+                    }
+                    true
+                } else {
+                    false
+                }
+            })
     }
 }
 
