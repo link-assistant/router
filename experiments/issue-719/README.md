@@ -41,3 +41,16 @@ HTTP 404 / `NOT_FOUND`. The original assertion expected 404 for both cases,
 causing the Linux, macOS, Windows, and coverage jobs in CI run `37695619945` to
 fail at `tests/gemini_namespace_test.rs:496`. Running that test before updating
 the assertion reproduces the same 503-versus-404 failure locally.
+
+For a bounded attempt at the unmodified full suite on a small Linux workspace:
+
+```sh
+python3 experiments/issue-719/bounded-build.py cargo test --locked --all-features \
+  --config 'profile.dev.package.link-assistant-router.codegen-units=1024'
+```
+
+The wrapper uses one CPU/build job and no debug information. It stops only its
+command's process group if a child exceeds 2000 MiB RSS, returning exit 125 to
+distinguish the workspace limit from a test failure. Use the focused fixture
+above when the full binary exceeds that bound; CI runs the unmodified suite on
+Linux, macOS, and Windows without this wrapper.
