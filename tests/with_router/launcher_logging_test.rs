@@ -261,15 +261,39 @@ printf 'TUI input:%s\n' "$reply"
     });
     drop(pty.slave);
     let mut reader = pty.master.try_clone_reader().unwrap();
+    let (send_transcript, transcripts) = std::sync::mpsc::channel();
+    let drain = thread::spawn(move || {
+        let mut transcript = Vec::new();
+        let mut buffer = [0; 4096];
+        while let Ok(count) = reader.read(&mut buffer) {
+            if count == 0 {
+                break;
+            }
+            transcript.extend_from_slice(&buffer[..count]);
+            // A PTY need not report EOF while a master handle stays open
+            // (notably on macOS). Observe the final vendor marker instead.
+            if String::from_utf8_lossy(&transcript).contains("TUI input:hello terminal")
+                || transcript.len() >= 64 * 1024
+            {
+                break;
+            }
+        }
+        let _ = send_transcript.send(transcript);
+    });
     let mut writer = pty.master.take_writer().unwrap();
     writer.write_all(b"hello terminal\n").unwrap();
     let status = child.wait().unwrap();
     let _ = finished.send(());
     watchdog.join().unwrap();
+    drop(writer);
+    drop(pty.master);
     requests.join().unwrap();
     assert!(status.success(), "{status:?}");
-    let mut transcript = String::new();
-    reader.read_to_string(&mut transcript).unwrap();
+    let transcript = transcripts
+        .recv_timeout(std::time::Duration::from_secs(5))
+        .expect("receive the final vendor terminal output within five seconds");
+    drain.join().unwrap();
+    let transcript = String::from_utf8_lossy(&transcript);
     assert!(transcript.contains("\x1b[2JFAKE_TUI_READY"), "{transcript}");
     assert!(
         transcript.contains("TUI input:hello terminal"),
