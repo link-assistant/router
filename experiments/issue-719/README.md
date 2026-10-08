@@ -55,3 +55,8 @@ command's process group if a child exceeds 2000 MiB RSS, returning exit 125 to
 distinguish the workspace limit from a test failure. Use the focused fixture
 above when the full binary exceeds that bound; CI runs the unmodified suite on
 Linux, macOS, and Windows without this wrapper.
+
+Set `ROUTER_BUILD_RSS_LIMIT_MIB` to a positive MiB value to adjust the compiler
+RSS bound to the workspace's available memory. The default is 2000 MiB; a
+bounded local unit-shard run can use 2200 MiB when sufficient memory is available
+for Cargo and the other workspace processes.

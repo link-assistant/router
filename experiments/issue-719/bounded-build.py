@@ -2,7 +2,8 @@
 """Run a Cargo validation command without exhausting a small Linux workspace.
 
 Uses one build job/CPU, omits debug information, and stops the command's process
-group if a child exceeds 2000 MiB RSS. Exit 125 means the memory bound prevented
+group if a child exceeds 2000 MiB RSS by default. Override that finite bound with
+ROUTER_BUILD_RSS_LIMIT_MIB. Exit 125 means the memory bound prevented
 completion; it is not a test failure. Other exits preserve the command's result.
 """
 
@@ -17,6 +18,9 @@ import time
 def main() -> int:
     if len(sys.argv) < 2 or not hasattr(os, "sched_getaffinity"):
         sys.exit("usage (Linux): bounded-build.py cargo <validation arguments>")
+    rss_limit_kib = 1024 * int(os.environ.get("ROUTER_BUILD_RSS_LIMIT_MIB", "2000"))
+    if rss_limit_kib <= 0:
+        sys.exit("ROUTER_BUILD_RSS_LIMIT_MIB must be positive")
     os.sched_setaffinity(0, {min(os.sched_getaffinity(0))})
     environment = os.environ.copy()
     environment.update(CARGO_BUILD_JOBS="1", CARGO_PROFILE_DEV_DEBUG="0", MALLOC_ARENA_MAX="2")
@@ -41,7 +45,7 @@ def main() -> int:
                 except (OSError, ValueError, IndexError):
                     continue
                 peak_kib = max(peak_kib, rss_kib)
-                if rss_kib > 2000 * 1024:
+                if rss_kib > rss_limit_kib:
                     print(f"Memory bound reached: PID {process.name}, RSS {rss_kib} KiB", flush=True)
                     os.killpg(command.pid, signal.SIGKILL)
                     command.wait()
