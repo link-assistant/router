@@ -450,6 +450,9 @@ async fn native_owner(
     routed.map_err(|error| {
         let status = match error {
             crate::model_routing::ModelRouteError::NotFound(_) => StatusCode::NOT_FOUND,
+            crate::model_routing::ModelRouteError::AccountUnavailable(_) => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
             crate::model_routing::ModelRouteError::Conflict(_) => StatusCode::CONFLICT,
             crate::model_routing::ModelRouteError::Forbidden(_) => StatusCode::FORBIDDEN,
             crate::model_routing::ModelRouteError::ModelRequired => StatusCode::BAD_REQUEST,

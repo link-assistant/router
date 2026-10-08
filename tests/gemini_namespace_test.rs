@@ -495,9 +495,36 @@ async fn gemini_omits_a_catalog_owned_by_another_account() {
         .await;
     assert_eq!(
         status,
-        StatusCode::NOT_FOUND,
+        StatusCode::SERVICE_UNAVAILABLE,
         "a prior account's model must not route through the current credential: {body}"
     );
+    let error: Value = serde_json::from_str(&body).expect("Gemini error JSON");
+    assert_eq!(error["error"]["code"], 503);
+    assert_eq!(error["error"]["status"], "UNAVAILABLE");
+    let message = error["error"]["message"].as_str().expect("error message");
+    for detail in [
+        "gpt-5.4-mini",
+        "codex",
+        "re-authenticate",
+        "retry the same model",
+    ] {
+        assert!(message.contains(detail), "missing {detail}: {message}");
+    }
+    assert!(!message.contains("acct_previous"), "{message}");
+    assert!(!message.contains("acct_stub"), "{message}");
+    assert!(!message.contains("stub-codex-oauth-token"), "{message}");
+
+    // A known model's account failure must remain distinct from an unknown id.
+    let (status, body) = router
+        .post_native(
+            "/api/services/gemini/v1beta/models/totally-made-up-xyz:generateContent",
+            &json!({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]}),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND, "{body}");
+    let error: Value = serde_json::from_str(&body).expect("Gemini unknown-model JSON");
+    assert_eq!(error["error"]["code"], 404);
+    assert_eq!(error["error"]["status"], "NOT_FOUND");
     assert!(
         router
             .forwarded

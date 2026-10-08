@@ -37,6 +37,23 @@ enum CredentialSelection {
 }
 
 impl ValidatedSubscription {
+    /// Present an automatic model route's credential failure without exposing
+    /// durable store paths, account identifiers, or upstream response bodies.
+    pub(crate) fn unavailable_error(
+        &self,
+        state: &AppState,
+        account: Option<&str>,
+    ) -> Option<ModelRouteError> {
+        self.required_model.as_deref().map(|model| {
+            account_unavailable_error(
+                state,
+                self.provider,
+                model,
+                account.or_else(|| self.account_name()),
+            )
+        })
+    }
+
     /// Return the validated token only while the credential document still
     /// describes the same snapshot.
     ///
@@ -220,6 +237,49 @@ impl ValidatedSubscription {
     pub(crate) const fn uses_account_pool(&self) -> bool {
         matches!(self.selection, CredentialSelection::AccountPool)
     }
+}
+
+/// Derive a public reason from credential evidence, never a raw store error.
+fn account_unavailable_error(
+    state: &AppState,
+    provider: SubscriptionProvider,
+    model: &str,
+    account: Option<&str>,
+) -> ModelRouteError {
+    let accounts = account.map_or_else(
+        || {
+            state
+                .account_router
+                .as_ref()
+                .filter(|router| router.provider() == provider)
+                .map_or_else(
+                    || vec![crate::credential_recovery_store::PRIMARY_ACCOUNT.to_string()],
+                    |router| {
+                        router
+                            .subscription_readers()
+                            .into_iter()
+                            .map(|(name, _)| name)
+                            .collect()
+                    },
+                )
+        },
+        |account| vec![account.to_string()],
+    );
+    let rejected = accounts.iter().any(|account| {
+        state.subscription_cache.evidence_for(provider, account)
+            == Some(crate::refresh::CredentialEvidence::Rejected)
+    });
+    let cause = if rejected {
+        format!("the {provider} credential was rejected by its upstream")
+    } else {
+        credential_state(provider, &state.model_catalogs)
+            .unwrap_or_else(|| format!("no eligible {provider} credential can serve this model"))
+    };
+    ModelRouteError::AccountUnavailable(format!(
+        "model '{model}' has no healthy {provider} credential: {cause}; \
+         re-authenticate the {provider} account or restore an eligible healthy credential \
+         and refresh its model catalog, then retry the same model"
+    ))
 }
 
 fn durably_equivalent(
@@ -545,13 +605,7 @@ pub async fn route_subscription_model_for_providers(
     .into_iter()
     .flatten()
     .find(|subscription| subscription.provider == provider)
-    .ok_or_else(|| {
-        let cause = credential_state(provider, &state.model_catalogs)
-            .unwrap_or_else(|| format!("no usable {provider} credential is available"));
-        ModelRouteError::NotFound(format!(
-            "model '{model}' has no healthy {provider} credential: {cause}"
-        ))
-    })?;
+    .ok_or_else(|| account_unavailable_error(state, provider, model, None))?;
     Ok(routed_subscription_state(
         state,
         subscription,

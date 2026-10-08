@@ -7,7 +7,7 @@ use std::time::Duration;
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::middleware::from_fn_with_state;
-use axum::routing::any;
+use axum::routing::{any, get};
 use http_body_util::BodyExt as _;
 use link_assistant_router::app_state::AppState;
 use link_assistant_router::cli::Cli;
@@ -170,12 +170,40 @@ async fn every_denial_has_one_client_exchange_and_zero_upstream_phases() {
         &config,
         ListenerKind::Combined,
     )
+    .route(
+        "/synthetic-local-error",
+        get(|| async {
+            (
+                StatusCode::BAD_REQUEST,
+                axum::Json(json!({
+                    "error": {"type": "invalid_request_error", "message": "safe local diagnostic"},
+                    "access_token": "synthetic-response-access-secret",
+                    "metadata": {"tenant": "sensitive-response-tenant"},
+                    "safety_identifier": "sensitive-response-user",
+                    "user_id": "sensitive-response-user",
+                    "prompt_cache_key": "sensitive-response-cache"
+                })),
+            )
+        }),
+    )
     .layer(from_fn_with_state(
         state,
         link_assistant_router::request_log::log_http_exchange,
     ));
 
     let cases = [
+        (
+            request(
+                "GET",
+                "/synthetic-local-error",
+                &codex_token,
+                "denied-local-redaction",
+                None,
+            ),
+            StatusCode::BAD_REQUEST,
+            "denied-local-redaction",
+            false,
+        ),
         (
             request(
                 "GET",
@@ -243,7 +271,8 @@ async fn every_denial_has_one_client_exchange_and_zero_upstream_phases() {
     for (request, expected, marker, has_body) in cases {
         let response = app.clone().oneshot(request).await.unwrap();
         assert_eq!(response.status(), expected, "{marker}");
-        response.into_body().collect().await.unwrap();
+        let response_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let response_body: Value = serde_json::from_slice(&response_bytes).unwrap();
 
         let records = records(&directory.path().join("requests"));
         let request = records
@@ -265,9 +294,25 @@ async fn every_denial_has_one_client_exchange_and_zero_upstream_phases() {
         phases.sort_unstable();
         assert_eq!(
             phases,
-            ["client_request", "client_response"],
+            ["client_request", "client_response", "client_response_body"],
             "{marker}: {exchange:#?}"
         );
+        let logged_body = exchange
+            .iter()
+            .find(|record| record["phase"] == "client_response_body")
+            .unwrap();
+        assert_eq!(
+            logged_body["body"],
+            link_assistant_router::request_log::redacted_body(&response_bytes),
+            "{marker}"
+        );
+        assert_eq!(
+            logged_body["body"]["error"], response_body["error"],
+            "{marker}"
+        );
+        let rendered_response = logged_body.to_string();
+        assert!(!rendered_response.contains("synthetic-response-access-secret"));
+        assert!(!rendered_response.contains("sensitive-response-"));
         if has_body {
             let rendered = request["body"].to_string();
             assert!(rendered.contains("diagnostic-"), "{marker}: {request}");
