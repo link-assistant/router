@@ -42,6 +42,8 @@ fn router(working_directory: &std::path::Path, overrides: &[(&str, &str)]) -> st
         .env("HOME", working_directory)
         .env("XDG_CONFIG_HOME", working_directory.join("xdg"))
         .env("APPDATA", working_directory.join("appdata"))
+        // Exercise credential-root selection independently of the log location.
+        .env("DATA_DIR", working_directory.join("xdg/operational-data"))
         .env_remove("LINK_ASSISTANT_ROUTER_URL")
         .env_remove("ROUTER_URL");
     for (name, value) in overrides {

@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use super::{AnyError, compact};
+use super::AnyError;
 use crate::clients::{ClientKind, RouterModel};
 
 pub(super) async fn fetch_models(
@@ -53,7 +53,7 @@ pub(super) async fn fetch_models(
     }
     Err(format!(
         "router token validation failed at {url} ({status}): {}",
-        compact(&body)
+        crate::logging::http_failure(status.as_u16())
     )
     .into())
 }

@@ -193,6 +193,13 @@ pub(super) async fn forward_openai(
         }
     };
     let upstream_status = upstream_resp.status();
+    if !upstream_status.is_success() {
+        tracing::warn!(
+            upstream_status = upstream_status.as_u16(),
+            error_class = crate::logging::http_failure(upstream_status.as_u16()),
+            "upstream request rejected"
+        );
+    }
     crate::request_routing::record_claude_evidence(
         state,
         selected_account.as_deref(),

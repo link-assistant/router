@@ -5,17 +5,17 @@
 //! covers the line, because the defect was that a populated field never
 //! reached it.
 
-use std::io::{BufRead as _, BufReader, Read as _, Write as _};
+use std::cell::Cell;
+use std::io::{BufRead as _, BufReader, Read as _, Seek as _, SeekFrom, Write as _};
 use std::net::{TcpListener, TcpStream};
-use std::process::{Child, ChildStderr, Command, Stdio};
-use std::sync::mpsc::{Receiver, RecvTimeoutError, channel};
+use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
 struct Router {
     child: Child,
     port: u16,
-    lines: Receiver<String>,
-    _data_dir: tempfile::TempDir,
+    log_offset: Cell<u64>,
+    data_dir: tempfile::TempDir,
 }
 
 impl Drop for Router {
@@ -33,12 +33,14 @@ impl Router {
             .expect("ephemeral address")
             .port();
         let data_dir = tempfile::tempdir().expect("temporary data directory");
-        let mut child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+        let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
             .arg("serve")
             .env("TOKEN_SECRET", "request-log-line-test-secret")
             .env("ROUTER_HOST", "127.0.0.1")
             .env("ROUTER_PORT", port.to_string())
             .env("DATA_DIR", data_dir.path())
+            .env_remove("VERBOSE")
+            .env("RUST_LOG", "info")
             .env("STORAGE_POLICY", "text")
             .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
             .env("DISABLE_LOGIN_API", "true")
@@ -48,16 +50,14 @@ impl Router {
             // reach routing, which is where the model matters.
             .env("ALLOW_ANONYMOUS_ADMIN", "true")
             .stdout(Stdio::null())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()
             .expect("start router");
-        let stderr = child.stderr.take().expect("piped stderr");
-        let lines = drain(stderr);
         let router = Self {
             child,
             port,
-            lines,
-            _data_dir: data_dir,
+            log_offset: Cell::new(0),
+            data_dir,
         };
         router.wait_until_ready();
         router
@@ -131,7 +131,11 @@ impl Router {
     /// `wait_until_ready` polls `/api/health`, and each poll logs a line; without
     /// this a test reads a probe's line and asserts against the wrong request.
     fn discard_pending(&self) {
-        while self.lines.try_recv().is_ok() {}
+        self.log_offset.set(
+            std::fs::metadata(self.data_dir.path().join("logs/operational.log"))
+                .expect("persistent request log")
+                .len(),
+        );
     }
 
     /// The `request` log line for one exact route.
@@ -153,13 +157,23 @@ impl Router {
     fn await_line(&self, kind: &str, marker: &str) -> String {
         let deadline = Instant::now() + Duration::from_secs(30);
         while Instant::now() < deadline {
-            match self.lines.recv_timeout(Duration::from_millis(500)) {
-                Ok(line) if line.contains(kind) && line.contains(marker) => return line,
-                // A line that is not the one wanted, and a quiet interval,
-                // both just mean "keep waiting until the deadline".
-                Ok(_) | Err(RecvTimeoutError::Timeout) => {}
-                Err(RecvTimeoutError::Disconnected) => break,
+            let mut log = BufReader::new(
+                std::fs::File::open(self.data_dir.path().join("logs/operational.log"))
+                    .expect("persistent request log"),
+            );
+            log.seek(SeekFrom::Start(self.log_offset.get())).unwrap();
+            loop {
+                let mut line = String::new();
+                let bytes = log.read_line(&mut line).unwrap();
+                if bytes == 0 || !line.ends_with('\n') {
+                    break;
+                }
+                self.log_offset.set(self.log_offset.get() + bytes as u64);
+                if line.contains(kind) && line.contains(marker) {
+                    return line;
+                }
             }
+            std::thread::sleep(Duration::from_millis(50));
         }
         panic!("no {kind} log line arrived");
     }
@@ -170,42 +184,6 @@ fn log_field<'a>(line: &'a str, name: &str) -> &'a str {
     line.split_whitespace()
         .find_map(|field| field.strip_prefix(&prefix))
         .unwrap_or_else(|| panic!("missing {name} in log line: {line}"))
-}
-
-fn drain(stderr: ChildStderr) -> Receiver<String> {
-    let (sender, receiver) = channel();
-    std::thread::spawn(move || {
-        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-            if sender.send(strip_ansi(&line)).is_err() {
-                return;
-            }
-        }
-    });
-    receiver
-}
-
-/// Remove the colour codes the subscriber writes to a pipe.
-///
-/// The field name and its `=` are coloured separately, so `model=x` is not a
-/// substring of the raw line even when the line is exactly right — asserting
-/// against it unstripped tests the terminal, not the log.
-fn strip_ansi(line: &str) -> String {
-    let mut plain = String::with_capacity(line.len());
-    let mut characters = line.chars();
-    while let Some(character) = characters.next() {
-        if character != '\u{1b}' {
-            plain.push(character);
-            continue;
-        }
-        if characters.next() == Some('[') {
-            for byte in characters.by_ref() {
-                if byte.is_ascii_alphabetic() {
-                    break;
-                }
-            }
-        }
-    }
-    plain
 }
 
 /// The model a request names appears on the line that reports it.

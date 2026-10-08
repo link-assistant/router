@@ -12,6 +12,12 @@ use std::thread;
 use std::time::Duration;
 use wait_timeout::ChildExt as _;
 
+fn launcher_diagnostics(home: &std::path::Path, output: &Output) -> String {
+    let log = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .unwrap_or_default();
+    format!("{log}{}", String::from_utf8_lossy(&output.stderr))
+}
+
 fn bound_client_token(client: &str) -> String {
     let payload = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(
         serde_json::json!({
@@ -396,7 +402,7 @@ fn assert_codex_overlay_launch(standalone: bool) {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(stderr.contains("\"router_model_launch\""), "{stderr}");
     assert!(stderr.contains("\"state\":\"unpinned\""), "{stderr}");
     assert!(
@@ -656,6 +662,9 @@ fn global_undo_refuses_to_overwrite_later_user_edits() {
         .expect("attempt undo");
     assert!(!undone.status.success());
     assert!(String::from_utf8_lossy(&undone.stderr).contains("changed after it was configured"));
+    let log = fs::read_to_string(home.join(".link-assistant-router/logs/operational.log"))
+        .expect("explicit command failures persist alongside their results");
+    assert!(log.contains("changed after it was configured"), "{log}");
     assert!(
         fs::read_to_string(config)
             .expect("read edited config")
@@ -711,7 +720,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         .output()
         .expect("run launcher without token");
     assert!(!missing_token.status.success());
-    assert!(String::from_utf8_lossy(&missing_token.stderr).contains("no token is available"));
+    assert!(launcher_diagnostics(&home, &missing_token).contains("no token is available"));
     health.join().expect("mock router thread");
 
     for (message, diagnostic) in [
@@ -729,9 +738,9 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
             .expect("run launcher with rejected token");
         assert!(!rejected.status.success());
         assert!(
-            String::from_utf8_lossy(&rejected.stderr).contains(diagnostic),
+            launcher_diagnostics(&home, &rejected).contains(diagnostic),
             "unexpected token diagnostic: {}",
-            String::from_utf8_lossy(&rejected.stderr)
+            launcher_diagnostics(&home, &rejected)
         );
         router.join().expect("rejected-token router thread");
     }
@@ -752,7 +761,7 @@ fn launcher_rejects_missing_credentials_and_unavailable_models_before_exec() {
         .output()
         .expect("run launcher with unavailable model");
     assert!(!unavailable.status.success());
-    assert!(String::from_utf8_lossy(&unavailable.stderr).contains("not available"));
+    assert!(launcher_diagnostics(&home, &unavailable).contains("not available"));
     assert_eq!(requests.join().expect("mock router thread").len(), 5);
 }
 
@@ -807,7 +816,7 @@ fn admin_credentials_are_exchanged_and_revoked_per_run() {
         fs::read_to_string(capture.join("token")).expect("captured token"),
         format!("{}\n", bound_client_token("codex"))
     );
-    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stderr = launcher_diagnostics(&home, &output);
     assert!(stderr.contains("\"router_model_launch\""), "{stderr}");
     assert!(stderr.contains("\"state\":\"exact\""), "{stderr}");
     assert!(
@@ -963,3 +972,6 @@ mod claude_profile_test;
 mod session_test;
 #[path = "with_router/zai_catalog_test.rs"]
 mod zai_catalog_test;
+
+#[path = "with_router/operational_log_test.rs"]
+mod operational_log_test;

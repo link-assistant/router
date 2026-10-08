@@ -15,6 +15,19 @@ fn command(home: &Path, args: &[&str]) -> Output {
     link_assistant_router::bounded_process::output(&mut command, Duration::from_secs(15)).unwrap()
 }
 
+fn assert_no_deployment_state(home: &Path) {
+    let data = home.join("router-data");
+    if !data.exists() {
+        return;
+    }
+    // Early operational diagnostics must not create deployment state.
+    let entries = std::fs::read_dir(data)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<Vec<_>>();
+    assert_eq!(entries, [std::ffi::OsString::from("logs")]);
+}
+
 #[test]
 fn absent_staging_status_and_verification_are_read_only_without_docker() {
     let home = tempfile::tempdir().unwrap();
@@ -33,12 +46,12 @@ fn absent_staging_status_and_verification_are_read_only_without_docker() {
         assert_eq!(report["namespace"], "router-stage-disposable");
         assert_eq!(report["status"], "absent");
         assert_eq!(report["parity"], false);
-        assert!(!home.path().join("router-data").exists());
+        assert_no_deployment_state(home.path());
     }
 }
 
 #[test]
-fn invalid_staging_identity_reports_refusal_before_any_files_are_created() {
+fn invalid_staging_identity_reports_refusal_without_deployment_state() {
     let home = tempfile::tempdir().unwrap();
     let output = command(
         home.path(),
@@ -50,7 +63,7 @@ fn invalid_staging_identity_reports_refusal_before_any_files_are_created() {
     assert_eq!(report["status"], "refused");
     assert_eq!(report["parity"], false);
     assert!(report["reason"].as_str().unwrap().contains("staging NAME"));
-    assert!(!home.path().join("router-data").exists());
+    assert_no_deployment_state(home.path());
 }
 
 #[test]
@@ -71,6 +84,6 @@ fn restore_requires_consent_and_rejects_conflicting_deployment_operations() {
             error.contains("required") || error.contains("cannot be used with"),
             "{error}"
         );
-        assert!(!home.path().join("router-data").exists());
+        assert_no_deployment_state(home.path());
     }
 }

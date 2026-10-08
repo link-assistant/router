@@ -298,14 +298,16 @@ fn status_exits_nonzero_and_never_prints_usable_when_refresh_storage_fails() {
         r#"{"tokens":{"access_token":"expired-access","refresh_token":"refresh-link"},"expiry_date":1}"#,
     )
     .expect("seed codex credential");
-    let blocked_data_dir = home.path().join("not-a-directory");
-    std::fs::write(&blocked_data_dir, b"occupied").expect("block recovery directory");
+    let data_dir = home.path().join("router-data");
+    std::fs::create_dir_all(&data_dir).expect("create data directory for logging");
+    let blocked_recovery = data_dir.join("refresh-recovery");
+    std::fs::write(&blocked_recovery, b"occupied").expect("block recovery directory");
 
     let output = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .args(["auth", "status", "--managed"])
         .env("XDG_CONFIG_HOME", config.path())
         .env("HOME", home.path())
-        .env("DATA_DIR", &blocked_data_dir)
+        .env("DATA_DIR", &data_dir)
         .env("TOKEN_SECRET", "auth-cli-test-secret")
         .output()
         .expect("router CLI should run");
@@ -320,7 +322,7 @@ fn status_exits_nonzero_and_never_prints_usable_when_refresh_storage_fails() {
     assert!(!stdout.contains("codex    usable"), "{stdout}");
     assert!(stderr.contains("codex refresh"), "{stderr}");
     assert!(
-        !stderr.contains(blocked_data_dir.to_string_lossy().as_ref()),
+        !stderr.contains(blocked_recovery.to_string_lossy().as_ref()),
         "{stderr}"
     );
 }

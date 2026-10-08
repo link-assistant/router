@@ -4,15 +4,14 @@
 //! expose the Router on every attached network, while the alias resolves to
 //! only the intended network address (issue #545).
 
-use std::io::{BufRead as _, BufReader, Read as _, Write as _};
+use std::io::{Read as _, Write as _};
 use std::net::{SocketAddr, TcpStream};
 use std::process::{Child, Command, Stdio};
-use std::sync::mpsc::{RecvTimeoutError, channel};
 use std::time::{Duration, Instant};
 
 struct Router {
     child: Child,
-    _data_dir: tempfile::TempDir,
+    data_dir: tempfile::TempDir,
 }
 
 impl Drop for Router {
@@ -25,59 +24,45 @@ impl Drop for Router {
 #[test]
 fn serve_resolves_a_host_alias_and_logs_the_effective_address() {
     let data_dir = tempfile::tempdir().expect("temporary Router data");
-    let mut child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
+    let child = Command::new(env!("CARGO_BIN_EXE_link-assistant-router"))
         .arg("serve")
         .env("TOKEN_SECRET", "bind-alias-test-secret")
         .env("ROUTER_HOST", "localhost")
         .env("ROUTER_PORT", "0")
         .env("DATA_DIR", data_dir.path())
+        .env_remove("VERBOSE")
+        .env("RUST_LOG", "info")
         .env("CLAUDE_CODE_HOME", data_dir.path().join("claude"))
         .env("DISABLE_LOGIN_API", "true")
         .env("ALLOW_ANONYMOUS_ADMIN", "true")
         .env("NO_COLOR", "1")
         .stdout(Stdio::null())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::null())
         .spawn()
         .expect("start Router with a host alias");
-    let stderr = child.stderr.take().expect("capture Router log");
-    let (sender, lines) = channel();
-    std::thread::spawn(move || {
-        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-            let _ = sender.send(line);
-        }
-    });
-    let mut router = Router {
-        child,
-        _data_dir: data_dir,
-    };
+    let mut router = Router { child, data_dir };
 
     let deadline = Instant::now() + Duration::from_secs(30);
-    let mut observed = Vec::new();
-    let address = loop {
+    let address = 'address: loop {
+        let observed = std::fs::read_to_string(router.data_dir.path().join("logs/operational.log"))
+            .unwrap_or_default();
         let remaining = deadline.saturating_duration_since(Instant::now());
         assert!(
             !remaining.is_zero(),
             "no effective listen address in {observed:?}"
         );
-        match lines.recv_timeout(remaining.min(Duration::from_millis(250))) {
-            Ok(line) => {
-                if let Some(rendered) = line.split("Listening on http://").nth(1)
-                    && let Some(candidate) = rendered.split_whitespace().next()
-                    && let Ok(address) = candidate.parse::<SocketAddr>()
-                {
-                    break address;
-                }
-                observed.push(line);
-            }
-            Err(RecvTimeoutError::Timeout) => {
-                if let Some(status) = router.child.try_wait().expect("read Router status") {
-                    panic!("Router exited with {status}; log: {observed:?}");
-                }
-            }
-            Err(RecvTimeoutError::Disconnected) => {
-                panic!("Router log closed before its listen address: {observed:?}");
+        for line in observed.lines() {
+            if let Some(rendered) = line.split("Listening on http://").nth(1)
+                && let Some(candidate) = rendered.split_whitespace().next()
+                && let Ok(address) = candidate.parse::<SocketAddr>()
+            {
+                break 'address address;
             }
         }
+        if let Some(status) = router.child.try_wait().expect("read Router status") {
+            panic!("Router exited with {status}; log: {observed:?}");
+        }
+        std::thread::sleep(Duration::from_millis(50));
     };
 
     assert!(
