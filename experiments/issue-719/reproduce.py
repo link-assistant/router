@@ -45,6 +45,7 @@ def main() -> int:
                 "cargo", "test", "--locked", "--lib", "--manifest-path",
                 str(project / "Cargo.toml"), "--config",
                 "profile.dev.package.link-assistant-router.debug=0",
+                "--config", "profile.dev.package.link-assistant-router.codegen-units=1024",
                 "model_routing::evidence_tests::failure_tests", "--", "--nocapture",
             ],
             cwd=project,
