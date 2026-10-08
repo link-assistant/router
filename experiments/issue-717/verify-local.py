@@ -15,11 +15,13 @@ ROOT = Path(__file__).resolve().parents[2]
 LOGS = ROOT / 'ci-logs'
 LOGS.mkdir(exist_ok=True)
 ENV = {**os.environ, 'CARGO_BUILD_JOBS': '1', 'CARGO_PROFILE_DEV_DEBUG': '0',
-       'CARGO_PROFILE_TEST_CODEGEN_UNITS': '1024', 'RUST_LOG': 'warn',
+       'CARGO_PROFILE_TEST_CODEGEN_UNITS': '1024',
        'ROUTER_LOCAL_MAX_BASELINE_ANON_BYTES': str(900 * 1024 * 1024)}
 # The fallback-home unit test requires no inherited vendor-home override.
 # Keep the coding agent's own environment untouched.
 ENV.pop('CODEX_HOME', None)
+# Server integration tests exercise the default INFO diagnostics.
+ENV.pop('RUST_LOG', None)
 
 
 def run(command, name, env=ENV, cwd=ROOT):
