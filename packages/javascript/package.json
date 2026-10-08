@@ -1,6 +1,6 @@
 {
   "name": "@link-assistant/router",
-  "version": "1.18.4",
+  "version": "1.18.5",
   "description": "Official typed Router operations and testing helpers for Node and Bun",
   "type": "module",
   "engines": {
