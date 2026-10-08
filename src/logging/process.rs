@@ -56,7 +56,7 @@ pub fn diagnostic(arguments: Arguments<'_>, quiet: bool) {
             log.record_file(&record)
         };
         if let Err(error) = result {
-            std::eprintln!("operational log write failed: {error}");
+            write_failure(&error);
         }
     }
 }
@@ -65,8 +65,25 @@ pub fn event(arguments: Arguments<'_>) {
     if let Some(log) = LOG.get() {
         let record = format!("{} INFO {}", chrono::Utc::now().to_rfc3339(), arguments);
         if let Err(error) = log.record(&record) {
-            std::eprintln!("operational log write failed: {error}");
+            write_failure(&error);
         }
+    }
+}
+
+/// Mirror sanitized launcher records without adding another console copy.
+pub fn event_file(arguments: Arguments<'_>) -> std::io::Result<()> {
+    LOG.get().map_or(Ok(()), |log| {
+        log.record_file(&format!(
+            "{} INFO {}",
+            chrono::Utc::now().to_rfc3339(),
+            arguments
+        ))
+    })
+}
+
+fn write_failure(error: &std::io::Error) {
+    if !crate::launcher_log::capture(format_args!("operational log write failed: {error}\n")) {
+        std::eprintln!("operational log write failed: {error}");
     }
 }
 
@@ -119,7 +136,7 @@ pub async fn run(
 ) -> ExitCode {
     if let Err(error) = install(data_dir, verbose, secrets) {
         // A missing/unwritable log must never silently discard the failure.
-        std::eprintln!(
+        eprintln!(
             "cannot initialize operational log at {}: {error}",
             data_dir.join("logs").display()
         );
@@ -137,13 +154,13 @@ pub async fn run(
 
 /// Execute the standalone launcher with the same file/console policy as `router with`.
 pub async fn run_launcher(args: &crate::cli::WithArgs, data_dir: &Path, verbose: bool) -> ExitCode {
-    run(
+    let work = Box::pin(run(
         data_dir,
         verbose,
         "with",
         args.token.clone().into_iter().collect(),
         !args.global && !args.undo,
-        crate::with_command::run(args),
-    )
-    .await
+        crate::with_command::run_with_logging(args, Some(data_dir), verbose),
+    ));
+    crate::launcher_log::run_process(args, data_dir, verbose, work).await
 }

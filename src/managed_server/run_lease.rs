@@ -1,6 +1,7 @@
 //! Heartbeat for a live `router with` process.
 
 use std::time::Duration;
+use tracing::instrument::WithSubscriber as _;
 
 use super::RunCredential;
 
@@ -115,7 +116,7 @@ pub fn start(credential: &RunCredential) -> Option<Guard> {
                 return;
             }
         }
-    })))
+    }.with_current_subscriber())))
 }
 
 #[cfg(test)]

@@ -855,12 +855,8 @@ fn current_claude_refuses_a_saved_choice_the_changed_catalog_no_longer_authorize
     let body: Value = serde_json::from_slice(&request.body).expect("Claude inference JSON");
     assert_eq!(body["model"], native);
     assert!(
-        std::fs::read_to_string(
-            home.path()
-                .join(".link-assistant-router/logs/operational.log")
-        )
-        .expect("launcher diagnostics")
-        .contains("keeping your own Claude model selection"),
+        wrapper::launcher_diagnostics(home.path())
+            .contains("keeping your own Claude model selection"),
         "Router pinned over the saved choice"
     );
 
@@ -878,11 +874,7 @@ fn current_claude_refuses_a_saved_choice_the_changed_catalog_no_longer_authorize
         "{}{}{}",
         String::from_utf8_lossy(&refused.stdout),
         String::from_utf8_lossy(&refused.stderr),
-        std::fs::read_to_string(
-            home.path()
-                .join(".link-assistant-router/logs/operational.log")
-        )
-        .expect("launcher diagnostics")
+        wrapper::launcher_diagnostics(home.path())
     );
     assert!(
         !refused.status.success(),

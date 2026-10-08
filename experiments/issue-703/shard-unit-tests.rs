@@ -11,29 +11,55 @@
 use std::path::{Path, PathBuf};
 use syn::visit_mut::{self, VisitMut};
 
-const SHARDS: usize = 8;
+const DEFAULT_SHARDS: usize = 8;
 
 struct Sharder {
     file: String,
-    counts: [usize; SHARDS],
+    counts: Vec<usize>,
+}
+
+fn is_test(function: &syn::ItemFn) -> bool {
+    function.attrs.iter().any(|attribute| {
+        let parts: Vec<_> = attribute
+            .path()
+            .segments
+            .iter()
+            .map(|s| s.ident.to_string())
+            .collect();
+        parts == ["test"] || parts == ["tokio", "test"]
+    })
+}
+
+fn assignment(file: &str, name: &syn::Ident, shards: usize) -> usize {
+    let key = format!("{file}:{name}");
+    let hash = key.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3)
+    });
+    (hash % shards as u64) as usize
+}
+
+// A module with private items and no impls, macros or submodules cannot supply
+// helpers to another test module. Skip its helper bodies when none of its
+// tests belong to this shard; every test still runs in its assigned shard.
+fn private_items(items: &[syn::Item]) -> bool {
+    items.iter().all(|item| {
+        let visibility = match item {
+            syn::Item::Use(item) => &item.vis,
+            syn::Item::Fn(item) => &item.vis,
+            syn::Item::Struct(item) => &item.vis,
+            syn::Item::Enum(item) => &item.vis,
+            syn::Item::Type(item) => &item.vis,
+            syn::Item::Const(item) => &item.vis,
+            _ => return false,
+        };
+        matches!(visibility, syn::Visibility::Inherited)
+    })
 }
 
 impl VisitMut for Sharder {
     fn visit_item_fn_mut(&mut self, function: &mut syn::ItemFn) {
-        if function.attrs.iter().any(|attribute| {
-            let parts: Vec<_> = attribute
-                .path()
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect();
-            parts == ["test"] || parts == ["tokio", "test"]
-        }) {
-            let key = format!("{}:{}", self.file, function.sig.ident);
-            let hash = key.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |h, b| {
-                (h ^ u64::from(b)).wrapping_mul(0x0000_0100_0000_01b3)
-            });
-            let shard = (hash % SHARDS as u64) as usize;
+        if is_test(function) {
+            let shard = assignment(&self.file, &function.sig.ident, self.counts.len());
             let value = shard.to_string();
             function
                 .attrs
@@ -42,9 +68,77 @@ impl VisitMut for Sharder {
         }
         visit_mut::visit_item_fn_mut(self, function);
     }
+
+    fn visit_item_mod_mut(&mut self, module: &mut syn::ItemMod) {
+        if module.attrs.iter().any(|attribute| {
+            attribute.path().is_ident("cfg")
+                && attribute
+                    .parse_args::<syn::Path>()
+                    .is_ok_and(|path| path.is_ident("test"))
+        }) {
+            let parsed;
+            let mut file = self.file.clone();
+            let items = if let Some((_, items)) = &module.content {
+                Some(items.as_slice())
+            } else if self.file == "src/lib.rs" {
+                let source = module
+                    .attrs
+                    .iter()
+                    .find_map(|attribute| {
+                        if attribute.path().is_ident("path") {
+                            if let syn::Meta::NameValue(value) = &attribute.meta {
+                                if let syn::Expr::Lit(value) = &value.value {
+                                    if let syn::Lit::Str(value) = &value.lit {
+                                        return Some(value.value());
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    })
+                    .unwrap_or_else(|| format!("{}.rs", module.ident));
+                file = format!("src/{source}");
+                parsed = std::fs::read_to_string(&file)
+                    .ok()
+                    .and_then(|text| syn::parse_file(&text).ok());
+                parsed.as_ref().map(|syntax| syntax.items.as_slice())
+            } else {
+                None
+            };
+            if let Some(items) = items.filter(|items| private_items(items)) {
+                let mut active = vec![false; self.counts.len()];
+                for item in items {
+                    if let syn::Item::Fn(function) = item {
+                        if is_test(function) {
+                            let shard = assignment(&file, &function.sig.ident, active.len());
+                            active[shard] = true;
+                        }
+                    }
+                }
+                let predicates = active
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(index, active)| {
+                        active.then(|| {
+                            let value = index.to_string();
+                            syn::parse_quote!(router_local_unit_shard = #value)
+                        })
+                    })
+                    .collect::<Vec<syn::Meta>>();
+                if let [predicate] = predicates.as_slice() {
+                    module.attrs.push(syn::parse_quote!(#[cfg(#predicate)]));
+                } else if !predicates.is_empty() {
+                    module
+                        .attrs
+                        .push(syn::parse_quote!(#[cfg(any(#(#predicates),*))]));
+                }
+            }
+        }
+        visit_mut::visit_item_mod_mut(self, module);
+    }
 }
 
-fn copy(source: &Path, destination: &Path, root: &Path, counts: &mut [usize; SHARDS]) {
+fn copy(source: &Path, destination: &Path, root: &Path, counts: &mut [usize]) {
     std::fs::create_dir_all(destination).unwrap();
     for entry in std::fs::read_dir(source).unwrap() {
         let entry = entry.unwrap();
@@ -58,7 +152,7 @@ fn copy(source: &Path, destination: &Path, root: &Path, counts: &mut [usize; SHA
                 .unwrap_or_else(|error| panic!("{}: {error}", path.display()));
             let mut sharder = Sharder {
                 file: path.strip_prefix(root).unwrap().display().to_string(),
-                counts: [0; SHARDS],
+                counts: vec![0; counts.len()],
             };
             sharder.visit_file_mut(&mut syntax);
             for (total, count) in counts.iter_mut().zip(sharder.counts) {
@@ -75,7 +169,14 @@ fn main() {
     let root = std::env::current_dir().unwrap();
     let output = root.join("target/local-unit-shards");
     std::fs::create_dir_all(&output).unwrap();
-    let mut counts = [0; SHARDS];
+    let shards = std::env::var("ROUTER_LOCAL_UNIT_SHARDS").map_or(DEFAULT_SHARDS, |value| {
+        value.parse().expect("integer shard count")
+    });
+    assert!(
+        (1..=64).contains(&shards),
+        "shard count must be between 1 and 64"
+    );
+    let mut counts = vec![0; shards];
     copy(&root.join("src"), &output.join("src"), &root, &mut counts);
     // Preserve relative include paths outside src; the original manifest and
     // generated OUT_DIR remain the compiler's ordinary Cargo environment.
@@ -86,14 +187,18 @@ fn main() {
             continue;
         }
         let destination = output.join(name);
-        if !destination.exists() {
+        if std::fs::symlink_metadata(&destination).is_err() {
             std::os::unix::fs::symlink(entry.path(), destination).unwrap();
         }
     }
     for (shard, count) in counts.iter().enumerate() {
         let wrapper: PathBuf = output.join(format!("shard-{shard}.py"));
+        let allowed = (0..shards)
+            .map(|number| format!("\"{number}\""))
+            .collect::<Vec<_>>()
+            .join(", ");
         let text = format!(
-            "#!/usr/bin/env python3\nimport os,sys\na=sys.argv[1:]\na=[{source:?} if x=='src/lib.rs' else x for x in a]\na += ['--cfg', 'router_local_unit_shard=\"{shard}\"', '--check-cfg', 'cfg(router_local_unit_shard, values(\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\"))']\nos.execv(a[0],a)\n",
+            "#!/usr/bin/env python3\nimport os,sys\na=sys.argv[1:]\na=[{source:?} if x=='src/lib.rs' else x for x in a]\na += ['--cfg', 'router_local_unit_shard=\"{shard}\"', '--check-cfg', 'cfg(router_local_unit_shard, values({allowed}))']\nos.execv(a[0],a)\n",
             source = output.join("src/lib.rs").display().to_string()
         );
         std::fs::write(&wrapper, text).unwrap();

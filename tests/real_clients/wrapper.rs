@@ -1,5 +1,22 @@
 use super::*;
 
+pub fn launcher_diagnostics(home: &Path) -> String {
+    let contents =
+        std::fs::read_to_string(home.join(".link-assistant-router/launcher/launcher.log"))
+            .expect("read persistent Router launcher diagnostics");
+    let records = contents
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).expect("valid launcher JSON record"))
+        .collect::<Vec<_>>();
+    let launch_id = &records.last().expect("a recorded launcher invocation")["launch_id"];
+    records
+        .iter()
+        .filter(|record| &record["launch_id"] == launch_id)
+        .map(|record| record["message"].as_str().expect("launcher message"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 pub fn isolated_pty_command() -> CommandBuilder {
     link_assistant_router::verification_client::safety().expect("safe TUI boundary");
     let mut command = CommandBuilder::new(env!("CARGO_BIN_EXE_with-router"));

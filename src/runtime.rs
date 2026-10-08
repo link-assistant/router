@@ -32,6 +32,7 @@ use link_assistant_router::providers::ProviderStore;
 use link_assistant_router::proxy::AppState;
 use link_assistant_router::storage::{TokenStore, build_token_store};
 use link_assistant_router::token::{ADMIN_SCOPE, IssueRequest, TokenManager};
+use link_assistant_router::with_command::run_with_logging;
 use log_lazy::LogLazy;
 use tower_http::trace::TraceLayer;
 
@@ -59,7 +60,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
         }
         Some(Command::Verify(args)) => return crate::verification::run_cli(args.arguments.clone()),
         Some(Command::With(args)) => {
-            return link_assistant_router::with_command::run(args).await;
+            return run_with_logging(args, cli.data_dir.as_deref(), cli.verbose).await;
         }
         Some(Command::Server { op }) => {
             return link_assistant_router::server_command::run(op).await;

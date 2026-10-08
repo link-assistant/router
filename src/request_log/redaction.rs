@@ -146,7 +146,7 @@ fn is_safety_identifier_name(name: &str) -> bool {
     )
 }
 
-fn is_secret_name(name: &str) -> bool {
+pub fn is_secret_name(name: &str) -> bool {
     let normalized = normalize_name(name);
     matches!(
         normalized.as_str(),

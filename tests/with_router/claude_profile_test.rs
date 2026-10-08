@@ -66,7 +66,7 @@ fn mock_claude_router_impl(
     (format!("http://127.0.0.1:{port}"), handle)
 }
 
-fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
+pub fn mock_claude_router_with_catalog(catalog: &str) -> (String, thread::JoinHandle<Vec<String>>) {
     mock_claude_router_impl(catalog, false, "200 OK")
 }
 

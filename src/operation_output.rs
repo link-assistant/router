@@ -15,6 +15,9 @@ macro_rules! print {
 }
 
 pub fn write(stderr: bool, arguments: Arguments<'_>) {
+    if crate::launcher_log::capture(arguments) {
+        return;
+    }
     let file_diagnostics = crate::logging::FILE_DIAGNOSTICS
         .try_with(|active| *active)
         .ok();
@@ -42,6 +45,10 @@ fn write_transport(stderr: bool, arguments: Arguments<'_>, quiet: bool) {
     } else {
         let _ = std::io::stdout().lock().write_fmt(arguments);
     }
+}
+
+pub fn write_passthrough(stderr: bool, arguments: Arguments<'_>) {
+    write_transport(stderr, arguments, false);
 }
 
 /// Keep explicitly requested results and interactive prompts on their output channel.

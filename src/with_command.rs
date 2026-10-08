@@ -2,7 +2,7 @@
 
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
-use std::io::{IsTerminal as _, Write as _};
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
@@ -32,7 +32,7 @@ use claude_settings::{
 #[path = "with_command_model_policy.rs"]
 mod model_policy;
 
-type AnyError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
 const CLAUDE_PRIVACY_DEFAULT_ENV: [&str; 3] = [
     "DISABLE_ERROR_REPORTING",
@@ -45,16 +45,10 @@ const CLAUDE_FEATURE_FLAG_BLOCKING_ENV: [&str; 3] = [
     "DO_NOT_TRACK",
 ];
 
-/// Execute one wrapper invocation and preserve the client's exit status.
-pub async fn run(args: &WithArgs) -> ExitCode {
-    match run_inner(args).await {
-        Ok(code) => code,
-        Err(error) => {
-            eprintln!("error: {error}");
-            ExitCode::from(1)
-        }
-    }
-}
+#[path = "with_command_run.rs"]
+mod launcher;
+use launcher::{confirm_claude_profile_reset, exit_code};
+pub use launcher::{run, run_with_logging};
 
 async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     // `--global` and `--undo` are permanent client setup, which now has its
@@ -93,6 +87,11 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
     } else {
         args.token.clone()
     };
+    crate::launcher_log::add_secret(explicit_token.as_deref());
+    crate::launcher_log::record(
+        "server_discovery",
+        "resolving selected Router and checking its connection",
+    );
     let server = if args.local {
         let mut server = crate::managed_server::discovered_local_router()
             .await
@@ -111,6 +110,11 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         )
         .await?
     };
+    crate::launcher_log::add_secret(server.token.as_deref());
+    crate::launcher_log::record(
+        "server_resolved",
+        &format!("{} selected from {}", server.base_url, server.source),
+    );
     crate::logging::event(format_args!(
         "selected_endpoint endpoint={} source={}",
         server.base_url, server.source
@@ -125,9 +129,18 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         .label
         .clone()
         .unwrap_or_else(|| format!("with-{}-{}", args.client, run_suffix()));
+    crate::launcher_log::record(
+        "run_registration",
+        "checking authentication and authorized catalog before run registration",
+    );
     let prepared = model_policy::prepare(args, &server, &label, model_request).await?;
     let credential = prepared.credential;
     let selected = prepared.selected;
+    crate::launcher_log::add_secret(Some(&credential.token));
+    crate::launcher_log::record(
+        "run_registered",
+        "run credential and authorized model catalog prepared",
+    );
     // Decided before the client is prepared: whether the run is a session or
     // a task also decides whether the router may answer the client's own
     // prompts on the user's behalf (issue #310).
@@ -227,31 +240,6 @@ async fn run_inner(args: &WithArgs) -> Result<ExitCode, AnyError> {
         eprintln!("warning: {error}; the short token TTL remains the cleanup backstop");
     }
     Ok(exit_code(status))
-}
-
-fn confirm_claude_profile_reset(yes: bool) -> Result<(), AnyError> {
-    if yes {
-        return Ok(());
-    }
-    if !std::io::stdin().is_terminal() {
-        return Err(
-            "Claude profile reset requires interactive confirmation; rerun with --yes before the client name"
-                .into(),
-        );
-    }
-    // An explicitly requested confirmation is interactive command output.
-    crate::operation_output::write_result(
-        true,
-        format_args!("Reset the Router-owned Claude profile and keep a recoverable backup? [y/N] "),
-    );
-    std::io::stderr().flush()?;
-    let mut response = String::new();
-    std::io::stdin().read_line(&mut response)?;
-    if matches!(response.trim().to_ascii_lowercase().as_str(), "y" | "yes") {
-        Ok(())
-    } else {
-        Err("Claude profile reset cancelled; the previous profile is unchanged".into())
-    }
 }
 
 /// A short, non-identifying suffix distinguishing concurrent runs.
@@ -662,11 +650,20 @@ impl TemporaryClient {
         debug_assert!(directory.path().is_dir());
         self.command.args(arguments);
         let program = self.command.get_program().to_string_lossy().into_owned();
+        crate::launcher_log::record(
+            "child_starting",
+            &format!("starting vendor executable {program}"),
+        );
+        crate::launcher_log::check()?;
         crate::logging::event(format_args!("client_start program={program}"));
         if let Some(context) = crate::operation_context::current() {
             if let Some(profile) = profile {
                 profile.commit_launch(std::process::id())?;
             }
+            crate::launcher_log::record(
+                "child_started",
+                "vendor handed to the structured process adapter",
+            );
             let output = tokio::task::spawn_blocking(move || {
                 context.scope(|| {
                     crate::operation_context::bounded_output(
@@ -682,6 +679,10 @@ impl TemporaryClient {
                 "stdout": String::from_utf8_lossy(&output.stdout),
                 "stderr": String::from_utf8_lossy(&output.stderr)
             }));
+            crate::launcher_log::record(
+                "child_exited",
+                &format!("vendor exit status: {}", output.status),
+            );
             drop(directory);
             return Ok(output.status);
         }
@@ -699,6 +700,10 @@ impl TemporaryClient {
                 format!("could not launch {program}: {error}").into()
             }
         })?;
+        crate::launcher_log::record(
+            "child_started",
+            &format!("vendor process started: {:?}", child.id()),
+        );
         if let Some(profile) = profile
             && let Err(error) = profile.commit_launch(child.id().unwrap_or_else(std::process::id))
         {
@@ -709,6 +714,18 @@ impl TemporaryClient {
             return Err(error);
         }
         let status = crate::logging::supervise(&mut child, shutdown).await;
+        match &status {
+            Ok(status) => crate::launcher_log::record(
+                "child_exited",
+                &format!("vendor exit status: {status}"),
+            ),
+            Err(error) => {
+                crate::launcher_log::record(
+                    "child_failed",
+                    &format!("vendor wait failed: {error}"),
+                );
+            }
+        }
         drop(directory);
         status
     }
@@ -921,24 +938,6 @@ fn write_gemini_settings(path: &Path) -> Result<(), AnyError> {
     let mut file = options.open(path)?;
     file.write_all(contents.as_bytes())?;
     Ok(())
-}
-
-fn exit_code(status: std::process::ExitStatus) -> ExitCode {
-    if let Some(code) = status.code() {
-        return ExitCode::from(u8::try_from(code).unwrap_or(1));
-    }
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::ExitStatusExt as _;
-        ExitCode::from(
-            status
-                .signal()
-                .and_then(|signal| u8::try_from(128 + signal).ok())
-                .unwrap_or(1),
-        )
-    }
-    #[cfg(not(unix))]
-    ExitCode::from(1)
 }
 
 #[cfg(test)]

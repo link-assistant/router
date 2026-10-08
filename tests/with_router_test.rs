@@ -973,5 +973,7 @@ mod session_test;
 #[path = "with_router/zai_catalog_test.rs"]
 mod zai_catalog_test;
 
+#[path = "with_router/launcher_logging_test.rs"]
+mod launcher_logging_test;
 #[path = "with_router/operational_log_test.rs"]
 mod operational_log_test;

@@ -196,25 +196,40 @@ pub async fn run_arguments(arguments: Vec<OsString>) -> ExitCode {
     if let Some(Command::With(args)) = &cli.command {
         secrets.extend(args.token.clone());
     }
-    crate::logging::run(&data_dir, verbose, &operation, secrets, quiet, async move {
-        if !json {
-            return Box::pin(crate::runtime::dispatch(cli)).await;
-        }
-        let mut context = OperationContext::default();
-        if matches!(cli.command, Some(Command::Verify(_))) {
-            context.process_deadline = std::time::Duration::from_secs(3600);
-        }
-        let response = match execute(context, cli).await {
-            Ok(result) => result,
-            Err(error) => error.result,
-        };
-        std::println!(
-            "{}",
-            serde_json::to_string(&response).expect("JSON response")
-        );
-        ExitCode::from(response.exit_code)
-    })
-    .await
+    let launcher = match &cli.command {
+        Some(Command::With(args)) if !json => Some(args.clone()),
+        _ => None,
+    };
+    let work = Box::pin(crate::logging::run(
+        &data_dir,
+        verbose,
+        &operation,
+        secrets,
+        quiet,
+        async move {
+            if !json {
+                return Box::pin(crate::runtime::dispatch(cli)).await;
+            }
+            let mut context = OperationContext::default();
+            if matches!(cli.command, Some(Command::Verify(_))) {
+                context.process_deadline = std::time::Duration::from_secs(3600);
+            }
+            let response = match execute(context, cli).await {
+                Ok(result) => result,
+                Err(error) => error.result,
+            };
+            std::println!(
+                "{}",
+                serde_json::to_string(&response).expect("JSON response")
+            );
+            ExitCode::from(response.exit_code)
+        },
+    ));
+    if let Some(args) = launcher {
+        crate::launcher_log::run_process(&args, &data_dir, verbose, work).await
+    } else {
+        work.await
+    }
 }
 
 const fn force_json(command: &mut Option<Command>) {

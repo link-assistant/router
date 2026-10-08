@@ -15,6 +15,59 @@ then removes the directory. Client failure and `Ctrl-C` still run cleanup. A
 later invocation sweeps directories left behind by a wrapper killed with
 `SIGKILL`.
 
+## Launcher diagnostics
+
+`router with claude` and `with-router claude` write no Router launcher messages
+to stdout or stderr by default. Claude inherits stdin, stdout, and stderr and
+controls its terminal normally. Router opens its persistent diagnostic log
+before discovery, version/authentication/catalog validation, run registration,
+or vendor startup. Model-launch context, saved-model decisions, unavailable
+models and billing reasons, privacy warnings, connection and setup failures,
+cleanup warnings, and child startup/exit outcomes remain inspectable there.
+
+The destination is `$DATA_DIR/launcher/launcher.log`, or
+`~/.link-assistant-router/launcher/launcher.log` when `DATA_DIR` is unset.
+Both entry points accept `--data-dir` before the client name. For example:
+
+```bash
+tail -n 50 ~/.link-assistant-router/launcher/launcher.log
+router --data-dir /my/router-state with claude
+with-router --data-dir /my/router-state claude
+router with --verbose claude
+with-router --verbose claude
+```
+
+Each JSON Lines record has a timestamp, a `launch_id` for distinguishing
+concurrent invocations, an event, and a message. Writes are synchronized across
+processes. The current file rotates at 1 MiB; five archives are kept as
+`launcher.log.1` (newest) through `launcher.log.5` (oldest), for at most 6 MiB
+of normal diagnostic retention. Individual messages are bounded. The directory
+and files use Unix permissions `0700` and `0600`; log destinations must not be
+symlinks. Token, OAuth, cookie, API-key, URL-credential, and known credential
+values are redacted before persistence, truncation, or verbose rendering.
+Vendor output and forwarded prompts are never copied into this diagnostic log.
+
+Process launches also retain these sanitized records in Router's shared
+`$DATA_DIR/logs/operational.log`, alongside process startup, shutdown signals,
+and child termination records. Its separate rotation keeps five files of up to
+2 MiB each. The launcher log opens first, so it can record an operational-log
+initialization failure without writing to Claude's terminal.
+
+`--verbose` (or `VERBOSE=1`) also sends Router diagnostics to stderr.
+`RUST_LOG` controls tracing detail in the file, including `debug` and `trace`;
+use `--verbose` to show that tracing in the terminal. Put wrapper options
+before `claude`; `claude --verbose` is Claude's own option.
+
+A failure before vendor startup remains silent by default, records
+`launch_failed`, and returns a nonzero exit status. An unavailable or
+unwritable log destination prevents launching an unlogged vendor; use
+`--verbose` to inspect that destination error. Help/version, permanent
+configuration, explicitly requested reset confirmation, and `--json` operation
+results keep their existing output contracts. Structured results retain Router
+diagnostics and the requested captured child result, while the file log holds
+only Router diagnostics. Other clients use the shared operational log and its
+quiet default; explicit command results and confirmations stay visible.
+
 ## Clients and configuration surfaces
 
 A temporary run either **extends** the client's own configuration — adding
@@ -66,7 +119,7 @@ Router does not install `DISABLE_TELEMETRY`,
 `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, or `DO_NOT_TRACK`: in Claude Code
 2.1.265 these controls can disable feature-flag evaluation and hide gated
 built-in tools such as `Monitor`. When an active blocker is inherited, Router
-preserves it and warns before launch with the exact variable name. Upstream
+preserves it and records a warning in the launcher log with the exact variable name. Upstream
 currently exposes no supported environment combination that both disables
 usage telemetry and guarantees fresh remote feature flags.
 
@@ -130,7 +183,8 @@ scripts.
 native one-shot mode; a flag is an option passed to a session and does not.
 Streams that are not a terminal are one-shot, so CI and pipelines need no flag.
 `--interactive` and `--non-interactive` override the rule in either direction,
-and when the mode is inferred from flags alone the wrapper says so on stderr.
+and when the mode is inferred from flags alone the wrapper records its decision
+in Claude's launcher log or the shared operational log for other clients.
 
 ```bash
 router with claude "fix the tests"     # one-shot: a prompt was given

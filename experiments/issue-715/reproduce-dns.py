@@ -72,9 +72,14 @@ def main():
                     assert direct.returncode == 0 and direct.stdout.strip() == '200'
                     if args.fixed:
                         assert len(backend) <= 63 and named.stdout.strip() == '200' and named.returncode == 0
-                        assert probe(relay, backend).stdout.strip() == '200'
-                        assert probe(relay, '127.0.0.1').stdout.strip() == '200'
-                        assert process.wait(30) == 0
+                        # state/current is published before run_relay starts.
+                        # Deployment completion includes its relay health check.
+                        assert process.wait(30) == 0, log.read_text()
+                        for host in [backend, '127.0.0.1']:
+                            result = probe(relay, host)
+                            assert result.returncode == 0 and result.stdout.strip() == '200', (
+                                f'relay probe {host}: {result.stdout} {result.stderr}'
+                            )
                     else:
                         assert len(backend) > 63 and named.returncode != 0
                 finally:
