@@ -12,6 +12,7 @@ Run it normally with:
 ```sh
 cargo test --locked --lib model_routing::evidence_tests::failure_tests
 cargo test --locked --test denied_request_logging_test
+cargo test --locked --test gemini_namespace_test
 ```
 
 If the complete unit-test binary exceeds the machine's available memory:
@@ -32,3 +33,11 @@ local errors had no `client_response_body` record. Credential replacement
 already passed and remains covered. The fixed results are 503
 `account_unavailable`, redacted local response records, and unchanged exact
 models for healthy credentials.
+
+The Gemini namespace also checks a catalog owned by an obsolete account. That
+known model must return HTTP 503 with Gemini's `UNAVAILABLE` status, safe provider
+re-authentication guidance, and no upstream request. An unknown id still returns
+HTTP 404 / `NOT_FOUND`. The original assertion expected 404 for both cases,
+causing the Linux, macOS, Windows, and coverage jobs in CI run `37695619945` to
+fail at `tests/gemini_namespace_test.rs:496`. Running that test before updating
+the assertion reproduces the same 503-versus-404 failure locally.
