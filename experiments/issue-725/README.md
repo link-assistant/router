@@ -55,6 +55,9 @@ limits. Additional request-based regressions cover these paths. CI run
 covered lines with the same instrumented-line count. The coverage gate passes;
 its separate reviewability check requires committing the increased baseline.
 The floor, tolerance and exception policy are unchanged.
+After merging main's provider-onboarding changes, run 37897142179 on
+`a849b0d` measures 76827 / 88498 lines (86.812131%). Its coverage gate passes;
+the measured baseline increase is committed for the reviewability check.
 Inspect a report from the matching source revision with:
 
 ```console

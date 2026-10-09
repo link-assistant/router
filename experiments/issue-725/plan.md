@@ -136,3 +136,21 @@ terminology and strict all-target/all-feature Clippy pass on the combined tree.
 The initial Clippy run stopped at its finite 2350 MiB memory bound, without a
 lint error. A finite 2450 MiB retry passes, observing a 2390160 KiB peak.
 Both logs are preserved; final CI verifies the unpartitioned combined source.
+
+CI run 37897142179, created at 2026-10-09T07:06:23Z for `a849b0d`, passes
+Linux, macOS, Windows, lint and all six companion workflows. Coverage measures
+76827 / 88498 lines (86.812131%); its gate passes, and the only failure again
+requires committing the measured increase. The preserved full workflow log
+records the measurement at `ci-logs/pipeline-37897142179.log:14667` and the
+reviewability error at line 14700. The existing checker advances the baseline
+to 86.812131%, and all eight coverage-policy tests pass. The floor, tolerance
+and exception policy remain unchanged.
+
+Main's v1.20.0 release, dc9a6e3417b055f117b0706dd0551043d447a32a, merges
+cleanly and changes only version metadata and its consumed changelog fragment.
+The rebuilt v1.20.0 binary passes all 167 version-sensitive, CLI, catalog,
+Router end-to-end and thinking cases. Generated contracts, binding parity,
+backward compatibility, strict TypeScript and all nine binding cases each in
+Node, Bun and Python pass. Formatting and strict all-target/all-feature Clippy
+also pass; the finite Clippy run observes a 2389420 KiB peak. Final CI must
+verify the committed measured baseline and run the dependent package build.
