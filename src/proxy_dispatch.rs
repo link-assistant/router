@@ -120,6 +120,10 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
         if origin.is_none() {
             origin.clone_from(&account);
         }
+        state.request_log.set_account(
+            request.correlation_id,
+            account.as_deref().unwrap_or("primary"),
+        );
         if let (Some(account), Some(token)) = (account.as_deref(), resolved.evidence_token.as_ref())
         {
             crate::account_policy_scope::credential(account, token);

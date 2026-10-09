@@ -17,6 +17,10 @@ pub use types::{
 #[path = "route_contract_native.rs"]
 mod native;
 use native::NATIVE_ROUTES;
+#[path = "route_contract_observability.rs"]
+mod observability;
+#[path = "route_contract_routing.rs"]
+mod routing;
 
 const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
@@ -195,16 +199,6 @@ const ROUTES: &[RouteSpec] = &[
         RouteId::LoginCode,
         RouteMethod::Post,
         "/api/management/login/{id}/code",
-    ),
-    management(
-        RouteId::Routing,
-        RouteMethod::Patch,
-        "/api/management/routing",
-    ),
-    management(
-        RouteId::CooldownReset,
-        RouteMethod::Post,
-        "/api/management/routing/cooldown/reset",
     ),
     management(RouteId::Usage, RouteMethod::Get, "/api/management/usage"),
     management(
@@ -905,7 +899,15 @@ const ROUTES: &[RouteSpec] = &[
 #[must_use]
 pub fn route_specs() -> &'static [RouteSpec] {
     static ALL: OnceLock<Vec<RouteSpec>> = OnceLock::new();
-    ALL.get_or_init(|| ROUTES.iter().chain(NATIVE_ROUTES.iter()).copied().collect())
+    ALL.get_or_init(|| {
+        ROUTES
+            .iter()
+            .chain(NATIVE_ROUTES.iter())
+            .chain(observability::ROUTES.iter())
+            .chain(routing::ROUTES.iter())
+            .copied()
+            .collect()
+    })
 }
 
 /// The canonical path template for a route id.

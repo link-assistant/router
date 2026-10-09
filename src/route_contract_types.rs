@@ -172,6 +172,13 @@ pub enum RouteId {
     NativeCodex,
     NativeCodexBackend,
     AccountPolicy,
+    RequestLog,
+    ErrorLogs,
+    ErrorLog,
+    ClearLogs,
+    Logging,
+    UsageQueue,
+    LatestVersion,
     Routing,
     CooldownReset,
 }

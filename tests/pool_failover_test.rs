@@ -392,6 +392,7 @@ struct Options {
     http: AccountHttpPolicy,
     retry: link_assistant_router::pool_retry::RetryPolicy,
     routing_policy: Option<link_assistant_router::account_routing_policy::AccountRoutingPolicy>,
+    observability: bool,
 }
 
 impl Default for Options {
@@ -405,6 +406,7 @@ impl Default for Options {
             http: AccountHttpPolicy::default(),
             retry: link_assistant_router::pool_retry::RetryPolicy::default(),
             routing_policy: None,
+            observability: false,
         }
     }
 }
@@ -515,6 +517,18 @@ impl Pool {
                 ..IssueRequest::default()
             })
             .unwrap();
+        let request_log = link_assistant_router::request_log::RequestLog::new(
+            data.path().join("requests"),
+            1024 * 1024,
+        );
+        let request_log = if options.observability {
+            request_log.with_error_log(Arc::new(link_assistant_router::error_log::ErrorLog::new(
+                data.path().join("errors"),
+                1024 * 1024,
+            )))
+        } else {
+            request_log
+        };
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -554,10 +568,7 @@ impl Pool {
             audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(Some(
                 data.path().join("audit.jsonl").to_str().unwrap(),
             ))),
-            request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
-                data.path().join("requests"),
-                1024 * 1024,
-            )),
+            request_log: Arc::new(request_log),
             activitypub_actor_base_url: "https://router.test".to_string(),
             activitypub_public_key_pem:
                 link_assistant_router::config::default_activitypub_public_key_pem(),
@@ -631,6 +642,14 @@ impl Pool {
             .into_config()
             .unwrap();
             link_assistant_router::server_router::router(state.clone(), &config)
+        } else {
+            app
+        };
+        let app = if options.observability {
+            app.layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                link_assistant_router::request_log::log_http_exchange,
+            ))
         } else {
             app
         };
@@ -768,3 +787,6 @@ mod websocket_cooling;
 
 #[path = "pool_failover/account_policies.rs"]
 mod account_policies;
+
+#[path = "pool_failover/observability.rs"]
+mod observability;

@@ -76,6 +76,10 @@ Main's subsequent PR #754 updates seven pinned Node/Python setup-action lines in
 
 Run `37918422497` at `ad01d70` passes Linux, macOS and Windows tests, and all six other workflows pass. Its unsharded Linux library inventory exactly matches the 2,177 distinct locally enabled tests (`resume-linux-inventory.log`). The instrumented suite passes and measures 77,818 of 89,502 lines covered (86.945543%). Only the baseline-review gate fails (`ci-logs/coverage-37918422497.log:8538`): the existing checker requests that measured increase. The downloaded `rust-lcov` report supplies the committed baseline; a second checker invocation leaves it unchanged, and its eight tests pass.
 
+Main's subsequent admin-observability merge (PR #753) adds seven management routes. The combined catalog retains all 62 operations and publishes 234 routes; the previously published observability route IDs retain their values, with routing controls appended afterward. The first merged build reproduces duplicate `record_management` helpers (`resume-admin-build.log`); observability now adds its timestamp through a separate helper and uses the existing shared audit writer.
+
+`tests/pool_failover/observability.rs` verifies that pre-output failover attributes a pending stream to the selected account, clears its active count on cancellation, and retains a complete opt-in capture of the failed account's quota response. Both tests pass with ordinary dispatch and account-policy dispatch (`resume-admin-observability-tests.log`), using the existing three-account fixture and bounded local HTTP requests. Run them with `cargo test --locked --all-features --test pool_failover_test observability::`.
+
 Run all integration tests, binary tests and doctests within the local limit with:
 
 ```sh

@@ -167,6 +167,22 @@ impl AuditLog {
         }
     }
 
+    /// Record a runtime debug change without retaining credentials or bodies.
+    pub fn record_logging_change(&self, debug: bool, reason: &str, ttl_secs: u64) {
+        self.record_observability(&serde_json::json!({"phase": "logging_changed", "debug": debug, "reason": reason, "ttl_secs": ttl_secs}));
+    }
+
+    /// Record an operator's deletion of diagnostic captures.
+    pub fn record_log_clear(&self) {
+        self.record_observability(&serde_json::json!({"phase": "logs_cleared"}));
+    }
+
+    fn record_observability(&self, event: &serde_json::Value) {
+        let mut event = event.clone();
+        event["time"] = crate::operation_context::now().to_rfc3339().into();
+        self.record_management(&event);
+    }
+
     /// Append one event. Failures are logged and otherwise ignored: auditing
     /// must never take the proxy down.
     pub fn record(&self, event: &AuditEvent) {

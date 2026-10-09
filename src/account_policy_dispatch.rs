@@ -146,6 +146,7 @@ pub async fn send(
             cookies,
         )
         .map_err(UpstreamSendError::Egress)?;
+        log.set_account(correlation, &selected.name);
         let sending = async {
             let response = log.send_prepared(correlation, &client, request).await?;
             let status = response.status().as_u16();

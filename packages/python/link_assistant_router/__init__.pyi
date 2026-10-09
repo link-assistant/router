@@ -85,6 +85,7 @@ LocalDeployment = TypedDict('LocalDeployment', {'backend': 'dict[str, Any] | Non
 LogAnomaly = TypedDict('LogAnomaly', {'correlation_ids': 'list[str]', 'detail': 'str', 'kind': 'str'}, total=False)
 LogRecordsReport = TypedDict('LogRecordsReport', {'correlation_id': 'str', 'output': 'list[str]', 'records': 'list[Any]'}, total=False)
 LogSummary = TypedDict('LogSummary', {'bytes': 'int', 'exchanges': 'int', 'incomplete_streams': 'int', 'non_streamed': 'int', 'records': 'int', 'statuses': 'dict[str, Any]', 'streamed': 'int', 'undecodable_bodies': 'int', 'unparsable_records': 'int', 'unterminated_streams': 'int', 'unverifiable_streams': 'int'}, total=False)
+LoggingPatch = TypedDict('LoggingPatch', {'debug': 'bool'}, total=False)
 LoginView = TypedDict('LoginView', {'error': 'str | None', 'expires_at': 'int | None', 'login_id': 'str', 'provider': 'LoginView_SubscriptionProvider', 'session_expires_at': 'str', 'status': 'LoginView_LoginStatus', 'url': 'str | None', 'user_code': 'str | None'}, total=False)
 LoginView_LoginStatus = Literal['awaiting_code'] | Literal['awaiting_callback'] | Literal['awaiting_device'] | Literal['authorized'] | Literal['failed'] | Literal['expired']
 LoginView_SubscriptionProvider = Literal['claude'] | Literal['codex'] | Literal['gemini'] | Literal['qwen']

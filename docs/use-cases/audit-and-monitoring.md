@@ -168,6 +168,58 @@ router tokens list
 rate(link_assistant_requests_total[5m])
 ```
 
+## Management diagnostics
+
+All diagnostic endpoints use the existing management listener/IP policy and
+require an administrator credential. Request ids are Router's `request_id` in
+the operational log and `correlation_id` in `requests.lino`.
+
+| Method and path under `/api/management` | Result |
+| --- | --- |
+| `GET /logs/requests/{id}` | `{id, records}` with the retained redacted phases, decoded from links notation or legacy JSON logs; 404 if the id is no longer retained |
+| `GET /logs/errors` | `{enabled, files: [{name, bytes}]}`, oldest first |
+| `GET /logs/errors/{name}` | Downloadable JSON with `id`, upstream `status`, redacted `body`, `complete`, and `truncated` |
+| `DELETE /logs` | Clears retained request/error files; preserves operational and audit logs |
+| `PATCH /logging` | Accepts `{"debug": true}` or `{"debug": false}`; returns `{debug, ttl_secs}` |
+| `GET /usage/queue` | `{accounts: [{name, in_flight, queued}], in_flight, queued, unassigned}` |
+| `GET /server/latest-version` | `{current_version, latest_version, update_available, release_url}` from the latest stable GitHub release |
+
+Error capture is **off by default**. Set `ERROR_LOG_DIR` to enable it, and
+optionally set `ERROR_LOG_MAX_BYTES` (default 10 MiB) to bound all capture files
+in that directory. Zero disables writes. On Unix, captures use owner-only files
+and directories (0600/0700). They evict the oldest files before a new file would exceed the
+budget. Use a dedicated error directory. Its files can contain prompt content;
+they are never added to metrics.
+
+Only upstream HTTP 4xx/5xx bodies consumed by Router are captured. Capture
+does not read ahead or change the response returned to the client. The body
+buffer is limited to the smaller of 1 MiB and the configured total budget.
+Incomplete or oversized bodies are represented by an omission marker, so a
+partial JSON document cannot bypass credential redaction. Captures are
+finalized when the upstream body finishes or is dropped. Clearing captures
+also invalidates buffers already in flight. Ordinary request logging continues
+during and after clearing; an active exchange may subsequently write new phases.
+
+Debug mode lasts for `LOG_DEBUG_TTL_SECS` (default 300, valid range 1–86400).
+Turning it off or waiting for expiry restores the original filter, including
+`RUST_LOG` directives. A later toggle replaces the previous lease. Changes and
+expiry are recorded in the optional audit log and the operational log. The
+existing console opt-in still applies.
+
+Active request counts include response streaming until consumption or
+cancellation. `unassigned` counts exchanges that have not selected an upstream
+account. Router dispatches immediately and has no application request queue,
+so `queued` is always zero. The version endpoint performs a bounded read-only
+GitHub check, returns 502 on a failed check, and never updates the server.
+
+```bash
+curl -s "$ROUTER_URL/api/management/logs/requests/$REQUEST_ID" \
+  -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN"
+curl -s -X PATCH "$ROUTER_URL/api/management/logging" \
+  -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"debug":true}'
+```
+
 ## Related
 
 - [per-task-tokens.md](per-task-tokens.md) — issuing and scoping the tokens

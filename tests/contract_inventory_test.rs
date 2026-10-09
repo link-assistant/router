@@ -11,8 +11,12 @@ fn existing_route_ids_keep_their_numeric_values_and_order() {
     assert_eq!(RouteId::CredentialStatus as usize, 19);
     assert_eq!(RouteId::NativeCodexBackend as usize, 93);
     assert_eq!(RouteId::AccountPolicy as usize, 94);
+    assert_eq!(RouteId::RequestLog as usize, 95);
+    assert_eq!(RouteId::LatestVersion as usize, 101);
     assert!(RouteId::NativeCodexBackend < RouteId::Routing);
     assert!(RouteId::NativeCodexBackend < RouteId::CooldownReset);
+    assert!(RouteId::LatestVersion < RouteId::Routing);
+    assert!(RouteId::LatestVersion < RouteId::CooldownReset);
 }
 
 #[test]

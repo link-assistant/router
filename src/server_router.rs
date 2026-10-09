@@ -108,6 +108,34 @@ pub(crate) fn management_routes(
             post(crate::routing_api::reset),
         )
         .route(
+            route_template(RouteId::RequestLog),
+            get(crate::observability_api::request),
+        )
+        .route(
+            route_template(RouteId::ErrorLogs),
+            get(crate::observability_api::errors),
+        )
+        .route(
+            route_template(RouteId::ErrorLog),
+            get(crate::observability_api::error),
+        )
+        .route(
+            route_template(RouteId::ClearLogs),
+            axum::routing::delete(crate::observability_api::clear),
+        )
+        .route(
+            route_template(RouteId::Logging),
+            axum::routing::patch(crate::observability_api::logging),
+        )
+        .route(
+            route_template(RouteId::UsageQueue),
+            get(crate::observability_api::queue),
+        )
+        .route(
+            route_template(RouteId::LatestVersion),
+            get(crate::observability_api::latest_version),
+        )
+        .route(
             route_template(RouteId::Tokens),
             get(token_admin::list_tokens).post(token_admin::issue_token),
         )
