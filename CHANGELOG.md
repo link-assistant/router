@@ -214,6 +214,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.20.0] - 2026-10-09
+
+### Added
+- Add a shared provider connector lifecycle contract backed by the existing subscription credential, refresh, catalog and cooldown implementations, with guarded egress transport.
+- Document provider onboarding terms decisions, denied subscription bridges, native client rows, model truth and required test tiers; exercise the contract against Claude and Codex with a reusable mock-upstream conformance suite.
+
 ## [1.19.0] - 2026-10-09
 
 ### Security
