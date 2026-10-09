@@ -64,6 +64,21 @@ and are ignored by Git.
 `run-checks.py --units --start 8` verifies saved shard results and their inventory
 without compiling or running completed tests again.
 
+When CI requires committing an increased coverage baseline, download its
+`rust-lcov` artifact and reproduce the reviewability failure without modifying
+the repository baseline:
+
+```sh
+python3 experiments/issue-727/check-measured-coverage.py \
+  ci-logs/issue-727/coverage-247aa01/coverage-summary.json --expect-update
+```
+
+After committing the report's measured percentage, run the same command without
+`--expect-update` to verify the coverage gate leaves the baseline unchanged.
+The failed job on `247aa01` measured 77,623 / 89,329 lines, requiring the baseline
+to advance from 86.855579% to 86.895633%. The existing coverage checker unit tests
+continue to enforce the floor and prevent unapproved decreases.
+
 The issue's compiled inventory was removed by issue #192. Source definitions
 therefore overlay authenticated live inventories instead of restoring a static
 list with routing authority. Leaving sources unset preserves existing behavior.

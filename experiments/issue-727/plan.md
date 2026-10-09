@@ -37,3 +37,20 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
    - Coverage baseline: `coverage-job-113673701659.log:7843` requires committing the increased baseline. Download the actual report and advance the baseline to its measured 86.839130%, preserving the ratchet.
 4. Merge the v1.19.0 release from main, verify generated contracts against the rebuilt binary and binding versions, and rerun the unit groups with the matching package version.
 5. Require all workflows for the final pushed SHA to pass before marking the PR ready; retain investigation evidence if another failure appears.
+
+## Resume verification (2026-10-09)
+
+- [x] Read the updated issue and all three PR comment/review endpoints; no new
+  feature or review requirements were added.
+- [x] Match fresh runs to commit `247aa01` and preserve failed pipeline and
+  coverage-job logs. All other checks passed; the coverage gate measured
+  77,623 / 89,329 lines (86.895633%) and required a reviewable baseline update
+  (`coverage-job-113817763609.log:7914`).
+- [x] Reproduce the baseline mutation with the downloaded report, commit its
+  measured increase, and verify checker unit tests and baseline idempotence.
+- [ ] Merge latest main's Rust, UI and Docker dependency updates, preserving
+  the jsonschema upgrade and lockfiles; rerun focused and complete local tests.
+- [ ] Review the final diff, run strict checks, commit and push only the prepared
+  branch; require fresh passing workflows for its exact SHA.
+- [ ] Recheck main ancestry, comments and clean status, update the PR's test
+  evidence, and mark PR #752 ready.
