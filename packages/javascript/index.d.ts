@@ -79,6 +79,10 @@ export type LoginView_LoginStatus = ("awaiting_code" | "awaiting_callback" | "aw
 export type LoginView_SubscriptionProvider = ("claude" | "codex" | "gemini" | "qwen");
 export type MaintenancePlan = { "backup_id"?: string | null; "binary"?: string | null; "channel"?: string | null; "client": string; "command": ReadonlyArray<string>; "method": string; "operation": string; "preserved_profiles": ReadonlyArray<string>; "reason"?: string | null; "status": string; "version_after"?: string | null; "version_before"?: string | null; };
 export type ManagementReport = { "accounts"?: JsonValue; "auth_url"?: JsonValue; "by_provider"?: JsonValue; "by_token"?: JsonValue; "code"?: JsonValue; "counters"?: JsonValue; "credential_kind"?: JsonValue; "credentials"?: JsonValue; "disabled"?: JsonValue; "duration_minutes"?: JsonValue; "enabled"?: JsonValue; "error"?: JsonValue; "expires_at"?: JsonValue; "expires_in"?: JsonValue; "failures"?: JsonValue; "id"?: JsonValue; "last_failure"?: JsonValue; "message"?: JsonValue; "mode"?: JsonValue; "output"?: JsonValue; "provider"?: JsonValue; "providers"?: JsonValue; "reason"?: JsonValue; "recent"?: JsonValue; "refresh"?: JsonValue; "remaining_seconds"?: JsonValue; "session_id"?: JsonValue; "started_at"?: JsonValue; "status"?: JsonValue; "surfaces"?: JsonValue; "tokens"?: JsonValue; "total"?: JsonValue; "total_cached_tokens"?: JsonValue; "total_cost_usd"?: JsonValue; "total_input_tokens"?: JsonValue; "total_output_tokens"?: JsonValue; "total_requests"?: JsonValue; "total_tokens"?: JsonValue; "uptime_seconds"?: JsonValue; "url"?: JsonValue; "user_code"?: JsonValue; "verification_uri"?: JsonValue; };
+export type ModelDefinitionsResponse = { "channel": string; "models": ReadonlyArray<ModelDefinitionsResponse_ModelTruthDescriptor>; };
+export type ModelDefinitionsResponse_ModelRouteScope = { "account"?: string | null; "endpoint"?: string | null; "protocols": ReadonlyArray<string>; "provider"?: string | null; };
+export type ModelDefinitionsResponse_ModelSelectorKind = "concrete" | "provider_dynamic_alias" | "operator_alias" | "unknown";
+export type ModelDefinitionsResponse_ModelTruthDescriptor = { "allow_substitution": boolean; "capabilities": JsonValue; "capability_provenance": JsonValue; "requested_selector"?: string | null; "route": ModelDefinitionsResponse_ModelRouteScope; "selector_kind": ModelDefinitionsResponse_ModelSelectorKind; "substitution_source"?: string | null; "upstream_request_model"?: string | null; "upstream_served_model"?: string | null; };
 export type ModelExplanationReport = { "capability_provenance": JsonValue; "client_representation": ModelExplanationReport_ClientRepresentation; "contract_version": number; "health": ModelExplanationReport_ModelHealth; "model_descriptor": ModelExplanationReport_ModelTruthDescriptor; "model_policy": JsonValue; "output": ReadonlyArray<string>; "requested_selector": string; "route_scope": JsonValue; "routing": ModelExplanationReport_ModelRouting; "selector_kind": string; "served_identity"?: string | null; };
 export type ModelExplanationReport_ClientRepresentation = { "advertisements": ReadonlyArray<JsonValue>; "client": string; };
 export type ModelExplanationReport_ModelHealth = { "degraded_providers": ReadonlyArray<string>; "degraded_reasons": JsonValue; "healthy_providers": ReadonlyArray<string>; "starting_providers": ReadonlyArray<string>; };
@@ -186,6 +190,9 @@ export interface AccountsListOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -269,6 +276,9 @@ export interface AccountsPauseOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -355,6 +365,9 @@ export interface AccountsPolicyOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -440,6 +453,9 @@ export interface AccountsResumeOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -524,6 +540,9 @@ export interface AuthClaudeOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -612,6 +631,9 @@ export interface AuthClearOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -698,6 +720,9 @@ export interface AuthCodexOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -784,6 +809,9 @@ export interface AuthGhOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -871,6 +899,9 @@ export interface AuthImportOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -962,6 +993,9 @@ export interface AuthStatusOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1047,6 +1081,9 @@ export interface ClientsBackupCreateOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1131,6 +1168,9 @@ export interface ClientsBackupListOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1211,6 +1251,9 @@ export interface ClientsBackupRestoreOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1297,6 +1340,9 @@ export interface ClientsBackupVerifyOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1378,6 +1424,9 @@ export interface ClientsDoctorOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1458,6 +1507,9 @@ export interface ClientsInstallOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1545,6 +1597,9 @@ export interface ClientsListOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1624,6 +1679,9 @@ export interface ClientsReinstallOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1711,6 +1769,9 @@ export interface ClientsRemoveOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1793,6 +1854,9 @@ export interface ClientsRepairOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1876,6 +1940,9 @@ export interface ClientsResetOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -1961,6 +2028,9 @@ export interface ClientsSetupOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2045,6 +2115,9 @@ export interface ClientsShowOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2125,6 +2198,9 @@ export interface ClientsUpdateOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2212,6 +2288,9 @@ export interface ConfigureOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2300,6 +2379,9 @@ export interface ContractsOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2379,6 +2461,9 @@ export interface DeployOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2492,6 +2577,9 @@ export interface DoctorOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2575,6 +2663,9 @@ export interface LogsAnomaliesOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2658,6 +2749,9 @@ export interface LogsShowOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2742,6 +2836,9 @@ export interface LogsSummaryOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2825,6 +2922,9 @@ export interface ModelsExplainOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -2910,6 +3010,9 @@ export interface ProvidersAddOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3006,6 +3109,9 @@ export interface ProvidersImportOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3090,6 +3196,9 @@ export interface ProvidersListOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3173,6 +3282,9 @@ export interface ProvidersRemoveOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3257,6 +3369,9 @@ export interface ProvidersShowOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3341,6 +3456,9 @@ export interface ServeOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3420,6 +3538,9 @@ export interface ServerClaimOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3499,6 +3620,9 @@ export interface ServerReapOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3579,6 +3703,9 @@ export interface ServerRemoveOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3659,6 +3786,9 @@ export interface ServerStartOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3738,6 +3868,9 @@ export interface ServerStatusOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3817,6 +3950,9 @@ export interface ServerStopOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3896,6 +4032,9 @@ export interface ServerUseOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -3982,6 +4121,9 @@ export interface TlsCaOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4065,6 +4207,9 @@ export interface TlsGenerateOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4149,6 +4294,9 @@ export interface TokensExpireOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4233,6 +4381,9 @@ export interface TokensImportOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4320,6 +4471,9 @@ export interface TokensIssueOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4412,6 +4566,9 @@ export interface TokensListOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4495,6 +4652,9 @@ export interface TokensRecoverAdminOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4581,6 +4741,9 @@ export interface TokensRevokeOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4665,6 +4828,9 @@ export interface TokensRotateOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4755,6 +4921,9 @@ export interface TokensShowOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4839,6 +5008,9 @@ export interface TunnelDownOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -4927,6 +5099,9 @@ export interface TunnelStatusOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -5015,6 +5190,9 @@ export interface TunnelUpOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -5103,6 +5281,9 @@ export interface UsageOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -5187,6 +5368,9 @@ export interface VerifyOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -5267,6 +5451,9 @@ export interface VersionOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;
@@ -5346,6 +5533,9 @@ export interface WithOptions {
   "lockoutFailures"?: string | number;
   "lockoutSecs"?: string | number;
   "exemptLoopback"?: boolean;
+  "sources"?: string | number | readonly (string | number)[];
+  "refreshSecs"?: string | number;
+  "localModels"?: string | number | readonly (string | number)[];
   "adminPort"?: string | number;
   "adminHost"?: string | number;
   "adminClaimTtlSecs"?: string | number;

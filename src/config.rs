@@ -292,6 +292,8 @@ pub struct Config {
     pub admin_ui: crate::admin::AdminUiConfig,
     /// Management listener policy and failed-authentication lockout.
     pub management: crate::management_config::ManagementConfig,
+    /// Optional operator definitions over authenticated live model catalogs.
+    pub model_catalog_sources: crate::model_catalog_sources::CatalogSourcesConfig,
     /// Opt-in Telegram/VK admin channels (disabled unless a bot token is set).
     pub chat_admin: crate::chat_admin::ChatAdminConfig,
 }
@@ -625,6 +627,9 @@ impl Config {
         .and_then(|mut config| {
             config.management = crate::management_config::ManagementConfig::from_env()
                 .map_err(ConfigError::InvalidManagementSecurity)?;
+            config.model_catalog_sources =
+                crate::model_catalog_sources::CatalogSourcesConfig::from_env()
+                    .map_err(ConfigError::InvalidModelCatalogSources)?;
             Ok(config)
         })
     }
@@ -734,6 +739,7 @@ impl Config {
                 .with_proxied_clients(args.proxied_client_overrides)
                 .map_err(ConfigError::InvalidProxiedClientPolicy)?,
             management: crate::management_config::ManagementConfig::default(),
+            model_catalog_sources: crate::model_catalog_sources::CatalogSourcesConfig::default(),
             admin_key: args.admin_key,
             allow_anonymous_admin: args.allow_anonymous_admin,
             emergency_auth: args.emergency_auth,

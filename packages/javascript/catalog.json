@@ -585,6 +585,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -1469,6 +1499,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -2395,6 +2455,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -3305,6 +3395,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -4199,6 +4319,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -5145,6 +5295,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -6059,6 +6239,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -6995,6 +7205,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -7919,6 +8159,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -8895,6 +9165,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -9806,6 +10106,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -10707,6 +11037,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -11562,6 +11922,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -12489,6 +12879,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -13359,6 +13779,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -14213,6 +14663,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -15149,6 +15629,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -15993,6 +16503,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -16929,6 +17469,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -17803,6 +18373,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -18693,6 +19293,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -19609,6 +20239,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -20519,6 +21179,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -21373,6 +22063,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -22302,6 +23022,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -23257,6 +24007,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -24100,6 +24880,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -25325,6 +26135,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -26209,6 +27049,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -27109,6 +27979,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -28025,6 +28925,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -28919,6 +29849,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -29829,6 +30789,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -30865,6 +31855,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -31765,6 +32785,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -32649,6 +33699,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -33555,6 +34635,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -34454,6 +35564,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -35304,6 +36444,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -36148,6 +37318,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -37014,6 +38214,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -37874,6 +39104,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -38718,6 +39978,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -39574,6 +40864,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -40418,6 +41738,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -41354,6 +42704,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -42238,6 +43618,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -43144,6 +44554,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -44038,6 +45478,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -44968,6 +46438,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -45954,6 +47454,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -46838,6 +48368,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -47764,6 +49324,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -48658,6 +50248,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -49624,6 +51244,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -50518,6 +52168,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -51464,6 +53144,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -52398,6 +54108,36 @@
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
           "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
           "positional": false,
           "required": false,
           "secret": false
@@ -53343,6 +55083,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -54242,6 +56012,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -55101,6 +56901,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -55950,6 +57780,36 @@
         },
         {
           "boolean": false,
+          "environment": "MODEL_CATALOG_SOURCES",
+          "flag": "model-catalog-sources",
+          "multiple": true,
+          "name": "sources",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MODEL_CATALOG_REFRESH_SECS",
+          "flag": "model-catalog-refresh-secs",
+          "multiple": false,
+          "name": "refresh_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "local-model",
+          "multiple": true,
+          "name": "local_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
           "multiple": false,
@@ -56606,6 +58466,18 @@
       "method": "GET",
       "name": "Providers",
       "path": "/api/management/providers"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "ModelDefinitions",
+      "path": "/api/management/routing/model-definitions/{channel}"
     },
     {
       "auth": "Admin",
@@ -61040,6 +62912,240 @@
         "preserved_profiles"
       ],
       "title": "Plan",
+      "type": "object"
+    },
+    "ModelCatalogDocument": {
+      "$defs": {
+        "ModelRouteScope": {
+          "additionalProperties": false,
+          "description": "Exact routing scope for one model observation or exchange.",
+          "properties": {
+            "account": {
+              "type": "null"
+            },
+            "endpoint": {
+              "type": "null"
+            },
+            "protocols": {
+              "maxItems": 0,
+              "type": "array"
+            },
+            "provider": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "protocols",
+            "provider"
+          ],
+          "type": "object"
+        },
+        "ModelSelectorKind": {
+          "description": "Kind of selector a caller supplied. Dynamic aliases are factual only when\nthe authenticated provider catalog advertised that exact spelling.\n\nThis is the one wire contract for `selector_kind`: every producer\nserializes the canonical `snake_case` spelling, and every consumer \u2014\ncatalog projection, `router model` diagnostics and the wrapper's typed\ncatalog rows \u2014 reads through [`Self::from_wire`]. Router once emitted\n`provider_advertised_exact_id` for live z.ai rows while the wrapper's\nderived parser accepted only the canonical names, so one such row made\n`router with` reject the whole catalog (issue #620). A spelling this\nbuild does not know is `Unknown`, never a parse failure: an older wrapper\nmust degrade to \"no alias evidence\", not to \"no models\".",
+          "enum": [
+            "concrete",
+            "provider_dynamic_alias",
+            "operator_alias",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "ModelTruthDescriptor": {
+          "additionalProperties": false,
+          "description": "Canonical truth descriptor used by model diagnostics and boundary logs.\n\n`None` is intentionally serialized as JSON `null`: it means unknown, not\nthat Router may fill the field from a nearby selector.",
+          "properties": {
+            "allow_substitution": {
+              "const": false
+            },
+            "capabilities": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "capability_provenance": {
+              "type": "null"
+            },
+            "requested_selector": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "route": {
+              "$ref": "#/$defs/ModelRouteScope"
+            },
+            "selector_kind": {
+              "enum": [
+                "concrete",
+                "operator_alias"
+              ]
+            },
+            "substitution_source": {
+              "type": "null"
+            },
+            "upstream_request_model": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "upstream_served_model": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "selector_kind",
+            "route",
+            "capabilities",
+            "capability_provenance",
+            "allow_substitution",
+            "requested_selector",
+            "upstream_request_model"
+          ],
+          "type": "object"
+        }
+      },
+      "$id": "link-assistant-router/model-catalog/v1",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "Versioned source document using Router's canonical model-truth descriptors.",
+      "properties": {
+        "models": {
+          "description": "Exact provider-scoped definitions. These do not grant credential access.",
+          "items": {
+            "$ref": "#/$defs/ModelTruthDescriptor"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "version": {
+          "description": "Document format version. Only version 1 is supported.",
+          "format": "uint32",
+          "maximum": 1,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "models"
+      ],
+      "title": "ModelCatalogDocument",
+      "type": "object"
+    },
+    "ModelDefinitionsResponse": {
+      "$defs": {
+        "ModelRouteScope": {
+          "description": "Exact routing scope for one model observation or exchange.",
+          "properties": {
+            "account": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "endpoint": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "protocols": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "protocols"
+          ],
+          "type": "object"
+        },
+        "ModelSelectorKind": {
+          "description": "Kind of selector a caller supplied. Dynamic aliases are factual only when\nthe authenticated provider catalog advertised that exact spelling.\n\nThis is the one wire contract for `selector_kind`: every producer\nserializes the canonical `snake_case` spelling, and every consumer \u2014\ncatalog projection, `router model` diagnostics and the wrapper's typed\ncatalog rows \u2014 reads through [`Self::from_wire`]. Router once emitted\n`provider_advertised_exact_id` for live z.ai rows while the wrapper's\nderived parser accepted only the canonical names, so one such row made\n`router with` reject the whole catalog (issue #620). A spelling this\nbuild does not know is `Unknown`, never a parse failure: an older wrapper\nmust degrade to \"no alias evidence\", not to \"no models\".",
+          "enum": [
+            "concrete",
+            "provider_dynamic_alias",
+            "operator_alias",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "ModelTruthDescriptor": {
+          "description": "Canonical truth descriptor used by model diagnostics and boundary logs.\n\n`None` is intentionally serialized as JSON `null`: it means unknown, not\nthat Router may fill the field from a nearby selector.",
+          "properties": {
+            "allow_substitution": {
+              "type": "boolean"
+            },
+            "capabilities": true,
+            "capability_provenance": true,
+            "requested_selector": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "route": {
+              "$ref": "#/$defs/ModelRouteScope"
+            },
+            "selector_kind": {
+              "$ref": "#/$defs/ModelSelectorKind"
+            },
+            "substitution_source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "upstream_request_model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "upstream_served_model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "selector_kind",
+            "route",
+            "capabilities",
+            "capability_provenance",
+            "allow_substitution"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "Effective provider-scoped catalog for the existing admin-only management boundary.",
+      "properties": {
+        "channel": {
+          "description": "Canonical subscription service or configured provider name.",
+          "type": "string"
+        },
+        "models": {
+          "description": "Current live definitions after eligible operator overlays.",
+          "items": {
+            "$ref": "#/$defs/ModelTruthDescriptor"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "channel",
+        "models"
+      ],
+      "title": "ModelDefinitionsResponse",
       "type": "object"
     },
     "ModelExplanationReport": {

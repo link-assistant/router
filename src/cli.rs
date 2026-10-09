@@ -34,6 +34,7 @@ mod deploy_settings_args;
 mod emergency_args;
 mod log_ops;
 mod management_args;
+mod model_catalog_args;
 mod model_ops;
 mod pool_args;
 mod store_ops;
@@ -51,6 +52,7 @@ pub use self::deploy_settings_args::DeploySettingsArgs;
 pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
 pub use self::management_args::ManagementArgs;
+pub use self::model_catalog_args::ModelCatalogArgs;
 pub use self::model_ops::ModelOp;
 pub use self::pool_args::PoolArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
@@ -431,6 +433,9 @@ pub struct Cli {
     /// Management access policy and authentication lockout.
     #[command(flatten)]
     pub management: ManagementArgs,
+    /// Operator model sources and local definitions.
+    #[command(flatten)]
+    pub model_catalog_sources: ModelCatalogArgs,
     /// Admin UI listener port; omitted or `0` keeps it disabled.
     #[arg(long, env = "ADMIN_PORT", global = true)]
     pub admin_port: Option<u16>,
@@ -872,6 +877,10 @@ impl Cli {
             },
         })?;
         config.management = self.management.config();
+        config.model_catalog_sources = self
+            .model_catalog_sources
+            .config()
+            .map_err(ConfigError::InvalidModelCatalogSources)?;
         config.client_home = client_home;
         config.isolated_client_home = self.home.is_some();
         Ok(config)

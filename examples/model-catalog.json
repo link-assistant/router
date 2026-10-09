@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "requested_selector": "friendly",
+      "selector_kind": "operator_alias",
+      "route": {
+        "provider": "local",
+        "account": null,
+        "endpoint": null,
+        "protocols": []
+      },
+      "upstream_request_model": "vendor-model",
+      "upstream_served_model": null,
+      "capabilities": null,
+      "capability_provenance": null,
+      "allow_substitution": false,
+      "substitution_source": null
+    }
+  ]
+}

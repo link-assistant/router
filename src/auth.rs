@@ -622,13 +622,10 @@ mod tests {
         token_bodies: Mutex<Vec<String>>,
     }
 
-    async fn listener_eventually_releases(port: u16) -> bool {
+    async fn callback_server_eventually_finishes(server: &tokio::task::AbortHandle) -> bool {
         let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
         loop {
-            if tokio::net::TcpListener::bind(("127.0.0.1", port))
-                .await
-                .is_ok()
-            {
+            if server.is_finished() {
                 return true;
             }
             if tokio::time::Instant::now() >= deadline {
@@ -858,6 +855,7 @@ mod tests {
         .await
         .unwrap();
         let port = login.port();
+        let callback_server = login.server.abort_handle();
         let auth_url = login.authorization_url().to_string();
         let callback_state = auth_url
             .split("state=")
@@ -899,11 +897,7 @@ mod tests {
         assert!(request.contains("code=good-code"));
         assert!(request.contains("code_verifier="));
         server.abort();
-        assert!(
-            tokio::net::TcpListener::bind(("127.0.0.1", port))
-                .await
-                .is_ok()
-        );
+        assert!(callback_server.is_finished());
     }
 
     #[tokio::test]
@@ -919,9 +913,9 @@ mod tests {
         })
         .await
         .unwrap();
-        let port = login.port();
+        let callback_server = login.server.abort_handle();
         assert!(login.complete().await.unwrap_err().contains("timed out"));
-        assert!(listener_eventually_releases(port).await);
+        assert!(callback_server.is_finished());
     }
 
     #[tokio::test]
@@ -937,10 +931,10 @@ mod tests {
         })
         .await
         .unwrap();
-        let port = login.port();
+        let callback_server = login.server.abort_handle();
 
         drop(login);
-        assert!(listener_eventually_releases(port).await);
+        assert!(callback_server_eventually_finishes(&callback_server).await);
     }
 
     #[tokio::test]
@@ -957,6 +951,7 @@ mod tests {
         .await
         .unwrap();
         let port = login.port();
+        let callback_server = login.server.abort_handle();
         let state = login
             .authorization_url()
             .split("state=")
@@ -980,11 +975,9 @@ mod tests {
                 .unwrap_err()
                 .contains("access_denied")
         );
-        assert!(
-            tokio::net::TcpListener::bind(("127.0.0.1", port))
-                .await
-                .is_ok()
-        );
+        // Another parallel test may already own the released ephemeral port.
+        // Completion of this listener's task proves its own resource cleanup.
+        assert!(callback_server.is_finished());
     }
 }
 

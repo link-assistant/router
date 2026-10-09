@@ -178,6 +178,7 @@ pub enum RouteId {
     Logging,
     UsageQueue,
     LatestVersion,
+    ModelDefinitions,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
