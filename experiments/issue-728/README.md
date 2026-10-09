@@ -61,7 +61,8 @@ original full suite on Linux and macOS and compiles it on Windows.
 
 ```sh
 rust-script experiments/issue-703/shard-unit-tests.rs
-ROUTER_BUILD_RSS_LIMIT_MIB=2400 python3 experiments/issue-726/verify-unit-shards.py
+CARGO_PROFILE_TEST_DEBUG=0 ROUTER_BUILD_RSS_LIMIT_MIB=2450 \
+  python3 experiments/issue-726/verify-unit-shards.py
 CARGO_PROFILE_TEST_DEBUG=0 CARGO_BUILD_JOBS=1 \
   cargo test --locked --all-features --test '*' --bins
 ```
