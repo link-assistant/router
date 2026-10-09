@@ -76,6 +76,7 @@ impl RouteMethod {
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RouteId {
+    // Append new variants so numeric casts and derived ordering stay stable.
     Health,
     AggregateModels,
     SubscriptionUsage,
@@ -95,8 +96,6 @@ pub enum RouteId {
     Accounts,
     AccountPause,
     AccountResume,
-    Routing,
-    CooldownReset,
     CredentialStatus,
     AuthDiagnostics,
     EmergencyAuthStatus,
@@ -172,6 +171,8 @@ pub enum RouteId {
     NativeAnthropic,
     NativeCodex,
     NativeCodexBackend,
+    Routing,
+    CooldownReset,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

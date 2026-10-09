@@ -16,6 +16,13 @@ Local logs are deliberately ignored by Git. Investigation logs include `routing-
 
 CI coverage run `37869397631` at commit `057da6c` passed its instrumented tests and measured 75,428 of 87,200 lines covered (86.50%). Its baseline-review gate then failed (`ci-logs/coverage-37869397631.log:8432`) because the committed baseline was 86.323847%. The `rust-lcov` artifact supplied the measured report, and the existing `scripts/check-coverage.rs` advanced `coverage-baseline.txt` to 86.500000%. Re-running the checker against that report leaves the committed baseline unchanged.
 
+CI's Rust API compatibility job at commit `d0e4666` reported changed `RouteId` discriminants (`ci-logs/semver-37873145548.log:1352`) and derived ordering. The new contract inventory regression first failed because `CredentialStatus as usize` was 21 instead of its published value 19 (`route-id-reproduction.log`). Appending the two new route variants preserves existing casts and ordering. Check against the default branch with the same pinned tool as CI:
+
+```sh
+cargo install cargo-semver-checks --version 0.51.0 --locked
+cargo semver-checks check-release --baseline-rev origin/main --release-type minor
+```
+
 The workspace has a 3 GB process-group memory limit. One Cargo build job and disabled debug information keep integration builds within that bound. Default library unit-test codegen exceeded the limit. `low-memory-rustc.py` is a local-only experiment that partitions library test codegen, reduces LLVM name retention and serializes the backend; it leaves dependencies, production builds and checked-in Cargo profiles unchanged. Even this experiment was OOM-killed here, so it does not establish a passing unit-suite result. The full unit suite must run on the normal CI runners. The attempted command was:
 
 ```sh

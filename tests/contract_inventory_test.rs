@@ -3,6 +3,18 @@ use link_assistant_router::contracts;
 use serde_json::Value;
 
 #[test]
+fn existing_route_ids_keep_their_numeric_values_and_order() {
+    use link_assistant_router::route_contract::RouteId;
+
+    // Public casts and derived ordering must retain the values from v1.18.6.
+    assert_eq!(RouteId::AccountResume as usize, 18);
+    assert_eq!(RouteId::CredentialStatus as usize, 19);
+    assert_eq!(RouteId::NativeCodexBackend as usize, 93);
+    assert!(RouteId::NativeCodexBackend < RouteId::Routing);
+    assert!(RouteId::NativeCodexBackend < RouteId::CooldownReset);
+}
+
+#[test]
 fn published_catalog_matches_the_rust_inventory() {
     let published: Value =
         serde_json::from_str(include_str!("../schemas/operation-catalog.v1.json")).unwrap();
