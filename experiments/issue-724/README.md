@@ -22,6 +22,14 @@ While the next run was queued, the management-hardening change reached `main` an
 
 CI run `37882175433` at commit `5fba6ae` passed all 2,176 library unit tests in both the Linux and instrumented suites. Its downloaded `rust-lcov` artifact measured 76,150 of 87,641 lines covered (86.888557%). The coverage floor passed; only the requirement to commit the increased baseline failed (`ci-logs/coverage-37882175433.log:8468`). The existing checker advances the baseline to that measured value, and a second invocation leaves it unchanged. The later `main` release commit changes version metadata to 1.19.0 without changing the tested routing source; its merge passes the build, generated contracts/bindings, compatibility checks and all 14 focused CLI/contract tests.
 
+Run `37886197015` passed the Linux and coverage jobs, but macOS reproduced a wall-clock assumption in `a_session_returns_to_its_account_after_the_cooldown` (`ci-logs/macos-37886197015.log:7801`). A one-second Unix reset can expire across a timestamp boundary between two immediate requests, so the second detour assertion sometimes already saw the recovered primary account. The bounded local repeat probe reproduced the same assertion on iteration 29 (`cooldown-clock-reproduction.log:201`). The fixture now supports an injected clock: the test freezes it for both detours and advances exactly one second to verify recovery, preserving every assertion and removing the real sleep. Compile `pool_failover_test` and pass the executable printed by Cargo to this Linux probe (at most 128 iterations, 1.5 GB address space and 64 MB stack per process):
+
+```sh
+python3 experiments/issue-724/repeat-pool-cooldown.py /path/to/pool_failover_test --repetitions 64
+```
+
+After the clock change, all 38 pool tests and all 64 repeat iterations pass (`cooldown-clock-pool-tests.log` and `cooldown-clock-repeat-tests.log`). The complete local integration/bin rerun also passes all 865 tests across 118 suites, with one ignored soak test (`cooldown-clock-full-integration-tests.log`).
+
 CI's Rust API compatibility job at commit `d0e4666` reported changed `RouteId` discriminants (`ci-logs/semver-37873145548.log:1352`) and derived ordering. The new contract inventory regression first failed because `CredentialStatus as usize` was 21 instead of its published value 19 (`route-id-reproduction.log`). Appending the two new route variants preserves existing casts and ordering. Check against the default branch with the same pinned tool as CI:
 
 ```sh

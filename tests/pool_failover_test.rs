@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -383,6 +383,7 @@ impl Drop for Pool {
 struct Options {
     failover: bool,
     cooldown: Duration,
+    clock: Option<Arc<AtomicU64>>,
     pause_at_percent: Option<u8>,
     /// Pool Codex accounts behind the native Responses route instead of
     /// Claude accounts behind the Anthropic pass-through.
@@ -397,6 +398,7 @@ impl Default for Options {
         Self {
             failover: true,
             cooldown: Duration::from_secs(60),
+            clock: None,
             pause_at_percent: None,
             codex: false,
             http: AccountHttpPolicy::default(),
@@ -597,6 +599,21 @@ impl Pool {
                 get(link_assistant_router::monitoring_api::metrics_endpoint),
             )
             .with_state(state.clone());
+        let app = if let Some(clock) = options.clock {
+            app.layer(axum::middleware::from_fn(
+                move |request: Request, next: axum::middleware::Next| {
+                    let mut context =
+                        link_assistant_router::operation_context::OperationContext::default();
+                    context.now = chrono::DateTime::from_timestamp(
+                        clock.load(Ordering::Relaxed).try_into().unwrap(),
+                        0,
+                    );
+                    async move { context.scope_async(next.run(request)).await }
+                },
+            ))
+        } else {
+            app
+        };
         let (url, app_task) = spawn(app).await;
         Self {
             // Never follows a relayed redirect, so a test sees what the router sent.

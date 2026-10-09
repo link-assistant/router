@@ -110,11 +110,19 @@ async fn attempts_are_bounded_and_the_last_failure_is_relayed() {
 /// account once the cooldown ends.
 #[tokio::test]
 async fn a_session_returns_to_its_account_after_the_cooldown() {
+    let clock = Arc::new(AtomicU64::new(
+        link_assistant_router::account_limits::now_unix(),
+    ));
     let pool = Pool::start(Options {
         cooldown: Duration::from_secs(1),
+        clock: Some(clock.clone()),
         ..Options::default()
     })
     .await;
+    clock.store(
+        link_assistant_router::account_limits::now_unix(),
+        Ordering::Relaxed,
+    );
     let session = Some("session-affinity");
 
     assert_eq!(pool.send(session, &hello(false)).await.0, StatusCode::OK);
@@ -133,7 +141,9 @@ async fn a_session_returns_to_its_account_after_the_cooldown() {
     let (_, body) = pool.send(session, &hello(false)).await;
     assert!(body.contains("answered by account-"), "{body}");
 
-    tokio::time::sleep(Duration::from_millis(2100)).await;
+    // Unix reset timestamps have second precision. Freeze the clock during
+    // the detour assertions, then advance exactly to the reset boundary.
+    clock.fetch_add(1, Ordering::Relaxed);
     let (_, body) = pool.send(session, &hello(false)).await;
     assert!(body.contains("answered by primary"), "{body}");
     assert_eq!(
