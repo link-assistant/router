@@ -48,9 +48,14 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
   (`coverage-job-113817763609.log:7914`).
 - [x] Reproduce the baseline mutation with the downloaded report, commit its
   measured increase, and verify checker unit tests and baseline idempotence.
-- [ ] Merge latest main's Rust, UI and Docker dependency updates, preserving
-  the jsonschema upgrade and lockfiles; rerun focused and complete local tests.
-- [ ] Review the final diff, run strict checks, commit and push only the prepared
-  branch; require fresh passing workflows for its exact SHA.
-- [ ] Recheck main ancestry, comments and clean status, update the PR's test
-  evidence, and mark PR #752 ready.
+- [x] Merge latest main's Rust, UI and Docker dependency updates, preserving
+  jsonschema 0.58.5, the link-cli upgrade and both lockfiles.
+- [x] Verify strict all-target/all-feature Clippy, the unchanged built UI,
+  15 catalog regressions, 21 CLI regressions, all 2,192 distinct unit tests,
+  Python/Node/Bun binding tests, and generated contract compatibility.
+- Finish every integration target, binary/documentation tests, the Rust host
+  consumer and generated Go/Java/PHP probes; retain their complete local logs.
+- Review the final diff, commit and push only the prepared branch, and require
+  fresh passing workflows for its exact SHA before readiness.
+- Recheck main ancestry, comments and clean status, update the PR's test evidence,
+  and mark PR #752 ready.
