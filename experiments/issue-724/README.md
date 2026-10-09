@@ -113,3 +113,16 @@ cargo test --locked --all-features --test pool_failover_test thinking_suffixes_s
 cargo test --locked --all-features --test pool_failover_test a_same_account_retry_round
 cargo test --locked --all-features --test thinking_account_policy_test
 ```
+
+The combined thinking/routing source passes all 968 integration/bin tests across 127 suites (one existing ignored soak), all 15 doctests, strict documentation and 2,183 distinct library tests. The enabled library inventory retains all 2,180 previously enabled tests and adds the exact-base routing, endpoint/generation capability scope and thinking-suffix grant regressions. No library tests fail or are ignored (`resume-thinking-local-unit-inventory-summary.log` and `ci-logs/thinking-local-unit-inventory.txt`).
+
+Eight initial file partitions completed six groups. Two compilers reached the existing 2,350 MiB guard before their tests started; the runner safely stopped them with exit 125. Splitting only those file partitions into four 16-way groups completes every remaining test without raising the bound. Successful groups peak at 2,383,772 KiB; the guarded attempts stop at no more than 2,424,720 KiB, below the enclosing fixed 2,400 MiB limit. The original and replacement logs are `resume-thinking-all-unit-shards.log` and `resume-thinking-unit-split-{5,6,13,14}.log`. On a small Linux worker, run all sixteen partitions directly:
+
+```sh
+env -u CARGO_TARGET_DIR CARGO_PROFILE_TEST_DEBUG=0 \
+  python3 experiments/issue-725/run-unit-shards.py --shards 16 --library-only
+```
+
+Main's subsequent v1.23.0 release changes only version/catalog metadata and changelog files; its production, test, script and example delta is empty. The rebuilt v1.23.0 binary passes all 41 focused CLI/contract/administration tests, all examples, strict production/integration/example/benchmark Clippy, exact CLI-generated contracts and bindings, published-contract compatibility, Node/Bun/Python (ten tests each) and TypeScript (`resume-thinking-release-*.log`). The catalog retains 62 operations and 234 HTTP routes. Formatting, file-size, terminology, workflow tools, release/changelog rules and recorded-fixture checks also pass.
+
+Run `37981694647` at `a978d43` passes Linux, macOS and Windows tests, including normal Linux's 2,183 enabled library tests. The complete local inventory exactly matches those names and retains all 2,180 previous tests (`resume-thinking-unit-inventory-summary.log`). All six other workflows pass. The instrumented suite measures 79,965 of 91,865 lines covered (87.046209%); its floor and ratchet pass, and only the baseline-review gate requests the measured increase (`ci-logs/coverage-37981694647.log:7305`). The downloaded `rust-lcov` report supplies the baseline through the unchanged checker; a second invocation leaves it unchanged, and all eight checker tests pass (`resume-thinking-coverage-*.log`).
