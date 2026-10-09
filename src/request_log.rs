@@ -1,9 +1,11 @@
 //! Redacted, size-bounded HTTP exchange logging.
 
-mod owner_only;
+mod management;
+pub(crate) mod owner_only;
 mod redaction;
 mod stream_outcome;
 mod total_limit;
+mod tracked_body;
 
 pub use stream_outcome::{
     STREAM_END_MARKER, StreamOutcome, body_is_inspectable, frame_terminates_stream,
@@ -80,6 +82,7 @@ struct LogIdentity {
 #[derive(Clone, Debug)]
 struct LogRoute {
     identity: LogIdentity,
+    account: Option<String>,
 }
 
 impl LogIdentity {
@@ -106,6 +109,7 @@ pub struct RequestLog {
     write_lock: Mutex<()>,
     total_limit_state: Mutex<Option<total_limit::State>>,
     routes: Mutex<HashMap<String, LogRoute>>,
+    error_log: Option<Arc<crate::error_log::ErrorLog>>,
 }
 
 impl RequestLog {
@@ -128,7 +132,9 @@ impl RequestLog {
             .ok()
             .and_then(|value| value.parse().ok())
             .unwrap_or(DEFAULT_MAX_TOTAL_BYTES);
-        Self::new(path, max_bytes).with_total_limit(max_total_bytes)
+        Self::new(path, max_bytes)
+            .with_total_limit(max_total_bytes)
+            .with_error_log_from_env()
     }
 
     /// Bound the whole store, not just each token within it.
@@ -151,6 +157,7 @@ impl RequestLog {
             write_lock: Mutex::new(()),
             total_limit_state: Mutex::new(None),
             routes: Mutex::new(HashMap::new()),
+            error_log: None,
         }
     }
 
@@ -259,7 +266,13 @@ impl RequestLog {
 
     fn route_request(&self, correlation_id: &str, identity: LogIdentity) {
         if let Ok(mut routes) = self.routes.lock() {
-            routes.insert(correlation_id.to_string(), LogRoute { identity });
+            routes.insert(
+                correlation_id.to_string(),
+                LogRoute {
+                    identity,
+                    account: None,
+                },
+            );
         }
     }
 
@@ -406,6 +419,9 @@ impl RequestLog {
         client: &reqwest::Client,
         builder: reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
+        if let Some(account) = crate::account_policy_scope::account() {
+            self.set_account(correlation_id, &account);
+        }
         let request = builder.build()?;
         if crate::account_policy_scope::active() {
             // Keep the policy loop's state out of every protocol handler's future.
@@ -427,6 +443,7 @@ impl RequestLog {
         client: &reqwest::Client,
         request: reqwest::Request,
     ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
+        self.begin_upstream(correlation_id);
         self.record(
             correlation_id,
             "upstream_request",
@@ -463,7 +480,10 @@ impl RequestLog {
                 }),
             ),
         }
-        result
+        result.map(|response| match &self.error_log {
+            Some(log) => log.wrap(correlation_id, response),
+            None => response,
+        })
     }
 
     /// Record bytes received from the upstream (one event per stream chunk).
@@ -785,8 +805,7 @@ pub async fn log_http_exchange(
             upstream_request_id = upstream_request_id.unwrap_or("-"),
             "private response"
         );
-        drop(route_guard);
-        return response;
+        return tracked_body::hold_route(response, route_guard);
     }
     let logged_uri = safe_http_uri(&parts.method, &parts.uri);
     let requested_model = Arc::new(Mutex::new(None));

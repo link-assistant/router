@@ -5,6 +5,7 @@ use tracing_subscriber::EnvFilter;
 mod child;
 mod process;
 pub(crate) mod redaction;
+pub(crate) mod runtime_debug;
 pub(crate) use child::supervise;
 pub use process::run_launcher;
 pub(crate) use process::{
@@ -33,7 +34,9 @@ pub fn request_log(
         path.display()
     );
     std::sync::Arc::new(
-        crate::request_log::RequestLog::new(path, max_bytes).with_total_limit(max_total_bytes),
+        crate::request_log::RequestLog::new(path, max_bytes)
+            .with_total_limit(max_total_bytes)
+            .with_error_log_from_env(),
     )
 }
 
@@ -45,13 +48,10 @@ pub fn init(verbose: bool) {
 
 /// Build the lazy compatibility logger used by existing proxy code.
 #[must_use]
-pub fn build_lazy(verbose: bool) -> log_lazy::LogLazy {
-    let level = if verbose {
-        log_lazy::levels::ALL
-    } else {
-        log_lazy::levels::PRODUCTION
-    };
-    log_lazy::LogLazy::with_sink(level, |level, message| match level {
+pub fn build_lazy(_verbose: bool) -> log_lazy::LogLazy {
+    // Tracing owns the reloadable filter; cloned compatibility loggers must
+    // not permanently suppress debug events before they reach that filter.
+    log_lazy::LogLazy::with_sink(log_lazy::levels::ALL, |level, message| match level {
         log_lazy::Level::FATAL | log_lazy::Level::ERROR => tracing::error!("{message}"),
         log_lazy::Level::WARN => tracing::warn!("{message}"),
         log_lazy::Level::INFO => tracing::info!("{message}"),
