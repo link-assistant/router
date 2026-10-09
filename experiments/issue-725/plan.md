@@ -191,7 +191,7 @@ generated contracts, binding parity and strict TypeScript pass. Strict
 all-target/all-feature Clippy passes under the finite 2450 MiB bound,
 observing a 2447080 KiB peak.
 
-Main remains at a8232ff8e745a465b339d8afadf410fdef075976 (v1.21.0).
+Main's release at a8232ff8e745a465b339d8afadf410fdef075976 is v1.21.0.
 Its metadata-only merge is reviewed and rebuilds the actual Router 1.21.0
 binary. All 201 affected CLI, contract, catalog, routing and thinking cases
 pass, including the new policy regressions. All nine binding cases each in
@@ -200,4 +200,26 @@ backward compatibility, formatting, file-size, terminology and vendor
 fixtures pass against that rebuilt binary.
 Strict all-target/all-feature Clippy also passes on the v1.21.0 merge,
 observing a 2408952 KiB peak under the same finite bound. The complete
-combined-source integration and unit rerun will accompany the next CI run.
+combined-source local rerun is complete: all 2,178 Linux unit tests, 912
+integration cases across 122 targets, fifteen documentation tests, the
+independent Rust library consumer and the three binary targets pass. All
+fourteen automation script suites, release preparation/retry experiments,
+remote checkpoint contracts and workflow invariants pass. Strict Rust
+documentation also passes, with a 1525612 KiB peak.
+
+Seven of eight temporary unit partitions pass directly. Partition 4 reaches
+the finite 2350 MiB compiler bound at 2407476 KiB before executing tests.
+Repartitioning that same file group as partitions 4 and 12 of sixteen runs
+all 112 and 108 remaining tests successfully, with respective peaks of
+2285496 and 2191288 KiB. No Linux unit entry point is omitted or repeated.
+Logs remain in `ci-logs/all-units-policy-merge.log` and
+`ci-logs/unit-policy-partition4{a,b}.log`.
+
+Main subsequently advances to 645931fcf0b260ebac5d13318f72d86af17230e4
+through PR #754, updating only the pinned Node/Python setup actions in two
+workflow files. Both diffs and the merged PR are reviewed. The merge changes
+no application, test, dependency, package or contract source, so the complete
+local results above remain applicable. Release workflow invariants, the tool
+installation check across all 42 jobs, its eight unit cases and formatting
+pass after merging those action updates. Latest-commit CI and readiness are
+recorded in PR #750 when all remote jobs finish.
