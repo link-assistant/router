@@ -1,5 +1,8 @@
 # Issue #725 implementation plan
 
+This file records the local validation checkpoint. Final CI results and
+readiness are recorded in [PR #750](https://github.com/link-assistant/router/pull/750).
+
 - [x] Read issue #725 and every comment on issue and PR #750; verify prepared branch.
 - [x] Read model-truth contract, adapter paths, contribution rules and upstream suffix/applier/test matrices.
 - [x] Record upstream revision and reproduce missing suffix/cross-protocol behavior with minimum automated tests.
@@ -103,5 +106,11 @@ repository. Logs remain in the ignored `ci-logs/` directory.
 
 Main subsequently published release 6656dc142fde87acf35e67072df5bae49144f33b
 (v1.19.0). Its diff contains version metadata and the consumed management
-changelog fragment only. It will be merged after the current checks finish,
-then the version-sensitive tests and generated contracts will be verified.
+changelog fragment only. It merges cleanly. After rebuilding the versioned
+binary, all 167 cases in the version-sensitive, CLI, catalog, Router end-to-end
+and four thinking targets pass. Generated contracts, binding parity and
+backward compatibility against the release commit also pass. Node, Bun and
+Python each pass their nine real-binary binding cases, and strict
+TypeScript passes. The initial contract and JavaScript rechecks used the
+cached 1.18.6 binary; rerunning against the rebuilt 1.19.0 binary passes.
+Python uses the existing isolated binding environment.
