@@ -177,6 +177,11 @@ pub(crate) fn management_routes(
                 post(crate::monitoring_api::account_resume_endpoint),
             )
             .route(
+                route_template(RouteId::AccountPolicy),
+                get(crate::account_policy_management::get_policy)
+                    .post(crate::account_policy_management::set_policy),
+            )
+            .route(
                 route_template(RouteId::Metrics),
                 get(proxy::metrics_endpoint),
             );
@@ -436,10 +441,15 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
                 post(gemini::forward_native_vertex),
             );
     }
-    routes.route_layer(from_fn_with_state(
-        (state, config.enable_anthropic_api),
-        authenticate_inference_route,
-    ))
+    routes
+        .route_layer(from_fn_with_state(
+            state.clone(),
+            crate::account_policy_middleware::route,
+        ))
+        .route_layer(from_fn_with_state(
+            (state, config.enable_anthropic_api),
+            authenticate_inference_route,
+        ))
 }
 
 fn private_service_routes(state: AppState) -> Router<AppState> {

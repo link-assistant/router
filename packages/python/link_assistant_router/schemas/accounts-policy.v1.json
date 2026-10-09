@@ -127,80 +127,9 @@
         "action"
       ],
       "type": "object"
-    },
-    "Accounts": {
-      "additionalProperties": false,
-      "properties": {
-        "accounts": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "cooldown_reason": {},
-              "cooldown_remaining_seconds": {},
-              "cooldown_until_unix": {},
-              "credential": {},
-              "healthy": {},
-              "home": {},
-              "last_error": {},
-              "model_cooldowns": {},
-              "name": {},
-              "pause": {},
-              "paused": {},
-              "remaining_requests": {},
-              "request_limit": {},
-              "routing_policy": {
-                "$ref": "#/$defs/AccountRoutingPolicy"
-              },
-              "routing_policy_error": {
-                "type": "string"
-              },
-              "used": {},
-              "windows": {}
-            },
-            "required": [
-              "name",
-              "healthy"
-            ],
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "credentials": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "credential": {
-                "type": "string"
-              },
-              "healthy": {
-                "type": "boolean"
-              },
-              "home": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "healthy"
-            ],
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "note": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "accounts"
-      ],
-      "type": "object"
     }
   },
-  "$id": "link-assistant-router/accounts-list/v1",
+  "$id": "link-assistant-router/accounts-policy/v1",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "allOf": [
@@ -233,45 +162,7 @@
     "data": {
       "anyOf": [
         {
-          "anyOf": [
-            {
-              "items": {
-                "additionalProperties": false,
-                "properties": {
-                  "cooldown_reason": {},
-                  "cooldown_remaining_seconds": {},
-                  "cooldown_until_unix": {},
-                  "credential": {},
-                  "healthy": {},
-                  "home": {},
-                  "last_error": {},
-                  "model_cooldowns": {},
-                  "name": {},
-                  "pause": {},
-                  "paused": {},
-                  "remaining_requests": {},
-                  "request_limit": {},
-                  "routing_policy": {
-                    "$ref": "#/$defs/AccountRoutingPolicy"
-                  },
-                  "routing_policy_error": {
-                    "type": "string"
-                  },
-                  "used": {},
-                  "windows": {}
-                },
-                "required": [
-                  "name",
-                  "healthy"
-                ],
-                "type": "object"
-              },
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/Accounts"
-            }
-          ]
+          "$ref": "#/$defs/AccountRoutingPolicy"
         },
         {
           "additionalProperties": false,
@@ -302,10 +193,10 @@
       "type": "integer"
     },
     "operation": {
-      "const": "accounts.list"
+      "const": "accounts.policy"
     },
     "schema": {
-      "const": "link-assistant-router/accounts-list/v1"
+      "const": "link-assistant-router/accounts-policy/v1"
     },
     "success": {
       "type": "boolean"

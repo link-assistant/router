@@ -46,6 +46,15 @@ pub async fn route_state_with_subscription_for_client(
         .and_then(Value::as_str)
         .filter(|model| !model.is_empty())
         .ok_or(ModelRouteError::ModelRequired)?;
+    if let Some(scope) = crate::account_policy_scope::current()
+        && scope.context.model.as_deref() != Some(model)
+        && scope.upstream_model == model
+        && let Some(router) = state.account_router.as_ref()
+        && entitled_providers.contains(&router.provider())
+    {
+        // An operator alias or account prefix already proved its exact account-owned model.
+        return route_subscription_model_for_providers(state, model, &[router.provider()]).await;
+    }
     let visible_subscription = entitled_providers.iter().any(|provider| {
         state
             .model_catalogs

@@ -95,6 +95,7 @@ pub enum RouteId {
     Accounts,
     AccountPause,
     AccountResume,
+    AccountPolicy,
     CredentialStatus,
     AuthDiagnostics,
     EmergencyAuthStatus,

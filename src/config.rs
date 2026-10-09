@@ -963,7 +963,7 @@ impl std::fmt::Display for ConfigError {
             | Self::TokenSecretFile(message) => write!(f, "{message}"),
             Self::InvalidAccountRoutingStrategy => write!(
                 f,
-                "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, fill-first, least-used"
+                "ACCOUNT_ROUTING_STRATEGY must be one of: round-robin, weighted-round-robin, fill-first, least-used"
             ),
             Self::InvalidAccountRequestLimits => write!(
                 f,

@@ -6,7 +6,6 @@
 //! selected account. Typed quota failures and configured request caps remove
 //! accounts from automatic selection without silently moving pinned work.
 
-use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -21,6 +20,8 @@ pub enum SelectionStrategy {
     /// Round-robin across all healthy accounts.
     #[default]
     RoundRobin,
+    /// Smooth weighted round-robin across eligible positive-weight accounts.
+    WeightedRoundRobin,
     /// Always prefer the lowest-index healthy account; fall back on cooldown.
     Priority,
     /// Pick the account with the lowest used-quota count.
@@ -31,6 +32,7 @@ impl SelectionStrategy {
     #[must_use]
     pub fn from_str_opt(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
+            "weighted-round-robin" | "weighted_round_robin" => Some(Self::WeightedRoundRobin),
             "round-robin" | "roundrobin" | "rr" => Some(Self::RoundRobin),
             "priority" | "prio" | "fill-first" | "fillfirst" => Some(Self::Priority),
             "least-used" | "leastused" | "least-utilized" | "quota-first" | "lru" => {
@@ -120,6 +122,8 @@ impl RoutingContext {
 
 /// Per-account runtime state (cooldowns, request counts, last error).
 struct AccountState {
+    routing_policy:
+        std::sync::RwLock<Result<crate::account_routing_policy::AccountRoutingPolicy, String>>,
     name: String,
     reader: SubscriptionReader,
     home: PathBuf,
@@ -134,6 +138,9 @@ struct AccountState {
 impl AccountState {
     fn new(name: String, reader: SubscriptionReader, home: PathBuf, limit: Option<usize>) -> Self {
         Self {
+            routing_policy: std::sync::RwLock::new(
+                crate::account_routing_policy::AccountRoutingPolicy::load(&home),
+            ),
             name,
             reader,
             home,
@@ -145,12 +152,27 @@ impl AccountState {
         }
     }
 
+    fn policy(
+        &self,
+    ) -> std::sync::RwLockReadGuard<
+        '_,
+        Result<crate::account_routing_policy::AccountRoutingPolicy, String>,
+    > {
+        self.routing_policy
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
     fn is_healthy(&self) -> bool {
+        let Ok(policy) = self.policy().clone() else {
+            return false;
+        };
         let guard = self
             .cooldown_until
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        !matches!(*guard, Some(t) if t > Instant::now()) && !self.is_paused()
+        (policy.disable_cooling || !matches!(*guard, Some(t) if t > Instant::now()))
+            && !self.is_paused()
     }
 
     fn limits(&self) -> std::sync::MutexGuard<'_, crate::account_limits::AccountLimitState> {
@@ -169,9 +191,10 @@ impl AccountState {
         self.is_available()
             && !context.exclude.contains(&self.name)
             && context.model.as_deref().is_none_or(|model| {
-                !self
-                    .limits()
-                    .blocks_model(model, crate::account_limits::now_unix())
+                self.policy().as_ref().is_ok_and(|p| p.disable_cooling)
+                    || !self
+                        .limits()
+                        .blocks_model(model, crate::account_limits::now_unix())
             })
     }
 
@@ -241,6 +264,8 @@ pub struct AccountRouter {
 struct AccountRouterInner {
     accounts: Vec<AccountState>,
     cursor: AtomicUsize,
+    weights: Mutex<Vec<i64>>,
+    force_model_prefix: bool,
     provider: SubscriptionProvider,
     strategy: SelectionStrategy,
     cooldown: Duration,
@@ -347,6 +372,11 @@ impl AccountRouter {
         }
         let router = Self {
             inner: Arc::new(AccountRouterInner {
+                weights: Mutex::new(vec![0; accounts.len()]),
+                force_model_prefix: crate::operation_context::var("ACCOUNT_FORCE_MODEL_PREFIX")
+                    .is_ok_and(|v| {
+                        matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+                    }),
                 accounts,
                 cursor: AtomicUsize::new(0),
                 provider,
@@ -542,17 +572,24 @@ impl AccountRouter {
         context: &RoutingContext,
         allowed: impl Fn(&str) -> bool,
     ) -> Result<SelectedSubscriptionAccount, AccountError> {
-        let (indices, mode) = self.selection_plan(context)?;
+        let (indices, mode) = self.selection_plan(context, &allowed)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.serves(context) || !allowed(&account.name) {
+            if !account.serves(context)
+                || !self.policy_serves(idx, context)
+                || !allowed(&account.name)
+            {
                 if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
                 continue;
             }
             match account.reader.read_token() {
-                Ok(token) if account.try_record_use() => {
+                Ok(token)
+                    if (crate::account_policy_scope::preselected(context).as_deref()
+                        == Some(&account.name)
+                        || account.try_record_use()) =>
+                {
                     self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
@@ -583,10 +620,10 @@ impl AccountRouter {
         cache: &crate::refresh::TokenCache,
         allowed: impl Fn(&str) -> bool,
     ) -> Result<SelectedSubscriptionAccount, AccountError> {
-        let (indices, mode) = self.selection_plan(context)?;
+        let (indices, mode) = self.selection_plan(context, &allowed)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.serves(context) {
+            if !account.serves(context) || !self.policy_serves(idx, context) {
                 if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
@@ -601,7 +638,11 @@ impl AccountRouter {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
-                Ok(Some(token)) if account.try_record_use() => {
+                Ok(Some(token))
+                    if (crate::account_policy_scope::preselected(context).as_deref()
+                        == Some(&account.name)
+                        || account.try_record_use()) =>
+                {
                     self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
@@ -624,137 +665,6 @@ impl AccountRouter {
         Err(AccountError::NoHealthyAccounts)
     }
 
-    fn selection_plan(
-        &self,
-        context: &RoutingContext,
-    ) -> Result<(Vec<usize>, SelectionMode), AccountError> {
-        if self.inner.accounts.is_empty() {
-            return Err(AccountError::NoAccountsConfigured);
-        }
-        if let Some(pin) = context.pinned_account.as_deref() {
-            let Some(index) = self.inner.accounts.iter().position(|a| a.name == pin) else {
-                return Err(AccountError::UnknownPinnedAccount(pin.to_string()));
-            };
-            // A token-pinned account never falls back, failover or not.
-            if context.exclude.iter().any(|tried| tried == pin) {
-                return Err(AccountError::PinnedAccountUnavailable(pin.to_string()));
-            }
-            return Ok((vec![index], SelectionMode::Pinned));
-        }
-        if let Some(session) = context.session_key.as_deref()
-            && let Some(index) = self.bound_account(session)
-        {
-            if !self.inner.failover || self.inner.accounts[index].serves(context) {
-                return Ok((vec![index], SelectionMode::Session));
-            }
-            // Failover: serve the session elsewhere for now, but keep (and
-            // refresh) its binding so it returns once the account recovers.
-            self.bind_session(context, index);
-            return Ok((self.failover_order(Some(index)), SelectionMode::Detour));
-        }
-        if !context.exclude.is_empty() {
-            return Ok((self.failover_order(None), SelectionMode::Automatic));
-        }
-        let mut indices: Vec<usize> = (0..self.inner.accounts.len()).collect();
-        match self.inner.strategy {
-            SelectionStrategy::RoundRobin => {
-                let start = self.inner.cursor.fetch_add(1, Ordering::Relaxed) % indices.len();
-                indices.rotate_left(start);
-            }
-            SelectionStrategy::Priority => {}
-            SelectionStrategy::LeastUsed => indices.sort_by(|left, right| {
-                Self::compare_usage(&self.inner.accounts[*left], &self.inner.accounts[*right])
-            }),
-        }
-        Ok((indices, SelectionMode::Automatic))
-    }
-
-    /// Failover candidates, rotated by a dedicated cursor so concurrent
-    /// failovers from one account spread across the others instead of all
-    /// landing on the next one in priority order.
-    fn failover_order(&self, skip: Option<usize>) -> Vec<usize> {
-        let mut indices: Vec<usize> = (0..self.inner.accounts.len())
-            .filter(|index| Some(*index) != skip)
-            .collect();
-        if !indices.is_empty() {
-            let start = self.inner.failover_cursor.fetch_add(1, Ordering::Relaxed) % indices.len();
-            indices.rotate_left(start);
-        }
-        indices
-    }
-
-    /// The account a session is currently bound to, if any.
-    #[must_use]
-    pub fn session_account(&self, context: &RoutingContext) -> Option<String> {
-        let index = self.bound_account(context.session_key.as_deref()?)?;
-        Some(self.inner.accounts[index].name.clone())
-    }
-
-    fn bind_selected(&self, context: &RoutingContext, mode: SelectionMode, index: usize) {
-        if !matches!(mode, SelectionMode::Detour) {
-            self.bind_session(context, index);
-        }
-    }
-
-    fn compare_usage(left: &AccountState, right: &AccountState) -> CmpOrdering {
-        let left_used = left.used.load(Ordering::Relaxed);
-        let right_used = right.used.load(Ordering::Relaxed);
-        match (left.request_limit, right.request_limit) {
-            (Some(left_limit), Some(right_limit)) => left_used
-                .saturating_mul(right_limit)
-                .cmp(&right_used.saturating_mul(left_limit))
-                .then_with(|| left_used.cmp(&right_used)),
-            // Prefer measurable quota headroom; unknown quotas remain eligible
-            // as a fallback instead of being treated as unlimited.
-            (Some(_), None) => CmpOrdering::Less,
-            (None, Some(_)) => CmpOrdering::Greater,
-            (None, None) => left_used.cmp(&right_used),
-        }
-    }
-
-    fn bound_account(&self, session: &str) -> Option<usize> {
-        if self.inner.session_affinity_ttl.is_zero() {
-            return None;
-        }
-        let now = Instant::now();
-        let mut affinities = self
-            .inner
-            .affinities
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        affinities.retain(|_, binding| binding.expires_at > now);
-        affinities.get(session).map(|binding| binding.account_index)
-    }
-
-    fn bind_session(&self, context: &RoutingContext, account_index: usize) {
-        let Some(session) = context.session_key.as_ref() else {
-            return;
-        };
-        if self.inner.session_affinity_ttl.is_zero() {
-            return;
-        }
-        let mut affinities = self
-            .inner
-            .affinities
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        affinities.insert(
-            session.clone(),
-            AffinityBinding {
-                account_index,
-                expires_at: Instant::now() + self.inner.session_affinity_ttl,
-            },
-        );
-    }
-
-    fn unavailable_error(mode: SelectionMode, account: &str) -> AccountError {
-        match mode {
-            SelectionMode::Pinned => AccountError::PinnedAccountUnavailable(account.to_string()),
-            SelectionMode::Session => AccountError::SessionAccountUnavailable(account.to_string()),
-            SelectionMode::Automatic | SelectionMode::Detour => AccountError::NoHealthyAccounts,
-        }
-    }
-
     /// Mark the named account as having failed (e.g., upstream returned 429).
     pub fn report_failure(&self, account_name: &str, err: &str) {
         self.report_failure_with_retry_after(account_name, err, None);
@@ -769,6 +679,14 @@ impl AccountRouter {
         err: &str,
         retry_after: Option<Duration>,
     ) {
+        if crate::account_policy_scope::current().is_some_and(|s| {
+            *s.last_action
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                == Some(crate::account_routing_policy::ErrorAction::Relay)
+        }) {
+            return;
+        }
         if let Some(idx) = self
             .inner
             .accounts
@@ -792,6 +710,13 @@ impl AccountRouter {
     }
 
     fn start_cooldown(&self, idx: usize, duration: Duration) {
+        if self.inner.accounts[idx]
+            .policy()
+            .as_ref()
+            .is_ok_and(|p| p.disable_cooling)
+        {
+            return;
+        }
         let mut guard = self.inner.accounts[idx]
             .cooldown_until
             .lock()
@@ -962,3 +887,8 @@ pub use limits::{LimitCounts, ObservedLimits, UpstreamObservation};
 #[cfg(test)]
 #[path = "accounts_tests.rs"]
 mod tests;
+
+#[path = "accounts_policy.rs"]
+mod policy;
+#[path = "accounts_selection.rs"]
+mod selection;

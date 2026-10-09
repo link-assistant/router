@@ -202,19 +202,15 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
         std::fs::create_dir_all(&config.data_dir)?;
     }
     let store = build_token_store(config.storage_policy, &config.data_dir)?;
-    let account_router =
-        if config.additional_account_dirs.is_empty() && config.account_request_limits.is_empty() {
-            None
-        } else {
-            let (provider, primary) = config.subscription_pool();
-            let options = config.account_router_options();
-            Some(AccountRouter::new_for_provider(
-                primary,
-                &config.additional_account_dirs,
-                provider,
-                options,
-            ))
-        };
+    // Keep a primary pool available so management can install the first policy
+    // without restarting the server. Default policies preserve selection behavior.
+    let (provider, primary) = config.subscription_pool();
+    let account_router = Some(AccountRouter::new_for_provider(
+        primary,
+        &config.additional_account_dirs,
+        provider,
+        config.account_router_options(),
+    ));
     Ok((store, account_router))
 }
 

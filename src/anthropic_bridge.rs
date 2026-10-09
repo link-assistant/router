@@ -74,7 +74,7 @@ pub fn resolve_bridge_model(state: &AppState) -> Result<String, ModelSelectionRe
     resolve_bridge_model_for_account(state, None)
 }
 
-fn resolve_bridge_model_for_account(
+pub(crate) fn resolve_bridge_model_for_account(
     state: &AppState,
     router_account: Option<&str>,
 ) -> Result<String, ModelSelectionRequired> {
@@ -105,6 +105,13 @@ fn resolve_bridge_model_for_account(
     }
     if !status.credential_healthy {
         return fail(SelectionFailure::CredentialUnavailable);
+    }
+    if let Some(scope) = crate::account_policy_scope::current()
+        && router_account == crate::account_policy_scope::account().as_deref()
+    {
+        return catalog_contains_current_generation(&status, &scope.upstream_model)
+            .then(|| scope.upstream_model.clone())
+            .map_or_else(|| fail(SelectionFailure::ConfiguredModelUnavailable), Ok);
     }
     if let Some(model) = state
         .bridge_model
