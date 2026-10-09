@@ -59,9 +59,13 @@ code and assigns every enabled unit test to one of eight temporary source
 copies. The original integration tests run without sharding. CI runs the
 original full suite on Linux and macOS and compiles it on Windows.
 
+This Codex workspace sets `CODEX_HOME` to a non-default directory. Unset that
+override only for the test subprocess so the existing default-home test runs
+with its intended environment.
+
 ```sh
 rust-script experiments/issue-703/shard-unit-tests.rs
-CARGO_PROFILE_TEST_DEBUG=0 ROUTER_BUILD_RSS_LIMIT_MIB=2450 \
+env -u CODEX_HOME CARGO_PROFILE_TEST_DEBUG=0 ROUTER_BUILD_RSS_LIMIT_MIB=2450 \
   python3 experiments/issue-726/verify-unit-shards.py
 CARGO_PROFILE_TEST_DEBUG=0 CARGO_BUILD_JOBS=1 \
   cargo test --locked --all-features --test '*' --bins
