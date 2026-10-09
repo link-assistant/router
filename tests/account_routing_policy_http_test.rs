@@ -297,6 +297,56 @@ async fn alias_cannot_bypass_upstream_grant_or_invent_live_model() {
 }
 
 #[tokio::test]
+async fn aliases_hide_shadowed_records_and_preserve_other_accounts_native_models() {
+    let f = Fixture::new(aliased(), StatusCode::OK, "").await;
+    for account in ["primary", "account-1"] {
+        f.state.model_catalogs.record_success_for_account(
+            SubscriptionProvider::Claude,
+            account,
+            None,
+            vec!["native".into(), "friendly".into()],
+        );
+    }
+    for (account, expected_status) in [
+        ("primary", StatusCode::FORBIDDEN),
+        ("account-1", StatusCode::OK),
+    ] {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-api-key",
+            f.token("friendly", Some(account)).parse().unwrap(),
+        );
+        let catalog = link_assistant_router::model_routing::models(
+            State(f.state.clone()),
+            axum::extract::OriginalUri("/api/services/anthropic/v1/models".parse().unwrap()),
+            headers,
+        )
+        .await;
+        assert_eq!(catalog.status(), StatusCode::OK);
+        let catalog = value(catalog).await;
+        if account == "primary" {
+            assert!(catalog["data"].as_array().unwrap().is_empty(), "{catalog}");
+        } else {
+            assert_eq!(catalog["data"][0]["id"], "friendly", "{catalog}");
+            assert_eq!(catalog["data"].as_array().unwrap().len(), 1);
+        }
+        assert_eq!(
+            f.request("friendly", "friendly", Some(account), false)
+                .await
+                .status(),
+            expected_status
+        );
+    }
+    {
+        let seen = f.seen.lock().unwrap().clone();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].0["authorization"], "Bearer vendor-1");
+        assert_eq!(seen[0].1["model"], "friendly");
+    }
+    f.close().await;
+}
+
+#[tokio::test]
 async fn alias_is_rewritten_in_stream_metadata() {
     let f = Fixture::new(aliased(), StatusCode::OK, "").await;
     let response = f.request("friendly", "native", None, true).await;

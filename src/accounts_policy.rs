@@ -95,20 +95,6 @@ impl AccountRouter {
     #[must_use]
     pub fn upstream_model(&self, account: &str, model: &str) -> Option<String> {
         let policy = self.routing_policy(account).ok()?;
-        let bare = policy
-            .prefix
-            .as_ref()
-            .and_then(|prefix| model.strip_prefix(&format!("{prefix}/")))
-            .unwrap_or(model);
-        let configured_alias = self.inner.accounts.iter().any(|account| {
-            account
-                .policy()
-                .as_ref()
-                .is_ok_and(|policy| policy.model_aliases.iter().any(|alias| alias.alias == bare))
-        });
-        if configured_alias && !policy.model_aliases.iter().any(|alias| alias.alias == bare) {
-            return None;
-        }
         let selected_prefix = self.inner.accounts.iter().find_map(|a| {
             let policy = a.policy();
             let prefix = policy.as_ref().ok()?.prefix.clone()?;

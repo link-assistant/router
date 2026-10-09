@@ -106,6 +106,18 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         Ok(policy) => policy,
         Err(error) => return failure(StatusCode::SERVICE_UNAVAILABLE, &error.to_string()),
     };
+    // A known alias must never fall through to a guessed native spelling on
+    // another account. Its live catalog can prove that spelling is real there.
+    let configured_alias = router.subscription_readers().iter().any(|(account, _)| {
+        router.routing_policy(account).is_ok_and(|policy| {
+            let bare = policy
+                .prefix
+                .as_ref()
+                .and_then(|prefix| requested.strip_prefix(&format!("{prefix}/")))
+                .unwrap_or(&requested);
+            policy.model_aliases.iter().any(|alias| alias.alias == bare)
+        })
+    });
     let candidates: Vec<_> = router
         .subscription_readers()
         .into_iter()
@@ -140,7 +152,9 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
                 model = format!("models/{model}");
             }
             let alias = model != requested && !requested.ends_with(&format!("/{model}"));
-            if (state.upstream_provider == crate::config::UpstreamProvider::Auto || alias)
+            if (state.upstream_provider == crate::config::UpstreamProvider::Auto
+                || alias
+                || configured_alias)
                 && !catalog.routable_models().contains(&model)
             {
                 return None;

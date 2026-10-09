@@ -1,5 +1,8 @@
 # Issue 723 implementation plan
 
+This records the implementation checkpoint before final CI. The latest CI,
+full-suite validation and readiness results are recorded in PR 748.
+
 - [x] Read issue, parent case study, all PR comments, contribution guidelines and recent related changes.
 - [x] Trace credential persistence, CLI/management editing, selection/failover, model catalog, translations and subscription policy enforcement.
 - [x] Add minimal failing tests for weighted routing, persisted prefixes and disable-cooling before implementation; extend coverage for the remaining policies.

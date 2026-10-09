@@ -45,6 +45,12 @@ now follow every existing variant, preserving numeric values and existing orderi
 `existing_public_enum_discriminants_remain_stable` reproduced the failure before
 this correction; its output is retained in `semver-reproduction.log`.
 
+Run 37868426482 tested `19efccf`; its SemVer job log, lines 1362–1364,
+identified the same issue in the field-bearing CLI `AccountOp` enum. The first
+report's result limit had omitted these additional variants. `Policy` now follows
+`List`, `Pause` and `Resume`, and a failing command-order regression reproduced
+the displacement before correction (`cli-order-reproduction.log`).
+
 ## Local resource limit
 
 The container has a 3 GB memory limit. The monolithic library unit-test
@@ -53,8 +59,9 @@ disabled. New HTTP regressions therefore use a separate integration target with
 real production routes and deterministic local mock upstreams. Build and test output
 is kept in ignored `.log` files here. The one-job, 512-codegen-unit experiment in
 `bounded-unit-rustc.py` also exceeded the container limit despite explicit
-memory/stack bounds. All 115 integration targets completed successfully (845
-tests, one ignored), and all 15 documentation tests passed. CI verifies the full
+memory/stack bounds. All 115 integration targets completed successfully (847
+tests, one ignored) after the first review corrections, and all 15 documentation
+tests passed. CI verifies the full
 unit suite on its larger runner.
 
 ## Live edit regression found during review
@@ -67,6 +74,16 @@ requires the current resolution to equal the validated upstream selector before
 every send, including retries. An invalidation returns the last vendor response,
 or an egress error when no attempt has been sent. The regression verifies 502
 and no outbound request for the initial-send race.
+
+Catalog review also reproduced native records shadowed by an alias: a principal
+granted only `friendly` saw that name in discovery even though dispatch resolved
+it to the forbidden `native` model on that account.
+`shadowed-model-reproduction.log` preserves the failing assertion. Catalog
+projection now verifies that each advertised name resolves to that record's exact
+upstream identity and account. The regression also preserves a native model of
+the same name on another account. Inference requires live catalog proof before
+a declared alias can be treated as a native spelling on that other account;
+an unknown spelling cannot bypass the alias's upstream model grant.
 
 ## Validation before the implementation commit
 
@@ -85,7 +102,7 @@ Python binding tests and the existing Python deployment/contract regression
 scripts pass. `review-catalog.py` verifies that `accounts.policy` is the only new
 CLI operation and all 61 existing operations retain identical definitions.
 
-After the review corrections, all 34 focused tests and strict Clippy pass.
+After the final review corrections, all 35 focused tests and strict Clippy pass.
 Formatting, file-size/terminology checks and generated contract/binding compatibility
 also pass. The full integration and documentation suites are rerun for the corrected
 implementation, with latest-commit CI required before marking the PR ready.

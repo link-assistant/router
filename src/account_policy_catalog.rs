@@ -25,6 +25,12 @@ pub fn project(
             policy
                 .visible_models(&record.canonical_id, router.force_model_prefix())
                 .into_iter()
+                .filter(|id| {
+                    // Publish a spelling only when this account resolves it
+                    // to the same native record; aliases can shadow records.
+                    router.upstream_model(&record.account, id).as_deref()
+                        == Some(record.canonical_id.as_str())
+                })
                 .map(|id| {
                     let mut projected = record.clone();
                     if id != record.canonical_id {

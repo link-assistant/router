@@ -50,7 +50,9 @@ an alias replaces the native spelling; `fork: true` retains both. Requests send 
 upstream identity, and JSON/SSE response model metadata uses the client's alias or
 prefix. Prompt text and tool content are not rewritten. Token model grants are
 checked against the upstream identity, including in discovery; granting an alias
-alone cannot authorize its underlying model. Exclusions apply to upstream,
+alone cannot authorize its underlying model. Native names shadowed by an alias
+on the same account are hidden; other accounts retain their own live native names.
+Exclusions apply to upstream,
 alias and prefixed names: they hide discovery entries and return 404 for an
 excluded request on its selected account.
 
