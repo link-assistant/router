@@ -167,6 +167,9 @@ impl AccountRouter {
         let Some(index) = self.account_index(observed.account) else {
             return ObservedLimits::default();
         };
+        if self.inner.accounts[index].uses_unpooled_defaults() {
+            return ObservedLimits::default();
+        }
         let limits = crate::account_limits::parse_unified(observed.headers);
         let now = now_unix();
         let mut outcome = ObservedLimits::default();

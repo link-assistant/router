@@ -3,6 +3,13 @@ use super::{AccountRouter, RoutingContext, SelectionStrategy};
 use crate::account_routing_policy::AccountRoutingPolicy;
 
 impl AccountRouter {
+    /// Keep the legacy single-account request defaults until a policy opts in.
+    pub(crate) fn retain_unpooled_defaults(&mut self) {
+        let inner = std::sync::Arc::get_mut(&mut self.inner).expect("new primary pool is unshared");
+        debug_assert_eq!(inner.accounts.len(), 1);
+        inner.accounts[0].implicit_primary = true;
+    }
+
     /// Whether this pool needs opt-in request policy processing.
     #[must_use]
     pub fn has_routing_policy(&self) -> bool {

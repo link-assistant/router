@@ -346,6 +346,135 @@ async fn aliases_hide_shadowed_records_and_preserve_other_accounts_native_models
     f.close().await;
 }
 
+struct RuntimeProcess(std::process::Child);
+impl Drop for RuntimeProcess {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+
+#[tokio::test]
+async fn runtime_single_primary_without_policy_keeps_legacy_rate_limit_behavior() {
+    let f = Fixture::new(
+        AccountRoutingPolicy::default(),
+        StatusCode::TOO_MANY_REQUESTS,
+        "rate limited",
+    )
+    .await;
+    std::fs::remove_file(f.homes[1].path().join("routing-policy.json")).unwrap();
+    let args = [
+        "--token-secret",
+        "runtime-fixture-secret",
+        "--storage-policy",
+        "text",
+        "--data-dir",
+        f.homes[0].path().to_str().unwrap(),
+        "--claude-code-home",
+        f.homes[1].path().to_str().unwrap(),
+        "--upstream-provider",
+        "anthropic",
+        "--upstream-base-url",
+        &f.state.upstream_base_url,
+    ];
+    let binary = env!("CARGO_BIN_EXE_router");
+    let issued = std::process::Command::new(binary)
+        .args(args)
+        .args(["tokens", "issue", "--admin"])
+        .output()
+        .unwrap();
+    assert!(issued.status.success());
+    let stdout = String::from_utf8(issued.stdout).unwrap();
+    let admin = stdout
+        .lines()
+        .find(|line| line.starts_with(link_assistant_router::token::TOKEN_PREFIX))
+        .unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port().to_string();
+    drop(listener);
+    let log = std::fs::File::create(f.homes[0].path().join("runtime.log")).unwrap();
+    let process = RuntimeProcess(
+        std::process::Command::new(binary)
+            .args(args)
+            .args(["--host", "127.0.0.1", "--port", &port])
+            .stdout(log.try_clone().unwrap())
+            .stderr(log)
+            .spawn()
+            .unwrap(),
+    );
+    let base = format!("http://127.0.0.1:{port}");
+    let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(5);
+    while tokio::net::TcpStream::connect(format!("127.0.0.1:{port}"))
+        .await
+        .is_err()
+    {
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "runtime startup exceeded five seconds"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+    }
+    let token: Value = f
+        .state
+        .client
+        .post(format!("{base}/api/management/tokens/client"))
+        .bearer_auth(admin)
+        .json(&json!({"client_kind":"claude-code"}))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let token = token["token"].as_str().expect("bound consumer token");
+    let mut statuses = Vec::new();
+    for policy in [
+        None,
+        Some(json!({"headers":{"X-Policy":"enabled"}})),
+        Some(json!({})),
+    ] {
+        if let Some(policy) = policy {
+            let response = f
+                .state
+                .client
+                .post(format!("{base}/api/management/accounts/primary/policy"))
+                .bearer_auth(admin)
+                .json(&policy)
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+        }
+        for _ in 0..2 {
+            let response = f.state.client.post(format!("{base}/api/services/anthropic/v1/messages"))
+                .header("x-api-key", token).header("user-agent", "claude-cli/2.1.259")
+                .header("anthropic-version", "2023-06-01")
+                .json(&json!({"model":"native","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}))
+                .send().await.unwrap();
+            statuses.push(response.status());
+        }
+    }
+    drop(process);
+    let calls = f.seen.lock().unwrap().clone();
+    f.close().await;
+    assert_eq!(
+        statuses,
+        [
+            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::SERVICE_UNAVAILABLE,
+            StatusCode::TOO_MANY_REQUESTS,
+            StatusCode::TOO_MANY_REQUESTS
+        ]
+    );
+    assert_eq!(calls.len(), 5);
+    assert_eq!(calls[2].0["x-policy"], "enabled");
+    for call in [&calls[0], &calls[1], &calls[3], &calls[4]] {
+        assert!(!call.0.contains_key("x-policy"));
+    }
+}
+
 #[tokio::test]
 async fn alias_is_rewritten_in_stream_metadata() {
     let f = Fixture::new(aliased(), StatusCode::OK, "").await;

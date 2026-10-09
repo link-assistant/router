@@ -5,6 +5,9 @@ credential directory. This sidecar survives vendor CLI logins and token refreshe
 it never changes the vendor's credential format. A missing file means the default
 policy. Invalid JSON or unsafe policy fields exclude that account until repaired.
 Policies apply to subscription inference across native and translated surfaces.
+With a single account, no request caps and no policy, automatic pooling cooldowns
+remain off as before. Installing a non-default policy enables policy processing
+immediately; replacing it with `{}` restores those single-account defaults.
 
 Show or replace a complete policy:
 

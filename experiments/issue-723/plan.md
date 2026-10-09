@@ -14,6 +14,7 @@ full-suite validation and readiness results are recorded in PR 748.
 - [x] Run focused tests, formatting, strict Clippy, generated-contract compatibility, file-size/terminology checks and language binding tests; preserve large logs.
 - [ ] Run the full Rust integration, library and documentation suites; use a bounded compiler experiment for the local 3 GB memory limit.
 - [x] Review diff for compatibility/security; reproduce and correct the live-edit selector race and public enum discriminant changes.
+- [x] Reproduce and correct alias catalog collisions and unconfigured single-primary cooldowns; verify remote first-policy activation and resetting defaults.
 - [x] Commit atomic implementation/review corrections and push only the prepared branch.
 - [ ] Update PR 748 description, integrate current main, verify latest-SHA CI and preserve/analyze failed logs.
 - [ ] Confirm clean tree, review final PR diff and mark PR 748 ready.

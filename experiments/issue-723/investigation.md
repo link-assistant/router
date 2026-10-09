@@ -106,3 +106,23 @@ After the final review corrections, all 35 focused tests and strict Clippy pass.
 Formatting, file-size/terminology checks and generated contract/binding compatibility
 also pass. The full integration and documentation suites are rerun for the corrected
 implementation, with latest-commit CI required before marking the PR ready.
+
+## Unconfigured single-account regression
+
+The production runtime keeps a primary pool available so management can install
+the first policy without a restart. Review found that enabling this pool also
+introduced automatic cooldowns when there was only one account, no request caps
+and no policy. Two consecutive vendor 429 responses became 429 and 502, with only
+one request reaching the vendor. `single-primary-defaults.py` reproduced this on
+the actual router binary; `single-primary-reproduction.log` preserves the failure.
+The automated production-runtime test then reproduced the same status mismatch
+before the fix (`single-primary-http-reproduction.log`).
+
+An implicit primary pool now retains the previous unpooled request defaults until
+a non-default policy opts in. Explicit pools, request caps and weighted or forced
+prefix selection retain their configured behavior. The runtime regression checks
+two consecutive 429 responses without a policy, management activation of the first
+policy (including its upstream header and cooldown), and restoration of the
+single-account defaults with an empty replacement. There are now 36 focused tests
+and 849 passing integration tests across 115 targets, with one ignored; 15
+documentation tests also pass.

@@ -122,6 +122,7 @@ impl RoutingContext {
 
 /// Per-account runtime state (cooldowns, request counts, last error).
 struct AccountState {
+    implicit_primary: bool,
     routing_policy:
         std::sync::RwLock<Result<crate::account_routing_policy::AccountRoutingPolicy, String>>,
     name: String,
@@ -138,6 +139,7 @@ struct AccountState {
 impl AccountState {
     fn new(name: String, reader: SubscriptionReader, home: PathBuf, limit: Option<usize>) -> Self {
         Self {
+            implicit_primary: false,
             routing_policy: std::sync::RwLock::new(
                 crate::account_routing_policy::AccountRoutingPolicy::load(&home),
             ),
@@ -171,8 +173,23 @@ impl AccountState {
             .cooldown_until
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        (policy.disable_cooling || !matches!(*guard, Some(t) if t > Instant::now()))
+        (policy.disable_cooling
+            || (self.implicit_primary
+                && policy == crate::account_routing_policy::AccountRoutingPolicy::default())
+            || !matches!(*guard, Some(t) if t > Instant::now()))
             && !self.is_paused()
+    }
+
+    fn uses_unpooled_defaults(&self) -> bool {
+        self.implicit_primary
+            && self
+                .policy()
+                .as_ref()
+                .is_ok_and(|p| *p == crate::account_routing_policy::AccountRoutingPolicy::default())
+    }
+
+    fn ignores_automatic_cooling(&self) -> bool {
+        self.policy().as_ref().is_ok_and(|p| p.disable_cooling) || self.uses_unpooled_defaults()
     }
 
     fn limits(&self) -> std::sync::MutexGuard<'_, crate::account_limits::AccountLimitState> {
@@ -191,7 +208,7 @@ impl AccountState {
         self.is_available()
             && !context.exclude.contains(&self.name)
             && context.model.as_deref().is_none_or(|model| {
-                self.policy().as_ref().is_ok_and(|p| p.disable_cooling)
+                self.ignores_automatic_cooling()
                     || !self
                         .limits()
                         .blocks_model(model, crate::account_limits::now_unix())
@@ -710,11 +727,7 @@ impl AccountRouter {
     }
 
     fn start_cooldown(&self, idx: usize, duration: Duration) {
-        if self.inner.accounts[idx]
-            .policy()
-            .as_ref()
-            .is_ok_and(|p| p.disable_cooling)
-        {
+        if self.inner.accounts[idx].ignores_automatic_cooling() {
             return;
         }
         let mut guard = self.inner.accounts[idx]
