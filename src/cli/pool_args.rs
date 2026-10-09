@@ -29,7 +29,7 @@ pub struct PoolArgs {
     )]
     pub pool_failover: Option<FailoverMode>,
 
-    /// Upstream attempts per request under pool failover, the first included.
+    /// Upstream attempts per round under pool failover, the first included.
     #[arg(
         long,
         env = "POOL_FAILOVER_MAX_ATTEMPTS",
@@ -47,6 +47,36 @@ pub struct PoolArgs {
         global = true
     )]
     pub pool_failover_budget_secs: u64,
+
+    /// Additional credential retry rounds before any response body is relayed.
+    #[arg(long, env = "POOL_RETRY_ROUNDS", default_value_t = 0, value_parser = clap::value_parser!(u32).range(0..=16), global = true)]
+    pub pool_retry_rounds: u32,
+
+    /// Distinct credentials per retry round; zero adds no credential cap.
+    #[arg(
+        long,
+        env = "POOL_MAX_RETRY_CREDENTIALS",
+        default_value_t = 0,
+        global = true
+    )]
+    pub pool_max_retry_credentials: u32,
+
+    /// Maximum seconds to wait for a cooldown between retry rounds.
+    #[arg(
+        long,
+        env = "POOL_MAX_RETRY_INTERVAL_SECS",
+        default_value_t = 30,
+        global = true
+    )]
+    pub pool_max_retry_interval_secs: u64,
+
+    /// Maximum observed cooldown, including vendor resets; bounded to eight days.
+    #[arg(long, env = "ACCOUNT_MAX_COOLDOWN_SECS", default_value_t = crate::account_limits::MAX_VENDOR_COOLDOWN.as_secs(), global = true)]
+    pub account_max_cooldown_secs: u64,
+
+    /// Bind subagent sessions to their parent's account when it is known.
+    #[arg(long, env = "SESSION_AFFINITY_SUBAGENTS", num_args = 0..=1, default_value_t = true, default_missing_value = "true", value_parser = parse_truthy, global = true)]
+    pub session_affinity_subagents: bool,
 
     /// Pause a pooled account once a vendor rate-limit window reports this
     /// utilization percentage (1-100) or more; it resumes when the window
@@ -121,6 +151,14 @@ impl PoolArgs {
             budget: std::time::Duration::from_secs(self.pool_failover_budget_secs),
             pause_at_percent: self.account_pause_at_percent,
             intercept_warmup: self.intercept_warmup,
+            retry: crate::pool_retry::RetryPolicy {
+                rounds: self.pool_retry_rounds,
+                max_credentials: self.pool_max_retry_credentials,
+                max_interval: std::time::Duration::from_secs(self.pool_max_retry_interval_secs),
+            },
+            session_affinity_subagents: self.session_affinity_subagents,
+            max_cooldown: std::time::Duration::from_secs(self.account_max_cooldown_secs)
+                .min(crate::account_limits::MAX_VENDOR_COOLDOWN),
             account_http: AccountHttpPolicy::new(
                 self.account_pool_idle_timeout_secs,
                 self.account_connection_max_age_secs,

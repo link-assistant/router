@@ -66,7 +66,15 @@ async fn a_rate_limited_codex_account_fails_over_and_relays_one_stream() {
     assert_eq!(usage.requests_total, 1);
     assert_eq!(usage.account_calls.get("account-1"), Some(&1));
     assert_eq!(usage.account_calls.get("primary"), None);
-    assert!(!pool.health("primary").healthy, "the 429 cooled primary");
+    assert!(
+        pool.health("primary").healthy,
+        "sibling models remain eligible"
+    );
+    assert!(
+        pool.health("primary")
+            .limits
+            .blocks_model("gpt-5", link_assistant_router::account_limits::now_unix())
+    );
 
     let metrics = pool
         .client

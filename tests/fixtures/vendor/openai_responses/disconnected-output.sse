@@ -1,0 +1,4 @@
+data: {"type":"response.created","response":{"id":"resp_a","model":"gpt-5"}}
+
+data: {"type":"response.output_text.delta","output_index":0,"content_index":0,"item_id":"msg_a","delta":"MOCK_A_PARTIAL"}
+

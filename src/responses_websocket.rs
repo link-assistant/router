@@ -1,6 +1,6 @@
 //! Native `OpenAI` Responses WebSocket forwarding with a pinned provider.
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashSet;
 use std::time::Duration;
 
 use axum::extract::State;
@@ -36,56 +36,28 @@ pub(crate) enum Namespace {
     Codex,
 }
 
-#[derive(Debug)]
 struct UpstreamTarget {
     url: String,
     headers: HeaderMap,
     allowed_models: Vec<String>,
     provider: UpstreamProvider,
     codex_cookie_scope: bool,
+    pool: Option<(crate::accounts::AccountRouter, String)>,
 }
 
-struct TurnTracking {
-    by_lane: HashMap<Option<String>, VecDeque<crate::usage::UsageTracker>>,
-}
-
-impl TurnTracking {
-    fn new() -> Self {
-        Self {
-            by_lane: HashMap::new(),
-        }
-    }
-
-    fn push(&mut self, lane: Option<String>, tracker: crate::usage::UsageTracker) {
-        self.by_lane.entry(lane).or_default().push_back(tracker);
-    }
-
-    fn feed_terminal(&mut self, value: &Value, bytes: &[u8]) {
-        let event_type = value
-            .get("type")
-            .and_then(Value::as_str)
-            .unwrap_or_default();
-        if !matches!(
-            event_type,
-            "response.completed" | "response.incomplete" | "response.failed" | "error"
-        ) {
-            return;
-        }
-        let lane = value
-            .get("stream_id")
-            .and_then(Value::as_str)
-            .map(str::to_string);
-        let remove_lane = self.by_lane.get_mut(&lane).is_some_and(|queue| {
-            if let Some(mut tracker) = queue.pop_front() {
-                tracker.feed(bytes);
-            }
-            queue.is_empty()
-        });
-        if remove_lane {
-            self.by_lane.remove(&lane);
-        }
+impl std::fmt::Debug for UpstreamTarget {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("UpstreamTarget")
+            .field("provider", &self.provider)
+            .field("allowed_models", &self.allowed_models)
+            .finish_non_exhaustive()
     }
 }
+
+#[path = "responses_websocket/tracking.rs"]
+mod tracking;
+use tracking::TurnTracking;
 
 pub async fn openai(
     State(state): State<AppState>,
@@ -326,7 +298,7 @@ async fn session(
         named_streams.insert(lane);
     }
     let mut tracking = TurnTracking::new();
-    tracking.push(first_lane, first_tracker);
+    tracking.push(first_lane, first_tracker, &target, &first_event);
     relay(
         &state,
         &headers,
@@ -494,6 +466,7 @@ async fn prepare_target(
         allowed_models,
         provider: UpstreamProvider::OpenAICompatible,
         codex_cookie_scope: false,
+        pool: None,
     })
 }
 
@@ -594,6 +567,10 @@ async fn subscription_target(
         allowed_models,
         provider: UpstreamProvider::Codex,
         codex_cookie_scope: state.subscription_base_url.is_none(),
+        pool: state
+            .account_router
+            .clone()
+            .map(|router| (router, selected.name)),
     })
 }
 

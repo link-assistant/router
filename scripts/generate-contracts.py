@@ -150,6 +150,7 @@ def generate(catalog):
         ('SubscriptionUsage','GET'):ref('UsageEnvelope'), ('SubscriptionUsageProvider','GET'):ref('UsageEnvelope'),
         ('AdminStatus','GET'):ref('AdminStatus'), ('AdminSummary','GET'):ref('AdminSummary'),
         ('AdminBootstrap','POST'):ref('Bootstrap'), ('AdminBootstrapConfirm','POST'):ref('Confirmed'), ('AdminRotate','POST'):ref('AdminRotated'),
+        ('Routing','PATCH'):ref('RoutingSettings'), ('CooldownReset','POST'):ref('CooldownResetResult'),
         ('Accounts','GET'):ref('Accounts'), ('AccountPause','POST'):ref('AccountPause'), ('AccountResume','POST'):ref('AccountResume'),
         ('SubscriptionHealth','GET'):ref('SubscriptionHealth'), ('AggregateModels','GET'):ref('Models'),
     }
@@ -158,7 +159,7 @@ def generate(catalog):
     components['AggregateModels']['properties']['data'] = array(ref('AggregateModel'))
     components['AggregateModels']['properties']['catalog_conflict_candidates'] = array(ref('AggregateModel'))
     response_types[('AggregateModels','GET')] = ref('AggregateModels')
-    request_types = {'Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
+    request_types = {'Routing':'RoutingUpdate','CooldownReset':'CooldownReset','Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
     paths = {}
     any_methods = {}
     for route in catalog['routes']:

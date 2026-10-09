@@ -196,6 +196,16 @@ const ROUTES: &[RouteSpec] = &[
         RouteMethod::Post,
         "/api/management/login/{id}/code",
     ),
+    management(
+        RouteId::Routing,
+        RouteMethod::Patch,
+        "/api/management/routing",
+    ),
+    management(
+        RouteId::CooldownReset,
+        RouteMethod::Post,
+        "/api/management/routing/cooldown/reset",
+    ),
     management(RouteId::Usage, RouteMethod::Get, "/api/management/usage"),
     management(
         RouteId::Accounts,

@@ -215,8 +215,7 @@ pub fn rejected_until(limits: &UnifiedLimits, now: u64) -> Option<u64> {
 pub enum LimitScope {
     /// Every model on the account.
     Credential,
-    /// Only models whose lowercased id contains this key (a family such as
-    /// `opus`, or the full requested model id).
+    /// The exact lowercased model id, or an explicitly named vendor family.
     Model(String),
 }
 
@@ -234,13 +233,22 @@ pub enum LimitScope {
 /// 4. Otherwise an error message that names the requested model id blocks
 ///    **that model**; one that names only the requested model's family blocks
 ///    the **family**.
-/// 5. Anything else — no headers, an unrelated message — blocks the
-///    **credential**, which is the behaviour before this heuristic existed.
+/// 5. Otherwise cool the requested model. Without a model, cool the credential.
+///
+/// Terminal quota error codes take precedence over all model hints.
 ///
 /// The overall `-status` pair is not consulted for scope: the vendor reports it
 /// rejected for a model-family limit too, so it cannot tell them apart.
 #[must_use]
 pub fn classify_scope(limits: &UnifiedLimits, body: &[u8], model: Option<&str>) -> LimitScope {
+    if serde_json::from_slice::<serde_json::Value>(body)
+        .ok()
+        .as_ref()
+        .and_then(|value| value.get("error"))
+        .is_some_and(terminal_quota)
+    {
+        return LimitScope::Credential;
+    }
     let mut family_rejection = None;
     for window in limits.rejected().filter(|window| window.name != "overall") {
         match window.model_family() {
@@ -272,7 +280,27 @@ pub fn classify_scope(limits: &UnifiedLimits, body: &[u8], model: Option<&str>) 
     {
         return LimitScope::Model(family.to_string());
     }
-    LimitScope::Credential
+    model
+        .filter(|model| !model.is_empty())
+        .map_or(LimitScope::Credential, LimitScope::Model)
+}
+
+/// Terminal quota types supersede model/family hints.
+#[must_use]
+pub fn terminal_quota(error: &serde_json::Value) -> bool {
+    ["type", "code"]
+        .into_iter()
+        .filter_map(|key| error.get(key).and_then(serde_json::Value::as_str))
+        .any(|code| {
+            matches!(
+                code,
+                "insufficient_quota"
+                    | "usage_limit_reached"
+                    | "quota_exhausted"
+                    | "billing_hard_limit_reached"
+                    | "credit_balance_too_low"
+            )
+        })
 }
 
 /// The vendor's error message, or the raw body when it is not the usual shape.
@@ -412,7 +440,7 @@ impl AccountLimitState {
         let model = model.to_ascii_lowercase();
         self.model_cooldowns
             .iter()
-            .any(|(key, until)| *until > now && model.contains(key.as_str()))
+            .any(|(key, until)| *until > now && model_key_matches(key, &model))
     }
 
     /// Whether this state is worth persisting.
@@ -576,3 +604,10 @@ pub fn doctor_report(data_dirs: &[PathBuf]) -> (String, bool) {
 #[cfg(test)]
 #[path = "account_limits_tests.rs"]
 mod tests;
+
+/// Match exact model ids while preserving vendor-defined Claude families.
+#[must_use]
+pub fn model_key_matches(key: &str, model: &str) -> bool {
+    let model = model.to_ascii_lowercase();
+    model == key || MODEL_FAMILIES.contains(&key) && model.contains(key)
+}

@@ -59,6 +59,37 @@ pub fn request_routing_context(
     });
     RoutingContext {
         session_key: header_session.or(body_session),
+        parent_session_key: [
+            "x-parent-session-id",
+            "x-codex-parent-session-id",
+            "x-parent-thread-id",
+            "parent-session-id",
+        ]
+        .into_iter()
+        .find_map(|name| {
+            headers
+                .get(name)
+                .and_then(|value| value.to_str().ok())
+                .filter(|value| !value.trim().is_empty())
+                .map(str::to_string)
+        })
+        .or_else(|| {
+            [
+                "/context/parent_session_id",
+                "/metadata/parent_session_id",
+                "/parent_session_id",
+                "/context/parent_thread_id",
+                "/metadata/parent_thread_id",
+                "/parent_thread_id",
+            ]
+            .into_iter()
+            .find_map(|pointer| {
+                body.pointer(pointer)
+                    .and_then(serde_json::Value::as_str)
+                    .filter(|value| !value.trim().is_empty())
+                    .map(str::to_string)
+            })
+        }),
         pinned_account,
         model: body
             .get("model")

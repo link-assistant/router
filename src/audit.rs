@@ -151,6 +151,10 @@ impl AuditLog {
     /// Append one event. Failures are logged and otherwise ignored: auditing
     /// must never take the proxy down.
     pub fn record(&self, event: &AuditEvent) {
+        self.record_management(event);
+    }
+
+    pub(crate) fn record_management(&self, event: &impl Serialize) {
         let Some(path) = self.path.as_ref() else {
             return;
         };

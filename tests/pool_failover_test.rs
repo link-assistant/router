@@ -17,6 +17,7 @@ use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::{get, post};
+use futures_util::StreamExt as _;
 use link_assistant_router::account_http::AccountHttpPolicy;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions, SelectionStrategy};
 use link_assistant_router::app_state::AppState;
@@ -53,6 +54,12 @@ enum Reply {
     Cut { reset: bool },
     /// A redirect to `location` (issue #669).
     Redirect { status: u16, location: String },
+    /// A recorded error/event body, including an empty or interrupted stream.
+    Recorded {
+        status: u16,
+        body: String,
+        reset: bool,
+    },
 }
 
 impl Reply {
@@ -157,6 +164,24 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
         .or_else(|| vendor.always.lock().unwrap().get(&account).cloned())
         .unwrap_or(Reply::Ok);
     match reply {
+        Reply::Recorded {
+            status,
+            body,
+            reset,
+        } => {
+            let chunks =
+                futures_util::stream::iter([Ok::<_, std::io::Error>(bytes::Bytes::from(body))]);
+            let tail = futures_util::stream::iter(
+                reset.then(|| Err(std::io::Error::other("recorded disconnect"))),
+            );
+            let mut response = Response::new(Body::from_stream(chunks.chain(tail)));
+            *response.status_mut() = StatusCode::from_u16(status).unwrap();
+            response.headers_mut().insert(
+                "content-type",
+                HeaderValue::from_static("text/event-stream"),
+            );
+            response
+        }
         Reply::Status {
             status,
             headers,
@@ -364,6 +389,7 @@ struct Options {
     codex: bool,
     /// Per-account connection and egress settings (issue #678).
     http: AccountHttpPolicy,
+    retry: link_assistant_router::pool_retry::RetryPolicy,
 }
 
 impl Default for Options {
@@ -374,6 +400,7 @@ impl Default for Options {
             pause_at_percent: None,
             codex: false,
             http: AccountHttpPolicy::default(),
+            retry: link_assistant_router::pool_retry::RetryPolicy::default(),
         }
     }
 }
@@ -406,6 +433,7 @@ impl Pool {
             pause_at_percent: None,
             intercept_warmup: true,
             account_http: AccountHttpPolicy::default(),
+            ..Default::default()
         });
         let data = tempfile::tempdir().unwrap();
         let homes: Vec<_> = ACCOUNTS
@@ -452,6 +480,8 @@ impl Pool {
                 pause_at_percent: options.pause_at_percent,
                 state_dir: Some(data.path().to_path_buf()),
                 http: options.http.clone(),
+                retry: options.retry,
+                ..Default::default()
             },
         );
         let cache = Arc::new(TokenCache::new());
@@ -459,6 +489,10 @@ impl Pool {
 
         let vendor = Vendor::default();
         let stub = Router::new()
+            .route(
+                "/responses",
+                get(websocket_cooling::vendor_websocket).post(vendor_handler),
+            )
             .fallback(vendor_handler)
             .with_state(vendor.clone());
         let (stub_url, stub_task) = spawn(stub).await;
@@ -510,7 +544,9 @@ impl Pool {
             admin_key: Some(ADMIN_KEY.to_string()),
             allow_anonymous_admin: false,
             metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
-            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
+            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(Some(
+                data.path().join("audit.jsonl").to_str().unwrap(),
+            ))),
             request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
                 data.path().join("requests"),
                 1024 * 1024,
@@ -526,6 +562,14 @@ impl Pool {
             max_proxy_request_bytes: link_assistant_router::proxy::MAX_PROXY_REQUEST_BYTES,
         };
         let app = Router::new()
+            .route(
+                "/api/management/routing",
+                axum::routing::patch(link_assistant_router::routing_api::update),
+            )
+            .route(
+                "/api/management/routing/cooldown/reset",
+                post(link_assistant_router::routing_api::reset),
+            )
             .route(MESSAGES, post(link_assistant_router::proxy::proxy_handler))
             .route(
                 COUNT_TOKENS,
@@ -533,7 +577,8 @@ impl Pool {
             )
             .route(
                 CODEX_RESPONSES,
-                post(link_assistant_router::proxy::openai_responses_native),
+                post(link_assistant_router::proxy::openai_responses_native)
+                    .get(link_assistant_router::responses_websocket::codex),
             )
             .route(
                 "/api/management/accounts",
@@ -658,5 +703,13 @@ mod cases;
 mod codex;
 #[path = "pool_failover/isolation.rs"]
 mod isolation;
+#[path = "pool_failover/model_cooling.rs"]
+mod model_cooling;
 #[path = "pool_failover/streams.rs"]
 mod streams;
+
+#[path = "pool_failover/routing_controls.rs"]
+mod routing_controls;
+
+#[path = "pool_failover/websocket_cooling.rs"]
+mod websocket_cooling;

@@ -1,0 +1,4 @@
+data: {"type":"response.created","response":{"id":"quota-test-response"}}
+
+data: {"type":"error","status":429,"error":{"type":"usage_limit_reached","message":"You've hit your usage limit.","resets_in_seconds":3600}}
+

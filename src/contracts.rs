@@ -63,12 +63,18 @@ pub fn command() -> clap::Command {
 pub fn operations() -> Vec<Value> {
     fn visit(command: &clap::Command, path: &[String], globals: &[Value], result: &mut Vec<Value>) {
         let own: Vec<_> = command.get_arguments().filter(|arg| arg.get_long() != Some("json"))
-            .map(|argument| json!({"name":argument.get_id().as_str(), "flag":argument.get_long(),
+            .map(|argument| {
+                let mut option = json!({"name":argument.get_id().as_str(), "flag":argument.get_long(),
                 "positional": argument.is_positional(), "required": argument.is_required_set(),
                 "multiple": matches!(argument.get_action(), clap::ArgAction::Append),
                 "boolean": matches!(argument.get_action(), clap::ArgAction::SetTrue | clap::ArgAction::SetFalse),
                 "secret": secret_option(argument.get_id().as_str()),
-                "environment": argument.get_env().map(|env| env.to_string_lossy().into_owned())})).collect();
+                "environment": argument.get_env().map(|env| env.to_string_lossy().into_owned())});
+                if option["boolean"] == true && argument.get_num_args().is_some_and(|range| range.max_values() > 0) {
+                    option["boolean_value"] = json!(true);
+                }
+                option
+            }).collect();
         let options: Vec<_> = globals.iter().chain(own.iter()).cloned().collect();
         if command.get_subcommands().count() == 0 {
             let name = path.join(".");
@@ -83,10 +89,16 @@ pub fn operations() -> Vec<Value> {
     }
     let command = command();
     let globals: Vec<_> = command.get_arguments().filter(|argument| argument.is_global_set())
-        .map(|argument| json!({"name":argument.get_id().as_str(),"flag":argument.get_long(),"positional":false,"required":false,
+        .map(|argument| {
+            let mut option = json!({"name":argument.get_id().as_str(),"flag":argument.get_long(),"positional":false,"required":false,
             "multiple":matches!(argument.get_action(),clap::ArgAction::Append),"boolean":matches!(argument.get_action(),clap::ArgAction::SetTrue),
             "secret": secret_option(argument.get_id().as_str()),
-            "environment":argument.get_env().map(|env|env.to_string_lossy().into_owned())})).collect();
+            "environment":argument.get_env().map(|env|env.to_string_lossy().into_owned())});
+            if option["boolean"] == true && argument.get_num_args().is_some_and(|range| range.max_values() > 0) {
+                option["boolean_value"] = json!(true);
+            }
+            option
+        }).collect();
     let mut result = Vec::new();
     for child in command.get_subcommands() {
         visit(child, &[child.get_name().into()], &globals, &mut result);
@@ -171,6 +183,10 @@ pub fn types() -> Value {
         "BackupManifest":schemars::schema_for!(crate::client_lifecycle::backup::Manifest),
         "TokenImportReport":schemars::schema_for!(crate::token_import::ImportReport),
         "AuthImportReport":crate::auth_import::result_schema(),
+        "RoutingUpdate":schemars::schema_for!(crate::routing_api::RoutingUpdate),
+        "RoutingSettings":schemars::schema_for!(crate::routing_api::RoutingSettings),
+        "CooldownReset":schemars::schema_for!(crate::routing_api::CooldownReset),
+        "CooldownResetResult":schemars::schema_for!(crate::routing_api::CooldownResetResult),
         "UsageSnapshot":schemars::schema_for!(crate::metrics::UsageSnapshot),
         "CredentialAcceptanceReport":schemars::schema_for!(crate::credential_status::CredentialAcceptanceReport),
         "AuthDiagnosticsSnapshot":schemars::schema_for!(crate::auth_diagnostics::AuthDiagnosticsSnapshot),
