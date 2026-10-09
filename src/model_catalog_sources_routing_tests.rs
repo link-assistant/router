@@ -45,6 +45,77 @@ async fn json_body(response: axum::response::Response) -> Value {
 }
 
 #[tokio::test]
+async fn source_metadata_survives_account_aliases_without_widening_grants() {
+    let dir = tempfile::tempdir().unwrap();
+    let account = tempfile::tempdir().unwrap();
+    let mut state = crate::app_state::AppState::for_tests(dir.path());
+    state.upstream_provider = crate::config::UpstreamProvider::Anthropic;
+    let router = crate::accounts::AccountRouter::new_for_provider(
+        account.path().into(),
+        &[],
+        crate::subscription::SubscriptionProvider::Claude,
+        crate::accounts::AccountRouterOptions::default(),
+    );
+    router
+        .set_routing_policy(
+            "primary",
+            crate::account_routing_policy::AccountRoutingPolicy {
+                model_aliases: vec![crate::account_routing_policy::ModelAlias {
+                    model: "live".into(),
+                    alias: "friendly".into(),
+                    fork: false,
+                }],
+                excluded_models: vec!["excluded".into()],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    state.account_router = Some(router);
+    configure(&state, &["live=claude:live", "excluded=claude:excluded"]);
+    state.model_catalogs.record_success_for_account(
+        crate::subscription::SubscriptionProvider::Claude,
+        "primary",
+        None,
+        vec!["live".into(), "excluded".into()],
+    );
+    for (allowed, visible) in [("live", true), ("friendly", false), ("excluded", false)] {
+        let credential = state
+            .token_manager
+            .issue_with_model_policy(
+                &crate::token::IssueRequest {
+                    client_kind: Some("claude-code"),
+                    principal_id: Some("primary"),
+                    account: Some("primary"),
+                    ..Default::default()
+                },
+                &crate::model_contract::ModelAccessPolicy::exact(allowed),
+            )
+            .unwrap();
+        let mut headers = HeaderMap::new();
+        headers.insert("x-api-key", credential.parse().unwrap());
+        headers.insert("user-agent", "claude-cli/2.1.259".parse().unwrap());
+        let response = crate::model_routing::models(
+            axum::extract::State(state.clone()),
+            axum::extract::OriginalUri("/api/models".parse().unwrap()),
+            headers,
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let catalog = json_body(response).await;
+        let data = catalog["data"].as_array().unwrap();
+        assert_eq!(data.len(), usize::from(visible), "{allowed}: {catalog}");
+        if visible {
+            assert_eq!(data[0]["id"], "friendly");
+            assert_eq!(data[0]["canonical_id"], "live");
+            assert_eq!(
+                data[0]["router_model_definition"]["capability_provenance"]["source_kind"],
+                "operator_override"
+            );
+        }
+    }
+}
+
+#[tokio::test]
 async fn management_definitions_use_live_scope_and_existing_admin_listener_boundary() {
     let dir = tempfile::tempdir().unwrap();
     let mut state = crate::app_state::AppState::for_tests(dir.path());
@@ -139,7 +210,7 @@ async fn local_alias_rewrites_only_the_upstream_selector_and_keeps_exact_token_g
     let dir = tempfile::tempdir().unwrap();
     let mut context = crate::operation_context::OperationContext::isolated(dir.path());
     context.set_env("UPSTREAM_ALLOW_PRIVATE_NETWORKS", "all");
-    context.scope_async(async {
+    Box::pin(context.scope_async(async {
         let requests = Arc::new(Mutex::new(Vec::new()));
         let captured = Arc::clone(&requests);
         let mock = axum::Router::new()
@@ -169,7 +240,8 @@ async fn local_alias_rewrites_only_the_upstream_selector_and_keeps_exact_token_g
             enabled:Some(true), subscriber_id:None, acknowledge_intermediary_risk:None,
             acknowledge_unsupported_clients:None, if_absent:false,
         }).unwrap();
-        configure(&state, &["friendly=local:upstream", "phantom=local:missing"]);
+        configure(&state, &["friendly=local:upstream", "phantom=local:missing",
+            "reserved=local:upstream", "account/friendly=local:upstream", "blocked=local:upstream"]);
         let credential = token(&state, "friendly");
         let mut headers = HeaderMap::new();
         headers.insert("authorization", format!("Bearer {credential}").parse().unwrap());
@@ -217,14 +289,59 @@ async fn local_alias_rewrites_only_the_upstream_selector_and_keeps_exact_token_g
         }
         assert_eq!(requests.lock().unwrap().len(), 4);
         assert!(requests.lock().unwrap().iter().all(|request| request["model"] == "upstream"));
+        // A policy on a subscription account must leave compatible-provider
+        // aliases and their exact credential grants available in auto mode.
+        let account = tempfile::tempdir().unwrap();
+        let router = crate::accounts::AccountRouter::new_for_provider(
+            account.path().into(), &[], crate::subscription::SubscriptionProvider::Claude,
+            crate::accounts::AccountRouterOptions::default(),
+        );
+        router.set_routing_policy("primary", crate::account_routing_policy::AccountRoutingPolicy {
+            weight: 2,
+            prefix: Some("account".into()),
+            excluded_models: vec!["blocked".into()],
+            model_aliases: vec![crate::account_routing_policy::ModelAlias {
+                model: "blocked".into(), alias: "reserved".into(), fork: false,
+            }],
+            ..Default::default()
+        }).unwrap();
+        state.account_router = Some(router);
+        state.upstream_provider = crate::config::UpstreamProvider::Auto;
+        state.model_catalogs.record_success_for_account(
+            crate::subscription::SubscriptionProvider::Claude,
+            "primary", None, vec!["blocked".into()],
+        );
+        let config = crate::cli::Cli::try_parse_from(["router", "--token-secret", "test", "serve"])
+            .unwrap().into_config().unwrap();
+        for (model, expected) in [("friendly", StatusCode::OK), ("upstream", StatusCode::FORBIDDEN),
+            ("reserved", StatusCode::FORBIDDEN), ("account/friendly", StatusCode::FORBIDDEN),
+            ("blocked", StatusCode::FORBIDDEN)] {
+            let mut request = Request::post("/api/services/openai/v1/chat/completions")
+                .header("content-type", "application/json")
+                .body(Body::from(json!({"model":model,"messages":[{"role":"user","content":"hello"}]}).to_string()))
+                .unwrap();
+            request.headers_mut().extend(headers.clone());
+            if matches!(model, "reserved" | "account/friendly" | "blocked") {
+                request.headers_mut().insert("authorization", format!("Bearer {}", token(&state, model)).parse().unwrap());
+            }
+            let response = crate::server_router::router(state.clone(), &config).oneshot(request).await.unwrap();
+            let status = response.status();
+            let body = json_body(response).await;
+            assert_eq!(status, expected, "auto {model}: {body}");
+            if expected == StatusCode::OK {
+                assert_eq!(body["model"], "upstream");
+            }
+        }
+        assert_eq!(requests.lock().unwrap().len(), 5);
         let response = model_definitions(axum::extract::State(state.clone()), axum::extract::Path("local".into())).await;
         let models = json_body(response).await;
-        assert_eq!(models["models"].as_array().unwrap().len(), 2);
-        assert_eq!(models["models"][1]["requested_selector"], "friendly");
-        assert_eq!(models["models"][1]["upstream_request_model"], "upstream");
+        assert_eq!(models["models"].as_array().unwrap().len(), 5);
+        let friendly = models["models"].as_array().unwrap().iter()
+            .find(|model| model["requested_selector"] == "friendly").unwrap();
+        assert_eq!(friendly["upstream_request_model"], "upstream");
         let policy = state.token_manager.model_policy_for(&state.token_manager.validate_token(&credential).unwrap().sub).unwrap();
         assert_eq!(policy.allowed_models, vec!["friendly"]);
         server.abort();
         let _ = server.await;
-    }).await;
+    })).await;
 }

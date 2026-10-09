@@ -10,6 +10,17 @@
 - [x] Merge latest main, commit atomic completed changes, and push only issue-727-61ea612f008e.
 - Finalize by updating PR title/body with implementation and test evidence, then inspecting fresh CI runs by timestamp and SHA and resolving failures.
 - Finalize by verifying a clean worktree, consistent final diff and documentation, and passing CI, then marking PR #752 ready.
+- [x] Recheck main before readiness; merge the newly landed account-policy feature,
+  preserve its route discriminant, and regenerate combined contracts/bindings.
+- [x] Reproduce policy/source interactions: missing alias metadata and automatic
+  compatible-provider requests incorrectly intercepted by subscription policy.
+- [x] Annotate before policy projection and retain ordinary automatic routing for
+  selectors the subscription policy does not own; verify reserved alias, prefix,
+  exclusion and exact-grant boundaries in regression coverage.
+- [ ] Run the complete local suite and strict checks against the combined merge,
+  fetch main again, and commit/push the final changes only to the prepared branch.
+- [ ] Preserve and inspect any new failed CI logs, advance the coverage baseline
+  from measured artifacts when required, and require passing CI for the final SHA.
 
 Baseline CLI reproduction and unit regression both fail because the new flags are absent. Full unsharded libtest compilation exceeded the 3 GiB cgroup limit; use the existing AST sharder and rustc memory wrapper for local testing. The repository removed compiled inventories in issue #192, so definitions overlay authenticated live catalogs instead of restoring static routing authority.
 

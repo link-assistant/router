@@ -234,6 +234,16 @@ pub enum AccountOp {
         #[command(flatten)]
         target: AuthTarget,
     },
+    /// Show or replace an account's persisted routing policy.
+    Policy {
+        /// Account name from `accounts list`.
+        name: String,
+        /// JSON file containing the complete replacement policy. Omit to show it.
+        #[arg(long)]
+        file: Option<std::path::PathBuf>,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
 }
 
 #[derive(Debug, Subcommand)]

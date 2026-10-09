@@ -59,12 +59,19 @@ lists empty, and substitution disabled: these are request-time observations or
 credential authority. A whole document is rejected if any entry violates its
 schema, has a duplicate provider/selector, or contradicts those rules.
 
-Token model allow-lists are checked against the requested selector before
-routing or provider I/O. Upstream requests use the configured exact target, and
-responses retain the provider's served ID. A token pinned to an alias does not
-gain permission to request its target ID or any other model. Existing signed
-client, subscription entitlement, account eligibility, and provider model
-restrictions apply unchanged.
+For compatible-provider aliases, token model allow-lists are checked against the
+requested selector before routing or provider I/O. Upstream requests use the
+configured exact target, and responses retain the provider's served ID. A token
+pinned to an alias does not gain permission to request its target ID or any other
+model. Existing signed client, subscription entitlement, account eligibility,
+and provider model restrictions apply unchanged.
+
+Subscription metadata attaches to each exact live upstream ID before
+[account routing policies](use-cases/account-routing-policy.md) apply aliases,
+prefixes and exclusions. Those policies retain their upstream-ID authorization
+and client-facing response identities. Source definitions do not expand their
+grants or restore excluded models. In automatic mode, a subscription policy
+leaves other providers' selectors available to the normal routing checks.
 
 ## Refresh and bounds
 
@@ -98,9 +105,10 @@ curl -H "Authorization: Bearer $ROUTER_ADMIN_TOKEN" \
 ```
 
 The response is `{ "channel": "local", "models": [...] }`, with effective
-model-truth descriptors for the channel. Subscription results contain only
-currently routable live account records; compatible-provider results use the
-same live inventory and overlay as inference discovery. Unknown channels return
+model-truth descriptors for the channel. Subscription results describe live
+account inventory and exact source definitions; account policy aliases and
+exclusions govern client discovery and inference. Compatible-provider results
+use the same live inventory and overlay as inference discovery. Unknown channels return
 404, and an unavailable compatible-provider live catalog returns 503. The route
 uses existing management authentication, listener policy, and lockout and is
 absent from inference-only listeners.

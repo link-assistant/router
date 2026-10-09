@@ -92,7 +92,7 @@ def generate(catalog):
         'TokenIssued': issue,
         'ClientTokenIssued': obj({key:{} for key in ['token','ttl_hours','label','client_kind','principal_id','model_policy']}, ['token','client_kind','principal_id']),
         'AdminSummary': obj({key:{} for key in ['version','upstream_provider','upstream_base_url','accounts','claude_credential','subscription','login_api_enabled','admin','emergency_auth','management_bans']}, ['version','admin']),
-        'Accounts': obj({'accounts':array(obj({key:{} for key in ['name','home','healthy','credential','used','request_limit','remaining_requests','last_error','cooldown_remaining_seconds','cooldown_reason','cooldown_until_unix','model_cooldowns','paused','pause','windows']}, ['name','healthy'])), 'credentials':array(obj({'name':STRING,'home':STRING,'credential':STRING,'healthy':BOOL}, ['name','healthy'])), 'note':STRING}, ['accounts']),
+        'Accounts': obj({'accounts':array(obj({key:{} for key in ['name','home','healthy','credential','used','request_limit','remaining_requests','last_error','cooldown_remaining_seconds','cooldown_reason','cooldown_until_unix','model_cooldowns','paused','pause','windows','routing_policy','routing_policy_error']}, ['name','healthy'])), 'credentials':array(obj({'name':STRING,'home':STRING,'credential':STRING,'healthy':BOOL}, ['name','healthy'])), 'note':STRING}, ['accounts']),
         'AccountPause': obj({'account':STRING,'paused':BOOL,'until_unix':{'type':['integer','null']}}, ['account','paused']),
         'AccountResume': obj({'account':STRING,'paused':BOOL,'was_paused':BOOL}, ['account','paused','was_paused']),
         'SubscriptionHealth': obj({'status':STRING,'starting_providers':array(STRING),'healthy_providers':array(STRING),'degraded_providers':array(obj({'provider':STRING,'reason':STRING,'state':STRING,'upstream_code':STRING}, ['provider','reason']))}, ['status','healthy_providers','degraded_providers']),
@@ -140,6 +140,9 @@ def generate(catalog):
         'transaction': nullable(obj({'version':INT,'phase':STRING,'previous':nullable(STRING),'previous_kind':STRING,'previous_port':nullable(INT),'candidate':STRING,'image_ref':STRING,'image_id':STRING,'port':INT}, ['version','phase','previous','previous_kind','previous_port','candidate','image_ref','image_id','port'])),
     }
     components['LocalDeployment'] = obj(local_status, list(local_status))
+    components['Accounts']['properties']['accounts']['items']['properties'].update({
+        'routing_policy': ref('AccountRoutingPolicy'), 'routing_policy_error': STRING,
+    })
     target = obj({'target': STRING, 'status': STRING, 'passed': INT, 'failed': INT, 'ignored': INT}, ['target', 'status', 'passed', 'failed', 'ignored'])
     skip = obj({'tier': STRING, 'test': STRING, 'reason': STRING}, ['tier', 'test', 'reason'])
     area = obj({'name': STRING, 'covers': STRING, 'status': STRING, 'ran': BOOL, 'passed': INT, 'failed': INT, 'ignored': INT, 'skipped': array(skip), 'not_run': array(STRING), 'targets': array(target), 'enable_skipped_with': STRING, 'commands': array(STRING), 'log': STRING, 'reason': STRING, 'enable_with': STRING}, ['name', 'status', 'ran'])
@@ -162,6 +165,7 @@ def generate(catalog):
         ('AdminStatus','GET'):ref('AdminStatus'), ('AdminSummary','GET'):ref('AdminSummary'),
         ('AdminBootstrap','POST'):ref('Bootstrap'), ('AdminBootstrapConfirm','POST'):ref('Confirmed'), ('AdminRotate','POST'):ref('AdminRotated'),
         ('Accounts','GET'):ref('Accounts'), ('AccountPause','POST'):ref('AccountPause'), ('AccountResume','POST'):ref('AccountResume'),
+        ('AccountPolicy','GET'):ref('AccountRoutingPolicy'), ('AccountPolicy','POST'):ref('AccountRoutingPolicy'),
         ('SubscriptionHealth','GET'):ref('SubscriptionHealth'), ('AggregateModels','GET'):ref('Models'),
     }
     components['AggregateModel'] = obj({key:{} for key in ['id','service','owned_by','selector_kind','variant_of','router_available','router_unavailable_reason','metadata_fetched_at','provider_created_at','context_window','max_output_tokens','modalities','pricing','deprecation_date','default_reasoning_level','supported_reasoning_levels','client_capabilities','capability_provenance']}, ['id','service','owned_by','capability_provenance'])
@@ -169,7 +173,7 @@ def generate(catalog):
     components['AggregateModels']['properties']['data'] = array(ref('AggregateModel'))
     components['AggregateModels']['properties']['catalog_conflict_candidates'] = array(ref('AggregateModel'))
     response_types[('AggregateModels','GET')] = ref('AggregateModels')
-    request_types = {'Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
+    request_types = {'AccountPolicy':'AccountRoutingPolicy','Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
     paths = {}
     any_methods = {}
     for route in catalog['routes']:
@@ -238,6 +242,7 @@ def generate(catalog):
         elif name=='auth.import': data=ref('AuthImportReport')
         elif name=='tokens.recover-admin': data=ref('Recovery')
         elif name=='accounts.list': data={'anyOf':[array(components['Accounts']['properties']['accounts']['items']),ref('Accounts')]}
+        elif name=='accounts.policy': data=ref('AccountRoutingPolicy')
         elif name=='clients.reset': data=array(ref('ResetRow'))
         elif name=='clients.repair': data=ref('RepairReport')
         elif name=='logs.summary': data=ref('LogSummary')

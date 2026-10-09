@@ -728,11 +728,12 @@ fn principal_catalog_records(
         let mut records = state
             .model_catalogs
             .records_for_accounts(provider, accounts);
+        // Annotate exact upstream identities before policies expose aliases or prefixes.
         state
             .model_catalogs
             .sources()
             .annotate_subscription(&mut records);
-        records
+        crate::account_policy_catalog::project(state, provider, records)
     }
 }
 

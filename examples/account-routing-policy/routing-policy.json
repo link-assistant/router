@@ -1,0 +1,19 @@
+{
+  "weight": 3,
+  "prefix": "team",
+  "disable_cooling": false,
+  "request_retry": 1,
+  "request_scoped_errors": [
+    { "status": 429, "match": "workspace quota", "action": "retry-next" },
+    { "status": 403, "match": "blocked account", "action": "cooldown" },
+    { "status": 429, "match": "", "action": "relay" }
+  ],
+  "headers": {
+    "x-operator-tag": "team-subscription",
+    "x-correlation-id": "$X-Request-Id"
+  },
+  "model_aliases": [
+    { "model": "your-live-upstream-model", "alias": "team-model", "fork": true }
+  ],
+  "excluded_models": [ "*-preview", "experimental-?" ]
+}

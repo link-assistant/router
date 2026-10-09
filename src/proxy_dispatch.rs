@@ -144,7 +144,11 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                     ));
                 }
             };
-        let account = resolved.account.clone();
+        let mut account = resolved.account.clone();
+        if let (Some(account), Some(token)) = (account.as_deref(), resolved.evidence_token.as_ref())
+        {
+            crate::account_policy_scope::credential(account, token);
+        }
         // An already-bound subscription cannot move; do not send twice.
         if attempt > 1
             && account
@@ -235,6 +239,9 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 return Err(transport_error(&error.to_string()));
             }
         };
+        if crate::account_policy_scope::active() {
+            account = crate::account_policy_scope::account();
+        }
         let status = response.status().as_u16();
         if status >= 400 {
             tracing::warn!(
@@ -263,7 +270,9 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
         };
         // Every response, `count_tokens` included, updates the vendor
         // rate-limit state (issue #677).
-        if let (Some(router), Some(name)) = (router, account.as_deref()) {
+        if !crate::account_policy_scope::active()
+            && let (Some(router), Some(name)) = (router, account.as_deref())
+        {
             router.observe_upstream(&UpstreamObservation {
                 account: name,
                 model: context.model.as_deref(),

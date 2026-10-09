@@ -15,6 +15,15 @@ authentication/listeners, live account scope, exact token grants, alias
 discovery, upstream request mapping, and translated buffered and streaming
 served identity.
 
+The account-policy merge adds a regression for exact source metadata surviving
+subscription alias projection while excluded models and alias-only grants stay
+hidden. Without annotating before projection, the raw catalog's operator
+provenance was null. The compatible alias test also uses the full HTTP router in
+automatic mode with a subscription policy: it originally returned a Claude
+entitlement error for an OpenCode-compatible provider. It now verifies successful
+compatible routing, exact selector grants, and continued protection of account
+aliases, prefixes and excluded live IDs.
+
 `tests/model_catalog_compatibility_test.rs` preserves the public catalog cache's
 unwind traits and existing route-ID discriminants and ordering. These assertions
 reproduced the Rust API compatibility failures found by CI.

@@ -14,6 +14,7 @@ fn existing_route_ids_preserve_discriminants_and_order() {
     // The first and last existing variants after the proposed insertion.
     assert_eq!(RouteId::Login as usize, 12);
     assert_eq!(RouteId::NativeCodexBackend as usize, 93);
+    assert_eq!(RouteId::AccountPolicy as usize, 94);
     assert!(RouteId::Provider < RouteId::Login);
     assert!(RouteId::NativeCodexBackend < RouteId::ModelDefinitions);
 }

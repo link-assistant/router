@@ -88,7 +88,7 @@ impl AccountRouter {
     /// Whether this pool was built with pre-first-byte failover on.
     #[must_use]
     pub fn failover_enabled(&self) -> bool {
-        self.inner.failover
+        self.inner.failover && !crate::account_policy_scope::active()
     }
 
     fn account_index(&self, name: &str) -> Option<usize> {
@@ -167,10 +167,24 @@ impl AccountRouter {
         let Some(index) = self.account_index(observed.account) else {
             return ObservedLimits::default();
         };
+        if self.inner.accounts[index].uses_unpooled_defaults() {
+            return ObservedLimits::default();
+        }
         let limits = crate::account_limits::parse_unified(observed.headers);
         let now = now_unix();
         let mut outcome = ObservedLimits::default();
-        let rejected = observed.status == 429;
+        let relayed = crate::account_policy_scope::current().is_some_and(|s| {
+            *s.last_action
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                == Some(crate::account_routing_policy::ErrorAction::Relay)
+        });
+        let rejected = observed.status == 429
+            && !relayed
+            && !self.inner.accounts[index]
+                .policy()
+                .as_ref()
+                .is_ok_and(|p| p.disable_cooling);
         {
             let mut state = self.inner.accounts[index].limits();
             state.expire(now);
