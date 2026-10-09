@@ -33,7 +33,8 @@ async fn native_upstream_errors_use_opt_in_capture_without_changing_response_byt
             let capture: serde_json::Value = serde_json::from_slice(
                 &errors.read(files[0]["name"].as_str().unwrap()).unwrap(),
             ).unwrap();
-            assert_eq!(capture["body"]["access_token"], "[REDACTED]");
+            assert_eq!(capture["body"]["access_token"], "pri********ret");
+            assert!(!capture.to_string().contains("private-secret"));
             assert_eq!(capture["status"], 502);
         } else {
             assert!(!data.path().join("errors").exists());
