@@ -446,7 +446,8 @@ fn realtime_sideband(
     Ok(Some((namespace, id)))
 }
 
-fn percent_decode_segment(encoded: &str) -> Option<String> {
+/// Decode a path selector, retaining literal plus signs and rejecting invalid UTF-8.
+pub fn percent_decode_segment(encoded: &str) -> Option<String> {
     let bytes = encoded.as_bytes();
     let mut decoded = Vec::with_capacity(bytes.len());
     let mut index = 0;

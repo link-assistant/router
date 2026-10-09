@@ -929,24 +929,44 @@ async fn native_gemini_alias_uses_authorized_claude_bridge() {
             &link_assistant_router::model_contract::ModelAccessPolicy::exact("native"),
         )
         .unwrap();
-    for automatic in [false, true] {
-        if automatic {
-            f.state.upstream_provider = link_assistant_router::config::UpstreamProvider::Auto;
+    for (uri_model, visible_model, prefix) in [
+        ("friendly", "friendly", None),
+        ("team%2Ffriendly", "team/friendly", Some("team")),
+        ("caf%C3%A9%2Bpro", "café+pro", None),
+    ] {
+        let mut policy = aliased();
+        policy.prefix = prefix.map(str::to_string);
+        if prefix.is_none() {
+            policy.model_aliases[0].alias = visible_model.into();
         }
-        let config = link_assistant_router::cli::Cli::try_parse_from([
-            "router",
-            "--token-secret",
-            "policy-fixture-secret",
-            "--data-dir",
-            f.homes[0].path().to_str().unwrap(),
-        ])
-        .unwrap()
-        .into_config()
-        .unwrap();
-        let app = link_assistant_router::server_router::router(f.state.clone(), &config);
-        let response = app
-            .oneshot(
-                Request::post("/api/services/gemini/v1beta/models/friendly:generateContent")
+        f.state
+            .account_router
+            .as_ref()
+            .unwrap()
+            .set_routing_policy("primary", policy)
+            .unwrap();
+        for automatic in [false, true] {
+            f.state.upstream_provider = if automatic {
+                link_assistant_router::config::UpstreamProvider::Auto
+            } else {
+                link_assistant_router::config::UpstreamProvider::Anthropic
+            };
+            let config = link_assistant_router::cli::Cli::try_parse_from([
+                "router",
+                "--token-secret",
+                "policy-fixture-secret",
+                "--data-dir",
+                f.homes[0].path().to_str().unwrap(),
+            ])
+            .unwrap()
+            .into_config()
+            .unwrap();
+            let app = link_assistant_router::server_router::router(f.state.clone(), &config);
+            let response = app
+                .oneshot(
+                    Request::post(format!(
+                        "/api/services/gemini/v1beta/models/{uri_model}:generateContent"
+                    ))
                     .header("content-type", "application/json")
                     .header("x-goog-api-client", "gl-node/test gccl/test")
                     .header("x-goog-api-key", &token)
@@ -954,20 +974,25 @@ async fn native_gemini_alias_uses_authorized_claude_bridge() {
                         json!({"contents":[{"role":"user","parts":[{"text":"hi"}]}]}).to_string(),
                     ))
                     .unwrap(),
-            )
-            .await
-            .unwrap();
-        let status = response.status();
-        let result = value(response).await;
-        assert_eq!(status, StatusCode::OK, "automatic={automatic}: {result}");
-        assert_eq!(result["modelVersion"], "friendly");
-        assert_eq!(
-            result["candidates"][0]["content"]["parts"][0]["text"],
-            "native"
-        );
+                )
+                .await
+                .unwrap();
+            let status = response.status();
+            let result = value(response).await;
+            assert_eq!(
+                status,
+                StatusCode::OK,
+                "{uri_model}, automatic={automatic}: {result}"
+            );
+            assert_eq!(result["modelVersion"], visible_model);
+            assert_eq!(
+                result["candidates"][0]["content"]["parts"][0]["text"],
+                "native"
+            );
+        }
     }
     let seen = f.seen.lock().unwrap().clone();
-    assert_eq!(seen.len(), 2);
+    assert_eq!(seen.len(), 6);
     assert_eq!(seen[0].1["model"], "native");
     assert_eq!(seen[1].0["authorization"], "Bearer vendor-0");
     f.close().await;

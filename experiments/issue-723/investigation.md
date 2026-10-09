@@ -144,3 +144,14 @@ remaining usable. Configuration is fixed once per instance, so the test uses a
 fresh admin tracker for the remote-opt-in instance. All 46 focused tests pass,
 including main's ten management-security tests. Contract compatibility, Node/Bun,
 TypeScript and Python binding/deployment regression checks pass after the merge.
+
+## Encoded URI selector regression
+
+Final URI review reproduced a valid Gemini model parameter `team%2Ffriendly`
+returning 403 despite a grant for its native upstream model. The middleware treated
+the encoded path spelling as the model identity, so prefix and alias resolution
+failed (`encoded-model-reproduction.log`). It now reuses the existing path decoder
+before policy and grant checks, while retaining the encoded spelling for URI
+replacement. The production Gemini-to-Claude regression covers both pinned-provider
+and automatic routing, encoded prefixes and UTF-8 aliases containing a plus sign;
+all use the native upstream identity and return decoded visible model metadata.

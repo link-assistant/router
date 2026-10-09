@@ -53,6 +53,9 @@ requests. Its default is false: those accounts also serve their unprefixed names
 A recognized prefix restricts both initial selection and retries to matching
 accounts. A signed account pin never falls back to another account.
 
+For URI model parameters, URL-encode the selector: `team/friendly` becomes
+`team%2Ffriendly`. JSON requests and response metadata retain `team/friendly`.
+
 Aliases project only models discovered in that account's live catalog. By default
 an alias replaces the native spelling; `fork: true` retains both. Requests send the
 upstream identity, and JSON/SSE response model metadata uses the client's alias or

@@ -85,11 +85,16 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         Err(response) => return response,
     };
     let mut body = parsed.value;
-    let requested = path_model.or_else(|| {
-        body.get("model")
+    let requested = match path_model.as_deref() {
+        Some(model) => match crate::native_service::percent_decode_segment(model) {
+            Some(model) => Some(model),
+            None => return failure(StatusCode::BAD_REQUEST, "invalid encoded model selector"),
+        },
+        None => body
+            .get("model")
             .and_then(Value::as_str)
-            .map(str::to_string)
-    });
+            .map(str::to_string),
+    };
     let Some(requested) = requested.filter(|m| !m.is_empty()) else {
         let bytes = parsed.native.encode(&body).unwrap_or_default();
         return next
@@ -230,7 +235,7 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
     // URI model surfaces are rewritten as well as JSON surfaces.
     if path.contains("/models/") {
         let rewritten = path.replacen(
-            &format!("/models/{requested}"),
+            &format!("/models/{}", path_model.as_deref().unwrap_or(&requested)),
             &format!("/models/{upstream}"),
             1,
         );
