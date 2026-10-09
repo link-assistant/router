@@ -8,3 +8,4 @@ bump: minor
 
 ### Fixed
 - Route and authorize recognized thinking selectors by their exact base model while retaining explicit body-control precedence and native signature replay.
+- Preserve thinking suffixes through account-policy aliases and prefixes, and validate the original controls independently against each retry account's catalog.

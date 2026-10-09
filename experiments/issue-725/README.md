@@ -92,6 +92,19 @@ catalog constraints are checked after account selection for every attempt,
 and unknown evidence preserves controls. The minor changelog fragment is the
 release trigger; the release workflow owns the version bump.
 
+Main's account-policy merge also exposed a composition bug: middleware used
+suffixed selectors as aliases, and its retry loop cloned controls already
+clamped or dropped for the first account. Four minimal HTTP cases fail before
+the fix in `ci-logs/account-policy-thinking-red.log`. The new policy-thinking
+target verifies native grants, alias/prefix suffixes, body precedence, signed
+history stripping, per-account drops and clamps, invalid retry budgets, a
+Codex bridge and encoded Gemini native selectors:
+
+```console
+cargo test --locked --test thinking_account_policy_test \
+  --test account_routing_policy_http_test --test account_routing_policy_test
+```
+
 The workspace has a 3 GB memory limit. A normal full test build exceeded it;
 the debug-free, single-job retry was stopped at a finite 2350 MiB child RSS
 bound. Complete local validation therefore runs the integration targets and

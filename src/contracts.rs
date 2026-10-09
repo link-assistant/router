@@ -172,6 +172,7 @@ pub fn types() -> Value {
         "TokenImportReport":schemars::schema_for!(crate::token_import::ImportReport),
         "AuthImportReport":crate::auth_import::result_schema(),
         "UsageSnapshot":schemars::schema_for!(crate::metrics::UsageSnapshot),
+        "AccountRoutingPolicy":schemars::schema_for!(crate::account_routing_policy::AccountRoutingPolicy),
         "CredentialAcceptanceReport":schemars::schema_for!(crate::credential_status::CredentialAcceptanceReport),
         "AuthDiagnosticsSnapshot":schemars::schema_for!(crate::auth_diagnostics::AuthDiagnosticsSnapshot),
         "EmergencyStatus":schemars::schema_for!(crate::emergency_auth::EmergencyAuthStatus),

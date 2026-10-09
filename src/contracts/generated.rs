@@ -3,6 +3,7 @@
 pub(super) const CLI_SCHEMAS: &[(&str, &str)] = &[
     ("accounts.list", include_str!("../../schemas/accounts-list.v1.json")),
     ("accounts.pause", include_str!("../../schemas/accounts-pause.v1.json")),
+    ("accounts.policy", include_str!("../../schemas/accounts-policy.v1.json")),
     ("accounts.resume", include_str!("../../schemas/accounts-resume.v1.json")),
     ("auth.claude", include_str!("../../schemas/auth-claude.v1.json")),
     ("auth.clear", include_str!("../../schemas/auth-clear.v1.json")),

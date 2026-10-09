@@ -15,30 +15,8 @@ use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_document(model: &str, raw: Option<&serde_json::Map<String, Value>>) -> Value {
-    let mut projected =
-        serde_json::Map::from_iter([("name".into(), Value::String(model.to_string()))]);
-    if let Some(raw) = raw {
-        for key in [
-            "baseModelId",
-            "version",
-            "displayName",
-            "description",
-            "inputTokenLimit",
-            "outputTokenLimit",
-            "supportedGenerationMethods",
-            "temperature",
-            "maxTemperature",
-            "topP",
-            "topK",
-        ] {
-            if let Some(value) = raw.get(key) {
-                projected.insert(key.into(), value.clone());
-            }
-        }
-    }
-    Value::Object(projected)
-}
+mod model;
+use model::native_model_document;
 
 /// Subscriptions whose live catalogs the Gemini namespace may advertise.
 ///
@@ -64,21 +42,21 @@ async fn advertised_models(
     providers
         .into_iter()
         .flat_map(|provider| {
-            principal
-                .map_or_else(
-                    || snapshot.records(provider),
-                    |principal| {
-                        if state.subscription_cache.evidence_for(provider, principal)
-                            == Some(crate::refresh::CredentialEvidence::Rejected)
-                        {
-                            Vec::new()
-                        } else {
-                            state
-                                .model_catalogs
-                                .records_for_accounts(provider, &[principal.to_string()])
-                        }
-                    },
-                )
+            let records = principal.map_or_else(
+                || snapshot.records(provider),
+                |principal| {
+                    if state.subscription_cache.evidence_for(provider, principal)
+                        == Some(crate::refresh::CredentialEvidence::Rejected)
+                    {
+                        Vec::new()
+                    } else {
+                        state
+                            .model_catalogs
+                            .records_for_accounts(provider, &[principal.to_string()])
+                    }
+                },
+            );
+            crate::account_policy_catalog::project(state, provider, records)
                 .into_iter()
                 .map(move |record| (provider, record))
         })
@@ -119,7 +97,13 @@ pub async fn native_models(
         )
         .is_ok()
     });
-    advertised.retain(|(_, record)| model_policy.permits(&record.canonical_id));
+    advertised.retain(|(provider, record)| {
+        crate::account_policy_catalog::permitted(
+            &model_policy,
+            *provider,
+            crate::account_policy_catalog::native_id(record),
+        )
+    });
     if state.upstream_provider != crate::config::UpstreamProvider::Auto
         && advertised.is_empty()
         && let Some(provider) = state.upstream_provider.subscription_provider()
@@ -208,7 +192,11 @@ pub async fn native_model(
         .into_iter()
         .filter_map(|(owner, candidate)| {
             (candidate.canonical_id.trim_start_matches("models/") == requested_id
-                && model_policy.permits(&candidate.canonical_id)
+                && crate::account_policy_catalog::permitted(
+                    &model_policy,
+                    owner,
+                    crate::account_policy_catalog::native_id(&candidate),
+                )
                 && crate::client_policy::enforce_subscription_for_claims(
                     &state,
                     &claims,
@@ -467,12 +455,15 @@ async fn forward_native(
     path: &str,
     mut body: Value,
 ) -> Response {
-    let Some((model, streaming)) = parse_native_target(path) else {
+    let Some((mut model, streaming)) = parse_native_target(path) else {
         return native_error(
             StatusCode::NOT_FOUND,
             "expected a model :generateContent or :streamGenerateContent action",
         );
     };
+    if let Some(scope) = crate::account_policy_scope::current() {
+        model.clone_from(&scope.upstream_selector);
+    }
     let from_thinking_suffix =
         crate::thinking::suffix_applies(&body, &model, crate::thinking::ThinkingProtocol::Gemini);
     let model = match crate::thinking::normalize_native_request(
@@ -633,14 +624,15 @@ async fn forward_native_authorized_after_route(
         // Codex, Claude and Qwen have no `generateContent` surface, so the
         // request crosses through the shared OpenAI Chat Completions path and
         // the response is translated back into Gemini's native shape.
-        return forward_native_via_chat(
+        return Box::pin(forward_native_via_chat(
             routed,
             headers,
             &model,
             streaming,
             &body,
             entitlement.expect("subscription ingress always records an entitlement"),
-        )
+            from_thinking_suffix,
+        ))
         .await;
     }
     let state = &routed.state;
@@ -729,6 +721,9 @@ async fn forward_native_authorized_after_route(
             );
         }
     };
+    if let Some(actual) = crate::account_policy_scope::account() {
+        routed.account = actual;
+    }
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let retry_after = retry_after_duration(upstream.headers());
@@ -736,19 +731,22 @@ async fn forward_native_authorized_after_route(
     // The response status is already authoritative even if the peer closes
     // before its declared body is complete. Record it while the response still
     // carries the exact credential generation that produced it.
-    state
-        .subscription_cache
-        .record_status_for_credential(
-            crate::subscription::SubscriptionProvider::Gemini,
-            &routed.account,
-            &routed.token,
-            status.as_u16(),
-        )
-        .await;
+    if !crate::account_policy_scope::active() {
+        state
+            .subscription_cache
+            .record_status_for_credential(
+                crate::subscription::SubscriptionProvider::Gemini,
+                &routed.account,
+                &routed.token,
+                status.as_u16(),
+            )
+            .await;
+    }
     state
         .metrics
         .record_request(Surface::OpenAIChat, status.as_u16(), Some(&routed.account));
-    if status == StatusCode::TOO_MANY_REQUESTS
+    if !crate::account_policy_scope::active()
+        && status == StatusCode::TOO_MANY_REQUESTS
         && let Some(router) = state.account_router.as_ref()
     {
         router.report_failure_with_retry_after(
@@ -872,20 +870,28 @@ async fn forward_native_via_chat(
     streaming: bool,
     body: &Value,
     entitlement: crate::client_policy::EntitlementDecision,
+    from_thinking_suffix: bool,
 ) -> Response {
     let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
         Ok(request) => request,
         Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
     };
     let state = routed.state;
-    let response = crate::proxy::openai_chat_completions_routed(
-        state.clone(),
-        headers.clone(),
-        chat_request,
-        routed.subscription,
-        entitlement,
-    )
-    .await;
+    let response = crate::thinking::ORIGIN
+        .scope(
+            (
+                crate::thinking::ThinkingProtocol::Gemini,
+                from_thinking_suffix,
+            ),
+            crate::proxy::openai_chat_completions_routed(
+                state.clone(),
+                headers.clone(),
+                chat_request,
+                routed.subscription,
+                entitlement,
+            ),
+        )
+        .await;
 
     translated_chat_response(response, &state, model, streaming).await
 }

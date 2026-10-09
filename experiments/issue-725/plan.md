@@ -154,3 +154,39 @@ backward compatibility, strict TypeScript and all nine binding cases each in
 Node, Bun and Python pass. Formatting and strict all-target/all-feature Clippy
 also pass; the finite Clippy run observes a 2389420 KiB peak. Final CI must
 verify the committed measured baseline and run the dependent package build.
+
+Commit 62b92c7 passes all seven workflows, including the dependent package
+build in CI run 37901940334. While packaging ran, main merged PR #748's
+account routing policies. Review of the combined handlers found suffixes
+lost during alias resolution and retries cloning the first account's
+constrained payload. Four minimal HTTP regressions fail before the fix:
+alias suffix requests return 403, a dropped budget is missing on retry,
+suffix budgets are not independently clamped, and a budget invalid for
+the second account returns 200 instead of 400. The preserved log is
+`ci-logs/account-policy-thinking-red.log`; bridge coverage is added in
+`tests/thinking_account_policy_test.rs`.
+The merge retains the higher measured coverage baseline. Main's v1.21.0
+release metadata is also fetched for inclusion before the next push.
+
+The Codex policy fixture uses the real serialized `ClientProtocol` value,
+exposing a second scope mismatch: live discovery emits `open_a_i_chat` and
+`open_a_i_responses`, while the validator understood only manually written
+public protocol aliases. The minimal evidence regression fails before fixing
+the validator (`ci-logs/catalog-protocol-spelling-red.log`). Matching the
+typed discovery serialization retains existing public aliases and keeps
+different protocol scopes unknown.
+
+The native Gemini-to-Codex regression then fails with `thinking level high
+is not supported by the exact model`: the intermediate Chat representation
+had erased the caller's Gemini source and suffix intent. The native bridge
+now retains both in an internal task scope for selected-account validation.
+The preserved failing log is `ci-logs/native-policy-thinking-origin-red.log`.
+
+The combined account-policy source passes all 47 focused cases: fourteen
+existing policy HTTP tests, eleven policy tests, seven new policy-thinking
+regressions and fifteen thinking-evidence tests. The compressed Codex retry
+retains explicit effort and summary while removing encrypted history from
+the previous account. Formatting, the 1000-line file limit, terminology,
+generated contracts, binding parity and strict TypeScript pass. Strict
+all-target/all-feature Clippy passes under the finite 2450 MiB bound,
+observing a 2447080 KiB peak.

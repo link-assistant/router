@@ -726,9 +726,10 @@ fn principal_catalog_records(
     }) {
         Vec::new()
     } else {
-        state
+        let records = state
             .model_catalogs
-            .records_for_accounts(provider, accounts)
+            .records_for_accounts(provider, accounts);
+        crate::account_policy_catalog::project(state, provider, records)
     }
 }
 

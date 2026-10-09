@@ -216,6 +216,28 @@ fn served_identity_uses_exact_base_without_allowing_sibling_substitution() {
 }
 
 #[test]
+fn authenticated_catalog_protocol_serialization_preserves_capability_scope() {
+    use link_assistant_router::client_policy::ClientProtocol;
+    for (target, native) in [
+        (P::OpenAIChat, ClientProtocol::OpenAIChat),
+        (P::Qwen, ClientProtocol::OpenAIChat),
+        (P::OpenAIResponses, ClientProtocol::OpenAIResponses),
+        (P::Codex, ClientProtocol::OpenAIResponses),
+    ] {
+        let protocol = serde_json::to_value(native).unwrap();
+        let mut evidence = truth_for(target);
+        evidence.route.protocols = vec![protocol.as_str().unwrap().into()];
+        evidence.capability_provenance["fields"]["thinking"]["scope"]["protocols"] =
+            json!([protocol]);
+        assert_ne!(
+            apply(&evidence, target),
+            apply(&truth_for(P::Vertex), target),
+            "{target:?}: {protocol}"
+        );
+    }
+}
+
+#[test]
 fn scoped_legacy_reasoning_level_metadata_constrains_only_its_own_account() {
     for levels in [
         json!(["low", "high"]),

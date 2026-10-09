@@ -124,8 +124,14 @@ pub(super) async fn forward_openai(
             );
         }
     };
+    if let (Some(account), Some(token)) = (
+        resolved.account.as_deref(),
+        resolved.evidence_token.as_ref(),
+    ) {
+        crate::account_policy_scope::credential(account, token);
+    }
     let oauth_token = resolved.access_token;
-    let selected_account = resolved.account;
+    let mut selected_account = resolved.account;
     let evidence_token = resolved.evidence_token;
     let selector_kind = selected_account.as_deref().map_or(
         crate::model_contract::ModelSelectorKind::Unknown,
@@ -228,6 +234,9 @@ pub(super) async fn forward_openai(
             );
         }
     };
+    if crate::account_policy_scope::active() {
+        selected_account = crate::account_policy_scope::account();
+    }
     let upstream_status = upstream_resp.status();
     if !upstream_status.is_success() {
         tracing::warn!(

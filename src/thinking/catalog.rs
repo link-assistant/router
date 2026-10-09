@@ -19,6 +19,10 @@ pub fn apply_for_account(
     origin: ThinkingProtocol,
     from_suffix: bool,
 ) -> Result<bool, String> {
+    let (origin, from_suffix) = super::ORIGIN
+        .try_with(|intent| *intent)
+        .unwrap_or((origin, from_suffix));
+    super::policy::remember(body, protocol, origin, from_suffix);
     let records = state
         .model_catalogs
         .records_for_accounts(provider, &[account.to_string()]);

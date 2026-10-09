@@ -10,10 +10,10 @@ pub(super) fn project_record(record: CatalogRecord) -> Value {
     let exposed_id = record.canonical_id.clone();
     let mut projected = record.raw;
     projected.insert("id".into(), Value::String(exposed_id));
-    projected.insert(
-        "canonical_id".into(),
-        Value::String(record.canonical_id.clone()),
-    );
+    let upstream = projected
+        .remove("_router_policy_upstream")
+        .unwrap_or_else(|| Value::String(record.canonical_id.clone()));
+    projected.insert("canonical_id".into(), upstream);
     projected.insert(
         "provider".into(),
         Value::String(record.provider.as_str().to_string()),

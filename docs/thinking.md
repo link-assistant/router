@@ -55,6 +55,13 @@ Explicit summary visibility does not select an amount of thinking. Signed
 thinking blocks, Gemini thought signatures and encrypted Responses history
 continue through their established replay paths.
 
+Account policy aliases and prefixes also accept suffixes, for example
+`team/friendly(high)`. Router resolves and authorizes the native base model,
+then applies the thinking request. Policy retries restore the original
+translated controls and validate each selected account independently; a
+first account's clamp or unsupported drop does not become the next account's
+request. Explicit invalid budgets still return a client error before sending.
+
 The [model truth contract](model-truth-contract.md#thinking-controls-and-scoped-evidence)
 defines which scoped evidence can constrain controls. Set Router's existing
 debug log level to inspect conversion, clamp and unsupported-drop traces;

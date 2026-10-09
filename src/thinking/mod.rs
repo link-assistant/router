@@ -11,6 +11,7 @@ mod catalog;
 pub(crate) use catalog::apply_for_account;
 mod extract;
 mod parser;
+pub(crate) mod policy;
 mod support;
 mod visibility;
 
@@ -106,6 +107,12 @@ pub enum ThinkingProtocol {
     Antigravity,
     Kimi,
     Xai,
+}
+
+// An internal bridge retains the caller's source format and suffix intent;
+// its intermediate wire format must not turn a translation into body input.
+tokio::task_local! {
+    pub(crate) static ORIGIN: (ThinkingProtocol, bool);
 }
 
 impl ThinkingProtocol {

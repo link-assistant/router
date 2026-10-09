@@ -170,6 +170,7 @@ pub enum RouteId {
     NativeAnthropic,
     NativeCodex,
     NativeCodexBackend,
+    AccountPolicy,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

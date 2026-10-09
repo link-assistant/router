@@ -76,8 +76,20 @@ pub(super) fn from_truth(
 }
 
 fn matches_protocol(name: &str, protocol: ThinkingProtocol) -> bool {
+    use crate::client_policy::ClientProtocol as C;
     use ThinkingProtocol as P;
+    // Discovery serializes ClientProtocol directly. Preserve those exact wire
+    // spellings as well as the established public protocol names below.
+    let native = serde_json::from_value::<C>(Value::String(name.to_string())).ok();
+    let native_matches = matches!(
+        (native, protocol),
+        (Some(C::AnthropicMessages), P::Anthropic)
+            | (Some(C::OpenAIChat), P::OpenAIChat | P::Qwen)
+            | (Some(C::OpenAIResponses), P::OpenAIResponses | P::Codex)
+            | (Some(C::GeminiNative), P::Gemini | P::Vertex)
+    );
     ThinkingProtocol::from_name(name) == Some(protocol)
+        || native_matches
         || match protocol {
             P::Anthropic => name == "anthropic_messages",
             P::OpenAIChat | P::Qwen => name == "openai_chat",

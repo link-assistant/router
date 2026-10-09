@@ -205,11 +205,20 @@ fn apply_model_policy(
     {
         candidates.retain(|entry| {
             entry
-                .get("id")
+                .get("canonical_id")
+                .or_else(|| entry.get("id"))
                 .and_then(serde_json::Value::as_str)
-                .is_some_and(|id| policy.allowed_models.iter().any(|allowed| allowed == id))
+                .is_some_and(|id| policy.permits(id))
         });
     }
+    let conflicting_ids = object
+        .get("catalog_conflict_candidates")
+        .and_then(serde_json::Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|entry| entry.get("id").and_then(serde_json::Value::as_str))
+        .map(str::to_string)
+        .collect::<std::collections::HashSet<_>>();
     if let Some(conflicts) = object
         .get_mut("catalog_conflicts")
         .and_then(serde_json::Value::as_array_mut)
@@ -217,12 +226,27 @@ fn apply_model_policy(
         conflicts.retain(|entry| {
             entry
                 .as_str()
-                .is_some_and(|id| policy.allowed_models.iter().any(|allowed| allowed == id))
+                .is_some_and(|id| conflicting_ids.contains(id) || policy.permits(id))
         });
     }
     let mut visible = Vec::new();
+    // Account aliases are authorized against their exact upstream identity.
+    for entry in &available {
+        let native = entry
+            .get("canonical_id")
+            .and_then(serde_json::Value::as_str);
+        if native.is_some_and(|native| entry["id"] != native && policy.permits(native)) {
+            visible.push(entry.clone());
+        }
+    }
     for allowed in &policy.allowed_models {
-        if let Some(exact) = available.iter().find(|entry| entry["id"] == *allowed) {
+        if let Some(exact) = available.iter().find(|entry| {
+            entry["id"] == *allowed
+                && entry
+                    .get("canonical_id")
+                    .and_then(serde_json::Value::as_str)
+                    .is_none_or(|native| policy.permits(native))
+        }) {
             visible.push(exact.clone());
             continue;
         }
@@ -253,6 +277,8 @@ fn apply_model_policy(
         }
         visible.push(variant);
     }
+    let mut seen = std::collections::HashSet::new();
+    visible.retain(|entry| seen.insert(entry["id"].to_string()));
     object.insert("data".into(), serde_json::Value::Array(visible));
 }
 

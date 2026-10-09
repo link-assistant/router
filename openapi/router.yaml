@@ -43,6 +43,134 @@
         ],
         "type": "object"
       },
+      "AccountRoutingPolicy": {
+        "additionalProperties": false,
+        "description": "Backward-compatible per-credential traffic policy.",
+        "properties": {
+          "disable_cooling": {
+            "default": false,
+            "type": "boolean"
+          },
+          "excluded_models": {
+            "description": "Case-sensitive glob patterns: `*` matches any sequence, `?` one character.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Static values, or `$Header-Name` copies from the reviewed allow-list.",
+            "type": "object"
+          },
+          "model_aliases": {
+            "items": {
+              "$ref": "#/components/schemas/AccountRoutingPolicy_ModelAlias"
+            },
+            "type": "array"
+          },
+          "prefix": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "request_retry": {
+            "default": null,
+            "description": "Number of retries after the first attempt. Zero disables retries.",
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "request_scoped_errors": {
+            "items": {
+              "$ref": "#/components/schemas/AccountRoutingPolicy_RequestScopedError"
+            },
+            "type": "array"
+          },
+          "weight": {
+            "default": 1,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "title": "AccountRoutingPolicy",
+        "type": "object"
+      },
+      "AccountRoutingPolicy_ErrorAction": {
+        "description": "Action of the first matching request-scoped error rule.",
+        "oneOf": [
+          {
+            "const": "cooldown",
+            "description": "Cool this account and relay the response.",
+            "type": "string"
+          },
+          {
+            "const": "retry-next",
+            "description": "Try another eligible account before returning any response bytes.",
+            "type": "string"
+          },
+          {
+            "const": "relay",
+            "description": "Relay unchanged, suppressing automatic cooldown and retry.",
+            "type": "string"
+          }
+        ]
+      },
+      "AccountRoutingPolicy_ModelAlias": {
+        "additionalProperties": false,
+        "description": "One explicitly configured account model alias.",
+        "properties": {
+          "alias": {
+            "description": "Client-facing name.",
+            "type": "string"
+          },
+          "fork": {
+            "default": false,
+            "description": "Keep the upstream name visible as well as the alias.",
+            "type": "boolean"
+          },
+          "model": {
+            "description": "Exact upstream model, which must appear in the account's live catalog.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "alias"
+        ],
+        "type": "object"
+      },
+      "AccountRoutingPolicy_RequestScopedError": {
+        "additionalProperties": false,
+        "description": "Upstream status and a literal body substring, evaluated in declaration order.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/AccountRoutingPolicy_ErrorAction"
+          },
+          "match": {
+            "type": "string"
+          },
+          "status": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "match",
+          "action"
+        ],
+        "type": "object"
+      },
       "Accounts": {
         "additionalProperties": false,
         "properties": {
@@ -63,6 +191,12 @@
                 "paused": {},
                 "remaining_requests": {},
                 "request_limit": {},
+                "routing_policy": {
+                  "$ref": "#/components/schemas/AccountRoutingPolicy"
+                },
+                "routing_policy_error": {
+                  "type": "string"
+                },
                 "used": {},
                 "windows": {}
               },
@@ -5383,6 +5517,175 @@
           "method": "POST",
           "name": "AccountPause",
           "path": "/api/management/accounts/{name}/pause"
+        }
+      }
+    },
+    "/api/management/accounts/{name}/policy": {
+      "get": {
+        "operationId": "get_api_management_accounts_name_policy",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountRoutingPolicy"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "AccountPolicy",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "AccountPolicy",
+          "path": "/api/management/accounts/{name}/policy"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_accounts_name_policy",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "AccountPolicy",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "AccountPolicy",
+          "path": "/api/management/accounts/{name}/policy"
+        }
+      },
+      "post": {
+        "operationId": "post_api_management_accounts_name_policy",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRoutingPolicy"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountRoutingPolicy"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "AccountPolicy",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "POST",
+          "name": "AccountPolicy",
+          "path": "/api/management/accounts/{name}/policy"
         }
       }
     },
