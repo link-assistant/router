@@ -74,8 +74,32 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
 - [x] Review combined contracts/bindings and unchanged existing routes; verify
   all binding suites and compile/exercise Go, Java and PHP clients (366 HTTP
   operations). Recheck that main remains at the merged `9b0a991`.
-- Rerun the complete merged suite with bounded compilation, documentation,
-  independent host-consumer and finite soak checks; retain their complete logs.
-- Commit the resolved merge and push only the prepared branch.
+- [x] Rerun the complete merged suite with bounded compilation: 2,195 distinct
+  unit tests, all 119 integration targets (880 passing tests and the separately
+  exercised timed soak), all binary targets and 15 documentation tests pass.
+- [x] Commit the resolved merge and push only the prepared branch.
 - Inspect final-head workflows and any failed logs/coverage artifacts, update
   the PR's validation evidence, and mark it ready only after passing CI.
+
+## v1.22.0 release and instrumented callback-test failure
+
+- [x] Inspect main's `bc8b453` release: only version/release metadata changes;
+  merge it after completing the full suite so tests do not mix package versions.
+- [x] Preserve the failed instrumented-test log on `621119d`; identify the
+  callback test's shared ephemeral-port assertion (`113955481825`, lines
+  6225–6236). No coverage report was generated, so do not change the baseline.
+- [x] Reproduce immediate rebinding failing after listener-task completion when
+  another listener owns the released port. Check the specific callback server's
+  task completion in success, provider-error, timeout and drop regressions.
+- [x] Rebuild v1.22.0, regenerate contracts/bindings and verify their matching
+  versions; all 15 catalog, 21 CLI and seven OAuth tests pass, as do strict
+  all-target/all-feature Clippy, formatting, repository checks, compatibility
+  and all binding suites (nine tests each) and TypeScript checks.
+- [x] Match all 2,195 unit names against ordinary Linux CI. Reproduce and fix
+  the inventory parser's handling of interleaved subprocess output; require a
+  passing summary and verify five evidence-parser regressions.
+- Verify API/provider/packaging regressions, binding suites, Rust documentation,
+  the independent host consumer and a finite 60-second soak on the merged build.
+- Commit each completed step, push only the prepared branch, and require all
+  workflows for its exact final SHA to pass before updating evidence/readiness.
+- Recheck main ancestry, issue/PR comments, the complete PR diff and clean status.

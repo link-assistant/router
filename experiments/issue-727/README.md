@@ -70,6 +70,11 @@ Logs are saved to the experiment directory and `ci-logs/issue-727`, respectively
 and are ignored by Git.
 `run-checks.py --units --start 8` verifies saved shard results and their inventory
 without compiling or running completed tests again.
+Compare the saved inventory with a downloaded ordinary Linux CI job using
+`experiments/issue-703/compare-unit-test-inventories.py`. The comparison accounts
+for interleaved subprocess output and requires a complete passing summary;
+`python3 experiments/issue-727/test-unit-inventory-parser.py` verifies that
+failures, truncated logs and missing/unexpected names are rejected.
 
 When CI requires committing an increased coverage baseline, download its
 `rust-lcov` artifact and reproduce the reviewability failure without modifying
@@ -85,6 +90,20 @@ After committing the report's measured percentage, run the same command without
 The failed job on `247aa01` measured 77,623 / 89,329 lines, requiring the baseline
 to advance from 86.855579% to 86.895633%. The existing coverage checker unit tests
 continue to enforce the floor and prevent unapproved decreases.
+
+The later instrumented test run on `621119d` failed before producing coverage:
+`coverage-job-113955481825.log:6225` identifies
+`auth::tests::provider_error_closes_listener_immediately` and line 6226 its
+immediate port-rebind assertion. A released ephemeral port can already belong
+to another parallel test. Run
+`python3 experiments/issue-727/reproduce-callback-port-reuse.py` to reproduce
+`EADDRINUSE` after the listener-owning task has finished; add `--check-task` to
+verify task completion despite the port being reused. Callback tests now retain
+their server's abort handle and verify that specific task has finished after
+success, provider rejection, timeout or drop. Run the focused runner with
+`--auth-tests` to include all seven real OAuth tests and require the four cleanup
+cases to execute. Production shutdown logic and
+the coverage ratchet stay unchanged.
 
 The issue's compiled inventory was removed by issue #192. Source definitions
 therefore overlay authenticated live inventories instead of restoring a static

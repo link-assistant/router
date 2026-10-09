@@ -19,6 +19,8 @@ ENV.pop('CODEX_HOME', None)
 parser = argparse.ArgumentParser(__doc__)
 parser.add_argument('--tests-only', action='store_true',
                     help='reuse an already built binary and generated contracts')
+parser.add_argument('--auth-tests', action='store_true',
+                    help='also verify OAuth callback task cleanup after port reuse')
 args = parser.parse_args()
 
 
@@ -38,11 +40,16 @@ focused = ROOT / 'target/issue-727-focused'
 if focused.exists():
     shutil.rmtree(focused)
 shutil.copytree(ROOT / 'target/local-unit-shards', focused, symlinks=True)
+names = ['cli_tests.rs', 'model_catalog_sources_tests.rs',
+         'model_catalog_sources_routing_tests.rs']
+if args.auth_tests:
+    names.append('auth.rs')
 for path in (focused / 'src').rglob('*.rs'):
-    enabled = '0' if path.name in ['cli_tests.rs', 'model_catalog_sources_tests.rs',
-                                 'model_catalog_sources_routing_tests.rs'] else '1'
-    path.write_text(re.sub(r'#\[cfg\(router_local_unit_shard = "[0-7]"\)\]',
-                          f'#[cfg(router_local_unit_shard = "{enabled}")]', path.read_text()))
+    enabled = '0' if path.name in names else '1'
+    # Include predicates inside module-level cfg(any(...)) as well as each
+    # function's cfg; otherwise an entire OAuth test module can stay disabled.
+    path.write_text(re.sub(r'router_local_unit_shard = "[0-7]"',
+                          f'router_local_unit_shard = "{enabled}"', path.read_text()))
 wrapper = focused / 'focused.py'
 wrapper.write_text((focused / 'shard-0.py').read_text().replace(
     str(ROOT / 'target/local-unit-shards'), str(focused)))
@@ -52,5 +59,14 @@ run(['cargo', 'test', '--locked', '--all-features', '--lib', 'model_catalog_sour
     'focused-sources', environment)
 run(['cargo', 'test', '--locked', '--all-features', '--lib', 'cli::tests'],
     'focused-cli', environment)
+if args.auth_tests:
+    run(['cargo', 'test', '--locked', '--all-features', '--lib', 'auth::tests::'],
+        'focused-auth', environment)
+    output = (LOGS / 'focused-auth.log').read_text()
+    for name in ['mismatched_state_is_rejected_and_listener_closes_after_valid_callback',
+                 'callback_listener_closes_on_timeout',
+                 'dropping_loopback_login_closes_listener',
+                 'provider_error_closes_listener_immediately']:
+        assert f'test auth::tests::{name} ... ok' in output, name
 run(['python3', 'experiments/issue-727/reproduce.py'], 'cli-after')
 print('All focused checks passed', flush=True)

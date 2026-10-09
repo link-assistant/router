@@ -13,6 +13,7 @@ local = set(args.local_inventory.read_text().splitlines())
 assert local, "The local unit-test inventory must not be empty"
 expected = set()
 active = False
+summary_verified = False
 with args.ci_log.open() as log:
     for line in log:
         line = re.sub(r"\x1b\[[0-9;]*m", "", line)
@@ -21,11 +22,16 @@ with args.ci_log.open() as log:
         elif active:
             if "test result:" in line:
                 assert f"{len(local)} passed; 0 failed" in line, line
+                summary_verified = True
                 break
-            match = re.search(r"\btest ([\w:]+) \.\.\. ok$", line.strip())
+            # Subprocess stdout can split a libtest result before its `ok`.
+            # Collect announced names; the summary above requires every test
+            # to pass, so interleaving cannot conceal a failed test.
+            match = re.search(r"\btest ([\w:]+) \.\.\.(?:\s|$)", line)
             if match:
                 expected.add(match.group(1))
 assert active, "The CI log does not contain the corresponding unit-test suite"
+assert summary_verified, "The CI log does not contain a passing unit-test summary"
 assert expected == local, (
     f"Missing locally: {sorted(expected - local)}; "
     f"absent from CI: {sorted(local - expected)}"
