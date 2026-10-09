@@ -38,3 +38,18 @@ workspace's 3 GB memory limit. Retries stop at a finite memory bound. The
 helper preserves production code, exported/shared fixtures and all external
 test parents, omits inactive private test modules, and enables every parsed
 test entry point exactly once across the four shards.
+
+The four partitions pass 533, 598, 456 and 579 Linux unit tests (2166 total).
+The second partition initially exposed the agent's `CODEX_HOME` override in an
+existing home-fallback test. Removing that variable from child processes made
+the isolated test and complete partition pass; production behavior is unchanged.
+All 15 documentation tests and the independent library consumer pass, as do
+the Node, Bun and Python bindings, contract generators and compatibility checks.
+
+The final WebSocket review reproduced a capability bypass: the same exact
+Codex catalog dropped unsupported HTTP thinking, while WebSocket turns still
+forwarded it. The connection now retains its selected account and endpoint for
+validation on every turn. The regression passes together with all 70 Router
+end-to-end tests and all four focused thinking test targets. All six existing
+WebSocket unit tests also pass. Strict Clippy, formatting, Rust documentation,
+file-size and terminology checks pass before committing this fix.

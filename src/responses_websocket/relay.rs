@@ -8,8 +8,8 @@ use tokio_tungstenite::tungstenite;
 
 use super::{
     AppState, MAX_CONNECTION_AGE, MAX_NAMED_STREAMS, Surface, TurnTracking, UpstreamTarget,
-    downstream_to_upstream, fail_and_close, reserve_turn, target_state, upstream_to_downstream,
-    validate_stream_id, websocket_error,
+    downstream_to_upstream, fail_and_close, reserve_turn, target_state, thinking_controls,
+    upstream_to_downstream, validate_stream_id, websocket_error,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -187,6 +187,15 @@ pub(super) async fn relay<S>(
                             let _ = downstream.send(Message::Text(error.to_string().into())).await;
                             continue;
                         }
+                        let model = model.to_string();
+                        match thinking_controls::apply_for_target(state, target, &mut value) {
+                            Ok(true) => message = Message::Text(value.to_string().into()),
+                            Ok(false) => {},
+                            Err(error) => {
+                                let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                                continue;
+                            }
+                        }
                         let tracker = match reserve_turn(state, &claims, &value) {
                             Ok(tracker) => tracker,
                             Err(error) => {
@@ -200,7 +209,7 @@ pub(super) async fn relay<S>(
                             Surface::OpenAIResponses,
                             path,
                             Some(&value),
-                            Some(model),
+                            Some(&model),
                         );
                         if let Some(lane_name) = lane.as_ref() {
                             named_streams.insert(lane_name.clone());

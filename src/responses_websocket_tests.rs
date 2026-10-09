@@ -522,6 +522,7 @@ async fn in_process_websocket_covers_routing_multiplexing_and_rejections() {
         allowed_models: vec!["gpt-unit".into()],
         provider: UpstreamProvider::OpenAICompatible,
         codex_cookie_scope: false,
+        thinking_account: None,
     };
     let request = websocket_request(&target).unwrap();
     assert_eq!(request.headers()["authorization"], "Bearer upstream");

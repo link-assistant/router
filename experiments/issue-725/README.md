@@ -31,6 +31,14 @@ A final comparison with upstream `strconv.Atoi` exposed signed-zero budgets:
 before the fix and now passes. The parser regression also rejects multiple
 signs and still bounds budgets to `u32`.
 
+The Codex WebSocket regression compared HTTP and two WebSocket turns against
+the same authenticated catalog declaring thinking unsupported. HTTP removed
+the effort, but the first WebSocket request still forwarded `low`; the failing
+output is in `ci-logs/websocket-evidence-reproduction.log`. WebSocket ingress
+normalized suffixes without checking the selected account's capability facts.
+The connection now retains its account and inference endpoint and applies the
+same catalog validator before forwarding the first and each subsequent turn.
+
 Run the reproductions and conformance cases with:
 
 ```console
@@ -76,4 +84,10 @@ Inactive private test modules are omitted only in a temporary source copy;
 production code, exported fixture helpers and parents of external/included
 test files are retained.
 All shards reuse dependencies and run under the same finite memory bound.
+The helper removes `CODEX_HOME` only from child processes because the existing
+credential-home fallback test requires that override to be absent. The Codex
+workspace environment is unchanged. Use `--shard 1` to repeat just the second
+partition after investigating a failure.
+Use `--test-file responses_websocket_tests.rs` to rerun one affected test file;
+this mode keeps all production code and shared fixtures in the temporary copy.
 `run-integrations.py --prebuilt` is an investigation mode, not final validation.

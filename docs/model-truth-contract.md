@@ -201,7 +201,9 @@ Each field uses the same authenticated capability provenance as other catalog
 facts. It must match the exact model, provider, account, catalog endpoint and
 target protocol and explicitly have `unknown: false` and `conflict: false`.
 
-Inference checks happen after account selection and again for each retry. A
+Inference checks happen after account selection and again for each retry.
+Codex Responses WebSocket turns check current evidence for the connection's
+bound account and inference endpoint, including the first turn. A
 healthy record must belong to that account and credential generation and its
 discovery endpoint must match the selected inference configuration. Gemini's
 documented public discovery endpoint is paired with its Google inference
