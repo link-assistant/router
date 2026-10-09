@@ -88,3 +88,18 @@ CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 \
 CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 \
   cargo test --locked --all-features --doc
 ```
+
+The complete admin-observability merge passes all 922 integration/bin tests across 122 suites (one ignored soak), including all 48 pool tests, all 15 doctests, every example target, and strict documentation. Results are in `resume-admin-all-integration-tests.log`, `resume-admin-doctests.log`, `resume-admin-examples.log`, and `resume-admin-strict-docs.log`. Fresh CI also passes strict all-target/all-feature Clippy (`ci-logs/lint-37966233582.log`).
+
+Run `37966233582` at `54965b5` passes the instrumented tests and coverage floor, measuring 78,542 of 90,291 lines covered (86.987629%). The reviewable-baseline gate alone fails (`ci-logs/coverage-37966233582.log:7968`), requesting that measured increase. The downloaded `rust-lcov` report supplies the baseline through the existing checker; a second invocation leaves it unchanged, and all eight checker tests pass (`resume-admin-coverage-*.log`).
+
+The fresh unsharded Linux inventory contains 2,180 enabled library tests: all 2,177 previous tests plus main's latest-version, debug-lease and native-error-capture regressions. The current local run uses sixteen generated groups and records every enabled test name. Reproduce it with the same fixed 2,400 MiB child limit:
+
+```sh
+ROUTER_LOCAL_UNIT_SHARDS=16 ROUTER_BUILD_RSS_LIMIT_MIB=1600 \
+  python3 experiments/issue-719/bounded-build.py \
+  rust-script experiments/issue-703/shard-unit-tests.rs
+python3 experiments/issue-724/run-unit-groups.py
+```
+
+The runner preserves per-group listings, test results and peak RSS in `ci-logs/admin-unit-group-*.log`, and writes their distinct enabled names to `ci-logs/admin-unit-test-inventory.txt`. It uses the same commands as the fixed-checkout validation and does not alter production sources or the normal CI compiler. The later main v1.22.0 release changes only package/catalog versions and changelog metadata; its production, test and script delta is empty, and the merged versions and generated bindings agree.
