@@ -22,7 +22,7 @@ parser.add_argument('--units', action='store_true')
 parser.add_argument('--integrations', action='store_true')
 parser.add_argument('--start', type=int, default=0)
 args = parser.parse_args()
-assert 0 <= args.start < 8
+assert 0 <= args.start <= 8  # 8 verifies saved inventories without rerunning tests.
 
 
 def run(command, name, environment=ENV):
@@ -34,6 +34,12 @@ def run(command, name, environment=ENV):
 
 if args.units:
     inventory = set()
+    # syn leaves proptest macro bodies intact, so these existing properties
+    # execute in every shard. Count them once while rejecting other duplicates.
+    macro_tests = {
+        'lino_json::tests::any_record_survives_the_line_round_trip',
+        'request_log::tests::complete_credentials_never_survive_any_redaction_site',
+    }
     for shard in range(args.start, 8):
         environment = {**ENV, 'RUSTC_WORKSPACE_WRAPPER': str(
             ROOT / f'target/local-unit-shards/shard-{shard}.py')}
@@ -43,9 +49,11 @@ if args.units:
     for shard in range(8):
         names = set(re.findall(r'^([\w:]+): test$',
                     (LOGS / f'unit-{shard}-list.log').read_text(), re.MULTILINE))
-        assert not inventory.intersection(names), f'duplicate shard {shard}'
+        duplicates = inventory.intersection(names) - macro_tests
+        assert not duplicates, f'duplicate shard {shard}: {sorted(duplicates)}'
         assert 'test result: ok.' in (LOGS / f'unit-{shard}.log').read_text()
         inventory.update(names)
+    assert macro_tests.issubset(inventory)
     (LOGS / 'unit-inventory.txt').write_text('\n'.join(sorted(inventory)) + '\n')
     print(f'All {len(inventory)} distinct unit tests passed', flush=True)
 
