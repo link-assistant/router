@@ -73,6 +73,7 @@ export type LocalDeployment = { "backend": ({ "image": (string | null); "name": 
 export type LogAnomaly = { "correlation_ids": ReadonlyArray<string>; "detail": string; "kind": string; };
 export type LogRecordsReport = { "correlation_id": string; "output": ReadonlyArray<string>; "records": ReadonlyArray<JsonValue>; };
 export type LogSummary = { "bytes"?: number; "exchanges"?: number; "incomplete_streams"?: number; "non_streamed"?: number; "records"?: number; "statuses"?: { [key: string]: JsonValue; }; "streamed"?: number; "undecodable_bodies"?: number; "unparsable_records"?: number; "unterminated_streams"?: number; "unverifiable_streams"?: number; };
+export type LoggingPatch = { "debug": boolean; };
 export type LoginView = { "error"?: string | null; "expires_at"?: number | null; "login_id": string; "provider": LoginView_SubscriptionProvider; "session_expires_at": string; "status": LoginView_LoginStatus; "url"?: string | null; "user_code"?: string | null; };
 export type LoginView_LoginStatus = ("awaiting_code" | "awaiting_callback" | "awaiting_device" | "authorized" | "failed" | "expired");
 export type LoginView_SubscriptionProvider = ("claude" | "codex" | "gemini" | "qwen");

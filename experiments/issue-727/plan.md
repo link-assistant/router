@@ -53,9 +53,29 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
 - [x] Verify strict all-target/all-feature Clippy, the unchanged built UI,
   15 catalog regressions, 21 CLI regressions, all 2,192 distinct unit tests,
   Python/Node/Bun binding tests, and generated contract compatibility.
-- Finish every integration target, binary/documentation tests, the Rust host
+- [x] Finish every integration target, binary/documentation tests, the Rust host
   consumer and generated Go/Java/PHP probes; retain their complete local logs.
-- Review the final diff, commit and push only the prepared branch, and require
-  fresh passing workflows for its exact SHA before readiness.
+- [x] Review the final diff, commit and push only the prepared branch.
+- Require fresh passing workflows for its exact SHA before readiness.
 - Recheck main ancestry, comments and clean status, update the PR's test evidence,
   and mark PR #752 ready.
+
+## Observability merge
+
+- [x] Detect main advancing to `9b0a991` while CI runs and inspect PR #753's
+  observability implementation, generated contracts, and validation evidence.
+- [x] Resolve registration/generator conflicts by retaining both endpoint sets,
+  preserving the measured higher coverage baseline, and regenerating artifacts.
+- [x] Expand the public route-ID regression, reproduce RequestLog's incorrect
+  96 ordinal, and append ModelDefinitions at 102 to preserve main's IDs 95–101.
+- [x] Verify 15 catalog and 21 CLI regressions, all 22 affected observability,
+  management-security and compatibility integration tests, strict Clippy,
+  formatting, repository checks and contract compatibility against main.
+- [x] Review combined contracts/bindings and unchanged existing routes; verify
+  all binding suites and compile/exercise Go, Java and PHP clients (366 HTTP
+  operations). Recheck that main remains at the merged `9b0a991`.
+- Rerun the complete merged suite with bounded compilation, documentation,
+  independent host-consumer and finite soak checks; retain their complete logs.
+- Commit the resolved merge and push only the prepared branch.
+- Inspect final-head workflows and any failed logs/coverage artifacts, update
+  the PR's validation evidence, and mark it ready only after passing CI.

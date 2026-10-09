@@ -151,6 +151,13 @@ def generate(catalog):
     components['Verification'] = obj({'schema': {'const':'link-assistant-router/verification/v1'}, 'router_version': nullable(STRING), 'commit': {'type':['string','null']}, 'generated_at_unix': INT, 'complete': BOOL, 'parity': BOOL, 'failed': BOOL, 'skipped': INT, 'areas_not_run': array(unexecuted_area), 'targets_not_run': array(STRING), 'areas': array(area), 'client_preparation': array(preparation)}, ['schema','router_version','commit','generated_at_unix','complete','parity','failed','skipped','areas_not_run','targets_not_run','areas','client_preparation'])
     response_types = {
         ('ModelDefinitions','GET'):ref('ModelDefinitionsResponse'),
+        ('RequestLog','GET'):obj({'id':STRING, 'records':array({'type':'object'})}, ['id','records']),
+        ('ErrorLogs','GET'):obj({'enabled':BOOL, 'files':array(obj({'name':STRING,'bytes':INT}, ['name','bytes']))}, ['enabled','files']),
+        ('ErrorLog','GET'):obj({'id':STRING,'status':INT,'body':{},'complete':BOOL,'truncated':BOOL}, ['id','status','body','complete','truncated']),
+        ('ClearLogs','DELETE'):obj({'cleared':BOOL}, ['cleared']),
+        ('Logging','PATCH'):obj({'debug':BOOL,'ttl_secs':INT}, ['debug','ttl_secs']),
+        ('UsageQueue','GET'):obj({'accounts':array(obj({'name':STRING,'in_flight':INT,'queued':{'const':0}}, ['name','in_flight','queued'])), 'in_flight':INT,'queued':{'const':0},'unassigned':INT}, ['accounts','in_flight','queued','unassigned']),
+        ('LatestVersion','GET'):obj({'current_version':STRING,'latest_version':STRING,'update_available':BOOL,'release_url':STRING}, ['current_version','latest_version','update_available','release_url']),
         ('Usage','GET'):ref('UsageSnapshot'), ('CredentialStatus','GET'):obj({'credentials':array(ref('CredentialAcceptanceReport'))}, ['credentials']),
         ('AuthDiagnostics','GET'):obj({'diagnostics':ref('AuthDiagnosticsSnapshot'),'emergency_auth':ref('EmergencyStatus')}, ['diagnostics','emergency_auth']),
         ('EmergencyAuthStatus','GET'):ref('EmergencyStatus'), ('EmergencyAuthDisable','POST'):obj({'disabled':BOOL,'was_active':BOOL,'status':ref('EmergencyStatus')}, ['disabled','was_active','status']),
@@ -174,6 +181,8 @@ def generate(catalog):
     components['AggregateModels']['properties']['catalog_conflict_candidates'] = array(ref('AggregateModel'))
     response_types[('AggregateModels','GET')] = ref('AggregateModels')
     request_types = {'AccountPolicy':'AccountRoutingPolicy','Login':'BeginLoginRequest','LoginCode':'SubmitCodeRequest','Tokens':'IssueTokenRequest','ClientTokens':'IssueClientTokenRequest','RevokeToken':'RevokeTokenRequest','RotateToken':'RotateTokenRequest','RotateClientToken':'RotateClientTokenRequest','Providers':'ProviderUpsert','AdminBootstrap':'TtlRequest','AdminRotate':'TtlRequest','AdminBootstrapConfirm':'ConfirmRequest'}
+    components['LoggingPatch'] = obj({'debug':BOOL}, ['debug'])
+    request_types['Logging'] = 'LoggingPatch'
     paths = {}
     any_methods = {}
     for route in catalog['routes']:
@@ -194,7 +203,7 @@ def generate(catalog):
                 'responses':{'200':{'description':'Success','content':content},'default':{'description':route['dialect']+' failure envelope','content':{'application/json':{'schema':ref(route['dialect']+'Error')}}}},
                 'parameters':[{'name':parameter,'in':'path','required':True,'schema':STRING, 'description':'Wildcard path segments' if '{*'+parameter+'}' in route['path'] else 'Path parameter'} for parameter in re.findall(r'{([^}]+)}',path)]}
             if method in ['POST','PUT','PATCH']:
-                op['requestBody']={'required':False,'content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
+                op['requestBody']={'required':route['name']=='Logging','content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
             if '/realtime' in path or path.endswith('/responses') and method=='GET': op['x-router-websocket']={'upgrade':'websocket','events':ref('OpaqueVendorPayload')}
             if route['auth']=='Client': op['security'] += [{'RouterApiKey':[]},{'RouterGoogleKey':[]}]
             if method=='HEAD':

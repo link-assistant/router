@@ -17,6 +17,8 @@ pub use types::{
 #[path = "route_contract_native.rs"]
 mod native;
 use native::NATIVE_ROUTES;
+#[path = "route_contract_observability.rs"]
+mod observability;
 
 const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
@@ -900,7 +902,14 @@ const ROUTES: &[RouteSpec] = &[
 #[must_use]
 pub fn route_specs() -> &'static [RouteSpec] {
     static ALL: OnceLock<Vec<RouteSpec>> = OnceLock::new();
-    ALL.get_or_init(|| ROUTES.iter().chain(NATIVE_ROUTES.iter()).copied().collect())
+    ALL.get_or_init(|| {
+        ROUTES
+            .iter()
+            .chain(NATIVE_ROUTES.iter())
+            .chain(observability::ROUTES.iter())
+            .copied()
+            .collect()
+    })
 }
 
 /// The canonical path template for a route id.

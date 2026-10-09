@@ -2496,6 +2496,18 @@
         "required": [],
         "type": "object"
       },
+      "LoggingPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "debug": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "debug"
+        ],
+        "type": "object"
+      },
       "LoginView": {
         "additionalProperties": false,
         "description": "Public view of a login session.",
@@ -6627,6 +6639,78 @@
         }
       }
     },
+    "/api/management/logging": {
+      "patch": {
+        "operationId": "patch_api_management_logging",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoggingPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "debug": {
+                      "type": "boolean"
+                    },
+                    "ttl_secs": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "debug",
+                    "ttl_secs"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Logging",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "PATCH",
+          "name": "Logging",
+          "path": "/api/management/logging"
+        }
+      }
+    },
     "/api/management/login": {
       "post": {
         "operationId": "post_api_management_login",
@@ -6920,6 +7004,418 @@
           "method": "POST",
           "name": "LoginCode",
           "path": "/api/management/login/{id}/code"
+        }
+      }
+    },
+    "/api/management/logs": {
+      "delete": {
+        "operationId": "delete_api_management_logs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cleared": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "cleared"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ClearLogs",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "DELETE",
+          "name": "ClearLogs",
+          "path": "/api/management/logs"
+        }
+      }
+    },
+    "/api/management/logs/errors": {
+      "get": {
+        "operationId": "get_api_management_logs_errors",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "files": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "bytes": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "bytes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "files"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ErrorLogs",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ErrorLogs",
+          "path": "/api/management/logs/errors"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_logs_errors",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ErrorLogs",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ErrorLogs",
+          "path": "/api/management/logs/errors"
+        }
+      }
+    },
+    "/api/management/logs/errors/{name}": {
+      "get": {
+        "operationId": "get_api_management_logs_errors_name",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "body": {},
+                    "complete": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "body",
+                    "complete",
+                    "truncated"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ErrorLog",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ErrorLog",
+          "path": "/api/management/logs/errors/{name}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_logs_errors_name",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ErrorLog",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ErrorLog",
+          "path": "/api/management/logs/errors/{name}"
+        }
+      }
+    },
+    "/api/management/logs/requests/{id}": {
+      "get": {
+        "operationId": "get_api_management_logs_requests_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "records": {
+                      "items": {
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "records"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "RequestLog",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RequestLog",
+          "path": "/api/management/logs/requests/{id}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_logs_requests_id",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "RequestLog",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "RequestLog",
+          "path": "/api/management/logs/requests/{id}"
         }
       }
     },
@@ -7417,6 +7913,109 @@
         }
       }
     },
+    "/api/management/server/latest-version": {
+      "get": {
+        "operationId": "get_api_management_server_latest_version",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "current_version": {
+                      "type": "string"
+                    },
+                    "latest_version": {
+                      "type": "string"
+                    },
+                    "release_url": {
+                      "type": "string"
+                    },
+                    "update_available": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "current_version",
+                    "latest_version",
+                    "update_available",
+                    "release_url"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "LatestVersion",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "LatestVersion",
+          "path": "/api/management/server/latest-version"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_server_latest_version",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "LatestVersion",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "LatestVersion",
+          "path": "/api/management/server/latest-version"
+        }
+      }
+    },
     "/api/management/tokens": {
       "get": {
         "operationId": "get_api_management_tokens",
@@ -7883,6 +8482,129 @@
           "method": "GET",
           "name": "Usage",
           "path": "/api/management/usage"
+        }
+      }
+    },
+    "/api/management/usage/queue": {
+      "get": {
+        "operationId": "get_api_management_usage_queue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accounts": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "in_flight": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "queued": {
+                            "const": 0
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "in_flight",
+                          "queued"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "in_flight": {
+                      "type": "integer"
+                    },
+                    "queued": {
+                      "const": 0
+                    },
+                    "unassigned": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "accounts",
+                    "in_flight",
+                    "queued",
+                    "unassigned"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "UsageQueue",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "UsageQueue",
+          "path": "/api/management/usage/queue"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_usage_queue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "UsageQueue",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "UsageQueue",
+          "path": "/api/management/usage/queue"
         }
       }
     },

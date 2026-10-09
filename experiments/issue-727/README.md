@@ -28,6 +28,13 @@ aliases, prefixes and excluded live IDs.
 unwind traits and existing route-ID discriminants and ordering. These assertions
 reproduced the Rust API compatibility failures found by CI.
 
+After merging the observability endpoints from main, run
+`python3 experiments/issue-727/check-route-ordinals.py` for a small reproduction
+of the same compatibility assertions. Keeping ModelDefinitions before the
+newly published variants changes RequestLog from 95 to 96 and fails. Appending
+ModelDefinitions at 102 preserves every observability route's value and order;
+the ordinary integration test verifies the combined public crate as well.
+
 The existing generated HTTP-client check also reproduced a Go compilation
 failure: the source document's null-only fields became invalid `nil` types.
 The strict source schema stays published separately; HTTP models describe

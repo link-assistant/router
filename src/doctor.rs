@@ -1,11 +1,13 @@
 //! Subscription diagnostics shared by the `doctor` CLI command.
 
 use crate::claude_auth::ClaudeAuthMode;
+mod latest_version;
 use crate::login::LoginConfig;
 use crate::model_catalog::{
     CatalogAcceptance, classify_catalog_acceptance, fetch_provider_catalog,
 };
 use crate::subscription::{SubscriptionProvider, SubscriptionReader, all_subscription_readers};
+pub use latest_version::latest_version;
 
 /// One line per Claude login mode, saying whether it can run here and which
 /// scopes it would request.

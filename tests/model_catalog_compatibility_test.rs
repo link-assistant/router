@@ -15,6 +15,15 @@ fn existing_route_ids_preserve_discriminants_and_order() {
     assert_eq!(RouteId::Login as usize, 12);
     assert_eq!(RouteId::NativeCodexBackend as usize, 93);
     assert_eq!(RouteId::AccountPolicy as usize, 94);
+    assert_eq!(RouteId::RequestLog as usize, 95);
+    assert_eq!(RouteId::ErrorLogs as usize, 96);
+    assert_eq!(RouteId::ErrorLog as usize, 97);
+    assert_eq!(RouteId::ClearLogs as usize, 98);
+    assert_eq!(RouteId::Logging as usize, 99);
+    assert_eq!(RouteId::UsageQueue as usize, 100);
+    assert_eq!(RouteId::LatestVersion as usize, 101);
+    assert_eq!(RouteId::ModelDefinitions as usize, 102);
     assert!(RouteId::Provider < RouteId::Login);
     assert!(RouteId::NativeCodexBackend < RouteId::ModelDefinitions);
+    assert!(RouteId::LatestVersion < RouteId::ModelDefinitions);
 }
