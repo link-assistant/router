@@ -67,9 +67,16 @@ with its intended environment.
 rust-script experiments/issue-703/shard-unit-tests.rs
 env -u CODEX_HOME CARGO_PROFILE_TEST_DEBUG=0 ROUTER_BUILD_RSS_LIMIT_MIB=2450 \
   python3 experiments/issue-726/verify-unit-shards.py
-CARGO_PROFILE_TEST_DEBUG=0 CARGO_BUILD_JOBS=1 \
+CARGO_PROFILE_TEST_DEBUG=0 ROUTER_BUILD_RSS_LIMIT_MIB=2450 \
+  RUSTC_WRAPPER="$PWD/experiments/issue-703/rustc_memory_wrapper.py" \
+  python3 experiments/issue-719/bounded-build.py \
   cargo test --locked --all-features --test '*' --bins
 ```
 
 The real-server regression preserves `LLVM_PROFILE_FILE` and exits gracefully
 on Unix so coverage includes successful debug PATCH calls and lease expiry.
+On Windows the isolated child preserves `SystemRoot`, `WINDIR`, `TEMP`, and
+`TMP`, matching the existing persistent bridge's runtime allowlist. Clearing
+those variables caused the Windows CI reproduction to fail at server startup.
+The test now reports bounded child stderr and operational logs on an early
+exit or readiness failure, while retaining the same startup deadline.

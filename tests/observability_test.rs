@@ -437,6 +437,8 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
     let address = socket.local_addr().unwrap();
     drop(socket);
     let audit = dir.path().join("audit.jsonl");
+    let stderr = dir.path().join("server-stderr.log");
+    let operational = dir.path().join("logs/operational.log");
     let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_router"));
     command
         .args([
@@ -458,12 +460,30 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
         .env("AUDIT_LOG", &audit)
         .env("ERROR_LOG_DIR", dir.path().join("errors"))
         .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null());
+        .stderr(std::fs::File::create(&stderr).unwrap());
+    // An empty Windows environment breaks network startup. Use the same
+    // runtime allowlist as the isolated persistent Codex bridge.
+    #[cfg(windows)]
+    command.envs(
+        ["SystemRoot", "WINDIR", "TEMP", "TMP"]
+            .into_iter()
+            .filter_map(|name| std::env::var_os(name).map(|value| (name, value))),
+    );
     // Keep the child visible to the workspace coverage run after env_clear.
     if let Some(profile) = std::env::var_os("LLVM_PROFILE_FILE") {
         command.env("LLVM_PROFILE_FILE", profile);
     }
     let mut server = Server(command.spawn().unwrap());
+    let diagnostics = || {
+        use std::io::Read as _;
+        let mut bytes = Vec::new();
+        for path in [&stderr, &operational] {
+            if let Ok(file) = std::fs::File::open(path) {
+                let _ = file.take(16 * 1024).read_to_end(&mut bytes);
+            }
+        }
+        String::from_utf8_lossy(&bytes).into_owned()
+    };
     let client = reqwest::Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(3))
@@ -472,6 +492,11 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
     let endpoint = format!("http://{address}/api/management");
     let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
     loop {
+        assert!(
+            server.0.try_wait().unwrap().is_none(),
+            "server exited before readiness: {}",
+            diagnostics()
+        );
         if client
             .get(format!("{endpoint}/health"))
             .send()
@@ -482,7 +507,8 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
         }
         assert!(
             tokio::time::Instant::now() < deadline,
-            "server did not start"
+            "server did not start: {}",
+            diagnostics()
         );
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
@@ -534,7 +560,7 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
             .count(),
         3
     );
-    let operational = std::fs::read_to_string(dir.path().join("logs/operational.log")).unwrap();
+    let operational = std::fs::read_to_string(operational).unwrap();
     assert!(operational.contains("runtime_logging_changed debug=true"));
     assert!(operational.contains("runtime_debug_reverted reason=ttl_expired"));
     assert!(operational.contains("runtime_logging_changed debug=false"));
