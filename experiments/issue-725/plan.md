@@ -268,3 +268,19 @@ pass. Strict all-target/all-feature Clippy also passes with warnings denied
 before completion; a finite 2550 MiB retry completes successfully. The
 combined unit, integration, documentation and binding checks and fresh
 latest-commit CI are recorded in PR #750 when complete.
+
+Complete combined-source reruns pass 2,181 distinct Linux unit entry points,
+922 integration cases across 123 targets, 15 documentation tests, the
+independent Rust consumer, all binary targets and 27 Node/Bun/Python cases.
+Generated contracts match 62 operations and 232 HTTP routes. Strict Rust
+documentation and all ten offline vendor fixtures also pass. Unit partition
+6 reaches the finite bound before tests at 2410880 KiB; the equivalent
+partitions 6 and 14 of sixteen pass all 146 and 115 cases. The final inventory
+confirms no Linux entry point is omitted or repeated.
+
+Main then advances to bc8b45331d31acf0df6aeb802d5070479c39a319, releasing
+v1.22.0. Its complete 146-line diff changes only package versions, generated
+contract versions and the consumed observability changelog fragment.
+Application and test source are unchanged. Merge the release metadata while
+retaining this issue's minor release trigger; version-sensitive integration,
+binding and contract checks and final CI are recorded in PR #750.
