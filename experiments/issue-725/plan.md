@@ -190,3 +190,14 @@ the previous account. Formatting, the 1000-line file limit, terminology,
 generated contracts, binding parity and strict TypeScript pass. Strict
 all-target/all-feature Clippy passes under the finite 2450 MiB bound,
 observing a 2447080 KiB peak.
+
+Main remains at a8232ff8e745a465b339d8afadf410fdef075976 (v1.21.0).
+Its metadata-only merge is reviewed and rebuilds the actual Router 1.21.0
+binary. All 201 affected CLI, contract, catalog, routing and thinking cases
+pass, including the new policy regressions. All nine binding cases each in
+Node, Bun and Python, strict TypeScript, generated contract/binding parity,
+backward compatibility, formatting, file-size, terminology and vendor
+fixtures pass against that rebuilt binary.
+Strict all-target/all-feature Clippy also passes on the v1.21.0 merge,
+observing a 2408952 KiB peak under the same finite bound. The complete
+combined-source integration and unit rerun will accompany the next CI run.
