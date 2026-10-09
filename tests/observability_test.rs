@@ -334,6 +334,37 @@ async fn abandoned_error_is_marked_incomplete_and_zero_budget_writes_nothing() {
 #[tokio::test]
 async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter() {
     struct Server(std::process::Child);
+    impl Server {
+        async fn stop(&mut self) {
+            #[cfg(unix)]
+            {
+                assert!(
+                    std::process::Command::new("kill")
+                        .args(["-TERM", &self.0.id().to_string()])
+                        .status()
+                        .unwrap()
+                        .success()
+                );
+                let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+                loop {
+                    if let Some(status) = self.0.try_wait().unwrap() {
+                        assert!(status.success(), "server shutdown failed: {status}");
+                        break;
+                    }
+                    assert!(
+                        tokio::time::Instant::now() < deadline,
+                        "server did not stop"
+                    );
+                    tokio::time::sleep(Duration::from_millis(20)).await;
+                }
+            }
+            #[cfg(not(unix))]
+            {
+                self.0.kill().unwrap();
+                self.0.wait().unwrap();
+            }
+        }
+    }
     impl Drop for Server {
         fn drop(&mut self) {
             let _ = self.0.kill();
@@ -371,7 +402,7 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
     if let Some(profile) = std::env::var_os("LLVM_PROFILE_FILE") {
         command.env("LLVM_PROFILE_FILE", profile);
     }
-    let _server = Server(command.spawn().unwrap());
+    let mut server = Server(command.spawn().unwrap());
     let client = reqwest::Client::builder()
         .no_proxy()
         .timeout(Duration::from_secs(3))
@@ -447,6 +478,8 @@ async fn real_server_debug_patch_expires_and_audits_with_a_quiet_startup_filter(
     assert!(operational.contains("runtime_debug_reverted reason=ttl_expired"));
     assert!(operational.contains("runtime_logging_changed debug=false"));
     assert!(!dir.path().join("errors").exists());
+    // Graceful Unix shutdown flushes the instrumented child's coverage data.
+    server.stop().await;
 }
 
 #[cfg(unix)]

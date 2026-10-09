@@ -193,7 +193,7 @@ def generate(catalog):
                 'responses':{'200':{'description':'Success','content':content},'default':{'description':route['dialect']+' failure envelope','content':{'application/json':{'schema':ref(route['dialect']+'Error')}}}},
                 'parameters':[{'name':parameter,'in':'path','required':True,'schema':STRING, 'description':'Wildcard path segments' if '{*'+parameter+'}' in route['path'] else 'Path parameter'} for parameter in re.findall(r'{([^}]+)}',path)]}
             if method in ['POST','PUT','PATCH']:
-                op['requestBody']={'required':False,'content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
+                op['requestBody']={'required':route['name']=='Logging','content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
             if '/realtime' in path or path.endswith('/responses') and method=='GET': op['x-router-websocket']={'upgrade':'websocket','events':ref('OpaqueVendorPayload')}
             if route['auth']=='Client': op['security'] += [{'RouterApiKey':[]},{'RouterGoogleKey':[]}]
             if method=='HEAD':
