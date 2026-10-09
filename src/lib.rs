@@ -126,6 +126,7 @@ pub mod primary_listener;
 mod process_adapter;
 pub mod provider_acceptance;
 mod provider_config;
+pub mod provider_connector;
 pub mod provider_proxy;
 pub mod providers;
 pub mod providers_cli;

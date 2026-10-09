@@ -196,6 +196,11 @@ fn oauth_client_from(
     }
 }
 
+/// Official token endpoint for an explicitly configured connector.
+pub(crate) const fn provider_token_url(provider: SubscriptionProvider) -> &'static str {
+    refresh_config(provider).token_url
+}
+
 fn refresh_token_url(provider: SubscriptionProvider) -> String {
     #[cfg(debug_assertions)]
     if let Ok(url) = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TEST_TOKEN_URL") {
