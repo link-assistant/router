@@ -87,7 +87,9 @@ fn proxy_router(state: AppState, data_dir: &std::path::Path) -> axum::Router {
     .expect("test CLI parses")
     .into_config()
     .expect("test config is valid");
-    link_assistant_router::server_router::router(state, &config)
+    link_assistant_router::server_router::router(state, &config).layer(axum::Extension(
+        axum::extract::ConnectInfo("127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap()),
+    ))
 }
 
 fn get_request(path: &str, token: Option<&str>) -> Request<Body> {
@@ -136,6 +138,9 @@ async fn the_bootstrap_claim_can_be_won_only_once_across_channels() {
     // HTTP now finds bootstrap closed, and a second chat user gets nothing.
     let state = state_with(Arc::clone(&admin), dir.path());
     let response = link_assistant_router::admin_api::router(state)
+        .layer(axum::Extension(axum::extract::ConnectInfo(
+            "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+        )))
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -169,7 +174,11 @@ async fn a_client_token_is_refused_where_an_admin_credential_is_required() {
 
     assert_eq!(
         status_of(
-            link_assistant_router::admin_api::router(state.clone()),
+            link_assistant_router::admin_api::router(state.clone()).layer(axum::Extension(
+                axum::extract::ConnectInfo(
+                    "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap()
+                )
+            )),
             "/api/management/admin/summary",
             Some(&client_token),
         )
@@ -311,6 +320,9 @@ async fn every_admin_response_is_hardened() {
         ("/", None),
     ] {
         let response = link_assistant_router::admin_api::router(state.clone())
+            .layer(axum::Extension(axum::extract::ConnectInfo(
+                "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+            )))
             .oneshot(get_request(path, token))
             .await
             .expect("router responds");

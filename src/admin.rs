@@ -229,6 +229,7 @@ struct PendingCandidate {
 /// The admin credential: an optional environment-provisioned key plus the
 /// claim state machine backed by a file in the data directory.
 pub struct AdminClaim {
+    management_access: crate::management_access::ManagementAccess,
     env_key: Option<String>,
     claim_path: Option<PathBuf>,
     candidate_ttl: Duration,
@@ -266,12 +267,19 @@ impl AdminClaim {
             .and_then(|raw| crate::lino_json::decode::<ClaimFile>(&raw).ok())
             .filter(|file: &ClaimFile| !file.is_empty());
         Self {
+            management_access: crate::management_access::ManagementAccess::new(data_dir),
             env_key: env_key.filter(|key| !key.is_empty()),
             claim_path: Some(claim_path),
             candidate_ttl,
             tokens: OnceLock::new(),
             state: Mutex::new(Self::state_from(stored)),
         }
+    }
+
+    /// Instance-wide management policy, counters and bans.
+    #[must_use]
+    pub const fn management_access(&self) -> &crate::management_access::ManagementAccess {
+        &self.management_access
     }
 
     fn state_from(stored: Option<ClaimFile>) -> ClaimState {
@@ -312,6 +320,7 @@ impl AdminClaim {
     #[must_use]
     pub fn in_memory(env_key: Option<String>, candidate_ttl: Duration) -> Self {
         Self {
+            management_access: crate::management_access::ManagementAccess::in_memory(),
             env_key: env_key.filter(|key| !key.is_empty()),
             claim_path: None,
             candidate_ttl,
