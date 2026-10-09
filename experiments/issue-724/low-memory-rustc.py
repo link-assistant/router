@@ -2,9 +2,10 @@
 """Local-only unit-build experiment for the workspace's 3 GB memory limit.
 
 Use as RUSTC_WRAPPER. Dependencies and production builds retain their normal
-flags; only Router's large library test harness uses smaller codegen partitions
-and reduced LLVM name retention. No runtime behavior or checked-in Cargo profile
-changes. Requires a rustc supporting -Zfewer-names (tested with Rust 1.98.1).
+flags; only Router's large library test harness uses smaller codegen partitions,
+reduced LLVM name retention and a serial backend. No runtime behavior or
+checked-in Cargo profile changes. Requires a rustc supporting -Zfewer-names
+and -Zno-parallel-backend (tested with Rust 1.98.1).
 """
 import os
 import sys
@@ -15,5 +16,9 @@ if "--test" in args and "--crate-name" in args:
     name = args[args.index("--crate-name") + 1]
     if name == "link_assistant_router":
         environment["RUSTC_BOOTSTRAP"] = "1"
-        args.extend(["-Ccodegen-units=1024", "-Zfewer-names=yes"])
+        args.extend([
+            "-Ccodegen-units=1024",
+            "-Zfewer-names=yes",
+            "-Zno-parallel-backend",
+        ])
 os.execvpe(compiler, [compiler, *args], environment)
