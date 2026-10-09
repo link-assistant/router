@@ -155,3 +155,14 @@ before policy and grant checks, while retaining the encoded spelling for URI
 replacement. The production Gemini-to-Claude regression covers both pinned-provider
 and automatic routing, encoded prefixes and UTF-8 aliases containing a plus sign;
 all use the native upstream identity and return decoded visible model metadata.
+
+## Final release merge and coverage baseline
+
+Main's automated v1.19.0 release (`6656dc1`) changed only version metadata and
+release notes; its merge preserves the tested routing source. The rebuilt binary,
+46 focused tests, strict Clippy, contract/binding parity and Node/Bun/TypeScript/
+Python checks pass after that merge. Linux CI also passes the 2,176 library tests.
+Coverage run `37882640505` measures 76,856 of 88,552 lines (86.791941%). Its only
+coverage error, at line 8,468 of the preserved log, requires committing the higher
+baseline. Replaying the actual gate with its report advances the baseline from
+86.756772% to 86.791941% and passes; the increase is retained for final CI.
