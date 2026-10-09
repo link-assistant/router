@@ -154,7 +154,7 @@ def generate(catalog):
         ('Accounts','GET'):ref('Accounts'), ('AccountPause','POST'):ref('AccountPause'), ('AccountResume','POST'):ref('AccountResume'),
         ('SubscriptionHealth','GET'):ref('SubscriptionHealth'), ('AggregateModels','GET'):ref('Models'),
     }
-    components['AggregateModel'] = obj({key:{} for key in ['id','service','owned_by','selector_kind','variant_of','router_available','router_unavailable_reason','metadata_fetched_at','provider_created_at','context_window','max_output_tokens','modalities','pricing','deprecation_date','default_reasoning_level','supported_reasoning_levels','client_capabilities','capability_provenance']}, ['id','service','owned_by','capability_provenance'])
+    components['AggregateModel'] = obj({key:{} for key in ['id','service','owned_by','selector_kind','variant_of','router_available','router_unavailable_reason','metadata_fetched_at','provider_created_at','context_window','max_output_tokens','modalities','pricing','deprecation_date','default_reasoning_level','supported_reasoning_levels','client_capabilities','thinking','capability_provenance']}, ['id','service','owned_by','capability_provenance'])
     components['AggregateModels'] = copy.deepcopy(components['Models'])
     components['AggregateModels']['properties']['data'] = array(ref('AggregateModel'))
     components['AggregateModels']['properties']['catalog_conflict_candidates'] = array(ref('AggregateModel'))
