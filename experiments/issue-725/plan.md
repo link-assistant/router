@@ -223,3 +223,25 @@ local results above remain applicable. Release workflow invariants, the tool
 installation check across all 42 jobs, its eight unit cases and formatting
 pass after merging those action updates. Latest-commit CI and readiness are
 recorded in PR #750 when all remote jobs finish.
+
+Resumed investigation checks the completed runs for `8f02018`, created at
+2026-10-09T11:52:52Z after its push. All six companion workflows and the
+Linux/macOS/Windows tests pass. CI run 37926456639 fails only the reviewable
+coverage-baseline update: coverage passes at 78412 / 90258 lines (86.875402%).
+The preserved full log records the measurement at
+`ci-logs/pipeline-37926456639.log:14289` and the explicit commit requirement at
+line 14322. The matching downloaded report advances the baseline through the
+existing checker. All eight coverage-policy tests and formatting pass; the
+floor, tolerance, exception policy and test discovery remain unchanged.
+
+Main advances to a89ebfcb9b1536a3b5f4e493850d6aac5b803bf1 through dependency
+PRs #755-#758. Their diffs and descriptions are reviewed. The merge changes
+only dependency manifests/locks and pinned Docker bases, including jsonschema
+0.58.5, Tokio 1.53.2, UUID 1.27.0 and link-cli 0.2.12. Application and test
+source remain unchanged. Strict all-target/all-feature Clippy passes with
+warnings denied under the finite 2450 MiB bound (2406652 KiB peak).
+Formatting, file-size, terminology, release/workflow invariants, strict
+TypeScript, binding parity and backward contract compatibility pass. The
+updated UI dependencies build successfully and reproduce the committed bundle
+exactly. Complete local integration and unit reruns continue alongside final
+CI, which must verify the new commit and dependent package build.
