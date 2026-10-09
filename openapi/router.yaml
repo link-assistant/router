@@ -1291,6 +1291,45 @@
         ],
         "type": "object"
       },
+      "CooldownReset": {
+        "additionalProperties": false,
+        "description": "Scope of an administrative cooldown reset.",
+        "properties": {
+          "account": {
+            "description": "Omit to clear cooldowns throughout the pool.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "description": "With an account, clear only this model's cooldown.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "CooldownReset",
+        "type": "object"
+      },
+      "CooldownResetResult": {
+        "additionalProperties": false,
+        "description": "Summary of a completed administrative cooldown reset.",
+        "properties": {
+          "cleared": {
+            "description": "Number of cooldown entries removed.",
+            "format": "uint",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cleared"
+        ],
+        "title": "CooldownResetResult",
+        "type": "object"
+      },
       "CredentialAcceptanceReport": {
         "additionalProperties": false,
         "description": "One provider's accepted state and exact local credential root.",
@@ -3520,6 +3559,36 @@
           "token",
           "revoked"
         ],
+        "type": "object"
+      },
+      "RoutingSettings": {
+        "additionalProperties": false,
+        "description": "Resolved live selection policy.",
+        "properties": {
+          "strategy": {
+            "description": "Canonical selection-strategy name.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy"
+        ],
+        "title": "RoutingSettings",
+        "type": "object"
+      },
+      "RoutingUpdate": {
+        "additionalProperties": false,
+        "description": "Requested selection policy for future sessions.",
+        "properties": {
+          "strategy": {
+            "description": "Selection strategy applied to new sessions.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "strategy"
+        ],
+        "title": "RoutingUpdate",
         "type": "object"
       },
       "RunLease": {
@@ -6874,6 +6943,124 @@
           "method": "GET",
           "name": "Provider",
           "path": "/api/management/providers/{name}"
+        }
+      }
+    },
+    "/api/management/routing": {
+      "patch": {
+        "operationId": "patch_api_management_routing",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingUpdate"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingSettings"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "Routing",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "PATCH",
+          "name": "Routing",
+          "path": "/api/management/routing"
+        }
+      }
+    },
+    "/api/management/routing/cooldown/reset": {
+      "post": {
+        "operationId": "post_api_management_routing_cooldown_reset",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CooldownReset"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CooldownResetResult"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "CooldownReset",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "POST",
+          "name": "CooldownReset",
+          "path": "/api/management/routing/cooldown/reset"
         }
       }
     },
