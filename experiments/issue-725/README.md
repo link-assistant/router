@@ -18,6 +18,13 @@ Anthropic target. Local failing logs are
 served-model comparison still using the suffixed selector; the identity check
 now compares the exact base and still rejects sibling substitutions.
 
+The complete integration run also caught an unrequested `reasoning.summary`
+being added by Chat-to-Responses amount conversion. A minimal standalone
+reproduction is `summary-reproduction.rs`; its failing output is preserved in
+`ci-logs/summary-reproduction.log`. The adapter now retains its historical
+summary behavior, with absence and explicit choices covered by an automated
+regression.
+
 Run the reproductions and conformance cases with:
 
 ```console
@@ -44,3 +51,21 @@ defaults remain; no thinking/signature replay handling is replaced. Scoped
 catalog constraints are checked after account selection for every attempt,
 and unknown evidence preserves controls. The minor changelog fragment is the
 release trigger; the release workflow owns the version bump.
+
+The workspace has a 3 GB memory limit. A normal full test build exceeded it;
+the debug-free, single-job retry was stopped at a finite 2350 MiB child RSS
+bound. Complete local validation therefore runs the integration targets and
+all unit entry points separately:
+
+```console
+python3 experiments/issue-725/run-integrations.py
+python3 experiments/issue-725/run-unit-shards.py
+cargo test --locked --all-features --example host_library_consumer
+cargo test --locked --all-features --doc
+```
+
+The unit helper parses Rust syntax and assigns each test function or property
+macro to exactly one of four shards. It gates the other entry points only in
+a temporary source copy; production code and fixture helpers are retained.
+All shards reuse dependencies and run under the same finite memory bound.
+`run-integrations.py --prebuilt` is an investigation mode, not final validation.

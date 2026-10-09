@@ -1,5 +1,5 @@
 //! Regression coverage for canonical thinking controls (issue #725).
-use link_assistant_router::{anthropic_bridge, gemini_bridge, openai};
+use link_assistant_router::{anthropic_bridge, gemini_bridge, openai, responses};
 use serde_json::json;
 
 #[test]
@@ -48,4 +48,17 @@ fn anthropic_manual_budget_translates_to_chat() {
         "exact-model",
     );
     assert_eq!(body["reasoning_effort"], "medium");
+}
+
+#[test]
+fn chat_to_responses_preserves_summary_choice_independently_of_effort() {
+    let mut source = json!({"model":"exact","messages":[{"role":"user","content":"hi"}],
+        "reasoning_effort":"high"});
+    let body = responses::try_chat_completion_to_responses(&source).unwrap();
+    assert_eq!(body["reasoning"], json!({"effort":"high"}));
+    for summary in ["auto", "concise", "detailed", "none"] {
+        source["reasoning"] = json!({"effort":"low","summary":summary});
+        let body = responses::try_chat_completion_to_responses(&source).unwrap();
+        assert_eq!(body["reasoning"], json!({"effort":"low","summary":summary}));
+    }
 }

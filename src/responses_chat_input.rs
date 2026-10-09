@@ -111,6 +111,15 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
         crate::thinking::ThinkingProtocol::OpenAIResponses,
         None,
     )?;
+    // This adapter preserves the client's summary field independently of
+    // effort. Its historical behavior does not infer a summary from effort.
+    if let Some(reasoning) = out.get_mut("reasoning").and_then(Value::as_object_mut) {
+        if let Some(summary) = body.pointer("/reasoning/summary") {
+            reasoning.insert("summary".into(), summary.clone());
+        } else {
+            reasoning.remove("summary");
+        }
+    }
     if !instructions.is_empty() {
         out["instructions"] = Value::String(instructions.join("\n\n"));
     }
