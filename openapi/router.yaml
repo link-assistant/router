@@ -5264,7 +5264,7 @@
   },
   "info": {
     "title": "Link.Assistant.Router HTTP API",
-    "version": "1.22.0"
+    "version": "1.23.0"
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "openapi": "3.1.0",
