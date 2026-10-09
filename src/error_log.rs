@@ -180,6 +180,7 @@ impl ErrorLog {
         let headers = response.headers().clone();
         let version = response.version();
         let url = response.url().clone();
+        let remaining = response.content_length();
         let capture = Capture {
             log: Arc::clone(self),
             id: id.to_owned(),
@@ -189,7 +190,8 @@ impl ErrorLog {
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner),
             bytes: Vec::new(),
-            complete: false,
+            remaining,
+            complete: remaining == Some(0),
             truncated: false,
         };
         let stream = futures_util::stream::unfold(
@@ -197,6 +199,12 @@ impl ErrorLog {
             |(mut stream, mut capture)| async move {
                 if let Some(chunk) = stream.next().await {
                     if let Ok(bytes) = &chunk {
+                        // HTTP relays may drop a fixed-length body after its
+                        // final chunk without another poll for stream EOF.
+                        capture.remaining = capture
+                            .remaining
+                            .and_then(|remaining| remaining.checked_sub(bytes.len() as u64));
+                        capture.complete = capture.remaining == Some(0);
                         let limit = MAX_BODY_BYTES
                             .min(usize::try_from(capture.log.max_bytes).unwrap_or(MAX_BODY_BYTES));
                         let take = bytes.len().min(limit.saturating_sub(capture.bytes.len()));
@@ -230,6 +238,7 @@ struct Capture {
     status: u16,
     generation: u64,
     bytes: Vec<u8>,
+    remaining: Option<u64>,
     complete: bool,
     truncated: bool,
 }

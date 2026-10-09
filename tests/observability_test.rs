@@ -270,6 +270,67 @@ async fn capture_is_opt_in_redacted_bounded_and_downloadable() {
 }
 
 #[tokio::test]
+async fn fixed_length_error_capture_finishes_when_http_relay_drops_body_after_last_chunk() {
+    let dir = tempfile::tempdir().unwrap();
+    let errors = Arc::new(ErrorLog::new(dir.path().join("errors"), 4096));
+    let log = Arc::new(
+        link_assistant_router::request_log::RequestLog::new(dir.path().join("requests"), 4096)
+            .with_error_log(Arc::clone(&errors)),
+    );
+    let raw = r#"{"error":"synthetic rejection","access_token":"secret"}"#;
+    let app = axum::Router::new()
+        .route(
+            "/",
+            axum::routing::get(
+                move |axum::extract::State(log): axum::extract::State<
+                    Arc<link_assistant_router::request_log::RequestLog>,
+                >| async move {
+                    let response =
+                        upstream(&log, "fixed-length", StatusCode::BAD_GATEWAY, raw).await;
+                    let status = response.status();
+                    let headers = response.headers().clone();
+                    (status, headers, Body::from_stream(response.bytes_stream()))
+                },
+            ),
+        )
+        .with_state(log);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    let response = reqwest::Client::builder()
+        .no_proxy()
+        .timeout(Duration::from_secs(3))
+        .build()
+        .unwrap()
+        .get(url)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+    assert_eq!(response.content_length(), Some(raw.len() as u64));
+    assert_eq!(response.text().await.unwrap(), raw);
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
+    let files = loop {
+        let files = errors.list().unwrap();
+        if !files.is_empty() {
+            break files;
+        }
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "capture not finalized"
+        );
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    };
+    let capture: Value =
+        serde_json::from_slice(&errors.read(files[0]["name"].as_str().unwrap()).unwrap()).unwrap();
+    assert_eq!(capture["complete"], true);
+    assert_eq!(capture["body"]["access_token"], "[REDACTED]");
+    assert_eq!(capture["body"]["error"], "synthetic rejection");
+    server.abort();
+    let _ = server.await;
+}
+
+#[tokio::test]
 async fn oversized_capture_omits_incomplete_json_and_clear_invalidates_in_flight_capture() {
     let dir = tempfile::tempdir().unwrap();
     let errors = Arc::new(ErrorLog::new(dir.path().join("errors"), 400));

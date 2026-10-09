@@ -10,6 +10,17 @@ cargo test --test management_security_test request_by_id_round_trip
 cargo test --test observability_test
 ```
 
+The fixed-length regression relays a synthetic error over two real HTTP
+connections while preserving its `Content-Length`. Before the fix, Hyper
+dropped the completed response body without polling EOF, and error capture
+incorrectly omitted the complete body. Capture now also recognizes receipt of
+all declared bytes. The test verifies the original client response and the
+complete, credential-redacted capture; abandoned responses remain omitted.
+
+```sh
+cargo test --test observability_test fixed_length_error_capture
+```
+
 The streaming regression sends a tiny synthetic upstream response through the
 request middleware. It checks counts before consumption, after consumption,
 and after cancellation, for ordinary and native service routes. Native routes
