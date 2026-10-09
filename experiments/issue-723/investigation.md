@@ -37,15 +37,36 @@ The added minor changelog fragment resolves that gate and requests the next mino
 release through the repository's release workflow; manually editing package
 versions is explicitly prohibited by the version check.
 
+The first implementation's downstream run 37866564752 tested `71a2e3f`.
+Its completed SemVer job log, `ci-logs/semver-37866564752.log`, lines 1352–1403,
+reported changed numeric discriminants in `SelectionStrategy` and `RouteId`.
+Adding variants within those public enums shifted existing values. The additions
+now follow every existing variant, preserving numeric values and existing ordering.
+`existing_public_enum_discriminants_remain_stable` reproduced the failure before
+this correction; its output is retained in `semver-reproduction.log`.
+
 ## Local resource limit
 
-The container has a 3 GB memory limit. The pre-existing monolithic library unit-test
+The container has a 3 GB memory limit. The monolithic library unit-test
 binary exceeded it during compilation even with one build job and debug information
 disabled. New HTTP regressions therefore use a separate integration target with
 real production routes and deterministic local mock upstreams. Build and test output
-is kept in ignored `.log` files here. `bounded-unit-rustc.py` provides a one-job,
-512-codegen-unit experiment with explicit memory/stack limits, without recompiling
-dependencies. CI also verifies the full suite on its larger runner.
+is kept in ignored `.log` files here. The one-job, 512-codegen-unit experiment in
+`bounded-unit-rustc.py` also exceeded the container limit despite explicit
+memory/stack bounds. All 115 integration targets completed successfully (845
+tests, one ignored), and all 15 documentation tests passed. CI verifies the full
+unit suite on its larger runner.
+
+## Live edit regression found during review
+
+A deterministic credential-store callback changes `friendly` from `native` to
+`other` after the middleware snapshots the model selector. With both models
+granted, the first implementation sent the request to `other` and returned 200.
+`policy-edit-reproduction.log` captures the failing HTTP assertion. Dispatch now
+requires the current resolution to equal the validated upstream selector before
+every send, including retries. An invalidation returns the last vendor response,
+or an egress error when no attempt has been sent. The regression verifies 502
+and no outbound request for the initial-send race.
 
 ## Validation before the implementation commit
 
@@ -63,3 +84,8 @@ against `origin/main` pass. JavaScript Node and Bun tests, TypeScript checks,
 Python binding tests and the existing Python deployment/contract regression
 scripts pass. `review-catalog.py` verifies that `accounts.policy` is the only new
 CLI operation and all 61 existing operations retain identical definitions.
+
+After the review corrections, all 34 focused tests and strict Clippy pass.
+Formatting, file-size/terminology checks and generated contract/binding compatibility
+also pass. The full integration and documentation suites are rerun for the corrected
+implementation, with latest-commit CI required before marking the PR ready.

@@ -10,7 +10,8 @@
 - [x] Document policy configuration, add examples/changelog and prepare the release trigger.
 - [x] Run focused tests, formatting, strict Clippy, generated-contract compatibility, file-size/terminology checks and language binding tests; preserve large logs.
 - [ ] Run the full Rust integration, library and documentation suites; use a bounded compiler experiment for the local 3 GB memory limit.
-- [ ] Review diff for compatibility/security, commit atomic changes and push only the prepared branch.
+- [x] Review diff for compatibility/security; reproduce and correct the live-edit selector race and public enum discriminant changes.
+- [x] Commit atomic implementation/review corrections and push only the prepared branch.
 - [ ] Update PR 748 description, integrate current main, verify latest-SHA CI and preserve/analyze failed logs.
 - [ ] Confirm clean tree, review final PR diff and mark PR 748 ready.
 

@@ -95,7 +95,6 @@ pub enum RouteId {
     Accounts,
     AccountPause,
     AccountResume,
-    AccountPolicy,
     CredentialStatus,
     AuthDiagnostics,
     EmergencyAuthStatus,
@@ -171,6 +170,7 @@ pub enum RouteId {
     NativeAnthropic,
     NativeCodex,
     NativeCodexBackend,
+    AccountPolicy,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

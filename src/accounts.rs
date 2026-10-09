@@ -20,12 +20,12 @@ pub enum SelectionStrategy {
     /// Round-robin across all healthy accounts.
     #[default]
     RoundRobin,
-    /// Smooth weighted round-robin across eligible positive-weight accounts.
-    WeightedRoundRobin,
     /// Always prefer the lowest-index healthy account; fall back on cooldown.
     Priority,
     /// Pick the account with the lowest used-quota count.
     LeastUsed,
+    /// Smooth weighted round-robin across eligible positive-weight accounts.
+    WeightedRoundRobin,
 }
 
 impl SelectionStrategy {

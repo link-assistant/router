@@ -3,6 +3,16 @@ use link_assistant_router::contracts;
 use serde_json::Value;
 
 #[test]
+fn existing_public_enum_discriminants_remain_stable() {
+    use link_assistant_router::accounts::SelectionStrategy;
+    use link_assistant_router::route_contract::RouteId;
+    assert_eq!(SelectionStrategy::Priority as isize, 1);
+    assert_eq!(SelectionStrategy::LeastUsed as isize, 2);
+    assert_eq!(RouteId::CredentialStatus as isize, 19);
+    assert_eq!(RouteId::NativeCodexBackend as isize, 93);
+}
+
+#[test]
 fn published_catalog_matches_the_rust_inventory() {
     let published: Value =
         serde_json::from_str(include_str!("../schemas/operation-catalog.v1.json")).unwrap();
