@@ -14,7 +14,7 @@ use crate::pool_failover::{
 
 /// `--pool-failover*`, `--account-pause-at-percent` and `--intercept-warmup`.
 /// Every one defaults to the historical behaviour.
-#[derive(clap::Args, Debug, Clone, Default)]
+#[derive(clap::Args, Debug, Clone)]
 pub struct PoolArgs {
     /// Retry a pooled request on the next eligible account when the upstream
     /// answers 429, 529, a retryable 5xx, a transport error, or 401 after a
@@ -140,6 +140,26 @@ pub struct PoolArgs {
 
 /// Parsed `--account-egress-proxy`.
 pub type EgressProxies = BTreeMap<String, EgressProxy>;
+
+impl Default for PoolArgs {
+    fn default() -> Self {
+        Self {
+            pool_failover: None,
+            pool_failover_max_attempts: 0,
+            pool_failover_budget_secs: 0,
+            pool_retry_rounds: 0,
+            pool_max_retry_credentials: 0,
+            pool_max_retry_interval_secs: 30,
+            account_max_cooldown_secs: crate::account_limits::MAX_VENDOR_COOLDOWN.as_secs(),
+            session_affinity_subagents: true,
+            account_pause_at_percent: None,
+            intercept_warmup: false,
+            account_pool_idle_timeout_secs: 0,
+            account_connection_max_age_secs: 0,
+            account_egress_proxy: None,
+        }
+    }
+}
 
 impl PoolArgs {
     /// The resolved policy.

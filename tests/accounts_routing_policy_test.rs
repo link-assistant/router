@@ -50,6 +50,47 @@ fn selected(router: &AccountRouter, model: &str) -> String {
 }
 
 #[test]
+fn programmatic_cli_defaults_preserve_quota_cooldowns() {
+    let policy = link_assistant_router::cli::PoolArgs::default().policy();
+    let (_root, router) = pool_with_options(AccountRouterOptions {
+        strategy: SelectionStrategy::Priority,
+        max_cooldown: policy.max_cooldown,
+        ..Default::default()
+    });
+    observe(&router, 429, br#"{"error":{"type":"rate_limit_error"}}"#);
+    assert_eq!(selected(&router, "model-a"), "account-1");
+    assert_eq!(selected(&router, "model-b"), "primary");
+    assert_eq!(policy.retry.max_interval, Duration::from_secs(30));
+}
+
+#[test]
+fn programmatic_cli_defaults_enable_parent_affinity() {
+    let policy = link_assistant_router::cli::PoolArgs::default().policy();
+    let (_root, router) = pool_with_options(AccountRouterOptions {
+        session_affinity_subagents: policy.session_affinity_subagents,
+        ..Default::default()
+    });
+    assert_eq!(
+        router
+            .select_with_context(&RoutingContext::for_session("parent"))
+            .unwrap()
+            .name,
+        "primary"
+    );
+    assert_eq!(
+        router
+            .select_with_context(&RoutingContext {
+                session_key: Some("child".into()),
+                parent_session_key: Some("parent".into()),
+                ..Default::default()
+            })
+            .unwrap()
+            .name,
+        "primary"
+    );
+}
+
+#[test]
 fn ordinary_quota_preserves_sibling_models() {
     let (_root, router) = pool();
     observe(
