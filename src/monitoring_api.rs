@@ -75,7 +75,7 @@ pub async fn accounts_endpoint(
         .health_snapshot_with(Some(&state.subscription_cache))
         .into_iter()
         .map(|health| {
-            serde_json::json!({
+            let mut value = serde_json::json!({
                 "name": health.name,
                 "home": health.home.display().to_string(),
                 "healthy": health.healthy,
@@ -91,7 +91,14 @@ pub async fn accounts_endpoint(
                 "paused": health.limits.paused_at(crate::account_limits::now_unix()),
                 "pause": health.limits.pause,
                 "windows": health.limits.windows,
-            })
+            });
+            value.as_object_mut().expect("account object").extend(
+                crate::account_policy_management::fields(router, &health.name)
+                    .as_object()
+                    .unwrap()
+                    .clone(),
+            );
+            value
         })
         .collect();
     (

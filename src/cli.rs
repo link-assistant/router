@@ -364,7 +364,7 @@ pub struct Cli {
     )]
     pub additional_account_dirs: Vec<PathBuf>,
 
-    /// New-session account policy: round-robin, fill-first, or least-used.
+    /// New-session account policy: round-robin, weighted-round-robin, fill-first, or least-used.
     #[arg(
         long,
         env = "ACCOUNT_ROUTING_STRATEGY",

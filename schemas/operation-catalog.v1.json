@@ -1819,6 +1819,916 @@
     {
       "command": [
         "accounts",
+        "policy"
+      ],
+      "name": "accounts.policy",
+      "options": [
+        {
+          "boolean": false,
+          "environment": "ROUTER_HOST",
+          "flag": "host",
+          "multiple": false,
+          "name": "host",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ROUTER_PORT",
+          "flag": "port",
+          "multiple": false,
+          "name": "port",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "LISTENERS",
+          "flag": "listener",
+          "multiple": true,
+          "name": "listeners",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "VERBOSE",
+          "flag": "verbose",
+          "multiple": false,
+          "name": "verbose",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "TOKEN_SECRET",
+          "flag": "token-secret",
+          "multiple": false,
+          "name": "token_secret",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "CLAUDE_CODE_HOME",
+          "flag": "claude-code-home",
+          "multiple": false,
+          "name": "claude_code_home",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "UPSTREAM_BASE_URL",
+          "flag": "upstream-base-url",
+          "multiple": false,
+          "name": "upstream_base_url",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "UPSTREAM_API_FORMAT",
+          "flag": "api-format",
+          "multiple": false,
+          "name": "api_format",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ROUTING_MODE",
+          "flag": "routing-mode",
+          "multiple": false,
+          "name": "routing_mode",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "STORAGE_POLICY",
+          "flag": "storage-policy",
+          "multiple": false,
+          "name": "storage_policy",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "DATA_DIR",
+          "flag": "data-dir",
+          "multiple": false,
+          "name": "data_dir",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "home",
+          "multiple": false,
+          "name": "home",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CLAUDE_CLI_BIN",
+          "flag": "claude-cli-bin",
+          "multiple": false,
+          "name": "claude_cli_bin",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CODEX_CLI_BIN",
+          "flag": "codex-cli-bin",
+          "multiple": false,
+          "name": "codex_cli_bin",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "UPSTREAM_PROVIDER",
+          "flag": "upstream-provider",
+          "multiple": false,
+          "name": "upstream_provider",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "GONKA_PRIVATE_KEY",
+          "flag": "gonka-private-key",
+          "multiple": false,
+          "name": "gonka_private_key",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "GONKA_API_KEY",
+          "flag": "gonka-api-key",
+          "multiple": false,
+          "name": "gonka_api_key",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "GONKA_SOURCE_URL",
+          "flag": "gonka-source-url",
+          "multiple": false,
+          "name": "gonka_source_url",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "GONKA_MODEL",
+          "flag": "gonka-model",
+          "multiple": false,
+          "name": "gonka_model",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ANTHROPIC_BRIDGE_MODEL",
+          "flag": "bridge-model",
+          "multiple": false,
+          "name": "bridge_model",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "BRIDGE_MODEL_POLICY",
+          "flag": "bridge-model-policy",
+          "multiple": false,
+          "name": "bridge_model_policy",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "AUDIT_LOG",
+          "flag": "audit-log",
+          "multiple": false,
+          "name": "audit_log",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "REQUEST_LOG",
+          "flag": "request-log",
+          "multiple": false,
+          "name": "request_log",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "REQUEST_LOG_MAX_BYTES",
+          "flag": "request-log-max-bytes",
+          "multiple": false,
+          "name": "request_log_max_bytes",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "REQUEST_LOG_MAX_TOTAL_BYTES",
+          "flag": "request-log-max-total-bytes",
+          "multiple": false,
+          "name": "request_log_max_total_bytes",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MAX_PROXY_REQUEST_BYTES",
+          "flag": "max-proxy-request-bytes",
+          "multiple": false,
+          "name": "max_proxy_request_bytes",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CRATER_FORGEFED_INBOX",
+          "flag": "crater-forgefed-inbox",
+          "multiple": false,
+          "name": "crater_forgefed_inbox",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CRATER_FORGEFED_ACTOR",
+          "flag": "crater-forgefed-actor",
+          "multiple": false,
+          "name": "crater_forgefed_actor",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CRATER_FORGEFED_TARGET",
+          "flag": "crater-forgefed-target",
+          "multiple": false,
+          "name": "crater_forgefed_target",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CRATER_POLL_INTERVAL_MS",
+          "flag": "crater-poll-interval-ms",
+          "multiple": false,
+          "name": "crater_poll_interval_ms",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CRATER_POLL_TIMEOUT_SECS",
+          "flag": "crater-poll-timeout-secs",
+          "multiple": false,
+          "name": "crater_poll_timeout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_PROVIDER_NAME",
+          "flag": "openai-compatible-provider-name",
+          "multiple": false,
+          "name": "openai_compatible_provider_name",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_BASE_URL",
+          "flag": "openai-compatible-base-url",
+          "multiple": false,
+          "name": "openai_compatible_base_url",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_API_KEY",
+          "flag": "openai-compatible-api-key",
+          "multiple": false,
+          "name": "openai_compatible_api_key",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_API_KEY_ENV",
+          "flag": "openai-compatible-api-key-env",
+          "multiple": false,
+          "name": "openai_compatible_api_key_env",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_MODEL",
+          "flag": "openai-compatible-model",
+          "multiple": false,
+          "name": "openai_compatible_model",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_MODELS",
+          "flag": "openai-compatible-models",
+          "multiple": true,
+          "name": "openai_compatible_models",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "OPENAI_COMPATIBLE_SUPPORTED_CLIENTS",
+          "flag": "openai-compatible-supported-clients",
+          "multiple": true,
+          "name": "openai_compatible_supported_clients",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACTIVITYPUB_ACTOR_BASE_URL",
+          "flag": "activitypub-actor-base-url",
+          "multiple": false,
+          "name": "activitypub_actor_base_url",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACTIVITYPUB_PUBLIC_KEY_PEM",
+          "flag": "activitypub-public-key-pem",
+          "multiple": false,
+          "name": "activitypub_public_key_pem",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "DISABLE_OPENAI_API",
+          "flag": "disable-openai-api",
+          "multiple": false,
+          "name": "disable_openai_api",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "DISABLE_ANTHROPIC_API",
+          "flag": "disable-anthropic-api",
+          "multiple": false,
+          "name": "disable_anthropic_api",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "DISABLE_METRICS",
+          "flag": "disable-metrics",
+          "multiple": false,
+          "name": "disable_metrics",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "INFERENCE_ONLY",
+          "flag": "inference-only",
+          "multiple": false,
+          "name": "inference_only",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ADDITIONAL_ACCOUNT_DIRS",
+          "flag": "additional-account-dirs",
+          "multiple": true,
+          "name": "additional_account_dirs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_ROUTING_STRATEGY",
+          "flag": "account-routing-strategy",
+          "multiple": false,
+          "name": "account_routing_strategy",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_COOLDOWN_SECS",
+          "flag": "account-cooldown-secs",
+          "multiple": false,
+          "name": "account_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "SESSION_AFFINITY_TTL_SECS",
+          "flag": "session-affinity-ttl-secs",
+          "multiple": false,
+          "name": "session_affinity_ttl_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_REQUEST_LIMITS",
+          "flag": "account-request-limits",
+          "multiple": true,
+          "name": "account_request_limits",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "EXPERIMENTAL_COMPATIBILITY",
+          "flag": "experimental-compatibility",
+          "multiple": false,
+          "name": "experimental_compatibility",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "SUBSCRIPTION_BRIDGE_OVERRIDES",
+          "flag": "allow-subscription-bridge",
+          "multiple": true,
+          "name": "subscription_bridge_overrides",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "PROXIED_CLIENT_OVERRIDES",
+          "flag": "allow-proxied-client",
+          "multiple": true,
+          "name": "proxied_client_overrides",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "TOKEN_ADMIN_KEY",
+          "flag": "admin-key",
+          "multiple": false,
+          "name": "admin_key",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ADMIN_PORT",
+          "flag": "admin-port",
+          "multiple": false,
+          "name": "admin_port",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ADMIN_HOST",
+          "flag": "admin-host",
+          "multiple": false,
+          "name": "admin_host",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ADMIN_CLAIM_TTL_SECS",
+          "flag": "admin-claim-ttl-secs",
+          "multiple": false,
+          "name": "admin_claim_ttl_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "ALLOW_ANONYMOUS_ADMIN",
+          "flag": "allow-anonymous-admin",
+          "multiple": false,
+          "name": "allow_anonymous_admin",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_FAILOVER",
+          "flag": "pool-failover",
+          "multiple": false,
+          "name": "pool_failover",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_FAILOVER_MAX_ATTEMPTS",
+          "flag": "pool-failover-max-attempts",
+          "multiple": false,
+          "name": "pool_failover_max_attempts",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_FAILOVER_BUDGET_SECS",
+          "flag": "pool-failover-budget-secs",
+          "multiple": false,
+          "name": "pool_failover_budget_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_PAUSE_AT_PERCENT",
+          "flag": "account-pause-at-percent",
+          "multiple": false,
+          "name": "account_pause_at_percent",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "INTERCEPT_WARMUP",
+          "flag": "intercept-warmup",
+          "multiple": false,
+          "name": "intercept_warmup",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_POOL_IDLE_TIMEOUT_SECS",
+          "flag": "account-pool-idle-timeout-secs",
+          "multiple": false,
+          "name": "account_pool_idle_timeout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_CONNECTION_MAX_AGE_SECS",
+          "flag": "account-connection-max-age-secs",
+          "multiple": false,
+          "name": "account_connection_max_age_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_EGRESS_PROXY",
+          "flag": "account-egress-proxy",
+          "multiple": false,
+          "name": "account_egress_proxy",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "TELEGRAM_BOT_TOKEN",
+          "flag": "telegram-bot-token",
+          "multiple": false,
+          "name": "telegram_bot_token",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "VK_BOT_TOKEN",
+          "flag": "vk-bot-token",
+          "multiple": false,
+          "name": "vk_bot_token",
+          "positional": false,
+          "required": false,
+          "secret": true
+        },
+        {
+          "boolean": false,
+          "environment": "VK_GROUP_ID",
+          "flag": "vk-group-id",
+          "multiple": false,
+          "name": "vk_group_id",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CHAT_ADMIN_SECRET_TTL_SECS",
+          "flag": "chat-admin-secret-ttl-secs",
+          "multiple": false,
+          "name": "chat_admin_secret_ttl_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "CHAT_ADMIN_RATE_LIMIT_PER_MINUTE",
+          "flag": "chat-admin-rate-limit-per-minute",
+          "multiple": false,
+          "name": "chat_admin_rate_limit_per_minute",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MPP_ENABLE",
+          "flag": "mpp-enable",
+          "multiple": false,
+          "name": "mpp_enable",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MPP_AMOUNT",
+          "flag": "mpp-amount",
+          "multiple": false,
+          "name": "mpp_amount",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MPP_CURRENCY",
+          "flag": "mpp-currency",
+          "multiple": false,
+          "name": "mpp_currency",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MPP_RECIPIENT",
+          "flag": "mpp-recipient",
+          "multiple": false,
+          "name": "mpp_recipient",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MPP_METHOD",
+          "flag": "mpp-method",
+          "multiple": false,
+          "name": "mpp_method",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "DISABLE_LOGIN_API",
+          "flag": "disable-login-api",
+          "multiple": false,
+          "name": "disable_login_api",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "LOGIN_CLI_COMMAND",
+          "flag": "login-cli-command",
+          "multiple": false,
+          "name": "login_cli_command",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "LOGIN_CLI_ARGS",
+          "flag": "login-cli-args",
+          "multiple": true,
+          "name": "login_cli_args",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "LOGIN_SESSION_TTL_SECS",
+          "flag": "login-session-ttl-secs",
+          "multiple": false,
+          "name": "login_session_ttl_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "LOGIN_MAX_SESSIONS",
+          "flag": "login-max-sessions",
+          "multiple": false,
+          "name": "login_max_sessions",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": null,
+          "multiple": false,
+          "name": "name",
+          "positional": true,
+          "required": true,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "file",
+          "multiple": false,
+          "name": "file",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": null,
+          "flag": "local",
+          "multiple": false,
+          "name": "local",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "server",
+          "multiple": false,
+          "name": "server",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": null,
+          "flag": "management-server",
+          "multiple": false,
+          "name": "management_server",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": null,
+          "flag": "managed",
+          "multiple": false,
+          "name": "managed",
+          "positional": false,
+          "required": false,
+          "secret": false
+        }
+      ],
+      "schema": "link-assistant-router/accounts-policy/v1"
+    },
+    {
+      "command": [
+        "accounts",
         "resume"
       ],
       "name": "accounts.resume",
@@ -55838,6 +56748,30 @@
         "Admin"
       ],
       "method": "GET",
+      "name": "AccountPolicy",
+      "path": "/api/management/accounts/{name}/policy"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "POST",
+      "name": "AccountPolicy",
+      "path": "/api/management/accounts/{name}/policy"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
       "name": "CredentialStatus",
       "path": "/api/management/auth/status"
     },
@@ -58221,6 +59155,141 @@
   ],
   "schema": "link-assistant-router/operation-catalog/v1",
   "types": {
+    "AccountRoutingPolicy": {
+      "$defs": {
+        "ErrorAction": {
+          "description": "Action of the first matching request-scoped error rule.",
+          "oneOf": [
+            {
+              "const": "cooldown",
+              "description": "Cool this account and relay the response.",
+              "type": "string"
+            },
+            {
+              "const": "retry-next",
+              "description": "Try another eligible account before returning any response bytes.",
+              "type": "string"
+            },
+            {
+              "const": "relay",
+              "description": "Relay unchanged, suppressing automatic cooldown and retry.",
+              "type": "string"
+            }
+          ]
+        },
+        "ModelAlias": {
+          "additionalProperties": false,
+          "description": "One explicitly configured account model alias.",
+          "properties": {
+            "alias": {
+              "description": "Client-facing name.",
+              "type": "string"
+            },
+            "fork": {
+              "default": false,
+              "description": "Keep the upstream name visible as well as the alias.",
+              "type": "boolean"
+            },
+            "model": {
+              "description": "Exact upstream model, which must appear in the account's live catalog.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "model",
+            "alias"
+          ],
+          "type": "object"
+        },
+        "RequestScopedError": {
+          "additionalProperties": false,
+          "description": "Upstream status and a literal body substring, evaluated in declaration order.",
+          "properties": {
+            "action": {
+              "$ref": "#/$defs/ErrorAction"
+            },
+            "match": {
+              "type": "string"
+            },
+            "status": {
+              "format": "uint16",
+              "maximum": 65535,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "status",
+            "match",
+            "action"
+          ],
+          "type": "object"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "Backward-compatible per-credential traffic policy.",
+      "properties": {
+        "disable_cooling": {
+          "default": false,
+          "type": "boolean"
+        },
+        "excluded_models": {
+          "default": [],
+          "description": "Case-sensitive glob patterns: `*` matches any sequence, `?` one character.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Static values, or `$Header-Name` copies from the reviewed allow-list.",
+          "type": "object"
+        },
+        "model_aliases": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ModelAlias"
+          },
+          "type": "array"
+        },
+        "prefix": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "request_retry": {
+          "default": null,
+          "description": "Number of retries after the first attempt. Zero disables retries.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "request_scoped_errors": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/RequestScopedError"
+          },
+          "type": "array"
+        },
+        "weight": {
+          "default": 1,
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "title": "AccountRoutingPolicy",
+      "type": "object"
+    },
     "AdminStatus": {
       "$defs": {
         "CredentialKind": {

@@ -1,0 +1,168 @@
+# Issue 723 investigation
+
+Issue: https://github.com/link-assistant/router/issues/723
+Pull request: https://github.com/link-assistant/router/pull/748
+
+The original account state had no credential-adjacent policy. Selection only
+supported round-robin, priority and least-used; every reported quota failure
+started a cooldown. Model discovery and protocol handlers used native identities
+without account-specific projections or an operator header/error policy.
+
+Before implementation, `cargo test --test account_routing_policy_test` reproduced
+three failures: the weighted strategy was unrecognized, a `second/model` request
+selected `primary` rather than `account-1`, and `disable_cooling` did not keep a
+failed account available. The complete output is retained locally in
+`experiments/issue-723/reproduction.log`.
+
+Policies now live in `routing-policy.json`, independently of vendor-owned login
+files. Missing policies preserve defaults; malformed or unsafe policies fail
+closed. Management replacements persist atomically and apply immediately.
+
+A request-local selection retains the visible and exact upstream model identities,
+original client headers, selected account and complete credential generation.
+Authorization uses the upstream identity before dispatch. A shared bounded policy
+loop handles retries before response bytes are returned and preserves strict pins,
+account transport isolation, signed-content stripping on account switches, and
+exact upstream model selection. Response rewriting changes model metadata only.
+
+## Existing CI failure
+
+Run 37860911937 (2026-10-08T23:42:26Z) tested the prepared placeholder commit
+`dc6a51bb3f465db92696b6abc88b8a26f103324f`. The downloaded log
+`ci-logs/workflow-37860911937.log`, line 4483, reports:
+
+> No changelog fragment found in this PR. Please add a changelog entry in changelog.d/
+
+The added minor changelog fragment resolves that gate and requests the next minor
+release through the repository's release workflow; manually editing package
+versions is explicitly prohibited by the version check.
+
+The first implementation's downstream run 37866564752 tested `71a2e3f`.
+Its completed SemVer job log, `ci-logs/semver-37866564752.log`, lines 1352–1403,
+reported changed numeric discriminants in `SelectionStrategy` and `RouteId`.
+Adding variants within those public enums shifted existing values. The additions
+now follow every existing variant, preserving numeric values and existing ordering.
+`existing_public_enum_discriminants_remain_stable` reproduced the failure before
+this correction; its output is retained in `semver-reproduction.log`.
+
+Run 37868426482 tested `19efccf`; its SemVer job log, lines 1362–1364,
+identified the same issue in the field-bearing CLI `AccountOp` enum. The first
+report's result limit had omitted these additional variants. `Policy` now follows
+`List`, `Pause` and `Resume`, and a failing command-order regression reproduced
+the displacement before correction (`cli-order-reproduction.log`).
+
+## Local resource limit
+
+The container has a 3 GB memory limit. The monolithic library unit-test
+binary exceeded it during compilation even with one build job and debug information
+disabled. New HTTP regressions therefore use a separate integration target with
+real production routes and deterministic local mock upstreams. Build and test output
+is kept in ignored `.log` files here. The one-job, 512-codegen-unit experiment in
+`bounded-unit-rustc.py` also exceeded the container limit despite explicit
+memory/stack bounds. All 115 integration targets completed successfully (847
+tests, one ignored) after the first review corrections, and all 15 documentation
+tests passed. CI verifies the full
+unit suite on its larger runner.
+
+## Live edit regression found during review
+
+A deterministic credential-store callback changes `friendly` from `native` to
+`other` after the middleware snapshots the model selector. With both models
+granted, the first implementation sent the request to `other` and returned 200.
+`policy-edit-reproduction.log` captures the failing HTTP assertion. Dispatch now
+requires the current resolution to equal the validated upstream selector before
+every send, including retries. An invalidation returns the last vendor response,
+or an egress error when no attempt has been sent. The regression verifies 502
+and no outbound request for the initial-send race.
+
+Catalog review also reproduced native records shadowed by an alias: a principal
+granted only `friendly` saw that name in discovery even though dispatch resolved
+it to the forbidden `native` model on that account.
+`shadowed-model-reproduction.log` preserves the failing assertion. Catalog
+projection now verifies that each advertised name resolves to that record's exact
+upstream identity and account. The regression also preserves a native model of
+the same name on another account. Inference requires live catalog proof before
+a declared alias can be treated as a native spelling on that other account;
+an unknown spelling cannot bypass the alias's upstream model grant.
+
+## Validation before the implementation commit
+
+The two account-policy targets, operation API and contract inventory targets pass
+all 32 tests. Coverage includes 1,000 weighted selections (250/750/0 for weights
+1/3/0), prefixes, aliases, forks, exclusions, all credential-copy refusals, all
+three error actions, retry overrides, strict pins, model cooldowns, fragmented
+UTF-8 SSE, native Gemini discovery, the authorized Gemini-to-Claude bridge and
+the Codex bridge. Existing Gemini consumer entitlement restrictions remain in
+effect in both automatic and pinned provider configurations.
+
+Strict Clippy (`--all-targets --all-features -- -D warnings`), formatting,
+file-size/terminology checks, generated contracts/bindings checks and compatibility
+against `origin/main` pass. JavaScript Node and Bun tests, TypeScript checks,
+Python binding tests and the existing Python deployment/contract regression
+scripts pass. `review-catalog.py` verifies that `accounts.policy` is the only new
+CLI operation and all 61 existing operations retain identical definitions.
+
+After the final review corrections, all 35 focused tests and strict Clippy pass.
+Formatting, file-size/terminology checks and generated contract/binding compatibility
+also pass. The full integration and documentation suites are rerun for the corrected
+implementation, with latest-commit CI required before marking the PR ready.
+
+## Unconfigured single-account regression
+
+The production runtime keeps a primary pool available so management can install
+the first policy without a restart. Review found that enabling this pool also
+introduced automatic cooldowns when there was only one account, no request caps
+and no policy. Two consecutive vendor 429 responses became 429 and 502, with only
+one request reaching the vendor. `single-primary-defaults.py` reproduced this on
+the actual router binary; `single-primary-reproduction.log` preserves the failure.
+The automated production-runtime test then reproduced the same status mismatch
+before the fix (`single-primary-http-reproduction.log`).
+
+An implicit primary pool now retains the previous unpooled request defaults until
+a non-default policy opts in. Explicit pools, request caps and weighted or forced
+prefix selection retain their configured behavior. The runtime regression checks
+two consecutive 429 responses without a policy, management activation of the first
+policy (including its upstream header and cooldown), and restoration of the
+single-account defaults with an empty replacement. There are now 36 focused tests
+and 849 passing integration tests across 115 targets, with one ignored; 15
+documentation tests also pass.
+
+## Integration with current management access controls
+
+While awaiting CI, main advanced to `aa05022` with issue 722's management-access
+hardening. The branch merges that history, retaining the new configuration error
+module, management middleware and signing-secret validation. Contracts and bindings
+were regenerated from the merged binary; comparison with current main still finds
+all 61 existing CLI operations unchanged and only `accounts.policy` added.
+
+The policy persistence regression now exercises the production router. It verifies
+that missing peer metadata and remote socket peers are rejected by default even
+with spoofed forwarding headers. A separate server instance with remote management
+enabled verifies a shared authentication lockout across policy and existing account
+endpoints, valid credentials remaining blocked during the ban, and another peer
+remaining usable. Configuration is fixed once per instance, so the test uses a
+fresh admin tracker for the remote-opt-in instance. All 46 focused tests pass,
+including main's ten management-security tests. Contract compatibility, Node/Bun,
+TypeScript and Python binding/deployment regression checks pass after the merge.
+
+## Encoded URI selector regression
+
+Final URI review reproduced a valid Gemini model parameter `team%2Ffriendly`
+returning 403 despite a grant for its native upstream model. The middleware treated
+the encoded path spelling as the model identity, so prefix and alias resolution
+failed (`encoded-model-reproduction.log`). It now reuses the existing path decoder
+before policy and grant checks, while retaining the encoded spelling for URI
+replacement. The production Gemini-to-Claude regression covers both pinned-provider
+and automatic routing, encoded prefixes and UTF-8 aliases containing a plus sign;
+all use the native upstream identity and return decoded visible model metadata.
+
+## Final release merge and coverage baseline
+
+Main's automated v1.19.0 release (`6656dc1`) changed only version metadata and
+release notes; its merge preserves the tested routing source. The rebuilt binary,
+46 focused tests, strict Clippy, contract/binding parity and Node/Bun/TypeScript/
+Python checks pass after that merge. Linux CI also passes the 2,176 library tests.
+Coverage run `37882640505` measures 76,856 of 88,552 lines (86.791941%). Its only
+coverage error, at line 8,468 of the preserved log, requires committing the higher
+baseline. Replaying the actual gate with its report advances the baseline from
+86.756772% to 86.791941% and passes; the increase is retained for final CI.

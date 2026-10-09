@@ -1465,7 +1465,8 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `ROUTER_VENDOR_REFRESH_ARGS` | per provider | Override the recovery probe for every provider, whitespace separated |
 | `ROUTER_VENDOR_REFRESH_ARGS_CLAUDE` / `_CODEX` | per provider | Override the recovery probe for one provider; wins over the global form |
 | `--additional-account-dirs` / `ADDITIONAL_ACCOUNT_DIRS` | (empty) | Comma-separated extra credential homes for the active subscription provider |
-| `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
+| `ACCOUNT_FORCE_MODEL_PREFIX` | `false` | Unprefixed requests exclude accounts with a configured model prefix |
+| `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `weighted-round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins, capped at 24 hours |
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
@@ -1548,6 +1549,12 @@ below, requests behave as before apart from this separation.
   connection, which closes when the last of them ends. The cookie store is
   carried over. A connection can therefore outlive the maximum age only by the
   length of the request it is serving.
+
+Optional per-account `routing-policy.json` files configure weights, model prefixes,
+cooldown/retry behavior, error rules, safe header copies, aliases and exclusions.
+Use `router accounts policy primary --file policy.json` locally or add `--server`
+to update a running router. See [per-account routing policies](docs/use-cases/account-routing-policy.md)
+for the schema, management endpoints and examples.
 
 `ACCOUNT_EGRESS_PROXY` routes chosen accounts through a proxy
 (`http://`, `https://`, `socks5://` or `socks5h://`, the last resolving host

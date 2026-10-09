@@ -477,6 +477,7 @@ async fn route_gemini_token(
                 )
             })?
     };
+    crate::account_policy_scope::credential(&selected.name, &token);
     Ok(RoutedGeminiToken {
         claims,
         token,
@@ -517,7 +518,7 @@ async fn forward(
     };
     let claims = routed.claims;
     let sub_token = routed.token;
-    let selected_account = Some(routed.account);
+    let mut selected_account = Some(routed.account);
     // The reservation carries the token id; usage settles through it.
     let mut reservation = routed.reservation;
     let model_policy = routed.model_policy;
@@ -617,25 +618,31 @@ async fn forward(
             );
         }
     };
+    if let Some(actual) = crate::account_policy_scope::account() {
+        selected_account = Some(actual);
+    }
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     state
         .metrics
         .record_request(surface, status.as_u16(), selected_account.as_deref());
-    state
-        .subscription_cache
-        .record_status_for_credential(
-            crate::subscription::SubscriptionProvider::Gemini,
-            selected_account
-                .as_deref()
-                .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
-            &sub_token,
-            status.as_u16(),
-        )
-        .await;
+    if !crate::account_policy_scope::active() {
+        state
+            .subscription_cache
+            .record_status_for_credential(
+                crate::subscription::SubscriptionProvider::Gemini,
+                selected_account
+                    .as_deref()
+                    .unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT),
+                &sub_token,
+                status.as_u16(),
+            )
+            .await;
+    }
     let retry_after = retry_after_duration(upstream_resp.headers());
     let response_headers = crate::proxy::relay_response_headers(upstream_resp.headers());
-    if status == StatusCode::TOO_MANY_REQUESTS
+    if !crate::account_policy_scope::active()
+        && status == StatusCode::TOO_MANY_REQUESTS
         && let (Some(router), Some(account)) =
             (state.account_router.as_ref(), selected_account.as_deref())
     {

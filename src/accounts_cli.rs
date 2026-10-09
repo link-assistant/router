@@ -23,12 +23,34 @@ pub fn run(
     op: &AccountOp,
 ) -> ExitCode {
     match op {
+        AccountOp::Policy { name, file, .. } => {
+            let result = (|| {
+                if let Some(path) = file {
+                    router.set_routing_policy(name, read_policy(path)?)?;
+                    println!("{LOCAL_NOTE}");
+                }
+                let policy = router.routing_policy(name)?;
+                crate::operation_output::report(&policy);
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&policy).map_err(|e| e.to_string())?
+                );
+                Ok::<_, String>(())
+            })();
+            match result {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("error: {error}");
+                    ExitCode::from(1)
+                }
+            }
+        }
         AccountOp::List { json, .. } if *json => {
             let rows: Vec<serde_json::Value> = router
                 .health_snapshot_with(refreshes)
                 .into_iter()
                 .map(|health| {
-                    serde_json::json!({
+                    let mut value = serde_json::json!({
                         "name": health.name,
                         "healthy": health.healthy,
                         "credential": health.credential.label(),
@@ -43,7 +65,14 @@ pub fn run(
                         "paused": health.limits.paused_at(crate::account_limits::now_unix()),
                         "pause": health.limits.pause,
                         "windows": health.limits.windows,
-                    })
+                    });
+                    value.as_object_mut().expect("account object").extend(
+                        crate::account_policy_management::fields(router, &health.name)
+                            .as_object()
+                            .unwrap()
+                            .clone(),
+                    );
+                    value
                 })
                 .collect();
             println!(
@@ -158,7 +187,41 @@ pub async fn run_remote(
 ) -> ExitCode {
     use crate::route_contract::{RouteId, route_template};
 
+    if let AccountOp::Policy { name, file, .. } = op {
+        let path =
+            route_template(RouteId::AccountPolicy).replace(NAME_PLACEHOLDER, &path_segment(name));
+        let result = if let Some(file) = file {
+            match read_policy(file) {
+                Ok(policy) => {
+                    crate::auth_remote::post(
+                        server,
+                        &path,
+                        serde_json::to_value(policy).expect("policy JSON"),
+                    )
+                    .await
+                }
+                Err(error) => Err(error),
+            }
+        } else {
+            crate::auth_remote::get(server, &path).await
+        };
+        return match result {
+            Ok(policy) => {
+                crate::operation_output::record(policy.clone());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&policy).expect("policy JSON")
+                );
+                ExitCode::SUCCESS
+            }
+            Err(error) => {
+                eprintln!("error: {error}");
+                ExitCode::from(1)
+            }
+        };
+    }
     let (route, name, body) = match op {
+        AccountOp::Policy { .. } => unreachable!("handled above"),
         AccountOp::List { .. } => return crate::auth_remote::accounts(server).await,
         AccountOp::Pause {
             name,
@@ -250,4 +313,14 @@ pub fn row(account: &AccountRow<'_>) -> String {
         optional(account.remaining),
         account.home
     )
+}
+
+fn read_policy(
+    path: &std::path::Path,
+) -> Result<crate::account_routing_policy::AccountRoutingPolicy, String> {
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    let policy: crate::account_routing_policy::AccountRoutingPolicy =
+        serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    policy.validate()?;
+    Ok(policy)
 }
