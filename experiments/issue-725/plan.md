@@ -27,8 +27,14 @@ covers an omitted summary and all four explicit choices. The other 116 targets
 passed. The corrected code passes Clippy; the complete current-source rerun
 is in progress.
 
-Local validation uses all 117 integration targets and four exhaustive unit
-shards because both ordinary and debug-free monolithic library builds exceed
-the workspace's 3 GB memory limit. The retry was stopped at a finite memory
-bound. The shard helper preserves production code and fixture helpers and
-assigns every parsed test entry point exactly once.
+All 117 integration targets passed: 847 tests passed, with the existing soak
+test left for its dedicated CI workflow. The corrected Codex feature matrix
+and all five upstream matrices pass. A final upstream grammar comparison also
+reproduced and fixed signed-zero parsing before the next final validation run.
+
+Local unit validation uses four exhaustive file partitions because ordinary,
+debug-free monolithic and scattered-function library builds exceed the
+workspace's 3 GB memory limit. Retries stop at a finite memory bound. The
+helper preserves production code, exported/shared fixtures and all external
+test parents, omits inactive private test modules, and enables every parsed
+test entry point exactly once across the four shards.

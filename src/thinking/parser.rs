@@ -45,10 +45,17 @@ pub fn parse_suffix(model: &str) -> SuffixResult<'_> {
     }
 }
 
-/// Parse a nonnegative u32 budget; leading zeros and a leading plus are accepted.
+/// Parse a nonnegative u32 budget; leading zeros, plus and signed zero are accepted.
 #[must_use]
 pub fn parse_numeric_suffix(raw: &str) -> Option<u32> {
-    raw.parse().ok()
+    if raw
+        .strip_prefix('-')
+        .is_some_and(|digits| !digits.is_empty() && digits.bytes().all(|digit| digit == b'0'))
+    {
+        Some(0)
+    } else {
+        raw.parse().ok()
+    }
 }
 
 /// Parse case-insensitive none/auto, including -1 as automatic thinking.

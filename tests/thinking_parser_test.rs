@@ -17,7 +17,26 @@ fn parser_matches_upstream_grammar_and_bounds_budgets() {
     }
     assert_eq!(thinking::parse_numeric_suffix("08192"), Some(8192));
     assert_eq!(thinking::parse_numeric_suffix("+8192"), Some(8192));
-    for raw in ["", "-1", "-2", " 1", "4294967296", "9999999999999999999999"] {
+    for raw in ["-0", "-000"] {
+        assert_eq!(thinking::parse_numeric_suffix(raw), Some(0));
+        assert_eq!(
+            thinking::parse_suffix(&format!("model({raw})"))
+                .config()
+                .unwrap()
+                .mode,
+            ThinkingMode::Off
+        );
+    }
+    for raw in [
+        "",
+        "-1",
+        "-2",
+        "-+0",
+        "--0",
+        " 1",
+        "4294967296",
+        "9999999999999999999999",
+    ] {
         assert_eq!(thinking::parse_numeric_suffix(raw), None);
     }
     for model in ["model(unknown)", "model(4294967296)", "model()", "(high)"] {

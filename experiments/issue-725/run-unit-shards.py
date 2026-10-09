@@ -2,9 +2,10 @@
 """Run every unit test in finite, memory-bounded shards on small Linux workers.
 
 The Rust parser recognizes test functions and property-test macros, avoiding
-matches in strings/comments. Each entry point appears in exactly one shard;
-production code and non-test fixture helpers remain unchanged in a temporary
-copy. The normal workspace is never edited. Dependencies reuse its target cache.
+matches in strings/comments. Files are partitioned, each entry point appears
+in exactly one shard, and inactive private test modules are omitted. Production
+code, exported fixture helpers and parents of external test modules stay intact
+in a temporary copy. Dependencies reuse the normal workspace's target cache.
 """
 import os
 from pathlib import Path
@@ -21,6 +22,8 @@ subprocess.run(['cargo', 'build', '--locked', '--manifest-path', str(tool / 'Car
 parser = tool / 'target/debug/router-test-sharder'
 environment['CARGO_TARGET_DIR'] = str(root / 'target')
 environment['ROUTER_BUILD_RSS_LIMIT_MIB'] = '2350'
+environment['ROUTER_SOURCE_COMMIT'] = subprocess.check_output(
+    ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 failures = []
 with tempfile.TemporaryDirectory(prefix='router-725-unit-') as temporary:
     project = Path(temporary)

@@ -20,8 +20,8 @@ take precedence, so `reasoning_effort: "low"` overrides `(high)`.
 Levels and special words are case insensitive. The last parenthesized suffix
 is parsed only at the end of the selector; whitespace is not trimmed. Leading
 zeroes and a leading `+` on a numeric budget are accepted. Empty, unrecognized,
-negative (except `-1`), overflowing and missing-base suffixes remain literal
-model IDs and receive ordinary exact routing checks.
+negative (except `-1` and signed zero), overflowing and missing-base suffixes
+remain literal model IDs and receive ordinary exact routing checks.
 
 Use the same suffix with `router with --model exact-model(high)` or a forwarded
 client `--model`. The short-lived token grants only the base model. Gemini

@@ -25,6 +25,12 @@ reproduction is `summary-reproduction.rs`; its failing output is preserved in
 summary behavior, with absence and explicit choices covered by an automated
 regression.
 
+A final comparison with upstream `strconv.Atoi` exposed signed-zero budgets:
+`-0` and `-000` are nonnegative zero and must disable thinking. The standalone
+`signed-zero-reproduction.rs` compiles the actual parser source; it failed
+before the fix and now passes. The parser regression also rejects multiple
+signs and still bounds budgets to `u32`.
+
 Run the reproductions and conformance cases with:
 
 ```console
@@ -64,8 +70,10 @@ cargo test --locked --all-features --example host_library_consumer
 cargo test --locked --all-features --doc
 ```
 
-The unit helper parses Rust syntax and assigns each test function or property
-macro to exactly one of four shards. It gates the other entry points only in
-a temporary source copy; production code and fixture helpers are retained.
+The unit helper parses Rust syntax and partitions complete test files across
+four shards. Each test function or property macro is enabled in one shard.
+Inactive private test modules are omitted only in a temporary source copy;
+production code, exported fixture helpers and parents of external/included
+test files are retained.
 All shards reuse dependencies and run under the same finite memory bound.
 `run-integrations.py --prebuilt` is an investigation mode, not final validation.
