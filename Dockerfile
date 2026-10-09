@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.98.1-slim-trixie@sha256:4cd829461bd5c4d511c32e269da9cb8929223b666519d8004e35fc8d1d771ab7 AS builder
+FROM rust:1.99.0-slim-trixie@sha256:24e632c09342c20abf8312cf4f61430a911c01ed3a5e4c02b87292b1c39c5273 AS builder
 
 WORKDIR /app
 
@@ -46,7 +46,7 @@ FROM oven/bun:1@sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f
 
 # Deliberately contains no vendor CLI. Native OAuth creates and refreshes the
 # credential; bun is only a small runner for a disposable compatibility flow.
-FROM debian:trixie-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a AS runtime-base
+FROM debian:trixie-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f AS runtime-base
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
