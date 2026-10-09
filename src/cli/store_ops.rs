@@ -197,16 +197,6 @@ pub enum TokenOp {
 
 #[derive(Debug, Subcommand)]
 pub enum AccountOp {
-    /// Show or replace an account's persisted routing policy.
-    Policy {
-        /// Account name from `accounts list`.
-        name: String,
-        /// JSON file containing the complete replacement policy. Omit to show it.
-        #[arg(long)]
-        file: Option<std::path::PathBuf>,
-        #[command(flatten)]
-        target: AuthTarget,
-    },
     /// List configured accounts and their health.
     List {
         /// Emit JSON instead of the table (issue #314).
@@ -241,6 +231,16 @@ pub enum AccountOp {
     Resume {
         /// Account name, as `accounts list` prints it.
         name: String,
+        #[command(flatten)]
+        target: AuthTarget,
+    },
+    /// Show or replace an account's persisted routing policy.
+    Policy {
+        /// Account name from `accounts list`.
+        name: String,
+        /// JSON file containing the complete replacement policy. Omit to show it.
+        #[arg(long)]
+        file: Option<std::path::PathBuf>,
         #[command(flatten)]
         target: AuthTarget,
     },
