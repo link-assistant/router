@@ -98,8 +98,16 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
 - [x] Match all 2,195 unit names against ordinary Linux CI. Reproduce and fix
   the inventory parser's handling of interleaved subprocess output; require a
   passing summary and verify five evidence-parser regressions.
-- Verify API/provider/packaging regressions, binding suites, Rust documentation,
-  the independent host consumer and a finite 60-second soak on the merged build.
-- Commit each completed step, push only the prepared branch, and require all
-  workflows for its exact final SHA to pass before updating evidence/readiness.
+- [x] Verify all 49 API/provider/packaging/contract/observability/security
+  regressions, binding suites, Rust documentation and the independent host
+  consumer on v1.22.0. The finite 60-second soak passes with 543 requests,
+  zero failures, no RSS/file-descriptor growth and no token reservations.
+- [x] Commit the release merge and callback-test correction separately and push
+  only the prepared branch.
+- [x] Preserve `a4ad404`'s instrumented-test report: every test passes and the
+  measured 78,332 / 90,108 lines require advancing the baseline to 86.931238%
+  (`coverage-job-113974654490.log:7942`). Reproduce that mutation, verify the
+  corrected value is unchanged and rerun all eight coverage-checker regressions.
+- Require all workflows for the exact final SHA to pass before updating
+  evidence/readiness.
 - Recheck main ancestry, issue/PR comments, the complete PR diff and clean status.

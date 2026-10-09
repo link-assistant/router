@@ -82,7 +82,7 @@ the repository baseline:
 
 ```sh
 python3 experiments/issue-727/check-measured-coverage.py \
-  ci-logs/issue-727/coverage-247aa01/coverage-summary.json --expect-update
+  ci-logs/issue-727/coverage-a4ad404/coverage-summary.json --expect-update
 ```
 
 After committing the report's measured percentage, run the same command without
@@ -104,6 +104,12 @@ success, provider rejection, timeout or drop. Run the focused runner with
 `--auth-tests` to include all seven real OAuth tests and require the four cleanup
 cases to execute. Production shutdown logic and
 the coverage ratchet stay unchanged.
+
+All instrumented tests then passed on `a4ad404`. Its downloaded report measured
+78,332 / 90,108 lines (86.931238%), requiring another reviewable increase from
+86.895633%; `coverage-job-113974654490.log:7942` records that gate failure.
+The same coverage reproduction script verifies the baseline mutation before
+this correction and an unchanged baseline afterward, with no coverage exception.
 
 The issue's compiled inventory was removed by issue #192. Source definitions
 therefore overlay authenticated live inventories instead of restoring a static
