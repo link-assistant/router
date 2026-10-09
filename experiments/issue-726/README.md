@@ -46,8 +46,10 @@ For the combined unit suite, run the existing syntax-tree sharder and the
 bounded runner to execute all enabled
 unit tests, retaining a fresh test-name inventory instead of assuming an old
 revision's test count. CI still compiles and runs the original suite.
+The verification in this 3 GiB workspace uses a 2400 MiB child-RSS bound for
+the unit shards.
 
 ```sh
 rust-script experiments/issue-703/shard-unit-tests.rs
-python3 experiments/issue-726/verify-unit-shards.py
+ROUTER_BUILD_RSS_LIMIT_MIB=2400 python3 experiments/issue-726/verify-unit-shards.py
 ```
