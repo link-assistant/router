@@ -17,10 +17,13 @@
 - [x] Annotate before policy projection and retain ordinary automatic routing for
   selectors the subscription policy does not own; verify reserved alias, prefix,
   exclusion and exact-grant boundaries in regression coverage.
-- [ ] Run the complete local suite and strict checks against the combined merge,
-  fetch main again, and commit/push the final changes only to the prepared branch.
-- [ ] Preserve and inspect any new failed CI logs, advance the coverage baseline
+- Complete the local suite and strict checks against the combined merge, then
+  verify main ancestry and push final changes only to the prepared branch.
+- Preserve and inspect any new failed CI logs, advance the coverage baseline
   from measured artifacts when required, and require passing CI for the final SHA.
+
+- [x] Merge the v1.21.0 release without conflicts; verify all 18 API, provider
+  and packaging regressions and regenerate matching bindings/contracts.
 
 Baseline CLI reproduction and unit regression both fail because the new flags are absent. Full unsharded libtest compilation exceeded the 3 GiB cgroup limit; use the existing AST sharder and rustc memory wrapper for local testing. The repository removed compiled inventories in issue #192, so definitions overlay authenticated live catalogs instead of restoring static routing authority.
 
