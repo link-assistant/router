@@ -136,3 +136,13 @@ python3 experiments/issue-724/probe-pinned-image-cache.py
 ```
 
 The two CI builders use [Docker's documented registry-mirror configuration](https://docs.docker.com/build/ci/github-actions/configure-builder/#registry-mirror) to consult `mirror.gcr.io`. Dockerfile tags/digests and smoke assertions remain intact. A cache miss still falls back to Docker Hub; [Google documents this behavior](https://docs.cloud.google.com/artifact-registry/docs/pull-cached-dockerhub-images). The probe requests only four manifests, reads at most 1 MiB each and limits process address space to 256 MiB; it does not download image layers.
+
+The final-head Windows run exposed a setup race in `an_initial_policy_cooldown_wait_consumes_the_retry_round`: its one-second Unix cooldown could expire before selection, legitimately permitting both rounds (`ci-logs/windows-37996592937.log:38996`; full pipeline log line 64834). The revised fixture uses the existing injected clock, waits for the existing retry-wait debug event, then explicitly resets the model cooldown. The upstream one-call assertion and original five-second deadline remain intact. An expired-clock counterpart verifies that expiration leaves both rounds available.
+
+Validate this fixture and its ability to detect the original round-handoff bug with:
+
+```sh
+python3 experiments/issue-724/probe-initial-round-test.py
+```
+
+The bounded experiment first passes the synchronized test, temporarily removes the exact initial-round handoff, reproduces the extra `primary` call, restores production source in `finally`, and passes all 51 pool tests. Each compiler stays below the unchanged 2,400 MiB limit; the largest observed child RSS is 2,030,100 KiB (`initial-round-clock-{green,red,full-pool}.log`). The new expired-clock case brings locally verified integration/bin coverage to 969 tests across the same 127 suites; application source and the 2,183-library-test inventory are unchanged.
