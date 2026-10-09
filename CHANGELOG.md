@@ -216,6 +216,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.22.0] - 2026-10-09
+
+### Added
+- Admin-only management endpoints for retained request lookup, opt-in upstream error capture and downloads, clearing request/error logs, per-account active request counts, and checking the latest stable Router version.
+- Runtime debug logging leases through `PATCH /api/management/logging`, with audit records and automatic restoration of the startup tracing filter after `LOG_DEBUG_TTL_SECS`.
+
 ## [1.21.0] - 2026-10-09
 
 ### Added
