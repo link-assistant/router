@@ -245,3 +245,26 @@ TypeScript, binding parity and backward contract compatibility pass. The
 updated UI dependencies build successfully and reproduce the committed bundle
 exactly. Complete local integration and unit reruns continue alongside final
 CI, which must verify the new commit and dependent package build.
+
+Commit 715a0d0 passes all seven workflows, including the dependent release
+package build in CI run 37956952439. Its preserved log reports a passing
+coverage gate at line 15724 and 78414 / 90258 covered lines (86.877617%) at
+line 15725. The committed 86.875402% baseline remains unchanged under the
+existing tolerance. Fresh local runs pass every one of the 2,178 distinct
+Linux unit entry points, all 912 integration cases across 122 targets and
+all 27 real-binary Node/Bun/Python binding cases. Generated contracts match
+62 operations and 225 HTTP routes.
+
+During final validation, main advances to 9b0a991fcd1c97bc55674b00ff665e5bacda86bf
+through PR #753's admin observability changes. Its complete diff and PR
+description are reviewed, including the error-stream tee, native-response
+lifetime tracking and selected-account logging beside the thinking retry
+path. The merge preserves both sets of changes. The sole conflict is the
+coverage baseline; retain the higher measured 86.875402% value. Formatting,
+Git whitespace checks, file-size, terminology, strict TypeScript, generated
+binding parity and backward contract compatibility against the new main
+pass. Strict all-target/all-feature Clippy also passes with warnings denied
+(2530832 KiB peak). Its initial 2450 MiB compiler bound stops the command
+before completion; a finite 2550 MiB retry completes successfully. The
+combined unit, integration, documentation and binding checks and fresh
+latest-commit CI are recorded in PR #750 when complete.
