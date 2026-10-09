@@ -348,6 +348,25 @@
           "claude_credential": {},
           "emergency_auth": {},
           "login_api_enabled": {},
+          "management_bans": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "client_ip": {
+                  "type": "string"
+                },
+                "expires_at": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "client_ip",
+                "expires_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "subscription": {},
           "upstream_base_url": {},
           "upstream_provider": {},

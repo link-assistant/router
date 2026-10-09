@@ -24,6 +24,7 @@ pub fn router(state: AppState, config: &Config) -> Router {
 
 /// Build exactly one listener shape from the canonical route contract.
 pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerKind) -> Router {
+    state.admin.management_access().configure(config.management);
     let mut app = Router::new();
     if matches!(
         listener,
@@ -55,8 +56,14 @@ pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerK
             crate::contracts::validation::response_contract,
         ));
     }
-    app.fallback(not_found)
-        .layer(axum::middleware::from_fn(scope_auth_outcomes))
+    app = app.fallback(not_found);
+    if matches!(listener, ListenerKind::Combined | ListenerKind::Admin) {
+        app = app.layer(from_fn_with_state(
+            (state.clone(), listener == ListenerKind::Admin),
+            crate::management_middleware::gate,
+        ));
+    }
+    app.layer(axum::middleware::from_fn(scope_auth_outcomes))
         .with_state(state)
 }
 
@@ -186,7 +193,10 @@ pub(crate) fn management_routes(
                 get(proxy::metrics_endpoint),
             );
     }
-    open_routes.merge(routes.route_layer(from_fn_with_state(state, authenticate_admin_route)))
+    open_routes.merge(routes.route_layer(from_fn_with_state(
+        state,
+        crate::management_middleware::authenticate,
+    )))
 }
 
 fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
@@ -554,21 +564,6 @@ async fn authenticate_inference_route(
         return not_found().await;
     }
     authenticate_client_route(State(state), request, next).await
-}
-
-async fn authenticate_admin_route(
-    State(state): State<AppState>,
-    request: Request,
-    next: Next,
-) -> Response {
-    if !proxy::is_admin_authorised(&state, request.headers()) {
-        return proxy::error_response(
-            StatusCode::UNAUTHORIZED,
-            "authentication_error",
-            "admin Bearer key required",
-        );
-    }
-    next.run(request).await
 }
 
 fn is_openai_payment_path(path: &str) -> bool {

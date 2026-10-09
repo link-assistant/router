@@ -26,6 +26,11 @@ API also offers `GET` and `POST /api/management/accounts/{name}/policy`; POST re
 the entire object, with omitted fields reset to defaults. These endpoints follow
 `--disable-metrics`, like the existing accounts endpoints.
 
+On the combined listener, management requests require a loopback socket peer by
+default. Remote administration uses `--management-allow-remote` or the dedicated
+admin listener and still requires admin credentials. Policy endpoints share the
+management authentication lockout; see [management access](../security/management-access.md).
+
 | Field | Default | Behavior |
 | --- | --- | --- |
 | `weight` | `1` | Signed integer, at most 1,000,000. Non-positive excludes the account only under the weighted strategy. |

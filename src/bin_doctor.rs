@@ -258,6 +258,18 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     print!("{}", config.pool.doctor_lines());
     let (limits, _) = link_assistant_router::account_limits::doctor_report(&data_dirs);
     print!("{limits}");
+    println!(
+        "management_allow_remote: {}",
+        config.management.allow_remote
+    );
+    println!(
+        "management_lockout     : failures={} secs={} exempt_loopback={}",
+        config.management.lockout_failures,
+        config.management.lockout_secs,
+        config.management.exempt_loopback
+    );
+    let management_bans = link_assistant_router::management_access::doctor_report(&data_dirs);
+    print!("{management_bans}");
 
     let failed = catalog_error || found;
     let deployments =
@@ -289,6 +301,16 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
             .map(|name| (*name).to_owned())
             .collect(),
         checks: vec![
+            Check {
+                name: "management-lockout".into(),
+                state: if management_bans.is_empty() {
+                    "inactive"
+                } else {
+                    "active"
+                }
+                .into(),
+                detail: (!management_bans.is_empty()).then_some(management_bans),
+            },
             Check {
                 name: "subscription-catalogs".into(),
                 state: if catalog_error { "failed" } else { "passed" }.into(),

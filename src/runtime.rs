@@ -142,7 +142,10 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
         {
             Ok(()) => ExitCode::SUCCESS,
             Err(e) => {
-                eprintln!("server error: {e}");
+                // Startup failures must reach the terminal even when normal
+                // serving diagnostics go only to the operational log.
+                crate::logging::FILE_DIAGNOSTICS
+                    .sync_scope(false, || eprintln!("server error: {e}"));
                 ExitCode::from(1)
             }
         },
@@ -281,6 +284,11 @@ async fn run_server(
     request_log_max_bytes: u64,
     request_log_max_total_bytes: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    link_assistant_router::management_config::ManagementConfig::validate_secrets(
+        &config.token_secret,
+        config.admin_key.as_deref(),
+    )
+    .map_err(|error| -> AnyError { error.into() })?;
     // Refuse an exposed emergency any-token mode before anything is bound
     // (issue #645).
     let emergency_listeners: Vec<std::net::SocketAddr> = if config.listeners.is_empty() {
@@ -582,9 +590,12 @@ async fn run_server(
         );
         let admin_shutdown = shutdown.notified();
         tokio::spawn(async move {
-            if let Err(error) = axum::serve(listener, app)
-                .with_graceful_shutdown(admin_shutdown)
-                .await
+            if let Err(error) = axum::serve(
+                listener,
+                app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+            )
+            .with_graceful_shutdown(admin_shutdown)
+            .await
             {
                 tracing::error!("admin UI server error: {error}");
             }

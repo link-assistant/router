@@ -142,8 +142,10 @@ lto = false
 codegen-units = 16
 strip = false
 
-# The CLI parser enum adds Version/Contracts/Verify in this initial API expansion.
-# Exception documented in docs/integration/compatibility.md; operational APIs
-# and all other semver lints remain checked against every PR base.
+# Initial CLI and management-policy expansions have documented release exceptions.
+# See docs/integration/compatibility.md; all other semver lints remain checked.
 [package.metadata.cargo-semver-checks.lints]
 enum_variant_added = { level = "allow" }
+# Cli/Config literals must supply the new management field for issue #722.
+# Keep this lint enabled: the documented exception requires a minor release.
+constructible_struct_adds_field = { required-update = "minor" }

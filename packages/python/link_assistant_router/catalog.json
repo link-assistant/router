@@ -544,6 +544,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -1392,6 +1432,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -2274,6 +2354,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -3144,6 +3264,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -4002,6 +4162,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -4904,6 +5104,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -5782,6 +6022,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -6674,6 +6954,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -7562,6 +7882,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -8494,6 +8854,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -9365,6 +9765,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -10226,6 +10666,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -11045,6 +11525,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -11928,6 +12448,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -12758,6 +13318,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -13576,6 +14176,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -14468,6 +15108,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -15276,6 +15956,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -16168,6 +16888,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -17006,6 +17766,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -17856,6 +18656,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -18728,6 +19568,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -19598,6 +20478,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -20416,6 +21336,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -21305,6 +22265,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -22216,6 +23216,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -23023,6 +24063,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -24204,6 +25284,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -25052,6 +26172,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -25912,6 +27072,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -26784,6 +27984,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -27642,6 +28882,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -28512,6 +29792,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -29504,6 +30824,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -30364,6 +31724,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -31212,6 +32612,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -32074,6 +33514,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -32933,6 +34413,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -33743,6 +35263,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -34551,6 +36111,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -35373,6 +36973,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -36193,6 +37833,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -37001,6 +38681,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -37813,6 +39533,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -38621,6 +40381,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -39513,6 +41313,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -40361,6 +42201,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -41223,6 +43103,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -42081,6 +44001,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -42971,6 +44931,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -43913,6 +45913,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -44761,6 +46801,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -45643,6 +47723,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -46501,6 +48621,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -47423,6 +49583,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -48281,6 +50481,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -49183,6 +51423,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -50081,6 +52361,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,
@@ -50982,6 +53302,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -51841,6 +54201,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -52660,6 +55060,46 @@
           "secret": true
         },
         {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
           "boolean": false,
           "environment": "ADMIN_PORT",
           "flag": "admin-port",
@@ -53467,6 +55907,46 @@
           "positional": false,
           "required": false,
           "secret": true
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_ALLOW_REMOTE",
+          "flag": "management-allow-remote",
+          "multiple": false,
+          "name": "allow_remote",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_FAILURES",
+          "flag": "management-lockout-failures",
+          "multiple": false,
+          "name": "lockout_failures",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "MANAGEMENT_LOCKOUT_SECS",
+          "flag": "management-lockout-secs",
+          "multiple": false,
+          "name": "lockout_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
+          "flag": "management-lockout-exempt-loopback",
+          "multiple": false,
+          "name": "exempt_loopback",
+          "positional": false,
+          "required": false,
+          "secret": false
         },
         {
           "boolean": false,

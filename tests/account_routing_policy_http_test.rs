@@ -17,6 +17,8 @@ use lino_arguments::Parser as _;
 use serde_json::{Value, json};
 use std::sync::{Arc, Mutex};
 use tower::ServiceExt;
+#[path = "support/account_policy_management.rs"]
+mod management;
 
 struct Fixture {
     state: AppState,
@@ -586,16 +588,23 @@ async fn policy_management_requires_admin_and_persists_live_changes() {
     let f = Fixture::new(AccountRoutingPolicy::default(), StatusCode::OK, "").await;
     let mut state = f.state.clone();
     state.admin_key = Some("admin-fixture".into());
-    let app = Router::new()
-        .route(
-            "/policy/{name}",
-            post(link_assistant_router::account_policy_management::set_policy),
-        )
-        .with_state(state);
+    management::assert_access_controls(state.clone()).await;
+    let config = link_assistant_router::cli::Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "policy-management-fixture-secret",
+    ])
+    .unwrap()
+    .into_config()
+    .unwrap();
+    let app = link_assistant_router::server_router::router(state, &config);
     let request = |key: &str, policy: Value| {
-        Request::post("/policy/primary")
+        Request::post("/api/management/accounts/primary/policy")
             .header("authorization", format!("Bearer {key}"))
             .header("content-type", "application/json")
+            .extension(axum::extract::ConnectInfo(
+                "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+            ))
             .body(Body::from(policy.to_string()))
             .unwrap()
     };

@@ -126,3 +126,21 @@ policy (including its upstream header and cooldown), and restoration of the
 single-account defaults with an empty replacement. There are now 36 focused tests
 and 849 passing integration tests across 115 targets, with one ignored; 15
 documentation tests also pass.
+
+## Integration with current management access controls
+
+While awaiting CI, main advanced to `aa05022` with issue 722's management-access
+hardening. The branch merges that history, retaining the new configuration error
+module, management middleware and signing-secret validation. Contracts and bindings
+were regenerated from the merged binary; comparison with current main still finds
+all 61 existing CLI operations unchanged and only `accounts.policy` added.
+
+The policy persistence regression now exercises the production router. It verifies
+that missing peer metadata and remote socket peers are rejected by default even
+with spoofed forwarding headers. A separate server instance with remote management
+enabled verifies a shared authentication lockout across policy and existing account
+endpoints, valid credentials remaining blocked during the ban, and another peer
+remaining usable. Configuration is fixed once per instance, so the test uses a
+fresh admin tracker for the remote-opt-in instance. All 46 focused tests pass,
+including main's ten management-security tests. Contract compatibility, Node/Bun,
+TypeScript and Python binding/deployment regression checks pass after the merge.

@@ -33,6 +33,7 @@ mod deploy_args;
 mod deploy_settings_args;
 mod emergency_args;
 mod log_ops;
+mod management_args;
 mod model_ops;
 mod pool_args;
 mod store_ops;
@@ -49,6 +50,7 @@ pub use self::deploy_args::{ClaudeCredentials, DeployArgs, DeployMode, UsageArgs
 pub use self::deploy_settings_args::DeploySettingsArgs;
 pub use self::emergency_args::EmergencyArgs;
 pub use self::log_ops::LogsOp;
+pub use self::management_args::ManagementArgs;
 pub use self::model_ops::ModelOp;
 pub use self::pool_args::PoolArgs;
 pub use self::store_ops::{AccountOp, ProviderOp, TokenOp};
@@ -426,6 +428,9 @@ pub struct Cli {
     /// Flat bootstrap Bearer key accepted alongside admin-scoped tokens.
     #[arg(long, env = "TOKEN_ADMIN_KEY", global = true, hide_env_values = true)]
     pub admin_key: Option<String>,
+    /// Management access policy and authentication lockout.
+    #[command(flatten)]
+    pub management: ManagementArgs,
     /// Admin UI listener port; omitted or `0` keeps it disabled.
     #[arg(long, env = "ADMIN_PORT", global = true)]
     pub admin_port: Option<u16>,
@@ -866,6 +871,7 @@ impl Cli {
                 method: self.mpp_method.clone().filter(|s| !s.is_empty()),
             },
         })?;
+        config.management = self.management.config();
         config.client_home = client_home;
         config.isolated_client_home = self.home.is_some();
         Ok(config)

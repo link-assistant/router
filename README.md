@@ -267,7 +267,7 @@ credential files.
 
 ```bash
 # Required: set the JWT signing secret
-export TOKEN_SECRET=your-secure-secret-here
+export TOKEN_SECRET="$(openssl rand -hex 32)"
 
 # Optional: customize port (default: 8080)
 export ROUTER_PORT=8080
@@ -381,7 +381,7 @@ Claude Code through the proxy without exposing its Claude OAuth credential.
 ### Step 1: Start the router (on the server/host machine)
 
 ```bash
-export TOKEN_SECRET=your-secure-secret
+export TOKEN_SECRET="$(openssl rand -hex 32)"
 ./target/release/link-assistant-router
 ```
 
@@ -899,6 +899,14 @@ OPENAI_COMPATIBLE_MODEL: claude-sonnet
 OPENAI_COMPATIBLE_MODELS: claude-sonnet,gpt-4o
 OPENAI_COMPATIBLE_SUPPORTED_CLIENTS: opencode
 ```
+
+Generate signing and administrator secrets independently with `openssl rand -hex 32`.
+Replace the sample signing value in configuration files: startup refuses published
+example secrets. Management on the combined listener is loopback-only by default;
+`MANAGEMENT_ALLOW_REMOTE=true` explicitly enables remote access. Five consecutive
+failed authentications ban that socket peer IP for 30 minutes; loopback is exempt
+by default. Settings, proxy trust, recovery, deploy and bot interactions are in
+[Management access](docs/security/management-access.md).
 
 Every flag listed in `--help` has an env-var alias and can be configured from
 `.lenv` with the same env-var key.
@@ -1859,7 +1867,7 @@ docker build -t link-assistant/router .
 ```bash
 docker run -d \
   -p 8080:8080 \
-  -e TOKEN_SECRET=your-secure-secret \
+  -e TOKEN_SECRET="$(openssl rand -hex 32)" \
   -v /path/to/claude-code-home:/data/claude:ro \
   link-assistant/router
 ```
@@ -1908,7 +1916,7 @@ docker run -it --rm \
 # Then run the router against that volume
 docker run -d \
   -p 8080:8080 \
-  -e TOKEN_SECRET=your-secure-secret \
+  -e TOKEN_SECRET="$(openssl rand -hex 32)" \
   -v claude-home:/data/claude \
   ghcr.io/link-assistant/router:latest
 ```
@@ -1970,7 +1978,7 @@ After=network.target
 [Service]
 Type=simple
 User=$USER
-Environment=TOKEN_SECRET=your-secure-secret
+Environment=TOKEN_SECRET=$(openssl rand -hex 32)
 Environment=ROUTER_PORT=8080
 Environment=CLAUDE_CODE_HOME=/home/$USER/.claude
 ExecStart=/home/$USER/router/target/release/link-assistant-router
@@ -2304,7 +2312,7 @@ Or test manually step by step:
 # Terminal 1: Start the router with a test credential file
 mkdir -p /tmp/test-claude
 echo '{"accessToken": "test-oauth-token"}' > /tmp/test-claude/credentials.json
-export TOKEN_SECRET=test-secret
+export TOKEN_SECRET="$(openssl rand -hex 32)"
 export CLAUDE_CODE_HOME=/tmp/test-claude
 export UPSTREAM_BASE_URL=https://api.anthropic.com
 cargo run

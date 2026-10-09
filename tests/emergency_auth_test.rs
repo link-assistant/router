@@ -160,7 +160,9 @@ fn router(dir: &std::path::Path, token_manager: TokenManager) -> axum::Router {
         github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
         max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     };
-    link_assistant_router::server_router::router(state, &config)
+    link_assistant_router::server_router::router(state, &config).layer(axum::Extension(
+        axum::extract::ConnectInfo("127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap()),
+    ))
 }
 
 /// Every header a supported client may carry its Router token in.

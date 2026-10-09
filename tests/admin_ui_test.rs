@@ -128,6 +128,9 @@ impl Harness {
 
     async fn call(&self, request: Request<Body>) -> (StatusCode, serde_json::Value) {
         let response = link_assistant_router::admin_api::router(self.state.clone())
+            .layer(axum::Extension(axum::extract::ConnectInfo(
+                "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+            )))
             .oneshot(request)
             .await
             .expect("router responds");
@@ -420,6 +423,9 @@ async fn tokens_can_be_issued_listed_and_revoked_through_the_admin_port() {
 async fn the_ui_is_served_from_the_embedded_bundle() {
     let harness = Harness::new(None, minutes(2));
     let response = link_assistant_router::admin_api::router(harness.state.clone())
+        .layer(axum::Extension(axum::extract::ConnectInfo(
+            "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+        )))
         .oneshot(build("/", "GET", None, None))
         .await
         .expect("router responds");
@@ -445,6 +451,9 @@ async fn the_ui_is_served_from_the_embedded_bundle() {
 async fn unknown_api_paths_do_not_fall_back_to_the_app_shell() {
     let harness = Harness::new(None, minutes(2));
     let response = link_assistant_router::admin_api::router(harness.state.clone())
+        .layer(axum::Extension(axum::extract::ConnectInfo(
+            "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+        )))
         .oneshot(build("/api/does-not-exist", "GET", None, None))
         .await
         .expect("router responds");
