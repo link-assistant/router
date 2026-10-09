@@ -168,6 +168,7 @@ impl CatalogStatus {
 pub struct ModelCatalogCache {
     entries: RwLock<HashMap<(SubscriptionProvider, String), CatalogStatus>>,
     persistence: Option<CatalogPersistence>,
+    sources: std::sync::Arc<crate::model_catalog_sources::ModelCatalogSources>,
 }
 
 #[derive(Debug, Clone)]
@@ -210,6 +211,7 @@ impl ModelCatalogCache {
         Self {
             entries: RwLock::new(HashMap::new()),
             persistence: None,
+            sources: std::sync::Arc::default(),
         }
     }
 
@@ -240,7 +242,16 @@ impl ModelCatalogCache {
         Self {
             entries: RwLock::new(entries),
             persistence: Some(persistence),
+            sources: std::sync::Arc::default(),
         }
+    }
+
+    /// Operator definitions, isolated from authenticated subscription inventory.
+    #[must_use]
+    pub const fn sources(
+        &self,
+    ) -> &std::sync::Arc<crate::model_catalog_sources::ModelCatalogSources> {
+        &self.sources
     }
 
     /// Invalidate one provider/account from a separate credential-mutating

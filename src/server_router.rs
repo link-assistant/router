@@ -100,6 +100,10 @@ pub(crate) fn management_routes(
         );
     let mut routes = Router::new()
         .route(
+            route_template(RouteId::ModelDefinitions),
+            get(crate::model_catalog_sources::model_definitions),
+        )
+        .route(
             route_template(RouteId::Routing),
             patch(crate::routing_api::update),
         )

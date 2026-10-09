@@ -169,6 +169,7 @@ const ROUTES: &[RouteSpec] = &[
         RouteMethod::Get,
         "/api/management/providers",
     ),
+    routing::MODEL_DEFINITIONS,
     management(
         RouteId::Providers,
         RouteMethod::Post,

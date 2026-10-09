@@ -287,6 +287,7 @@ pub(crate) async fn forward_provider_at_routed(
         || (provider.kind == ProviderKind::Lefine
             && protocol == crate::client_policy::ClientProtocol::OpenAIChat);
     let mut selector_kind = crate::model_contract::ModelSelectorKind::Unknown;
+    let mut operator_mapping = false;
     let client = match crate::client_policy::bound_client(&claims) {
         Ok((client, _)) => client,
         Err(error) => {
@@ -332,6 +333,15 @@ pub(crate) async fn forward_provider_at_routed(
         selector_kind = crate::model_contract::ModelSelectorKind::from_catalog_value(
             selected.and_then(|candidate| candidate.raw.get("selector_kind")),
         );
+        if let Some(upstream) = selected
+            .and_then(|candidate| candidate.raw.get("router_upstream_model"))
+            .and_then(serde_json::Value::as_str)
+        {
+            operator_mapping = upstream != model;
+            // Authorize the caller's exact selector above, then resolve only
+            // the validated mapping whose target is in this live inventory.
+            body["model"] = serde_json::Value::String(upstream.to_string());
+        }
     }
     // Per-token request budgets apply to every upstream, not just the
     // subscription ones, so a task token cannot escape its cap by being
@@ -358,6 +368,16 @@ pub(crate) async fn forward_provider_at_routed(
         .and_then(serde_json::Value::as_str)
         .unwrap_or_default()
         .to_string();
+    let identity_model = if operator_mapping {
+        &resolved_model
+    } else {
+        &requested_model
+    };
+    let identity_selector_kind = if operator_mapping {
+        crate::model_contract::ModelSelectorKind::Concrete
+    } else {
+        selector_kind
+    };
     crate::audit::record_authorised_request_with_resolved_model(
         state,
         &claims,
@@ -472,9 +492,9 @@ pub(crate) async fn forward_provider_at_routed(
             state.logger.clone(),
             usage.take(),
             SettledRelayIdentity {
-                requested_model: (!native_protocol).then_some(requested_model.clone()),
+                requested_model: (!native_protocol).then(|| identity_model.clone()),
                 model_policy: (!native_protocol).then_some(model_policy.clone()),
-                selector_kind,
+                selector_kind: identity_selector_kind,
                 completion_audit: (!native_protocol && status.is_success()).then(|| {
                     crate::audit::ResponseModelAudit::new(state, &claims, surface, path)
                         .with_models(Some(&requested_model), Some(&resolved_model))
@@ -522,10 +542,10 @@ pub(crate) async fn forward_provider_at_routed(
         && let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&response_body)
     {
         let served_model = match crate::model_contract::validate_translated_response_for_selector(
-            &requested_model,
+            identity_model,
             &payload,
             &model_policy,
-            selector_kind,
+            identity_selector_kind,
         ) {
             Ok(served_model) => served_model,
             Err(error) => {
@@ -604,6 +624,14 @@ fn cache_openai_provider_failure(
 /// Generic configured IDs restrict live results; Lefine uses them only as an
 /// outage fallback after provisioning has already established the key.
 pub(crate) async fn live_openai_compatible_catalog(
+    state: &AppState,
+    provider: &ResolvedProvider,
+) -> Result<Vec<LiveProviderModel>, String> {
+    let live = fetch_live_openai_compatible_catalog(state, provider).await?;
+    Ok(state.model_catalogs.sources().overlay(&provider.name, live))
+}
+
+async fn fetch_live_openai_compatible_catalog(
     state: &AppState,
     provider: &ResolvedProvider,
 ) -> Result<Vec<LiveProviderModel>, String> {

@@ -179,6 +179,7 @@ pub enum RouteId {
     Logging,
     UsageQueue,
     LatestVersion,
+    ModelDefinitions,
     Routing,
     CooldownReset,
 }

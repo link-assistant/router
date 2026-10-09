@@ -169,14 +169,31 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         })
         .collect();
     // Policies on one subscription must not intercept another provider in auto mode.
+    // Unowned selectors continue through ordinary routing, including compatible
+    // provider aliases. Their original selector and token policy remain intact.
     if state.upstream_provider == crate::config::UpstreamProvider::Auto
         && candidates.is_empty()
-        && crate::subscription::SubscriptionProvider::ALL
+        && (crate::subscription::SubscriptionProvider::ALL
             .into_iter()
             .any(|provider| {
                 provider != router.provider()
                     && state.model_catalogs.models(provider).contains(&requested)
             })
+            || (!configured_alias
+                && !router.subscription_readers().iter().any(|(account, _)| {
+                    let catalog = state.model_catalogs.status_for(router.provider(), account);
+                    catalog.routable_models().contains(&requested)
+                        || (router.provider() == crate::subscription::SubscriptionProvider::Gemini
+                            && catalog
+                                .routable_models()
+                                .contains(&format!("models/{requested}")))
+                        || router.routing_policy(account).is_ok_and(|policy| {
+                            policy
+                                .prefix
+                                .as_ref()
+                                .is_some_and(|prefix| requested.starts_with(&format!("{prefix}/")))
+                        })
+                })))
     {
         let bytes = parsed.native.encode(&body).unwrap_or_default();
         return next

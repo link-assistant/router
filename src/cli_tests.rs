@@ -274,6 +274,7 @@ fn sensitive_environment_values_are_hidden_from_help() {
 fn cli_defaults_round_trip_to_config() {
     let cli = Cli {
         management: ManagementArgs::default(),
+        model_catalog_sources: ModelCatalogArgs::default(),
         command: None,
         home: None,
         host: "127.0.0.1".into(),
@@ -403,6 +404,7 @@ fn explicit_home_is_the_credential_boundary_for_every_provider() {
 fn cli_invalid_routing_mode_rejected() {
     let cli = Cli {
         management: ManagementArgs::default(),
+        model_catalog_sources: ModelCatalogArgs::default(),
         command: None,
         home: None,
         host: "0.0.0.0".into(),
@@ -636,4 +638,43 @@ fn the_per_provider_import_flags_carry_no_target() {
     ]);
     assert_eq!(op.import_target(), None);
     assert!(!op.may_be_remote());
+}
+
+#[test]
+fn configurable_model_catalog_flags_are_accepted() {
+    let parsed = Cli::try_parse_from([
+        "router",
+        "--token-secret",
+        "catalog-test",
+        "--model-catalog-sources",
+        "first.json,second.json",
+        "--model-catalog-refresh-secs",
+        "30",
+        "--local-model",
+        "friendly=local:vendor-model",
+        "serve",
+    ]);
+    assert!(
+        parsed.is_ok(),
+        "catalog configuration must be accepted: {:?}",
+        parsed.err()
+    );
+    let config = parsed.unwrap().into_config().unwrap();
+    assert_eq!(
+        config.model_catalog_sources.sources,
+        ["first.json", "second.json"]
+    );
+    assert_eq!(config.model_catalog_sources.refresh_secs, 30);
+    assert_eq!(
+        config.model_catalog_sources.local_models[0]
+            .requested_selector
+            .as_deref(),
+        Some("friendly")
+    );
+    assert_eq!(
+        config.model_catalog_sources.local_models[0]
+            .upstream_request_model
+            .as_deref(),
+        Some("vendor-model")
+    );
 }

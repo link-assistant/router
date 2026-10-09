@@ -2792,6 +2792,122 @@
         "required": [],
         "type": "object"
       },
+      "ModelDefinitionsResponse": {
+        "additionalProperties": false,
+        "description": "Effective provider-scoped catalog for the existing admin-only management boundary.",
+        "properties": {
+          "channel": {
+            "description": "Canonical subscription service or configured provider name.",
+            "type": "string"
+          },
+          "models": {
+            "description": "Current live definitions after eligible operator overlays.",
+            "items": {
+              "$ref": "#/components/schemas/ModelDefinitionsResponse_ModelTruthDescriptor"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "channel",
+          "models"
+        ],
+        "title": "ModelDefinitionsResponse",
+        "type": "object"
+      },
+      "ModelDefinitionsResponse_ModelRouteScope": {
+        "additionalProperties": false,
+        "description": "Exact routing scope for one model observation or exchange.",
+        "properties": {
+          "account": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endpoint": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "protocols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "protocols"
+        ],
+        "type": "object"
+      },
+      "ModelDefinitionsResponse_ModelSelectorKind": {
+        "description": "Kind of selector a caller supplied. Dynamic aliases are factual only when\nthe authenticated provider catalog advertised that exact spelling.\n\nThis is the one wire contract for `selector_kind`: every producer\nserializes the canonical `snake_case` spelling, and every consumer \u2014\ncatalog projection, `router model` diagnostics and the wrapper's typed\ncatalog rows \u2014 reads through [`Self::from_wire`]. Router once emitted\n`provider_advertised_exact_id` for live z.ai rows while the wrapper's\nderived parser accepted only the canonical names, so one such row made\n`router with` reject the whole catalog (issue #620). A spelling this\nbuild does not know is `Unknown`, never a parse failure: an older wrapper\nmust degrade to \"no alias evidence\", not to \"no models\".",
+        "enum": [
+          "concrete",
+          "provider_dynamic_alias",
+          "operator_alias",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "ModelDefinitionsResponse_ModelTruthDescriptor": {
+        "additionalProperties": false,
+        "description": "Canonical truth descriptor used by model diagnostics and boundary logs.\n\n`None` is intentionally serialized as JSON `null`: it means unknown, not\nthat Router may fill the field from a nearby selector.",
+        "properties": {
+          "allow_substitution": {
+            "type": "boolean"
+          },
+          "capabilities": true,
+          "capability_provenance": true,
+          "requested_selector": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "route": {
+            "$ref": "#/components/schemas/ModelDefinitionsResponse_ModelRouteScope"
+          },
+          "selector_kind": {
+            "$ref": "#/components/schemas/ModelDefinitionsResponse_ModelSelectorKind"
+          },
+          "substitution_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "upstream_request_model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "upstream_served_model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "selector_kind",
+          "route",
+          "capabilities",
+          "capability_provenance",
+          "allow_substitution"
+        ],
+        "type": "object"
+      },
       "ModelExplanationReport": {
         "additionalProperties": false,
         "properties": {
@@ -7880,6 +7996,108 @@
           "method": "POST",
           "name": "CooldownReset",
           "path": "/api/management/routing/cooldown/reset"
+        }
+      }
+    },
+    "/api/management/routing/model-definitions/{channel}": {
+      "get": {
+        "operationId": "get_api_management_routing_model_definitions_channel",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "channel",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDefinitionsResponse"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            },
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ModelDefinitions",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ModelDefinitions",
+          "path": "/api/management/routing/model-definitions/{channel}"
+        }
+      },
+      "head": {
+        "operationId": "head_api_management_routing_model_definitions_channel",
+        "parameters": [
+          {
+            "description": "Path parameter",
+            "in": "path",
+            "name": "channel",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "default": {
+            "description": "Anthropic failure envelope"
+          }
+        },
+        "security": [
+          {
+            "AdminBearer": []
+          }
+        ],
+        "summary": "ModelDefinitions",
+        "tags": [
+          "Management"
+        ],
+        "x-router-route": {
+          "auth": "Admin",
+          "class": "Management",
+          "dialect": "Anthropic",
+          "listeners": [
+            "Combined",
+            "Admin"
+          ],
+          "method": "GET",
+          "name": "ModelDefinitions",
+          "path": "/api/management/routing/model-definitions/{channel}"
         }
       }
     },

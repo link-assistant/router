@@ -168,6 +168,8 @@ pub fn operation_name(command: Option<&Command>) -> String {
 #[must_use]
 pub fn types() -> Value {
     json!({
+        "ModelCatalogDocument":crate::model_catalog_sources::document_schema(),
+        "ModelDefinitionsResponse":schemars::schema_for!(crate::model_catalog_sources::ModelDefinitionsResponse),
         "OperationResult":schemars::schema_for!(crate::operations::OperationResult),
         "BackupVerificationReport":schemars::schema_for!(crate::operation_reports::BackupVerificationReport),
         "DoctorReport":schemars::schema_for!(crate::operation_reports::DoctorReport),

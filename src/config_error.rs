@@ -7,6 +7,8 @@ pub enum ConfigError {
     InvalidPort,
     /// Management access settings were invalid.
     InvalidManagementSecurity(String),
+    /// Operator model catalog configuration was invalid.
+    InvalidModelCatalogSources(String),
     /// The listen address could not be parsed.
     InvalidAddress,
     /// `ROUTER_HOST` was neither an IP literal nor a resolvable safe alias.
@@ -75,6 +77,7 @@ impl std::fmt::Display for ConfigError {
                 "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
             ),
             Self::InvalidManagementSecurity(message)
+            | Self::InvalidModelCatalogSources(message)
             | Self::InvalidBridgeModelPolicy(message)
             | Self::InvalidSubscriptionBridgePolicy(message)
             | Self::InvalidProxiedClientPolicy(message)
