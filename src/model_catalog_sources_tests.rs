@@ -187,6 +187,13 @@ async fn file_reads_are_capped_and_file_urls_work() {
             .await
             .is_ok()
     );
+    // Reject before filesystem access: Windows otherwise resolves this as SMB.
+    assert_eq!(
+        fetch::load_with_policy("file://127.0.0.1/catalog.json", NetworkPolicy::default())
+            .await
+            .unwrap_err(),
+        "file URL must name a local path"
+    );
     std::fs::write(&path, vec![b' '; MAX_DOCUMENT_BYTES + 1]).unwrap();
     assert!(
         fetch::load_with_policy(&url, NetworkPolicy::default())

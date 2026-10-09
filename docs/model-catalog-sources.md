@@ -11,6 +11,8 @@ Router loads sources before readiness and refreshes them every 10,800 seconds
 (three hours). Set `MODEL_CATALOG_REFRESH_SECS` or
 `--model-catalog-refresh-secs` to a positive interval between 1 and 31,536,000
 seconds. Relative file paths resolve from the server's working directory.
+File URLs allow only an empty host or `localhost`; remote file hosts are
+rejected before filesystem access on every platform.
 
 Documents use [the model catalog JSON Schema](../schemas/model-catalog.v1.json)
 and the canonical [model-truth descriptor](model-truth-contract.md). For example,

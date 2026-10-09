@@ -53,9 +53,13 @@ pub(super) async fn load_with_policy(
         }
     } else {
         let path = if source.starts_with("file:") {
-            url::Url::parse(source)
-                .map_err(|_| "invalid file URL")?
-                .to_file_path()
+            let url = url::Url::parse(source).map_err(|_| "invalid file URL")?;
+            // On Windows, to_file_path also accepts remote hosts as UNC paths.
+            // File URLs must remain local and never bypass the HTTP guard.
+            if !matches!(url.host_str(), None | Some("localhost")) {
+                return Err("file URL must name a local path".into());
+            }
+            url.to_file_path()
                 .map_err(|()| "file URL must name a local path")?
         } else if source.contains("://") {
             return Err("catalog URLs must use http, https or file".into());
