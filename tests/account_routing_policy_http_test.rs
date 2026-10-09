@@ -491,6 +491,65 @@ async fn production_anthropic_handler_preserves_alias_and_actual_retry_account()
     f.close().await;
 }
 
+struct PolicyEditingStore {
+    reader: link_assistant_router::subscription::SubscriptionReader,
+    router: AccountRouter,
+}
+impl std::fmt::Debug for PolicyEditingStore {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PolicyEditingStore").finish_non_exhaustive()
+    }
+}
+impl link_assistant_router::credential_store::CredentialStore for PolicyEditingStore {
+    fn reload(&self) -> Option<link_assistant_router::subscription::SubscriptionToken> {
+        // An admin edit after the middleware snapshots its authorized selector.
+        let mut policy = aliased();
+        policy.model_aliases[0].model = "other".into();
+        self.router.set_routing_policy("primary", policy).unwrap();
+        self.reader.read_token().ok()
+    }
+    fn persist(
+        &self,
+        token: &link_assistant_router::subscription::SubscriptionToken,
+    ) -> Result<(), String> {
+        self.reader.persist(token)
+    }
+    fn lock_path(&self) -> Option<std::path::PathBuf> {
+        self.reader.lock_path()
+    }
+    fn describe(&self) -> String {
+        self.reader.describe()
+    }
+}
+
+#[tokio::test]
+async fn live_policy_edit_cannot_retarget_the_validated_upstream_model() {
+    let f = Fixture::new(aliased(), StatusCode::OK, "").await;
+    let router = f.state.account_router.as_ref().unwrap();
+    let reader = router.subscription_readers().remove(0).1;
+    f.state.subscription_cache.register_store(
+        SubscriptionProvider::Claude,
+        "primary",
+        Arc::new(PolicyEditingStore {
+            reader,
+            router: router.clone(),
+        }),
+    );
+    f.state.model_catalogs.record_success_for_account(
+        SubscriptionProvider::Claude,
+        "primary",
+        None,
+        vec!["native".into(), "other".into()],
+    );
+    // Both native models are granted: selector stability is a separate check.
+    let response = f.request("friendly", "", None, false).await;
+    let status = response.status();
+    let result = value(response).await;
+    assert_eq!(status, StatusCode::BAD_GATEWAY, "{result}");
+    assert!(f.seen.lock().unwrap().is_empty());
+    f.close().await;
+}
+
 fn test_state(data_dir: &std::path::Path) -> AppState {
     use std::sync::Arc;
     AppState {

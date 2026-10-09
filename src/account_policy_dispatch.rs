@@ -52,10 +52,17 @@ pub async fn send(
         let policy = router
             .routing_policy(&selected.name)
             .map_err(UpstreamSendError::Egress)?;
-        let upstream_model = replay_model(router, &selected.name, &model, &initial_model)
-            .ok_or_else(|| {
-                UpstreamSendError::Egress("account excludes the requested model".into())
-            })?;
+        let Some(upstream_model) = replay_model(router, &selected.name, &model, &initial_model)
+            .filter(|upstream| upstream == &initial_model)
+        else {
+            // Live edits must not change the selector authorized by middleware,
+            // including edits after a retry account was selected.
+            return last_response.ok_or_else(|| {
+                UpstreamSendError::Egress(
+                    "account no longer serves the validated upstream model".into(),
+                )
+            });
+        };
         if !crate::account_policy_catalog::permitted(
             &scope.model_policy,
             router.provider(),
