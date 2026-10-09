@@ -17,11 +17,15 @@ import tempfile
 root = Path(__file__).resolve().parents[2]
 arguments = argparse.ArgumentParser(description=__doc__)
 selection = arguments.add_mutually_exclusive_group()
-selection.add_argument('--shard', type=int, choices=range(4),
+selection.add_argument('--shard', type=int,
                        help='Rerun one file partition after investigating a failure.')
 selection.add_argument('--test-file', help='Run only a named test file after a focused change.')
+arguments.add_argument('--shards', type=int, choices=range(1, 17), default=4,
+                       help='Use more finite partitions when a compiler hits the memory bound.')
 options = arguments.parse_args()
 selected = options.shard
+if selected is not None and not 0 <= selected < options.shards:
+    arguments.error('--shard must be between zero and --shards minus one')
 tool = root / 'experiments/issue-725/test-sharder'
 environment = os.environ.copy()
 # Existing home-fallback tests require this override to be absent. Remove it
@@ -41,12 +45,12 @@ with tempfile.TemporaryDirectory(prefix='router-725-unit-') as temporary:
     for entry in root.iterdir():
         if entry.name not in {'src', 'target', '.git', 'experiments', 'ci-logs'}:
             (project / entry.name).symlink_to(entry, target_is_directory=entry.is_dir())
-    for shard in ([0] if options.test_file else [selected] if selected is not None else range(4)):
+    for shard in ([0] if options.test_file else [selected] if selected is not None else range(options.shards)):
         if (project / 'src').exists():
             shutil.rmtree(project / 'src')
         shutil.copytree(root / 'src', project / 'src')
         sources = sorted(str(path) for path in (project / 'src').rglob('*.rs'))
-        count = 4
+        count = options.shards
         if options.test_file:
             matches = [path for path in sources if Path(path).name == options.test_file]
             if len(matches) != 1:

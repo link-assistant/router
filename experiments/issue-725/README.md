@@ -90,4 +90,6 @@ workspace environment is unchanged. Use `--shard 1` to repeat just the second
 partition after investigating a failure.
 Use `--test-file responses_websocket_tests.rs` to rerun one affected test file;
 this mode keeps all production code and shared fixtures in the temporary copy.
+If a partition reaches the finite memory bound, `--shards 8 --shard 3` and
+`--shards 8 --shard 7` together cover the original four-way partition 3.
 `run-integrations.py --prebuilt` is an investigation mode, not final validation.

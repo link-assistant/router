@@ -39,7 +39,8 @@ helper preserves production code, exported/shared fixtures and all external
 test parents, omits inactive private test modules, and enables every parsed
 test entry point exactly once across the four shards.
 
-The four partitions pass 533, 598, 456 and 579 Linux unit tests (2166 total).
+Before merging PR #747, the four partitions passed 533, 598, 456 and 579 Linux
+unit tests (2166 total).
 The second partition initially exposed the agent's `CODEX_HOME` override in an
 existing home-fallback test. Removing that variable from child processes made
 the isolated test and complete partition pass; production behavior is unchanged.
@@ -53,3 +54,9 @@ validation on every turn. The regression passes together with all 70 Router
 end-to-end tests and all four focused thinking test targets. All six existing
 WebSocket unit tests also pass. Strict Clippy, formatting, Rust documentation,
 file-size and terminology checks pass before committing this fix.
+
+Main advanced to aa05022968413f00822085b8463415351c5d2fb0 while validation ran.
+PR #747's management access changes merge without conflicts; README's thinking
+documentation and both module sets remain. The combined tree passes strict
+Clippy, formatting, file-size and terminology checks. Complete local suites
+will be rerun against the merged tree, including its new management tests.
