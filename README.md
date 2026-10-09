@@ -2435,6 +2435,11 @@ keeping `main` building regularly is what keeps the shared cache warm.
 
 ## Contributing
 
+New provider adapters follow the shared lifecycle and terms-decision checklist
+in [Provider onboarding](docs/providers/onboarding.md). Its mock-upstream
+conformance suite exercises the existing Claude and Codex adapters without
+vendor credentials.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding guidelines, and the pull request process.
 
 ## License
