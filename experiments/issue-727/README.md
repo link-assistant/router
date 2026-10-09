@@ -74,6 +74,13 @@ the merge runner through `experiments/issue-719/bounded-build.py` with a finite
 `ROUTER_BUILD_RSS_LIMIT_MIB` appropriate for the workspace. The soak runtime has
 its own 768 MiB bound.
 
+After verifying that a subsequent main merge changes only release metadata,
+`run-release-checks.py` rebuilds the executable and checks matching contracts,
+bindings, API and thinking regressions, host consumers and generated HTTP
+clients. Run it under the same compiler bound after the complete source suite
+finishes. The existing client probes accept `ROUTER_MAVEN` and `ROUTER_PYTHON`
+when those tools are installed outside the default search path.
+
 The focused runner builds Router and generates contracts before preparing fresh
 shards. After changes limited to tests, `--tests-only` reuses the built binary
 and published contracts. Full unit verification checks that every shard passes

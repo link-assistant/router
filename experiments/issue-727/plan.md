@@ -127,10 +127,32 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
 - [x] Verify the streaming suffix case, generated artifacts, contract
   compatibility and all JavaScript/Bun/Python binding suites on the combined
   executable.
-- Run fresh strict checks, all thinking integrations, all local
-  unit/integration targets and the bounded soak against the combined source.
-- Commit the resolved merge, push only the prepared branch and require every
-  workflow for its exact head to pass; investigate actual failures using saved
-  logs and measured coverage artifacts.
+- [x] Run fresh strict checks and the complete combined suite: 2,197 distinct
+  units, 924 integration tests across all 124 targets, binary targets and 15
+  documentation tests. Rust documentation and the independent host consumer
+  pass. The finite 60-second, 16-client soak completes 629 requests with zero
+  failures, bounded RSS growth and zero outstanding token reservations.
+- [x] Commit the resolved merge and push only the prepared branch (`f64cd3e`).
+- Require every workflow for its exact head to pass; investigate actual
+  failures using saved logs and measured coverage artifacts.
 - Recheck latest main and user edits/comments, update complete validation
   evidence, confirm clean status and mark PR #752 ready.
+
+## v1.23.0 release sync
+
+- [x] Finish the complete thinking/source suite before changing package versions.
+- [x] Fetch main again and inspect `0f2da83`: only release/version metadata
+  changes. Merge it without conflicts, retaining the source feature's minor
+  changelog fragment and the higher measured coverage baseline.
+- [x] Rebuild v1.23.0 and verify matching generated contracts and bindings,
+  strict checks, focused catalog/CLI/OAuth cases, all 159 release-sensitive API
+  and thinking tests across 14 targets, documentation and host consumers.
+  JavaScript/Bun/Python each pass nine tests; generated Go/Java/PHP clients
+  compile and exercise the real Router. The finite 60-second soak completes
+  730 requests with zero failures, bounded resources and zero reservations.
+- [x] Compare all 2,197 local unit names with both the instrumented and ordinary
+  Linux CI suites; the inventories match exactly.
+- Commit the tested release sync, preserve the measured coverage update, and
+  push only the prepared branch. Require passing workflows on its final SHA.
+- Recheck latest main, all issue/PR comments and human description edits,
+  review the final diff and clean status, then mark PR #752 ready.
