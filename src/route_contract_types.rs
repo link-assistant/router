@@ -88,6 +88,7 @@ pub enum RouteId {
     RotateClientToken,
     Providers,
     Provider,
+    ModelDefinitions,
     Login,
     LoginSession,
     LoginCode,

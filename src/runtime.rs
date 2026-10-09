@@ -379,6 +379,10 @@ async fn run_server(
     let model_catalogs = Arc::new(
         link_assistant_router::model_catalog::ModelCatalogCache::persistent(&config.data_dir),
     );
+    model_catalogs
+        .sources()
+        .configure(config.model_catalog_sources.clone())
+        .map_err(|error| -> AnyError { error.into() })?;
 
     // The admin credential: a deploy-time key when provided, otherwise the
     // persisted first-visitor claim (unclaimed until someone confirms one).
@@ -480,14 +484,16 @@ async fn run_server(
     if let Some(router) = state.account_router.as_ref() {
         catalog_readers.extend(router.subscription_readers());
     }
-    let catalog_refresh = link_assistant_router::model_catalog::refresh_catalogs_from_startup(
-        state.client.clone(),
-        catalog_readers,
-        Arc::clone(&state.subscription_cache),
-        Arc::clone(&state.model_catalogs),
-        link_assistant_router::model_catalog::INITIAL_REFRESH_TIMEOUT,
-    )
-    .await;
+    let (catalog_refresh, source_refresh) = tokio::join!(
+        link_assistant_router::model_catalog::refresh_catalogs_from_startup(
+            state.client.clone(),
+            catalog_readers,
+            Arc::clone(&state.subscription_cache),
+            Arc::clone(&state.model_catalogs),
+            link_assistant_router::model_catalog::INITIAL_REFRESH_TIMEOUT,
+        ),
+        Arc::clone(state.model_catalogs.sources()).start(),
+    );
 
     // Opt-in, and announced: a deployment that is recording every client
     // exchange to a file, or answering from one instead of a provider, must say
@@ -628,6 +634,9 @@ async fn run_server(
         handle.abort();
     }
     catalog_refresh.abort();
+    if let Some(handle) = source_refresh {
+        handle.abort();
+    }
     primary_result
         .map(|_| ())
         .map_err(|error| -> AnyError { error.to_string().into() })

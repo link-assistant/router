@@ -725,9 +725,14 @@ fn principal_catalog_records(
     }) {
         Vec::new()
     } else {
+        let mut records = state
+            .model_catalogs
+            .records_for_accounts(provider, accounts);
         state
             .model_catalogs
-            .records_for_accounts(provider, accounts)
+            .sources()
+            .annotate_subscription(&mut records);
+        records
     }
 }
 

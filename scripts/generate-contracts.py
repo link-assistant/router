@@ -45,6 +45,7 @@ def generate(catalog):
         outputs[path] = document if isinstance(document, str) else json.dumps(document, indent=2, sort_keys=True) + '\n'
 
     types = copy.deepcopy(catalog['types'])
+    write('schemas/model-catalog.v1.json', catalog['types']['ModelCatalogDocument'])
     # Preserve $defs inside each independently valid JSON Schema. OpenAPI uses
     # renamed components so generators do not depend on unsupported nested defs.
     components = {}
@@ -52,6 +53,9 @@ def generate(catalog):
         schema = strict(schema)
         definitions = schema.pop('$defs', {})
         schema.pop('$schema', None)
+        # Component references resolve against the OpenAPI document, while
+        # standalone schemas retain their own versioned identifier.
+        schema.pop('$id', None)
         def rewrite(value):
             if isinstance(value, dict):
                 # Composite defaults are annotations, and the Go generator
@@ -138,6 +142,7 @@ def generate(catalog):
     preparation = obj({'client': STRING, 'expected': {'type':['string','null']}, 'observed': {'type':['string','null']}, 'status': STRING, 'reason': STRING, 'source': {'enum':['installed','ci-pin','latest']}, 'host_installed': {'type':['string','null']}, 'host_mismatch': BOOL}, ['client','expected','observed','status','reason','source','host_installed','host_mismatch'])
     components['Verification'] = obj({'schema': {'const':'link-assistant-router/verification/v1'}, 'router_version': nullable(STRING), 'commit': {'type':['string','null']}, 'generated_at_unix': INT, 'complete': BOOL, 'parity': BOOL, 'failed': BOOL, 'skipped': INT, 'areas_not_run': array(unexecuted_area), 'targets_not_run': array(STRING), 'areas': array(area), 'client_preparation': array(preparation)}, ['schema','router_version','commit','generated_at_unix','complete','parity','failed','skipped','areas_not_run','targets_not_run','areas','client_preparation'])
     response_types = {
+        ('ModelDefinitions','GET'):ref('ModelDefinitionsResponse'),
         ('Usage','GET'):ref('UsageSnapshot'), ('CredentialStatus','GET'):obj({'credentials':array(ref('CredentialAcceptanceReport'))}, ['credentials']),
         ('AuthDiagnostics','GET'):obj({'diagnostics':ref('AuthDiagnosticsSnapshot'),'emergency_auth':ref('EmergencyStatus')}, ['diagnostics','emergency_auth']),
         ('EmergencyAuthStatus','GET'):ref('EmergencyStatus'), ('EmergencyAuthDisable','POST'):obj({'disabled':BOOL,'was_active':BOOL,'status':ref('EmergencyStatus')}, ['disabled','was_active','status']),
