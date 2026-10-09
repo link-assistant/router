@@ -152,7 +152,12 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
   730 requests with zero failures, bounded resources and zero reservations.
 - [x] Compare all 2,197 local unit names with both the instrumented and ordinary
   Linux CI suites; the inventories match exactly.
-- Commit the tested release sync, preserve the measured coverage update, and
-  push only the prepared branch. Require passing workflows on its final SHA.
+- [x] Commit the tested release sync, retaining regular merge history.
+- [x] Preserve `f64cd3e`'s failed coverage job and measured artifact: every
+  instrumented test passes, but 79,754 / 91,676 lines require advancing the
+  reviewable baseline to 86.995506% (`114014049846`, line 8626).
+- [x] Reproduce that exact mutation using a baseline copy, verify an unchanged
+  value after correction and pass all eight coverage-checker regressions.
+- Push only the prepared branch and require passing workflows on its final SHA.
 - Recheck latest main, all issue/PR comments and human description edits,
   review the final diff and clean status, then mark PR #752 ready.

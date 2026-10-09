@@ -133,6 +133,21 @@ All instrumented tests then passed on `a4ad404`. Its downloaded report measured
 The same coverage reproduction script verifies the baseline mutation before
 this correction and an unchanged baseline afterward, with no coverage exception.
 
+The complete thinking/source merge then passes 2,197 distinct unit tests,
+924 integration tests across all 124 targets, binary targets and 15 documentation
+tests. Both ordinary and instrumented Linux CI inventories exactly match the
+local shards. The subsequent metadata-only v1.23.0 sync passes the release
+consumer driver, including all 159 selected integration tests and real generated
+Go/Java/PHP probes. Its finite 60-second, 16-client soak completes 730 requests
+with zero failures, bounded resource growth and zero token reservations.
+
+The instrumented report for `f64cd3e` measures 79,754 / 91,676 lines
+(86.995506%). Its reviewability failure is preserved at
+`coverage-job-114014049846.log:8626`. Run the same coverage reproduction script
+against `ci-logs/issue-727/coverage-f64cd3e/coverage-summary.json` to verify the
+measured update and an unchanged baseline afterward. The higher baseline is
+committed without changing the coverage gate or requesting an exception.
+
 The issue's compiled inventory was removed by issue #192. Source definitions
 therefore overlay authenticated live inventories instead of restoring a static
 list with routing authority. Leaving sources unset preserves existing behavior.
