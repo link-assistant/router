@@ -50,6 +50,11 @@ def generate(catalog):
     # renamed components so generators do not depend on unsupported nested defs.
     components = {}
     for name, schema in types.items():
+        # Source documents are not HTTP payloads. Their standalone schema keeps
+        # null-only authority fields, which client generators cannot model as
+        # language types (the Go generator emits invalid `nil` types).
+        if name == 'ModelCatalogDocument':
+            continue
         schema = strict(schema)
         definitions = schema.pop('$defs', {})
         schema.pop('$schema', None)
