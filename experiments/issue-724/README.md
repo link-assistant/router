@@ -70,6 +70,10 @@ The combined source passes all 910 integration/bin tests across 121 suites (one 
 
 The subsequent `main` v1.21.0 release merge changes only version/changelog metadata; its production, test and script delta is empty. The new binary builds successfully, generated contracts/bindings and published compatibility remain current, all 21 focused CLI/contract/operation tests pass, and every example target passes (`combined-release-*.log`).
 
+The combined account-policy source at `ad01d708159c669984f42bf2a7cde39b7ef42103` also passes all eight bounded library groups in an immutable checkout. Its 2,177 distinct enabled test names retain every previously enabled test and add main's SSE rewriting regression. The largest child RSS is 2,404,772 KiB, below the 2,400 MiB limit (`combined-local-unit-shards.log`, `combined-unit-inventory-summary.log`, and `ci-logs/connector-unit-shard-*.log`). The runner above reproduces this suite; production sources and normal CI remain unchanged by its generated test groups.
+
+Main's subsequent PR #754 updates seven pinned Node/Python setup-action lines in two workflows. Its merge changes no production, test, Cargo, generated-contract or script files. The workflow tool check passes all 42 jobs in 13 workflows, and release-workflow invariants, formatting, whitespace and file-size checks pass (`main-actions-*.log`). The existing source-test results therefore remain applicable; final CI also verifies the updated actions.
+
 Run all integration tests, binary tests and doctests within the local limit with:
 
 ```sh
