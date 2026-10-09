@@ -246,6 +246,33 @@ pub async fn accept_candidate(
     .await
 }
 
+/// Validate a native-login candidate through its connector's HTTP transport.
+///
+/// The caller supplies a bounded, redirect-free client with its egress and DNS
+/// policy. Staging, rotation, persistence and promotion rules are unchanged.
+pub async fn accept_candidate_with_client(
+    data_dir: &Path,
+    provider: SubscriptionProvider,
+    document: &str,
+    client: &reqwest::Client,
+    token_url_override: Option<&str>,
+    catalog_base_url_override: Option<&str>,
+) -> Result<AcceptedCredential, AcceptanceFailure> {
+    accept_candidate_with_timeout_mode(
+        data_dir,
+        provider,
+        document,
+        token_url_override,
+        catalog_base_url_override,
+        CandidateValidation {
+            timeout: ACCEPTANCE_TIMEOUT,
+            rotate_candidate: true,
+            client: Some(client),
+        },
+    )
+    .await
+}
+
 /// Stage and positively validate a credential copied from an external owner.
 ///
 /// Unlike a fresh native-login response, an imported refresh link is still
@@ -265,8 +292,11 @@ pub async fn accept_external_candidate(
         document,
         None,
         catalog_base_url_override,
-        ACCEPTANCE_TIMEOUT,
-        false,
+        CandidateValidation {
+            timeout: ACCEPTANCE_TIMEOUT,
+            rotate_candidate: false,
+            client: None,
+        },
     )
     .await
 }
@@ -287,10 +317,19 @@ pub async fn accept_candidate_with_timeout(
         document,
         token_url_override,
         catalog_base_url_override,
-        timeout,
-        true,
+        CandidateValidation {
+            timeout,
+            rotate_candidate: true,
+            client: None,
+        },
     )
     .await
+}
+
+struct CandidateValidation<'a> {
+    timeout: Duration,
+    rotate_candidate: bool,
+    client: Option<&'a reqwest::Client>,
 }
 
 async fn accept_candidate_with_timeout_mode(
@@ -299,9 +338,13 @@ async fn accept_candidate_with_timeout_mode(
     document: &str,
     token_url_override: Option<&str>,
     catalog_base_url_override: Option<&str>,
-    timeout: Duration,
-    rotate_candidate: bool,
+    validation: CandidateValidation<'_>,
 ) -> Result<AcceptedCredential, AcceptanceFailure> {
+    let CandidateValidation {
+        timeout,
+        rotate_candidate,
+        client,
+    } = validation;
     let staging_root = data_dir.join(STAGING_DIRECTORY);
     std::fs::create_dir_all(&staging_root).map_err(|_| {
         AcceptanceFailure::not_attempted("could not create the private credential staging area")
@@ -342,13 +385,16 @@ async fn accept_candidate_with_timeout_mode(
     let candidate_data = stage.path().join("router-state");
     let cache =
         crate::refresh::TokenCache::registered_for(std::slice::from_ref(&reader), &candidate_data);
-    let client = reqwest::Client::builder()
-        .timeout(timeout)
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|_| {
-            AcceptanceFailure::not_attempted("could not initialize candidate validation")
-        })?;
+    let client = match client {
+        Some(client) => client.clone(),
+        None => reqwest::Client::builder()
+            .timeout(timeout)
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|_| {
+                AcceptanceFailure::not_attempted("could not initialize candidate validation")
+            })?,
+    };
     let now_ms = crate::operation_context::now().timestamp_millis();
     let refreshed = if rotate_candidate {
         let refresh_result = match token_url_override {
