@@ -50,7 +50,11 @@ CI's first complete merged run passed all platform tests but measured
 86.702128% line coverage against the 86.756772% baseline. The downloaded
 LCOV report identified missed native-control removal, legacy reasoning-level
 facts, snake-case Gemini controls, native URL selectors and Anthropic output
-limits. Additional request-based regressions cover these paths.
+limits. Additional request-based regressions cover these paths. CI run
+37890500554 on `f815e27` measures 76692 / 88360 lines (86.794930%): 82 more
+covered lines with the same instrumented-line count. The coverage gate passes;
+its separate reviewability check requires committing the increased baseline.
+The floor, tolerance and exception policy are unchanged.
 Inspect a report from the matching source revision with:
 
 ```console

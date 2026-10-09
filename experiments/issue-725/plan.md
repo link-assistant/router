@@ -90,7 +90,8 @@ below the 86.756772% baseline. The full preserved workflow log reports that at
 The downloaded LCOV report identifies missed native-control removal, legacy
 reasoning-level facts, snake-case Gemini controls, native URL selectors and
 Anthropic output-limit paths. Ten request-based tests now cover these behaviors;
-all 21 focused request cases pass locally; a fresh CI measurement is pending.
+all 21 focused request cases pass locally. The next CI measurement is recorded
+below.
 The coverage floor, tolerance and exception policy remain unchanged.
 
 The second and third merged unit partitions pass all 560 and 521 tests.
@@ -114,3 +115,24 @@ Python each pass their nine real-binary binding cases, and strict
 TypeScript passes. The initial contract and JavaScript rechecks used the
 cached 1.18.6 binary; rerunning against the rebuilt 1.19.0 binary passes.
 Python uses the existing isolated binding environment.
+
+CI run 37890500554, created at 2026-10-09T05:50:31Z for `f815e27`, measures
+76692 / 88360 lines (86.794930%). Its coverage gate passes; the sole coverage
+failure requires committing that reviewable baseline increase. The preserved
+job log records the measurement at
+`ci-logs/coverage-f815e27-113696010429.log:8456` and the reviewability error at
+line 8489. The downloaded report advances the committed baseline through the
+existing checker; all eight coverage-policy tests pass. No floor, tolerance,
+exception or test-discovery rule changes.
+
+Main advanced to ccc9d8d0500df6d3bf942173befc9bd5cb6393af (provider
+onboarding). Its reviewed connector, credential-acceptance and refresh changes
+are merged. The sole conflict is the coverage baseline: retain the higher
+measured 86.794930% increase rather than main's 86.776613% increase.
+All 115 focused catalog, connector, Router end-to-end and thinking integration
+cases pass, together with all six credential-acceptance unit cases. This brings
+the verified integration total to 878 across 119 targets. Formatting, file-size,
+terminology and strict all-target/all-feature Clippy pass on the combined tree.
+The initial Clippy run stopped at its finite 2350 MiB memory bound, without a
+lint error. A finite 2450 MiB retry passes, observing a 2390160 KiB peak.
+Both logs are preserved; final CI verifies the unpartitioned combined source.
