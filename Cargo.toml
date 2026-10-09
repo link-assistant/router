@@ -44,7 +44,7 @@ url = "2.5"
 tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "time", "signal", "fs", "process", "sync", "net"] }
 serde = { version = "1.0", features = ["derive"] }
 schemars = { version = "1.2", features = ["chrono04"] }
-jsonschema = { version = "0.33", default-features = false }
+jsonschema = { version = "0.58", default-features = false }
 serde_json = "1.0"
 toml_edit = "0.25"
 jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
