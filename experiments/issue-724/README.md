@@ -68,6 +68,8 @@ Further regressions reproduced an immediate error for an already-cooling policy 
 
 The combined source passes all 910 integration/bin tests across 121 suites (one ignored soak), including all 46 pool tests, all 15 doctests, strict documentation and strict all-target/all-feature Clippy (`combined-canonical-integration-tests.log`, `combined-policy-final-pool.log`, `combined-doctests.log`, `combined-docs.log`, `combined-clippy.log`). Regenerating the merged catalog from the built CLI resolves the catalog consistency check; the checked output contains 62 operations and 227 routes and retains published contracts. Node, TypeScript and Python checks pass. A concurrent client run hit Bun's existing five-second native-verifier test limit; its isolated rerun passes all ten tests, with that verifier taking 3.31 seconds (`combined-bun-serial-tests.log`). No timeout increase is needed.
 
+The subsequent `main` v1.21.0 release merge changes only version/changelog metadata; its production, test and script delta is empty. The new binary builds successfully, generated contracts/bindings and published compatibility remain current, all 21 focused CLI/contract/operation tests pass, and every example target passes (`combined-release-*.log`).
+
 Run all integration tests, binary tests and doctests within the local limit with:
 
 ```sh
