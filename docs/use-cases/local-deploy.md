@@ -6,14 +6,16 @@ send new connections to a verified candidate while established streams finish
 on the previous backend.
 
 ```bash
-TOKEN_SECRET='a-long-random-secret' router deploy
+export TOKEN_SECRET="$(openssl rand -hex 32)"
+
+router deploy
 
 # An explicit release or digest may be selected. Moving tags are refused.
-TOKEN_SECRET='a-long-random-secret' router deploy \
+router deploy \
   --image ghcr.io/link-assistant/router:1.12.0
 
 # Let the backend use this machine's Claude Code login (issue #622).
-TOKEN_SECRET='a-long-random-secret' router deploy --claude-credentials share
+router deploy --claude-credentials share
 
 # Read-only report; TOKEN_SECRET is not required.
 router deploy --status
@@ -109,12 +111,12 @@ host, which reads the Keychain in place, while keeping exactly one endpoint:
 
 ```bash
 # Read-only plan: what would stop, start, and be preserved, and every blocker.
-TOKEN_SECRET='a-long-random-secret' router deploy --mode host --status
+router deploy --mode host --status
 
-TOKEN_SECRET='a-long-random-secret' router deploy --mode host
+router deploy --mode host
 
 # Back to the containers, which were stopped, not removed.
-TOKEN_SECRET='a-long-random-secret' router deploy --mode container
+router deploy --mode container
 ```
 
 The host Router uses the deployment's `data/` directory and `TOKEN_SECRET`, so
@@ -169,7 +171,7 @@ rerun `router deploy`.
 ### Supervising the host Router
 
 ```bash
-TOKEN_SECRET='a-long-random-secret' router deploy --mode host --install-service
+router deploy --mode host --install-service
 router deploy --uninstall-service
 ```
 
@@ -360,9 +362,12 @@ Review `router deploy --status`, then use the deliberately named local-only flag
 when interruption is acceptable:
 
 ```bash
-TOKEN_SECRET='a-long-random-secret' router deploy --force-update
+router deploy --force-update
 ```
 
 Before mutation, the force report names every affected legacy run by id, label,
 and state, and reports the listener/connection impact. There is no anonymous or
 implicit force mode.
+
+Management listener policy, failure lockout and forwarding-address trust are
+documented in [Management access](../security/management-access.md).

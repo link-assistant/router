@@ -153,7 +153,11 @@ fn test_app_for_listener_with_switches(
         max_proxy_request_bytes: link_assistant_router::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
     };
     (
-        link_assistant_router::server_router::router_for_listener(state, &config, listener),
+        link_assistant_router::server_router::router_for_listener(state, &config, listener).layer(
+            axum::Extension(axum::extract::ConnectInfo(
+                "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+            )),
+        ),
         token,
     )
 }

@@ -13,7 +13,7 @@ set -euo pipefail
 ROUTER="${1:-router}"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-export TOKEN_SECRET="example-shared-signing-secret"
+export TOKEN_SECRET="$(openssl rand -hex 32)"
 export STORAGE_POLICY=text
 
 DATA_DIR="$WORK/a" "$ROUTER" tokens issue --local --label existing >/dev/null

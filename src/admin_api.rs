@@ -15,7 +15,7 @@ use std::sync::Arc;
 use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
-use axum::middleware::from_fn;
+use axum::middleware::{from_fn, from_fn_with_state};
 use axum::response::{IntoResponse, Response};
 
 use crate::admin::{AdminClaim, ClaimError};
@@ -32,12 +32,17 @@ pub fn router(state: AppState) -> Router {
 /// Build the admin UI listener with the same feature switches as the public
 /// listener. Both listener shapes consume the same management-route builder.
 pub fn router_with_config(state: AppState, config: &crate::config::Config) -> Router {
+    state.admin.management_access().configure(config.management);
     router_with_features(state, config.login.enabled, config.enable_metrics)
 }
 
 fn router_with_features(state: AppState, login_enabled: bool, metrics_enabled: bool) -> Router {
     crate::server_router::management_routes(state.clone(), login_enabled, metrics_enabled)
         .fallback(crate::admin_ui::serve_asset)
+        .layer(from_fn_with_state(
+            (state.clone(), true),
+            crate::management_middleware::gate,
+        ))
         // Outermost, so the UI assets and the error responses of the auth
         // middleware are hardened too — see [`crate::security_headers`].
         .layer(from_fn(crate::security_headers::apply))
@@ -172,6 +177,7 @@ pub async fn admin_summary(State(state): State<AppState>) -> impl IntoResponse {
             "subscription": subscription,
             "login_api_enabled": state.login_manager.is_enabled(),
             "admin": admin_status,
+            "management_bans": state.admin.management_access().active_bans(),
             "emergency_auth": state.token_manager.emergency().status(),
         })),
     )

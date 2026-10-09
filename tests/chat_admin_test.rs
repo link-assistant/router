@@ -79,6 +79,9 @@ impl Harness {
             .body(Body::from(body.unwrap_or_else(|| json!({})).to_string()))
             .expect("request");
         let response = link_assistant_router::admin_api::router(self.state.clone())
+            .layer(axum::Extension(axum::extract::ConnectInfo(
+                "127.0.0.1:12345".parse::<std::net::SocketAddr>().unwrap(),
+            )))
             .oneshot(request)
             .await
             .expect("router responds");
