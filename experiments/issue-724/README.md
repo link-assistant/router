@@ -32,6 +32,8 @@ After the clock change, all 38 pool tests and all 64 repeat iterations pass (`co
 
 Merging provider onboarding from `main` (`ccc9d8d`, PR #751) reproduced four failures in its shared conformance fixture (`provider-merge-reproduction.log`): it still expected a whole-account cooldown for an ordinary quota with a requested model. The fixture now verifies that model's cooldown duration/count and exclusion while its sibling remains eligible, then verifies the original credential cooldown duration/count for terminal quota with a model specified. All nine connector conformance cases pass (`provider-merge-conformance-tests.log`); login, refresh, catalog, network and rollback assertions remain in place. The combined source passes all 874 integration/bin tests across 119 suites (one ignored soak), all 15 doctests, strict Clippy and strict documentation (`provider-merge-*.log`). Generated contracts/bindings, published-contract compatibility, formatting, file size, terminology, changelog and vendor fixture checks also pass.
 
+CI run `37895529084` at commit `df69402` passes the Linux, macOS and Windows test jobs, including all 2,176 enabled library tests on Linux/macOS and 2,123 on Windows. Its downloaded `rust-lcov` report measures 76,285 of 87,779 lines covered (86.905752%). The coverage floor passes; the baseline-review gate requests this measured increase (`ci-logs/coverage-37895529084.log:7882`). The existing coverage checker advances the baseline from that report, a second invocation leaves it unchanged, and all eight checker tests pass. The subsequent `main` release changes version metadata to 1.20.0 without changing routing source. Its merge passes the build, generated contracts/bindings, compatibility checks, all 14 focused CLI/contract tests and every example target (`final-release-*.log`).
+
 CI's Rust API compatibility job at commit `d0e4666` reported changed `RouteId` discriminants (`ci-logs/semver-37873145548.log:1352`) and derived ordering. The new contract inventory regression first failed because `CredentialStatus as usize` was 21 instead of its published value 19 (`route-id-reproduction.log`). Appending the two new route variants preserves existing casts and ordering. Check against the default branch with the same pinned tool as CI:
 
 ```sh
@@ -39,7 +41,7 @@ cargo install cargo-semver-checks --version 0.51.0 --locked
 cargo semver-checks check-release --baseline-rev origin/main --release-type minor
 ```
 
-The workspace has a 3 GB process-group memory limit. One Cargo build job and disabled debug information keep integration builds within that bound. Default library unit-test codegen exceeded the limit. `low-memory-rustc.py` is a local-only experiment that partitions library test codegen, reduces LLVM name retention and serializes the backend; it leaves dependencies, production builds and checked-in Cargo profiles unchanged. Even this experiment was OOM-killed here, so it does not establish a passing unit-suite result. The full unit suite must run on the normal CI runners. The attempted command was:
+The workspace has a 3 GB process-group memory limit. One Cargo build job and disabled debug information keep integration builds within that bound. Default library unit-test codegen exceeded the limit. `low-memory-rustc.py` is a local-only experiment that partitions library test codegen, reduces LLVM name retention and serializes the backend; it leaves dependencies, production builds and checked-in Cargo profiles unchanged. That unsharded experiment was also OOM-killed. The attempted command was:
 
 ```sh
 CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 \
@@ -48,6 +50,17 @@ CARGO_BUILD_JOBS=1 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 \
 ```
 
 The wrapper requires a compiler supporting `-Zfewer-names` and `-Zno-parallel-backend` (Rust 1.98.1 here). CI uses the normal stable build without this local memory experiment. Logs include `all-tests.log` and `all-tests-serial-codegen.log`.
+
+The repository's existing syntax-tree sharder subsequently allows the entire enabled library suite to run locally within the limit. All eight groups pass, and their 2,176 distinct test names exactly match the passing unsharded CI inventory from run `37895529084`. Each compiler/test child is bounded to 2,400 MiB; the largest recorded child RSS is 2,363,804 KiB. This changes only generated copies under `target/local-unit-shards`, leaving production sources and CI unchanged. On Linux, reproduce the bounded run with:
+
+```sh
+ROUTER_BUILD_RSS_LIMIT_MIB=1600 python3 experiments/issue-719/bounded-build.py \
+  rust-script experiments/issue-703/shard-unit-tests.rs
+env -u CODEX_HOME ROUTER_BUILD_RSS_LIMIT_MIB=2400 CARGO_PROFILE_TEST_DEBUG=0 \
+  python3 experiments/issue-726/verify-unit-shards.py
+```
+
+Removing `CODEX_HOME` only from the test child's environment matches the default-home fixture's normal CI environment. Results are in `provider-merge-local-unit-shards.log`, `ci-logs/connector-unit-shard-*.log` and `ci-logs/connector-unit-test-inventory.txt`.
 
 Run all integration tests, binary tests and doctests within the local limit with:
 
