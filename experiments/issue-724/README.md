@@ -74,6 +74,8 @@ The combined account-policy source at `ad01d708159c669984f42bf2a7cde39b7ef42103`
 
 Main's subsequent PR #754 updates seven pinned Node/Python setup-action lines in two workflows. Its merge changes no production, test, Cargo, generated-contract or script files. The workflow tool check passes all 42 jobs in 13 workflows, and release-workflow invariants, formatting, whitespace and file-size checks pass (`main-actions-*.log`). The existing source-test results therefore remain applicable; final CI also verifies the updated actions.
 
+Run `37918422497` at `ad01d70` passes Linux, macOS and Windows tests, and all six other workflows pass. Its unsharded Linux library inventory exactly matches the 2,177 distinct locally enabled tests (`resume-linux-inventory.log`). The instrumented suite passes and measures 77,818 of 89,502 lines covered (86.945543%). Only the baseline-review gate fails (`ci-logs/coverage-37918422497.log:8538`): the existing checker requests that measured increase. The downloaded `rust-lcov` report supplies the committed baseline; a second checker invocation leaves it unchanged, and its eight tests pass.
+
 Run all integration tests, binary tests and doctests within the local limit with:
 
 ```sh
