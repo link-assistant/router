@@ -26,6 +26,47 @@ async fn model_quota_preserves_the_sibling_on_the_same_account() {
 }
 
 #[tokio::test]
+async fn thinking_suffixes_share_base_cooldowns_and_survive_failover() {
+    for policy in [false, true] {
+        let pool = Pool::start(Options {
+            routing_policy: policy.then(|| {
+                link_assistant_router::account_routing_policy::AccountRoutingPolicy {
+                    headers: [("x-fixture".into(), "thinking".into())].into(),
+                    ..Default::default()
+                }
+            }),
+            ..options()
+        })
+        .await;
+        pool.vendor.script("primary", [Reply::status(429)]);
+        for model in ["gpt-5(high)", "gpt-5(low)", "gpt-5", "gpt-5-mini(high)"] {
+            let (status, body) = pool.send_codex(&turn(model)).await;
+            assert_eq!(
+                status,
+                StatusCode::OK,
+                "policy={policy}, model={model}: {body}"
+            );
+        }
+        assert_eq!(
+            pool.vendor.accounts_seen(),
+            ["primary", "account-1", "account-1", "account-1", "primary"],
+            "policy={policy}"
+        );
+        let seen = pool.vendor.seen();
+        for request in &seen[..2] {
+            assert_eq!(request.2["model"], "gpt-5");
+            assert_eq!(request.2["reasoning"]["effort"], "high");
+        }
+        assert_eq!(seen[2].2["reasoning"]["effort"], "low");
+        assert!(
+            pool.health("primary")
+                .limits
+                .blocks_model("gpt-5", link_assistant_router::account_limits::now_unix())
+        );
+    }
+}
+
+#[tokio::test]
 async fn terminal_quota_after_stream_start_cools_all_models_without_replay() {
     let pool = Pool::start(options()).await;
     let body = include_str!("../fixtures/vendor/openai_responses/terminal-quota.sse");

@@ -53,6 +53,36 @@ async fn policy_dispatch_retries_an_additional_round() {
 }
 
 #[tokio::test]
+async fn a_same_account_retry_round_keeps_encrypted_history_and_thinking() {
+    let pool = Pool::start(Options {
+        retry: link_assistant_router::pool_retry::RetryPolicy {
+            rounds: 1,
+            max_credentials: 1,
+            ..Default::default()
+        },
+        ..options()
+    })
+    .await;
+    pool.vendor
+        .script("primary", [Reply::status(503), Reply::Ok]);
+    let request = json!({"model":"gpt-5(high)","stream":true,"store":false,
+        "input":[{"type":"reasoning","id":"rs_1","summary":[],"encrypted_content":"sealed-by-primary"},
+                 {"role":"user","content":"hello"}]});
+    let (status, output) = pool.send_codex(&request).await;
+    assert_eq!(status, StatusCode::OK, "{output}");
+    assert_eq!(pool.vendor.accounts_seen(), ["primary", "primary"]);
+    let seen = pool.vendor.seen();
+    for (_, _, body) in &seen {
+        assert_eq!(body["reasoning"]["effort"], "high");
+        assert_eq!(
+            body["input"][0]["encrypted_content"], "sealed-by-primary",
+            "{body}"
+        );
+    }
+    assert_eq!(seen[0].2, seen[1].2);
+}
+
+#[tokio::test]
 async fn policy_dispatch_detects_empty_and_disconnected_streams_before_output() {
     for reset in [false, true] {
         let pool = Pool::start(options()).await;

@@ -294,7 +294,7 @@ pub fn validate_served_model_for_selector(
     // how an intentionally unpinned credential remains truthful without
     // turning an omitted selector into a Router-chosen default.
     if !requested.is_empty()
-        && served != requested
+        && served != crate::thinking::base_model(requested)
         && !allow_substitution
         && !selector_kind.permits_resolution()
     {

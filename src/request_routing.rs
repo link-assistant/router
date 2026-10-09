@@ -23,7 +23,8 @@ pub struct ResolvedUpstreamCredential {
 
 /// Copy only stable routing signals from a request. Header signals take
 /// precedence over JSON metadata and the caller token's account binding is
-/// carried separately as a strict pin.
+/// carried separately as a strict pin. Recognized thinking suffixes share the
+/// base model's account eligibility and cooldown identity.
 pub fn request_routing_context(
     headers: &HeaderMap,
     body: &serde_json::Value,
@@ -95,7 +96,7 @@ pub fn request_routing_context(
             .get("model")
             .and_then(serde_json::Value::as_str)
             .filter(|model| !model.is_empty())
-            .map(ToString::to_string),
+            .map(|model| crate::thinking::base_model(model).to_string()),
         exclude: Vec::new(),
     }
 }

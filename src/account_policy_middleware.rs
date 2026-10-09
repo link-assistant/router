@@ -95,12 +95,13 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
             .and_then(Value::as_str)
             .map(str::to_string),
     };
-    let Some(requested) = requested.filter(|m| !m.is_empty()) else {
+    let Some(requested_selector) = requested.filter(|m| !m.is_empty()) else {
         let bytes = parsed.native.encode(&body).unwrap_or_default();
         return next
             .run(Request::from_parts(parts, Body::from(bytes)))
             .await;
     };
+    let requested = crate::thinking::base_model(&requested_selector).to_string();
     let pin = match state.token_manager.account_for(&claims.sub) {
         Ok(pin) => pin,
         Err(error) => return failure(StatusCode::SERVICE_UNAVAILABLE, &error.to_string()),
@@ -242,14 +243,17 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         .expect("selected model is eligible")
         .1
         .clone();
+    // Resolve grants and aliases with the base identity, retaining the suffix
+    // for the protocol handler where explicit body controls take precedence.
+    let upstream_selector = format!("{upstream}{}", &requested_selector[requested.len()..]);
     if body.get("model").is_some() {
-        body["model"] = Value::String(upstream.clone());
+        body["model"] = Value::String(upstream_selector.clone());
     }
     // URI model surfaces are rewritten as well as JSON surfaces.
     if path.contains("/models/") {
         let rewritten = path.replacen(
             &format!("/models/{}", path_model.as_deref().unwrap_or(&requested)),
-            &format!("/models/{upstream}"),
+            &format!("/models/{upstream_selector}"),
             1,
         );
         let uri = parts
@@ -275,15 +279,31 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         upstream_model: upstream.clone(),
         retry_deadline,
         retry_rounds_used: budget.rounds_used(),
+        upstream_selector,
         model_policy,
         last_action: Mutex::new(None),
         selected: Mutex::new(selected),
+        thinking: Mutex::new(None),
+        thinking_error: Mutex::new(None),
     });
     REQUEST
         .scope(Arc::clone(&scope), async {
             let response = next
                 .run(Request::from_parts(parts, Body::from(bytes)))
                 .await;
+            let thinking_error = scope
+                .thinking_error
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .take();
+            if let Some(message) = thinking_error {
+                return crate::api_error::PresentedError {
+                    status: StatusCode::BAD_REQUEST,
+                    error_type: "invalid_request_error",
+                    message: &message,
+                }
+                .render(dialect);
+            }
             if upstream == requested {
                 response
             } else {

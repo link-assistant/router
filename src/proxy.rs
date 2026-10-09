@@ -401,7 +401,7 @@ pub(crate) fn authorize_model_for_claims(
         }
         .render(dialect)
     })?;
-    if policy.permits(requested) {
+    if policy.permits(crate::thinking::base_model(requested)) {
         Ok(policy)
     } else {
         state
@@ -439,7 +439,7 @@ async fn validate_anthropic_messages_request(
         return Ok(request);
     }
 
-    let (parts, body) = request.into_parts();
+    let (mut parts, body) = request.into_parts();
     let body_bytes = axum::body::to_bytes(body, state.max_proxy_request_bytes)
         .await
         .map_err(|error| {
@@ -452,10 +452,10 @@ async fn validate_anthropic_messages_request(
                 ),
             )
         })?;
-    let body = serde_json::from_slice(&body_bytes)
+    let mut body: serde_json::Value = serde_json::from_slice(&body_bytes)
         .map_err(|error| malformed_json_response(&error.to_string()))?;
     let required: RequiredAnthropicMessagesFields =
-        serde_json::from_value(body).map_err(|error| {
+        serde_json::from_value(body.clone()).map_err(|error| {
             error_response(
                 StatusCode::BAD_REQUEST,
                 "invalid_request_error",
@@ -469,10 +469,22 @@ async fn validate_anthropic_messages_request(
             "invalid Anthropic Messages request: model must not be empty",
         ));
     }
+    if crate::thinking::suffix_applies(
+        &body,
+        &required.model,
+        crate::thinking::ThinkingProtocol::Anthropic,
+    ) {
+        parts.extensions.insert(crate::thinking::SuffixIntent);
+    }
+    let changed =
+        crate::thinking::normalize_request(&mut body, crate::thinking::ThinkingProtocol::Anthropic)
+            .map_err(|reason| {
+                error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason)
+            })?;
     authorize_model_for_claims(
         state,
         claims,
-        &required.model,
+        body["model"].as_str().unwrap_or(&required.model),
         crate::api_error::ApiDialect::Anthropic,
     )?;
     if required.max_tokens == 0 {
@@ -490,6 +502,18 @@ async fn validate_anthropic_messages_request(
         ));
     }
 
+    let body_bytes = if changed {
+        parts.headers.remove(axum::http::header::CONTENT_LENGTH);
+        axum::body::Bytes::from(serde_json::to_vec(&body).map_err(|error| {
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &error.to_string(),
+            )
+        })?)
+    } else {
+        body_bytes
+    };
     Ok(Request::from_parts(parts, Body::from(body_bytes)))
 }
 
@@ -593,6 +617,10 @@ async fn proxy_handler_with_subscription(
         Ok(request) => request,
         Err(response) => return response,
     };
+    let from_thinking_suffix = req
+        .extensions()
+        .get::<crate::thinking::SuffixIntent>()
+        .is_some();
 
     // Log session tracking header if present
     if let Some(session_id) = incoming_headers.get("x-claude-code-session-id") {
@@ -713,6 +741,7 @@ async fn proxy_handler_with_subscription(
         incoming_headers: &incoming_headers,
         body: body_bytes,
         routing_body: &routing_body,
+        from_thinking_suffix,
         context: routing_context,
         subscription: subscription.as_ref(),
         correlation_id: &correlation_id,

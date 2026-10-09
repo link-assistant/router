@@ -103,3 +103,13 @@ python3 experiments/issue-724/run-unit-groups.py
 ```
 
 The runner preserves per-group listings, test results and peak RSS in `ci-logs/admin-unit-group-*.log`, and writes their distinct enabled names to `ci-logs/admin-unit-test-inventory.txt`. It uses the same commands as the fixed-checkout validation and does not alter production sources or the normal CI compiler. The later main v1.22.0 release changes only package/catalog versions and changelog metadata; its production, test and script delta is empty, and the merged versions and generated bindings agree.
+
+Merging canonical thinking controls (main PR #750) exposed two interactions before their fixes. `thinking_suffixes_share_base_cooldowns_and_survive_failover` returned to the cooled primary for both a different suffix and the bare model (`resume-thinking-pool-red.log`): the stable routing context had retained the suffix while the upstream received the base model. The context now uses the interpreted base model, retaining invalid suffixes as literal identifiers. The test runs with ordinary and account-policy dispatch and verifies control preservation, sibling eligibility and the stored base-model cooldown. `routing_context_uses_the_base_model_for_valid_thinking_suffixes` covers effort, budget, auto, off and invalid selectors.
+
+`a_same_account_retry_round_keeps_encrypted_history_and_thinking` also failed before the fix (`resume-thinking-history-red.log`): the policy dispatcher treated every retry as a credential switch and removed the same account's encrypted history. Replay now compares the selected account with the original account before stripping history, while independently revalidating thinking controls on every retry. The regression verifies both upstream bodies, the account sequence, encrypted history and reasoning effort. Run these permanent coexistence cases with:
+
+```sh
+cargo test --locked --all-features --test pool_failover_test thinking_suffixes_share
+cargo test --locked --all-features --test pool_failover_test a_same_account_retry_round
+cargo test --locked --all-features --test thinking_account_policy_test
+```

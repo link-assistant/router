@@ -23,6 +23,9 @@ use crate::subscription::SubscriptionProvider;
 #[path = "responses_websocket/relay.rs"]
 mod relay_session;
 use relay_session::relay;
+#[path = "responses_websocket/thinking.rs"]
+mod thinking_controls;
+use thinking_controls::parse_create_event;
 
 const RESPONSES_PATH: &str = "/v1/responses";
 const MAX_NAMED_STREAMS: usize = 32;
@@ -43,6 +46,7 @@ struct UpstreamTarget {
     provider: UpstreamProvider,
     codex_cookie_scope: bool,
     pool: Option<(crate::accounts::AccountRouter, String)>,
+    thinking_account: Option<thinking_controls::AccountScope>,
 }
 
 impl std::fmt::Debug for UpstreamTarget {
@@ -176,6 +180,10 @@ async fn session(
                 return;
             }
         };
+    if let Err(error) = thinking_controls::apply_for_target(&state, &target, &mut first_event) {
+        fail_and_close(&mut downstream, error, 1008).await;
+        return;
+    }
     let first_bytes = serde_json::to_vec(&first_event).expect("JSON values always serialize");
     let first_tracker = match reserve_turn(&state, &claims, &first_event) {
         Ok(tracker) => tracker,
@@ -467,6 +475,7 @@ async fn prepare_target(
         provider: UpstreamProvider::OpenAICompatible,
         codex_cookie_scope: false,
         pool: None,
+        thinking_account: None,
     })
 }
 
@@ -570,7 +579,11 @@ async fn subscription_target(
         pool: state
             .account_router
             .clone()
-            .map(|router| (router, selected.name)),
+            .map(|router| (router, selected.name.clone())),
+        thinking_account: Some(thinking_controls::AccountScope {
+            account: selected.name,
+            base_url,
+        }),
     })
 }
 
@@ -757,30 +770,6 @@ fn target_state(state: &AppState, target: &UpstreamTarget) -> AppState {
     // records the credential, selected account, or request contents.
     routed.upstream_provider = target.provider;
     routed
-}
-
-fn parse_create_event(bytes: &[u8]) -> Result<Value, Value> {
-    let value = serde_json::from_slice::<Value>(bytes).map_err(|_| {
-        websocket_error(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            "invalid_websocket_event",
-            "the first WebSocket message must be valid JSON",
-            None,
-            None,
-        )
-    })?;
-    if !value.is_object() || value.get("type").and_then(Value::as_str) != Some("response.create") {
-        return Err(websocket_error(
-            StatusCode::BAD_REQUEST,
-            "invalid_request_error",
-            "invalid_websocket_event",
-            "the first WebSocket message must be a response.create event",
-            Some("type"),
-            stream_id(&value).as_deref(),
-        ));
-    }
-    Ok(value)
 }
 
 fn validate_stream_id(event: &Value) -> Result<Option<String>, Value> {

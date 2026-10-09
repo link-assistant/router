@@ -38,6 +38,7 @@ pub(super) struct CodexDispatch<'a> {
     /// The client's native bytes, when the request is forwarded natively.
     pub native_body: Option<crate::encoded_request_body::NativeBody>,
     pub native_protocol: bool,
+    pub from_thinking_suffix: bool,
     pub responses_mode: CodexResponsesMode,
     pub validated: Option<&'a crate::model_routing::ValidatedSubscription>,
     pub context: RoutingContext,
@@ -140,7 +141,11 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
             break;
         }
         let history_account = origin.clone().or_else(|| context.exclude.first().cloned());
-        let body = if failover && history_account.is_some_and(|origin| origin != account) {
+        let body = if failover
+            && history_account
+                .as_ref()
+                .is_some_and(|origin| origin != &account)
+        {
             if stripped.is_none() {
                 let mut value = request.body.clone();
                 let changed = crate::pool_failover::strip_codex_encrypted_reasoning(&mut value);
@@ -158,6 +163,57 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
             .subscription_base_url
             .clone()
             .unwrap_or_else(|| token.base_url(request.provider));
+        let mut attempt_body = request.body.clone();
+        if failover
+            && history_account
+                .as_ref()
+                .is_some_and(|origin| origin != &account)
+        {
+            crate::pool_failover::strip_codex_encrypted_reasoning(&mut attempt_body);
+        }
+        let model = attempt_body
+            .get("model")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string();
+        let protocol = if request.provider == SubscriptionProvider::Codex {
+            crate::thinking::ThinkingProtocol::Codex
+        } else if request.path.ends_with("/chat/completions") {
+            crate::thinking::ThinkingProtocol::Qwen
+        } else {
+            crate::thinking::ThinkingProtocol::OpenAIResponses
+        };
+        let origin =
+            if request.native_protocol && protocol == crate::thinking::ThinkingProtocol::Qwen {
+                protocol
+            } else {
+                match request.surface {
+                    Surface::Anthropic => crate::thinking::ThinkingProtocol::Anthropic,
+                    Surface::OpenAIChat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                    Surface::OpenAIResponses => crate::thinking::ThinkingProtocol::OpenAIResponses,
+                }
+            };
+        let changed = crate::thinking::apply_for_account(
+            state,
+            &mut attempt_body,
+            &model,
+            request.provider,
+            &account,
+            &base_url,
+            protocol,
+            origin,
+            request.from_thinking_suffix,
+        )
+        .map_err(|reason| {
+            error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason)
+        })?;
+        let body = if changed {
+            Bytes::from(encode(&attempt_body).map_err(|reason| {
+                error_response(StatusCode::INTERNAL_SERVER_ERROR, "api_error", &reason)
+            })?)
+        } else {
+            body
+        };
         let bytes_sent = body.len() as u64;
         let attempt_outcome = async {
             let response = send_attempt(&request, &account, token, &base_url, body).await?;

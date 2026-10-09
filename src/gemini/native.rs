@@ -15,30 +15,8 @@ use super::{AppState, code_assist_envelope, route_gemini_token};
 use crate::metrics::Surface;
 use crate::proxy::{error_response, retry_after_duration};
 
-fn native_model_document(model: &str, raw: Option<&serde_json::Map<String, Value>>) -> Value {
-    let mut projected =
-        serde_json::Map::from_iter([("name".into(), Value::String(model.to_string()))]);
-    if let Some(raw) = raw {
-        for key in [
-            "baseModelId",
-            "version",
-            "displayName",
-            "description",
-            "inputTokenLimit",
-            "outputTokenLimit",
-            "supportedGenerationMethods",
-            "temperature",
-            "maxTemperature",
-            "topP",
-            "topK",
-        ] {
-            if let Some(value) = raw.get(key) {
-                projected.insert(key.into(), value.clone());
-            }
-        }
-    }
-    Value::Object(projected)
-}
+mod model;
+use model::native_model_document;
 
 /// Subscriptions whose live catalogs the Gemini namespace may advertise.
 ///
@@ -475,7 +453,7 @@ async fn forward_native(
     state: &AppState,
     headers: &HeaderMap,
     path: &str,
-    body: Value,
+    mut body: Value,
 ) -> Response {
     let Some((mut model, streaming)) = parse_native_target(path) else {
         return native_error(
@@ -484,8 +462,18 @@ async fn forward_native(
         );
     };
     if let Some(scope) = crate::account_policy_scope::current() {
-        model.clone_from(&scope.upstream_model);
+        model.clone_from(&scope.upstream_selector);
     }
+    let from_thinking_suffix =
+        crate::thinking::suffix_applies(&body, &model, crate::thinking::ThinkingProtocol::Gemini);
+    let model = match crate::thinking::normalize_native_request(
+        &model,
+        &mut body,
+        crate::thinking::ThinkingProtocol::Gemini,
+    ) {
+        Ok(model) => model,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
+    };
     let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
         Err(response) => return *response,
@@ -551,6 +539,7 @@ async fn forward_native(
             authorized_selector,
             streaming,
             body,
+            from_thinking_suffix,
             entitlement,
         },
     ))
@@ -562,13 +551,23 @@ async fn forward_native_authorized(
     state: &AppState,
     headers: &HeaderMap,
     path: &str,
-    body: Value,
+    mut body: Value,
 ) -> Response {
     let Some((model, streaming)) = parse_native_target(path) else {
         return native_error(
             StatusCode::NOT_FOUND,
             "expected a model :generateContent or :streamGenerateContent action",
         );
+    };
+    let from_thinking_suffix =
+        crate::thinking::suffix_applies(&body, &model, crate::thinking::ThinkingProtocol::Gemini);
+    let model = match crate::thinking::normalize_native_request(
+        &model,
+        &mut body,
+        crate::thinking::ThinkingProtocol::Gemini,
+    ) {
+        Ok(model) => model,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
     };
     let routed = match native_owner(state, headers, path, &model).await {
         Ok(routed) => routed,
@@ -583,6 +582,7 @@ async fn forward_native_authorized(
             authorized_selector: model,
             streaming,
             body,
+            from_thinking_suffix,
             entitlement: None,
         },
     ))
@@ -594,6 +594,7 @@ struct NativeRequest {
     authorized_selector: String,
     streaming: bool,
     body: Value,
+    from_thinking_suffix: bool,
     entitlement: Option<crate::client_policy::EntitlementDecision>,
 }
 
@@ -607,7 +608,8 @@ async fn forward_native_authorized_after_route(
         model,
         authorized_selector,
         streaming,
-        body,
+        mut body,
+        from_thinking_suffix,
         entitlement,
     } = request;
     if routed.state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
@@ -629,6 +631,7 @@ async fn forward_native_authorized_after_route(
             streaming,
             &body,
             entitlement.expect("subscription ingress always records an entitlement"),
+            from_thinking_suffix,
         ))
         .await;
     }
@@ -648,6 +651,21 @@ async fn forward_native_authorized_after_route(
         Ok(routed) => routed,
         Err(response) => return response,
     };
+    if let Err(reason) = crate::thinking::apply_for_account(
+        state,
+        &mut body,
+        &model,
+        crate::subscription::SubscriptionProvider::Gemini,
+        &routed.account,
+        &routed
+            .token
+            .base_url(crate::subscription::SubscriptionProvider::Gemini),
+        crate::thinking::ThinkingProtocol::Gemini,
+        crate::thinking::ThinkingProtocol::Gemini,
+        from_thinking_suffix,
+    ) {
+        return native_error(StatusCode::BAD_REQUEST, &reason);
+    }
     let envelope = code_assist_envelope(&model, &body);
     let serialized = match serde_json::to_vec(&envelope) {
         Ok(serialized) => serialized,
@@ -852,20 +870,28 @@ async fn forward_native_via_chat(
     streaming: bool,
     body: &Value,
     entitlement: crate::client_policy::EntitlementDecision,
+    from_thinking_suffix: bool,
 ) -> Response {
     let chat_request = match crate::gemini_bridge::gemini_request_to_chat_checked(model, body) {
         Ok(request) => request,
         Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
     };
     let state = routed.state;
-    let response = crate::proxy::openai_chat_completions_routed(
-        state.clone(),
-        headers.clone(),
-        chat_request,
-        routed.subscription,
-        entitlement,
-    )
-    .await;
+    let response = crate::thinking::ORIGIN
+        .scope(
+            (
+                crate::thinking::ThinkingProtocol::Gemini,
+                from_thinking_suffix,
+            ),
+            crate::proxy::openai_chat_completions_routed(
+                state.clone(),
+                headers.clone(),
+                chat_request,
+                routed.subscription,
+                entitlement,
+            ),
+        )
+        .await;
 
     translated_chat_response(response, &state, model, streaming).await
 }

@@ -103,11 +103,11 @@ pub struct RoutingContext {
     pub parent_session_key: Option<String>,
     /// Explicit account selected by the router-issued caller token.
     pub pinned_account: Option<String>,
-    /// Requested model id, so a model-scoped vendor cooldown blocks only that
-    /// model on its account (issue #677).
+    /// Requested base model id, excluding recognized thinking suffixes, so a
+    /// model-scoped vendor cooldown blocks only that model on its account.
     pub model: Option<String>,
-    /// Accounts an earlier attempt of this same request already tried; a
-    /// pre-first-byte failover never returns to them (issue #676).
+    /// Accounts already tried in the current retry round. Pre-first-byte
+    /// failover returns to them only after starting an additional round.
     pub exclude: Vec<String>,
 }
 

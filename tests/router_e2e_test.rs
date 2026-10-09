@@ -55,6 +55,7 @@ struct TestRouter {
     client: reqwest::Client,
     model_catalogs: Arc<ModelCatalogCache>,
     url: String,
+    upstream_url: String,
     claude_token: String,
     codex_token: String,
     opencode_token: String,
@@ -220,7 +221,7 @@ impl TestRouter {
             subscription_readers: Vec::new(),
             model_catalogs: Arc::clone(&model_catalogs),
             subscription_cache: Arc::new(TokenCache::new()),
-            upstream_base_url: stub_url,
+            upstream_base_url: stub_url.clone(),
             upstream_provider: provider,
             gonka: None,
             bridge_model: Some("gpt-5".to_string()),
@@ -270,6 +271,7 @@ impl TestRouter {
         Self {
             client: reqwest::Client::new(),
             model_catalogs,
+            upstream_url: stub_url,
             url,
             claude_token,
             codex_token,
@@ -891,3 +893,6 @@ mod bridge_history;
 
 #[path = "router_e2e/bridge_semantics.rs"]
 mod bridge_semantics;
+
+#[path = "router_e2e/thinking.rs"]
+mod thinking;

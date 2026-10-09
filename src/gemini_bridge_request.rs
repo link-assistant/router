@@ -47,6 +47,8 @@ pub fn chat_to_gemini_request_checked(body: &Value) -> Result<Value, String> {
             "stream_options",
             "tools",
             "tool_choice",
+            "reasoning",
+            "reasoning_effort",
         ],
         "request",
     )?;
@@ -154,6 +156,16 @@ pub fn chat_to_gemini_request_checked(body: &Value) -> Result<Value, String> {
     if let Some(config) = chat_tool_choice_to_gemini(body.get("tool_choice"))? {
         request["toolConfig"] = config;
     }
+    crate::thinking::apply_thinking(
+        &mut request,
+        body,
+        body.get("model")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+        crate::thinking::ThinkingProtocol::OpenAIChat,
+        crate::thinking::ThinkingProtocol::Gemini,
+        None,
+    )?;
     Ok(request)
 }
 
@@ -163,6 +175,7 @@ pub fn responses_to_chat_checked(body: &Value) -> Result<Value, String> {
         &[
             "model",
             "input",
+            "reasoning",
             "instructions",
             "max_output_tokens",
             "temperature",
@@ -288,6 +301,16 @@ pub fn responses_to_chat_checked(body: &Value) -> Result<Value, String> {
             chat[field] = value.clone();
         }
     }
+    crate::thinking::apply_thinking(
+        &mut chat,
+        body,
+        body.get("model")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+        crate::thinking::ThinkingProtocol::OpenAIResponses,
+        crate::thinking::ThinkingProtocol::OpenAIChat,
+        None,
+    )?;
     Ok(chat)
 }
 
@@ -385,6 +408,14 @@ pub fn gemini_request_to_chat_checked(model: &str, request: &Value) -> Result<Va
     if let Some(choice) = gemini_tool_choice_to_chat(request.get("toolConfig"))? {
         chat["tool_choice"] = choice;
     }
+    crate::thinking::apply_thinking(
+        &mut chat,
+        request,
+        model,
+        crate::thinking::ThinkingProtocol::Gemini,
+        crate::thinking::ThinkingProtocol::OpenAIChat,
+        None,
+    )?;
     Ok(chat)
 }
 
@@ -754,14 +785,27 @@ fn validate_gemini_cli_defaults(config: &Value) -> Result<(), String> {
     if let Some(thinking) = config.get("thinkingConfig") {
         reject_unknown_fields(
             thinking,
-            &["includeThoughts"],
+            &[
+                "includeThoughts",
+                "include_thoughts",
+                "thinkingBudget",
+                "thinking_budget",
+                "thinkingLevel",
+                "thinking_level",
+            ],
             "generationConfig.thinkingConfig",
         )?;
-        if thinking.get("includeThoughts") != Some(&Value::Bool(true)) {
-            return Err(
-                "generationConfig.thinkingConfig has no exact cross-provider representation".into(),
-            );
+        for field in ["includeThoughts", "include_thoughts"] {
+            if thinking.get(field).is_some_and(|value| !value.is_boolean()) {
+                return Err(format!(
+                    "generationConfig.thinkingConfig.{field} must be a boolean"
+                ));
+            }
         }
+        crate::thinking::extract_config(
+            &json!({"generationConfig":config}),
+            crate::thinking::ThinkingProtocol::Gemini,
+        )?;
     }
     Ok(())
 }

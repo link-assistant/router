@@ -10,9 +10,12 @@ pub struct PolicyRequest {
     pub upstream_model: String,
     pub retry_deadline: std::time::Instant,
     pub retry_rounds_used: u32,
+    pub upstream_selector: String,
     pub model_policy: crate::model_contract::ModelAccessPolicy,
     pub last_action: Mutex<Option<crate::account_routing_policy::ErrorAction>>,
     pub selected: Mutex<SelectedSubscriptionAccount>,
+    pub(crate) thinking: Mutex<Option<crate::thinking::policy::RetryControls>>,
+    pub(crate) thinking_error: Mutex<Option<String>>,
 }
 
 tokio::task_local! { pub static REQUEST: Arc<PolicyRequest>; }

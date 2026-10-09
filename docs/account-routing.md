@@ -2,6 +2,8 @@
 
 Ordinary quota responses cool only the requested model on the selected account. Full model identifiers match exactly, so a `gpt-5` cooldown leaves `gpt-5-mini` available. Anthropic's explicitly named `opus`, `sonnet` and `haiku` windows continue to block that family. Credential-wide vendor windows, authentication failures (401/403), and terminal quota codes (`insufficient_quota`, `usage_limit_reached`, `quota_exhausted`, `billing_hard_limit_reached`, `credit_balance_too_low`) block every model on the account. A quota response without a requested model also blocks the account.
 
+Recognized [thinking suffixes](thinking.md) share the base model's cooldown: `gpt-5(high)`, `gpt-5(low)` and `gpt-5` all use the `gpt-5` entry. Malformed or unrecognized suffixes remain literal model identifiers. Use the base model when resetting a thinking-enabled request's cooldown.
+
 Errors delivered inside SSE or Codex WebSocket responses update the same cooldown state. Stream bytes stay unchanged. An empty or interrupted SSE body may fail over before its first byte reaches the client. Once any output starts, the request is never replayed; the existing stream termination handling reports incomplete streams.
 
 Vendor utilization windows and `ACCOUNT_PAUSE_AT_PERCENT` remain account-wide. Cooldown resets preserve pauses, window readings, request counts, credential evidence and session bindings.
@@ -17,6 +19,8 @@ Vendor utilization windows and `ACCOUNT_PAUSE_AT_PERCENT` remain account-wide. C
 Retry sends, response inspection on retries and waits share `POOL_FAILOVER_BUDGET_SECS`, measured from the first attempt. The first attempt retains the configured connect, first-byte and idle-read timeouts, including disabled timeouts for long reasoning turns. Explicit account pins remain strict. Default rounds preserve the existing one-round attempt limit; retrying cannot extend the failover budget.
 
 These limits also apply when [per-account routing policies](use-cases/account-routing-policy.md) are active. An initial cooldown wait consumes a retry round, and an explicit account `request_retry` caps the total attempts across rounds. Model aliases use their actual upstream model's cooldown. Policies with `disable_cooling` or a matching `relay` rule retain their cooling opt-out, including errors received inside streams.
+
+Retries on the same account retain signed thinking and encrypted reasoning history. A switch to another account removes history bound to the original account. Thinking configuration is checked against the selected account's current capabilities on every retry, preserving the client's original controls before any account-specific clamp or drop.
 
 Parent identifiers are accepted from `x-parent-session-id`, `x-codex-parent-session-id`, `x-parent-thread-id`, or `parent-session-id`, then from `context`, `metadata`, or root JSON fields named `parent_session_id` or `parent_thread_id`. Headers take precedence. An existing child's own binding takes precedence over a newly supplied parent. Explicit caller-token account pins take precedence over both. `SESSION_AFFINITY_TTL_SECS=0` disables all session affinity. With failover enabled, a temporarily unavailable parent account permits a detour without rebinding the child.
 

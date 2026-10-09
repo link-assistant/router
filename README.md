@@ -737,6 +737,14 @@ default. Exact per-run model policy, response identity, evidence precedence,
 and the audited surface inventory are documented in
 [the model truth contract](docs/model-truth-contract.md).
 
+Thinking can be selected with an additive suffix, for example
+`"model": "exact-model(high)"` or `"model": "exact-model(8192)"`.
+Router routes and authorizes `exact-model`, translates the requested thinking
+mode to the destination protocol, and lets explicit body controls take
+precedence. `none` disables thinking; `auto` and `-1` request automatic thinking.
+See [thinking controls](docs/thinking.md) for grammar, capability evidence and
+compatibility details.
+
 #### Model identity and output limits
 
 Native responses preserve the provider's bytes. Translated responses report

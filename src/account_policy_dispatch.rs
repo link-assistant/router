@@ -34,6 +34,7 @@ pub async fn send(
         selected.token.access_token = access_token.to_string();
     }
     let initial_base = selected.token.base_url(router.provider());
+    let initial_account = selected.name.clone();
     let initial_model = scope.upstream_model.clone();
     let initial_policy = router
         .routing_policy(&selected.name)
@@ -93,8 +94,11 @@ pub async fn send(
             } else {
                 &upstream_model
             },
+            selected.name != initial_account,
             attempt > 1,
             scope.state.max_proxy_request_bytes,
+            &scope,
+            &selected,
         )?;
         if attempt > 1 {
             request.headers_mut().insert(
@@ -367,7 +371,10 @@ fn prepare(
     request: &mut reqwest::Request,
     model: &str,
     moved: bool,
+    retrying: bool,
     limit: usize,
+    scope: &crate::account_policy_scope::PolicyRequest,
+    selected: &crate::accounts::SelectedSubscriptionAccount,
 ) -> Result<(), UpstreamSendError> {
     let Some(bytes) = request.body().and_then(reqwest::Body::as_bytes) else {
         return Ok(());
@@ -404,6 +411,17 @@ fn prepare(
     if moved {
         crate::pool_failover::strip_anthropic_thinking(&mut body);
         crate::pool_failover::strip_codex_encrypted_reasoning(&mut body);
+    }
+    if retrying {
+        crate::thinking::policy::revalidate(scope, selected, &mut body, model).map_err(
+            |reason| {
+                *scope
+                    .thinking_error
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(reason.clone());
+                UpstreamSendError::Egress(reason)
+            },
+        )?;
     }
     if original == body {
         return Ok(());

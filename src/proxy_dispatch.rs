@@ -34,6 +34,7 @@ pub(super) struct Dispatch<'a> {
     pub incoming_headers: &'a HeaderMap,
     pub body: Bytes,
     pub routing_body: &'a Value,
+    pub from_thinking_suffix: bool,
     pub context: RoutingContext,
     pub subscription: Option<&'a crate::model_routing::ValidatedSubscription>,
     pub correlation_id: &'a str,
@@ -79,7 +80,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
     let deadline = policy.deadline(Instant::now());
     // The account whose signatures the conversation history carries.
     let mut origin = router.and_then(|router| router.session_account(&request.context));
-    let mut context = request.context;
+    let mut context = request.context.clone();
     let mut last: Option<Failure> = None;
     let mut stripped: Option<Bytes> = None;
     let mut attempt = 0;
@@ -148,11 +149,19 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
         } else {
             request.body.clone()
         };
-        let headers = build_upstream_headers(
+        let body = if let Some(account) = account.as_deref() {
+            apply_thinking_for_attempt(&request, &body, account)?
+        } else {
+            body
+        };
+        let mut headers = build_upstream_headers(
             request.incoming_headers,
             &resolved.access_token,
             &state.logger,
         );
+        if body != request.body {
+            headers.remove(axum::http::header::CONTENT_LENGTH);
+        }
         state.logger.verbose(|| {
             format!(
                 "Forwarding {} {} ({} bytes, attempt {attempt})",
@@ -296,6 +305,51 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
             "api_error",
             "Upstream authentication unavailable",
         )),
+    }
+}
+
+fn apply_thinking_for_attempt(
+    request: &Dispatch<'_>,
+    bytes: &Bytes,
+    account: &str,
+) -> Result<Bytes, Response> {
+    if !request
+        .routing_body
+        .get("messages")
+        .is_some_and(Value::is_array)
+    {
+        return Ok(bytes.clone());
+    }
+    let Ok(mut body) = serde_json::from_slice::<Value>(bytes) else {
+        return Ok(bytes.clone());
+    };
+    let model = body
+        .get("model")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let changed = crate::thinking::apply_for_account(
+        request.state,
+        &mut body,
+        &model,
+        SubscriptionProvider::Claude,
+        account,
+        &request.state.upstream_base_url,
+        crate::thinking::ThinkingProtocol::Anthropic,
+        crate::thinking::ThinkingProtocol::Anthropic,
+        request.from_thinking_suffix,
+    )
+    .map_err(|reason| error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason))?;
+    if changed {
+        serde_json::to_vec(&body).map(Bytes::from).map_err(|error| {
+            error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "api_error",
+                &error.to_string(),
+            )
+        })
+    } else {
+        Ok(bytes.clone())
     }
 }
 

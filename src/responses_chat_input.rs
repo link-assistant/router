@@ -97,15 +97,29 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
     }
 
     let mut out = json!({"model":model, "input":input});
+    // Preserve the established Responses default, then let explicit controls
+    // and additive suffix defaults pass through the shared pipeline.
     out["reasoning"] = body
         .get("reasoning")
         .cloned()
-        .or_else(|| {
-            body.get("reasoning_effort")
-                .cloned()
-                .map(|effort| json!({"effort":effort}))
-        })
         .unwrap_or_else(|| json!({"effort":crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}));
+    crate::thinking::apply_thinking(
+        &mut out,
+        body,
+        model,
+        crate::thinking::ThinkingProtocol::OpenAIChat,
+        crate::thinking::ThinkingProtocol::OpenAIResponses,
+        None,
+    )?;
+    // This adapter preserves the client's summary field independently of
+    // effort. Its historical behavior does not infer a summary from effort.
+    if let Some(reasoning) = out.get_mut("reasoning").and_then(Value::as_object_mut) {
+        if let Some(summary) = body.pointer("/reasoning/summary") {
+            reasoning.insert("summary".into(), summary.clone());
+        } else {
+            reasoning.remove("summary");
+        }
+    }
     if !instructions.is_empty() {
         out["instructions"] = Value::String(instructions.join("\n\n"));
     }

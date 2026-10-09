@@ -87,4 +87,3 @@ fn request(ip: &str, path: &str, valid: bool) -> Request<Body> {
         .body(Body::empty())
         .unwrap()
 }
-
