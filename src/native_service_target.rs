@@ -312,6 +312,10 @@ fn provider_target(
             )
         })?
         .clone();
+    state.request_log.set_account(
+        &crate::request_log::correlation_id(incoming),
+        &provider.name,
+    );
     Ok((
         Target {
             client,
@@ -401,6 +405,10 @@ async fn subscription_target(
             }
         }
     }
+    state.request_log.set_account(
+        &crate::request_log::correlation_id(incoming),
+        &selected.name,
+    );
     let destination = AffinityDestination::Subscription {
         provider,
         account: selected.name,

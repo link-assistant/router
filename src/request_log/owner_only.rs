@@ -9,7 +9,7 @@ use std::fs::{self, OpenOptions};
 use std::io::Write as _;
 use std::path::Path;
 
-pub(super) fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
+pub fn ensure_owner_only_dir(path: &Path) -> std::io::Result<()> {
     fs::create_dir_all(path)?;
     set_dir_owner_only(path)
 }
@@ -39,7 +39,7 @@ pub(super) fn append_owner_only(path: &Path, contents: &[u8]) -> std::io::Result
     file.write_all(contents)
 }
 
-pub(super) fn write_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
+pub fn write_owner_only(path: &Path, contents: &[u8]) -> std::io::Result<()> {
     let mut options = OpenOptions::new();
     options.create(true).write(true).truncate(true);
     #[cfg(unix)]

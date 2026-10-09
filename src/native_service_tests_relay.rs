@@ -1,4 +1,49 @@
 #[tokio::test]
+async fn native_upstream_errors_use_opt_in_capture_without_changing_response_bytes() {
+    let raw = r#"{"error":"synthetic failure","access_token":"private-secret"}"#;
+    let upstream = axum::Router::new().fallback(move || async move {
+        (StatusCode::BAD_GATEWAY, [("x-request-id", "native-error")], raw)
+    });
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move { axum::serve(listener, upstream).await.unwrap() });
+    let data = tempfile::tempdir().unwrap();
+    let errors = Arc::new(crate::error_log::ErrorLog::new(data.path().join("errors"), 4096));
+    for enabled in [false, true] {
+        let mut state = AppState::for_tests(data.path());
+        if enabled {
+            state.request_log = Arc::new(
+                crate::request_log::RequestLog::new(data.path().join("requests"), 4096)
+                    .with_error_log(Arc::clone(&errors)),
+            );
+        }
+        let response = relay_native_http(
+            &state,
+            &Method::POST,
+            NativeRequestBody::Memory(Bytes::new()),
+            Target { client: state.client.clone(), url: origin.clone(), headers: HeaderMap::new() },
+            None,
+        ).await;
+        assert_eq!(response.status(), StatusCode::BAD_GATEWAY);
+        assert_eq!(response.headers()["x-request-id"], "native-error");
+        assert_eq!(response.into_body().collect().await.unwrap().to_bytes(), raw);
+        let files = errors.list().unwrap();
+        assert_eq!(files.len(), usize::from(enabled));
+        if enabled {
+            let capture: serde_json::Value = serde_json::from_slice(
+                &errors.read(files[0]["name"].as_str().unwrap()).unwrap(),
+            ).unwrap();
+            assert_eq!(capture["body"]["access_token"], "[REDACTED]");
+            assert_eq!(capture["status"], 502);
+        } else {
+            assert!(!data.path().join("errors").exists());
+        }
+    }
+    server.abort();
+    let _ = server.await;
+}
+
+#[tokio::test]
 async fn native_lists_expose_only_resources_owned_by_the_router_principal() {
     let data = tempfile::tempdir().unwrap();
     let state = AppState::for_tests(data.path());

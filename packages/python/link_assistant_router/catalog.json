@@ -59151,6 +59151,90 @@
       "method": "DELETE",
       "name": "NativeCodexBackend",
       "path": "/api/services/codex/backend-api/wham/remote/control/environments/{environment_id}/clients/{client_id}"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "RequestLog",
+      "path": "/api/management/logs/requests/{id}"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "ErrorLogs",
+      "path": "/api/management/logs/errors"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "ErrorLog",
+      "path": "/api/management/logs/errors/{name}"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "DELETE",
+      "name": "ClearLogs",
+      "path": "/api/management/logs"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "PATCH",
+      "name": "Logging",
+      "path": "/api/management/logging"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "UsageQueue",
+      "path": "/api/management/usage/queue"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "GET",
+      "name": "LatestVersion",
+      "path": "/api/management/server/latest-version"
     }
   ],
   "schema": "link-assistant-router/operation-catalog/v1",

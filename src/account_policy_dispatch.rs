@@ -137,6 +137,7 @@ pub async fn send(
             cookies,
         )
         .map_err(UpstreamSendError::Egress)?;
+        log.set_account(correlation, &selected.name);
         let sending = log.send_prepared(correlation, &client, request);
         let result = if attempt == 1 {
             sending.await

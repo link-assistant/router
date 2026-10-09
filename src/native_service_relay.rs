@@ -23,6 +23,10 @@ async fn relay_native_http(
     let Ok(upstream) = upstream else {
         return unavailable("native service upstream request failed");
     };
+    let upstream = match state.request_log.error_log() {
+        Some(log) => log.wrap(&crate::request_log::correlation_id(&HeaderMap::new()), upstream),
+        None => upstream,
+    };
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(upstream.headers());

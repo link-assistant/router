@@ -3,6 +3,7 @@ use std::fmt::Arguments;
 use std::path::{Path, PathBuf};
 use std::process::{ExitCode, ExitStatus};
 use std::sync::OnceLock;
+use tracing_subscriber::prelude::*;
 
 use crate::operational_log::OperationalLog;
 
@@ -32,15 +33,23 @@ pub fn install(data_dir: &Path, verbose: bool, mut secrets: Vec<String>) -> std:
     secrets.sort_by_key(|secret| std::cmp::Reverse(secret.len()));
     secrets.dedup();
     let log = OperationalLog::open(&data_dir.join("logs"), verbose, secrets)?;
-    tracing_subscriber::fmt()
-        .with_writer(log.clone())
-        .with_ansi(false)
-        .with_env_filter(super::env_filter(
-            verbose,
-            crate::operation_context::var("RUST_LOG").ok().as_deref(),
-        ))
+    let filter = super::env_filter(
+        verbose,
+        crate::operation_context::var("RUST_LOG").ok().as_deref(),
+    );
+    let baseline = filter.to_string();
+    let (filter, handle) = tracing_subscriber::reload::Layer::new(filter);
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_writer(log.clone())
+                .with_ansi(false),
+        )
         .try_init()
         .map_err(std::io::Error::other)?;
+    let _ = super::runtime_debug::CONTROL
+        .set(super::runtime_debug::RuntimeDebug::new(handle, baseline));
     let _ = DATA_DIR.set(data_dir.to_path_buf());
     let _ = LOG.set(log);
     Ok(())
