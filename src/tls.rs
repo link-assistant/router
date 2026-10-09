@@ -253,7 +253,7 @@ pub async fn serve_prebound_https(
     let listener = listener.into_std()?;
     axum_server::from_tcp_rustls(listener, tls)?
         .handle(handle)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<std::net::SocketAddr>())
         .await?;
     Ok(())
 }

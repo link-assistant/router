@@ -273,6 +273,7 @@ fn sensitive_environment_values_are_hidden_from_help() {
 #[test]
 fn cli_defaults_round_trip_to_config() {
     let cli = Cli {
+        management: ManagementArgs::default(),
         command: None,
         home: None,
         host: "127.0.0.1".into(),
@@ -401,6 +402,7 @@ fn explicit_home_is_the_credential_boundary_for_every_provider() {
 #[test]
 fn cli_invalid_routing_mode_rejected() {
     let cli = Cli {
+        management: ManagementArgs::default(),
         command: None,
         home: None,
         host: "0.0.0.0".into(),

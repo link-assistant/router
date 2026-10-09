@@ -104,9 +104,12 @@ impl BoundPrimaryListener {
         let result = if let Some(tls) = self.tls {
             crate::tls::serve_prebound_https(self.listener, app, tls, shutdown).await
         } else {
-            axum::serve(self.listener, app)
-                .with_graceful_shutdown(shutdown)
-                .await?;
+            axum::serve(
+                self.listener,
+                app.into_make_service_with_connect_info::<SocketAddr>(),
+            )
+            .with_graceful_shutdown(shutdown)
+            .await?;
             Ok(())
         };
         tracing::info!(
