@@ -147,6 +147,123 @@ async fn native_responses_websocket_is_affine_transparent_and_multiplexed() {
 }
 
 #[tokio::test]
+async fn websocket_normalizes_thinking_suffix_on_every_create() {
+    let server = TestRouter::start(UpstreamProvider::OpenAICompatible).await;
+    let (mut socket, _) = tokio_tungstenite::connect_async(websocket_request(
+        &server,
+        "/api/services/openai/v1/responses",
+    ))
+    .await
+    .unwrap();
+    for level in ["low", "high"] {
+        socket
+            .send(tungstenite::Message::Text(
+                json!({"type":"response.create","model":format!("gpt-5({level})"),"input":"hi"})
+                    .to_string()
+                    .into(),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(next_json(&mut socket).await["type"], "response.in_progress");
+        assert_eq!(next_json(&mut socket).await["type"], "response.completed");
+    }
+    socket.close(None).await.unwrap();
+    let requests = server.requests.lock().unwrap();
+    assert_eq!(requests.len(), 2);
+    for (request, effort) in requests.iter().zip(["low", "high"]) {
+        assert_eq!(request["model"], "gpt-5");
+        assert_eq!(request["reasoning"]["effort"], effort);
+    }
+}
+
+#[tokio::test]
+async fn codex_websocket_applies_selected_account_thinking_evidence_on_every_turn() {
+    let server = TestRouter::start(UpstreamProvider::Codex).await;
+    let account = link_assistant_router::credential_recovery_store::PRIMARY_ACCOUNT;
+    let mut records = server
+        .state_catalogs()
+        .status_for(SubscriptionProvider::Codex, account)
+        .records;
+    let endpoint = format!("{}/models", server.upstream_url);
+    for record in &mut records {
+        record
+            .raw
+            .insert("thinking".into(), json!({"supported":false}));
+        record.raw.insert("router_endpoint".into(), json!(endpoint));
+        record
+            .raw
+            .insert("router_source_url".into(), json!(endpoint));
+        record
+            .raw
+            .insert("router_account".into(), json!(record.account));
+        record
+            .raw
+            .insert("router_protocols".into(), json!(["openai_responses"]));
+        record.raw.insert(
+            "router_health_generation".into(),
+            json!(record.health_generation),
+        );
+    }
+    server.state_catalogs().record_records_for_account(
+        SubscriptionProvider::Codex,
+        account,
+        Some("acct_stub".into()),
+        records,
+    );
+
+    // The same authenticated catalog already constrains HTTP Responses.
+    let response = server
+        .post(
+            "/api/services/codex/v1/responses",
+            &json!({
+                "model":"gpt-5(high)", "input":"hi", "stream":true,
+            }),
+        )
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "{}",
+        response.text().await.unwrap()
+    );
+    assert!(
+        server.requests.lock().unwrap()[0]
+            .pointer("/reasoning/effort")
+            .is_none()
+    );
+
+    let (mut socket, _) = tokio_tungstenite::connect_async(websocket_request(
+        &server,
+        "/api/services/codex/v1/responses",
+    ))
+    .await
+    .unwrap();
+    for level in ["low", "high"] {
+        socket
+            .send(tungstenite::Message::Text(
+                json!({
+                    "type":"response.create", "model":format!("gpt-5({level})"), "input":"hi",
+                })
+                .to_string()
+                .into(),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(next_json(&mut socket).await["type"], "response.in_progress");
+        assert_eq!(next_json(&mut socket).await["type"], "response.completed");
+    }
+    socket.close(None).await.unwrap();
+    let requests = server.requests.lock().unwrap();
+    assert_eq!(requests.len(), 3);
+    for request in &requests[1..] {
+        assert_eq!(request["model"], "gpt-5");
+        assert!(request.pointer("/reasoning/effort").is_none(), "{request}");
+    }
+}
+
+#[tokio::test]
 async fn unsupported_and_malformed_websocket_requests_make_no_inference_call() {
     let server = TestRouter::start(UpstreamProvider::OpenAICompatible).await;
     let before = server.requests.lock().expect("request lock").len();

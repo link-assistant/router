@@ -111,3 +111,26 @@ Baseline CLI reproduction and unit regression both fail because the new flags ar
 - Require all workflows for the exact final SHA to pass before updating
   evidence/readiness.
 - Recheck main ancestry, issue/PR comments, the complete PR diff and clean status.
+
+## Thinking merge
+
+- [x] Detect main advancing to `d9f541b` (PR #750), read its implementation and
+  all comments/reviews, and merge it while preserving the higher measured
+  coverage baseline.
+- [x] Trace ingress normalization, policy ownership, source alias projection
+  and provider forwarding; verify that recognized suffixes authorize the base
+  selector and do not promote operator metadata to authenticated capability
+  evidence.
+- [x] Extend the existing full HTTP regression for effort/numeric suffixes,
+  explicit-body precedence and protected subscription selectors; the combined
+  implementation passes these cases without a production routing change.
+- [x] Verify the streaming suffix case, generated artifacts, contract
+  compatibility and all JavaScript/Bun/Python binding suites on the combined
+  executable.
+- Run fresh strict checks, all thinking integrations, all local
+  unit/integration targets and the bounded soak against the combined source.
+- Commit the resolved merge, push only the prepared branch and require every
+  workflow for its exact head to pass; investigate actual failures using saved
+  logs and measured coverage artifacts.
+- Recheck latest main and user edits/comments, update complete validation
+  evidence, confirm clean status and mark PR #752 ready.

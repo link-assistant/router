@@ -8,9 +8,12 @@ pub struct PolicyRequest {
     pub headers: axum::http::HeaderMap,
     pub context: RoutingContext,
     pub upstream_model: String,
+    pub upstream_selector: String,
     pub model_policy: crate::model_contract::ModelAccessPolicy,
     pub last_action: Mutex<Option<crate::account_routing_policy::ErrorAction>>,
     pub selected: Mutex<SelectedSubscriptionAccount>,
+    pub(crate) thinking: Mutex<Option<crate::thinking::policy::RetryControls>>,
+    pub(crate) thinking_error: Mutex<Option<String>>,
 }
 
 tokio::task_local! { pub static REQUEST: Arc<PolicyRequest>; }

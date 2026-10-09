@@ -102,3 +102,23 @@ pub fn insert_candidate(catalog: &mut Value, candidate: Value) {
     candidates.push(existing);
     candidates.push(candidate);
 }
+
+/// Project one selected account's exact record through the model-truth contract.
+pub fn thinking_model_truth(record: &CatalogRecord) -> crate::model_contract::ModelTruthDescriptor {
+    let raw = project_record(record.clone());
+    let projected = super::aggregate::project_model(
+        raw.as_object().expect("record projection is an object"),
+        &record.canonical_id,
+    );
+    let provenance = projected
+        .get("capability_provenance")
+        .cloned()
+        .unwrap_or(Value::Null);
+    crate::model_contract::ModelTruthDescriptor {
+        upstream_request_model: Some(record.canonical_id.clone()),
+        route: serde_json::from_value(provenance["scope"].clone()).unwrap_or_default(),
+        capabilities: Value::Object(projected),
+        capability_provenance: provenance,
+        ..crate::model_contract::ModelTruthDescriptor::default()
+    }
+}

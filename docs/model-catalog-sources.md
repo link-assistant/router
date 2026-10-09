@@ -66,6 +66,13 @@ pinned to an alias does not gain permission to request its target ID or any othe
 model. Existing signed client, subscription entitlement, account eligibility,
 and provider model restrictions apply unchanged.
 
+Recognized [thinking suffixes](thinking.md) apply to the alias's base selector.
+For example, a token allowed to use `friendly` can request `friendly(high)`;
+Router sends the configured upstream ID with high reasoning effort. Explicit
+thinking controls in the request body take precedence over the suffix. The
+suffix grants no access to the upstream ID, reserved account aliases, prefixes
+or excluded models. Unrecognized suffixes remain literal selectors.
+
 Subscription metadata attaches to each exact live upstream ID before
 [account routing policies](use-cases/account-routing-policy.md) apply aliases,
 prefixes and exclusions. Those policies retain their upstream-ID authorization

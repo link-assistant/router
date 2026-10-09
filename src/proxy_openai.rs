@@ -10,18 +10,6 @@ mod resource;
 use resource::{capture_created_resource, state_for_previous_response};
 pub(crate) use resource::{rewrite_routed_model, route_openai_request};
 
-/// Provider-independent fields owned by the Chat Completions surface.
-///
-/// Passthrough providers may accept extensions and some provide a default
-/// model, so validating the entire normalized request here would narrow their
-/// public contract. `messages`, however, belongs to Chat Completions itself and
-/// must exist before routing or translating to any upstream dialect (#387).
-#[derive(serde::Deserialize)]
-struct RequiredChatFields {
-    #[allow(dead_code)]
-    messages: Vec<openai::ChatMessage>,
-}
-
 include!("proxy_openai_diagnostics.rs");
 
 pub async fn openai_chat_completions(
@@ -135,6 +123,12 @@ async fn openai_chat_completions_with_subscription(
             &format!("invalid OpenAI chat completion request: {error}"),
         );
     }
+    let routing_body = body.clone();
+    if let Err(response) =
+        crate::thinking::normalize_ingress(&mut body, crate::metrics::Surface::OpenAIChat)
+    {
+        return response;
+    }
     let include_usage = body
         .pointer("/stream_options/include_usage")
         .and_then(serde_json::Value::as_bool)
@@ -143,7 +137,6 @@ async fn openai_chat_completions_with_subscription(
     if stream_from_query {
         body["stream"] = serde_json::json!(true);
     }
-    let routing_body = body.clone();
     let routed = if let Some(subscription) = initial_subscription {
         crate::model_routing::RoutedState {
             state,
@@ -688,11 +681,16 @@ async fn openai_responses_with_route(
         Ok(body) => body,
         Err(response) => return response,
     };
+    let routing_body = body.clone();
+    if let Err(response) =
+        crate::thinking::normalize_ingress(&mut body, crate::metrics::Surface::OpenAIResponses)
+    {
+        return response;
+    }
     let state = match state_for_previous_response(&state, &headers, namespace, &body) {
         Ok(state) => state,
         Err(response) => return response,
     };
-    let routing_body = body.clone();
     let client_path = if native_route {
         "/api/services/codex/v1/responses"
     } else {

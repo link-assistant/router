@@ -208,3 +208,16 @@ fn native_model_and_error_envelopes_match_the_served_protocols() {
             .unwrap();
     }
 }
+
+#[test]
+fn aggregate_catalog_publishes_thinking_without_accepting_unknown_fields() {
+    use axum::http::Method;
+    let mut catalog = serde_json::json!({"data":[{
+        "id":"exact-model", "service":"claude", "owned_by":"anthropic",
+        "capability_provenance":{},
+        "thinking":{"supported":true,"min_budget_tokens":1024,"max_budget_tokens":8192}
+    }]});
+    contracts::validation::http(&Method::GET, "/api/models", 200, &catalog).unwrap();
+    catalog["data"][0]["undocumented"] = true.into();
+    assert!(contracts::validation::http(&Method::GET, "/api/models", 200, &catalog).is_err());
+}

@@ -24,6 +24,13 @@ entitlement error for an OpenCode-compatible provider. It now verifies successfu
 compatible routing, exact selector grants, and continued protection of account
 aliases, prefixes and excluded live IDs.
 
+The thinking merge extends that full HTTP regression with effort and numeric
+suffixes on local aliases, explicit-body precedence, and streaming responses.
+It verifies that the upstream receives the exact configured ID and normalized
+reasoning controls while target-ID grants and protected subscription selectors
+remain denied, including requests carrying a valid grant for the protected base
+selector. These cases pass on the combined implementation without a routing fix.
+
 `tests/model_catalog_compatibility_test.rs` preserves the public catalog cache's
 unwind traits and existing route-ID discriminants and ordering. These assertions
 reproduced the Rust API compatibility failures found by CI.
@@ -58,6 +65,14 @@ python3 experiments/issue-727/run-focused.py
 python3 experiments/issue-727/run-checks.py --units
 python3 experiments/issue-727/run-checks.py --integrations
 ```
+
+For a fresh main merge, `run-merged-checks.py` runs strict repository checks,
+archives the previous suite's evidence, executes all unit/integration targets,
+and verifies Rust documentation, the host-library example and a finite
+60-second soak. First prepare current shards with the focused runner, then run
+the merge runner through `experiments/issue-719/bounded-build.py` with a finite
+`ROUTER_BUILD_RSS_LIMIT_MIB` appropriate for the workspace. The soak runtime has
+its own 768 MiB bound.
 
 The focused runner builds Router and generates contracts before preparing fresh
 shards. After changes limited to tests, `--tests-only` reuses the built binary

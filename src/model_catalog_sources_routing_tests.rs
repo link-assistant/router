@@ -313,16 +313,25 @@ async fn local_alias_rewrites_only_the_upstream_selector_and_keeps_exact_token_g
         );
         let config = crate::cli::Cli::try_parse_from(["router", "--token-secret", "test", "serve"])
             .unwrap().into_config().unwrap();
-        for (model, expected) in [("friendly", StatusCode::OK), ("upstream", StatusCode::FORBIDDEN),
-            ("reserved", StatusCode::FORBIDDEN), ("account/friendly", StatusCode::FORBIDDEN),
-            ("blocked", StatusCode::FORBIDDEN)] {
+        for (model, expected) in [("friendly", StatusCode::OK),
+            ("friendly(high)", StatusCode::OK), ("friendly(8192)", StatusCode::OK),
+            ("friendly(max)", StatusCode::OK), ("upstream", StatusCode::FORBIDDEN),
+            ("upstream(high)", StatusCode::FORBIDDEN), ("reserved", StatusCode::FORBIDDEN),
+            ("reserved(high)", StatusCode::FORBIDDEN), ("account/friendly", StatusCode::FORBIDDEN),
+            ("account/friendly(high)", StatusCode::FORBIDDEN), ("blocked", StatusCode::FORBIDDEN),
+            ("blocked(high)", StatusCode::FORBIDDEN)] {
+            let mut payload = json!({"model":model,"messages":[{"role":"user","content":"hello"}]});
+            if model == "friendly(max)" {
+                payload["reasoning_effort"] = json!("low");
+            }
             let mut request = Request::post("/api/services/openai/v1/chat/completions")
                 .header("content-type", "application/json")
-                .body(Body::from(json!({"model":model,"messages":[{"role":"user","content":"hello"}]}).to_string()))
+                .body(Body::from(payload.to_string()))
                 .unwrap();
             request.headers_mut().extend(headers.clone());
-            if matches!(model, "reserved" | "account/friendly" | "blocked") {
-                request.headers_mut().insert("authorization", format!("Bearer {}", token(&state, model)).parse().unwrap());
+            let base = crate::thinking::base_model(model);
+            if matches!(base, "reserved" | "account/friendly" | "blocked") {
+                request.headers_mut().insert("authorization", format!("Bearer {}", token(&state, base)).parse().unwrap());
             }
             let response = crate::server_router::router(state.clone(), &config).oneshot(request).await.unwrap();
             let status = response.status();
@@ -330,9 +339,35 @@ async fn local_alias_rewrites_only_the_upstream_selector_and_keeps_exact_token_g
             assert_eq!(status, expected, "auto {model}: {body}");
             if expected == StatusCode::OK {
                 assert_eq!(body["model"], "upstream");
+                let forwarded = requests.lock().unwrap().last().unwrap().clone();
+                assert_eq!(forwarded["model"], "upstream");
+                let effort = match model {
+                    "friendly(high)" => json!("high"),
+                    "friendly(8192)" => json!("medium"),
+                    "friendly(max)" => json!("low"),
+                    _ => Value::Null,
+                };
+                assert_eq!(forwarded["reasoning_effort"], effort, "{model}: {forwarded}");
             }
         }
-        assert_eq!(requests.lock().unwrap().len(), 5);
+        let mut request = Request::post("/api/services/openai/v1/chat/completions")
+            .header("content-type", "application/json")
+            .body(Body::from(json!({"model":"friendly(high)","stream":true,
+                "messages":[{"role":"user","content":"hello"}]}).to_string()))
+            .unwrap();
+        request.headers_mut().extend(headers.clone());
+        let response = crate::server_router::router(state.clone(), &config).oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let stream = std::str::from_utf8(&bytes).unwrap();
+        assert!(stream.contains("\"model\":\"upstream\""), "{stream}");
+        assert!(!stream.contains("model_substitution_not_allowed"), "{stream}");
+        {
+            let requests = requests.lock().unwrap();
+            assert_eq!(requests.len(), 9);
+            assert_eq!(requests.last().unwrap()["model"], "upstream");
+            assert_eq!(requests.last().unwrap()["reasoning_effort"], "high");
+        }
         let response = model_definitions(axum::extract::State(state.clone()), axum::extract::Path("local".into())).await;
         let models = json_body(response).await;
         assert_eq!(models["models"].as_array().unwrap().len(), 5);

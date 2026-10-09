@@ -151,6 +151,42 @@ pub(super) async fn forward_openai(
     // Claude MAX OAuth inference requires Claude Code's identity as the first
     // system block; OpenAI-dialect clients such as Codex never send it.
     let mut body = body;
+    if let Err(reason) = crate::thinking::anthropic::apply_translated_suffix(
+        &mut body,
+        routing_body,
+        match shape {
+            OpenAIShape::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+            OpenAIShape::Response => crate::thinking::ThinkingProtocol::OpenAIResponses,
+        },
+        crate::thinking::ThinkingProtocol::Anthropic,
+    ) {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason);
+    }
+    if let Some(account) = selected_account.as_deref()
+        && let Err(reason) = crate::thinking::apply_for_account(
+            state,
+            &mut body,
+            &served_model,
+            crate::subscription::SubscriptionProvider::Claude,
+            account,
+            &state.upstream_base_url,
+            crate::thinking::ThinkingProtocol::Anthropic,
+            match shape {
+                OpenAIShape::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                OpenAIShape::Response => crate::thinking::ThinkingProtocol::OpenAIResponses,
+            },
+            crate::thinking::suffix_applies(
+                routing_body,
+                requested_model,
+                match shape {
+                    OpenAIShape::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                    OpenAIShape::Response => crate::thinking::ThinkingProtocol::OpenAIResponses,
+                },
+            ),
+        )
+    {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason);
+    }
     if entitlement_granted && crate::claude_identity::is_oauth_credential(&oauth_token) {
         crate::claude_identity::ensure_claude_code_system(&mut body);
     }
