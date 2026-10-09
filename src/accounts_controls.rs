@@ -12,6 +12,7 @@ impl SelectionStrategy {
             Self::RoundRobin => "round-robin",
             Self::Priority => "fill-first",
             Self::LeastUsed => "least-used",
+            Self::WeightedRoundRobin => "weighted-round-robin",
         }
     }
 }
@@ -114,6 +115,7 @@ impl AccountRouter {
     /// Manual pauses and exhausted request caps have no timed recovery.
     pub(crate) fn retry_delay(&self, context: &RoutingContext) -> Option<Duration> {
         let now = crate::account_limits::now_unix();
+        let scoped = crate::account_policy_scope::current();
         self.inner
             .accounts
             .iter()
@@ -140,12 +142,21 @@ impl AccountRouter {
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
                     .and_then(|until| until.checked_duration_since(Instant::now()))
                     .unwrap_or_default();
+                let model = scoped
+                    .as_ref()
+                    .map(|scope| scope.upstream_model.clone())
+                    .or_else(|| {
+                        context
+                            .model
+                            .as_deref()
+                            .and_then(|model| self.upstream_model(&account.name, model))
+                    });
                 let state = account.limits();
                 let mut until = state.cooldown_until_unix.unwrap_or(now);
                 if let Some(pause) = &state.pause {
                     until = until.max(pause.until_unix?);
                 }
-                if let Some(model) = context.model.as_deref() {
+                if let Some(model) = model.as_deref() {
                     for (key, deadline) in &state.model_cooldowns {
                         if crate::account_limits::model_key_matches(key, model) {
                             until = until.max(*deadline);

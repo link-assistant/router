@@ -391,6 +391,7 @@ struct Options {
     /// Per-account connection and egress settings (issue #678).
     http: AccountHttpPolicy,
     retry: link_assistant_router::pool_retry::RetryPolicy,
+    routing_policy: Option<link_assistant_router::account_routing_policy::AccountRoutingPolicy>,
 }
 
 impl Default for Options {
@@ -403,6 +404,7 @@ impl Default for Options {
             codex: false,
             http: AccountHttpPolicy::default(),
             retry: link_assistant_router::pool_retry::RetryPolicy::default(),
+            routing_policy: None,
         }
     }
 }
@@ -462,6 +464,9 @@ impl Pool {
                     )
                 };
                 std::fs::write(home.join(file), credentials.to_string()).unwrap();
+                if let Some(policy) = &options.routing_policy {
+                    policy.save(&home).unwrap();
+                }
                 home
             })
             .collect();
@@ -563,6 +568,20 @@ impl Pool {
             github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
             max_proxy_request_bytes: link_assistant_router::proxy::MAX_PROXY_REQUEST_BYTES,
         };
+        if options.routing_policy.is_some() {
+            for account in ACCOUNTS {
+                state.model_catalogs.record_success_for_account(
+                    router.provider(),
+                    account,
+                    options.codex.then(|| format!("acct_{account}")),
+                    vec![
+                        "gpt-5".into(),
+                        "gpt-5-mini".into(),
+                        "claude-sonnet-4-5".into(),
+                    ],
+                );
+            }
+        }
         let app = Router::new()
             .route(
                 "/api/management/routing",
@@ -599,6 +618,22 @@ impl Pool {
                 get(link_assistant_router::monitoring_api::metrics_endpoint),
             )
             .with_state(state.clone());
+        let app = if options.routing_policy.is_some() {
+            use lino_arguments::Parser as _;
+            let config = link_assistant_router::cli::Cli::try_parse_from([
+                "router",
+                "--token-secret",
+                "pool-failover-secret",
+                "--data-dir",
+                data.path().to_str().unwrap(),
+            ])
+            .unwrap()
+            .into_config()
+            .unwrap();
+            link_assistant_router::server_router::router(state.clone(), &config)
+        } else {
+            app
+        };
         let app = if let Some(clock) = options.clock {
             app.layer(axum::middleware::from_fn(
                 move |request: Request, next: axum::middleware::Next| {
@@ -730,3 +765,6 @@ mod routing_controls;
 
 #[path = "pool_failover/websocket_cooling.rs"]
 mod websocket_cooling;
+
+#[path = "pool_failover/account_policies.rs"]
+mod account_policies;

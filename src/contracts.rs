@@ -188,6 +188,7 @@ pub fn types() -> Value {
         "CooldownReset":schemars::schema_for!(crate::routing_api::CooldownReset),
         "CooldownResetResult":schemars::schema_for!(crate::routing_api::CooldownResetResult),
         "UsageSnapshot":schemars::schema_for!(crate::metrics::UsageSnapshot),
+        "AccountRoutingPolicy":schemars::schema_for!(crate::account_routing_policy::AccountRoutingPolicy),
         "CredentialAcceptanceReport":schemars::schema_for!(crate::credential_status::CredentialAcceptanceReport),
         "AuthDiagnosticsSnapshot":schemars::schema_for!(crate::auth_diagnostics::AuthDiagnosticsSnapshot),
         "EmergencyStatus":schemars::schema_for!(crate::emergency_auth::EmergencyAuthStatus),

@@ -16,6 +16,8 @@ Vendor utilization windows and `ACCOUNT_PAUSE_AT_PERCENT` remain account-wide. C
 
 Retry sends, response inspection on retries and waits share `POOL_FAILOVER_BUDGET_SECS`, measured from the first attempt. The first attempt retains the configured connect, first-byte and idle-read timeouts, including disabled timeouts for long reasoning turns. Explicit account pins remain strict. Default rounds preserve the existing one-round attempt limit; retrying cannot extend the failover budget.
 
+These limits also apply when [per-account routing policies](use-cases/account-routing-policy.md) are active. An initial cooldown wait consumes a retry round, and an explicit account `request_retry` caps the total attempts across rounds. Model aliases use their actual upstream model's cooldown. Policies with `disable_cooling` or a matching `relay` rule retain their cooling opt-out, including errors received inside streams.
+
 Parent identifiers are accepted from `x-parent-session-id`, `x-codex-parent-session-id`, `x-parent-thread-id`, or `parent-session-id`, then from `context`, `metadata`, or root JSON fields named `parent_session_id` or `parent_thread_id`. Headers take precedence. An existing child's own binding takes precedence over a newly supplied parent. Explicit caller-token account pins take precedence over both. `SESSION_AFFINITY_TTL_SECS=0` disables all session affinity. With failover enabled, a temporarily unavailable parent account permits a detour without rebinding the child.
 
 ## Management endpoints
@@ -34,7 +36,7 @@ curl -X POST "$ROUTER_URL/api/management/routing/cooldown/reset" \
   -d '{"account":"primary","model":"gpt-5"}'
 ```
 
-Strategy values use the existing aliases for `round-robin`, `fill-first`/`priority`, and `least-used`. Responses return the canonical strategy. Only new sessions use a changed strategy; existing bindings remain on their accounts.
+Strategy values use the existing aliases for `round-robin`, `weighted-round-robin`, `fill-first`/`priority`, and `least-used`. Responses return the canonical strategy. Only new sessions use a changed strategy; existing bindings remain on their accounts.
 
 Reset `{}` clears all cooldowns, `{"account":"primary"}` clears every cooldown on that account, and adding `"model"` clears only that exact model/family entry. A model reset cannot lift an account-wide cooldown. To clear a vendor family entry, pass its family key (for example `opus`). Responses return `{"cleared":N}`. Unknown accounts return 404; invalid strategy/reset scope returns 400; an unconfigured pool returns 409.
 

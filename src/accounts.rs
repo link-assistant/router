@@ -6,7 +6,6 @@
 //! selected account. Typed quota failures and configured request caps remove
 //! accounts from automatic selection without silently moving pinned work.
 
-use std::cmp::Ordering as CmpOrdering;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -25,12 +24,15 @@ pub enum SelectionStrategy {
     Priority,
     /// Pick the account with the lowest used-quota count.
     LeastUsed,
+    /// Smooth weighted round-robin across eligible positive-weight accounts.
+    WeightedRoundRobin,
 }
 
 impl SelectionStrategy {
     #[must_use]
     pub fn from_str_opt(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
+            "weighted-round-robin" | "weighted_round_robin" => Some(Self::WeightedRoundRobin),
             "round-robin" | "roundrobin" | "rr" => Some(Self::RoundRobin),
             "priority" | "prio" | "fill-first" | "fillfirst" => Some(Self::Priority),
             "least-used" | "leastused" | "least-utilized" | "quota-first" | "lru" => {
@@ -131,6 +133,9 @@ impl RoutingContext {
 
 /// Per-account runtime state (cooldowns, request counts, last error).
 struct AccountState {
+    implicit_primary: bool,
+    routing_policy:
+        std::sync::RwLock<Result<crate::account_routing_policy::AccountRoutingPolicy, String>>,
     name: String,
     reader: SubscriptionReader,
     home: PathBuf,
@@ -145,6 +150,10 @@ struct AccountState {
 impl AccountState {
     fn new(name: String, reader: SubscriptionReader, home: PathBuf, limit: Option<usize>) -> Self {
         Self {
+            implicit_primary: false,
+            routing_policy: std::sync::RwLock::new(
+                crate::account_routing_policy::AccountRoutingPolicy::load(&home),
+            ),
             name,
             reader,
             home,
@@ -156,17 +165,46 @@ impl AccountState {
         }
     }
 
+    fn policy(
+        &self,
+    ) -> std::sync::RwLockReadGuard<
+        '_,
+        Result<crate::account_routing_policy::AccountRoutingPolicy, String>,
+    > {
+        self.routing_policy
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
     fn is_healthy(&self) -> bool {
+        let Ok(policy) = self.policy().clone() else {
+            return false;
+        };
         let guard = self
             .cooldown_until
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        !matches!(*guard, Some(t) if t > Instant::now())
+        (policy.disable_cooling
+            || (self.implicit_primary
+                && policy == crate::account_routing_policy::AccountRoutingPolicy::default())
+            || (!matches!(*guard, Some(t) if t > Instant::now())
+                && self
+                    .limits()
+                    .cooldown_until_unix
+                    .is_none_or(|until| until <= crate::account_limits::now_unix())))
             && !self.is_paused()
+    }
+
+    fn uses_unpooled_defaults(&self) -> bool {
+        self.implicit_primary
             && self
-                .limits()
-                .cooldown_until_unix
-                .is_none_or(|until| until <= crate::account_limits::now_unix())
+                .policy()
+                .as_ref()
+                .is_ok_and(|p| *p == crate::account_routing_policy::AccountRoutingPolicy::default())
+    }
+
+    fn ignores_automatic_cooling(&self) -> bool {
+        self.policy().as_ref().is_ok_and(|p| p.disable_cooling) || self.uses_unpooled_defaults()
     }
 
     fn limits(&self) -> std::sync::MutexGuard<'_, crate::account_limits::AccountLimitState> {
@@ -185,9 +223,10 @@ impl AccountState {
         self.is_available()
             && !context.exclude.contains(&self.name)
             && context.model.as_deref().is_none_or(|model| {
-                !self
-                    .limits()
-                    .blocks_model(model, crate::account_limits::now_unix())
+                self.ignores_automatic_cooling()
+                    || !self
+                        .limits()
+                        .blocks_model(model, crate::account_limits::now_unix())
             })
     }
 
@@ -257,6 +296,8 @@ pub struct AccountRouter {
 struct AccountRouterInner {
     accounts: Vec<AccountState>,
     cursor: AtomicUsize,
+    weights: Mutex<Vec<i64>>,
+    force_model_prefix: bool,
     provider: SubscriptionProvider,
     strategy: Mutex<SelectionStrategy>,
     session_affinity_subagents: bool,
@@ -369,6 +410,11 @@ impl AccountRouter {
         }
         let router = Self {
             inner: Arc::new(AccountRouterInner {
+                weights: Mutex::new(vec![0; accounts.len()]),
+                force_model_prefix: crate::operation_context::var("ACCOUNT_FORCE_MODEL_PREFIX")
+                    .is_ok_and(|v| {
+                        matches!(v.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+                    }),
                 accounts,
                 cursor: AtomicUsize::new(0),
                 provider,
@@ -570,17 +616,24 @@ impl AccountRouter {
         context: &RoutingContext,
         allowed: impl Fn(&str) -> bool,
     ) -> Result<SelectedSubscriptionAccount, AccountError> {
-        let (indices, mode) = self.selection_plan(context)?;
+        let (indices, mode) = self.selection_plan(context, &allowed)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.serves(context) || !allowed(&account.name) {
+            if !account.serves(context)
+                || !self.policy_serves(idx, context)
+                || !allowed(&account.name)
+            {
                 if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
                 continue;
             }
             match account.reader.read_token() {
-                Ok(token) if account.try_record_use() => {
+                Ok(token)
+                    if (crate::account_policy_scope::preselected(context).as_deref()
+                        == Some(&account.name)
+                        || account.try_record_use()) =>
+                {
                     self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
@@ -611,10 +664,10 @@ impl AccountRouter {
         cache: &crate::refresh::TokenCache,
         allowed: impl Fn(&str) -> bool,
     ) -> Result<SelectedSubscriptionAccount, AccountError> {
-        let (indices, mode) = self.selection_plan(context)?;
+        let (indices, mode) = self.selection_plan(context, &allowed)?;
         for idx in indices {
             let account = &self.inner.accounts[idx];
-            if !account.serves(context) {
+            if !account.serves(context) || !self.policy_serves(idx, context) {
                 if !mode.falls_through() {
                     return Err(Self::unavailable_error(mode, &account.name));
                 }
@@ -629,7 +682,11 @@ impl AccountRouter {
                         return Err(Self::unavailable_error(mode, &account.name));
                     }
                 }
-                Ok(Some(token)) if account.try_record_use() => {
+                Ok(Some(token))
+                    if (crate::account_policy_scope::preselected(context).as_deref()
+                        == Some(&account.name)
+                        || account.try_record_use()) =>
+                {
                     self.bind_selected(context, mode, idx);
                     return Ok(SelectedSubscriptionAccount {
                         name: account.name.clone(),
@@ -652,14 +709,6 @@ impl AccountRouter {
         Err(AccountError::NoHealthyAccounts)
     }
 
-    fn unavailable_error(mode: SelectionMode, account: &str) -> AccountError {
-        match mode {
-            SelectionMode::Pinned => AccountError::PinnedAccountUnavailable(account.to_string()),
-            SelectionMode::Session => AccountError::SessionAccountUnavailable(account.to_string()),
-            SelectionMode::Automatic | SelectionMode::Detour => AccountError::NoHealthyAccounts,
-        }
-    }
-
     /// Mark the named account as having failed (e.g., upstream returned 429).
     pub fn report_failure(&self, account_name: &str, err: &str) {
         self.report_failure_with_retry_after(account_name, err, None);
@@ -674,6 +723,14 @@ impl AccountRouter {
         err: &str,
         retry_after: Option<Duration>,
     ) {
+        if crate::account_policy_scope::current().is_some_and(|s| {
+            *s.last_action
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                == Some(crate::account_routing_policy::ErrorAction::Relay)
+        }) {
+            return;
+        }
         if let Some(idx) = self
             .inner
             .accounts
@@ -697,6 +754,9 @@ impl AccountRouter {
     }
 
     fn start_cooldown(&self, idx: usize, duration: Duration) {
+        if self.inner.accounts[idx].ignores_automatic_cooling() {
+            return;
+        }
         let mut guard = self.inner.accounts[idx]
             .cooldown_until
             .lock()
@@ -868,8 +928,9 @@ pub use limits::{LimitCounts, ObservedLimits, UpstreamObservation};
 #[path = "accounts_tests.rs"]
 mod tests;
 
-#[path = "accounts_routing.rs"]
-mod routing;
-
 #[path = "accounts_controls.rs"]
 mod controls;
+#[path = "accounts_policy.rs"]
+mod policy;
+#[path = "accounts_selection.rs"]
+mod selection;

@@ -60,6 +60,17 @@ impl RetryBudget {
         context.exclude.len() >= self.per_round as usize
     }
 
+    pub(crate) const fn rounds_used(&self) -> u32 {
+        self.round
+    }
+
+    pub(crate) fn consume_rounds(&mut self, rounds: u32) {
+        self.round = rounds.min(self.policy.rounds.min(16));
+        self.max_attempts = self
+            .per_round
+            .saturating_mul(self.policy.rounds.min(16) - self.round + 1);
+    }
+
     pub(crate) async fn next_round(
         &mut self,
         router: Option<&AccountRouter>,

@@ -407,6 +407,26 @@ impl RequestLog {
         builder: reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
         let request = builder.build()?;
+        if crate::account_policy_scope::active() {
+            // Keep the policy loop's state out of every protocol handler's future.
+            return Box::pin(crate::account_policy_dispatch::send(
+                self,
+                correlation_id,
+                client,
+                request,
+            ))
+            .await;
+        }
+        self.send_prepared(correlation_id, client, request).await
+    }
+
+    /// Send and log one prepared attempt without nesting the policy retry loop.
+    pub(crate) async fn send_prepared(
+        &self,
+        correlation_id: &str,
+        client: &reqwest::Client,
+        request: reqwest::Request,
+    ) -> Result<reqwest::Response, crate::upstream_client::UpstreamSendError> {
         self.record(
             correlation_id,
             "upstream_request",

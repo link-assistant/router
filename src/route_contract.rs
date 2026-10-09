@@ -223,6 +223,16 @@ const ROUTES: &[RouteSpec] = &[
         "/api/management/accounts/{name}/resume",
     ),
     management(
+        RouteId::AccountPolicy,
+        RouteMethod::Get,
+        "/api/management/accounts/{name}/policy",
+    ),
+    management(
+        RouteId::AccountPolicy,
+        RouteMethod::Post,
+        "/api/management/accounts/{name}/policy",
+    ),
+    management(
         RouteId::CredentialStatus,
         RouteMethod::Get,
         "/api/management/auth/status",

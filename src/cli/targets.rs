@@ -30,6 +30,7 @@ impl AccountOp {
     pub const fn target(&self) -> &AuthTarget {
         match self {
             Self::List { target, .. }
+            | Self::Policy { target, .. }
             | Self::Pause { target, .. }
             | Self::Resume { target, .. } => target,
         }

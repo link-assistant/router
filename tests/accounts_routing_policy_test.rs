@@ -103,6 +103,62 @@ fn ordinary_quota_preserves_sibling_models() {
 }
 
 #[test]
+fn a_model_alias_cannot_bypass_its_upstream_cooldown() {
+    use link_assistant_router::account_routing_policy::{AccountRoutingPolicy, ModelAlias};
+    let (_root, router) = pool();
+    router
+        .set_routing_policy(
+            "primary",
+            AccountRoutingPolicy {
+                model_aliases: vec![ModelAlias {
+                    model: "model-a".into(),
+                    alias: "friendly".into(),
+                    fork: false,
+                }],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    observe(&router, 429, br#"{"error":{"type":"rate_limit_error"}}"#);
+    assert_eq!(selected(&router, "friendly"), "account-1");
+    assert_eq!(selected(&router, "model-b"), "primary");
+}
+
+#[test]
+fn live_weighted_selection_preserves_parent_and_child_affinity() {
+    use link_assistant_router::account_routing_policy::AccountRoutingPolicy;
+    let (_root, router) = pool();
+    router
+        .set_routing_policy(
+            "account-1",
+            AccountRoutingPolicy {
+                weight: 3,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    let parent = RoutingContext::for_session("parent");
+    assert_eq!(router.select_with_context(&parent).unwrap().name, "primary");
+    assert_eq!(
+        router.set_strategy(SelectionStrategy::WeightedRoundRobin),
+        SelectionStrategy::Priority
+    );
+    assert_eq!(router.strategy().as_str(), "weighted-round-robin");
+    let child = RoutingContext {
+        session_key: Some("child".into()),
+        parent_session_key: Some("parent".into()),
+        ..Default::default()
+    };
+    assert_eq!(router.select_with_context(&child).unwrap().name, "primary");
+    let mut counts = [0; 2];
+    for _ in 0..4 {
+        counts[usize::from(router.select().unwrap().name != "primary")] += 1;
+    }
+    assert_eq!(counts, [1, 3]);
+    assert_eq!(router.select_with_context(&child).unwrap().name, "primary");
+}
+
+#[test]
 fn terminal_quota_overrides_a_model_mention() {
     let (_root, router) = pool();
     observe(

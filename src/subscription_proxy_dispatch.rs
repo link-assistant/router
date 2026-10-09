@@ -118,7 +118,7 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
             log_stop(state, request.correlation_id, attempt, "budget exhausted");
             break;
         }
-        let (account, token) =
+        let (mut account, token) =
             match select_account(state, request.provider, request.validated, &context).await {
                 Ok(selected) => selected,
                 Err(error) => {
@@ -208,8 +208,13 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
                 return Err(transport_error(&request, Some(&account), &error));
             }
         };
+        if let Some(actual) = crate::account_policy_scope::account() {
+            account = actual;
+        }
         let status = response.status().as_u16();
-        if let Some(router) = router {
+        if !crate::account_policy_scope::active()
+            && let Some(router) = router
+        {
             router.observe_upstream(&UpstreamObservation {
                 account: &account,
                 model: context.model.as_deref(),
@@ -271,6 +276,7 @@ async fn send_attempt(
 ) -> Result<reqwest::Response, String> {
     let state = request.state;
     let provider = request.provider;
+    crate::account_policy_scope::credential(account, &token);
     let upstream_url = join_subscription_url(provider, base_url, request.path);
     let custom_base_url = state.subscription_base_url.is_some();
     let shared_client =
@@ -334,6 +340,7 @@ async fn send_attempt(
     // to the contrary. Refresh and replay the request exactly once, so a
     // recoverable credential is not reported as dead (issue #205).
     if request.validated.is_none()
+        && crate::account_policy_scope::reactive_refresh_allowed(account)
         && response.status() == reqwest::StatusCode::UNAUTHORIZED
         && let Some(refreshed) = state
             .subscription_cache
@@ -346,6 +353,7 @@ async fn send_attempt(
             )
             .await
     {
+        crate::account_policy_scope::credential(account, &refreshed);
         tracing::info!(
             "{provider} rejected an unexpired access token; retrying once with a refreshed one"
         );
@@ -372,7 +380,9 @@ async fn send_attempt(
             }
         }
     }
-    if let Some(evidence_token) = evidence_token.as_ref() {
+    if !crate::account_policy_scope::active()
+        && let Some(evidence_token) = evidence_token.as_ref()
+    {
         state
             .subscription_cache
             .record_status_for_credential(

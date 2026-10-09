@@ -126,6 +126,9 @@ pub async fn record_claude_evidence(
     credential: Option<&crate::subscription::SubscriptionToken>,
     status: u16,
 ) {
+    if crate::account_policy_scope::active() {
+        return;
+    }
     let cache = &state.subscription_cache;
     let account = account.unwrap_or(crate::credential_recovery_store::PRIMARY_ACCOUNT);
     if let Some(credential) = credential {

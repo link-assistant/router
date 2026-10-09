@@ -10,8 +10,28 @@ fn existing_route_ids_keep_their_numeric_values_and_order() {
     assert_eq!(RouteId::AccountResume as usize, 18);
     assert_eq!(RouteId::CredentialStatus as usize, 19);
     assert_eq!(RouteId::NativeCodexBackend as usize, 93);
+    assert_eq!(RouteId::AccountPolicy as usize, 94);
     assert!(RouteId::NativeCodexBackend < RouteId::Routing);
     assert!(RouteId::NativeCodexBackend < RouteId::CooldownReset);
+}
+
+#[test]
+fn existing_public_enum_discriminants_remain_stable() {
+    use clap::Subcommand as _;
+    use link_assistant_router::accounts::SelectionStrategy;
+    use link_assistant_router::route_contract::RouteId;
+    assert_eq!(SelectionStrategy::Priority as isize, 1);
+    assert_eq!(SelectionStrategy::LeastUsed as isize, 2);
+    assert_eq!(RouteId::CredentialStatus as isize, 19);
+    assert_eq!(RouteId::NativeCodexBackend as isize, 93);
+    let account_commands =
+        link_assistant_router::cli::AccountOp::augment_subcommands(clap::Command::new("accounts"));
+    let existing_names: Vec<_> = account_commands
+        .get_subcommands()
+        .take(3)
+        .map(clap::Command::get_name)
+        .collect();
+    assert_eq!(existing_names, ["list", "pause", "resume"]);
 }
 
 #[test]

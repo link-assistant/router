@@ -263,6 +263,14 @@ pub const SOURCE_COMMIT: &str = env!("ROUTER_SOURCE_COMMIT");
 /// Importable request-log operations.
 pub mod logs;
 
+mod account_policy_catalog;
+mod account_policy_dispatch;
+pub mod account_policy_management;
+mod account_policy_middleware;
+mod account_policy_response;
+mod account_policy_scope;
+/// Per-credential routing configuration and validation.
+pub mod account_routing_policy;
 mod config_error;
 pub mod management_access;
 pub mod management_config;

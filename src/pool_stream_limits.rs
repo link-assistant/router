@@ -13,16 +13,27 @@ pub struct StreamLimits {
     model: Option<String>,
     line: Vec<u8>,
     oversized: bool,
+    relayed: bool,
 }
 
 impl StreamLimits {
-    pub(crate) const fn new(router: AccountRouter, account: String, model: Option<String>) -> Self {
+    pub(crate) fn new(router: AccountRouter, account: String, model: Option<String>) -> Self {
+        // Response streams outlive task-local policy dispatch. Retain its opt-out.
+        let scoped = crate::account_policy_scope::current();
+        let relayed = scoped.as_ref().is_some_and(|scope| {
+            *scope
+                .last_action
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                == Some(crate::account_routing_policy::ErrorAction::Relay)
+        });
         Self {
             router,
             account,
-            model,
+            model: scoped.map(|scope| scope.upstream_model.clone()).or(model),
             line: Vec::new(),
             oversized: false,
+            relayed,
         }
     }
 
@@ -52,6 +63,9 @@ impl StreamLimits {
 
     /// Also used by WebSocket frames, whose error is already JSON.
     pub(crate) fn observe_event(&self, value: &Value) {
+        if self.relayed {
+            return;
+        }
         let kind = value
             .get("type")
             .and_then(Value::as_str)

@@ -171,6 +171,7 @@ pub enum RouteId {
     NativeAnthropic,
     NativeCodex,
     NativeCodexBackend,
+    AccountPolicy,
     Routing,
     CooldownReset,
 }
