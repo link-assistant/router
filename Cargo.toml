@@ -142,11 +142,10 @@ lto = false
 codegen-units = 16
 strip = false
 
-# The CLI parser enum adds Version/Contracts/Verify in this initial API expansion.
-# Exceptions documented in docs/integration/compatibility.md; all other API
-# changes remain checked against every PR base.
+# Initial CLI and management-policy expansions have documented release exceptions.
+# See docs/integration/compatibility.md; all other semver lints remain checked.
 [package.metadata.cargo-semver-checks.lints]
 enum_variant_added = { level = "allow" }
-# Issue #724 extends the existing defaultable pool configuration/context structs.
-# Keep checking this lint, requiring a minor release for reviewed field additions.
+# Issues #722/#724 extend public defaultable configuration/context structs.
+# Keep this lint enabled, requiring a minor release for reviewed field additions.
 constructible_struct_adds_field = { required-update = "minor" }

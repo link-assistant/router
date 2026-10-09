@@ -14,6 +14,14 @@ Every claim below is asserted by
 which needs no subscription: all of it concerns the router's own auth surface,
 so no request reaches an upstream.
 
+Management access on the combined listener is now loopback-only by default.
+A non-loopback caller receives `403` before authentication unless
+`MANAGEMENT_ALLOW_REMOTE=true` is explicit. The dedicated admin listener also
+provides management access. Five consecutive bad credentials ban the socket
+peer IP for 30 minutes (`429` with `Retry-After`); loopback is exempt by default.
+See [Management access](../security/management-access.md) for the threat model,
+settings, example-secret refusal, reverse proxies and recovery.
+
 ## The one thing to get right
 
 `POST /api/management/tokens` mints generic `la_sk_…` tokens for ordinary provider routes,
@@ -23,7 +31,7 @@ and every other `/api/management/tokens*` endpoint — is **closed by default**.
 unauthenticated call is refused:
 
 ```console
-$ curl -X POST http://router:8080/api/management/tokens -d '{"ttl_hours":1,"label":"anyone"}'
+$ curl -X POST http://127.0.0.1:8080/api/management/tokens -d '{"ttl_hours":1,"label":"anyone"}'
 {"error":{"type":"authentication_error", …}}              # 401, no credential sent
 ```
 
@@ -103,6 +111,9 @@ Mount the subscription **read-only** and keep router state on its own volume:
 ```bash
 docker run -d --name router \
   -p 127.0.0.1:8080:8080 \
+  -p 127.0.0.1:8081:8081 \
+  -e ADMIN_HOST=0.0.0.0 \
+  -e ADMIN_PORT=8081 \
   -e TOKEN_SECRET="$TOKEN_SECRET" \
   -e TOKEN_ADMIN_KEY="$TOKEN_ADMIN_KEY" \
   -e DATA_DIR=/data/router \
@@ -114,7 +125,11 @@ docker run -d --name router \
 ```
 
 `-p 127.0.0.1:8080:8080` publishes to the host's loopback only; drop the
-`127.0.0.1:` prefix **only** once `TOKEN_ADMIN_KEY` is set.
+`127.0.0.1:` prefix **only** once `TOKEN_ADMIN_KEY` is set. Use
+`http://127.0.0.1:8081/api/management/*` for administration in this container
+example; Docker-forwarded traffic has a non-loopback peer inside the container,
+so it is refused on the combined port without `MANAGEMENT_ALLOW_REMOTE=true`.
+The admin port is published only on host loopback.
 
 The router starts and serves `/api/health` with **no subscription mounted at all**,
 so it can be deployed before credentials are provisioned; requests then fail at

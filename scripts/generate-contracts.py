@@ -82,7 +82,7 @@ def generate(catalog):
         'ProviderProvisionResponse': obj({**components['ProviderRecord']['properties'], 'outcome':{'enum':['created','replaced','already_present']}}, [*components['ProviderRecord'].get('required',[]), 'outcome']),
         'TokenIssued': issue,
         'ClientTokenIssued': obj({key:{} for key in ['token','ttl_hours','label','client_kind','principal_id','model_policy']}, ['token','client_kind','principal_id']),
-        'AdminSummary': obj({key:{} for key in ['version','upstream_provider','upstream_base_url','accounts','claude_credential','subscription','login_api_enabled','admin','emergency_auth']}, ['version','admin']),
+        'AdminSummary': obj({key:{} for key in ['version','upstream_provider','upstream_base_url','accounts','claude_credential','subscription','login_api_enabled','admin','emergency_auth','management_bans']}, ['version','admin']),
         'Accounts': obj({'accounts':array(obj({key:{} for key in ['name','home','healthy','credential','used','request_limit','remaining_requests','last_error','cooldown_remaining_seconds','cooldown_reason','cooldown_until_unix','model_cooldowns','paused','pause','windows']}, ['name','healthy'])), 'credentials':array(obj({'name':STRING,'home':STRING,'credential':STRING,'healthy':BOOL}, ['name','healthy'])), 'note':STRING}, ['accounts']),
         'AccountPause': obj({'account':STRING,'paused':BOOL,'until_unix':{'type':['integer','null']}}, ['account','paused']),
         'AccountResume': obj({'account':STRING,'paused':BOOL,'was_paused':BOOL}, ['account','paused','was_paused']),
@@ -100,6 +100,7 @@ def generate(catalog):
         'NativeModels':obj({'models':array({'type':'object'})}, ['models']),
         'ManagementReport':obj({key:{} for key in ['accounts','credentials','providers','tokens','total_requests','total_input_tokens','total_output_tokens','total_tokens','total_cached_tokens','total_cost_usd','uptime_seconds','surfaces','by_provider','by_token','total','recent','failures','counters','enabled','remaining_seconds','duration_minutes','started_at','expires_at','disabled','status','session_id','id','url','auth_url','verification_uri','user_code','expires_in','message','error','output','provider','mode','reason','credential_kind','code','refresh','last_failure']})
     })
+    components['AdminSummary']['properties']['management_bans'] = array(obj({'client_ip': STRING, 'expires_at': INT}, ['client_ip', 'expires_at']))
     components.update({
         'OperationCatalog': obj({key:{} for key in ['schema','version','operations','routes','languages','types']}, ['schema','version','operations','routes','languages','types']),
         'Verification': obj({key:{} for key in ['schema','router_version','router_commit','commit','generated_at_unix','complete','failed','skipped','areas_not_run','targets_not_run','os','arch','prepared_at','generated_at','started_at','finished_at','duration_seconds','areas','client_preparation','require_parity','overall','parity','client_filter','summary']}, ['schema','areas']),

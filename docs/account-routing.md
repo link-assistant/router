@@ -22,6 +22,8 @@ Parent identifiers are accepted from `x-parent-session-id`, `x-codex-parent-sess
 
 These endpoints require the same admin authentication as other management routes. They are available on management listeners even when metrics are disabled. Runtime changes apply to this running pool; configure the environment for changes that must survive restart. Cooldown state persists in the configured data directory.
 
+The combined listener permits management access from loopback by default. These controls also follow the shared authentication lockout policy; see [management access configuration](security/management-access.md) for remote access and recovery settings.
+
 ```sh
 curl -X PATCH "$ROUTER_URL/api/management/routing" \
   -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \

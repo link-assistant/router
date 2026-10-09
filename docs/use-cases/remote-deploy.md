@@ -13,13 +13,15 @@ Ordinary relative roots in config still resolve against the config directory;
 remote roots must ultimately be absolute.
 
 ```bash
+export TOKEN_SECRET="$(openssl rand -hex 32)"
+
 # Build the exact Router release tag on the target and deploy it.
-TOKEN_SECRET='a-long-random-secret' router deploy --server router@example.test
+router deploy --server router@example.test
 
 # Alternatively, build a target-local checkout or pull an immutable image.
-TOKEN_SECRET='a-long-random-secret' router deploy --server router@example.test \
+router deploy --server router@example.test \
   --build /srv/router-source
-TOKEN_SECRET='a-long-random-secret' router deploy --server router@example.test \
+router deploy --server router@example.test \
   --image ghcr.io/link-assistant/router:1.10.1
 
 # Observation does not create a directory, image, network, or container.
@@ -87,7 +89,7 @@ ownership label names the exact deployment root.
 ## Seeding a login
 
 ```bash
-TOKEN_SECRET='a-long-random-secret' router deploy --server deploy@203.0.113.10 \
+router deploy --server deploy@203.0.113.10 \
   --seed-credential anthropic --seed-credential codex --json
 ```
 
@@ -298,3 +300,6 @@ old backend keeps serving.
 
 The target writes these events to stderr only when `--json` is given.
 Without `--json` the output is unchanged.
+
+Management listener policy, failure lockout and forwarding-address trust are
+documented in [Management access](../security/management-access.md).

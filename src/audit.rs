@@ -148,6 +148,25 @@ impl AuditLog {
         self.path.as_deref()
     }
 
+    /// Record an IP ban without retaining any submitted credential.
+    pub fn record_management_ban(&self, ban: &crate::management_access::ManagementBan, path: &str) {
+        let Some(destination) = &self.path else {
+            return;
+        };
+        let event = serde_json::json!({
+            "phase": "management_auth_banned",
+            "time": crate::operation_context::now().to_rfc3339(),
+            "client_ip": ban.client_ip,
+            "expires_at": ban.expires_at,
+            "path": path,
+        });
+        if let Err(error) =
+            open_append_only(destination).and_then(|mut file| writeln!(file, "{event}"))
+        {
+            tracing::warn!("management ban audit write failed: {error}");
+        }
+    }
+
     /// Append one event. Failures are logged and otherwise ignored: auditing
     /// must never take the proxy down.
     pub fn record(&self, event: &AuditEvent) {
