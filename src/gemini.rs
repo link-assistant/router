@@ -557,10 +557,47 @@ async fn forward(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let gemini_request = match crate::gemini_bridge::chat_to_gemini_request_checked(&chat_body) {
+    let mut gemini_request = match crate::gemini_bridge::chat_to_gemini_request_checked(&chat_body)
+    {
         Ok(request) => request,
         Err(reason) => return bridge_request_error(surface, &reason),
     };
+    if let Err(reason) = crate::thinking::anthropic::apply_translated_suffix(
+        &mut gemini_request,
+        routing_body,
+        match shape {
+            ShapeIn::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+            ShapeIn::Responses => crate::thinking::ThinkingProtocol::OpenAIResponses,
+        },
+        crate::thinking::ThinkingProtocol::Gemini,
+    ) {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason);
+    }
+    if let Some(account) = selected_account.as_deref()
+        && let Err(reason) = crate::thinking::apply_for_account(
+            state,
+            &mut gemini_request,
+            &model,
+            crate::subscription::SubscriptionProvider::Gemini,
+            account,
+            &sub_token.base_url(crate::subscription::SubscriptionProvider::Gemini),
+            crate::thinking::ThinkingProtocol::Gemini,
+            match shape {
+                ShapeIn::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                ShapeIn::Responses => crate::thinking::ThinkingProtocol::OpenAIResponses,
+            },
+            crate::thinking::suffix_applies(
+                routing_body,
+                &requested_model,
+                match shape {
+                    ShapeIn::Chat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                    ShapeIn::Responses => crate::thinking::ThinkingProtocol::OpenAIResponses,
+                },
+            ),
+        )
+    {
+        return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason);
+    }
     let envelope = code_assist_envelope(&model, &gemini_request);
     let serialized = match serde_json::to_vec(&envelope) {
         Ok(v) => v,

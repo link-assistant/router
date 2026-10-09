@@ -303,6 +303,26 @@ async fn forward_subscription_openai_inner(
             Err(response) => return response,
         },
     };
+    if provider == SubscriptionProvider::Qwen && path.ends_with("/chat/completions") {
+        let model = routing_body
+            .get("model")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or_default();
+        if crate::thinking::suffix_applies(
+            routing_body,
+            model,
+            crate::thinking::ThinkingProtocol::Qwen,
+        ) && let Err(reason) = crate::thinking::apply_thinking(
+            &mut body,
+            routing_body,
+            model,
+            crate::thinking::ThinkingProtocol::Qwen,
+            crate::thinking::ThinkingProtocol::Qwen,
+            None,
+        ) {
+            return error_response(StatusCode::BAD_REQUEST, "invalid_request_error", &reason);
+        }
+    }
     let native_protocol = native_route
         && response_shape == SubscriptionResponseShape::Passthrough
         && entitlement == crate::client_policy::EntitlementDecision::Native;
@@ -387,6 +407,21 @@ async fn forward_subscription_openai_inner(
         body: &body,
         native_body: native_body.filter(|_| native_protocol),
         native_protocol,
+        from_thinking_suffix: crate::thinking::suffix_applies(
+            routing_body,
+            requested_model_for_policy,
+            match surface {
+                Surface::Anthropic => crate::thinking::ThinkingProtocol::Anthropic,
+                Surface::OpenAIChat
+                    if provider == SubscriptionProvider::Qwen
+                        && path.ends_with("/chat/completions") =>
+                {
+                    crate::thinking::ThinkingProtocol::Qwen
+                }
+                Surface::OpenAIChat => crate::thinking::ThinkingProtocol::OpenAIChat,
+                Surface::OpenAIResponses => crate::thinking::ThinkingProtocol::OpenAIResponses,
+            },
+        ),
         responses_mode,
         validated,
         context: routing_context,

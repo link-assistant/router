@@ -783,7 +783,7 @@ fn target_state(state: &AppState, target: &UpstreamTarget) -> AppState {
 }
 
 fn parse_create_event(bytes: &[u8]) -> Result<Value, Value> {
-    let value = serde_json::from_slice::<Value>(bytes).map_err(|_| {
+    let mut value = serde_json::from_slice::<Value>(bytes).map_err(|_| {
         websocket_error(
             StatusCode::BAD_REQUEST,
             "invalid_request_error",
@@ -803,6 +803,20 @@ fn parse_create_event(bytes: &[u8]) -> Result<Value, Value> {
             stream_id(&value).as_deref(),
         ));
     }
+    crate::thinking::normalize_request(
+        &mut value,
+        crate::thinking::ThinkingProtocol::OpenAIResponses,
+    )
+    .map_err(|reason| {
+        websocket_error(
+            StatusCode::BAD_REQUEST,
+            "invalid_request_error",
+            "invalid_websocket_event",
+            &reason,
+            Some("model"),
+            stream_id(&value).as_deref(),
+        )
+    })?;
     Ok(value)
 }
 

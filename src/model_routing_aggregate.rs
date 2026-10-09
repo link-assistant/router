@@ -73,7 +73,7 @@ pub(super) fn project_catalog(
     Ok(Value::Object(projected))
 }
 
-fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
+pub(super) fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     let service = service(raw);
     let owner = raw
         .get("owned_by")
@@ -153,7 +153,7 @@ fn project_model(raw: &Map<String, Value>, id: &str) -> Map<String, Value> {
     projected
 }
 
-const CAPABILITY_FIELDS: [&str; 8] = [
+const CAPABILITY_FIELDS: [&str; 9] = [
     "context_window",
     "max_output_tokens",
     "modalities",
@@ -162,6 +162,7 @@ const CAPABILITY_FIELDS: [&str; 8] = [
     "default_reasoning_level",
     "supported_reasoning_levels",
     "client_capabilities",
+    "thinking",
 ];
 
 fn capability_source_kind(raw: &Map<String, Value>) -> &'static str {
@@ -202,6 +203,13 @@ fn capability_source_kind(raw: &Map<String, Value>) -> &'static str {
 }
 
 fn project_capability_fields(raw: &Map<String, Value>, projected: &mut Map<String, Value>) {
+    if let Some(thinking) = raw.get("thinking").filter(|value| value.is_object())
+        && serde_json::from_value::<crate::thinking::ThinkingSupport>(thinking.clone())
+            .is_ok_and(|support| support.has_facts())
+    {
+        projected.insert("thinking".into(), thinking.clone());
+    }
+
     copy_first_number(
         raw,
         projected,

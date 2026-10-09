@@ -4,6 +4,7 @@ use axum::body::Body;
 use axum::extract::{OriginalUri, Request, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
+pub(crate) use catalog_contract::thinking_model_truth;
 use serde_json::{Value, json};
 
 use crate::app_state::AppState;

@@ -465,13 +465,23 @@ async fn forward_native(
     state: &AppState,
     headers: &HeaderMap,
     path: &str,
-    body: Value,
+    mut body: Value,
 ) -> Response {
     let Some((model, streaming)) = parse_native_target(path) else {
         return native_error(
             StatusCode::NOT_FOUND,
             "expected a model :generateContent or :streamGenerateContent action",
         );
+    };
+    let from_thinking_suffix =
+        crate::thinking::suffix_applies(&body, &model, crate::thinking::ThinkingProtocol::Gemini);
+    let model = match crate::thinking::normalize_native_request(
+        &model,
+        &mut body,
+        crate::thinking::ThinkingProtocol::Gemini,
+    ) {
+        Ok(model) => model,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
     };
     let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
@@ -538,6 +548,7 @@ async fn forward_native(
             authorized_selector,
             streaming,
             body,
+            from_thinking_suffix,
             entitlement,
         },
     ))
@@ -549,13 +560,23 @@ async fn forward_native_authorized(
     state: &AppState,
     headers: &HeaderMap,
     path: &str,
-    body: Value,
+    mut body: Value,
 ) -> Response {
     let Some((model, streaming)) = parse_native_target(path) else {
         return native_error(
             StatusCode::NOT_FOUND,
             "expected a model :generateContent or :streamGenerateContent action",
         );
+    };
+    let from_thinking_suffix =
+        crate::thinking::suffix_applies(&body, &model, crate::thinking::ThinkingProtocol::Gemini);
+    let model = match crate::thinking::normalize_native_request(
+        &model,
+        &mut body,
+        crate::thinking::ThinkingProtocol::Gemini,
+    ) {
+        Ok(model) => model,
+        Err(reason) => return native_error(StatusCode::BAD_REQUEST, &reason),
     };
     let routed = match native_owner(state, headers, path, &model).await {
         Ok(routed) => routed,
@@ -570,6 +591,7 @@ async fn forward_native_authorized(
             authorized_selector: model,
             streaming,
             body,
+            from_thinking_suffix,
             entitlement: None,
         },
     ))
@@ -581,6 +603,7 @@ struct NativeRequest {
     authorized_selector: String,
     streaming: bool,
     body: Value,
+    from_thinking_suffix: bool,
     entitlement: Option<crate::client_policy::EntitlementDecision>,
 }
 
@@ -594,7 +617,8 @@ async fn forward_native_authorized_after_route(
         model,
         authorized_selector,
         streaming,
-        body,
+        mut body,
+        from_thinking_suffix,
         entitlement,
     } = request;
     if routed.state.upstream_provider == crate::config::UpstreamProvider::ZaiCodingPlan {
@@ -635,6 +659,21 @@ async fn forward_native_authorized_after_route(
         Ok(routed) => routed,
         Err(response) => return response,
     };
+    if let Err(reason) = crate::thinking::apply_for_account(
+        state,
+        &mut body,
+        &model,
+        crate::subscription::SubscriptionProvider::Gemini,
+        &routed.account,
+        &routed
+            .token
+            .base_url(crate::subscription::SubscriptionProvider::Gemini),
+        crate::thinking::ThinkingProtocol::Gemini,
+        crate::thinking::ThinkingProtocol::Gemini,
+        from_thinking_suffix,
+    ) {
+        return native_error(StatusCode::BAD_REQUEST, &reason);
+    }
     let envelope = code_assist_envelope(&model, &body);
     let serialized = match serde_json::to_vec(&envelope) {
         Ok(serialized) => serialized,

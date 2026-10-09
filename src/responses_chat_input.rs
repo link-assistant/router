@@ -97,15 +97,20 @@ pub fn try_chat_completion_to_responses(body: &Value) -> Result<Value, String> {
     }
 
     let mut out = json!({"model":model, "input":input});
+    // Preserve the established Responses default, then let explicit controls
+    // and additive suffix defaults pass through the shared pipeline.
     out["reasoning"] = body
         .get("reasoning")
         .cloned()
-        .or_else(|| {
-            body.get("reasoning_effort")
-                .cloned()
-                .map(|effort| json!({"effort":effort}))
-        })
         .unwrap_or_else(|| json!({"effort":crate::clients::DEFAULT_OPENAI_REASONING_EFFORT}));
+    crate::thinking::apply_thinking(
+        &mut out,
+        body,
+        model,
+        crate::thinking::ThinkingProtocol::OpenAIChat,
+        crate::thinking::ThinkingProtocol::OpenAIResponses,
+        None,
+    )?;
     if !instructions.is_empty() {
         out["instructions"] = Value::String(instructions.join("\n\n"));
     }

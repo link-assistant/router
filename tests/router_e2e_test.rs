@@ -891,3 +891,6 @@ mod bridge_history;
 
 #[path = "router_e2e/bridge_semantics.rs"]
 mod bridge_semantics;
+
+#[path = "router_e2e/thinking.rs"]
+mod thinking;

@@ -5,6 +5,11 @@ selected spelling is sent unchanged or the request fails locally. Fallback,
 model switching, and response substitution are disabled unless a user opts in
 to a named setting.
 
+A recognized final thinking suffix such as `exact-id(high)` is a request
+control: `exact-id` is the exact authorized, catalog-selected upstream model.
+Wrapper grants contain that base ID and do not widen to sibling models.
+Unrecognized, empty and overflowing suffixes remain literal selectors.
+
 This inventory is the checked repository audit for issues #592–#596. It also
 records which facts Router can prove and which remain unknown.
 
@@ -180,3 +185,36 @@ ROUTER_LIVE_ZAI_API_KEY=... ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 \
 Provider snapshots are evidence only when they retain source URL, endpoint,
 account, retrieval time, raw field, and exact ID. Router-authored fixtures test
 software behavior; they are never accepted as proof of a provider fact.
+
+## Thinking controls and scoped evidence
+
+The shared `src/thinking/` pipeline separates `Off`, `Auto`, `Budget(u32)` and
+six discrete effort levels. Protocol conversion tables describe request
+semantics; they do not establish model capabilities. The suffix grammar and
+precedence are documented in [thinking controls](thinking.md).
+
+Exact live catalog metadata may provide a `thinking` object with optional
+`supported`, `min_budget_tokens`, `max_budget_tokens`, `levels`, `zero_allowed`,
+`dynamic_allowed` and `adaptive` fields. Optional fields are unknown when absent.
+Existing `supported_reasoning_levels` evidence supplies only the listed efforts.
+Each field uses the same authenticated capability provenance as other catalog
+facts. It must match the exact model, provider, account, catalog endpoint and
+target protocol and explicitly have `unknown: false` and `conflict: false`.
+
+Inference checks happen after account selection and again for each retry. A
+healthy record must belong to that account and credential generation and its
+discovery endpoint must match the selected inference configuration. Gemini's
+documented public discovery endpoint is paired with its Google inference
+endpoint; a custom endpoint does not inherit Google's capability facts.
+Missing, stale, differently scoped or conflicting evidence leaves controls
+unknown and preserves caller intent. An exact `supported: false` drops amount
+controls with a debug trace; it never hides the catalog model. Supported
+suffix budgets and cross-protocol conversions are clamped to known limits;
+invalid explicit same-protocol budgets or levels fail locally.
+
+Native requests without a suffix preserve their existing controls. Thinking
+summary visibility is independent of the amount, and signed history blocks,
+thought signatures and encrypted reasoning replay retain their existing
+handling. No default reasoning is introduced by the shared pipeline; existing
+adapter defaults remain in their adapters. Synthetic upstream conformance
+models are confined to test fixtures.

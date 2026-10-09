@@ -94,16 +94,8 @@ pub(super) fn anthropic_effort(body: &Value) -> Result<Option<&'static str>, Str
             }
         }
     };
-    if let Some(thinking) = body.get("thinking").filter(|value| !value.is_null()) {
-        if effort.is_none() {
-            return Err(
-                "thinking without output_config.effort has no lossless Responses representation"
-                    .into(),
-            );
-        }
-        if thinking.get("type").and_then(Value::as_str) != Some("adaptive") {
-            return Err("only adaptive thinking can accompany translated effort".into());
-        }
+    if body.get("thinking").is_some_and(|value| !value.is_null()) {
+        return crate::thinking::anthropic::translated_effort(body);
     }
     Ok(effort)
 }

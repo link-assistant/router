@@ -50,13 +50,13 @@ pub(super) async fn relay<S>(
                     let _ = upstream.close(None).await;
                     break;
                 };
-                let Ok(message) = client_message else {
+                let Ok(mut message) = client_message else {
                     let _ = upstream.close(None).await;
                     break;
                 };
                 if let Message::Text(text) = &message {
                     let bytes = text.as_bytes();
-                    let value = match serde_json::from_slice::<Value>(bytes) {
+                    let mut value = match serde_json::from_slice::<Value>(bytes) {
                         Ok(value) if value.is_object() => value,
                         _ => {
                             let error = websocket_error(
@@ -72,6 +72,16 @@ pub(super) async fn relay<S>(
                         }
                     };
                     if value.get("type").and_then(Value::as_str) == Some("response.create") {
+                        match crate::thinking::normalize_request(&mut value, crate::thinking::ThinkingProtocol::OpenAIResponses) {
+                            Ok(true) => message = Message::Text(value.to_string().into()),
+                            Ok(false) => {},
+                            Err(reason) => {
+                                let error = websocket_error(StatusCode::BAD_REQUEST, "invalid_request_error", "invalid_thinking_config", &reason, Some("model"), None);
+                                let _ = downstream.send(Message::Text(error.to_string().into())).await;
+                                continue;
+                            }
+                        }
+
                         let lane = match validate_stream_id(&value) {
                             Ok(lane) => lane,
                             Err(error) => {
