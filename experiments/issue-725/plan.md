@@ -7,7 +7,8 @@
 - [x] Integrate adapter and routing paths while preserving body-control precedence and signature replay.
 - [x] Port all five upstream matrix families and add bounded parser property tests and routing regressions.
 - [x] Document suffix grammar and model-truth interaction; add release changelog fragment.
-- [ ] Run focused tests, all local tests, formatting, Clippy, file-size and terminology checks; preserve logs.
+- [x] Verify aggregate catalogs publish their optional thinking metadata through the strict generated contract.
+- [x] Run focused tests, all local tests, formatting, Clippy, file-size and terminology checks; preserve logs.
 - [x] Review implementation diff, confirm current main is an ancestor, commit atomic changes, push only issue-725-052105988e50.
 - [ ] Update PR #750 title/body with reproduction, tests, compatibility and any supported limits.
 - [ ] Verify latest CI timestamps/SHA, download failed logs into ci-logs, fix failures and recheck.
@@ -60,3 +61,47 @@ PR #747's management access changes merge without conflicts; README's thinking
 documentation and both module sets remain. The combined tree passes strict
 Clippy, formatting, file-size and terminology checks. Complete local suites
 will be rerun against the merged tree, including its new management tests.
+
+Final contract review reproduced the aggregate catalog rejecting its documented
+thinking metadata: `contracts::validation::http` returned `Additional properties
+are not allowed ('thinking' was unexpected)`. The new contract-inventory test
+failed before changing the generator. OpenAPI and JavaScript/Python types now
+declare the optional property; regeneration, backward compatibility and strict
+TypeScript checks pass. All five Cargo contract-inventory tests pass, including
+the new regression.
+The complete merged integration run passes 858 tests across 118 targets; this
+additional contract case brings the verified integration total to 859.
+
+The first merged unit partition passes all 472 Linux tests, and all three binary
+targets pass with no test cases. Its queued continuation was stopped before
+compilation; the other three partitions now use `--library-only` with binaries
+verified separately. This avoids recompiling production solely to link empty
+binary test targets, while preserving the same exhaustive library partitions.
+
+CI run 37878525988 was created at 2026-10-09T03:16:36Z for commit a951557,
+after its push. Linux, macOS, Windows, lint and all six companion workflows
+pass. The coverage job is the sole failure: 76610 / 88360 lines, 86.702128%,
+below the 86.756772% baseline. The full preserved workflow log reports that at
+`ci-logs/pipeline-37878525988.log:25236`; the job log reports it at
+`ci-logs/coverage-37878525988-113661394773.log:8439`.
+The downloaded LCOV report identifies missed native-control removal, legacy
+reasoning-level facts, snake-case Gemini controls, native URL selectors and
+Anthropic output-limit paths. Ten request-based tests now cover these behaviors;
+all 21 focused request cases pass locally; a fresh CI measurement is pending.
+The coverage floor, tolerance and exception policy remain unchanged.
+
+The second and third merged unit partitions pass all 560 and 521 tests.
+All 15 documentation tests and the independent library consumer pass.
+The last 624-test partition reached the finite compiler memory bound before
+running tests. Its two exhaustive eight-way subsets pass 220 and 404 tests;
+all 2177 Linux unit cases are now verified. The contract regression and ten
+additional thinking cases bring the integration total to 869 across 118 targets.
+Strict Clippy and Rust documentation, formatting, vendor fixtures, file-size,
+terminology, release-workflow and workflow-tool checks pass. All fourteen
+automation script suites pass, including the release fixture in its temporary
+repository. Logs remain in the ignored `ci-logs/` directory.
+
+Main subsequently published release 6656dc142fde87acf35e67072df5bae49144f33b
+(v1.19.0). Its diff contains version metadata and the consumed management
+changelog fragment only. It will be merged after the current checks finish,
+then the version-sensitive tests and generated contracts will be verified.

@@ -22,6 +22,8 @@ selection.add_argument('--shard', type=int,
 selection.add_argument('--test-file', help='Run only a named test file after a focused change.')
 arguments.add_argument('--shards', type=int, choices=range(1, 17), default=4,
                        help='Use more finite partitions when a compiler hits the memory bound.')
+arguments.add_argument('--library-only', action='store_true',
+                       help='Omit binary targets when they are verified separately.')
 options = arguments.parse_args()
 selected = options.shard
 if selected is not None and not 0 <= selected < options.shards:
@@ -60,9 +62,11 @@ with tempfile.TemporaryDirectory(prefix='router-725-unit-') as temporary:
             count = len(sources) + 1
         subprocess.run([str(parser), str(shard), str(count), *sources], check=True)
         command = ['python3', str(root / 'experiments/issue-719/bounded-build.py'),
-                   'cargo', 'test', '--locked', '--all-features', '--lib', '--bins',
+                   'cargo', 'test', '--locked', '--all-features', '--lib',
                    '--manifest-path', str(project / 'Cargo.toml'), '--config',
                    'profile.dev.package.link-assistant-router.codegen-units=1024']
+        if not options.library_only:
+            command.append('--bins')
         result = subprocess.call(command, cwd=project, env=environment)
         if result:
             failures.append((shard, result))

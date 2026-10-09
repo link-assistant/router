@@ -39,11 +39,30 @@ normalized suffixes without checking the selected account's capability facts.
 The connection now retains its account and inference endpoint and applies the
 same catalog validator before forwarding the first and each subsequent turn.
 
+The published catalog contract initially omitted the new optional `thinking`
+metadata. `catalog-contract-reproduction.rs` and the new contract-inventory
+regression both failed with `Additional properties are not allowed ('thinking'
+was unexpected)`. The generator now declares that optional property, and the
+OpenAPI document and JavaScript/Python types are regenerated. The regression
+also checks that an unrelated undocumented model property is still rejected.
+
+CI's first complete merged run passed all platform tests but measured
+86.702128% line coverage against the 86.756772% baseline. The downloaded
+LCOV report identified missed native-control removal, legacy reasoning-level
+facts, snake-case Gemini controls, native URL selectors and Anthropic output
+limits. Additional request-based regressions cover these paths.
+Inspect a report from the matching source revision with:
+
+```console
+python3 experiments/issue-725/coverage-gaps.py /path/to/lcov.info
+```
+
 Run the reproductions and conformance cases with:
 
 ```console
 cargo test --locked --test thinking_pipeline_test --test thinking_parser_test \
-  --test thinking_matrix_test --test thinking_evidence_test --test router_e2e_test
+  --test thinking_matrix_test --test thinking_evidence_test --test router_e2e_test \
+  --test contract_inventory_test
 ```
 
 To regenerate the five upstream fixtures from the pinned checkout:
@@ -93,3 +112,6 @@ this mode keeps all production code and shared fixtures in the temporary copy.
 If a partition reaches the finite memory bound, `--shards 8 --shard 3` and
 `--shards 8 --shard 7` together cover the original four-way partition 3.
 `run-integrations.py --prebuilt` is an investigation mode, not final validation.
+Use `--library-only` when binary targets are verified separately with
+`cargo test --locked --all-features --bins`. This avoids rebuilding the
+production library for each partition solely to link binary test targets.
