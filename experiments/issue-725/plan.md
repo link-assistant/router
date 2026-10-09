@@ -284,3 +284,16 @@ contract versions and the consumed observability changelog fragment.
 Application and test source are unchanged. Merge the release metadata while
 retaining this issue's minor release trigger; version-sensitive integration,
 binding and contract checks and final CI are recorded in PR #750.
+
+The v1.22.0 tree passes strict Clippy with warnings denied (2450048 KiB
+peak), formatting, TypeScript, binding parity and backward contract
+compatibility. All 87 version-sensitive integration cases across eight
+targets and all 27 real-binary binding cases pass; generated contracts still
+match 62 operations and 232 routes.
+
+Run 37965002363's instrumented suite passes and measures 79133 / 91051
+covered lines (86.910633%). The coverage floor and ratchet pass; its log
+records the measurement at `ci-logs/coverage-3a80d38-113956392542.log:7961`
+and the reviewability error at line 7994. The downloaded matching report
+advances the baseline through the existing checker. All eight checker
+tests pass, with floors, tolerance, exception policy and discovery unchanged.
