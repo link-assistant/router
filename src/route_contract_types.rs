@@ -88,7 +88,6 @@ pub enum RouteId {
     RotateClientToken,
     Providers,
     Provider,
-    ModelDefinitions,
     Login,
     LoginSession,
     LoginCode,
@@ -171,6 +170,7 @@ pub enum RouteId {
     NativeAnthropic,
     NativeCodex,
     NativeCodexBackend,
+    ModelDefinitions,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

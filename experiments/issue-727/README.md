@@ -15,6 +15,23 @@ authentication/listeners, live account scope, exact token grants, alias
 discovery, upstream request mapping, and translated buffered and streaming
 served identity.
 
+`tests/model_catalog_compatibility_test.rs` preserves the public catalog cache's
+unwind traits and existing route-ID discriminants and ordering. These assertions
+reproduced the Rust API compatibility failures found by CI.
+
+The existing generated HTTP-client check also reproduced a Go compilation
+failure: the source document's null-only fields became invalid `nil` types.
+The strict source schema stays published separately; HTTP models describe
+request and response payloads. Verify the generated clients with:
+
+```sh
+bash scripts/generate-http-clients.sh
+bash scripts/test-http-clients.sh
+```
+
+These checks require Java, Go, PHP, Composer and Maven, compile all three clients,
+and exercise them against a running Router with HTTP contract validation enabled.
+
 This workspace has a 3 GiB compiler memory limit. The ordinary combined libtest
 target exceeded it. The existing issue #703 AST sharder enables disjoint test
 functions while preserving production code, test bodies and debug assertions.

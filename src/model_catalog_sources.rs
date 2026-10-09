@@ -181,7 +181,9 @@ struct Snapshot {
 pub struct ModelCatalogSources {
     config: OnceLock<CatalogSourcesConfig>,
     snapshot: RwLock<Snapshot>,
-    last_attempt: tokio::sync::Mutex<Option<Instant>>,
+    // Unwinding can only leave an attempted timestamp, never a partially
+    // validated definition. Preserve the public catalog cache's unwind traits.
+    last_attempt: std::panic::AssertUnwindSafe<tokio::sync::Mutex<Option<Instant>>>,
 }
 
 impl ModelCatalogSources {
