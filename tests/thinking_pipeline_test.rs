@@ -62,3 +62,32 @@ fn chat_to_responses_preserves_summary_choice_independently_of_effort() {
         assert_eq!(body["reasoning"], json!({"effort":"low","summary":summary}));
     }
 }
+
+#[test]
+fn anthropic_budget_keeps_explicit_output_limit_and_historical_output_headroom() {
+    let request = serde_json::from_value(json!({
+        "model":"claude-sonnet-4-5(8192)",
+        "messages":[{"role":"user","content":"hi"}],
+        "max_tokens":6000,"temperature":0.4,"top_p":0.5
+    }))
+    .unwrap();
+    let body = openai::chat_completion_to_anthropic(&request);
+    assert_eq!(body["model"], "claude-sonnet-4-5");
+    assert_eq!(body["max_tokens"], 6000);
+    assert_eq!(
+        body["thinking"],
+        json!({"type":"enabled","budget_tokens":1904})
+    );
+    assert!(body.get("temperature").is_none());
+    assert!(body.get("top_p").is_none());
+}
+
+#[test]
+fn anthropic_adaptive_max_keeps_the_historical_chat_xhigh_mapping() {
+    let body = anthropic_bridge::anthropic_to_chat_request(
+        &json!({"messages":[{"role":"user","content":"hi"}],
+            "thinking":{"type":"adaptive"},"output_config":{"effort":"max"}}),
+        "exact-model",
+    );
+    assert_eq!(body["reasoning_effort"], "xhigh");
+}
