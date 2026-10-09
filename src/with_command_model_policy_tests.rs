@@ -29,6 +29,16 @@ fn model(id: &str, owner: &str) -> RouterModel {
 }
 
 #[test]
+fn thinking_suffix_grants_only_the_exact_base_model() {
+    let parsed = request(&args(&["--model", "exact-model(high)", "codex"])).unwrap();
+    assert_eq!(parsed.requested_policy.allowed_models, ["exact-model"]);
+    assert!(!parsed.requested_policy.permits("exact-model-sibling"));
+    let forwarded = request(&args(&["codex", "--model", "exact-model(8192)"])).unwrap();
+    assert_eq!(forwarded.requested_policy.allowed_models, ["exact-model"]);
+    assert_eq!(forwarded.forwarded.as_deref(), Some("exact-model(8192)"));
+}
+
+#[test]
 fn request_rejects_conflicts_widening_without_a_selector_and_empty_ids() {
     let conflict = args(&["--model", "wrapper", "codex", "--model", "client"]);
     let error = request(&conflict)

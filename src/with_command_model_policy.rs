@@ -42,10 +42,18 @@ pub(super) fn request(args: &WithArgs) -> Result<ModelRequest, AnyError> {
     let mut allowed_models = args
         .model
         .iter()
-        .cloned()
-        .chain(forwarded.iter().cloned())
+        .map(|model| crate::thinking::base_model(model).to_string())
+        .chain(
+            forwarded
+                .iter()
+                .map(|model| crate::thinking::base_model(model).to_string()),
+        )
         .collect::<Vec<_>>();
-    allowed_models.extend(args.allowed_models.iter().cloned());
+    allowed_models.extend(
+        args.allowed_models
+            .iter()
+            .map(|model| crate::thinking::base_model(model).to_string()),
+    );
     allowed_models.sort();
     allowed_models.dedup();
     let requested_policy = ModelAccessPolicy {
@@ -104,8 +112,12 @@ pub(super) async fn prepare(
             .iter()
             .any(|allowed| allowed == selected)
     {
-        let mut allowed_models = vec![selected.to_string()];
-        allowed_models.extend(args.allowed_models.iter().cloned());
+        let mut allowed_models = vec![crate::thinking::base_model(selected).to_string()];
+        allowed_models.extend(
+            args.allowed_models
+                .iter()
+                .map(|model| crate::thinking::base_model(model).to_string()),
+        );
         allowed_models.sort();
         allowed_models.dedup();
         let pinned = ModelAccessPolicy {
@@ -194,8 +206,10 @@ fn validate_selection(
 ) -> Result<(), AnyError> {
     if let Some(model) = selected
         && args.client == ClientKind::ClaudeCode
-        && let Some(unavailable) =
-            super::unavailable_native_claude_model(model, credential.models())
+        && let Some(unavailable) = super::unavailable_native_claude_model(
+            crate::thinking::base_model(model),
+            credential.models(),
+        )
     {
         return Err(format!(
             "Claude model `{unavailable}` requires an Anthropic provider, but this client's authorized live catalog contains none; choose a visible exact model with --model or configure Anthropic"
@@ -206,7 +220,11 @@ fn validate_selection(
         crate::managed_server::ensure_model_available(credential, args.client, allowed)?;
     }
     if let Some(model) = selected {
-        crate::managed_server::ensure_model_available(credential, args.client, model)?;
+        crate::managed_server::ensure_model_available(
+            credential,
+            args.client,
+            crate::thinking::base_model(model),
+        )?;
     }
     Ok(())
 }
@@ -233,14 +251,16 @@ fn launch_diagnostic(
     forwarded: Option<&str>,
     policy: &ModelAccessPolicy,
 ) -> serde_json::Value {
-    let advertised = selected.and_then(|selected| {
-        credential.models().iter().find(|model| {
-            model.id == selected
-                || selected
-                    .strip_suffix("[1m]")
-                    .is_some_and(|base| model.id == base)
-        })
-    });
+    let advertised = selected
+        .map(crate::thinking::base_model)
+        .and_then(|selected| {
+            credential.models().iter().find(|model| {
+                model.id == selected
+                    || selected
+                        .strip_suffix("[1m]")
+                        .is_some_and(|base| model.id == base)
+            })
+        });
     let request_source = if args.model.is_some() {
         "with --model"
     } else if forwarded.is_some() {
@@ -303,7 +323,9 @@ fn launch_diagnostic(
                 .map(str::to_string)
                 .collect(),
         },
-        upstream_request_model: selected.map(str::to_string),
+        upstream_request_model: selected
+            .map(crate::thinking::base_model)
+            .map(str::to_string),
         upstream_served_model: None,
         capabilities,
         capability_provenance: advertised.map_or(serde_json::Value::Null, |model| {

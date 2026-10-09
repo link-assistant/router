@@ -86,6 +86,8 @@ pub async fn send(
             },
             attempt > 1,
             scope.state.max_proxy_request_bytes,
+            &scope,
+            &selected,
         )?;
         if attempt > 1 {
             request.headers_mut().insert(
@@ -306,6 +308,8 @@ fn prepare(
     model: &str,
     moved: bool,
     limit: usize,
+    scope: &crate::account_policy_scope::PolicyRequest,
+    selected: &crate::accounts::SelectedSubscriptionAccount,
 ) -> Result<(), UpstreamSendError> {
     let Some(bytes) = request.body().and_then(reqwest::Body::as_bytes) else {
         return Ok(());
@@ -342,6 +346,15 @@ fn prepare(
     if moved {
         crate::pool_failover::strip_anthropic_thinking(&mut body);
         crate::pool_failover::strip_codex_encrypted_reasoning(&mut body);
+        crate::thinking::policy::revalidate(scope, selected, &mut body, model).map_err(
+            |reason| {
+                *scope
+                    .thinking_error
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(reason.clone());
+                UpstreamSendError::Egress(reason)
+            },
+        )?;
     }
     if original == body {
         return Ok(());

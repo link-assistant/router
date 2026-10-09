@@ -370,7 +370,7 @@ fn anthropic_effort_maps_to_codex_without_default_overwrite() {
 
     for body in [
         json!({"messages": [{"role": "user", "content": "answer"}], "output_config": {"effort": "extreme"}}),
-        json!({"messages": [{"role": "user", "content": "answer"}], "thinking": {"type": "enabled", "budget_tokens": 2048}}),
+        json!({"messages": [{"role": "user", "content": "answer"}], "thinking": {"type": "enabled", "budget_tokens": -2}}),
     ] {
         assert!(validate_anthropic_request(&body, BridgeTarget::Responses).is_err());
     }

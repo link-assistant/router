@@ -398,6 +398,7 @@
           "selector_kind": {},
           "service": {},
           "supported_reasoning_levels": {},
+          "thinking": {},
           "variant_of": {}
         },
         "required": [

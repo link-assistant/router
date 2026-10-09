@@ -160,6 +160,7 @@ pub mod subscription_proxy;
 pub mod subscription_usage;
 pub mod subscription_usage_cli;
 pub mod telegram;
+pub mod thinking;
 pub mod tls;
 pub mod tls_cli;
 pub mod token;
