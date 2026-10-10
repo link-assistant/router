@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { load } from './helpers.mjs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { load, repository, temporary } from './helpers.mjs';
 
 const { translateSource } = await load('tools/translation/translate.mjs');
+const { regenerate } = await load('tools/translation/bulk.mjs');
 const { translateJavaScript, parseMeta, emitTypeScript, analyzeJavaScript } = await load('tools/translation/js-to-rust/translator.mjs');
 const { evaluate } = await load('tools/translation/js-to-rust/interpreter.mjs');
 const moduleFor = source => import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
@@ -27,6 +30,27 @@ test('forward carried functions and their callers are absent from the executable
   assert.equal(Object.hasOwn(translated, 'dependent'), false);
   assert.equal(result.ir.runtimeParity, false);
   assert.ok(result.ir.items.find(item => item.name === 'unsafe_io').diagnostic);
+});
+
+test('bulk regeneration detects source and artifact drift before changed behavior is accepted', async t => {
+  const root = await temporary(t);
+  await mkdir(join(root, 'src'));
+  await mkdir(join(root, 'tools/translation'), { recursive: true });
+  await mkdir(join(root, 'parity'));
+  for (const file of ['translate.mjs', 'rust-structure.mjs', 'bulk.mjs']) await writeFile(join(root, 'tools/translation', file), await readFile(join(repository, 'tools/translation', file)));
+  const source = join(root, 'src/fixture.rs');
+  const artifact = join(root, 'packages/javascript/generated/rust-draft/src/fixture.mjs');
+  await writeFile(source, 'pub fn observed() -> u8 { 5 }');
+  regenerate({ root, sources: ['src/fixture.rs'] });
+  assert.deepEqual(regenerate({ root, sources: ['src/fixture.rs'], check: true }).failures, []);
+  assert.equal((await moduleFor(await readFile(artifact, 'utf8'))).translated.observed(), 5n);
+  await writeFile(source, 'pub fn observed() -> u8 { 7 }');
+  assert.ok(regenerate({ root, sources: ['src/fixture.rs'], check: true }).failures.some(failure => failure.startsWith('stale:')));
+  regenerate({ root, sources: ['src/fixture.rs'] });
+  assert.equal((await moduleFor(await readFile(artifact, 'utf8'))).translated.observed(), 7n);
+  await writeFile(artifact, 'export const translated = { observed: () => 0n };');
+  assert.ok(regenerate({ root, sources: ['src/fixture.rs'], check: true }).failures.some(failure => failure.includes('fixture.mjs')));
+  assert.throws(() => regenerate({ root, sources: ['../outside.rs'] }), /repository relative/);
 });
 
 const reverseFixture = `
@@ -68,4 +92,10 @@ test('reverse source capabilities and dependent unsupported calls fail before pr
   ]) assert.throws(() => translateJavaScript(source), error => error.name === 'TranslationError' && typeof error.diagnostic?.message === 'string');
   const result = analyzeJavaScript('/** @param {number} a @returns {number} */ export function bad(a) { return missing(a); }\n/** @param {number} a @returns {number} */ export function caller(a) { return bad(a); }');
   assert.throws(() => evaluate(result.program, 'caller', [1]), /unknown function/);
+});
+
+test('serialized meta rejects duplicate definitions and undeclared references before emission', () => {
+  const meta = translateJavaScript('/** @param {number} value @returns {number} */ export function copy(value) { return value; }').meta;
+  assert.throws(() => parseMeta(meta + meta), /duplicate/i);
+  assert.throws(() => parseMeta(meta.replace('(variable value)', '(variable missing)')));
 });

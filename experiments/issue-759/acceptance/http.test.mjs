@@ -90,6 +90,43 @@ test('429 fails over before bytes reach the client and settles a single request'
   assert.equal((await runtime.tokens.get(runtime.token.id)).used_tokens, 5);
 });
 
+test('chat to Messages bridge preserves system text, tool identity, arguments and usage over HTTP', async t => {
+  const mock = await upstream(t, (_, response) => {
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ id: 'anthropic-fixture', type: 'message', role: 'assistant', model: 'vendor-model',
+      content: [{ type: 'text', text: 'lookup complete' }, { type: 'tool_use', id: 'call-next', name: 'lookup', input: { key: 'next' } }],
+      stop_reason: 'tool_use', stop_sequence: null, usage: { input_tokens: 3, output_tokens: 2 } }));
+  });
+  const runtime = await router(t, [{ protocol: 'anthropic', baseUrl: mock.origin, apiKey: 'anthropic-upstream-secret', model: 'vendor-model', account: 'primary' }]);
+  const input = { ...message, messages: [
+    { role: 'system', content: 'Keep tool results precise.' },
+    { role: 'user', content: 'look up x' },
+    { role: 'assistant', content: null, tool_calls: [{ id: 'call-lookup', type: 'function', function: { name: 'lookup', arguments: '{"key":"x"}' } }] },
+    { role: 'tool', tool_call_id: 'call-lookup', content: 'found x' },
+  ], tools: [{ type: 'function', function: { name: 'lookup', description: 'Lookup a key', parameters: { type: 'object', properties: { key: { type: 'string' } } } } }] };
+  const response = await runtime.request('/v1/chat/completions', input);
+  assert.equal(response.status, 200, await response.clone().text());
+  const output = await response.json();
+  assert.equal(output.choices[0].message.content, 'lookup complete');
+  assert.equal(output.choices[0].finish_reason, 'tool_calls');
+  assert.equal(output.choices[0].message.tool_calls[0].id, 'call-next');
+  assert.equal(output.choices[0].message.tool_calls[0].function.name, 'lookup');
+  assert.deepEqual(JSON.parse(output.choices[0].message.tool_calls[0].function.arguments), { key: 'next' });
+  const observed = mock.requests[0];
+  assert.equal(observed.path, '/v1/messages');
+  assert.equal(observed.headers.authorization, undefined);
+  assert.equal(observed.headers['x-api-key'], 'anthropic-upstream-secret');
+  assert.equal(observed.headers['anthropic-version'], '2023-06-01');
+  const body = JSON.parse(observed.body);
+  assert.equal(body.system, 'Keep tool results precise.');
+  assert.equal(body.messages[1].content[0].type, 'tool_use');
+  assert.equal(body.messages[1].content[0].id, 'call-lookup');
+  assert.deepEqual(body.messages[1].content[0].input, { key: 'x' });
+  assert.equal(body.messages[2].content[0].type, 'tool_result');
+  assert.equal(body.messages[2].content[0].tool_use_id, 'call-lookup');
+  assert.equal((await runtime.tokens.get(runtime.token.id)).used_tokens, 5);
+});
+
 test('same-dialect SSE survives network chunk boundaries and records usage once', async t => {
   const data = 'data: ' + JSON.stringify({ id: 'stream-fixture', choices: [{ delta: { content: 'hé🙂' }, finish_reason: null }] }) + '\n\n' +
     'data: ' + JSON.stringify({ id: 'stream-fixture', choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 3, completion_tokens: 2, total_tokens: 5 } }) + '\n\ndata: [DONE]\n\n';

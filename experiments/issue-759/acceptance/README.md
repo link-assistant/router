@@ -36,7 +36,10 @@ Forward translator cases execute generated JavaScript and require checked
 fixed-width overflow errors. Carried Rust and its dependants must remain absent
 from the executable interface. Reverse cases compare authored results with the
 checked serialized meta evaluator, including NaN, signed zero, UTF-16 length and
-loops. They also reject executable source capabilities and unsupported syntax.
+loops. They also reject executable source capabilities, unsupported syntax,
+duplicate meta definitions and undeclared references. A bounded regeneration
+fixture executes a source behavior change, detects stale output, and rejects a
+tampered artifact that substitutes a constant stub for the generated behavior.
 Generated Rust execution remains the separate fixture runner's responsibility
 on gated CI; the reverse tests here do not claim that the Rust target ran.
 
