@@ -127,14 +127,31 @@ export function translateSource(source, path = 'input.rs') {
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
   const tokens = tokenize(runtime, 'JavaScript').tokens;
   const annotations = [];
+  const helperTypes = {
+    ml_natSub: ['bigint', 'bigint'],
+    ml_fixed: ['bigint', 'bigint', 'bigint', 'string'],
+    ml_divide: ['bigint', 'bigint', 'string', 'string | null', 'boolean', '[bigint, bigint, string] | null'],
+    ml_toNatChecked: ['bigint', 'string'],
+    ml_abort: ['string'],
+    ml_assert: ['boolean', 'string'],
+    ml_showNumber: ['number'],
+    ml_at: ['any[]', 'number | bigint'],
+    ml_forall: ['any[]', '(value: any) => boolean'],
+  };
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function' || tokens[at + 2]?.value !== '(') continue;
-    const known = parameterTypes.get(tokens[at + 1].value);
+    const name = tokens[at + 1].value;
+    const known = parameterTypes.get(name);
+    const helper = helperTypes[name];
     let index = 0;
     for (let parameter = at + 3; tokens[parameter]?.value !== ')'; parameter++) {
       if (tokens[parameter].kind !== 'identifier') continue;
-      annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type) : 'any'}` });
+      annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type) : helper?.[index] ?? 'any'}` });
       index++;
+    }
+    if (name === 'ml_abort') {
+      const close = tokens.find((token, index) => index > at + 2 && token.value === ')');
+      annotations.push({ offset: close.end, text: ': never' });
     }
   }
   let typedRuntime = runtime;

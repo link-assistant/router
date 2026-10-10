@@ -1,6 +1,6 @@
 // Generated draft from src/zai_coding_plan.rs; sha256=47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

@@ -1,6 +1,6 @@
 // Generated draft from src/gonka.rs; sha256=e88edf7455de0af62be89883df2ca5063a60aa59591f22ee75f73dec6e3a15b9
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

@@ -1,6 +1,6 @@
 // Generated draft from src/stream_termination.rs; sha256=96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

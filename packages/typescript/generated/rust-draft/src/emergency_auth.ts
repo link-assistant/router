@@ -1,6 +1,6 @@
 // Generated draft from src/emergency_auth.rs; sha256=ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

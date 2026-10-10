@@ -1,6 +1,6 @@
 // Generated draft from src/pool_stream_limits.rs; sha256=91d5cc85d35e14675b3dd72fabfedf3a8ac4d441453c5c2665df52c83fcb92eb
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

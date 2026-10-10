@@ -66,6 +66,12 @@ test('TypeScript annotations never rewrite function-like source string data', as
   assert.equal((await load(result.javascript)).translated.TEXT, 'function misleading(value)');
 });
 
+test('TypeScript integer division helpers retain BigInt arithmetic types', () => {
+  const result = translateSource('pub fn quotient(value: i64, divisor: i64) -> i64 { value / divisor } pub fn abort() -> u64 { panic!("stop") }');
+  assert.match(result.typescript, /function ml_divide\(a: bigint, b: bigint, rounding: string, zero: string \| null, remainder: boolean, bounds: \[bigint, bigint, string\] \| null\)/u);
+  assert.match(result.typescript, /function ml_abort\(message: string\): never/u);
+});
+
 test('raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries', () => {
   const source = '/* outside /* inside */ tail */\nconst TEXT: &str = r###"} ; \\" raw"###;\nfn plain() -> bool { true }\nconst C: char = \'\\u{1f600}\';\n// café 😀\n';
   const result = translateSource(source);

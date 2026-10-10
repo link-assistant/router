@@ -1,6 +1,6 @@
 // Generated draft from src/deploy_local/data_backup.rs; sha256=346c71e03279c446d37df23dfc7d9b1651ef614eb69d53f61de617763d09138e
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }

@@ -1,6 +1,6 @@
 // Generated draft from docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs; sha256=7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: any, min: any, max: any, message: any) {
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
 }
@@ -8,7 +8,7 @@ function ml_fixed(value: any, min: any, max: any, message: any) {
 // Integer division with the source's rounding; by zero it aborts with the message `zero`
 // or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
 // out of [min, max] aborts with `overflow`, the remainder too.
-function ml_divide(a: any, b: any, rounding: any, zero: any, remainder: any, bounds: any) {
+function ml_divide(a: bigint, b: bigint, rounding: string, zero: string | null, remainder: boolean, bounds: [bigint, bigint, string] | null) {
   if (b === 0n) {
     if (zero !== null) throw new RangeError(zero);
     return remainder ? a : 0n;
