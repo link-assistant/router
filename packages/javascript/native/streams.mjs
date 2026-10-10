@@ -133,7 +133,10 @@ export function translateStream(body, source, target, model, { clock = Date.now,
       else {
         if (messageItem) { out += responses('response.output_text.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, text: state.text }); const item = { id: messageItem.id, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] }; out += responses('response.content_part.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: item.content[0] }); out += responses('response.output_item.done', { output_index: messageItem.output_index, item }); }
         for (const r of toolMap.values()) { out += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments }); out += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: 'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } }); }
-        const type = state.finish === 'length' ? 'response.incomplete' : 'response.completed'; out += responses(type, { response: canonicalResponse(state, target, model, now) });
+        const type = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response = canonicalResponse(state, target, model, now);
+        const order = new Map([...toolMap.values()].map(r => [`fc_${r.tool.id}`, r.output_index])); if (messageItem) order.set(messageItem.id, messageItem.output_index);
+        response.output.sort((a, b) => order.get(a.id) - order.get(b.id));
+        out += responses(type, { response });
       }
       finished = true;
     }

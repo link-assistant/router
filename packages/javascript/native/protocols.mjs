@@ -150,7 +150,9 @@ export function normalizeUsage(usage = {}, protocol = 'chat') {
   const cached = usage.cache_read_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? 0;
   const created = usage.cache_creation_input_tokens ?? 0;
   const input = rawInput + (protocol === 'anthropic' ? cached + created : 0);
-  return { input, output, cached, created, total: usage.total_tokens ?? input + output };
+  const normalized = { input, output, cached, created, total: usage.total_tokens ?? input + output };
+  if (Object.values(normalized).some(value => !Number.isSafeInteger(value) || value < 0)) throw new ProtocolError('Upstream returned invalid token usage', 502);
+  return normalized;
 }
 export function responseToCanonical(body, protocol) {
   const result = { id: body.id, model: body.model, text: '', tools: [], usage: normalizeUsage(body.usage, protocol), finish: 'stop' };
@@ -196,5 +198,6 @@ export function canonicalResponse(r, protocol, model = r.model, now = Date.now()
   return { id: id.startsWith('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status: r.finish === 'length' ? 'incomplete' : 'completed', error: null, incomplete_details: r.finish === 'length' ? { reason: 'max_output_tokens' } : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...r.tools.map(t => ({ id: `fc_${t.id}`, type: 'function_call', status: 'completed', call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
 }
 export function translateResponse(body, source, target, model, now) {
-  return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), target, model, now);
+  try { return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), target, model, now); }
+  catch (error) { if (error instanceof ProtocolError) error.status = 502; throw error; }
 }

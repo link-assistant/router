@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { timingSafeEqual } from 'node:crypto';
-import { ProtocolError, translateRequest, translateResponse } from './protocols.mjs';
+import { ProtocolError, translateRequest, translateResponse, normalizeUsage } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
@@ -164,9 +164,10 @@ export function createNativeRouter(options = {}) {
     }
     let settled = false;
     const settle = async usage => {
-      if (settled) return; settled = true;
-      if (usage) { counters.input_tokens += usage.input; counters.output_tokens += usage.output; }
+      if (settled) return;
       if (tokenId && core.tokens?.settle) await core.tokens.settle(tokenId, reserve, usage?.total ?? 0);
+      settled = true;
+      if (usage) { counters.input_tokens += usage.input; counters.output_tokens += usage.output; }
     };
     let finalError;
     try {
@@ -209,7 +210,7 @@ export function createNativeRouter(options = {}) {
         catch (error) { throw new ProtocolError(error.status === 413 ? 'Upstream response exceeds limit' : 'Upstream returned malformed JSON', 502); }
         finally { cleanup(); }
         const result = translateResponse(raw, protocol, source, body.model, clock());
-        const usage = responseToCanonicalUsage(raw, protocol);
+        const usage = normalizeUsage(raw.usage, protocol);
         await core.reportSuccess?.(candidate); await settle(usage);
         return json(result, response.status, headers);
       }
@@ -251,11 +252,6 @@ export function createNativeRouter(options = {}) {
     async close() { if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
   };
   return router;
-}
-function responseToCanonicalUsage(raw, protocol) {
-  // Usage parsing does not inspect content, preserving native reasoning blocks.
-  const u = raw.usage ?? {}, input = u.input_tokens ?? u.prompt_tokens ?? 0, output = u.output_tokens ?? u.completion_tokens ?? 0;
-  return { input, output, cached: u.cache_read_input_tokens ?? u.input_tokens_details?.cached_tokens ?? u.prompt_tokens_details?.cached_tokens ?? 0, total: u.total_tokens ?? input + output + (protocol === 'anthropic' ? (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) : 0) };
 }
 export async function startNativeServer(options = {}) {
   const core = options.core ?? await (await import('./core.mjs')).createRouterCore(options);

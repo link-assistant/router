@@ -130,3 +130,8 @@ test('failed listen leaves shutdown safe and permits a later retry', async t => 
   await router.close(); assert.equal(router.address, undefined);
   await router.listen({ port: 0 }); assert.ok(router.address.port);
 });
+test('malformed upstream usage cannot corrupt durable token budgets', async () => {
+  let actual;
+  const router = createNativeRouter({ core: core({ config: {}, tokens: { validate: () => ({ sub: 'id' }), admit: () => 'admitted', settle: (_id, _reserve, used) => { actual = used; } } }), fetch: async () => Response.json({ ...chat, usage: { prompt_tokens: -1, completion_tokens: 1 } }) });
+  const response = await router.fetch(request()); assert.equal(response.status, 502); assert.equal(actual, 0);
+});
