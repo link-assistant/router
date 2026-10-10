@@ -1,4 +1,4 @@
-import type { Router, Result, Invocation } from './index.js';
+import type { Router, Result, Invocation, TokenRecord, AccountRoutingPolicy } from './index.js';
 /** Native JS runtime. Defaults to native core configuration; never executes Rust. */
 export interface NativeRouterOptions {
   config?: Record<string, unknown>;
@@ -14,6 +14,7 @@ export interface NativeRouterOptions {
   serverClock?: () => number;
 }
 export class NativeRouterError extends Error {
+  constructor(message: string, options?: { code?: string; result?: Result | null; cause?: unknown });
   code: string; exitCode: number | null; stderr: string; result: Result | null;
 }
 export interface NativeRouter extends Omit<Router, 'options' | 'binaryPromise'> {}
@@ -35,12 +36,45 @@ export interface NativeHttpRouter {
   listen(options?: { host?: string; port?: number }): Promise<NativeHttpRouter>;
   close(): Promise<void>;
 }
+export interface NativeTokenOptions {
+  ttl_hours?: number;
+  label?: string;
+  account?: string;
+  scope?: '' | 'admin';
+  max_requests?: number;
+  max_tokens?: number;
+  rate_limit_per_minute?: number;
+  github_repos?: string[];
+  model_policy?: { allowed_models?: string[]; allow_substitution?: boolean; substitution_source?: string };
+}
+export interface NativeTokenManager {
+  issue(options?: NativeTokenOptions): Promise<{ token: string; id: string; record: TokenRecord }>;
+  list(): Promise<TokenRecord[]>;
+  get(id: string): Promise<TokenRecord | null>;
+  validate(token: string, options?: { admin?: boolean; model?: string; repository?: string }): Promise<Record<string, unknown>>;
+  revoke(id: string): Promise<boolean>;
+  expire(id: string): Promise<TokenRecord>;
+  rotate(id: string, options?: NativeTokenOptions): Promise<{ token: string; id: string; record: TokenRecord }>;
+  admit(id: string, reserve?: number): Promise<string>;
+  settle(id: string, reserved?: number, used?: number): Promise<void>;
+}
 export class RouterCore {
   constructor(options: NativeRouterOptions & { config: Record<string, unknown> });
   config: Record<string, unknown>;
+  tokens: NativeTokenManager;
+  listProviders(): Promise<Array<Record<string, unknown>>>;
+  showProvider(name: string): Promise<Record<string, unknown> | null>;
+  upsertProvider(provider: Record<string, unknown>): Promise<Record<string, unknown>>;
+  removeProvider(name: string): Promise<boolean>;
+  listAccounts(): Promise<Array<Record<string, unknown>>>;
+  accountAction(name: string, action: 'pause' | 'resume' | 'policy', body?: AccountRoutingPolicy | Record<string, unknown>): Promise<Record<string, unknown>>;
+  resetCooldowns(): Promise<{ cleared: number }>;
+  resetCooldown(name: string, model?: string): Promise<{ cleared: number }>;
   models(): Promise<Array<Record<string, unknown>>>;
   candidates(context?: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
   route(context?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  reportFailure(candidate: Record<string, unknown>, details: Record<string, unknown>): Promise<string>;
+  reportSuccess(candidate: Record<string, unknown>): Promise<void>;
 }
 export function createRouterCore(options?: NativeRouterOptions): Promise<RouterCore>;
 export function createNativeServerRouter(options: NativeRouterOptions & { core: unknown }): NativeHttpRouter;
