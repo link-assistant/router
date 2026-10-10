@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNativeRouter } from '../../../packages/javascript/native/server.mjs';
-import { ResponsesStore } from '../../../packages/javascript/native/responses.mjs';
+import { ResponsesStore, normalizeResponseInput } from '../../../packages/javascript/native/responses.mjs';
 
 const response = { id: 'resp_one', object: 'response', status: 'completed', model: 'alias', output: [{ id: 'msg_one', type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Hello', annotations: [] }] }], usage: { input_tokens: 2, output_tokens: 1, total_tokens: 3 } };
 const config = { token_secret: 'secret' };
@@ -96,4 +96,17 @@ test('active records cannot be evicted by capacity pressure and shutdown aborts 
   store.save('/v1', 'a', { ...response, status: 'in_progress' }, [], { abort: () => { aborted = true; } });
   assert.throws(() => store.save('/v1', 'b', { ...response, id: 'other' }, []), /storage is full/);
   assert.equal(aborted, false); store.close(); assert.equal(aborted, true); assert.equal(store.bytes, 0);
+});
+test('near-cap cancellation and failure fit precharged transition allocations', () => {
+  const active = { ...response, status: 'in_progress', error: undefined, incomplete_details: undefined };
+  const probe = new ResponsesStore(), allocation = probe.size({ namespace: '/v1', owner: 'a', input: [], response: active });
+  for (const action of ['cancel', 'fail']) {
+    let aborted = false;
+    const store = new ResponsesStore({ maxBytes: allocation, maxRecordBytes: allocation });
+    store.save('/v1', 'a', active, [], { abort: () => { aborted = true; } });
+    store[action]('/v1', 'a', active.id);
+    const record = [...store.records.values()][0]; assert.equal(store.bytes, allocation); assert.equal(record.bytes, allocation); assert.ok(store.serializedBytes(record) <= record.bytes); assert.ok(store.serializedBytes(record) <= store.maxRecordBytes);
+    assert.equal(record.response.status, action === 'cancel' ? 'cancelled' : 'failed'); assert.equal(aborted, action === 'cancel');
+  }
+  for (const body of [{}, { input: null }, { input: {} }, null]) assert.throws(() => normalizeResponseInput(body), error => error.status === 400 && /input/.test(error.message));
 });

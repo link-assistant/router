@@ -1,5 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { ProtocolError } from './protocols.mjs';
+// Precharge the maximum extra JSON for runtime-owned cancel/fail transitions.
+// The measured transition below must fit this allocation before it mutates.
+const TRANSITION_RESERVE_BYTES = 256;
 
 /** Foreground resources retained only in this runtime, with explicit bounds. */
 export class ResponsesStore {
@@ -8,7 +11,14 @@ export class ResponsesStore {
     this.clock = clock; this.ttlMs = ttlMs; this.maxRecords = maxRecords; this.maxBytes = maxBytes; this.maxRecordBytes = maxRecordBytes; this.records = new Map(); this.bytes = 0;
   }
   key(namespace, owner, id) { return JSON.stringify([namespace, owner, id]); }
-  size(record) { return 256 + Buffer.byteLength(JSON.stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
+  serializedBytes(record) { return Buffer.byteLength(JSON.stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
+  size(record) { return TRANSITION_RESERVE_BYTES + this.serializedBytes(record); }
+  transition(record, fields) {
+    const next = { ...record, response: { ...record.response, ...fields } };
+    const bytes = this.serializedBytes(next);
+    if (bytes > record.bytes || bytes > this.maxRecordBytes) throw new ProtocolError('Response transition exceeds retention allocation', 507);
+    record.response = next.response;
+  }
   sweep() {
     for (const [key, record] of this.records) if (record.expiresAt <= this.clock()) { this.records.delete(key); this.bytes -= record.bytes; record.abort?.(); }
   }
@@ -43,14 +53,14 @@ export class ResponsesStore {
   cancel(namespace, owner, id) {
     const response = this.get(namespace, owner, id), record = this.records.get(this.key(namespace, owner, id));
     if (!['in_progress', 'queued'].includes(response.status) || !record.abort) throw new ProtocolError('Only an active foreground response can be cancelled', 409);
-    record.response.status = 'cancelled'; record.response.error = null; record.response.incomplete_details = null;
+    this.transition(record, { status: 'cancelled', error: null, incomplete_details: null });
     const abort = record.abort; record.abort = undefined; abort();
     return structuredClone(record.response);
   }
   fail(namespace, owner, id) {
     const record = this.records.get(this.key(namespace, owner, id));
     if (!record || record.response.status === 'cancelled') return;
-    record.response.status = 'failed'; record.response.error = { code: 'upstream_stream_error', message: 'Upstream stream failed or ended prematurely' }; record.abort = undefined;
+    this.transition(record, { status: 'failed', error: { code: 'upstream_stream_error', message: 'Upstream stream failed or ended prematurely' } }); record.abort = undefined;
   }
   inputItems(namespace, owner, id, query = new URLSearchParams()) {
     this.get(namespace, owner, id); const record = this.records.get(this.key(namespace, owner, id));
@@ -75,6 +85,7 @@ export function responseOwner(claims, credential) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 export function normalizeResponseInput(body) {
+  if (!body || typeof body.input !== 'string' && !Array.isArray(body.input)) throw new ProtocolError('input must be a string or array');
   const input = typeof body.input === 'string' ? [{ role: 'user', content: body.input }] : body.input;
   const ids = new Set();
   return input.map(raw => {
