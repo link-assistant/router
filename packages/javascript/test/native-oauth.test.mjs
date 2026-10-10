@@ -214,3 +214,10 @@ test('catalogFor isolates pinned account aliases and exact client compatibility 
   assert.ok(pinned.some(row => row.id === 'only-one')); assert.ok(!pinned.some(row => row.id === 'only-two'));
   assert.deepEqual(await core.catalogFor({client:'claude'}),[]); assert.equal(core.accounts.cursor,0);
 });
+
+test('completing a begun PKCE object atomically consumes its persisted pending grant',async t => {
+  const home = await temporary(t), manager = new OAuthManager({clock,fetch:async()=>jsonResponse(fixture.refresh_response)});
+  const login = await ClaudeLogin.begin({home,clock,manager});
+  await login.complete('code',{validateCatalog:async()=>['model-a']});
+  await rejectCode(ClaudeLogin.resume({home,clock,manager}),'pending_login_missing');
+});

@@ -362,7 +362,7 @@ export class ClaudeLogin {
     this.home = resolve(home); this.mode = loginMode(mode); this.manager = manager; this.clock = clock;
     this.authorizeURL = validateOAuthEndpoint(authorizeURL,{allowLoopback,expected:CLAUDE_AUTHORIZE_URL});
     this.#pending = pending ?? {state:randomBytes(32).toString('base64url'),code_verifier:randomBytes(32).toString('base64url'),expires_at:clock()*1000+600000};
-    this.used = false;
+    this.used = false; this.pendingClaimed = false;
   }
   static async begin(options = {}) {
     const login = new ClaudeLogin(options);
@@ -379,7 +379,7 @@ export class ClaudeLogin {
     finally { await unlink(claimed); }
     const now = (options.clock?.() ?? Math.floor(Date.now()/1000))*1000;
     if (!pending?.state || !pending.code_verifier || !Number.isSafeInteger(pending.expires_at) || pending.expires_at <= now) throw fail('pending_login_expired','Pending Claude authorization expired');
-    return new ClaudeLogin({...options,pending});
+    const login = new ClaudeLogin({...options,pending}); login.pendingClaimed = true; return login;
   }
   authorizationURL() {
     const url = new URL(this.authorizeURL);
@@ -390,6 +390,11 @@ export class ClaudeLogin {
   }
   async complete(pasted,{dataDir = join(this.home,'.router'),validateCatalog = validateCredentialCatalog,catalogBaseURL,allowLoopback = false} = {}) {
     if (this.used) throw fail('pending_login_consumed','Claude authorization code flow already consumed');
+    if (!this.pendingClaimed) {
+      const claimed = await ClaudeLogin.resume({home:this.home,mode:this.mode,manager:this.manager,authorizeURL:this.authorizeURL,clock:this.clock,allowLoopback:this.manager.allowLoopback});
+      if (claimed.#pending.state !== this.#pending.state) throw fail('pending_login_changed','Pending Claude authorization belongs to another login');
+      this.pendingClaimed = true;
+    }
     this.used = true;
     const [code,returnedState] = String(pasted).trim().split('#');
     if (!code) throw fail('invalid_argument','Claude authorization code is empty');

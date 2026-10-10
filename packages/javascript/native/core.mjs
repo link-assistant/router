@@ -52,7 +52,8 @@ export class RouterCore {
         const kind = subscriptionProvider(account?.oauth_provider ?? account?.oauth?.provider ?? provider?.oauth?.provider ?? provider.kind);
         const key = `${kind}\0${candidate.account}\0${home}`;
         if (!this.credentialStores.has(key)) this.credentialStores.set(key,new CredentialFileStore({provider:kind,home,dataDir:this.config.data_dir,account:candidate.account,clock:this.clock}));
-        candidate.auth_type = 'oauth'; candidate.oauth_provider = kind; candidate.credential_key = key;
+        candidate.auth_type = 'oauth'; candidate.oauth_provider = kind;
+        Object.defineProperty(candidate,'credential_key',{value:key,enumerable:false});
       }
     }
     return ordered;
