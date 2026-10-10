@@ -8,7 +8,10 @@ export interface NativeRouterOptions {
   core?: unknown;
   fetch?: typeof fetch;
   authenticate?: (request: Request) => unknown | Promise<unknown>;
+  /** Core clock in Unix seconds. */
   clock?: () => number;
+  /** HTTP runtime clock in milliseconds. */
+  serverClock?: () => number;
 }
 export class NativeRouterError extends Error {
   code: string; exitCode: number | null; stderr: string; result: Result | null;

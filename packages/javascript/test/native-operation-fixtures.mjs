@@ -1,17 +1,17 @@
 /** Executable parity evidence. A fixture passes only after asserting observed behavior. */
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, mkdir, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NativeRouter, catalog, validateNativeResult } from '../native/operations.mjs';
 
 export const fixtureOperations = Object.freeze([
-  'version', 'contracts', 'accounts.list', 'accounts.pause', 'accounts.resume', 'accounts.policy',
+  'version', 'contracts', 'logs.show', 'logs.summary', 'logs.anomalies', 'tls.ca', 'tls.generate', 'accounts.list', 'accounts.pause', 'accounts.resume', 'accounts.policy',
   'tokens.import', 'tokens.issue', 'tokens.list', 'tokens.show', 'tokens.revoke', 'tokens.expire', 'tokens.rotate', 'tokens.recover-admin',
   'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status',
 ]);
 export async function runOperationFixtures() {
-  const directory = await mkdtemp(join(tmpdir(), 'router-native-operation-fixtures-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'router-native-operation-fixtures-')));
   const router = new NativeRouter({ config: { token_secret: 'native-operation-fixture-secret', storage_policy: 'memory', data_dir: directory,
     providers: [], accounts: [{ name: 'fixture-account', provider: 'fixture', policy: { weight: 2 } }] }, env: {} });
   const evidence = new Map();
@@ -85,6 +85,17 @@ export async function runOperationFixtures() {
       assert.equal(health.status, 200);
     });
     await record('auth.status', {}, data => { assert.equal(data.api_key_providers[0].name, 'fixture'); assert.ok(data.output[0].includes('not implemented')); });
+    const requests = join(directory, 'requests', 'fixture'); await mkdir(requests, { recursive: true });
+    const logPath = join(requests, 'requests.jsonl');
+    await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 200 }) + '\n');
+    await record('logs.summary', {}, data => { assert.equal(data.exchanges, 1); assert.equal(data.records, 1); });
+    await record('logs.show', { correlationId: 'operation-log' }, data => { assert.equal(data.records[0].status, 200); });
+    await record('logs.anomalies', {}, data => { assert.deepEqual(data, []); });
+    await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 429 }) + '\n');
+    const anomalies = await router.execute('logs.anomalies');
+    assert.equal(anomalies.success, false); assert.equal(anomalies.exit_code, 1); assert.ok(anomalies.data.some(item => item.kind === 'rate_limited'));
+    await record('tls.generate', { dns: 'native-fixture.local' }, data => { assert.ok(data.output[0].endsWith('/tls/cert.pem')); });
+    await record('tls.ca', {}, data => { assert.ok(data.output.join('\n').includes('BEGIN CERTIFICATE')); });
     await record('doctor', {}, data => { assert.equal(data.status, 'partial'); assert.ok(data.checks.some(check => check.state === 'unverified')); });
     // Unsupported commands must fail closed with a complete versioned contract.
     for (const operation of catalog.operations.filter(operation => !fixtureOperations.includes(operation.name))) {

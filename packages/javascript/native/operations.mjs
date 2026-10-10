@@ -1,6 +1,7 @@
 /** Native operation dispatcher. This module never resolves or spawns a Rust executable. */
 import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 
 export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));
@@ -35,6 +36,7 @@ export function operationResult(name, data, diagnostics = [], exitCode = 0) {
 const output = (...lines) => ({ output: lines });
 const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };
 export const nativeOperationSupport = Object.freeze({
+  ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])),
   version: 'implemented', contracts: 'implemented',
   'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
   'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
@@ -104,6 +106,10 @@ async function dispatch(router, name, options, invocation) {
   if (name === 'contracts') { localOnly(options); return catalog; }
   if (!nativeOperationSupport[name]) unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
   const core = await runtimeFor(router);
+  if (supportedResourceOperations[name]) {
+    localOnly(options, name.startsWith('logs.') ? ['correlation_id', 'token'] : name === 'tls.generate' ? ['dns'] : []);
+    return executeResourceOperation({ name, options, invocation, core, config: core.config });
+  }
   if (name === 'accounts.list') {
     localOnly(options); return { accounts: (await core.accounts.list()).map(account => ({
       name: account.name, healthy: account.healthy ?? !account.paused,
@@ -308,7 +314,7 @@ export class NativeRouter {
     return result;
   }
   async runtime() {
-    this.serverPromise ??= Promise.all([runtimeFor(this), import('./server.mjs')]).then(([core, { createNativeRouter }]) => createNativeRouter({ ...this.options, core }));
+    this.serverPromise ??= Promise.all([runtimeFor(this), import('./server.mjs')]).then(([core, { createNativeRouter }]) => createNativeRouter({ ...this.options, core, clock: this.options.serverClock ?? Date.now }));
     return this.serverPromise;
   }
   async fetch(request) { return (await this.runtime()).fetch(request); }

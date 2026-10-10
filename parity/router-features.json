@@ -478,52 +478,67 @@
     {
       "id": "operation:logs.anomalies",
       "operation": "logs.anomalies",
-      "status": "unsupported",
+      "status": "partial",
       "implementation": [
-        "packages/javascript/native/operations.mjs"
+        "packages/javascript/native/operations.mjs",
+        "packages/javascript/native/resources.mjs"
       ],
       "evidence": [
         {
           "file": "packages/javascript/test/native-operation-fixtures.mjs",
-          "fixture": "unsupported:logs.anomalies"
+          "fixture": "operation:logs.anomalies"
+        },
+        {
+          "file": "packages/javascript/test/native-resource-fixtures.mjs",
+          "fixture": "resource-logs-anomalies-nonzero"
         }
       ],
       "gaps": [
-        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+        "Local resource subset; remote management unavailable; logs have bounded file/read limits and Node20 zstd fails closed; TLS generation requires openssl"
       ]
     },
     {
       "id": "operation:logs.show",
       "operation": "logs.show",
-      "status": "unsupported",
+      "status": "partial",
       "implementation": [
-        "packages/javascript/native/operations.mjs"
+        "packages/javascript/native/operations.mjs",
+        "packages/javascript/native/resources.mjs"
       ],
       "evidence": [
         {
           "file": "packages/javascript/test/native-operation-fixtures.mjs",
-          "fixture": "unsupported:logs.show"
+          "fixture": "operation:logs.show"
+        },
+        {
+          "file": "packages/javascript/test/native-resource-fixtures.mjs",
+          "fixture": "resource-logs-show-percent-and-arrays"
         }
       ],
       "gaps": [
-        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+        "Local resource subset; remote management unavailable; logs have bounded file/read limits and Node20 zstd fails closed; TLS generation requires openssl"
       ]
     },
     {
       "id": "operation:logs.summary",
       "operation": "logs.summary",
-      "status": "unsupported",
+      "status": "partial",
       "implementation": [
-        "packages/javascript/native/operations.mjs"
+        "packages/javascript/native/operations.mjs",
+        "packages/javascript/native/resources.mjs"
       ],
       "evidence": [
         {
           "file": "packages/javascript/test/native-operation-fixtures.mjs",
-          "fixture": "unsupported:logs.summary"
+          "fixture": "operation:logs.summary"
+        },
+        {
+          "file": "packages/javascript/test/native-resource-fixtures.mjs",
+          "fixture": "resource-logs-summary-formats"
         }
       ],
       "gaps": [
-        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+        "Local resource subset; remote management unavailable; logs have bounded file/read limits and Node20 zstd fails closed; TLS generation requires openssl"
       ]
     },
     {
@@ -767,35 +782,45 @@
     {
       "id": "operation:tls.ca",
       "operation": "tls.ca",
-      "status": "unsupported",
+      "status": "partial",
       "implementation": [
-        "packages/javascript/native/operations.mjs"
+        "packages/javascript/native/operations.mjs",
+        "packages/javascript/native/resources.mjs"
       ],
       "evidence": [
         {
           "file": "packages/javascript/test/native-operation-fixtures.mjs",
-          "fixture": "unsupported:tls.ca"
+          "fixture": "operation:tls.ca"
+        },
+        {
+          "file": "packages/javascript/test/native-resource-fixtures.mjs",
+          "fixture": "resource-tls-ca"
         }
       ],
       "gaps": [
-        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+        "Local resource subset; remote management unavailable; logs have bounded file/read limits and Node20 zstd fails closed; TLS generation requires openssl"
       ]
     },
     {
       "id": "operation:tls.generate",
       "operation": "tls.generate",
-      "status": "unsupported",
+      "status": "partial",
       "implementation": [
-        "packages/javascript/native/operations.mjs"
+        "packages/javascript/native/operations.mjs",
+        "packages/javascript/native/resources.mjs"
       ],
       "evidence": [
         {
           "file": "packages/javascript/test/native-operation-fixtures.mjs",
-          "fixture": "unsupported:tls.generate"
+          "fixture": "operation:tls.generate"
+        },
+        {
+          "file": "packages/javascript/test/native-resource-fixtures.mjs",
+          "fixture": "resource-tls-generate-reuse"
         }
       ],
       "gaps": [
-        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+        "Local resource subset; remote management unavailable; logs have bounded file/read limits and Node20 zstd fails closed; TLS generation requires openssl"
       ]
     },
     {
