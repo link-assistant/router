@@ -5928,4 +5928,4 @@ export function resolveBinary(options?: RouterOptions): Promise<string>;
 export function validateOperation(name: string, result: unknown): Result;
 export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;
 
-export { NativeRouter, NativeRouterError, createNativeRouter } from './native.d.ts';
+export { NativeRouter, NativeRouterError, createNativeRouter } from './native.js';
