@@ -463,6 +463,7 @@ jobs:
           temporary_root="$(mktemp -d)"
           trap 'rm -rf "$temporary_root"' EXIT
           for attempt in {1..20}; do
+            echo "Wrapper sweep attempt $attempt/20"
             TMPDIR="$temporary_root" cargo test --locked --all-features --lib with_command -- --nocapture
           done
 
@@ -475,6 +476,7 @@ jobs:
         run: |
           csrutil status || true
           for attempt in 1 2 3 4 5; do
+            echo "Active-client safety attempt $attempt/5"
             cargo test --locked --all-features --test clients_active_profile_test
             cargo test --locked --all-features --test clients_active_profile_test -- --test-threads=1
           done

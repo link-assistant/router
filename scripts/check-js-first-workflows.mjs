@@ -49,7 +49,7 @@ export function auditWorkflows(sources) {
       lint: ['node scripts/lint-js-first.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
       'node-tests': ['npm run native:test --prefix packages/javascript'],
       'bun-tests': ['npm run native:test:bun --prefix packages/javascript'],
-      typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node scripts/build-js-first-ui.mjs'],
+      typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
       translation: ['node scripts/translate-router.mjs --check', 'node --test tools/translation/test/*.test.mjs'],
       'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test tools/translation/js-to-rust/test/*.test.mjs'],
@@ -65,6 +65,7 @@ export function auditWorkflows(sources) {
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }
+      if (['bun-tests', 'typescript'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.3')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
       if (!(job?.steps ?? []).some(step => step.uses?.startsWith('actions/checkout@'))) errors.push(`${gateName}/${id}: immutable checkout missing`);
     }
     const aggregate = gate.jobs?.complete;

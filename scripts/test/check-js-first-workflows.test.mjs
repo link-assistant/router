@@ -72,3 +72,10 @@ test('duplicate YAML keys are rejected rather than choosing a convenient one', (
   const sources = { ...baseline, 'bypass.yml': 'name: Bad\non: push\njobs:\n  hidden:\n    runs-on: ubuntu-latest\njobs:\n  hidden:\n    runs-on: ubuntu-latest\n' };
   assert.ok(auditWorkflows(sources).some(error => error.includes('Map keys must be unique')));
 });
+
+test('Bun runtime is required for both native JavaScript and compiled TypeScript', () => {
+  for (const id of ['bun-tests', 'typescript']) {
+    fails('javascript-first.yml', workflow => { workflow.jobs[id].steps = workflow.jobs[id].steps.filter(step => !step.uses?.startsWith('oven-sh/setup-bun@')); }, 'pinned Bun runtime');
+    fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).with['bun-version'] = 'latest'; }, 'pinned Bun runtime');
+  }
+});
