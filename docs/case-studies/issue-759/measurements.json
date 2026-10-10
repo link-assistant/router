@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "measurementScope": "Issue 759 archive compression and filesystem observations only",
+  "archiveCompressionProbe": {
+    "reportedBy": "root agent; decoded hashes independently matched by root",
+    "sourceArchivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.xz",
+    "rawDecodedBytes": 37901923,
+    "gzipBytes": 9535246,
+    "xzBytes": 457960,
+    "xzPreset": 6,
+    "compressionSeconds": 9.619,
+    "decodedSha256": "1653ae218d7845db0985ab627e9c1e6f55a6b56cb6428a675710b39f2de035ef",
+    "originalGzipArchivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.gz",
+    "provenance": "Canonical retained XZ archive; original gzip alias was recompressed. Raw decoded size and SHA-256 were independently verified by root."
+  },
+  "filesystemObservations": [
+    {
+      "observedDateUtc": "2026-10-10",
+      "observedAtUtc": null,
+      "source": "Initial user disk warning",
+      "approximateFreeGiB": 18,
+      "reportedUsedPercent": 96
+    },
+    {
+      "observedAtUtc": "2026-10-10T19:58:46Z",
+      "source": "Research agent df observation",
+      "approximateFreeGiB": 29,
+      "reportedUsedPercent": 94
+    }
+  ],
+  "caseDirectoryObservations": {
+    "path": "docs/case-studies/issue-759",
+    "approximateEarlierMiB": 421,
+    "approximateLatestMiB": 330,
+    "collectionStatus": "Ongoing archive collection and recompression; these are snapshots, not final totals.",
+    "exactObservationTimesUtc": null
+  },
+  "caseEvidenceBudgetBytes": 500000000,
+  "typicalFeaturePeakRssBytes": null,
+  "typicalFeaturePeakTargetDiskBytes": null,
+  "limitations": [
+    "These observations measure archive storage and filesystem free space, not typical feature development peak RSS, build target disk, CI cost or feedback latency.",
+    "The increase in reported free space cannot be attributed solely to task compression: root temporary-file cleanup and other filesystem activity were not isolated.",
+    "The collector's final per-file compression ledger will provide richer provenance and final archive totals.",
+    "The 500 MB hard evidence budget and restrictions on full clones, local Rust builds and cleanup of existing user caches remain in force."
+  ]
+}
