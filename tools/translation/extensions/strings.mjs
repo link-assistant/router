@@ -131,7 +131,10 @@ class StringRustParser extends RustParser {
       if (['while', 'loop', 'for'].includes(token.value)) throw unsupported(`${token.value} loop`, 'mutable iteration is outside the pure subset', token);
       const expr = this.expr(path, { statement: true });
       if (c.eat(';')) {
-        if (expr.k === 'abort') { tail = expr; continue; }
+        if (expr.k === 'abort') {
+          if (!c.is('}')) throw unsupported('nonterminal abort', 'control flow after an abort remains carried', expr.span);
+          tail = expr; continue;
+        }
         throw unsupported('expression statement', 'effects are outside the pure subset', expr.span);
       }
       tail = expr;

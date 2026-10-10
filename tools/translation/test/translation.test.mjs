@@ -54,6 +54,7 @@ test('bounded generic lowering rejects non-exhaustiveness, mutation, closures an
     'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| x + 1).collect() }',
     'fn bad(v: u64) -> u64 { if v > 0 { return v; } 0 }',
     'fn bad() -> u64 { None.unwrap_or(1) }',
+    'fn bad() -> u64 { panic!("must abort"); 7 }',
   ];
   for (const source of sources) {
     const result = translateSource(source);
