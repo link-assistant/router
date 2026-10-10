@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Execute native evidence and validate the entire declared Rust/OpenAPI scope. */
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, readdir } from 'node:fs/promises';
 import { resolve, relative, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
@@ -89,6 +89,10 @@ for (const feature of manifest.features ?? []) {
 for (const operation of expected) if (!operations.has(operation)) errors.push(`Missing operation inventory: ${operation}`);
 for (const route of expectedRoutes) if (!routes.has(route)) errors.push(`Missing OpenAPI route inventory: ${route}`);
 for (const id of mandatory) if (!ids.has(id)) errors.push(`Missing native feature inventory: ${id}`);
+const coveredNative = new Set((manifest.features ?? []).flatMap(feature => feature.implementation ?? []));
+for (const name of await readdir(resolve(root, 'packages/javascript/native'))) {
+  if (name.endsWith('.mjs') && !coveredNative.has(`packages/javascript/native/${name}`)) errors.push(`Native module missing feature/evidence references: ${name}`);
+}
 let translation;
 try {
   if (manifest.translation_inventory !== 'parity/rust-source-inventory.json') throw new Error('Canonical Rust source inventory reference is required');
@@ -99,8 +103,9 @@ try {
     if (!tracked.has(source.source) || seen.has(source.source)) throw new Error(`Unknown/duplicate Rust source: ${source.source}`);
     seen.add(source.source);
     const bytes = await readFile(await localFile(source.source));
-    if (createHash('sha256').update(bytes).digest('hex') !== source.sha256) throw new Error(`Stale Rust source hash: ${source.source}`);
+    if (bytes.length !== source.bytes || createHash('sha256').update(bytes).digest('hex') !== source.sha256) throw new Error(`Stale Rust source hash: ${source.source}`);
     const meta = JSON.parse(await readFile(await localFile(source.targets.meta), 'utf8'));
+    if (meta.sourcePath !== source.source || meta.sourceSha256 !== source.sha256 || meta.sourceBytes !== source.bytes) throw new Error(`Translation metadata source mismatch: ${source.source}`);
     for (const kind of ['executable','carried','preserved']) {
       const count = meta.items.filter(item => item.status === kind).length;
       if (source[kind] !== count || meta.counts[kind] !== count) throw new Error(`Invalid translation ${kind} count: ${source.source}`);
