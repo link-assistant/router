@@ -90,7 +90,11 @@ function argumentsFor(operation, options) {
     const values = Array.isArray(value) ? value : [value];
     if (option.positional) { positional.push([operation.options.indexOf(option), values]); continue; }
     if (!option.flag) throw new RouterError(`No CLI flag for ${name}`, { code: 'options' });
-    if (option.boolean) { if (value === true) flags.push('--' + option.flag); else if (value !== false) throw new RouterError(`${name} must be boolean`, { code: 'options' }); }
+    if (option.boolean) {
+      if (typeof value !== 'boolean') throw new RouterError(`${name} must be boolean`, { code: 'options' });
+      if (option.boolean_value) flags.push(`--${option.flag}=${value}`);
+      else if (value) flags.push('--' + option.flag);
+    }
     else for (const item of values) flags.push('--' + option.flag, String(item));
   }
   positional.sort((a, b) => a[0] - b[0]);

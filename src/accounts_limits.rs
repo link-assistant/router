@@ -101,19 +101,15 @@ impl AccountRouter {
         let Some(dir) = self.inner.state_dir.as_deref() else {
             return;
         };
-        let now = now_unix();
         for (name, state) in crate::account_limits::load(dir, self.provider().as_str()) {
             let Some(index) = self.account_index(&name) else {
                 continue;
             };
-            if let Some(until) = state.cooldown_until_unix {
-                self.start_cooldown_until(index, until, now);
-            }
             *self.inner.accounts[index].limits() = state;
         }
     }
 
-    fn persist_limits(&self) {
+    pub(super) fn persist_limits(&self) {
         let Some(dir) = self.inner.state_dir.as_deref() else {
             return;
         };
@@ -134,30 +130,14 @@ impl AccountRouter {
         crate::account_limits::save(dir, self.provider().as_str(), &accounts);
     }
 
-    /// Cool an account until a vendor reset time. Unlike `Retry-After`, a
-    /// reset may be days away (a weekly window), so this is bounded by
-    /// [`crate::account_limits::MAX_VENDOR_COOLDOWN`] rather than one day.
-    fn start_cooldown_until(&self, index: usize, until_unix: u64, now: u64) {
-        let seconds = until_unix
-            .saturating_sub(now)
-            .min(crate::account_limits::MAX_VENDOR_COOLDOWN.as_secs());
-        let mut guard = self.inner.accounts[index]
-            .cooldown_until
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let proposed = Instant::now() + Duration::from_secs(seconds);
-        if guard.is_none_or(|current| current < proposed) {
-            *guard = Some(proposed);
-        }
-    }
-
     /// Apply what one upstream response said about its account.
     ///
     /// - A `429` cools the account (or one model on it — see
     ///   [`crate::account_limits::classify_scope`]) until the longest rejected
     ///   window resets. Without a usable reset the existing
-    ///   `Retry-After`/default cooldown applies. A response that was served
-    ///   never cools its account, whatever its windows say: an account drawing
+    ///   `Retry-After`/default cooldown applies. Authentication failures cool the
+    ///   entire credential. A served response never cools its account from
+    ///   window headers alone: an account drawing
     ///   on paid overage reports `rejected` on answers it still gives.
     /// - Utilization readings drive `ACCOUNT_PAUSE_AT_PERCENT`.
     ///
@@ -179,7 +159,7 @@ impl AccountRouter {
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 == Some(crate::account_routing_policy::ErrorAction::Relay)
         });
-        let rejected = observed.status == 429
+        let rejected = matches!(observed.status, 401 | 403 | 429)
             && !relayed
             && !self.inner.accounts[index]
                 .policy()
@@ -193,36 +173,41 @@ impl AccountRouter {
             }
         }
         if rejected {
-            let until = crate::account_limits::rejected_until(&limits, now);
-            match crate::account_limits::classify_scope(&limits, observed.body, observed.model) {
+            let fallback = observed
+                .retry_after
+                .map(crate::request_routing::bounded_retry_after)
+                .map_or(self.inner.cooldown, |retry| retry.max(self.inner.cooldown))
+                .min(self.inner.max_cooldown);
+            let until = crate::account_limits::rejected_until(&limits, now)
+                .unwrap_or_else(|| now.saturating_add(fallback.as_secs()))
+                .min(now.saturating_add(self.inner.max_cooldown.as_secs()));
+            let scope = if matches!(observed.status, 401 | 403) {
+                LimitScope::Credential
+            } else {
+                crate::account_limits::classify_scope(&limits, observed.body, observed.model)
+            };
+            match scope {
                 LimitScope::Model(key) => {
-                    let fallback = observed
-                        .retry_after
-                        .map(crate::request_routing::bounded_retry_after)
-                        .map_or(self.inner.cooldown, |retry| retry.max(self.inner.cooldown));
-                    let until = until.unwrap_or_else(|| now.saturating_add(fallback.as_secs()));
                     self.inner.accounts[index].limits().cool_model(&key, until);
                     self.record_error(index, &format!("upstream rate-limited model {key}"));
                     outcome.model_cooldown = Some(key);
                 }
                 LimitScope::Credential => {
-                    if let Some(until) = until {
-                        let reason = "vendor rate-limit window rejected";
-                        self.inner.accounts[index]
-                            .limits()
-                            .cool_credential(until, reason);
-                        self.record_error(index, reason);
-                        self.start_cooldown_until(index, until, now);
-                    } else {
-                        self.report_failure_with_retry_after(
-                            observed.account,
-                            &format!("upstream returned {}", observed.status),
-                            observed.retry_after,
-                        );
-                    }
+                    let reason = format!("upstream returned {}", observed.status);
+                    self.inner.accounts[index]
+                        .limits()
+                        .cool_credential(until, &reason);
+                    self.record_error(index, &reason);
                     outcome.credential_cooldown = true;
                 }
             }
+            tracing::debug!(
+                account = observed.account,
+                model = observed.model,
+                until,
+                credential_cooldown = outcome.credential_cooldown,
+                "observed upstream cooldown"
+            );
         }
         outcome.paused = self.apply_threshold(index, &limits.windows, now);
         let readings_due = !limits.windows.is_empty()
@@ -349,7 +334,8 @@ impl AccountRouter {
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .is_some_and(|until| until > Instant::now());
-            counts.cooling_down += usize::from(cooling);
+            counts.cooling_down +=
+                usize::from(cooling || state.cooldown_until_unix.is_some_and(|until| until > now));
             counts.paused += usize::from(state.paused_at(now));
             counts.model_cooldowns += state.model_cooldowns.len();
         }

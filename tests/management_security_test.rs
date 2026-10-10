@@ -146,6 +146,70 @@ fn config() -> link_assistant_router::config::Config {
 }
 
 #[tokio::test]
+async fn routing_controls_honor_remote_access_policy_and_shared_auth_lockouts() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut config = config();
+    let controls = [
+        (
+            "PATCH",
+            "/api/management/routing",
+            r#"{"strategy":"round-robin"}"#,
+        ),
+        ("POST", "/api/management/routing/cooldown/reset", "{}"),
+    ];
+    let control_request = |ip: &str, method: &str, path: &str, body: &'static str, valid| {
+        let mut req = request(ip, path, valid);
+        *req.method_mut() = method.parse().unwrap();
+        req.headers_mut()
+            .insert("content-type", "application/json".parse().unwrap());
+        *req.body_mut() = Body::from(body);
+        req
+    };
+    let app = link_assistant_router::server_router::router(setup(dir.path()), &config);
+    for (method, path, body) in controls {
+        for (ip, expected) in [
+            ("198.51.100.10", StatusCode::FORBIDDEN),
+            ("127.0.0.1", StatusCode::CONFLICT),
+        ] {
+            let response = app
+                .clone()
+                .oneshot(control_request(ip, method, path, body, true))
+                .await
+                .unwrap();
+            assert_eq!(response.status(), expected, "{method} {path} from {ip}");
+        }
+    }
+    config.management.allow_remote = true;
+    config.management.lockout_failures = 2;
+    // Management policy is selected once at startup; opt-in needs a fresh state.
+    let app = link_assistant_router::server_router::router(setup(dir.path()), &config);
+    for (index, (method, path, body)) in controls.into_iter().enumerate() {
+        let response = app
+            .clone()
+            .oneshot(control_request("198.51.100.10", method, path, body, false))
+            .await
+            .unwrap();
+        assert_eq!(
+            response.status(),
+            if index == 0 {
+                StatusCode::UNAUTHORIZED
+            } else {
+                StatusCode::TOO_MANY_REQUESTS
+            }
+        );
+    }
+    for (method, path, body) in controls {
+        let response = app
+            .clone()
+            .oneshot(control_request("198.51.100.10", method, path, body, true))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(response.headers()["retry-after"], "1800");
+    }
+}
+
+#[tokio::test]
 async fn remote_opt_in_still_requires_admin_and_missing_peer_fails_closed() {
     let dir = tempfile::tempdir().unwrap();
     let mut config = config();

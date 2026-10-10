@@ -19,6 +19,8 @@ mod native;
 use native::NATIVE_ROUTES;
 #[path = "route_contract_observability.rs"]
 mod observability;
+#[path = "route_contract_routing.rs"]
+mod routing;
 
 const COMBINED_AND_INFERENCE: &[ListenerKind] =
     &[ListenerKind::Combined, ListenerKind::InferenceOnly];
@@ -167,11 +169,7 @@ const ROUTES: &[RouteSpec] = &[
         RouteMethod::Get,
         "/api/management/providers",
     ),
-    management(
-        RouteId::ModelDefinitions,
-        RouteMethod::Get,
-        "/api/management/routing/model-definitions/{channel}",
-    ),
+    routing::MODEL_DEFINITIONS,
     management(
         RouteId::Providers,
         RouteMethod::Post,
@@ -907,6 +905,7 @@ pub fn route_specs() -> &'static [RouteSpec] {
             .iter()
             .chain(NATIVE_ROUTES.iter())
             .chain(observability::ROUTES.iter())
+            .chain(routing::ROUTES.iter())
             .copied()
             .collect()
     })

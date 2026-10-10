@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -17,6 +17,7 @@ use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use axum::routing::{get, post};
+use futures_util::StreamExt as _;
 use link_assistant_router::account_http::AccountHttpPolicy;
 use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions, SelectionStrategy};
 use link_assistant_router::app_state::AppState;
@@ -53,6 +54,12 @@ enum Reply {
     Cut { reset: bool },
     /// A redirect to `location` (issue #669).
     Redirect { status: u16, location: String },
+    /// A recorded error/event body, including an empty or interrupted stream.
+    Recorded {
+        status: u16,
+        body: String,
+        reset: bool,
+    },
 }
 
 impl Reply {
@@ -157,6 +164,24 @@ async fn vendor(State(vendor): State<Vendor>, request: Request) -> Response {
         .or_else(|| vendor.always.lock().unwrap().get(&account).cloned())
         .unwrap_or(Reply::Ok);
     match reply {
+        Reply::Recorded {
+            status,
+            body,
+            reset,
+        } => {
+            let chunks =
+                futures_util::stream::iter([Ok::<_, std::io::Error>(bytes::Bytes::from(body))]);
+            let tail = futures_util::stream::iter(
+                reset.then(|| Err(std::io::Error::other("recorded disconnect"))),
+            );
+            let mut response = Response::new(Body::from_stream(chunks.chain(tail)));
+            *response.status_mut() = StatusCode::from_u16(status).unwrap();
+            response.headers_mut().insert(
+                "content-type",
+                HeaderValue::from_static("text/event-stream"),
+            );
+            response
+        }
         Reply::Status {
             status,
             headers,
@@ -355,15 +380,26 @@ impl Drop for Pool {
     }
 }
 
+/// A fixed clock for boundary tests, or one advanced by request elapsed time.
+#[derive(Clone)]
+enum Clock {
+    Frozen(Arc<AtomicU64>),
+    Advancing(u64),
+}
+
 struct Options {
     failover: bool,
     cooldown: Duration,
+    clock: Option<Clock>,
     pause_at_percent: Option<u8>,
     /// Pool Codex accounts behind the native Responses route instead of
     /// Claude accounts behind the Anthropic pass-through.
     codex: bool,
     /// Per-account connection and egress settings (issue #678).
     http: AccountHttpPolicy,
+    retry: link_assistant_router::pool_retry::RetryPolicy,
+    routing_policy: Option<link_assistant_router::account_routing_policy::AccountRoutingPolicy>,
+    observability: bool,
 }
 
 impl Default for Options {
@@ -371,9 +407,13 @@ impl Default for Options {
         Self {
             failover: true,
             cooldown: Duration::from_secs(60),
+            clock: None,
             pause_at_percent: None,
             codex: false,
             http: AccountHttpPolicy::default(),
+            retry: link_assistant_router::pool_retry::RetryPolicy::default(),
+            routing_policy: None,
+            observability: false,
         }
     }
 }
@@ -406,6 +446,7 @@ impl Pool {
             pause_at_percent: None,
             intercept_warmup: true,
             account_http: AccountHttpPolicy::default(),
+            ..Default::default()
         });
         let data = tempfile::tempdir().unwrap();
         let homes: Vec<_> = ACCOUNTS
@@ -432,6 +473,9 @@ impl Pool {
                     )
                 };
                 std::fs::write(home.join(file), credentials.to_string()).unwrap();
+                if let Some(policy) = &options.routing_policy {
+                    policy.save(&home).unwrap();
+                }
                 home
             })
             .collect();
@@ -452,6 +496,8 @@ impl Pool {
                 pause_at_percent: options.pause_at_percent,
                 state_dir: Some(data.path().to_path_buf()),
                 http: options.http.clone(),
+                retry: options.retry,
+                ..Default::default()
             },
         );
         let cache = Arc::new(TokenCache::new());
@@ -459,6 +505,10 @@ impl Pool {
 
         let vendor = Vendor::default();
         let stub = Router::new()
+            .route(
+                "/responses",
+                get(websocket_cooling::vendor_websocket).post(vendor_handler),
+            )
             .fallback(vendor_handler)
             .with_state(vendor.clone());
         let (stub_url, stub_task) = spawn(stub).await;
@@ -474,6 +524,18 @@ impl Pool {
                 ..IssueRequest::default()
             })
             .unwrap();
+        let request_log = link_assistant_router::request_log::RequestLog::new(
+            data.path().join("requests"),
+            1024 * 1024,
+        );
+        let request_log = if options.observability {
+            request_log.with_error_log(Arc::new(link_assistant_router::error_log::ErrorLog::new(
+                data.path().join("errors"),
+                1024 * 1024,
+            )))
+        } else {
+            request_log
+        };
         let state = AppState {
             client: reqwest::Client::new(),
             token_manager,
@@ -510,11 +572,10 @@ impl Pool {
             admin_key: Some(ADMIN_KEY.to_string()),
             allow_anonymous_admin: false,
             metrics: Arc::new(link_assistant_router::metrics::Metrics::default()),
-            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(None)),
-            request_log: Arc::new(link_assistant_router::request_log::RequestLog::new(
-                data.path().join("requests"),
-                1024 * 1024,
-            )),
+            audit: Arc::new(link_assistant_router::audit::AuditLog::to_path(Some(
+                data.path().join("audit.jsonl").to_str().unwrap(),
+            ))),
+            request_log: Arc::new(request_log),
             activitypub_actor_base_url: "https://router.test".to_string(),
             activitypub_public_key_pem:
                 link_assistant_router::config::default_activitypub_public_key_pem(),
@@ -525,7 +586,29 @@ impl Pool {
             github: link_assistant_router::github_proxy::GitHubProxyConfig::default(),
             max_proxy_request_bytes: link_assistant_router::proxy::MAX_PROXY_REQUEST_BYTES,
         };
+        if options.routing_policy.is_some() {
+            for account in ACCOUNTS {
+                state.model_catalogs.record_success_for_account(
+                    router.provider(),
+                    account,
+                    options.codex.then(|| format!("acct_{account}")),
+                    vec![
+                        "gpt-5".into(),
+                        "gpt-5-mini".into(),
+                        "claude-sonnet-4-5".into(),
+                    ],
+                );
+            }
+        }
         let app = Router::new()
+            .route(
+                "/api/management/routing",
+                axum::routing::patch(link_assistant_router::routing_api::update),
+            )
+            .route(
+                "/api/management/routing/cooldown/reset",
+                post(link_assistant_router::routing_api::reset),
+            )
             .route(MESSAGES, post(link_assistant_router::proxy::proxy_handler))
             .route(
                 COUNT_TOKENS,
@@ -533,7 +616,8 @@ impl Pool {
             )
             .route(
                 CODEX_RESPONSES,
-                post(link_assistant_router::proxy::openai_responses_native),
+                post(link_assistant_router::proxy::openai_responses_native)
+                    .get(link_assistant_router::responses_websocket::codex),
             )
             .route(
                 "/api/management/accounts",
@@ -552,6 +636,67 @@ impl Pool {
                 get(link_assistant_router::monitoring_api::metrics_endpoint),
             )
             .with_state(state.clone());
+        let app = if options.routing_policy.is_some() {
+            use lino_arguments::Parser as _;
+            let config = link_assistant_router::cli::Cli::try_parse_from([
+                "router",
+                "--token-secret",
+                "pool-failover-secret",
+                "--data-dir",
+                data.path().to_str().unwrap(),
+            ])
+            .unwrap()
+            .into_config()
+            .unwrap();
+            link_assistant_router::server_router::router(state.clone(), &config)
+        } else {
+            app
+        };
+        let app = if options.observability {
+            app.layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                link_assistant_router::request_log::log_http_exchange,
+            ))
+        } else {
+            app
+        };
+        let app = if let Some(clock) = options.clock {
+            app.layer(axum::middleware::from_fn(
+                move |request: Request, next: axum::middleware::Next| {
+                    let mut context =
+                        link_assistant_router::operation_context::OperationContext::default();
+                    let (initial, advance_clock) = match &clock {
+                        Clock::Frozen(clock) => (clock.load(Ordering::Relaxed), false),
+                        Clock::Advancing(now) => (*now, true),
+                    };
+                    let started = tokio::time::Instant::now();
+                    async move {
+                        let mut response = std::pin::pin!(next.run(request));
+                        // Start every request at the injected timestamp, then
+                        // advance its scoped clock as Tokio's retry sleep runs.
+                        // Cooldown expiry must not depend on the delivery of
+                        // tracing events during concurrent tests.
+                        std::future::poll_fn(|cx| {
+                            context.now = chrono::DateTime::from_timestamp(
+                                initial
+                                    .saturating_add(if advance_clock {
+                                        started.elapsed().as_secs()
+                                    } else {
+                                        0
+                                    })
+                                    .try_into()
+                                    .unwrap(),
+                                0,
+                            );
+                            context.scope(|| response.as_mut().poll(cx))
+                        })
+                        .await
+                    }
+                },
+            ))
+        } else {
+            app
+        };
         let (url, app_task) = spawn(app).await;
         Self {
             // Never follows a relayed redirect, so a test sees what the router sent.
@@ -658,5 +803,19 @@ mod cases;
 mod codex;
 #[path = "pool_failover/isolation.rs"]
 mod isolation;
+#[path = "pool_failover/model_cooling.rs"]
+mod model_cooling;
 #[path = "pool_failover/streams.rs"]
 mod streams;
+
+#[path = "pool_failover/routing_controls.rs"]
+mod routing_controls;
+
+#[path = "pool_failover/websocket_cooling.rs"]
+mod websocket_cooling;
+
+#[path = "pool_failover/account_policies.rs"]
+mod account_policies;
+
+#[path = "pool_failover/observability.rs"]
+mod observability;

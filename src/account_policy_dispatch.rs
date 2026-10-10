@@ -34,17 +34,27 @@ pub async fn send(
         selected.token.access_token = access_token.to_string();
     }
     let initial_base = selected.token.base_url(router.provider());
+    let initial_account = selected.name.clone();
     let initial_model = scope.upstream_model.clone();
     let initial_policy = router
         .routing_policy(&selected.name)
         .map_err(UpstreamSendError::Egress)?;
     let pool = crate::pool_failover::current();
-    let max_attempts = initial_policy
+    let attempts = initial_policy
         .request_retry
         .map_or_else(|| pool.max_attempts.max(1), |n| n + 1);
+    let mut budget = crate::pool_retry::RetryBudget::new(
+        Some(router),
+        scope.context.pinned_account.is_none() && initial_policy.request_retry != Some(0),
+        attempts,
+    );
+    budget.consume_rounds(scope.retry_rounds_used);
+    let max_attempts = initial_policy
+        .request_retry
+        .map_or(budget.max_attempts, |n| budget.max_attempts.min(n + 1));
     let ordinary_retry =
         router.inner_failover_enabled() || initial_policy.request_retry.is_some_and(|n| n > 0);
-    let deadline = pool.deadline(Instant::now());
+    let deadline = scope.retry_deadline;
     let mut context = scope.context.clone();
     let model = context.model.clone().unwrap_or_default();
     let mut last_response = None;
@@ -84,6 +94,7 @@ pub async fn send(
             } else {
                 &upstream_model
             },
+            selected.name != initial_account,
             attempt > 1,
             scope.state.max_proxy_request_bytes,
             &scope,
@@ -140,7 +151,53 @@ pub async fn send(
         )
         .map_err(UpstreamSendError::Egress)?;
         log.set_account(correlation, &selected.name);
-        let sending = log.send_prepared(correlation, &client, request);
+        let sending = async {
+            let response = log.send_prepared(correlation, &client, request).await?;
+            let status = response.status().as_u16();
+            let inspect = policy
+                .request_scoped_errors
+                .iter()
+                .find(|rule| rule.status == status)
+                .is_some_and(|rule| !rule.body_match.is_empty());
+            let (response, inspected) = if inspect {
+                peek(response, deadline).await
+            } else {
+                (response, Bytes::new())
+            };
+            let action = policy.error_action(status, &inspected);
+            let probe = (ordinary_retry || action == Some(ErrorAction::RetryNext))
+                && !matches!(action, Some(ErrorAction::Relay | ErrorAction::Cooldown))
+                && context.pinned_account.is_none()
+                && initial_policy.request_retry != Some(0)
+                && response.status().is_success()
+                && response
+                    .headers()
+                    .get("content-type")
+                    .and_then(|value| value.to_str().ok())
+                    .is_some_and(|value| value.contains("text/event-stream"));
+            let version = response.version();
+            let url = response.url().clone();
+            let (prepared, prefix) = crate::pool_response::PoolResponse::prepare(response, probe)
+                .await
+                .map_err(UpstreamSendError::Egress)?;
+            let response_headers = prepared.headers().clone();
+            let mut response = http::Response::builder()
+                .status(prepared.status())
+                .version(version)
+                .url(url)
+                .body(reqwest::Body::wrap_stream(prepared.bytes_stream()))
+                .expect("valid upstream status");
+            *response.headers_mut() = response_headers;
+            // The prepared stream preserves every inspected byte and transport error.
+            Ok::<(reqwest::Response, Bytes), UpstreamSendError>((
+                response.into(),
+                if inspected.is_empty() {
+                    prefix
+                } else {
+                    inspected
+                },
+            ))
+        };
         let result = if attempt == 1 {
             sending.await
         } else {
@@ -152,7 +209,7 @@ pub async fn send(
         let mut retry = ordinary_retry;
         let mut retry_reason = crate::pool_failover::RetryReason::Transport;
         match result {
-            Ok(response) => {
+            Ok((response, prefix)) => {
                 *scope
                     .selected
                     .lock()
@@ -160,16 +217,6 @@ pub async fn send(
                 let status = response.status().as_u16();
                 retry_reason = crate::pool_failover::classify_status(status)
                     .unwrap_or(crate::pool_failover::RetryReason::Transport);
-                let inspect = policy
-                    .request_scoped_errors
-                    .iter()
-                    .find(|r| r.status == status)
-                    .is_some_and(|r| !r.body_match.is_empty());
-                let (response, prefix) = if inspect {
-                    peek(response, deadline).await
-                } else {
-                    (response, Bytes::new())
-                };
                 let action = policy.error_action(status, &prefix);
                 tracing::debug!(account = %selected.name, status, ?action, attempt, max_attempts,
                     "account routing policy upstream verdict");
@@ -223,38 +270,55 @@ pub async fn send(
             break;
         }
         context.exclude.push(selected.name.clone());
-        let next = tokio::time::timeout_at(
-            tokio::time::Instant::from_std(deadline),
-            router.select_subscription_where_authoritative(
-                &context,
-                &scope.state.subscription_cache,
-                |account| {
-                    let Some(upstream) = replay_model(router, account, &model, &initial_model)
-                    else {
-                        return false;
-                    };
-                    // Preserve the validated upstream selector during replay.
-                    upstream == initial_model
-                        && crate::account_policy_catalog::permitted(
-                            &scope.model_policy,
-                            router.provider(),
-                            &upstream,
-                        )
-                        && router.serves_upstream_model(account, &upstream)
-                        && (upstream == model
-                            && scope.state.upstream_provider
-                                != crate::config::UpstreamProvider::Auto
-                            || scope
-                                .state
-                                .model_catalogs
-                                .status_for(router.provider(), account)
-                                .routable_models()
-                                .contains(&upstream))
-                },
-            ),
-        )
-        .await;
-        let Ok(Ok(mut next)) = next else {
+        if budget.round_full(&context)
+            && !budget
+                .next_round(Some(router), &mut context, deadline)
+                .await
+        {
+            break;
+        }
+        let next = loop {
+            let next = tokio::time::timeout_at(
+                tokio::time::Instant::from_std(deadline),
+                router.select_subscription_where_authoritative(
+                    &context,
+                    &scope.state.subscription_cache,
+                    |account| {
+                        let Some(upstream) = replay_model(router, account, &model, &initial_model)
+                        else {
+                            return false;
+                        };
+                        // Preserve the validated upstream selector during replay.
+                        upstream == initial_model
+                            && crate::account_policy_catalog::permitted(
+                                &scope.model_policy,
+                                router.provider(),
+                                &upstream,
+                            )
+                            && router.serves_upstream_model(account, &upstream)
+                            && (upstream == model
+                                && scope.state.upstream_provider
+                                    != crate::config::UpstreamProvider::Auto
+                                || scope
+                                    .state
+                                    .model_catalogs
+                                    .status_for(router.provider(), account)
+                                    .routable_models()
+                                    .contains(&upstream))
+                    },
+                ),
+            )
+            .await;
+            match next {
+                Ok(Ok(next)) => break Some(next),
+                Ok(Err(_))
+                    if budget
+                        .next_round(Some(router), &mut context, deadline)
+                        .await => {}
+                _ => break None,
+            }
+        };
+        let Some(mut next) = next else {
             break;
         };
         let client = router
@@ -307,6 +371,7 @@ fn prepare(
     request: &mut reqwest::Request,
     model: &str,
     moved: bool,
+    retrying: bool,
     limit: usize,
     scope: &crate::account_policy_scope::PolicyRequest,
     selected: &crate::accounts::SelectedSubscriptionAccount,
@@ -346,6 +411,8 @@ fn prepare(
     if moved {
         crate::pool_failover::strip_anthropic_thinking(&mut body);
         crate::pool_failover::strip_codex_encrypted_reasoning(&mut body);
+    }
+    if retrying {
         crate::thinking::policy::revalidate(scope, selected, &mut body, model).map_err(
             |reason| {
                 *scope

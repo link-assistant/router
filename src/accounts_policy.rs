@@ -14,7 +14,7 @@ impl AccountRouter {
     #[must_use]
     pub fn has_routing_policy(&self) -> bool {
         self.inner.force_model_prefix
-            || self.inner.strategy == SelectionStrategy::WeightedRoundRobin
+            || self.strategy() == SelectionStrategy::WeightedRoundRobin
             || self.inner.accounts.iter().any(|a| {
                 a.policy()
                     .as_ref()
@@ -136,7 +136,7 @@ impl AccountRouter {
         let Ok(policy) = account.policy().clone() else {
             return false;
         };
-        if self.inner.strategy == SelectionStrategy::WeightedRoundRobin && policy.weight <= 0 {
+        if self.strategy() == SelectionStrategy::WeightedRoundRobin && policy.weight <= 0 {
             return false;
         }
         let scoped = crate::account_policy_scope::current();
@@ -144,6 +144,14 @@ impl AccountRouter {
             .as_ref()
             .and_then(|s| s.context.model.as_deref())
             .or(context.model.as_deref());
-        model.is_none_or(|model| self.upstream_model(&account.name, model).is_some())
+        model.is_none_or(|model| {
+            self.upstream_model(&account.name, model)
+                .is_some_and(|upstream| {
+                    account.ignores_automatic_cooling()
+                        || !account
+                            .limits()
+                            .blocks_model(&upstream, crate::account_limits::now_unix())
+                })
+        })
     }
 }

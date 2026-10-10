@@ -445,6 +445,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -545,6 +546,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -575,6 +577,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -645,6 +648,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -685,6 +689,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -695,6 +750,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -1365,6 +1421,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -1465,6 +1522,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -1495,6 +1553,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -1565,6 +1624,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -1605,6 +1665,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -1615,6 +1726,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -2315,6 +2427,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -2415,6 +2528,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -2445,6 +2559,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -2515,6 +2630,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -2555,6 +2671,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -2565,6 +2732,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -3255,6 +3423,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -3355,6 +3524,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -3385,6 +3555,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -3455,6 +3626,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -3495,6 +3667,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -3505,6 +3728,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -4185,6 +4409,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -4285,6 +4510,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -4315,6 +4541,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -4385,6 +4612,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -4425,6 +4653,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -4435,6 +4714,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -5155,6 +5435,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -5255,6 +5536,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -5285,6 +5567,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -5355,6 +5638,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -5395,6 +5679,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -5405,6 +5740,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -6105,6 +6441,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -6205,6 +6542,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -6235,6 +6573,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -6305,6 +6644,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -6345,6 +6685,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -6355,6 +6746,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -7065,6 +7457,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -7165,6 +7558,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -7195,6 +7589,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -7265,6 +7660,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -7305,6 +7701,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -7315,6 +7762,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -8025,6 +8473,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -8125,6 +8574,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -8155,6 +8605,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -8225,6 +8676,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -8265,6 +8717,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -8275,6 +8778,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -9025,6 +9529,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -9125,6 +9630,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -9155,6 +9661,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -9225,6 +9732,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -9265,6 +9773,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -9275,6 +9834,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -9966,6 +10526,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -10066,6 +10627,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -10096,6 +10658,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -10166,6 +10729,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -10206,6 +10770,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -10216,6 +10831,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -10897,6 +11513,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -10997,6 +11614,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -11027,6 +11645,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -11097,6 +11716,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -11137,6 +11757,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -11147,6 +11818,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -11788,6 +12460,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -11888,6 +12561,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -11918,6 +12592,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -11988,6 +12663,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -12028,6 +12704,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -12038,6 +12765,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -12739,6 +13467,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -12839,6 +13568,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -12869,6 +13599,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -12939,6 +13670,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -12979,6 +13711,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -12989,6 +13772,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -13639,6 +14423,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -13739,6 +14524,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -13769,6 +14555,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -13839,6 +14626,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -13879,6 +14667,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -13889,6 +14728,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -14529,6 +15369,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -14629,6 +15470,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -14659,6 +15501,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -14729,6 +15572,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -14769,6 +15613,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -14779,6 +15674,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -15489,6 +16385,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -15589,6 +16486,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -15619,6 +16517,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -15689,6 +16588,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -15729,6 +16629,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -15739,6 +16690,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -16369,6 +17321,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -16469,6 +17422,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -16499,6 +17453,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -16569,6 +17524,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -16609,6 +17565,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -16619,6 +17626,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -17329,6 +18337,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -17429,6 +18438,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -17459,6 +18469,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -17529,6 +18540,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -17569,6 +18581,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -17579,6 +18642,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -18239,6 +19303,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -18339,6 +19404,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -18369,6 +19435,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -18439,6 +19506,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -18479,6 +19547,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -18489,6 +19608,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -19159,6 +20279,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -19259,6 +20380,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -19289,6 +20411,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -19359,6 +20482,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -19399,6 +20523,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -19409,6 +20584,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -20099,6 +21275,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -20199,6 +21376,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -20229,6 +21407,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -20299,6 +21478,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -20339,6 +21519,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -20349,6 +21580,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -21039,6 +22271,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -21139,6 +22372,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -21169,6 +22403,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -21239,6 +22474,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -21279,6 +22515,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -21289,6 +22576,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -21929,6 +23217,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -22029,6 +23318,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -22059,6 +23349,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -22129,6 +23420,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -22169,6 +23461,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -22179,6 +23522,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -22888,6 +24232,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -22988,6 +24333,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -23018,6 +24364,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -23088,6 +24435,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -23128,6 +24476,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -23138,6 +24537,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -23867,6 +25267,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -23967,6 +25368,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -23997,6 +25399,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -24067,6 +25470,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -24107,6 +25511,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -24117,6 +25572,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -24746,6 +26202,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -24846,6 +26303,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -24876,6 +26334,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -24946,6 +26405,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -24986,6 +26446,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -24996,6 +26507,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -25995,6 +27507,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -26095,6 +27608,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -26125,6 +27639,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -26195,6 +27710,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -26235,6 +27751,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -26245,6 +27812,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -26915,6 +28483,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -27015,6 +28584,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -27045,6 +28615,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -27115,6 +28686,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -27155,6 +28727,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -27165,6 +28788,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -27845,6 +29469,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -27945,6 +29570,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -27975,6 +29601,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -28045,6 +29672,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -28085,6 +29713,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -28095,6 +29774,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -28785,6 +30465,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -28885,6 +30566,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -28915,6 +30597,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -28985,6 +30668,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -29025,6 +30709,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -29035,6 +30770,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -29715,6 +31451,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -29815,6 +31552,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -29845,6 +31583,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -29915,6 +31654,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -29955,6 +31695,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -29965,6 +31756,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -30655,6 +32447,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -30755,6 +32548,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -30785,6 +32579,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -30855,6 +32650,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -30895,6 +32691,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -30905,6 +32752,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -31215,6 +33063,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": null,
           "flag": "enabled",
           "multiple": false,
@@ -31715,6 +33564,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -31815,6 +33665,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -31845,6 +33696,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -31915,6 +33767,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -31955,6 +33808,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -31965,6 +33869,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -32645,6 +34550,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -32745,6 +34651,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -32775,6 +34682,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -32845,6 +34753,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -32885,6 +34794,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -32895,6 +34855,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -33565,6 +35526,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -33665,6 +35627,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -33695,6 +35658,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -33765,6 +35729,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -33805,6 +35770,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -33815,6 +35831,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -34495,6 +36512,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -34595,6 +36613,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -34625,6 +36644,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -34695,6 +36715,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -34735,6 +36756,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -34745,6 +36817,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -35424,6 +37497,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -35524,6 +37598,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -35554,6 +37629,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -35624,6 +37700,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -35664,6 +37741,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -35674,6 +37802,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -36304,6 +38433,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -36404,6 +38534,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -36434,6 +38565,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -36504,6 +38636,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -36544,6 +38677,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -36554,6 +38738,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -37184,6 +39369,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -37284,6 +39470,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -37314,6 +39501,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -37384,6 +39572,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -37424,6 +39613,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -37434,6 +39674,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -38074,6 +40315,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -38174,6 +40416,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -38204,6 +40447,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -38274,6 +40518,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -38314,6 +40559,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -38324,6 +40620,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -38964,6 +41261,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -39064,6 +41362,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -39094,6 +41393,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -39164,6 +41464,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -39204,6 +41505,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -39214,6 +41566,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -39844,6 +42197,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -39944,6 +42298,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -39974,6 +42329,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -40044,6 +42400,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -40084,6 +42441,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -40094,6 +42502,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -40724,6 +43133,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -40824,6 +43234,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -40854,6 +43265,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -40924,6 +43336,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -40964,6 +43377,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -40974,6 +43438,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -41604,6 +44069,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -41704,6 +44170,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -41734,6 +44201,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -41804,6 +44272,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -41844,6 +44313,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -41854,6 +44374,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -42564,6 +45085,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -42664,6 +45186,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -42694,6 +45217,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -42764,6 +45288,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -42804,6 +45329,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -42814,6 +45390,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -43484,6 +46061,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -43584,6 +46162,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -43614,6 +46193,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -43684,6 +46264,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -43724,6 +46305,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -43734,6 +46366,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -44414,6 +47047,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -44514,6 +47148,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -44544,6 +47179,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -44614,6 +47250,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -44654,6 +47291,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -44664,6 +47352,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -45344,6 +48033,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -45444,6 +48134,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -45474,6 +48165,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -45544,6 +48236,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -45584,6 +48277,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -45594,6 +48338,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -46304,6 +49049,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -46404,6 +49150,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -46434,6 +49181,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -46504,6 +49252,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -46544,6 +49293,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -46554,6 +49354,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -47314,6 +50115,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -47414,6 +50216,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -47444,6 +50247,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -47514,6 +50318,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -47554,6 +50359,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -47564,6 +50420,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -48234,6 +51091,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -48334,6 +51192,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -48364,6 +51223,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -48434,6 +51294,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -48474,6 +51335,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -48484,6 +51396,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -49184,6 +52097,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -49284,6 +52198,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -49314,6 +52229,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -49384,6 +52300,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -49424,6 +52341,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -49434,6 +52402,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -50114,6 +53083,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -50214,6 +53184,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -50244,6 +53215,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -50314,6 +53286,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -50354,6 +53327,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -50364,6 +53388,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -51104,6 +54129,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -51204,6 +54230,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -51234,6 +54261,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -51304,6 +54332,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -51344,6 +54373,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -51354,6 +54434,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -52034,6 +55115,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -52134,6 +55216,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -52164,6 +55247,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -52234,6 +55318,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -52274,6 +55359,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -52284,6 +55420,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -53004,6 +56141,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -53104,6 +56242,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -53134,6 +56273,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -53204,6 +56344,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -53244,6 +56385,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -53254,6 +56446,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -53974,6 +57167,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -54074,6 +57268,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -54104,6 +57299,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -54174,6 +57370,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -54214,6 +57411,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -54224,6 +57472,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -54943,6 +58192,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -55043,6 +58293,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -55073,6 +58324,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -55143,6 +58395,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -55183,6 +58436,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -55193,6 +58497,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -55872,6 +59177,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -55972,6 +59278,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -56002,6 +59309,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -56072,6 +59380,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -56112,6 +59421,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -56122,6 +59482,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -56761,6 +60122,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -56861,6 +60223,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -56891,6 +60254,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -56961,6 +60325,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -57001,6 +60366,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -57011,6 +60427,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -57640,6 +61057,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INFERENCE_ONLY",
           "flag": "inference-only",
           "multiple": false,
@@ -57740,6 +61158,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_ALLOW_REMOTE",
           "flag": "management-allow-remote",
           "multiple": false,
@@ -57770,6 +61189,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK",
           "flag": "management-lockout-exempt-loopback",
           "multiple": false,
@@ -57840,6 +61260,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "ALLOW_ANONYMOUS_ADMIN",
           "flag": "allow-anonymous-admin",
           "multiple": false,
@@ -57880,6 +61301,57 @@
         },
         {
           "boolean": false,
+          "environment": "POOL_RETRY_ROUNDS",
+          "flag": "pool-retry-rounds",
+          "multiple": false,
+          "name": "pool_retry_rounds",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_CREDENTIALS",
+          "flag": "pool-max-retry-credentials",
+          "multiple": false,
+          "name": "pool_max_retry_credentials",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "POOL_MAX_RETRY_INTERVAL_SECS",
+          "flag": "pool-max-retry-interval-secs",
+          "multiple": false,
+          "name": "pool_max_retry_interval_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
+          "environment": "ACCOUNT_MAX_COOLDOWN_SECS",
+          "flag": "account-max-cooldown-secs",
+          "multiple": false,
+          "name": "account_max_cooldown_secs",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": true,
+          "boolean_value": true,
+          "environment": "SESSION_AFFINITY_SUBAGENTS",
+          "flag": "session-affinity-subagents",
+          "multiple": false,
+          "name": "session_affinity_subagents",
+          "positional": false,
+          "required": false,
+          "secret": false
+        },
+        {
+          "boolean": false,
           "environment": "ACCOUNT_PAUSE_AT_PERCENT",
           "flag": "account-pause-at-percent",
           "multiple": false,
@@ -57890,6 +61362,7 @@
         },
         {
           "boolean": true,
+          "boolean_value": true,
           "environment": "INTERCEPT_WARMUP",
           "flag": "intercept-warmup",
           "multiple": false,
@@ -61107,6 +64580,30 @@
       "method": "GET",
       "name": "LatestVersion",
       "path": "/api/management/server/latest-version"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "PATCH",
+      "name": "Routing",
+      "path": "/api/management/routing"
+    },
+    {
+      "auth": "Admin",
+      "class": "Management",
+      "dialect": "Anthropic",
+      "listeners": [
+        "Combined",
+        "Admin"
+      ],
+      "method": "POST",
+      "name": "CooldownReset",
+      "path": "/api/management/routing/cooldown/reset"
     }
   ],
   "schema": "link-assistant-router/operation-catalog/v1",
@@ -62202,6 +65699,46 @@
         "claim_id"
       ],
       "title": "ConfirmRequest",
+      "type": "object"
+    },
+    "CooldownReset": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "Scope of an administrative cooldown reset.",
+      "properties": {
+        "account": {
+          "description": "Omit to clear cooldowns throughout the pool.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "description": "With an account, clear only this model's cooldown.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "title": "CooldownReset",
+      "type": "object"
+    },
+    "CooldownResetResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Summary of a completed administrative cooldown reset.",
+      "properties": {
+        "cleared": {
+          "description": "Number of cooldown entries removed.",
+          "format": "uint",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "cleared"
+      ],
+      "title": "CooldownResetResult",
       "type": "object"
     },
     "CredentialAcceptanceReport": {
@@ -63718,6 +67255,37 @@
         }
       },
       "title": "RotateTokenRequest",
+      "type": "object"
+    },
+    "RoutingSettings": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "description": "Resolved live selection policy.",
+      "properties": {
+        "strategy": {
+          "description": "Canonical selection-strategy name.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "title": "RoutingSettings",
+      "type": "object"
+    },
+    "RoutingUpdate": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "Requested selection policy for future sessions.",
+      "properties": {
+        "strategy": {
+          "description": "Selection strategy applied to new sessions.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "title": "RoutingUpdate",
       "type": "object"
     },
     "ServerStatusReport": {

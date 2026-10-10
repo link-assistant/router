@@ -36,6 +36,7 @@ fn test_app_for_listener(
         dir,
         listener,
         SurfaceSwitches {
+            disable_metrics: false,
             features: FeatureSwitches { mpp, github },
             apis: ApiSwitches {
                 openai: true,
@@ -47,6 +48,7 @@ fn test_app_for_listener(
 
 #[derive(Clone, Copy)]
 struct SurfaceSwitches {
+    disable_metrics: bool,
     features: FeatureSwitches,
     apis: ApiSwitches,
 }
@@ -93,6 +95,9 @@ fn test_app_for_listener_with_switches(
     }
     if !switches.apis.openai {
         args.push("--disable-openai-api");
+    }
+    if switches.disable_metrics {
+        args.push("--disable-metrics");
     }
     if !switches.apis.anthropic {
         args.push("--disable-anthropic-api");
@@ -294,6 +299,7 @@ async fn service_switches_own_their_complete_namespaces() {
         directory.path(),
         ListenerKind::Combined,
         SurfaceSwitches {
+            disable_metrics: false,
             features: FeatureSwitches {
                 mpp: false,
                 github: false,
@@ -317,6 +323,7 @@ async fn service_switches_own_their_complete_namespaces() {
         directory.path(),
         ListenerKind::Combined,
         SurfaceSwitches {
+            disable_metrics: false,
             features: FeatureSwitches {
                 mpp: false,
                 github: false,
@@ -437,6 +444,8 @@ async fn inference_only_listener_has_no_management_or_private_service_routes() {
 
     for (method, path) in [
         (Method::POST, "/api/management/tokens"),
+        (Method::PATCH, "/api/management/routing"),
+        (Method::POST, "/api/management/routing/cooldown/reset"),
         (Method::GET, "/api/management/usage"),
         (Method::GET, "/api/services/github/api/v3/user"),
         (
@@ -476,6 +485,48 @@ async fn admin_listener_has_management_but_no_service_routes() {
     ] {
         let result = response(app.clone(), Method::GET, path, None, "").await;
         assert_eq!(result.status(), StatusCode::NOT_FOUND, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn routing_controls_require_admin_on_management_listeners_without_metrics() {
+    for listener in [ListenerKind::Combined, ListenerKind::Admin] {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let (app, token) = test_app_for_listener_with_switches(
+            dir.path(),
+            listener,
+            SurfaceSwitches {
+                disable_metrics: true,
+                features: FeatureSwitches {
+                    mpp: false,
+                    github: false,
+                },
+                apis: ApiSwitches {
+                    openai: true,
+                    anthropic: true,
+                },
+            },
+        );
+        for (method, path, body) in [
+            (
+                Method::PATCH,
+                "/api/management/routing",
+                r#"{"strategy":"round-robin"}"#,
+            ),
+            (Method::POST, "/api/management/routing/cooldown/reset", "{}"),
+        ] {
+            for credential in [None, Some(token.as_str())] {
+                let result = response(app.clone(), method.clone(), path, credential, body).await;
+                assert_eq!(result.status(), StatusCode::UNAUTHORIZED, "{method} {path}");
+            }
+            let result =
+                response(app.clone(), method, path, Some("network-audit-admin"), body).await;
+            assert_eq!(
+                result.status(),
+                StatusCode::CONFLICT,
+                "configured route without a pool: {path}"
+            );
+        }
     }
 }
 

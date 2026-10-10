@@ -50,9 +50,15 @@ pub struct AccountRouterOptions {
     pub strategy: SelectionStrategy,
     /// Default cooldown after an upstream quota failure.
     pub cooldown: Duration,
+    /// Maximum observed cooldown, including vendor window resets.
+    pub max_cooldown: Duration,
     /// How long an inactive session remains bound to its account. Zero disables
     /// session affinity.
     pub session_affinity_ttl: Duration,
+    /// Child sessions inherit a live parent account binding.
+    pub session_affinity_subagents: bool,
+    /// Additional pre-first-byte retry rounds.
+    pub retry: crate::pool_retry::RetryPolicy,
     /// Optional request cap for each account, ordered primary then additional.
     pub request_limits: Vec<Option<usize>>,
     /// Pre-first-byte failover is enabled (issue #676): a session whose bound
@@ -75,7 +81,10 @@ impl Default for AccountRouterOptions {
         Self {
             strategy: SelectionStrategy::default(),
             cooldown: Duration::from_secs(60),
+            max_cooldown: crate::account_limits::MAX_VENDOR_COOLDOWN,
             session_affinity_ttl: Duration::from_secs(60 * 60),
+            session_affinity_subagents: true,
+            retry: crate::pool_retry::RetryPolicy::default(),
             request_limits: Vec::new(),
             failover: false,
             pause_at_percent: None,
@@ -90,13 +99,15 @@ impl Default for AccountRouterOptions {
 pub struct RoutingContext {
     /// Conversation/session identifier detected from headers or JSON metadata.
     pub session_key: Option<String>,
+    /// Parent conversation identifier for subagent affinity.
+    pub parent_session_key: Option<String>,
     /// Explicit account selected by the router-issued caller token.
     pub pinned_account: Option<String>,
-    /// Requested model id, so a model-scoped vendor cooldown blocks only that
-    /// model on its account (issue #677).
+    /// Requested base model id, excluding recognized thinking suffixes, so a
+    /// model-scoped vendor cooldown blocks only that model on its account.
     pub model: Option<String>,
-    /// Accounts an earlier attempt of this same request already tried; a
-    /// pre-first-byte failover never returns to them (issue #676).
+    /// Accounts already tried in the current retry round. Pre-first-byte
+    /// failover returns to them only after starting an additional round.
     pub exclude: Vec<String>,
 }
 
@@ -176,7 +187,11 @@ impl AccountState {
         (policy.disable_cooling
             || (self.implicit_primary
                 && policy == crate::account_routing_policy::AccountRoutingPolicy::default())
-            || !matches!(*guard, Some(t) if t > Instant::now()))
+            || (!matches!(*guard, Some(t) if t > Instant::now())
+                && self
+                    .limits()
+                    .cooldown_until_unix
+                    .is_none_or(|until| until <= crate::account_limits::now_unix())))
             && !self.is_paused()
     }
 
@@ -284,8 +299,11 @@ struct AccountRouterInner {
     weights: Mutex<Vec<i64>>,
     force_model_prefix: bool,
     provider: SubscriptionProvider,
-    strategy: SelectionStrategy,
+    strategy: Mutex<SelectionStrategy>,
+    session_affinity_subagents: bool,
+    retry: crate::pool_retry::RetryPolicy,
     cooldown: Duration,
+    max_cooldown: Duration,
     session_affinity_ttl: Duration,
     affinities: Mutex<HashMap<String, AffinityBinding>>,
     /// Rotates failover candidates so concurrent failovers spread out.
@@ -364,7 +382,10 @@ impl AccountRouter {
         let AccountRouterOptions {
             strategy,
             cooldown,
+            max_cooldown,
             session_affinity_ttl,
+            session_affinity_subagents,
+            retry,
             request_limits,
             failover,
             pause_at_percent,
@@ -397,8 +418,11 @@ impl AccountRouter {
                 accounts,
                 cursor: AtomicUsize::new(0),
                 provider,
-                strategy,
+                strategy: Mutex::new(strategy),
+                session_affinity_subagents,
+                retry,
                 cooldown,
+                max_cooldown: max_cooldown.min(crate::account_limits::MAX_VENDOR_COOLDOWN),
                 session_affinity_ttl,
                 affinities: Mutex::new(HashMap::new()),
                 failover_cursor: AtomicUsize::new(0),
@@ -523,6 +547,17 @@ impl AccountRouter {
             .iter()
             .map(|a| {
                 let credential = a.credential_state_with(now_ms, refreshes);
+                let legacy_cooldown = a
+                    .cooldown_until
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .and_then(|t| t.checked_duration_since(Instant::now()));
+                let mut limits = a.limits().clone();
+                limits.expire(crate::account_limits::now_unix());
+                let cooldown_remaining =
+                    legacy_cooldown.max(limits.cooldown_until_unix.map(|until| {
+                        Duration::from_secs(until.saturating_sub(crate::account_limits::now_unix()))
+                    }));
                 AccountHealth {
                     name: a.name.clone(),
                     home: a.home.clone(),
@@ -538,16 +573,8 @@ impl AccountRouter {
                         .lock()
                         .unwrap_or_else(std::sync::PoisonError::into_inner)
                         .clone(),
-                    cooldown_remaining: a
-                        .cooldown_until
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner)
-                        .and_then(|t| t.checked_duration_since(Instant::now())),
-                    limits: {
-                        let mut limits = a.limits().clone();
-                        limits.expire(crate::account_limits::now_unix());
-                        limits
-                    },
+                    cooldown_remaining,
+                    limits,
                 }
             })
             .collect()
@@ -901,6 +928,8 @@ pub use limits::{LimitCounts, ObservedLimits, UpstreamObservation};
 #[path = "accounts_tests.rs"]
 mod tests;
 
+#[path = "accounts_controls.rs"]
+mod controls;
 #[path = "accounts_policy.rs"]
 mod policy;
 #[path = "accounts_selection.rs"]

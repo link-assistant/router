@@ -15,6 +15,15 @@ async function fixture(body) {
 }
 const versionProbe = `if(process.argv.includes('version')) { console.log(JSON.stringify({schema:'link-assistant-router/version/v1',operation:'version',success:true,exit_code:0,data:{version:'${version}',source_commit:'${'a'.repeat(40)}'},diagnostics:[]}));process.exit(0); }`;
 
+test('an explicit false overrides default-enabled subagent affinity', { timeout: 10_000 }, async () => {
+  const home = await temporaryHome();
+  const router = new Router({ binary, allowDownload: false, env: { ...home.env, SESSION_AFFINITY_SUBAGENTS: 'true' } });
+  try {
+    const result = await router.doctor({ local: true, sessionAffinitySubagents: false });
+    assert.match(result.data.output.join('\n'), /subagent affinity\s+: false/);
+  } finally { await home.close(); }
+});
+
 test('domain reports expose actual state changes through the official binding', { timeout: 30_000 }, async () => {
   const home = await temporaryHome();
   let accepted = true;

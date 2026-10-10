@@ -37,7 +37,7 @@ pub(super) struct Relay<'a> {
 pub(super) async fn relay(
     relay: Relay<'_>,
     status: StatusCode,
-    upstream_resp: reqwest::Response,
+    upstream_resp: crate::pool_response::PoolResponse,
 ) -> Response {
     let Relay {
         state,
@@ -186,6 +186,17 @@ pub(super) async fn relay(
             };
             Ok::<bytes::Bytes, std::io::Error>(bytes::Bytes::from(output))
         }));
+        let dialect = (codex
+            && status.is_success()
+            && crate::request_log::body_is_inspectable(&response_headers))
+        .then_some(
+            if response_shape == SubscriptionResponseShape::ChatCompletion {
+                crate::stream_termination::StreamDialect::OpenAiChat
+            } else {
+                crate::stream_termination::StreamDialect::Responses
+            },
+        );
+        let stream = crate::stream_termination::in_band_errors(stream, dialect);
         let mut response = Response::new(Body::from_stream(stream));
         *response.status_mut() = status;
         *response.headers_mut() = response_headers;

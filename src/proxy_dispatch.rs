@@ -15,8 +15,7 @@ use std::time::Instant;
 
 use axum::http::{HeaderMap, Method, StatusCode};
 use axum::response::Response;
-use bytes::{Bytes, BytesMut};
-use futures_util::StreamExt;
+use bytes::Bytes;
 use futures_util::stream::BoxStream;
 use serde_json::{Value, json};
 
@@ -26,11 +25,6 @@ use crate::accounts::{RoutingContext, UpstreamObservation};
 use crate::pool_failover::{RetryReason, classify_status};
 use crate::request_routing::ResolvedUpstreamCredential;
 use crate::subscription::SubscriptionProvider;
-use crate::upstream_client::UpstreamSendError;
-
-/// Bytes of a failed response read before deciding whether to retry it. Error
-/// bodies are small; a larger one is still relayed whole.
-const MAX_PEEKED_ERROR_BYTES: usize = 16 * 1024;
 
 /// Everything one dispatch needs from the handler.
 pub(super) struct Dispatch<'a> {
@@ -56,40 +50,13 @@ pub(super) struct UpstreamReply {
 }
 
 impl UpstreamReply {
-    fn live(response: reqwest::Response, account: Option<String>) -> Self {
+    fn prepared(response: crate::pool_response::PoolResponse, account: Option<String>) -> Self {
         Self {
-            status: StatusCode::from_u16(response.status().as_u16())
-                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+            status: response.status(),
             headers: response.headers().clone(),
             account,
-            body: response.bytes_stream().boxed(),
+            body: response.bytes_stream(),
         }
-    }
-
-    /// Read up to [`MAX_PEEKED_ERROR_BYTES`] of the body for classification,
-    /// keeping every byte for the relay.
-    async fn peeked(response: reqwest::Response, account: Option<String>) -> (Self, Bytes) {
-        let mut reply = Self::live(response, account);
-        let mut stream =
-            std::mem::replace(&mut reply.body, futures_util::stream::empty().boxed()).fuse();
-        let mut prefix = BytesMut::new();
-        let mut pending = None;
-        while prefix.len() < MAX_PEEKED_ERROR_BYTES {
-            match stream.next().await {
-                Some(Ok(chunk)) => prefix.extend_from_slice(&chunk),
-                Some(Err(error)) => {
-                    pending = Some(error);
-                    break;
-                }
-                None => break,
-            }
-        }
-        let prefix = prefix.freeze();
-        reply.body = futures_util::stream::iter([Ok(prefix.clone())])
-            .chain(futures_util::stream::iter(pending.map(Err)))
-            .chain(stream)
-            .boxed();
-        (reply, prefix)
     }
 }
 
@@ -108,30 +75,34 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
     // A token-pinned account never falls back.
     let failover = router.is_some_and(crate::accounts::AccountRouter::failover_enabled)
         && request.context.pinned_account.is_none();
-    let max_attempts = if failover {
-        policy.max_attempts.max(1)
-    } else {
-        1
-    };
+    let mut budget = crate::pool_retry::RetryBudget::new(router, failover, policy.max_attempts);
+    let max_attempts = budget.max_attempts;
     let deadline = policy.deadline(Instant::now());
     // The account whose signatures the conversation history carries.
-    let origin = router.and_then(|router| router.session_account(&request.context));
+    let mut origin = router.and_then(|router| router.session_account(&request.context));
     let mut context = request.context.clone();
     let mut last: Option<Failure> = None;
     let mut stripped: Option<Bytes> = None;
-    for attempt in 1..=max_attempts {
-        if attempt > 1 && Instant::now() >= deadline {
+    let mut attempt = 0;
+    while attempt < max_attempts {
+        if budget.round_full(&context) && !budget.next_round(router, &mut context, deadline).await {
+            break;
+        }
+        if attempt > 0 && Instant::now() >= deadline {
             log_stop(state, request.correlation_id, attempt, "budget exhausted");
             break;
         }
         let resolved =
             match resolve_upstream_credentials(state, &context, request.subscription).await {
                 Ok(resolved) => resolved,
-                Err(error) if attempt > 1 => {
-                    log_stop(state, request.correlation_id, attempt, &error.to_string());
-                    break;
-                }
                 Err(error) => {
+                    if budget.next_round(router, &mut context, deadline).await {
+                        continue;
+                    }
+                    if attempt > 0 {
+                        log_stop(state, request.correlation_id, attempt, &error.to_string());
+                        break;
+                    }
                     if let Some(error) = request.subscription.and_then(|subscription| {
                         subscription.unavailable_error(state, context.pinned_account.as_deref())
                     }) {
@@ -146,6 +117,10 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 }
             };
         let mut account = resolved.account.clone();
+        attempt += 1;
+        if origin.is_none() {
+            origin.clone_from(&account);
+        }
         state.request_log.set_account(
             request.correlation_id,
             account.as_deref().unwrap_or("primary"),
@@ -203,18 +178,33 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 account.as_deref(),
                 &state.client,
                 CookieMode::None,
-            )
-            .map_err(UpstreamSendError::Egress)?;
+            )?;
             let builder = client
                 .request(request.method.clone(), request.upstream_url)
                 .headers(headers)
                 .body(body);
-            state
+            let response = state
                 .request_log
                 .send_upstream(request.correlation_id, &client, builder)
                 .await
+                .map_err(|error| error.to_string())?;
+            crate::request_routing::record_claude_evidence(
+                state,
+                account.as_deref(),
+                resolved.evidence_token.as_ref(),
+                response.status().as_u16(),
+            )
+            .await;
+            let probe = failover
+                && response.status().is_success()
+                && response
+                    .headers()
+                    .get("content-type")
+                    .and_then(|value| value.to_str().ok())
+                    .is_some_and(|value| value.contains("text/event-stream"));
+            crate::pool_response::PoolResponse::prepare(response, probe).await
         };
-        let outcome = if attempt > 1 {
+        let outcome = if failover && attempt > 1 {
             let bounded =
                 tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), upstream_call)
                     .await;
@@ -226,7 +216,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
         } else {
             upstream_call.await
         };
-        let response = match outcome {
+        let (mut response, peeked) = match outcome {
             Ok(response) => response,
             Err(error) => {
                 tracing::error!("Upstream request failed: {error}");
@@ -241,7 +231,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                     // A vendor reply (with its Retry-After) beats a later
                     // connection failure as the answer to relay.
                     if !matches!(last, Some(Failure::Reply(_))) {
-                        last = Some(Failure::Transport(error.to_string()));
+                        last = Some(Failure::Transport(error));
                     }
                     context.exclude.extend(account);
                     continue;
@@ -249,7 +239,7 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
                 if let Some(Failure::Reply(reply)) = last {
                     return Ok(reply);
                 }
-                return Err(transport_error(&error.to_string()));
+                return Err(transport_error(&error));
             }
         };
         if crate::account_policy_scope::active() {
@@ -265,22 +255,18 @@ pub(super) async fn dispatch(request: Dispatch<'_>) -> Result<UpstreamReply, Res
             );
         }
         let retry_after = retry_after_duration(response.headers());
-        crate::request_routing::record_claude_evidence(
-            state,
-            account.as_deref(),
-            resolved.evidence_token.as_ref(),
-            status,
-        )
-        .await;
         state
             .logger
             .verbose(|| format!("Upstream responded: {status} (attempt {attempt})"));
         let reason = classify_status(status);
-        let (reply, peeked) = if status == 429 || (failover && reason.is_some()) {
-            UpstreamReply::peeked(response, account.clone()).await
-        } else {
-            (UpstreamReply::live(response, account.clone()), Bytes::new())
-        };
+        if let (Some(router), Some(name)) = (router, account.as_ref()) {
+            response = response.observe(crate::pool_stream_limits::StreamLimits::new(
+                router.clone(),
+                name.clone(),
+                context.model.clone(),
+            ));
+        }
+        let reply = UpstreamReply::prepared(response, account.clone());
         // Every response, `count_tokens` included, updates the vendor
         // rate-limit state (issue #677).
         if !crate::account_policy_scope::active()

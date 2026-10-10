@@ -299,7 +299,6 @@ async fn aliases_cannot_bypass_native_model_cooldowns() {
     );
     f.close().await;
 }
-
 #[tokio::test]
 async fn error_rules_relay_cooldown_and_retry_before_first_byte() {
     for action in [
@@ -334,13 +333,16 @@ async fn error_rules_relay_cooldown_and_retry_before_first_byte() {
         let health = f.state.account_router.as_ref().unwrap().health_snapshot();
         assert_eq!(
             health[0].cooldown_remaining.is_some(),
+            action == ErrorAction::Cooldown
+        );
+        assert_eq!(
+            health[0].limits.model_cooldowns.contains_key("native"),
             action != ErrorAction::Relay
         );
         assert_eq!(health[0].used, 1);
         f.close().await;
     }
 }
-
 #[tokio::test]
 async fn retry_override_zero_and_strict_pins_stop_account_switching() {
     for (retry, pin) in [(Some(0), None), (Some(2), Some("primary")), (Some(1), None)] {

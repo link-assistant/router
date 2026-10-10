@@ -47,7 +47,7 @@ pub(super) struct CodexDispatch<'a> {
 
 /// The upstream response the client will receive.
 pub(super) struct Dispatched {
-    pub response: reqwest::Response,
+    pub response: crate::pool_response::PoolResponse,
     /// The account that produced it.
     pub account: String,
     pub base_url: String,
@@ -81,11 +81,8 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
     // A token-pinned account never falls back.
     let failover = router.is_some_and(crate::accounts::AccountRouter::failover_enabled)
         && request.context.pinned_account.is_none();
-    let max_attempts = if failover {
-        policy.max_attempts.max(1)
-    } else {
-        1
-    };
+    let mut budget = crate::pool_retry::RetryBudget::new(router, failover, policy.max_attempts);
+    let max_attempts = budget.max_attempts;
     let deadline = policy.deadline(Instant::now());
     let encode = |value: &Value| {
         request.native_body.as_ref().map_or_else(
@@ -110,23 +107,34 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
     // can read; a request moved to another account must leave them out.
     let mut stripped: Option<Bytes> = None;
     // The account whose encrypted reasoning the conversation history carries.
-    let origin = router.and_then(|router| router.session_account(&request.context));
+    let mut origin = router.and_then(|router| router.session_account(&request.context));
     let mut context = request.context.clone();
     let mut last: Option<Result<Dispatched, (String, String)>> = None;
-    for attempt in 1..=max_attempts {
-        if attempt > 1 && Instant::now() >= deadline {
+    let mut attempt = 0;
+    while attempt < max_attempts {
+        if budget.round_full(&context) && !budget.next_round(router, &mut context, deadline).await {
+            break;
+        }
+        if attempt > 0 && Instant::now() >= deadline {
             log_stop(state, request.correlation_id, attempt, "budget exhausted");
             break;
         }
         let (mut account, token) =
             match select_account(state, request.provider, request.validated, &context).await {
                 Ok(selected) => selected,
-                Err(error) if attempt > 1 => {
-                    log_stop(state, request.correlation_id, attempt, &error.message);
-                    break;
+                Err(error) => {
+                    if budget.next_round(router, &mut context, deadline).await {
+                        continue;
+                    }
+                    if attempt > 0 {
+                        log_stop(state, request.correlation_id, attempt, &error.message);
+                        break;
+                    }
+                    return Err(error_response(error.status, error.code, &error.message));
                 }
-                Err(error) => return Err(error_response(error.status, error.code, &error.message)),
             };
+        attempt += 1;
+        origin.get_or_insert_with(|| account.clone());
         // An already-bound account cannot move; do not send twice.
         if attempt > 1 && context.exclude.contains(&account) {
             log_stop(state, request.correlation_id, attempt, "no other account");
@@ -207,8 +215,19 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
             body
         };
         let bytes_sent = body.len() as u64;
-        let attempt_outcome = send_attempt(&request, &account, token, &base_url, body);
-        let outcome = if attempt > 1 {
+        let attempt_outcome = async {
+            let response = send_attempt(&request, &account, token, &base_url, body).await?;
+            let probe = failover
+                && response.status().is_success()
+                && (request.provider == SubscriptionProvider::Codex
+                    || response
+                        .headers()
+                        .get("content-type")
+                        .and_then(|value| value.to_str().ok())
+                        .is_some_and(|value| value.contains("text/event-stream")));
+            crate::pool_response::PoolResponse::prepare(response, probe).await
+        };
+        let outcome = if failover && attempt > 1 {
             let bounded =
                 tokio::time::timeout_at(tokio::time::Instant::from_std(deadline), attempt_outcome)
                     .await;
@@ -220,7 +239,7 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
         } else {
             attempt_outcome.await
         };
-        let response = match outcome {
+        let (mut response, peeked) = match outcome {
             Ok(response) => response,
             Err(error) => {
                 if failover && attempt < max_attempts {
@@ -257,9 +276,16 @@ pub(super) async fn dispatch(request: CodexDispatch<'_>) -> Result<Dispatched, R
                 model: context.model.as_deref(),
                 status,
                 headers: response.headers(),
-                body: &[],
+                body: &peeked,
                 retry_after: retry_after_duration(response.headers()),
             });
+        }
+        if let Some(router) = router {
+            response = response.observe(crate::pool_stream_limits::StreamLimits::new(
+                router.clone(),
+                account.clone(),
+                context.model.clone(),
+            ));
         }
         let dispatched = Dispatched {
             response,

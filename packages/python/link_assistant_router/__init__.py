@@ -203,8 +203,9 @@ class Router:
             values = value if isinstance(value, (list, tuple)) else [value]
             if option['positional']: positional.append((operation['options'].index(option), [str(item) for item in values]))
             elif option['boolean']:
-                if value is True: flags.append('--' + option['flag'])
-                elif value is not False: raise RouterError(f'{key} must be boolean', code='options')
+                if not isinstance(value, bool): raise RouterError(f'{key} must be boolean', code='options')
+                if option.get('boolean_value'): flags.append('--' + option['flag'] + '=' + str(value).lower())
+                elif value: flags.append('--' + option['flag'])
             else:
                 for item in values: flags.extend(['--' + option['flag'], str(item)])
         args = [*operation['command'], '--json', *flags]

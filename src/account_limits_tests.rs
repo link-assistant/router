@@ -124,7 +124,7 @@ fn scope_representative_claim_for_requested_family() {
     // The claim names another family: that says nothing about this model.
     assert_eq!(
         classify_scope(&limits, b"", Some("claude-sonnet-4")),
-        LimitScope::Credential
+        LimitScope::Model("claude-sonnet-4".into())
     );
 }
 
@@ -143,7 +143,7 @@ fn scope_from_error_message() {
     );
     assert_eq!(
         classify_scope(&empty, b"plain text limit", Some("claude-opus-4-1")),
-        LimitScope::Credential
+        LimitScope::Model("claude-opus-4-1".into())
     );
     assert_eq!(classify_scope(&empty, b"", None), LimitScope::Credential);
 }

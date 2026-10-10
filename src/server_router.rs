@@ -3,7 +3,7 @@
 use axum::extract::{Request, State};
 use axum::middleware::{Next, from_fn_with_state};
 use axum::response::Response;
-use axum::routing::{any, get, post};
+use axum::routing::{any, get, patch, post};
 use axum::{Router, http::StatusCode};
 
 use crate::activitypub;
@@ -102,6 +102,14 @@ pub(crate) fn management_routes(
         .route(
             route_template(RouteId::ModelDefinitions),
             get(crate::model_catalog_sources::model_definitions),
+        )
+        .route(
+            route_template(RouteId::Routing),
+            patch(crate::routing_api::update),
+        )
+        .route(
+            route_template(RouteId::CooldownReset),
+            post(crate::routing_api::reset),
         )
         .route(
             route_template(RouteId::RequestLog),

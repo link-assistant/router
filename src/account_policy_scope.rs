@@ -8,6 +8,8 @@ pub struct PolicyRequest {
     pub headers: axum::http::HeaderMap,
     pub context: RoutingContext,
     pub upstream_model: String,
+    pub retry_deadline: std::time::Instant,
+    pub retry_rounds_used: u32,
     pub upstream_selector: String,
     pub model_policy: crate::model_contract::ModelAccessPolicy,
     pub last_action: Mutex<Option<crate::account_routing_policy::ErrorAction>>,

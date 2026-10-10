@@ -9,6 +9,14 @@ from link_assistant_router.testing import temporary_home, mock_upstream, vendor_
 
 BINARY = str(Path(os.environ.get('ROUTER_TEST_BIN','target/debug/router')).resolve())
 class BindingTests(unittest.TestCase):
+    def test_explicit_false_overrides_default_enabled_subagent_affinity(self):
+        home=temporary_home()
+        router=Router(binary=BINARY,allow_download=False,env={**home.env,'SESSION_AFFINITY_SUBAGENTS':'true'})
+        try:
+            result=router.doctor(local=True,session_affinity_subagents=False)
+            self.assertRegex('\n'.join(result['data']['output']),r'subagent affinity\s+: false')
+        finally: home.close()
+
     def test_domain_reports_follow_real_state_changes(self):
         import base64
         home=temporary_home(); accepted=[True]

@@ -631,6 +631,37 @@ fn routing_context_falls_back_to_standard_body_session_fields() {
 }
 
 #[test]
+fn routing_context_uses_the_base_model_for_valid_thinking_suffixes() {
+    for suffix in ["high", "low", "8192", "auto", "none"] {
+        let body = serde_json::json!({"model": format!("model-a({suffix})")});
+        let context = request_routing_context(&HeaderMap::new(), &body, None);
+        assert_eq!(context.model.as_deref(), Some("model-a"), "{body}");
+    }
+    for model in ["model-b", "model-a(unknown)", "model-a(-2)"] {
+        let context = request_routing_context(
+            &HeaderMap::new(),
+            &serde_json::json!({"model": model}),
+            None,
+        );
+        assert_eq!(context.model.as_deref(), Some(model));
+    }
+}
+
+#[test]
+fn parent_header_precedes_json_metadata() {
+    let mut headers = HeaderMap::new();
+    headers.insert("x-parent-session-id", "header-parent".parse().unwrap());
+    let body =
+        serde_json::json!({"session_id":"child", "metadata":{"parent_session_id":"body-parent"}});
+    let context = request_routing_context(&headers, &body, None);
+    assert_eq!(context.session_key.as_deref(), Some("child"));
+    assert_eq!(context.parent_session_key.as_deref(), Some("header-parent"));
+    headers.clear();
+    let context = request_routing_context(&headers, &body, None);
+    assert_eq!(context.parent_session_key.as_deref(), Some("body-parent"));
+}
+
+#[test]
 fn retry_after_delta_seconds_is_used_for_account_cooldown() {
     let mut headers = HeaderMap::new();
     headers.insert("retry-after", HeaderValue::from_static("120"));

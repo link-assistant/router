@@ -1479,11 +1479,16 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `ACCOUNT_FORCE_MODEL_PREFIX` | `false` | Unprefixed requests exclude accounts with a configured model prefix |
 | `--account-routing-strategy` / `ACCOUNT_ROUTING_STRATEGY` | `round-robin` | New-session policy: `round-robin`, `weighted-round-robin`, `priority`/`fill-first`, or `least-used`/`quota-first` |
 | `--account-cooldown-secs` / `ACCOUNT_COOLDOWN_SECS` | `60` | Minimum cooldown after a quota response; a longer upstream `Retry-After` wins, capped at 24 hours |
+| `--account-max-cooldown-secs` / `ACCOUNT_MAX_COOLDOWN_SECS` | `691200` | Maximum observed cooldown, including vendor resets; bounded to eight days |
 | `--session-affinity-ttl-secs` / `SESSION_AFFINITY_TTL_SECS` | `3600` | Inactive seconds before a conversation can be assigned again; `0` disables affinity |
+| `--session-affinity-subagents` / `SESSION_AFFINITY_SUBAGENTS` | `true` | Bind a new child session to its parent's account when the parent has an active binding |
 | `--account-request-limits` / `ACCOUNT_REQUEST_LIMITS` | (unknown) | Comma-separated request caps, primary first then extras; must match pool size, and `0` means unknown/unlimited |
 | `--pool-failover` / `POOL_FAILOVER` | `off` | `pre-first-byte` retries a pooled Claude request on the next eligible account after a 429, 529, retryable 5xx, transport error, or 401 — only before the first response byte reaches the client. `off` relays the failure as before |
-| `--pool-failover-max-attempts` / `POOL_FAILOVER_MAX_ATTEMPTS` | `3` | Upstream attempts per request under pool failover, the first included (1-16) |
+| `--pool-failover-max-attempts` / `POOL_FAILOVER_MAX_ATTEMPTS` | `3` | Upstream attempts per round under pool failover, the first included (1-16) |
 | `--pool-failover-budget-secs` / `POOL_FAILOVER_BUDGET_SECS` | `30` | Wall-clock seconds after which pool failover stops trying further accounts |
+| `--pool-retry-rounds` / `POOL_RETRY_ROUNDS` | `0` | Additional pre-first-byte retry rounds (0-16); zero preserves the existing single round |
+| `--pool-max-retry-credentials` / `POOL_MAX_RETRY_CREDENTIALS` | `0` | Maximum distinct credentials per round; zero adds no cap beyond the failover attempt bound |
+| `--pool-max-retry-interval-secs` / `POOL_MAX_RETRY_INTERVAL_SECS` | `30` | Longest cooldown wait accepted between rounds |
 | `--account-pause-at-percent` / `ACCOUNT_PAUSE_AT_PERCENT` | (unset) | Pause a pooled account once a vendor rate-limit window reports this utilization percentage (1-100); it resumes when the window resets. Unset never pauses |
 | `--intercept-warmup` / `INTERCEPT_WARMUP` | `false` | Answer Claude Code's `Warmup` probe locally (JSON or SSE) instead of spending subscription quota on it |
 | `--account-pool-idle-timeout-secs` / `ACCOUNT_POOL_IDLE_TIMEOUT_SECS` | `90` | Seconds an idle upstream connection of a pooled account stays open; `0` keeps idle connections |
@@ -1491,6 +1496,13 @@ The HTTP API accepts the same shape at `POST /api/management/providers`:
 | `--account-egress-proxy` / `ACCOUNT_EGRESS_PROXY` | (none) | Per-account egress proxies, `ACCOUNT=SPEC,...`; see [Per-account connections and egress](#per-account-connections-and-egress) |
 
 #### Pool failover and vendor rate limits
+
+Ordinary quota errors cool the requested model on its account, preserving
+sibling models. Terminal quota and authentication failures cool the whole
+account. Admins can switch the strategy for new sessions and reset all,
+account or model cooldowns through authenticated, audited management routes.
+See [Account routing controls](docs/account-routing.md) for request examples,
+retry bounds and parent-session identifiers.
 
 With `POOL_FAILOVER=pre-first-byte`, a pooled request that fails before any
 byte reaches the client is retried on the next eligible account, under one

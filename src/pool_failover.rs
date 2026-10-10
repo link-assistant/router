@@ -16,7 +16,7 @@ use serde_json::Value;
 
 use crate::accounts::AccountRouterOptions;
 
-/// Default bound on upstream attempts per request, the first included.
+/// Default bound on upstream attempts per round, the first included.
 pub const DEFAULT_MAX_ATTEMPTS: u32 = 3;
 /// Default bound on the time spent across every attempt of one request.
 pub const DEFAULT_BUDGET_SECS: u64 = 30;
@@ -61,9 +61,9 @@ impl FailoverMode {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PoolPolicy {
     pub failover: FailoverMode,
-    /// Upstream attempts per request, the first included (at least one).
+    /// Upstream attempts per round, the first included (at least one).
     pub max_attempts: u32,
-    /// Wall-clock bound across every attempt of one request.
+    /// Deadline for retries, measured from the first attempt.
     pub budget: Duration,
     /// `ACCOUNT_PAUSE_AT_PERCENT`: pause an account once a vendor window is at
     /// or above this utilization, until the window resets.
@@ -72,6 +72,12 @@ pub struct PoolPolicy {
     pub intercept_warmup: bool,
     /// Per-account connection isolation and egress proxies (issue #678).
     pub account_http: crate::account_http::AccountHttpPolicy,
+    /// Extra bounded retry rounds.
+    pub retry: crate::pool_retry::RetryPolicy,
+    /// Parent-session inheritance for subagents.
+    pub session_affinity_subagents: bool,
+    /// Maximum observed vendor/model cooldown.
+    pub max_cooldown: Duration,
 }
 
 impl Default for PoolPolicy {
@@ -83,13 +89,16 @@ impl Default for PoolPolicy {
             pause_at_percent: None,
             intercept_warmup: false,
             account_http: crate::account_http::AccountHttpPolicy::default(),
+            retry: crate::pool_retry::RetryPolicy::default(),
+            session_affinity_subagents: true,
+            max_cooldown: crate::account_limits::MAX_VENDOR_COOLDOWN,
         }
     }
 }
 
 impl PoolPolicy {
-    /// The instant by which every attempt of a request starting at `now` must
-    /// be done.
+    /// The instant by which retries of a request starting at `now` must be done.
+    /// The first attempt retains the configured upstream timeouts.
     #[must_use]
     pub fn deadline(&self, now: Instant) -> Instant {
         let budget = self.budget.min(Duration::from_secs(MAX_BUDGET_SECS));
@@ -131,6 +140,32 @@ impl PoolPolicy {
                 )
             }),
             account_http: account_http_from_env(),
+            retry: crate::pool_retry::RetryPolicy {
+                rounds: var("POOL_RETRY_ROUNDS")
+                    .and_then(|value| value.parse::<u32>().ok())
+                    .unwrap_or(0)
+                    .min(16),
+                max_credentials: var("POOL_MAX_RETRY_CREDENTIALS")
+                    .and_then(|value| value.parse().ok())
+                    .unwrap_or(0),
+                max_interval: Duration::from_secs(
+                    var("POOL_MAX_RETRY_INTERVAL_SECS")
+                        .and_then(|value| value.parse().ok())
+                        .unwrap_or(30),
+                ),
+            },
+            session_affinity_subagents: var("SESSION_AFFINITY_SUBAGENTS").is_none_or(|value| {
+                !matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "0" | "false" | "no" | "off"
+                )
+            }),
+            max_cooldown: Duration::from_secs(
+                var("ACCOUNT_MAX_COOLDOWN_SECS")
+                    .and_then(|value| value.parse().ok())
+                    .unwrap_or(crate::account_limits::MAX_VENDOR_COOLDOWN.as_secs()),
+            )
+            .min(crate::account_limits::MAX_VENDOR_COOLDOWN),
         }
     }
 
@@ -153,6 +188,13 @@ impl PoolPolicy {
             self.pause_at_percent
                 .map_or_else(|| "off".to_string(), |percent| format!("{percent}%")),
             if self.intercept_warmup { "on" } else { "off" },
+        ) + &format!(
+            "pool retry rounds       : {} (credentials {}, max interval {}s)\nsubagent affinity       : {}\nmaximum cooldown        : {}s\n",
+            self.retry.rounds,
+            self.retry.max_credentials,
+            self.retry.max_interval.as_secs(),
+            self.session_affinity_subagents,
+            self.max_cooldown.as_secs()
         ) + &self.account_http.doctor_line()
     }
 }
@@ -253,6 +295,9 @@ impl crate::config::Config {
             pause_at_percent: self.pool.pause_at_percent,
             state_dir: Some(self.data_dir.clone()),
             http: self.pool.account_http.clone(),
+            retry: self.pool.retry,
+            session_affinity_subagents: self.pool.session_affinity_subagents,
+            max_cooldown: self.pool.max_cooldown,
         }
     }
 }

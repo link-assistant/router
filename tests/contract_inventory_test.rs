@@ -3,6 +3,23 @@ use link_assistant_router::contracts;
 use serde_json::Value;
 
 #[test]
+fn existing_route_ids_keep_their_numeric_values_and_order() {
+    use link_assistant_router::route_contract::RouteId;
+
+    // Public casts and derived ordering must retain the values from v1.18.6.
+    assert_eq!(RouteId::AccountResume as usize, 18);
+    assert_eq!(RouteId::CredentialStatus as usize, 19);
+    assert_eq!(RouteId::NativeCodexBackend as usize, 93);
+    assert_eq!(RouteId::AccountPolicy as usize, 94);
+    assert_eq!(RouteId::RequestLog as usize, 95);
+    assert_eq!(RouteId::LatestVersion as usize, 101);
+    assert!(RouteId::NativeCodexBackend < RouteId::Routing);
+    assert!(RouteId::NativeCodexBackend < RouteId::CooldownReset);
+    assert!(RouteId::LatestVersion < RouteId::Routing);
+    assert!(RouteId::LatestVersion < RouteId::CooldownReset);
+}
+
+#[test]
 fn existing_public_enum_discriminants_remain_stable() {
     use clap::Subcommand as _;
     use link_assistant_router::accounts::SelectionStrategy;

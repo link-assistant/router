@@ -224,22 +224,35 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
             "the credential model policy denies the upstream model",
         );
     }
-    let selected = match router
-        .select_subscription_where_authoritative(&context, &state.subscription_cache, |name| {
-            candidates.iter().any(|(account, model)| {
-                account == name
-                    && crate::account_policy_catalog::permitted(
-                        &model_policy,
-                        router.provider(),
-                        model,
-                    )
-                    && router.serves_upstream_model(account, model)
+    let pool = crate::pool_failover::current();
+    let retry_deadline = pool.deadline(std::time::Instant::now());
+    let mut budget = crate::pool_retry::RetryBudget::new(
+        Some(router),
+        router.inner_failover_enabled() && context.pinned_account.is_none(),
+        pool.max_attempts,
+    );
+    let selected = loop {
+        match router
+            .select_subscription_where_authoritative(&context, &state.subscription_cache, |name| {
+                candidates.iter().any(|(account, model)| {
+                    account == name
+                        && crate::account_policy_catalog::permitted(
+                            &model_policy,
+                            router.provider(),
+                            model,
+                        )
+                        && router.serves_upstream_model(account, model)
+                })
             })
-        })
-        .await
-    {
-        Ok(selected) => selected,
-        Err(error) => return failure(StatusCode::SERVICE_UNAVAILABLE, &error.to_string()),
+            .await
+        {
+            Ok(selected) => break selected,
+            Err(_)
+                if budget
+                    .next_round(Some(router), &mut context, retry_deadline)
+                    .await => {}
+            Err(error) => return failure(StatusCode::SERVICE_UNAVAILABLE, &error.to_string()),
+        }
     };
     let upstream = candidates
         .iter()
@@ -281,6 +294,8 @@ pub async fn route(State(state): State<AppState>, request: Request, next: Next) 
         headers: parts.headers.clone(),
         context,
         upstream_model: upstream.clone(),
+        retry_deadline,
+        retry_rounds_used: budget.rounds_used(),
         upstream_selector,
         model_policy,
         last_action: Mutex::new(None),

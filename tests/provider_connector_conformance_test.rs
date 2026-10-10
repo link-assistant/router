@@ -10,7 +10,9 @@ use axum::response::IntoResponse as _;
 use axum::routing::any;
 use base64::Engine as _;
 use link_assistant_router::account_http::EgressProxy;
-use link_assistant_router::accounts::{AccountRouter, AccountRouterOptions, UpstreamObservation};
+use link_assistant_router::accounts::{
+    AccountRouter, AccountRouterOptions, RoutingContext, UpstreamObservation,
+};
 use link_assistant_router::provider_connector::{
     ConnectorEndpoints, ConnectorTransport, LoginFlow, ProviderConnector, SubscriptionConnector,
 };
@@ -233,22 +235,55 @@ async fn subscription_conformance(provider: SubscriptionProvider, proxied: bool)
         .unwrap();
     let router =
         AccountRouter::new_for_provider(home, &[], provider, AccountRouterOptions::default());
+    let observation = UpstreamObservation {
+        account: "primary",
+        model: Some("fixture-model"),
+        status: response.status().as_u16(),
+        headers: response.headers(),
+        body: b"",
+        retry_after: None,
+    };
+    let outcome = contract.observe_upstream(&router, &observation).unwrap();
+    assert!(!outcome.credential_cooldown);
+    assert_eq!(outcome.model_cooldown.as_deref(), Some("fixture-model"));
+    assert_eq!(router.limit_counts().cooling_down, 0);
+    assert_eq!(router.limit_counts().model_cooldowns, 1);
+    assert!(
+        router.limit_states()[0].1.model_cooldowns["fixture-model"]
+            > link_assistant_router::account_limits::now_unix().saturating_add(60)
+    );
+    assert!(
+        router
+            .select_with_context(&RoutingContext {
+                model: Some("fixture-model".into()),
+                ..Default::default()
+            })
+            .is_err()
+    );
+    let sibling = RoutingContext {
+        model: Some("fixture-sibling".into()),
+        ..Default::default()
+    };
+    assert_eq!(
+        router.select_with_context(&sibling).unwrap().name,
+        "primary"
+    );
+
+    // A terminal quota still cools the credential, even with a requested model.
     let outcome = contract
         .observe_upstream(
             &router,
             &UpstreamObservation {
-                account: "primary",
-                model: Some("fixture-model"),
-                status: response.status().as_u16(),
-                headers: response.headers(),
-                body: b"",
-                retry_after: None,
+                body: br#"{"error":{"code":"insufficient_quota"}}"#,
+                ..observation
             },
         )
         .unwrap();
     assert!(outcome.credential_cooldown);
+    assert!(outcome.model_cooldown.is_none());
     assert_eq!(router.limit_counts().cooling_down, 1);
     assert!(router.health_snapshot()[0].cooldown_remaining.unwrap() > Duration::from_secs(60));
+    assert!(router.select_with_context(&sibling).is_err());
     assert!(contract.classify_error(429).is_some());
     assert!(contract.classify_error(400).is_none());
 

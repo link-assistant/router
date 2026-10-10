@@ -76,6 +76,7 @@ impl RouteMethod {
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum RouteId {
+    // Append new variants so numeric casts and derived ordering stay stable.
     Health,
     AggregateModels,
     SubscriptionUsage,
@@ -179,6 +180,8 @@ pub enum RouteId {
     UsageQueue,
     LatestVersion,
     ModelDefinitions,
+    Routing,
+    CooldownReset,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

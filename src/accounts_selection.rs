@@ -25,9 +25,8 @@ impl AccountRouter {
             }
             return Ok((vec![index], SelectionMode::Pinned));
         }
-        if let Some(session) = context.session_key.as_deref()
-            && let Some(index) = self.bound_account(session)
-        {
+        if let Some(index) = self.context_account(context) {
+            self.bind_session(context, index);
             if (!self.inner.failover && !self.has_routing_policy())
                 || (self.inner.accounts[index].serves(context)
                     && self.policy_serves(index, context)
@@ -44,7 +43,7 @@ impl AccountRouter {
             return Ok((self.failover_order(None), SelectionMode::Automatic));
         }
         let mut indices: Vec<usize> = (0..self.inner.accounts.len()).collect();
-        match self.inner.strategy {
+        match self.strategy() {
             SelectionStrategy::RoundRobin => {
                 let start = self.inner.cursor.fetch_add(1, Ordering::Relaxed) % indices.len();
                 indices.rotate_left(start);
@@ -112,7 +111,7 @@ impl AccountRouter {
     /// The account a session is currently bound to, if any.
     #[must_use]
     pub fn session_account(&self, context: &RoutingContext) -> Option<String> {
-        let index = self.bound_account(context.session_key.as_deref()?)?;
+        let index = self.context_account(context)?;
         Some(self.inner.accounts[index].name.clone())
     }
 
