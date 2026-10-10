@@ -1064,6 +1064,7 @@ jobs:
       version: ${{ steps.source.outputs.version }}
     env:
       RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+      RELEASE_MODE: ${{ inputs.release_mode }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -1072,7 +1073,7 @@ jobs:
       - id: source
         shell: bash
         run: |
-          if [ "${{ inputs.release_mode }}" = publish ]; then
+          if [ "$RELEASE_MODE" = publish ]; then
             RELEASE_VERSION="${GITHUB_REF_NAME#v}"
           fi
           git fetch --force --tags --quiet
@@ -1083,7 +1084,7 @@ jobs:
   release-javascript:
     name: JavaScript first (immutable release commit)
     needs: [javascript, resolve-release-source]
-    if: needs.javascript.result == 'success' && (always() && needs.resolve-release-source.result == 'success')
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && needs.resolve-release-source.result == 'success')
     uses: ./.github/workflows/javascript-first.yml
     with:
       sha: ${{ needs.resolve-release-source.outputs.sha }}
