@@ -100,6 +100,9 @@ jobs:
       - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: npm run typecheck --prefix packages/javascript
       - run: npm run native:typecheck --prefix packages/javascript
+      - run: node scripts/regenerate-native-typescript.mjs --check
+      - run: node scripts/check-native-typescript.mjs
+      - run: node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
       - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
       - run: npm ci --prefix ui --ignore-scripts
       - run: node scripts/build-js-first-ui.mjs

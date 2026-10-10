@@ -819,10 +819,10 @@
     },
     {
       "path": "packages/javascript/native/operations.mjs",
-      "sha256": "ad5a5ec323b629200fb6bfacb39203dcf4a57e2c242b771cf38d7c293181d800",
-      "sourceItems": 25,
+      "sha256": "b817c36f41a9e448c4ab2b38be1ce9ad26b77a023dcc76e2ae7508bc5b9d23ed",
+      "sourceItems": 26,
       "translatedItems": 0,
-      "unsupportedItems": 25,
+      "unsupportedItems": 26,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -849,7 +849,17 @@
           "message": "no definition",
           "span": {
             "start": 177,
-            "end": 216,
+            "end": 265,
+            "encoding": "utf16"
+          },
+          "example": "import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 266,
+            "end": 305,
             "encoding": "utf16"
           },
           "example": "import Ajv2020 from 'ajv/dist/2020.js';"
@@ -858,8 +868,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: the method parse",
           "span": {
-            "start": 218,
-            "end": 319,
+            "start": 307,
+            "end": 408,
             "encoding": "utf16"
           },
           "example": "export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));"
@@ -868,8 +878,8 @@
           "kind": "collection",
           "message": "arrays and objects are outside portable-pure-v1: the property version",
           "span": {
-            "start": 320,
-            "end": 359,
+            "start": 409,
+            "end": 448,
             "encoding": "utf16"
           },
           "example": "export const version = catalog.version;"
@@ -878,8 +888,8 @@
           "kind": "name",
           "message": "a name with no spelling both languages read back: Object",
           "span": {
-            "start": 360,
-            "end": 457,
+            "start": 449,
+            "end": 546,
             "encoding": "utf16"
           },
           "example": "export const operationNames = Object.freeze(catalog.operations.map(operation => operation.name));"
@@ -888,8 +898,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 458,
-            "end": 548,
+            "start": 547,
+            "end": 637,
             "encoding": "utf16"
           },
           "example": "const camel = value => value.replace(/[-_]([a-z])/g, (_, letter) => letter.toUpperCase());"
@@ -898,8 +908,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 549,
-            "end": 655,
+            "start": 638,
+            "end": 744,
             "encoding": "utf16"
           },
           "example": "const snake = value => value.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase()).replaceAll('-', '_');"
@@ -908,8 +918,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 656,
-            "end": 685,
+            "start": 745,
+            "end": 774,
             "encoding": "utf16"
           },
           "example": "const validators = new Map();"
@@ -918,8 +928,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 686,
-            "end": 775,
+            "start": 775,
+            "end": 864,
             "encoding": "utf16"
           },
           "example": "const ajv = new Ajv2020({ strict: true, allowUnionTypes: true, validateFormats: false });"
@@ -928,8 +938,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 777,
-            "end": 1112,
+            "start": 866,
+            "end": 1201,
             "encoding": "utf16"
           },
           "example": "export class NativeRouterError extends Error { constructor(message, { code = 'operation', result = null, cause } = {}) { super(message, { cause }); this.name = 'NativeRouterError';"
@@ -938,8 +948,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1113,
-            "end": 1566,
+            "start": 1202,
+            "end": 1655,
             "encoding": "utf16"
           },
           "example": "export function validateNativeResult(name, result) { if (!validators.has(name)) { const schema = JSON.parse(readFileSync(new URL(`../schemas/${name.replaceAll('.', '-')}.v1.json`, "
@@ -948,8 +958,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1567,
-            "end": 1845,
+            "start": 1656,
+            "end": 1934,
             "encoding": "utf16"
           },
           "example": "export function operationResult(name, data, diagnostics = [], exitCode = 0) { return validateNativeResult(name, { schema: `link-assistant-router/${name.replaceAll('.', '-')}/v1`, o"
@@ -958,8 +968,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: ...",
           "span": {
-            "start": 1846,
-            "end": 1895,
+            "start": 1935,
+            "end": 1984,
             "encoding": "utf16"
           },
           "example": "const output = (...lines) => ({ output: lines });"
@@ -968,8 +978,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 1896,
-            "end": 1994,
+            "start": 1985,
+            "end": 2083,
             "encoding": "utf16"
           },
           "example": "const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };"
@@ -978,18 +988,18 @@
           "kind": "name",
           "message": "a name with no spelling both languages read back: Object",
           "span": {
-            "start": 1995,
-            "end": 2697,
+            "start": 2084,
+            "end": 2905,
             "encoding": "utf16"
           },
-          "example": "export const nativeOperationSupport = Object.freeze({ version: 'implemented', contracts: 'implemented', 'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': "
+          "example": "export const nativeOperationSupport = Object.freeze({ ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])), version: "
         },
         {
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 2698,
-            "end": 3671,
+            "start": 2906,
+            "end": 3879,
             "encoding": "utf16"
           },
           "example": "function normalizeOptions(operation, options) { const allowed = new Map(operation.options.map(option => [snake(option.name), option])); const normalized = {}; for (const [key, valu"
@@ -998,8 +1008,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 3672,
-            "end": 4024,
+            "start": 3880,
+            "end": 4232,
             "encoding": "utf16"
           },
           "example": "function localOnly(options, accepted = []) { const consumed = new Set(['local', ...accepted]); for (const [name, value] of Object.entries(options)) { if (value === false) continue;"
@@ -1008,8 +1018,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 4025,
-            "end": 4692,
+            "start": 4233,
+            "end": 4900,
             "encoding": "utf16"
           },
           "example": "function redactedProvider(provider) { return { name: provider.name, kind: provider.kind ?? 'openai-compatible', base_url: provider.base_url, models: provider.models ?? [], supporte"
@@ -1018,8 +1028,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 4693,
-            "end": 5624,
+            "start": 4901,
+            "end": 5832,
             "encoding": "utf16"
           },
           "example": "function tokenOptions(options) { const result = {}; for (const key of ['ttl_hours', 'max_requests', 'max_tokens', 'rate_limit_per_minute']) { if (options[key] === undefined) contin"
@@ -1028,8 +1038,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
           "span": {
-            "start": 5625,
-            "end": 5843,
+            "start": 5833,
+            "end": 6051,
             "encoding": "utf16"
           },
           "example": "const find = (records, key, value) => { const record = records.find(record => record[key] === value); if (!record) throw new NativeRouterError(`Unknown ${key}: ${value}`, { code: '"
@@ -1038,8 +1048,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 5844,
-            "end": 6087,
+            "start": 6052,
+            "end": 6295,
             "encoding": "utf16"
           },
           "example": "async function runtimeFor(router) { router.corePromise ??= router.options.core ? Promise.resolve(router.options.core) : import('./core.mjs').then(({ createRouterCore }) => createRo"
@@ -1048,8 +1058,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 6088,
-            "end": 18261,
+            "start": 6296,
+            "end": 18732,
             "encoding": "utf16"
           },
           "example": "async function dispatch(router, name, options, invocation) { if (name === 'version') { localOnly(options); return { version, source_commit: 'unknown' }; } if (name === 'contracts')"
@@ -1058,8 +1068,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 18356,
-            "end": 21105,
+            "start": 18827,
+            "end": 21621,
             "encoding": "utf16"
           },
           "example": "export class NativeRouter { constructor(options = {}) { this.options = options; this.corePromise = null; this.serverPromise = null; for (const operation of catalog.operations) { le"
@@ -1068,8 +1078,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 21106,
-            "end": 21177,
+            "start": 21622,
+            "end": 21693,
             "encoding": "utf16"
           },
           "example": "export const createNativeRouter = options => new NativeRouter(options);"
