@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
+import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -22,10 +23,13 @@ const protocolOf = candidate => {
   throw new ProtocolError(`Unsupported upstream protocol ${typeof value === 'string' ? value : 'unknown'}`, 501);
 };
 const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };
-function upstreamURL(base, protocol) {
+function upstreamURL(base, protocol, endpointPath) {
   let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash) throw new ProtocolError('Provider base URL must be an HTTP(S) URL without credentials, query or fragment', 500);
-  u.pathname = `${u.pathname.replace(/\/$/, '')}${/\/v1$/.test(u.pathname.replace(/\/$/, '')) ? '/' : '/v1/'}${paths[protocol]}`;
+  if (endpointPath !== undefined) {
+    if (typeof endpointPath !== 'string' || !/^\/[a-zA-Z0-9/_-]+$/.test(endpointPath) || endpointPath.startsWith('//')) throw new ProtocolError('Provider endpoint path is invalid', 500);
+    u.pathname = `${u.pathname.replace(/\/$/, '')}${endpointPath}`;
+  } else u.pathname = `${u.pathname.replace(/\/$/, '')}${/\/v1$/.test(u.pathname.replace(/\/$/, '')) ? '/' : '/v1/'}${paths[protocol]}`;
   return u;
 }
 function upstreamHeaders(candidate, protocol, request) {
@@ -39,8 +43,11 @@ function upstreamHeaders(candidate, protocol, request) {
     headers.set(key, value);
   }
   const key = candidate.apiKey ?? candidate.api_key ?? candidate.account?.api_key;
-  if (key) headers.set(protocol === 'anthropic' ? 'x-api-key' : 'authorization', protocol === 'anthropic' ? key : `Bearer ${key}`);
+  if (key) headers.set(protocol === 'anthropic' && candidate.auth_type !== 'oauth' ? 'x-api-key' : 'authorization', protocol === 'anthropic' && candidate.auth_type !== 'oauth' ? key : `Bearer ${key}`);
   if (protocol === 'anthropic') headers.set('anthropic-version', '2023-06-01');
+  if (candidate.auth_type === 'oauth') {
+    for (const [key, value] of Object.entries(candidate.oauth_headers ?? {})) if (['anthropic-beta', 'anthropic-version', 'chatgpt-account-id', 'originator'].includes(key.toLowerCase()) && typeof value === 'string') headers.set(key, value);
+  }
   const requestId = request.headers.get('x-request-id');
   if (requestId && /^[a-zA-Z0-9._:-]{1,128}$/.test(requestId)) headers.set('x-request-id', requestId);
   return headers;
@@ -67,6 +74,9 @@ const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);
 export function createNativeRouter(options = {}) {
   const { core, authenticate, fetch: upstreamFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxResponseBytes = 32 * 1024 * 1024, timeoutMs = 120_000, maxAttempts = 3 } = options;
   if (!core) throw new TypeError('createNativeRouter requires core; use startNativeServer to create one from configuration');
+  const tlsConfig = { ...core.config, ...options };
+  if (tlsConfig.tls_self_signed || tlsConfig.tls_cert || tlsConfig.tls_key || tlsConfig.tlsSelfSigned || tlsConfig.tlsCert || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener => listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:'))) throw new ProtocolError('Native HTTPS listeners are not implemented; configure an HTTP listener behind TLS termination', 501);
+  const responseStore = options.responseStore ?? new ResponsesStore({ clock, ...options.responseStoreOptions });
   const logs = []; const counters = { requests: 0, failures: 0, upstream_attempts: 0, input_tokens: 0, output_tokens: 0 };
   let server;
   const configuration = () => core.config ?? options.config ?? {};
@@ -150,8 +160,17 @@ export function createNativeRouter(options = {}) {
     if (source !== 'responses' && !Array.isArray(body.messages)) throw new ProtocolError('messages must be an array');
     if (source === 'responses' && typeof body.input !== 'string' && !Array.isArray(body.input)) throw new ProtocolError('input must be a string or array');
     if (body.stream !== undefined && typeof body.stream !== 'boolean') throw new ProtocolError('stream must be a boolean');
+    if (source === 'responses') {
+      if (body.background || body.conversation || body.previous_response_id) throw new ProtocolError('Background, conversation and previous-response execution are not implemented by the native lifecycle store', 501);
+      if (body.store !== undefined && typeof body.store !== 'boolean') throw new ProtocolError('store must be a boolean');
+    }
     for (const key of ['max_tokens', 'max_completion_tokens', 'max_output_tokens']) if (body[key] !== undefined && (!Number.isSafeInteger(body[key]) || body[key] < 1)) throw new ProtocolError(`${key} must be a positive integer`);
     const claims = await authorize(request, false, body.model);
+    const retain = source === 'responses' && body.store !== false;
+    const namespace = new URL(request.url).pathname.startsWith('/api/services/') ? '/api/services/openai/v1' : '/v1';
+    const owner = retain ? responseOwner(claims, bearer(request.headers)) : undefined;
+    const responseInput = retain ? normalizeResponseInput(body) : undefined;
+    let retainedId;
     const client = typeof claims.client === 'string' ? claims.client : typeof claims.client_kind === 'string' ? claims.client_kind : undefined;
     const context = { model: body.model, client, sessionKey: request.headers.get('x-router-session') ?? undefined, pinnedAccount: claims.account, exclude: [] };
     const candidates = core.candidates ? await core.candidates(context) : [await core.route(context)];
@@ -183,7 +202,7 @@ export function createNativeRouter(options = {}) {
         let response;
         try {
           counters.upstream_attempts++;
-          response = await upstreamFetch(upstreamURL(candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url, protocol), { method: 'POST', headers: upstreamHeaders(candidate, protocol, request), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
+          response = await upstreamFetch(upstreamURL(candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url, protocol, candidate.endpointPath), { method: 'POST', headers: upstreamHeaders(candidate, protocol, request), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
         } catch (error) {
           clearTimeout(timer); request.signal.removeEventListener('abort', abort);
           if (request.signal.aborted) throw new ProtocolError('Client disconnected', 499);
@@ -201,7 +220,20 @@ export function createNativeRouter(options = {}) {
         const headers = relayHeaders(response);
         if (body.stream) {
           if (!response.headers.get('content-type')?.includes('text/event-stream') || !response.body) { cleanup(); await response.body?.cancel(); throw new ProtocolError('Upstream did not return an SSE stream', 502); }
-          const callbacks = { clock, onComplete: async state => { cleanup(); await core.reportSuccess?.(candidate); await settle(state.usage); }, onError: async () => { cleanup(); await core.reportFailure?.(candidate, { status: 502 }); await settle(); }, onCancel: async () => { cleanup(); controller.abort(); await settle(); } };
+          const callbacks = {
+            clock,
+            onStart: async response => { if (retain) { responseStore.save(namespace, owner, response, responseInput, { abort: () => controller.abort(new Error('Response cancelled')) }); retainedId = response.id; } },
+            onComplete: async state => {
+              cleanup(); await settle(state.usage);
+              if (retain) {
+                if (!state.response || !['completed', 'incomplete'].includes(state.response.status)) throw new ProtocolError('Upstream stream did not supply a completed response resource', 502);
+                responseStore.save(namespace, owner, state.response, responseInput, { update: true });
+              }
+              await core.reportSuccess?.(candidate);
+            },
+            onError: async (_error, state) => { cleanup(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await core.reportFailure?.(candidate, { status: 502 }); await settle(state?.usage); },
+            onCancel: async () => { cleanup(); controller.abort(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await settle(); },
+          };
           const stream = source === protocol ? monitorNativeStream(response.body, protocol, callbacks) : translateStream(response.body, protocol, source, body.model, callbacks);
           return new Response(stream, { status: 200, headers: { ...headers, 'content-type': 'text/event-stream', 'cache-control': 'no-cache', 'x-accel-buffering': 'no' } });
         }
@@ -212,6 +244,7 @@ export function createNativeRouter(options = {}) {
         const result = translateResponse(raw, protocol, source, body.model, clock());
         const usage = normalizeUsage(raw.usage, protocol);
         await core.reportSuccess?.(candidate); await settle(usage);
+        if (retain) responseStore.save(namespace, owner, result, responseInput);
         return json(result, response.status, headers);
       }
       throw finalError ?? new ProtocolError('All upstream accounts are unavailable', 503);
@@ -224,16 +257,27 @@ export function createNativeRouter(options = {}) {
     try {
       if (['/health', '/api/health'].includes(path) && request.method === 'GET') response = new Response('ok', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       else if (path.startsWith('/api/management/')) response = await management(request, path);
+      else if (/^(?:\/v1|\/api\/services\/openai\/v1)\/responses\/[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
+        const match = /^(\/v1|\/api\/services\/openai\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
+        const claims = await authorize(request, false), owner = responseOwner(claims, bearer(request.headers)), id = decodeURIComponent(match[2]);
+        const existing = responseStore.get(match[1], owner, id);
+        await authorize(request, false, existing.model);
+        if (!match[3] && request.method === 'GET') response = json(existing);
+        else if (!match[3] && request.method === 'DELETE') response = json(responseStore.delete(match[1], owner, id));
+        else if (match[3] === 'cancel' && request.method === 'POST') response = json(responseStore.cancel(match[1], owner, id));
+        else if (match[3] === 'input_items' && request.method === 'GET') response = json(responseStore.inputItems(match[1], owner, id, new URL(request.url).searchParams));
+        else throw new ProtocolError('Route not found', 404);
+      }
       else if (['/v1/models', '/api/models'].includes(path) && request.method === 'GET') { await authorize(request, false); response = json({ object: 'list', data: await models() }); }
       else if (/^\/v1\/models\/[^/]+$/.test(path) && request.method === 'GET') { await authorize(request, false); const id = decodeURIComponent(path.slice('/v1/models/'.length)), model = (await models()).find(m => m.id === id); if (!model) throw new ProtocolError('Model not found', 404); response = json(model); }
-      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses'].includes(path) && request.method === 'POST') response = await inference(request, source, await boundedJSON(request, maxBodyBytes));
+      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', '/api/services/openai/v1/responses'].includes(path) && request.method === 'POST') response = await inference(request, source, await boundedJSON(request, maxBodyBytes));
       else throw new ProtocolError('Route not found', 404);
     } catch (error) { counters.failures++; response = errorResponse(error, source); }
     logs.push({ time: started, method: request.method, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
     return response;
   }
   const router = {
-    core, fetch: handle, get address() { return server?.address(); },
+    core, responseStore, fetch: handle, get address() { return server?.address(); },
     async listen({ host = configuration().host ?? '127.0.0.1', port = configuration().port ?? 3000 } = {}) {
       if (server) throw new Error('Router is already listening');
       server = createServer(async (incoming, outgoing) => {
@@ -249,7 +293,7 @@ export function createNativeRouter(options = {}) {
       catch (error) { server = undefined; throw error; }
       return router;
     },
-    async close() { if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
+    async close() { responseStore.close?.(); if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
   };
   return router;
 }

@@ -135,3 +135,12 @@ test('malformed upstream usage cannot corrupt durable token budgets', async () =
   const router = createNativeRouter({ core: core({ config: {}, tokens: { validate: () => ({ sub: 'id' }), admit: () => 'admitted', settle: (_id, _reserve, used) => { actual = used; } } }), fetch: async () => Response.json({ ...chat, usage: { prompt_tokens: -1, completion_tokens: 1 } }) });
   const response = await router.fetch(request()); assert.equal(response.status, 502); assert.equal(actual, 0);
 });
+test('OAuth credentials use reviewed provider headers and exact configured endpoint', async () => {
+  let headers, url;
+  const c = core({ candidates: () => [{ ...candidate, protocol: 'anthropic', auth_type: 'oauth', oauth_headers: { 'anthropic-beta': 'oauth-2025-04-20', cookie: 'secret' } }] });
+  const router = createNativeRouter({ core: c, fetch: async (target, init) => { url = target; headers = init.headers; return Response.json({ id: 'msg_a', content: [{ type: 'text', text: 'hi' }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }); } });
+  assert.equal((await router.fetch(request('/v1/messages', { ...body, max_tokens: 10 }))).status, 200);
+  assert.equal(headers.get('authorization'), 'Bearer upstream-secret'); assert.equal(headers.get('x-api-key'), null); assert.equal(headers.get('anthropic-beta'), 'oauth-2025-04-20'); assert.equal(headers.get('cookie'), null);
+  const codex = createNativeRouter({ core: core({ candidates: () => [{ ...candidate, protocol: 'responses', baseUrl: 'https://chatgpt.com/backend-api/codex', endpointPath: '/responses', auth_type: 'oauth', oauth_headers: { 'chatgpt-account-id': 'acct', originator: 'codex_cli_rs' } }] }), fetch: async (target, init) => { url = target; headers = init.headers; return Response.json({ id: 'resp_oauth', model: 'alias', status: 'completed', output: [], usage: {} }); } });
+  assert.equal((await codex.fetch(request('/v1/responses', { model: 'alias', input: 'hi', store: false }))).status, 200); assert.equal(url.href, 'https://chatgpt.com/backend-api/codex/responses'); assert.equal(headers.get('chatgpt-account-id'), 'acct');
+});

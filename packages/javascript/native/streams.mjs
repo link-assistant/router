@@ -84,7 +84,7 @@ async function* normalizedEvents(body, protocol) {
 }
 
 /** Incremental conversion: errors are in-band and never fabricated success. */
-export function translateStream(body, source, target, model, { clock = Date.now, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 } = {}) {
+export function translateStream(body, source, target, model, { clock = Date.now, onStart, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 } = {}) {
   const events = normalizedEvents(body, source)[Symbol.asyncIterator]();
   const state = { id: undefined, text: '', tools: [], usage: normalizeUsage(), finish: 'stop' };
   const toolMap = new Map(), openToolBlocks = new Set(); let stateBytes = 0, begun = false, finished = false, sequence = 0, activeBlock, nextBlock = 0, messageItem, outputIndex = 0;
@@ -136,6 +136,7 @@ export function translateStream(body, source, target, model, { clock = Date.now,
         const type = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response = canonicalResponse(state, target, model, now);
         const order = new Map([...toolMap.values()].map(r => [`fc_${r.tool.id}`, r.output_index])); if (messageItem) order.set(messageItem.id, messageItem.output_index);
         response.output.sort((a, b) => order.get(a.id) - order.get(b.id));
+        state.response = response;
         out += responses(type, { response });
       }
       finished = true;
@@ -145,10 +146,16 @@ export function translateStream(body, source, target, model, { clock = Date.now,
   return new ReadableStream({
     async pull(controller) {
       try {
-        while (!finished) { const { value, done } = await events.next(); if (done) break; const output = render(value); if (output) { controller.enqueue(encoder.encode(output)); if (finished) { await onComplete?.(state); controller.close(); } return; } }
+        while (!finished) {
+          const { value, done } = await events.next(); if (done) break;
+          const wasBegun = begun, output = render(value);
+          if (!wasBegun && begun) await onStart?.({ ...canonicalResponse(state, target, model, now), status: 'in_progress', usage: null });
+          if (finished) await onComplete?.(state);
+          if (output) { controller.enqueue(encoder.encode(output)); if (finished) controller.close(); return; }
+        }
         if (!finished) controller.close();
       } catch (error) {
-        await onError?.(error);
+        await onError?.(error, state);
         const payload = { error: { type: 'upstream_stream_error', message: 'Upstream stream failed or ended prematurely' } };
         controller.enqueue(encoder.encode(target === 'responses' ? responses('error', payload) : frame(target === 'anthropic' ? { type: 'error', ...payload } : payload, target === 'anthropic' ? 'error' : undefined)));
         controller.close(); finished = true; await events.return?.();
@@ -159,15 +166,15 @@ export function translateStream(body, source, target, model, { clock = Date.now,
 }
 
 /** Preserve native event payloads while checking terminal events and usage. */
-export function monitorNativeStream(body, protocol, { onComplete, onError, onCancel } = {}) {
-  const events = decodeSSE(body)[Symbol.asyncIterator](); let terminal = false, usage = normalizeUsage(), anthropicUsage = {};
+export function monitorNativeStream(body, protocol, { onStart, onComplete, onError, onCancel } = {}) {
+  const events = decodeSSE(body)[Symbol.asyncIterator](); let terminal = false, usage = normalizeUsage(), anthropicUsage = {}, response, started = false;
   return new ReadableStream({
     async pull(controller) {
       try {
         const { value: f, done } = await events.next();
         if (done) {
           if (!terminal) throw new ProtocolError('Upstream stream ended before its terminal event', 502);
-          await onComplete?.({ usage }); controller.close(); return;
+          await onComplete?.({ usage, response }); controller.close(); return;
         }
         if (f.data === '[DONE]') terminal = true;
         else {
@@ -179,11 +186,17 @@ export function monitorNativeStream(body, protocol, { onComplete, onError, onCan
           }
           if (p.message?.usage) { anthropicUsage = p.message.usage; usage = normalizeUsage(p.message.usage, protocol); }
           if (p.response?.usage) usage = normalizeUsage(p.response.usage, protocol);
+          if (p.response?.id) {
+            response = p.response;
+            if (!started) { started = true; await onStart?.({ ...response, status: 'in_progress', usage: null }); }
+          }
           if (p.type === 'message_stop' || ['response.completed', 'response.incomplete'].includes(p.type)) terminal = true;
         }
+        if (terminal) await onComplete?.({ usage, response });
         controller.enqueue(encoder.encode(frame(f.data, f.event)));
+        if (terminal) { controller.close(); await events.return?.(); }
       } catch (error) {
-        await onError?.(error);
+        await onError?.(error, { usage, response });
         const payload = { error: { type: 'upstream_stream_error', message: 'Upstream stream failed or ended prematurely' } };
         controller.enqueue(encoder.encode(frame(protocol === 'anthropic' ? { type: 'error', ...payload } : payload, protocol === 'chat' ? undefined : 'error'))); controller.close(); await events.return?.();
       }
