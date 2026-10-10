@@ -91,6 +91,10 @@ async function boundedFile(path, budget) {
     budget.remaining -= total; return Buffer.concat(chunks,total);
   } finally { await handle.close(); }
 }
+function utf8(bytes,path) {
+  try { return new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
+  catch { throw bad(`Resource is not valid UTF-8: ${path}`); }
+}
 async function readLogs(root, token) {
   await noLinks(root); const rootStat = await statOptional(root);
   if (!rootStat?.isDirectory()) return { files:[], bytes:0, unparsable:0 };
@@ -111,7 +115,7 @@ async function readLogs(root, token) {
   for (const path of files.sort()) {
     const bytes = await boundedFile(path,budget);
     // Rust read_to_string refuses invalid UTF-8; replacement could hide corruption.
-    let text; try { text = new TextDecoder('utf-8',{fatal:true}).decode(bytes); } catch { throw bad(`Request log is not valid UTF-8: ${path}`); }
+    const text = utf8(bytes,path);
     const records = [];
     for (const line of text.split(/\r?\n/)) {
       if (!line.trim()) continue; const record = decodeLogLine(line);
@@ -266,7 +270,11 @@ export async function executeResourceOperation({name,options = {},config = {},co
   if (name === 'tls.generate') return serializedTlsGenerate(resolve(dataDir),options.dns);
   if (name === 'tls.ca') {
     const path = join(resolve(dataDir),'tls','cert.pem');
-    try { const bytes = await boundedFile(path,{remaining:1024*1024,limit:1024*1024}); return {output:bytes.toString('utf8').trimEnd().split(/\r?\n/)}; }
+    try {
+      const bytes = await boundedFile(path,{remaining:1024*1024,limit:1024*1024});
+      const output = utf8(bytes,path).split(/\r?\n/); if (output.at(-1) === '') output.pop();
+      return {output};
+    }
     catch (error) { if (error.code === 'ENOENT') throw bad(`no generated certificate at ${path}; start the router with TLS_SELF_SIGNED=1 first`); throw error; }
   }
   if (options.token !== undefined && typeof options.token !== 'string') throw bad('Log token filter must be a string');

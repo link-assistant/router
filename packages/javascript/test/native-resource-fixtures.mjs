@@ -131,6 +131,8 @@ fixture('resource-tls-ca','tls.ca',()=>temporary(async dir=> {
   await assert.rejects(run(dir,'tls.ca'),/no generated certificate/);
   await run(dir,'tls.generate'); const ca = await run(dir,'tls.ca');
   assert.equal(ca.output[0],'-----BEGIN CERTIFICATE-----'); assert.ok(new X509Certificate(ca.output.join('\n')).checkHost('localhost'));
+  await writeFile(join(dir,'tls','cert.pem'),Buffer.from([0xff]));
+  await assert.rejects(run(dir,'tls.ca'),/valid UTF-8/);
 }));
 fixture('resource-tls-refuse-name-injection','tls.generate',()=>temporary(async dir=> {
   await assert.rejects(run(dir,'tls.generate',{dns:'localhost\n[evil]'}),/DNS names/);
