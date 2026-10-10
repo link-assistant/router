@@ -100,6 +100,7 @@ jobs:
       - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: npm run typecheck --prefix packages/javascript
       - run: npm run native:typecheck --prefix packages/javascript
+      - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
       - run: npm ci --prefix ui --ignore-scripts
       - run: node scripts/build-js-first-ui.mjs
   parity:
@@ -164,6 +165,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node --test tools/translation/js-to-rust/test/*.test.mjs
       - run: node scripts/regenerate-js-first.mjs --check
   complete:

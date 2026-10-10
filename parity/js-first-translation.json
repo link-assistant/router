@@ -351,7 +351,1526 @@
     "cases": 58,
     "expectedResults": "independently authored JSON, not generated from the JavaScript implementation"
   },
-  "nativeCoverage": [],
+  "nativeCoverage": [
+    {
+      "path": "packages/javascript/native/accounts.mjs",
+      "sha256": "c508294b7a0db77931008aa94126eb37e64e3fe4bc4664a13bafc3c32a2a7abd",
+      "sourceItems": 8,
+      "translatedItems": 0,
+      "unsupportedItems": 8,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 56,
+            "encoding": "utf16"
+          },
+          "example": "import { cooldownActive } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 57,
+            "end": 127,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, readOptional, serialized } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 128,
+            "end": 171,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 173,
+            "end": 437,
+            "encoding": "utf16"
+          },
+          "example": "const strategyAliases = new Map([ ['rr','round-robin'],['roundrobin','round-robin'],['weighted_round_robin','weighted-round-robin'], ['prio','priority'],['fill-first','priority'],["
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 438,
+            "end": 663,
+            "encoding": "utf16"
+          },
+          "example": "export function wildcardMatch(pattern, value) { const regex = pattern.split('').map(c => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\\\^$.[\\]{}()+|]/g,'\\\\$&')).join(''); retur"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 664,
+            "end": 3421,
+            "encoding": "utf16"
+          },
+          "example": "export function validateAccountPolicy(policy = {}) { const p = { weight:1, prefix:null, disable_cooling:false, request_retry:null, request_scoped_errors:[], headers:{}, model_alias"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3422,
+            "end": 4124,
+            "encoding": "utf16"
+          },
+          "example": "export function accountVisibleModels(account, upstream) { const p = account.policy; const excluded = model => p.excluded_models.some(pattern => wildcardMatch(pattern,model)); if (e"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 4125,
+            "end": 14658,
+            "encoding": "utf16"
+          },
+          "example": "export class AccountRouter { constructor({ config, clock = () => Math.floor(Date.now()/1000) }) { this.config = config; this.clock = clock; this.cursor = 0; this.failoverCursor = 0"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/cli.mjs",
+      "sha256": "11b27e2ca3e9efc5a879ee8b8ea50cda147df3ef26d497cd1a8ee7409d3833aa",
+      "sourceItems": 6,
+      "translatedItems": 0,
+      "unsupportedItems": 6,
+      "diagnostics": [
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 0,
+            "end": 122,
+            "encoding": "utf16"
+          },
+          "example": "#!/usr/bin/env node /** Standalone native CLI: structured contracts, never falls back to Rust. */ import { pathToFileURL }"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 123,
+            "end": 139,
+            "encoding": "utf16"
+          },
+          "example": "from 'node:url';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 140,
+            "end": 214,
+            "encoding": "utf16"
+          },
+          "example": "import { NativeRouter, catalog, operationResult } from './operations.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 216,
+            "end": 2731,
+            "encoding": "utf16"
+          },
+          "example": "export function parseNativeArguments(argv) { const remaining = [...argv], global = {}; for (let index = 0; index < remaining.length; index++) { if (remaining[index] === '--json') {"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2732,
+            "end": 3513,
+            "encoding": "utf16"
+          },
+          "example": "export async function runNativeCli(argv, { stdout = process.stdout, stdin = process.stdin, env = process.env, router } = {}) { let result; try { const parsed = parseNativeArguments"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 3514,
+            "end": 3661,
+            "encoding": "utf16"
+          },
+          "example": "if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) { process.exitCode = await runNativeCli(process.argv.slice(2)); }"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/config.mjs",
+      "sha256": "acae75e3153fbeffc1b88ac039ad4e841cd391671a7411123419cbc9891f08a2",
+      "sourceItems": 14,
+      "translatedItems": 0,
+      "unsupportedItems": 14,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 44,
+            "encoding": "utf16"
+          },
+          "example": "import { readFile } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 45,
+            "end": 133,
+            "encoding": "utf16"
+          },
+          "example": "import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 134,
+            "end": 170,
+            "encoding": "utf16"
+          },
+          "example": "import { resolve } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 171,
+            "end": 261,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, readOptional, serialized, withNativeFileLock } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 262,
+            "end": 323,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError, ensureRealSecret } from './tokens.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 325,
+            "end": 911,
+            "encoding": "utf16"
+          },
+          "example": "export function parseLenv(text) { const values = Object.create(null); for (const raw of text.split(/\\r?\\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 912,
+            "end": 986,
+            "encoding": "utf16"
+          },
+          "example": "const bool = value => value === true || value === 'true' || value === '1';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 987,
+            "end": 2622,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeProvider(record, env = process.env) { const name = record.name ?? record.provider_name ?? record.provider; if (typeof name !== 'string' || !/^[A-Za-z0-9._-"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 2623,
+            "end": 4934,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeConfig(input = {}, env = process.env) { const config = { ...input }; config.token_secret = input.token_secret ?? input.tokenSecret ?? env.TOKEN_SECRET; con"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4935,
+            "end": 5641,
+            "encoding": "utf16"
+          },
+          "example": "export async function loadConfig({ config = {}, configPath, env = process.env } = {}) { let fromFile = {}; if (configPath) { const text = await readFile(configPath,'utf8'); if (con"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5642,
+            "end": 6049,
+            "encoding": "utf16"
+          },
+          "example": "export function encryptProviderSecret(secret, tokenSecret) { const key = createHash('sha256').update(ensureRealSecret(tokenSecret)).digest(), nonce = randomBytes(12); const cipher "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6050,
+            "end": 6819,
+            "encoding": "utf16"
+          },
+          "example": "export function decryptProviderSecret(secret, tokenSecret) { if (!secret.startsWith('aes256gcm:')) throw new RouterError('invalid_provider','Unsupported provider secret format'); c"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 6820,
+            "end": 6958,
+            "encoding": "utf16"
+          },
+          "example": "const redact = r => { const { api_key, encrypted_api_key, ...safe } = r; return { ...safe, has_encrypted_api_key:!!encrypted_api_key }; };"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 6959,
+            "end": 9731,
+            "encoding": "utf16"
+          },
+          "example": "export class ProviderStore { constructor({ dataDir, secret, env = process.env, records = [], persistent = true }) { this.path = `${dataDir}/providers.lenv`; this.secret = secret; t"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/core.mjs",
+      "sha256": "c5e5c264709ebee508e8b576f436bdf2983894750fa89c4e3fb7f97d80874502",
+      "sourceItems": 11,
+      "translatedItems": 0,
+      "unsupportedItems": 11,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 57,
+            "encoding": "utf16"
+          },
+          "example": "import { loadConfig, ProviderStore } from './config.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 58,
+            "end": 107,
+            "encoding": "utf16"
+          },
+          "example": "import { createTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 108,
+            "end": 152,
+            "encoding": "utf16"
+          },
+          "example": "import { TokenManager } from './tokens.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 153,
+            "end": 200,
+            "encoding": "utf16"
+          },
+          "example": "import { AccountRouter } from './accounts.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 201,
+            "end": 264,
+            "encoding": "utf16"
+          },
+          "example": "import { modelCandidates, catalogModels } from './routing.mjs';"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 266,
+            "end": 2880,
+            "encoding": "utf16"
+          },
+          "example": "export class RouterCore { constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env }) { this.config = config; this.clock = clock; this.tokens = n"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2881,
+            "end": 3295,
+            "encoding": "utf16"
+          },
+          "example": "export async function createRouterCore(options = {}) { const config = await loadConfig(options); const core = new RouterCore({...options,config}); // Resolve persisted provider cat"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 3296,
+            "end": 3370,
+            "encoding": "utf16"
+          },
+          "example": "export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 3371,
+            "end": 3445,
+            "encoding": "utf16"
+          },
+          "example": "export { loadConfig, normalizeConfig, ProviderStore } from './config.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 3446,
+            "end": 3529,
+            "encoding": "utf16"
+          },
+          "example": "export { MemoryTokenStore, TextTokenStore, createTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 3530,
+            "end": 3577,
+            "encoding": "utf16"
+          },
+          "example": "export { AccountRouter } from './accounts.mjs';"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/index.mjs",
+      "sha256": "195aebb5ca3330a6db00686475a005962f74baf99eb0614653ea804235e1ace4",
+      "sourceItems": 3,
+      "translatedItems": 0,
+      "unsupportedItems": 3,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 184,
+            "encoding": "utf16"
+          },
+          "example": "export { NativeRouter, NativeRouterError, createNativeRouter, catalog, version, operationNames, nativeOperationSupport, operationResult, validateNativeResult } from './operations.m"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 185,
+            "end": 243,
+            "encoding": "utf16"
+          },
+          "example": "export { createRouterCore, RouterCore } from './core.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 244,
+            "end": 341,
+            "encoding": "utf16"
+          },
+          "example": "export { createNativeRouter as createNativeServerRouter, startNativeServer } from './server.mjs';"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/operations.mjs",
+      "sha256": "ad5a5ec323b629200fb6bfacb39203dcf4a57e2c242b771cf38d7c293181d800",
+      "sourceItems": 25,
+      "translatedItems": 0,
+      "unsupportedItems": 25,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 92,
+            "end": 131,
+            "encoding": "utf16"
+          },
+          "example": "import { readFileSync } from 'node:fs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 132,
+            "end": 176,
+            "encoding": "utf16"
+          },
+          "example": "import { readFile } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 177,
+            "end": 216,
+            "encoding": "utf16"
+          },
+          "example": "import Ajv2020 from 'ajv/dist/2020.js';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method parse",
+          "span": {
+            "start": 218,
+            "end": 319,
+            "encoding": "utf16"
+          },
+          "example": "export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property version",
+          "span": {
+            "start": 320,
+            "end": 359,
+            "encoding": "utf16"
+          },
+          "example": "export const version = catalog.version;"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 360,
+            "end": 457,
+            "encoding": "utf16"
+          },
+          "example": "export const operationNames = Object.freeze(catalog.operations.map(operation => operation.name));"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 458,
+            "end": 548,
+            "encoding": "utf16"
+          },
+          "example": "const camel = value => value.replace(/[-_]([a-z])/g, (_, letter) => letter.toUpperCase());"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 549,
+            "end": 655,
+            "encoding": "utf16"
+          },
+          "example": "const snake = value => value.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase()).replaceAll('-', '_');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 656,
+            "end": 685,
+            "encoding": "utf16"
+          },
+          "example": "const validators = new Map();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 686,
+            "end": 775,
+            "encoding": "utf16"
+          },
+          "example": "const ajv = new Ajv2020({ strict: true, allowUnionTypes: true, validateFormats: false });"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 777,
+            "end": 1112,
+            "encoding": "utf16"
+          },
+          "example": "export class NativeRouterError extends Error { constructor(message, { code = 'operation', result = null, cause } = {}) { super(message, { cause }); this.name = 'NativeRouterError';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1113,
+            "end": 1566,
+            "encoding": "utf16"
+          },
+          "example": "export function validateNativeResult(name, result) { if (!validators.has(name)) { const schema = JSON.parse(readFileSync(new URL(`../schemas/${name.replaceAll('.', '-')}.v1.json`, "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1567,
+            "end": 1845,
+            "encoding": "utf16"
+          },
+          "example": "export function operationResult(name, data, diagnostics = [], exitCode = 0) { return validateNativeResult(name, { schema: `link-assistant-router/${name.replaceAll('.', '-')}/v1`, o"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ...",
+          "span": {
+            "start": 1846,
+            "end": 1895,
+            "encoding": "utf16"
+          },
+          "example": "const output = (...lines) => ({ output: lines });"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1896,
+            "end": 1994,
+            "encoding": "utf16"
+          },
+          "example": "const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 1995,
+            "end": 2697,
+            "encoding": "utf16"
+          },
+          "example": "export const nativeOperationSupport = Object.freeze({ version: 'implemented', contracts: 'implemented', 'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2698,
+            "end": 3671,
+            "encoding": "utf16"
+          },
+          "example": "function normalizeOptions(operation, options) { const allowed = new Map(operation.options.map(option => [snake(option.name), option])); const normalized = {}; for (const [key, valu"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3672,
+            "end": 4024,
+            "encoding": "utf16"
+          },
+          "example": "function localOnly(options, accepted = []) { const consumed = new Set(['local', ...accepted]); for (const [name, value] of Object.entries(options)) { if (value === false) continue;"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4025,
+            "end": 4692,
+            "encoding": "utf16"
+          },
+          "example": "function redactedProvider(provider) { return { name: provider.name, kind: provider.kind ?? 'openai-compatible', base_url: provider.base_url, models: provider.models ?? [], supporte"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4693,
+            "end": 5624,
+            "encoding": "utf16"
+          },
+          "example": "function tokenOptions(options) { const result = {}; for (const key of ['ttl_hours', 'max_requests', 'max_tokens', 'rate_limit_per_minute']) { if (options[key] === undefined) contin"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 5625,
+            "end": 5843,
+            "encoding": "utf16"
+          },
+          "example": "const find = (records, key, value) => { const record = records.find(record => record[key] === value); if (!record) throw new NativeRouterError(`Unknown ${key}: ${value}`, { code: '"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 5844,
+            "end": 6087,
+            "encoding": "utf16"
+          },
+          "example": "async function runtimeFor(router) { router.corePromise ??= router.options.core ? Promise.resolve(router.options.core) : import('./core.mjs').then(({ createRouterCore }) => createRo"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 6088,
+            "end": 18261,
+            "encoding": "utf16"
+          },
+          "example": "async function dispatch(router, name, options, invocation) { if (name === 'version') { localOnly(options); return { version, source_commit: 'unknown' }; } if (name === 'contracts')"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 18356,
+            "end": 21105,
+            "encoding": "utf16"
+          },
+          "example": "export class NativeRouter { constructor(options = {}) { this.options = options; this.corePromise = null; this.serverPromise = null; for (const operation of catalog.operations) { le"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 21106,
+            "end": 21177,
+            "encoding": "utf16"
+          },
+          "example": "export const createNativeRouter = options => new NativeRouter(options);"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/protocols.mjs",
+      "sha256": "a61c6bdd850bdcb6b50ee388ebbebc0381a9a231248674db5447f7a296dfcc16",
+      "sourceItems": 12,
+      "translatedItems": 0,
+      "unsupportedItems": 12,
+      "diagnostics": [
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 78,
+            "end": 240,
+            "encoding": "utf16"
+          },
+          "example": "export class ProtocolError extends Error { constructor(message, status = 400) { super(message); this.status = status; this.code = 'unsupported_translation'; } }"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 241,
+            "end": 286,
+            "encoding": "utf16"
+          },
+          "example": "const copy = value => structuredClone(value);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 287,
+            "end": 399,
+            "encoding": "utf16"
+          },
+          "example": "const text = content => typeof content === 'string' ? content : (content ?? []).map(p => p.text ?? '').join('');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 400,
+            "end": 589,
+            "encoding": "utf16"
+          },
+          "example": "const parseArguments = raw => { try { return typeof raw === 'string' ? JSON.parse(raw) : raw ?? {}; } catch { throw new ProtocolError('Function arguments must contain valid JSON');"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 590,
+            "end": 1279,
+            "encoding": "utf16"
+          },
+          "example": "function chatParts(content) { if (content == null || typeof content === 'string') return content ?? ''; if (!Array.isArray(content)) throw new ProtocolError('Message content must b"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1280,
+            "end": 1877,
+            "encoding": "utf16"
+          },
+          "example": "function anthropicParts(content) { if (typeof content === 'string') return content; return (content ?? []).map(p => { if (p.cache_control || p.citations?.length) throw new Protocol"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1878,
+            "end": 6285,
+            "encoding": "utf16"
+          },
+          "example": "export function requestToChat(body, source) { if (source === 'chat') return copy(body); const out = { model: body.model, messages: [], stream: body.stream ?? false }; for (const ke"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6286,
+            "end": 10732,
+            "encoding": "utf16"
+          },
+          "example": "export function translateRequest(body, source, target, model = body.model) { if (source === target) return { ...copy(body), model }; const chat = requestToChat(body, source); chat."
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 10733,
+            "end": 11305,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeUsage(usage = {}, protocol = 'chat') { const rawInput = usage.input_tokens ?? usage.prompt_tokens ?? 0; const output = usage.output_tokens ?? usage.complet"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 11306,
+            "end": 14357,
+            "encoding": "utf16"
+          },
+          "example": "export function responseToCanonical(body, protocol) { const result = { id: body.id, model: body.model, text: '', tools: [], usage: normalizeUsage(body.usage, protocol), finish: 'st"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 14358,
+            "end": 16356,
+            "encoding": "utf16"
+          },
+          "example": "export function canonicalResponse(r, protocol, model = r.model, now = Date.now()) { const created = Math.floor(now / 1000), id = r.id ?? `native_${created}`; const u = r.usage; if "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 16357,
+            "end": 16558,
+            "encoding": "utf16"
+          },
+          "example": "export function translateResponse(body, source, target, model, now) { return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), tar"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/routing.mjs",
+      "sha256": "707fde53c2b0aba35e49bd54666aa863c46ce398eedf389509fc00703c8f027f",
+      "sourceItems": 5,
+      "translatedItems": 0,
+      "unsupportedItems": 5,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 57,
+            "encoding": "utf16"
+          },
+          "example": "import { providerModelId } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 58,
+            "end": 112,
+            "encoding": "utf16"
+          },
+          "example": "import { accountVisibleModels } from './accounts.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 113,
+            "end": 156,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 158,
+            "end": 1968,
+            "encoding": "utf16"
+          },
+          "example": "export function modelCandidates(providers, accounts, context = {}) { const requested = context.model; if (typeof requested !== 'string' || !requested) throw new RouterError('model_"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1969,
+            "end": 2719,
+            "encoding": "utf16"
+          },
+          "example": "export function catalogModels(providers, accounts) { const result = new Map(); for (const provider of providers) if (provider.enabled !== false) for (const account of accounts.valu"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/server.mjs",
+      "sha256": "b05443889720d491ec5c97f9314020ed677170a50bea29fae675c207851d0603",
+      "sourceItems": 21,
+      "translatedItems": 0,
+      "unsupportedItems": 21,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 41,
+            "encoding": "utf16"
+          },
+          "example": "import { createServer } from 'node:http';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 42,
+            "end": 81,
+            "encoding": "utf16"
+          },
+          "example": "import { Readable } from 'node:stream';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 82,
+            "end": 128,
+            "encoding": "utf16"
+          },
+          "example": "import { timingSafeEqual } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 129,
+            "end": 214,
+            "encoding": "utf16"
+          },
+          "example": "import { ProtocolError, translateRequest, translateResponse } from './protocols.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 215,
+            "end": 284,
+            "encoding": "utf16"
+          },
+          "example": "import { translateStream, monitorNativeStream } from './streams.mjs';"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 286,
+            "end": 361,
+            "encoding": "utf16"
+          },
+          "example": "const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 362,
+            "end": 502,
+            "encoding": "utf16"
+          },
+          "example": "const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /(?:api[_-]?key|token|password|secret|authorization|credential|cookie)/i",
+          "span": {
+            "start": 503,
+            "end": 597,
+            "encoding": "utf16"
+          },
+          "example": "const redactedKeys = /(?:api[_-]?key|token|password|secret|authorization|credential|cookie)/i;"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 598,
+            "end": 870,
+            "encoding": "utf16"
+          },
+          "example": "export function redact(value) { if (Array.isArray(value)) return value.map(redact); if (!value || typeof value !== 'object') return value; return Object.fromEntries(Object.entries("
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 871,
+            "end": 1042,
+            "encoding": "utf16"
+          },
+          "example": "const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1043,
+            "end": 1183,
+            "encoding": "utf16"
+          },
+          "example": "const bearer = headers => { const a = headers.get('authorization'); return a?.match(/^Bearer\\s+(.+)$/i)?.[1] ?? headers.get('x-api-key'); };"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1184,
+            "end": 1706,
+            "encoding": "utf16"
+          },
+          "example": "const protocolOf = candidate => { const value = candidate.protocol ?? candidate.provider?.protocol ?? candidate.provider?.type ?? candidate.provider; if (['anthropic', 'messages']."
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 1707,
+            "end": 1797,
+            "encoding": "utf16"
+          },
+          "example": "const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1798,
+            "end": 2300,
+            "encoding": "utf16"
+          },
+          "example": "function upstreamURL(base, protocol) { let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); } if (!['http:', 'https:'].includes(u"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2301,
+            "end": 3504,
+            "encoding": "utf16"
+          },
+          "example": "function upstreamHeaders(candidate, protocol, request) { const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' }); // Only"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3505,
+            "end": 3755,
+            "encoding": "utf16"
+          },
+          "example": "function relayHeaders(upstream) { const result = {}; for (const [key, value] of upstream.headers) if (/^(?:x-request-id|request-id|retry-after|x-ratelimit-[a-z_-]+|anthropic-rateli"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 3756,
+            "end": 4712,
+            "encoding": "utf16"
+          },
+          "example": "async function boundedJSON(request, maxBytes) { if (!request.body) throw new ProtocolError('Request body is required'); const length = Number(request.headers.get('content-length'))"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 4713,
+            "end": 4790,
+            "encoding": "utf16"
+          },
+          "example": "const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 4875,
+            "end": 21503,
+            "encoding": "utf16"
+          },
+          "example": "export function createNativeRouter(options = {}) { const { core, authenticate, fetch: upstreamFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxRespons"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 21504,
+            "end": 22067,
+            "encoding": "utf16"
+          },
+          "example": "function responseToCanonicalUsage(raw, protocol) { // Usage parsing does not inspect content, preserving native reasoning blocks. const u = raw.usage ?? {}, input = u.input_tokens "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 22068,
+            "end": 22345,
+            "encoding": "utf16"
+          },
+          "example": "export async function startNativeServer(options = {}) { const core = options.core ?? await (await import('./core.mjs')).createRouterCore(options); const router = createNativeRouter"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/storage.mjs",
+      "sha256": "dbee65bdcad7f30dfd719abb6b13e9bb44b6cc1a9524dee7052ba34ddcbe1b33",
+      "sourceItems": 17,
+      "translatedItems": 0,
+      "unsupportedItems": 17,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 83,
+            "encoding": "utf16"
+          },
+          "example": "import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 84,
+            "end": 120,
+            "encoding": "utf16"
+          },
+          "example": "import { dirname } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 121,
+            "end": 162,
+            "encoding": "utf16"
+          },
+          "example": "import { randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 164,
+            "end": 189,
+            "encoding": "utf16"
+          },
+          "example": "const queues = new Map();"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 190,
+            "end": 605,
+            "encoding": "utf16"
+          },
+          "example": "export async function serialized(key, operation) { const previous = queues.get(key) ?? Promise.resolve(); let release; const held = new Promise(resolve => { release = resolve; }); "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 606,
+            "end": 1203,
+            "encoding": "utf16"
+          },
+          "example": "export async function atomicWrite(path, text) { await mkdir(dirname(path), { recursive: true, mode: 0o700 }); const temporary = `${path}.${randomUUID()}.tmp`; let file; try { file "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 1362,
+            "end": 3466,
+            "encoding": "utf16"
+          },
+          "example": "export async function withNativeFileLock(path, operation, timeout = 30000) { const lock = `${path}.native-lock`; await mkdir(dirname(path), {recursive:true,mode:0o700}); const star"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 3467,
+            "end": 3650,
+            "encoding": "utf16"
+          },
+          "example": "export async function readOptional(path, fallback = '') { try { return await readFile(path, 'utf8'); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3652,
+            "end": 4023,
+            "encoding": "utf16"
+          },
+          "example": "function quote(text) { if (!text.includes('\"')) return `\"${text}\"`; if (!text.includes(\"'\")) return `'${text}'`; const delimiter = text.startsWith('\"') ? \"'\" : '\"'; const runs = te"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4111,
+            "end": 5075,
+            "encoding": "utf16"
+          },
+          "example": "export function encodeLino(value, level = 0) { if (typeof value === 'string') { if (/[\\x00-\\x08\\x0b-\\x1f\\x7f]/.test(value)) { const escaped = value.replace(/[%\\x00-\\x08\\x0b-\\x1f\\x7"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5076,
+            "end": 7813,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeLino(text) { let i = 0; const skip = () => { while (text[i] === ' ' || text[i] === '\\t' || text[i] === '\\r') i++; }; function scalar(raw, quoted = false) { if"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 7815,
+            "end": 8038,
+            "encoding": "utf16"
+          },
+          "example": "const strings = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'slidin"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8039,
+            "end": 8587,
+            "encoding": "utf16"
+          },
+          "example": "export function encodeTokenRecords(records) { const values = records.slice().sort((a,b) => a.id.localeCompare(b.id)).map(record => { const value = { ...record }; for (const field o"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8588,
+            "end": 9864,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeTokenRecords(text) { if (!text.trim()) return []; const root = decodeLino(text); if (root.type !== 'RouterState' || root.subtype !== 'TokenStore' || !Array.is"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 9865,
+            "end": 10644,
+            "encoding": "utf16"
+          },
+          "example": "export class MemoryTokenStore { constructor(records = []) { this.records = new Map(records.map(r => [r.id, structuredClone(r)])); this.key = {}; } async transaction(operation) { re"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 10645,
+            "end": 11473,
+            "encoding": "utf16"
+          },
+          "example": "export class TextTokenStore extends MemoryTokenStore { constructor(path) { super(); this.path = path; } // Refresh under the native process lock before every mutation; read access "
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
+          "span": {
+            "start": 11474,
+            "end": 11939,
+            "encoding": "utf16"
+          },
+          "example": "export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage } = {}) { if (storage) return storage; if (['memory','mem','none'].includes(storage_policy)) r"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/streams.mjs",
+      "sha256": "1ab15f929d4c57784db7eb7e68a69e4feb13fd186a36e1eabff7892a77456537",
+      "sourceItems": 7,
+      "translatedItems": 0,
+      "unsupportedItems": 7,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 83,
+            "encoding": "utf16"
+          },
+          "example": "import { canonicalResponse, normalizeUsage, ProtocolError } from './protocols.mjs';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 84,
+            "end": 118,
+            "encoding": "utf16"
+          },
+          "example": "const encoder = new TextEncoder();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 119,
+            "end": 255,
+            "encoding": "utf16"
+          },
+          "example": "const frame = (data, event) => `${event ? `event: ${event}\\n` : ''}data: ${typeof data === 'string' ? data : JSON.stringify(data)}\\n\\n`;"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 337,
+            "end": 2069,
+            "encoding": "utf16"
+          },
+          "example": "export async function* decodeSSE(body, { maxFrameBytes = 1024 * 1024 } = {}) { const reader = body.getReader(), decoder = new TextDecoder(); let buffer = '', data = [], event = '';"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2071,
+            "end": 7028,
+            "encoding": "utf16"
+          },
+          "example": "async function* normalizedEvents(body, protocol) { const tools = new Map(); let ended = false, finish = 'stop', usage = normalizeUsage(), id, started = false; for await (const f of"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7110,
+            "end": 15185,
+            "encoding": "utf16"
+          },
+          "example": "export function translateStream(body, source, target, model, { clock = Date.now, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 } = {}) { const events = normalized"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 15267,
+            "end": 17281,
+            "encoding": "utf16"
+          },
+          "example": "export function monitorNativeStream(body, protocol, { onComplete, onError, onCancel } = {}) { const events = decodeSSE(body)[Symbol.asyncIterator](); let terminal = false, usage = "
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/tokens.mjs",
+      "sha256": "c29443ae3baf6cc5c2d973b638bad6ac97e3ec13684f68bc45dbeef022cf090d",
+      "sourceItems": 12,
+      "translatedItems": 0,
+      "unsupportedItems": 12,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 70,
+            "encoding": "utf16"
+          },
+          "example": "import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 71,
+            "end": 131,
+            "encoding": "utf16"
+          },
+          "example": "import { tokenBudgetPermits } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 132,
+            "end": 181,
+            "encoding": "utf16"
+          },
+          "example": "import { MemoryTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 183,
+            "end": 355,
+            "encoding": "utf16"
+          },
+          "example": "export class RouterError extends Error { constructor(code, message, status = 400) { super(message); this.name = 'RouterError'; this.code = code; this.status = status; } }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 356,
+            "end": 636,
+            "encoding": "utf16"
+          },
+          "example": "export function ensureRealSecret(secret) { if (!secret || secret.startsWith('\\0') || ['unused-by-remote-command','unused-by-auth','unused-by-this-client-command'].includes(secret))"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 637,
+            "end": 720,
+            "encoding": "utf16"
+          },
+          "example": "const encode = object => Buffer.from(JSON.stringify(object)).toString('base64url');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 721,
+            "end": 832,
+            "encoding": "utf16"
+          },
+          "example": "const clients = new Set(['claude','codex','opencode','gemini','qwen','openclaw','kilo','cline','roo','aider']);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 833,
+            "end": 1087,
+            "encoding": "utf16"
+          },
+          "example": "const number = (value, name, positive = false) => { if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) throw new RouterError('invalid_argument', `${name} must be a ${p"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 1088,
+            "end": 1467,
+            "encoding": "utf16"
+          },
+          "example": "const defaults = { ephemeral: false, run_lease_expires_at: null, sliding_window_seconds: null, account: null, max_requests: null, used_requests: 0, max_tokens: null, used_tokens: 0"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 1468,
+            "end": 2023,
+            "encoding": "utf16"
+          },
+          "example": "export function validateModelPolicy(policy = {}) { const models = policy.allowed_models ?? []; if (!Array.isArray(models) || models.some(model => typeof model !== 'string' || !mode"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 2024,
+            "end": 11365,
+            "encoding": "utf16"
+          },
+          "example": "export class TokenManager { constructor({ secret, store = new MemoryTokenStore(), clock = () => Math.floor(Date.now()/1000), leeway = 60 } = {}) { this.secret = secret; this.store "
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 11366,
+            "end": 11465,
+            "encoding": "utf16"
+          },
+          "example": "export const codexTokenAlias = token => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;"
+        }
+      ]
+    }
+  ],
   "unsupportedExamples": [
     {
       "kind": "async",
