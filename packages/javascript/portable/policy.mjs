@@ -3,7 +3,7 @@
 
 /** @param {number} used @param {number} reserved @param {number} reserve @param {number} max @returns {boolean} */
 export function tokenBudgetPermits(used, reserved, reserve, max) {
-  return max < 0 || used + reserved + reserve <= max;
+  return max < 0 || used + reserved < max && used + reserved + reserve <= max;
 }
 
 /** @param {number} until @param {number} now @returns {boolean} */

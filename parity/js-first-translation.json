@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "translator": "tools/translation/js-to-rust/translator.mjs",
+  "provenance": "tools/translation/js-to-rust/provenance.json",
+  "fragment": "portable-router-v1",
+  "contract": {
+    "status": "bounded-executable-translation",
+    "wholeNativeImplementationTranslated": false,
+    "numbers": "JavaScript Number and Rust f64, IEEE-754 binary64; NaN and signed zero preserved by min/max encodings",
+    "strings": "Unicode scalar strings; length counts UTF-16 code units; Rust String cannot represent unpaired UTF-16 surrogate input",
+    "runtime": "Node >=20; TypeScript strict; generated Rust uses only std",
+    "arguments": "Callers supply the JSDoc annotated primitive types; JavaScript implicit coercion is not part of this fragment",
+    "unsupportedPolicy": "strict portable regeneration fails; native source census reports refusals without source envelopes"
+  },
+  "sources": [
+    {
+      "path": "packages/javascript/portable/policy.mjs",
+      "sha256": "61d6a2b90f4a8c495700eea32eef4e84855df7c631d1b8507c4e132e2c54d448",
+      "bytes": 4193,
+      "functions": [
+        {
+          "javascript": "tokenBudgetPermits",
+          "rust": "token_budget_permits",
+          "parameters": [
+            {
+              "name": "used",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "reserve",
+              "type": "number"
+            },
+            {
+              "name": "max",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "cooldownActive",
+          "rust": "cooldown_active",
+          "parameters": [
+            {
+              "name": "until",
+              "type": "number"
+            },
+            {
+              "name": "now",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "providerModelId",
+          "rust": "provider_model_id",
+          "parameters": [
+            {
+              "name": "provider",
+              "type": "string"
+            },
+            {
+              "name": "model",
+              "type": "string"
+            }
+          ],
+          "returns": "string"
+        },
+        {
+          "javascript": "clamp",
+          "rust": "clamp",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "number"
+            },
+            {
+              "name": "minimum",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "longestCooldown",
+          "rust": "longest_cooldown",
+          "parameters": [
+            {
+              "name": "previous",
+              "type": "number"
+            },
+            {
+              "name": "next",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryAfterDeadline",
+          "rust": "retry_after_deadline",
+          "parameters": [
+            {
+              "name": "seconds",
+              "type": "number"
+            },
+            {
+              "name": "now",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "tokenCost",
+          "rust": "token_cost",
+          "parameters": [
+            {
+              "name": "input",
+              "type": "number"
+            },
+            {
+              "name": "output",
+              "type": "number"
+            },
+            {
+              "name": "input_per_million",
+              "type": "number"
+            },
+            {
+              "name": "output_per_million",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "validTokenCount",
+          "rust": "valid_token_count",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "settledTokenUsage",
+          "rust": "settled_token_usage",
+          "parameters": [
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "actual",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "remainingTokenBudget",
+          "rust": "remaining_token_budget",
+          "parameters": [
+            {
+              "name": "used",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "max",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "completionTokenLimit",
+          "rust": "completion_token_limit",
+          "parameters": [
+            {
+              "name": "requested",
+              "type": "number"
+            },
+            {
+              "name": "available",
+              "type": "number"
+            },
+            {
+              "name": "limit",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryBackoff",
+          "rust": "retry_backoff",
+          "parameters": [
+            {
+              "name": "failures",
+              "type": "number"
+            },
+            {
+              "name": "base",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryableStatus",
+          "rust": "retryable_status",
+          "parameters": [
+            {
+              "name": "status",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "successStatus",
+          "rust": "success_status",
+          "parameters": [
+            {
+              "name": "status",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "weightedCapacity",
+          "rust": "weighted_capacity",
+          "parameters": [
+            {
+              "name": "weight",
+              "type": "number"
+            },
+            {
+              "name": "load",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "tokenExpired",
+          "rust": "token_expired",
+          "parameters": [
+            {
+              "name": "now",
+              "type": "number"
+            },
+            {
+              "name": "expires",
+              "type": "number"
+            },
+            {
+              "name": "skew",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "isQualifiedModel",
+          "rust": "is_qualified_model",
+          "parameters": [
+            {
+              "name": "model",
+              "type": "string"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "credentialPrefixMatches",
+          "rust": "credential_prefix_matches",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "prefix",
+              "type": "string"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "utf16Length",
+          "rust": "utf16_length",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "modelNameLengthPermits",
+          "rust": "model_name_length_permits",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        }
+      ]
+    }
+  ],
+  "fixtures": {
+    "path": "parity/fixtures/js-first/policy.json",
+    "sha256": "82d1a2fdd476cc805903a926d25d3bacfdb9df896acc547e351fd63987ceccf8",
+    "cases": 58,
+    "expectedResults": "independently authored JSON, not generated from the JavaScript implementation"
+  },
+  "nativeCoverage": [],
+  "unsupportedExamples": [
+    {
+      "kind": "async",
+      "source": "/** @returns {number} */ export async function delayed() { return 1; }",
+      "message": "async functions and await are outside portable-pure-v1"
+    },
+    {
+      "kind": "template",
+      "source": "/** @param {string} name @returns {string} */ export function greeting(name) { return `hi ${name}`; }",
+      "message": "template literals are outside portable-pure-v1"
+    },
+    {
+      "kind": "collection",
+      "source": "/** @returns {number} */ export function collection() { return [1, 2].length; }",
+      "message": "arrays and objects are outside portable-pure-v1"
+    },
+    {
+      "kind": "class",
+      "source": "export class Router {}",
+      "message": "a class is outside portable-pure-v1"
+    },
+    {
+      "kind": "no-definition",
+      "source": "import { readFile } from 'node:fs';",
+      "message": "no definition"
+    },
+    {
+      "kind": "untyped",
+      "source": "export function untyped(value) { return value; }",
+      "message": "a parameter or result without a JSDoc number, boolean or string type: none"
+    },
+    {
+      "kind": "unknown-call",
+      "source": "/** @returns {number} */ export function missing() { return absent(); }",
+      "message": "a call to a function the module does not define: absent"
+    },
+    {
+      "kind": "mutable",
+      "source": "/** @returns {number} */ export function immutable() { const x = 1; x = 2; return x; }",
+      "message": "assignment to an immutable or unbound local: x"
+    },
+    {
+      "kind": "concatenation",
+      "source": "/** @param {number} n @returns {string} */ export function coercion(n) { return 'x' + n; }",
+      "message": "mixed type string concatenation requires JavaScript coercion: add of string and number"
+    },
+    {
+      "kind": "loop",
+      "source": "/** @returns {number} */ export function forbiddenLoop() { for (;;) {} return 1; }",
+      "message": "for, do and generator loops are outside portable-router-v1"
+    },
+    {
+      "kind": "type",
+      "source": "/** @param {number} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }",
+      "message": "operand types the construct map does not accept: a condition that is not boolean"
+    },
+    {
+      "kind": "rounding",
+      "source": "/** @param {number} n @returns {number} */ export function rounding(n) { return Math.round(n); }",
+      "message": "Math.round rounds halves up, f64::round away from zero"
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @param {number} n @returns {boolean} */ export function loose(n) { return n == 0; }",
+      "message": "a construct outside portable-pure-v1: the operator =="
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @returns {number} */ export function throwing() { throw new Error('x'); }",
+      "message": "a construct outside portable-pure-v1: the statement throw"
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @param {number} n @returns {number} */ export function defaults(n = 1) { return n; }",
+      "message": "a construct outside portable-pure-v1: a default parameter"
+    },
+    {
+      "kind": "missing-return",
+      "source": "/** @param {boolean} yes @returns {number} */ export function missingReturn(yes) { if (yes) { return 1; } }",
+      "message": "a path ends without a return"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "tools/translation/js-to-rust/generated/policy.lino",
+      "bytes": 5515,
+      "sha256": "6c87b857fcadce2fd1d4306c119cb3adc9107fa588fd8afd7a7dadde0d077f3a"
+    },
+    {
+      "path": "src/generated_js_first/policy.rs",
+      "bytes": 11797,
+      "sha256": "6899a9b44ef26e33a7f5199953c3c3f1ee8b9477742ab0143de79afbf1c8a95d"
+    },
+    {
+      "path": "src/generated_js_first/mod.rs",
+      "bytes": 75,
+      "sha256": "4399269fb36024388acb626aa3ef3c66bfca0c3a2b4e80e09c35837f0ee321fe"
+    },
+    {
+      "path": "packages/typescript/native/js-first-policy.ts",
+      "bytes": 3371,
+      "sha256": "8a029f8a5ca9a78317bc3ab8182c7b607690e3cd564af47ccf47dffd1c0538d3"
+    }
+  ]
+}

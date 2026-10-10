@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/link-assistant/formal-ai",
+  "pullRequest": "https://github.com/link-assistant/formal-ai/pull/1188",
+  "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+  "license": "Unlicense",
+  "verification": "Original source Git blob hashes verified against GitHub contents at the public PR commit before adaptation.",
+  "files": [
+    { "source": "scripts/self-translation/lexer.mjs", "local": "vendor/lexer.mjs", "gitBlob": "9de24e8e61719256b515c06a5839bee6b7d7cbb4", "originalSha256": "de63554d12ba030a9a8cf82b3d950d8baa07f55dd20623e711b4a292a6d8f94d", "adaptations": [] },
+    { "source": "scripts/self-translation/frontends.mjs", "local": "vendor/frontends.mjs", "gitBlob": "df5794142fcb1fe1204b8c32f09eb683018a32a2", "originalSha256": "bdf326db20c3b7f617896aa4668b9847b8216558da9decabaa4854677434475f", "adaptations": ["Mutable let, assignment and while AST nodes", "String UTF-16 length AST node", "Number.isFinite and Number.isNaN calls", "Reject nonfinite source literals"] },
+    { "source": "scripts/self-translation/ir.mjs", "local": "vendor/ir.mjs", "gitBlob": "3f8fbda4219355f6fe4178256122648099847d5b", "originalSha256": "31360b91433928ef707ab035d42dd6b4a495b5923686930e95d6c926aa49506e", "adaptations": ["portable-router-v1 fragment", "Type-check and serialize mutable locals, assignment, while and UTF-16 length", "Typed string concatenation", "Reject duplicate bindings and unpaired surrogate literals"] },
+    { "source": "scripts/self-translation/constructs.mjs", "local": "vendor/constructs.mjs", "gitBlob": "31e92cf3db4b71b690726dfb127e6e86d923243d", "originalSha256": "c9e08937c7268ecac20c59bb62274004a9dbcb64927e2687691fce5b320aaba8", "adaptations": ["Read local vendored construct map"] },
+    { "source": "scripts/self-translation/lino.mjs", "local": "vendor/lino.mjs", "gitBlob": "bed89a65f14ab2219a95fcda009257a1735facba", "originalSha256": "b82b27064c1fb4c91f50ad45ceefde472e69239b0cd26d94e36b11c5ebd6a7ba", "adaptations": [] },
+    { "source": "data/meta/self-translation/constructs.lino", "local": "vendor/constructs.lino", "gitBlob": "868fa3b83a5c8085ad89ce94fb2711fed94ac7c8", "originalSha256": "694cb604f5ab05b746037da333f3671de27d56097cd14110cb77aa3095c61f2b", "adaptations": ["NaN and signed-zero preserving min/max runtime encodings", "Number predicates and Math.trunc", "Router refusal vocabulary for mutable and loop support"] }
+  ],
+  "reviewedMetaLanguage": {
+    "pullRequest": "https://github.com/link-foundation/meta-language/pull/201",
+    "files": ["js/src/program-translation.js", "js/src/self-translation.js"],
+    "boundary": "Portable items produce executable semantic translation; unsupported items are carried in upstream output. This implementation rejects unsupported portable items and records refusals without carrying source."
+  }
+}
