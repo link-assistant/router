@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { repository, temporary } from './helpers.mjs';
@@ -12,7 +12,19 @@ async function isolatedChecker(t, edit) {
   const directory = await temporary(t);
   await mkdir(join(directory, 'scripts'));
   await mkdir(join(directory, 'parity'));
-  for (const path of ['packages', 'docs', 'src', 'tools']) await symlink(join(repository, path), join(directory, path), 'dir');
+  // Mirror references by symlink, keeping only the edited proof inputs local.
+  // No source checkout or generated inventory is copied or modified.
+  for (const name of await readdir(repository)) {
+    if (['scripts', 'parity', 'packages'].includes(name) || name.startsWith('.') && name !== '.git') continue;
+    await symlink(join(repository, name), join(directory, name));
+  }
+  for (const name of await readdir(join(repository, 'scripts'))) if (name !== 'check-router-parity.mjs') await symlink(join(repository, 'scripts', name), join(directory, 'scripts', name));
+  for (const name of await readdir(join(repository, 'parity'))) if (name !== 'router-features.json') await symlink(join(repository, 'parity', name), join(directory, 'parity', name));
+  await mkdir(join(directory, 'packages/javascript/native'), { recursive: true });
+  for (const name of await readdir(join(repository, 'packages'))) if (name !== 'javascript') await symlink(join(repository, 'packages', name), join(directory, 'packages', name));
+  for (const name of await readdir(join(repository, 'packages/javascript'))) if (name !== 'native') await symlink(join(repository, 'packages/javascript', name), join(directory, 'packages/javascript', name));
+  for (const name of await readdir(join(repository, 'packages/javascript/native'))) if (name !== 'operations.mjs') await symlink(join(repository, 'packages/javascript/native', name), join(directory, 'packages/javascript/native', name));
+  await writeFile(join(directory, 'packages/javascript/native/operations.mjs'), await readFile(join(repository, 'packages/javascript/native/operations.mjs')));
   await writeFile(join(directory, 'scripts/check-router-parity.mjs'), await readFile(join(repository, 'scripts/check-router-parity.mjs')));
   const manifest = JSON.parse(await readFile(join(repository, 'parity/router-features.json')));
   await edit(manifest, directory);
@@ -41,4 +53,23 @@ test('promoting partial operation statuses without implementation changes cannot
   });
   assert.equal(result.status, 1, result.output);
   assert.match(result.output, /Dispatcher support status disagrees/);
+});
+
+test('even green evidence for every operation cannot unlock uncovered HTTP routes or carried translations', async t => {
+  const result = await isolatedChecker(t, async (manifest, directory) => {
+    const support = {}, evidence = [];
+    for (const feature of manifest.features.filter(feature => feature.operation)) {
+      support[feature.operation] = 'implemented';
+      feature.status = 'implemented';
+      feature.gaps = [];
+      const fixture = `synthetic-covered:${feature.operation}`;
+      feature.evidence = [{ file: 'parity/covered-operations.mjs', fixture }];
+      evidence.push([fixture, { operation: feature.operation, success: true }]);
+    }
+    await writeFile(join(directory, 'packages/javascript/native/operations.mjs'), `export const nativeOperationSupport = ${JSON.stringify(support)};\n`);
+    await writeFile(join(directory, 'parity/covered-operations.mjs'), `export async function runOperationFixtures() { return new Map(${JSON.stringify(evidence)}); }\n`);
+  });
+  assert.equal(result.status, 1, 'A catalog-only proof must not authorize full router parity: ' + result.output);
+  assert.match(result.output, /carried/i);
+  assert.match(result.output, /route/i);
 });
