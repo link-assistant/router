@@ -30,11 +30,16 @@ export function fingerprint(stampPath) {
   for (const relative of files) {
     const absolute = path.resolve(root, relative);
     if (absolute === resolvedStamp) continue;
-    hash.update(relative).update('\0');
-    if (!fs.existsSync(absolute)) hash.update('deleted');
-    else if (fs.lstatSync(absolute).isSymbolicLink()) hash.update('symlink\0').update(fs.readlinkSync(absolute));
-    else hash.update(fs.readFileSync(absolute));
-    hash.update('\0');
+    let kind = 'deleted';
+    let content = Buffer.alloc(0);
+    if (fs.existsSync(absolute)) {
+      const metadata = fs.lstatSync(absolute);
+      kind = metadata.isSymbolicLink() ? 'symlink' : metadata.mode & 0o111 ? 'executable' : 'file';
+      content = metadata.isSymbolicLink() ? Buffer.from(fs.readlinkSync(absolute)) : fs.readFileSync(absolute);
+    }
+    // Length framing prevents file bytes from masquerading as another path.
+    // Executability and link targets are part of Git's source tree identity.
+    hash.update(JSON.stringify([relative, kind, content.length]) + '\n').update(content);
   }
   return { headSha: git('rev-parse', 'HEAD'), treeHash: hash.digest('hex') };
 }

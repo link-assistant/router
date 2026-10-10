@@ -56,12 +56,12 @@ export function auditWorkflows(sources) {
     };
     for (const id of STAGES) {
       const job = gate.jobs?.[id];
-      if (!job || !job['runs-on'] || job.if || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
+      if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && step.run?.includes('rev-parse') && step.run?.includes('process.exit(1)'))) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || step.if) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if')) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }
@@ -78,7 +78,7 @@ export function auditWorkflows(sources) {
     if (!workflow.jobs || !Object.keys(workflow.jobs).length) { errors.push(`${name}: jobs missing`); continue; }
     if (!workflow.concurrency?.group || workflow.concurrency?.['cancel-in-progress'] !== false) errors.push(`${name}: Rust workflows must set cancel-in-progress: false`);
     const js = workflow.jobs.javascript;
-    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || js.if || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: unconditional same-SHA reusable gate missing`);
+    if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || Object.hasOwn(js, 'if') || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: unconditional same-SHA reusable gate missing`);
     for (const [id, job] of Object.entries(workflow.jobs)) {
       if (id === 'javascript') continue;
       if (job.concurrency?.['cancel-in-progress'] !== undefined && job.concurrency['cancel-in-progress'] !== false) errors.push(`${name}/${id}: job cancellation bypass`);

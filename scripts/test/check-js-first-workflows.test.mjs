@@ -37,7 +37,10 @@ test('obscured cargo and Docker commands still require a gate because every runn
 test('every JavaScript stage and command is mandatory and cannot skip or ignore failures', () => {
   for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { delete workflow.jobs[id]; }, 'stage missing');
-    fails('javascript-first.yml', workflow => { workflow.jobs[id].if = 'false'; }, 'stage missing');
+    for (const condition of ['false', false, '', 0, null]) {
+      fails('javascript-first.yml', workflow => { workflow.jobs[id].if = condition; }, 'stage missing');
+      fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1).if = condition; }, 'conditional');
+    }
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1)['continue-on-error'] = true; }, 'ignore failures');
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1).run = 'echo inventory only'; }, 'mandatory command');
   }

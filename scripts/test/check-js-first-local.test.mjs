@@ -26,6 +26,8 @@ test('green stamps require strict parity, every stage and unchanged tracked/untr
     stamp({ headSha: 'a'.repeat(40) }); assert.throws(() => verifyStamp(stampPath), /different commit/);
     stamp(); fs.writeFileSync('source.js', 'export const value = 2;\n'); assert.throws(() => verifyStamp(stampPath), /different commit/);
     fs.writeFileSync('source.js', 'export const value = 1;\n'); assert.deepEqual(verifyStamp(stampPath), identity);
+    fs.chmodSync('source.js', 0o755); assert.throws(() => verifyStamp(stampPath), /different commit/);
+    fs.chmodSync('source.js', 0o644); assert.deepEqual(verifyStamp(stampPath), identity);
     fs.writeFileSync('new.js', '// new source'); assert.throws(() => verifyStamp(stampPath), /different commit/);
     fs.unlinkSync('new.js'); fs.unlinkSync('source.js'); assert.throws(() => verifyStamp(stampPath), /different commit/);
   } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
