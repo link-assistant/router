@@ -170,6 +170,33 @@ export class AccountRouter {
     });
   }
   async reportSuccess(candidate) { const state = this.limits.get(candidate.account); if (state) { state.last_error = null; } }
+  setStrategy(value) {
+    const strategy = strategyAliases.get(value.trim().toLowerCase()) ?? value.trim().toLowerCase();
+    if (!['round-robin','weighted-round-robin','priority','least-used'].includes(strategy)) throw new RouterError('invalid_argument','Unknown routing strategy');
+    this.strategy = strategy;
+    return {strategy:strategy === 'priority' ? 'fill-first' : strategy};
+  }
+  async resetCooldowns(account, model) {
+    if (model != null && account == null || account != null && !account.trim() || model != null && !model.trim()) throw new RouterError('invalid_argument','A model reset requires a nonempty account and model');
+    if (account != null && !this.records.has(account)) throw new RouterError('not_found','Account not found',404);
+    return serialized(this,async () => {
+      let cleared = 0;
+      for (const [name,state] of this.limits) {
+        if (account != null && account !== name) continue;
+        const active = Object.entries(state.model_cooldowns ?? {}).filter(([,until]) => until > this.clock());
+        state.model_cooldowns = Object.fromEntries(active);
+        if (state.cooldown_until_unix != null && state.cooldown_until_unix <= this.clock()) { delete state.cooldown_until_unix; delete state.cooldown_reason; }
+        if (model != null) {
+          const key = model.toLowerCase();
+          if (Object.hasOwn(state.model_cooldowns,key)) { cleared++; delete state.model_cooldowns[key]; }
+        } else {
+          cleared += (state.cooldown_until_unix != null ? 1 : 0)+active.length;
+          delete state.cooldown_until_unix; delete state.cooldown_reason; state.model_cooldowns = {};
+        }
+      }
+      await this.persist(); return {cleared};
+    });
+  }
   async list() { return [...this.records.values()].map(a => ({ name:a.name,provider:a.provider,request_limit:a.request_limit ?? null,used_requests:this.used.get(a.name) ?? 0,healthy:this.serves(a.name),policy:structuredClone(a.policy),limits:structuredClone(this.limits.get(a.name) ?? {}) })); }
   async pause(name, { reason = 'Operator pause', until_unix = null } = {}) {
     if (!this.records.has(name)) throw new RouterError('not_found','Account not found',404);

@@ -125,7 +125,8 @@ test('exact provider/model and operator alias fixture routing never guesses pref
   await rejectsCode(c.route({model:'MODEL-A'}),'model_not_found');
   const conflicting = await core({providers:[...fixture.providers,{...fixture.providers[0],name:'other'}]});
   await rejectsCode(conflicting.route({model:'model-a'}),'model_conflict');
-  assert.equal((await conflicting.route({model:'fixture/model-a'})).provider,'fixture');
+  assert.equal((await conflicting.route({model:'model-a',provider:'fixture'})).provider,'fixture');
+  await rejectsCode(conflicting.route({model:'fixture/model-a'}),'model_not_found');
 });
 test('scoped cooldown fails over only affected model/account and strict pins never escape',async () => {
   let now = fixture.clock; const c = await createRouterCore({config:config({account_strategy:'priority',account_failover:true}),env:{},clock:() => now});
@@ -191,4 +192,43 @@ test('native durable token admission is atomic across independent Node processes
   const results = await Promise.all(Array.from({length:3},() => run(process.execPath,['--input-type=module','-e',script])));
   assert.equal(results.reduce((sum,r) => sum+Number(r.stdout.trim()),0),3);
   assert.equal((await manager.get(issued.id)).used_requests,3);
+});
+
+test('persistent provider deletes remain authoritative across stale store instances',async t => {
+  const directory = await temporary(t);
+  const first = await core({data_dir:directory,storage_policy:'text'});
+  await first.upsertProvider({name:'temporary',base_url:'http://localhost:1/v1',models:['temporary-model'],api_key:'sensitive'});
+  const second = await core({data_dir:directory,storage_policy:'text'});
+  await second.upsertProvider({name:'other',base_url:'http://localhost:1/v1',models:['other-model']});
+  await first.removeProvider('temporary');
+  assert.equal(await second.showProvider('temporary'),null);
+  await second.upsertProvider({name:'third',base_url:'http://localhost:1/v1',models:['third-model']});
+  assert.equal(await first.showProvider('temporary'),null);
+});
+
+test('management strategy changes preserve affinity and cooldown reset preserves manual pauses',async () => {
+  const c = await core({account_strategy:'priority'});
+  const candidate = await c.route({model:'model-a',sessionKey:'bound'});
+  assert.deepEqual(await c.updateRouting({strategy:'prio'}),{strategy:'fill-first'});
+  await c.reportFailure(candidate,{status:429,scope:'model',retryAfter:50});
+  await c.reportFailure({...candidate,model:'model-b'},{status:429,scope:'model',retryAfter:50});
+  await c.accounts.pause('primary');
+  assert.deepEqual(await c.resetCooldown('primary','MODEL-A'),{cleared:1});
+  assert.equal(c.accounts.limits.get('primary').model_cooldowns['model-b'],fixture.clock+50);
+  assert.deepEqual(await c.resetCooldowns(),{cleared:1});
+  assert.ok(c.accounts.limits.get('primary').pause);
+  await rejectsCode(c.route({model:'model-a',pinnedAccount:'primary'}),'pinned_account_unavailable');
+});
+test('rotation preserves authority and constraints while resetting Rust usage/clock semantics',async () => {
+  let now = fixture.clock; const manager = new TokenManager({secret:fixture.token_secret,clock:() => now});
+  const issued = await manager.issue({ttl_hours:3,scope:'',account:'primary',client_kind:'claude-code',principal_id:'primary',max_requests:3,max_tokens:20,github_repos:['a/b'],model_policy:{allowed_models:['model-a']},sliding_window_seconds:10});
+  assert.equal((await manager.validate(issued.token)).client_kind,'claude');
+  await manager.admit(issued.id,1); now += 60;
+  const rotated = await manager.rotate(issued.id);
+  assert.equal(rotated.record.expires_at,now+7200);
+  assert.equal(rotated.record.used_requests,0);
+  assert.equal(rotated.record.sliding_window_seconds,null);
+  assert.deepEqual(rotated.record.model_policy,{allowed_models:['model-a']});
+  assert.deepEqual(rotated.record.github_repos,['a/b']);
+  await rejectsCode(manager.validate(issued.token),'revoked');
 });

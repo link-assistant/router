@@ -29,8 +29,9 @@ export class RouterCore {
     if (action === 'policy') return this.accounts.policy(name,body.policy ?? body);
     throw new TypeError(`Unknown account action: ${action}`);
   }
-  async resetCooldowns() { this.accounts.limits.clear(); await this.accounts.persist(); return {reset:true}; }
-  async resetCooldown(name) { const state = this.accounts.limits.get(name); if (state) { delete state.cooldown_until_unix; delete state.cooldown_reason; state.model_cooldowns = {}; } await this.accounts.persist(); return {name,reset:true}; }
+  async updateRouting({strategy} = {}) { if (typeof strategy !== 'string') throw new TypeError('strategy is required'); return this.accounts.setStrategy(strategy); }
+  async resetCooldowns() { return this.accounts.resetCooldowns(); }
+  async resetCooldown(name,model) { return this.accounts.resetCooldowns(name,model); }
   async models() { return catalogModels(await this.providers.resolve(),this.accounts.records); }
   async candidates(context = {}) { return this.accounts.order(modelCandidates(await this.providers.resolve(),this.accounts.records,context),context); }
   async resolveCandidates(model, context = {}) { return this.candidates({ ...context,model }); }

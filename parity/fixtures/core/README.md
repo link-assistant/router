@@ -19,7 +19,7 @@ HS256 Router credentials and both carrier prefixes; revocation; admin,
 repository, client/principal and exact model boundaries; sliding expiration;
 atomic request/token reservations and fixed-minute rate budgets; text token
 persistence; AES256GCM provider secrets; persisted providers.lenv; exact provider
-and model selection; round-robin, priority, least-used and weighted strategies;
+and model selection (provider names are never inferred model-id namespaces); round-robin, priority, least-used and weighted strategies;
 account/session pins, detours, model/account cooldowns and manual pauses.
 
 Known uncovered constructs are explicit rather than approximated:
@@ -40,7 +40,7 @@ Known uncovered constructs are explicit rather than approximated:
   part of this core. HTTP adapters decide pre-first-byte versus streaming
   failure handling. Models must be explicitly advertised in provider config.
 - Automatic primary-account cooling exceptions and policy-force-prefix mode
-  are not reproduced. Rotation currently uses two awaited durable mutations
-  and rounds remaining lifetime up to an hour; it is not atomic across the
-  replacement and original revocation. Tokens above JavaScript's safe integer
+  are not reproduced. Rotation uses two awaited durable mutations, matching Rust's order, and
+  floors remaining lifetime to whole hours with a minimum of one hour; it is
+  not atomic across the replacement and original revocation. Tokens above JavaScript's safe integer
   range are rejected instead of silently losing precision.

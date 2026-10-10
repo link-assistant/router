@@ -90,9 +90,9 @@ const redact = r => { const { api_key, encrypted_api_key, ...safe } = r; return 
 export class ProviderStore {
   constructor({ dataDir, secret, env = process.env, records = [], persistent = true }) { this.path = `${dataDir}/providers.lenv`; this.secret = secret; this.env = env; this.records = new Map(records.map(r => [r.name,r])); this.persistent = persistent; }
   async load() {
-    const text = this.persistent ? await readOptional(this.path) : '';
-    const map = new Map(this.records);
-    for (const line of text.split(/\r?\n/)) if (line.trim().startsWith('PROVIDER: ')) { const record = JSON.parse(line.trim().slice(10)); map.set(record.name,record); }
+    const text = this.persistent ? await readOptional(this.path,null) : null;
+    const map = text == null ? new Map(this.records) : new Map();
+    for (const line of (text ?? '').split(/\r?\n/)) if (line.trim().startsWith('PROVIDER: ')) { const record = JSON.parse(line.trim().slice(10)); map.set(record.name,record); }
     return map;
   }
   async resolve() {

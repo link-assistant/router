@@ -12,8 +12,7 @@ export function modelCandidates(providers, accounts, context = {}) {
     for (const account of accounts.values()) {
       if (account.provider !== provider.name || account.enabled === false) continue;
       for (const upstream of provider.models) for (const visible of accountVisibleModels(account,upstream)) {
-        const qualified = providerModelId(provider.name,visible.selector);
-        if (requested !== visible.selector && requested !== qualified) continue;
+        if (requested !== visible.selector) continue;
         const headers = { ...account.policy.headers };
         candidates.push({ provider:provider.name, kind:provider.kind, model:visible.model, requested_model:requested,
           selector:visible.selector, account:account.name, base_url:provider.base_url,baseUrl:provider.base_url,
@@ -31,8 +30,8 @@ export function catalogModels(providers, accounts) {
   const result = new Map();
   for (const provider of providers) if (provider.enabled !== false) for (const account of accounts.values()) if (account.provider === provider.name && account.enabled !== false) {
     for (const model of provider.models) for (const visible of accountVisibleModels(account,model)) {
-      for (const id of [visible.selector,providerModelId(provider.name,visible.selector)]) {
-        const key = `${provider.name}\0${id}`;
+      for (const id of [visible.selector]) {
+        const key = providerModelId(provider.name,id);
         if (!result.has(key)) result.set(key,{id,object:'model',created:0,owned_by:provider.name,provider:provider.name,upstream_model:visible.model,supported_clients:provider.supported_clients});
       }
     }

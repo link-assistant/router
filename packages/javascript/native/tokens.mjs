@@ -10,7 +10,8 @@ export function ensureRealSecret(secret) {
   return secret;
 }
 const encode = object => Buffer.from(JSON.stringify(object)).toString('base64url');
-const clients = new Set(['claude','codex','opencode','gemini','qwen','openclaw','kilo','cline','roo','aider']);
+const clients = new Set(['claude','codex','cursor','opencode','gemini','grok','qwen','agent']);
+const clientAliases = new Map([['claude-code','claude'],['cursor-agent','cursor'],['gemini-cli','gemini'],['grok-cli','grok'],['qwen-code','qwen']]);
 const number = (value, name, positive = false) => {
   if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) throw new RouterError('invalid_argument', `${name} must be a ${positive ? 'positive' : 'nonnegative'} safe integer`);
   return value;
@@ -38,6 +39,8 @@ export class TokenManager {
   }
   async issue(options = {}) {
     ensureRealSecret(this.secret);
+    options = {...options};
+    if (options.client_kind != null) { const name = String(options.client_kind).trim().toLowerCase(); options.client_kind = clientAliases.get(name) ?? name; }
     const ttl = number(options.ttl_hours ?? 24, 'ttl_hours', true);
     if (ttl > 87600) throw new RouterError('invalid_argument', 'ttl_hours must not exceed 87600');
     for (const field of ['max_requests','max_tokens','rate_limit_per_minute','sliding_window_seconds','run_lease_seconds']) if (options[field] != null) number(options[field], field, true);
@@ -102,9 +105,14 @@ export class TokenManager {
   async expire(id) { return this.store.transaction(records => { const r = records.get(id); if (!r) throw new RouterError('not_found','Token not found',404); r.revoked = true; r.expires_at = this.clock(); return r; }); }
   async rotate(id, overrides = {}) {
     const held = await this.get(id);
-    if (!held || held.revoked || held.expires_at <= this.clock()) throw new RouterError('not_found','Active token not found',404);
-    // Create replacement then revoke original; both durable mutations are awaited.
-    const replacement = await this.issue({ ...held, ttl_hours:Math.max(1,Math.ceil((held.expires_at-this.clock())/3600)), ...overrides });
+    if (!held) throw new RouterError('not_found','Token not found',404);
+    const options = {ttl_hours:Math.max(1,Math.floor((held.expires_at-this.clock())/3600))};
+    for (const field of ['label','account','max_requests','max_tokens','rate_limit_per_minute']) options[field] = overrides[field] ?? held[field];
+    options.ttl_hours = overrides.ttl_hours ?? options.ttl_hours;
+    for (const field of ['scope','github_repos','client_kind','principal_id','model_policy']) options[field] = held[field];
+    // Rust rotation mints a fresh durable, fixed-clock token with reset usage,
+    // then revokes the old token after successful issuance.
+    const replacement = await this.issue(options);
     await this.revoke(id); return replacement;
   }
   async admit(id, reserve = 0) {
