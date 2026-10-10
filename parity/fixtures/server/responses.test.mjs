@@ -63,8 +63,9 @@ test('bridge streaming completion is retrievable with announced response ID', as
   const stored = await (await router.fetch(make('/v1/responses/resp_chat_one'))).json(); assert.equal(stored.id, 'resp_chat_one'); assert.equal(stored.status, 'completed'); assert.equal(stored.output[0].content[0].text, 'Hello');
 });
 test('cancelling an active native response aborts upstream and keeps cancelled ownership record', async () => {
-  let aborted = false;
-  const router = createNativeRouter({ core: core(), fetch: async (_url, { signal }) => {
+  let aborted = false, failures = 0;
+  const c = core(); c.reportFailure = () => { failures++; };
+  const router = createNativeRouter({ core: c, fetch: async (_url, { signal }) => {
     const body = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode(frame({ type: 'response.created', response: { ...response, status: 'in_progress', output: [], usage: null } }))); signal.addEventListener('abort', () => { aborted = true; controller.error(new Error('aborted')); }, { once: true }); } });
     return new Response(body, { headers: { 'content-type': 'text/event-stream' } });
   } });
@@ -74,6 +75,7 @@ test('cancelling an active native response aborts upstream and keeps cancelled o
   let remainder = ''; while (true) { const { value, done } = await reader.read(); if (done) break; remainder += new TextDecoder().decode(value); }
   assert.match(remainder, /upstream_stream_error/); assert.doesNotMatch(remainder, /response.completed/);
   assert.equal((await (await router.fetch(make('/v1/responses/resp_one'))).json()).status, 'cancelled');
+  assert.equal(failures, 0);
 });
 test('HTTPS configuration is rejected before an HTTP listener can start', () => {
   for (const tls of [{ tls_self_signed: true }, { tls_cert: 'cert.pem' }, { tls_key: 'key.pem' }, { listeners: [{ protocol: 'https' }] }]) assert.throws(() => createNativeRouter({ core: { ...core(), config: tls } }), /HTTPS listeners/);

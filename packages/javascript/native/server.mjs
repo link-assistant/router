@@ -191,7 +191,10 @@ export function createNativeRouter(options = {}) {
     let finalError;
     try {
       const attemptLimit = configuration().account_failover === false ? 1 : Math.max(1, Math.min(10, maxAttempts));
-      for (const candidate of candidates.slice(0, attemptLimit)) {
+      for (const rawCandidate of candidates.slice(0, attemptLimit)) {
+        let candidate = rawCandidate;
+        try { candidate = core.prepareCandidate ? await core.prepareCandidate(rawCandidate) : rawCandidate; }
+        catch (error) { finalError = new ProtocolError('Upstream credential is unavailable', error.status ?? 502); await core.reportFailure?.(rawCandidate, { status: finalError.status, scope: 'account' }); continue; }
         let protocol, payload;
         try { protocol = protocolOf(candidate); payload = translateRequest(body, source, protocol, candidate.model ?? body.model); }
         catch (error) { if (!(error instanceof ProtocolError)) throw error; finalError = error; continue; }
@@ -220,9 +223,10 @@ export function createNativeRouter(options = {}) {
         const headers = relayHeaders(response);
         if (body.stream) {
           if (!response.headers.get('content-type')?.includes('text/event-stream') || !response.body) { cleanup(); await response.body?.cancel(); throw new ProtocolError('Upstream did not return an SSE stream', 502); }
+          let resourceCancelled = false;
           const callbacks = {
             clock, model: body.model,
-            onStart: async response => { if (retain) { responseStore.save(namespace, owner, response, responseInput, { abort: () => controller.abort(new Error('Response cancelled')) }); retainedId = response.id; } },
+            onStart: async response => { if (retain) { responseStore.save(namespace, owner, response, responseInput, { abort: () => { resourceCancelled = true; controller.abort(new Error('Response cancelled')); } }); retainedId = response.id; } },
             onComplete: async state => {
               cleanup(); await settle(state.usage);
               if (retain) {
@@ -231,7 +235,7 @@ export function createNativeRouter(options = {}) {
               }
               await core.reportSuccess?.(candidate);
             },
-            onError: async (_error, state) => { cleanup(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await core.reportFailure?.(candidate, { status: 502 }); await settle(state?.usage); },
+            onError: async (_error, state) => { cleanup(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); if (!resourceCancelled && !request.signal.aborted) await core.reportFailure?.(candidate, { status: 502 }); await settle(state?.usage); },
             onCancel: async () => { cleanup(); controller.abort(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await settle(); },
           };
           const stream = source === protocol ? monitorNativeStream(response.body, protocol, callbacks) : translateStream(response.body, protocol, source, body.model, callbacks);

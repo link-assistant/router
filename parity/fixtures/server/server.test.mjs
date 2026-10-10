@@ -144,3 +144,9 @@ test('OAuth credentials use reviewed provider headers and exact configured endpo
   const codex = createNativeRouter({ core: core({ candidates: () => [{ ...candidate, protocol: 'responses', baseUrl: 'https://chatgpt.com/backend-api/codex', endpointPath: '/responses', auth_type: 'oauth', oauth_headers: { 'chatgpt-account-id': 'acct', originator: 'codex_cli_rs' } }] }), fetch: async (target, init) => { url = target; headers = init.headers; return Response.json({ id: 'resp_oauth', model: 'alias', status: 'completed', output: [], usage: {} }); } });
   assert.equal((await codex.fetch(request('/v1/responses', { model: 'alias', input: 'hi', store: false }))).status, 200); assert.equal(url.href, 'https://chatgpt.com/backend-api/codex/responses'); assert.equal(headers.get('chatgpt-account-id'), 'acct');
 });
+test('only selected account credentials are prepared before upstream dispatch', async () => {
+  const prepared = [], received = [];
+  const c = core({ candidates: () => [{ ...candidate, account: 'a' }, { ...candidate, account: 'b' }], prepareCandidate: async value => { prepared.push(value.account); return { ...value, apiKey: `fresh-${value.account}` }; } });
+  const router = createNativeRouter({ core: c, fetch: async (_url, { headers }) => { received.push(headers.get('authorization')); return Response.json(chat); } });
+  assert.equal((await router.fetch(request())).status, 200); assert.deepEqual(prepared, ['a']); assert.deepEqual(received, ['Bearer fresh-a']);
+});
