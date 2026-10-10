@@ -206,7 +206,7 @@ mod shared_fixtures {
 
     #[test]
     fn clamp_negative_zero() {
-        assert_eq!(clamp(-0.0, -0.0, 0.0_f64).to_bits(), (-0.0).to_bits());
+        assert_eq!(clamp(-0.0_f64, -0.0_f64, 0.0_f64).to_bits(), (-0.0_f64).to_bits());
     }
 
     #[test]
@@ -216,7 +216,7 @@ mod shared_fixtures {
 
     #[test]
     fn max_zero_sign() {
-        assert_eq!(longest_cooldown(-0.0, 0.0_f64).to_bits(), (0.0_f64).to_bits());
+        assert_eq!(longest_cooldown(-0.0_f64, 0.0_f64).to_bits(), (0.0_f64).to_bits());
     }
 
     #[test]

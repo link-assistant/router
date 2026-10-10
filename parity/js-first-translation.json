@@ -1961,8 +1961,8 @@
     },
     {
       "path": "src/generated_js_first/policy.rs",
-      "bytes": 11797,
-      "sha256": "6899a9b44ef26e33a7f5199953c3c3f1ee8b9477742ab0143de79afbf1c8a95d"
+      "bytes": 11813,
+      "sha256": "c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673"
     },
     {
       "path": "src/generated_js_first/mod.rs",

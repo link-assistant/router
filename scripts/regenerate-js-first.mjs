@@ -28,7 +28,7 @@ export function decodeFixture(value) {
 const rustLiteral = (value) => {
   if (typeof value === 'string') return JSON.stringify(value);
   if (typeof value === 'boolean') return String(value);
-  if (value && typeof value === 'object') return ({ NaN: 'f64::NAN', Infinity: 'f64::INFINITY', '-Infinity': 'f64::NEG_INFINITY', '-0': '-0.0' })[value.$number];
+  if (value && typeof value === 'object') return ({ NaN: 'f64::NAN', Infinity: 'f64::INFINITY', '-Infinity': 'f64::NEG_INFINITY', '-0': '-0.0_f64' })[value.$number];
   const text = String(value);
   return text.includes('.') || /e/iu.test(text) ? `${text}_f64` : `${text}.0_f64`;
 };

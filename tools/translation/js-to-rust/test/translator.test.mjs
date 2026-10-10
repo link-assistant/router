@@ -115,7 +115,9 @@ test('unsupported dependencies are removed transitively from executable coverage
 });
 
 test('regeneration is deterministic and the committed artifacts are current', () => {
-  assert.deepEqual([...buildArtifacts(ROOT)], [...buildArtifacts(ROOT)]);
+  const artifacts = buildArtifacts(ROOT);
+  assert.deepEqual([...artifacts], [...buildArtifacts(ROOT)]);
+  assert.match(artifacts.get('src/generated_js_first/policy.rs'), /\(-0\.0_f64\)\.to_bits\(\)/u);
   assert.deepEqual(regenerate(ROOT, { check: true }).changed, []);
 });
 
