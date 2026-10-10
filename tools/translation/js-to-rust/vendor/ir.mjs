@@ -173,6 +173,8 @@ export function signatures(items) {
  */
 export function check(item, table) {
   const map = constructMap();
+  canonicalRustName(item.name);
+  for (const param of item.params ?? []) canonicalRustName(param.name);
   for (const type of item.kind === 'function' ? [...item.params.map((param) => param.type), item.returns] : [item.type]) {
     if (!map.types.has(type)) refuse('untyped', type);
   }
@@ -186,6 +188,7 @@ export function check(item, table) {
   const scope = new Map(item.params.map((param) => [param.name, param.type]));
   const block = (body, names, mutable = new Set()) => body.map((statement) => {
     if (statement.kind === 'let') {
+      canonicalRustName(statement.name);
       if (names.has(statement.name)) refuse('name', `shadowed or duplicate binding ${statement.name}`);
       const value = expression(statement.value, names, table);
       names.set(statement.name, value.type);
@@ -193,6 +196,7 @@ export function check(item, table) {
       return { ...statement, value };
     }
     if (statement.kind === 'assign') {
+      canonicalRustName(statement.name);
       if (!mutable.has(statement.name)) refuse('mutable', statement.name);
       const value = expression(statement.value, names, table);
       if (value.type !== names.get(statement.name)) refuse('type', statement.name);
@@ -221,6 +225,7 @@ function expression(expr, names, table) {
   const typed = (fields, type) => ({ ...expr, ...fields, type });
   switch (expr.kind) {
     case 'number':
+      if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(expr.text) || !Number.isFinite(Number(expr.text))) refuse('type', 'a malformed decimal literal');
       return typed({}, 'number');
     case 'string':
       if (/\p{Surrogate}/u.test(expr.value)) refuse('type', 'an unpaired UTF-16 surrogate literal');
@@ -228,6 +233,7 @@ function expression(expr, names, table) {
     case 'boolean':
       return typed({}, 'boolean');
     case 'variable': {
+      canonicalRustName(expr.name);
       if (names.has(expr.name)) return typed({}, names.get(expr.name));
       const item = table.get(expr.name);
       if (item && item.kind === 'constant') return typed({}, item.type);
@@ -257,6 +263,7 @@ function expression(expr, names, table) {
       return typed({ cond, then, else: otherwise }, then.type);
     }
     case 'call': {
+      canonicalRustName(expr.name);
       const callee = table.get(expr.name);
       if (!callee || callee.kind !== 'function') return refuse('unknown-call', expr.name);
       const args = expr.args.map((arg) => expression(arg, names, table));

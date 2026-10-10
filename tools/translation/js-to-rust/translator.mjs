@@ -6,6 +6,7 @@ import { parseJavaScriptItem } from './vendor/frontends.mjs';
 import { check, signatures, toLino, fromLino, FRAGMENT } from './vendor/ir.mjs';
 import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
+import { parseLinks } from './vendor/lino.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -97,7 +98,10 @@ export function translateJavaScript(source) {
 }
 
 export function parseMeta(text) {
+  const links = parseLinks(text);
+  if (links.some((link) => !['function', 'constant'].includes(link[0]))) throw new Error('unsupported top-level meta-language link');
   const items = fromLino(text);
+  if (JSON.stringify(links) !== JSON.stringify(parseLinks(items.map(toLino).join('\n')))) throw new Error('noncanonical or malformed meta-language fields');
   const names = new Set();
   for (const item of items) {
     if (names.has(item.name)) throw new Error(`duplicate meta-language definition ${item.name}`);
