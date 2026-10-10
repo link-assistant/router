@@ -49,6 +49,25 @@ test('native unsupported operations/options and malformed contract responses fai
   assert.throws(() => validateNativeResult('version', { schema: 'link-assistant-router/version/v1', operation: 'version', success: true, exit_code: 2, diagnostics: [], data: { version, source_commit: 'unknown' } }), { code: 'schema' });
 });
 
+test('schema-invalid core output cannot be transformed into a successful fallback envelope', async () => {
+  const router = new NativeRouter({ core: { tokens: { list: async () => [{ id: 7, label: 'invalid record' }] } } });
+  const result = await router.execute('tokens.list');
+  assert.equal(result.success, false);
+  assert.ok(result.exit_code > 0);
+  assert.ok(result.diagnostics.some(diagnostic => diagnostic.startsWith('schema:')));
+  await assert.rejects(router.tokens.list(), error => error.code === 'schema' && error.exitCode > 0);
+});
+
+test('model explanation returns an actual requested selector and candidate observations', async t => {
+  const router = new NativeRouter({ config: { token_secret: 'explain-secret', storage_policy: 'memory', data_dir: await temporary(t),
+    providers: [{ name: 'fixture', base_url: 'http://127.0.0.1:1', models: ['one'] }], accounts: [] }, env: {} });
+  t.after(() => router.close());
+  const result = await router.models.explain({ id: 'fixture/one' });
+  assert.equal(result.data.requested_selector, 'fixture/one');
+  assert.equal(result.data.routing.candidate_count, 1);
+  assert.ok(result.data.health.healthy_providers.includes('fixture'));
+});
+
 test('native CLI publishes parse failures and numeric issue flags with matching actual exit status', async t => {
   const directory = await temporary(t);
   const cli = join(repository, 'packages/javascript/native/cli.mjs');
