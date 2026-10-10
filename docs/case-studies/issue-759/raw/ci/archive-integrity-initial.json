@@ -1,0 +1,148 @@
+{
+  "verified_at": "2026-10-10T20:09:40.432963+00:00",
+  "counts": {
+    "receipt_references": 16231,
+    "unique_receipt_files": 15663,
+    ".gz": 15498,
+    ".xz": 165
+  },
+  "decoded_bytes_streamed": 2426966703,
+  "ci_logical_bytes": 326854920,
+  "case_allocated_bytes": 416350208,
+  "hard_cap_bytes": 500000000,
+  "errors": [
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/0_Full Requirements Aggregate.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Full Requirements Aggregate/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/15_JavaScript _ JavaScript Package.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Package/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/16_JavaScript _ JavaScript Tests (tooling).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Tests (tooling)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/17_JavaScript _ JavaScript Tests (conformance).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Tests (conformance)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/18_JavaScript _ JavaScript Tests (grammar).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Tests (grammar)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/19_Self-Translation Report (4_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (4_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/20_Self-Translation Report (5_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (5_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/21_JavaScript _ JavaScript Tests (downstream).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Tests (downstream)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/22_JavaScript _ JavaScript Tests (translation).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/JavaScript _ JavaScript Tests (translation)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/23_Self-Translation Report (6_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (6_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/24_Changed Paths.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Changed Paths/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/25_Self-Translation Report (1_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (1_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/26_Self-Translation Report (7_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (7_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/27_Self-Translation Report (8_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (8_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/28_Self-Translation Report (3_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (3_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/29_Self-Translation Report (2_8).txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/Self-Translation Report (2_8)/system.txt.gz",
+      "error": "stored_sha256_mismatch"
+    },
+    {
+      "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs/30_Bulk Grammar Pipeline.txt.gz",
+      "error": "stored_sha256_mismatch"
+    }
+  ],
+  "method": "Checks every current run-log, direct-job and artifact text manifest; exact compressed receipt hashes, declared decoded hashes, streaming UTF8-token patterns. No raw files expanded on disk. Historical migration receipts preserve old paths/hashes separately."
+}

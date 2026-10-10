@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37473914457/attempt-1/logs/0_Verify monotonic ledger.txt.gz",
+    "sha256": "053992c3d43ccf597a02767add0055d0e7afe76f12d241191bfb7ea8d7dcce81",
+    "bytes": 40331,
+    "uncompressed_bytes": 212184,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914457/attempt-1/logs/Verify monotonic ledger/system.txt.gz",
+    "sha256": "6f8d00b7b32bc9980b161327313b8ae95a4901d94f353d9d43b2e0c071626fbd",
+    "bytes": 393,
+    "uncompressed_bytes": 752,
+    "redacted": false
+  }
+]

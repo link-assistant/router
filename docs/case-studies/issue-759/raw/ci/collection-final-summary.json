@@ -1,0 +1,122 @@
+{
+  "generated_at": "2026-10-10T20:29:58.517173+00:00",
+  "requested_attempts": 1735,
+  "log_status_counts": {
+    "collected": 1724,
+    "download_error": 11
+  },
+  "job_status_counts": {
+    "collected": 1735
+  },
+  "requested_attempts_by_repository": {
+    "link-assistant/formal-ai": 1549,
+    "link-assistant/router": 28,
+    "link-foundation/meta-language": 59,
+    "link-foundation/relative-meta-logic": 99
+  },
+  "artifacts": [
+    {
+      "repository": "link-assistant/formal-ai",
+      "metadata_status": {
+        "complete_available_inventory": true,
+        "per_page": 50,
+        "repository_artifacts_scanned": 4500,
+        "branch_snapshot_relevant_artifacts": 4380,
+        "duplicate_artifact_ids_removed": 7,
+        "oldest_run_in_snapshot": "2026-09-30T11:12:23Z",
+        "note": "Membership is by run id in the pinned complete branch-run snapshot; later-created runs are outside this frozen evidence population."
+      },
+      "artifact_records": 4380,
+      "selection_reasons": {
+        "native_coverage_object_or_profile_bytes_metadata_only_not_a_textual_failure_report": 25,
+        "successful_run_report_metadata_only": 2343,
+        "artifact_name_does_not_identify_a_failure_report_or_log_metadata_retained": 1793,
+        "native_dockerbuild_record_metadata_only_not_a_textual_failure_report": 54,
+        "previously_downloaded": 165
+      },
+      "bundles_with_current_text_manifests": 165,
+      "text_member_references": 2703,
+      "unique_stored_text_objects_referenced": 1481,
+      "unique_stored_text_bytes_referenced": 62623478,
+      "native_binary_bytes_metadata_only": 44661576353
+    },
+    {
+      "repository": "link-assistant/router",
+      "metadata_status": {
+        "complete_available_inventory": true,
+        "per_page": 100,
+        "repository_artifacts_scanned": 900,
+        "branch_snapshot_relevant_artifacts": 162,
+        "duplicate_artifact_ids_removed": 0,
+        "oldest_run_in_snapshot": "2026-10-08T23:55:35Z",
+        "note": "Membership is by run id in the pinned complete branch-run snapshot; later-created runs are outside this frozen evidence population."
+      },
+      "artifact_records": 162,
+      "selection_reasons": {
+        "successful_run_report_metadata_only": 142,
+        "previously_downloaded": 11,
+        "native_dockerbuild_record_metadata_only_not_a_textual_failure_report": 3,
+        "artifact_name_does_not_identify_a_failure_report_or_log_metadata_retained": 6
+      },
+      "bundles_with_current_text_manifests": 11,
+      "text_member_references": 22,
+      "unique_stored_text_objects_referenced": 21,
+      "unique_stored_text_bytes_referenced": 4100039,
+      "native_binary_bytes_metadata_only": 0
+    },
+    {
+      "repository": "link-foundation/meta-language",
+      "metadata_status": {
+        "complete_available_inventory": true,
+        "per_page": 100,
+        "repository_artifacts_scanned": 1300,
+        "branch_snapshot_relevant_artifacts": 568,
+        "duplicate_artifact_ids_removed": 0,
+        "oldest_run_in_snapshot": "2026-10-07T13:05:22Z",
+        "note": "Membership is by run id in the pinned complete branch-run snapshot; later-created runs are outside this frozen evidence population."
+      },
+      "artifact_records": 568,
+      "selection_reasons": {
+        "artifact_name_does_not_identify_a_failure_report_or_log_metadata_retained": 129,
+        "previously_downloaded": 439
+      },
+      "bundles_with_current_text_manifests": 439,
+      "text_member_references": 1448,
+      "unique_stored_text_objects_referenced": 881,
+      "unique_stored_text_bytes_referenced": 3057088,
+      "native_binary_bytes_metadata_only": 0
+    },
+    {
+      "repository": "link-foundation/relative-meta-logic",
+      "metadata_status": {
+        "complete_available_inventory": true,
+        "per_page": 100,
+        "repository_artifacts_scanned": 581,
+        "branch_snapshot_relevant_artifacts": 581,
+        "duplicate_artifact_ids_removed": 0,
+        "oldest_run_in_snapshot": "2026-09-20T14:32:57Z",
+        "note": "Membership is by run id in the pinned complete branch-run snapshot; later-created runs are outside this frozen evidence population."
+      },
+      "artifact_records": 581,
+      "selection_reasons": {
+        "artifact_name_does_not_identify_a_failure_report_or_log_metadata_retained": 77,
+        "successful_run_report_metadata_only": 501,
+        "previously_downloaded": 1,
+        "native_dockerbuild_record_metadata_only_not_a_textual_failure_report": 2
+      },
+      "bundles_with_current_text_manifests": 1,
+      "text_member_references": 8,
+      "unique_stored_text_objects_referenced": 8,
+      "unique_stored_text_bytes_referenced": 2254,
+      "native_binary_bytes_metadata_only": 0
+    }
+  ],
+  "ci_files": 28586,
+  "ci_logical_bytes": 368835060,
+  "ci_allocated_bytes": 448196608,
+  "case_allocated_bytes": 465043456,
+  "hard_evidence_cap_bytes": 500000000,
+  "filesystem_available_bytes": 29893693440,
+  "filesystem_total_bytes": 494384795648,
+  "note": "Disk measurements describe this collection time. Source incident figures are separately self-reported. Counts come directly from current manifests; source-manifest JSONL preserves historical unavailable/budget/rate responses."
+}

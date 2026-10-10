@@ -1,0 +1,97 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112681635085,
+      "run_id": 37587719166,
+      "workflow_name": "Self-authored pull request",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37587719166",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaPFlNDQ",
+      "head_sha": "1935f8f0dad5449e28471c015ae928909ba4b711",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112681635085",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37587719166/job/112681635085",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-07T07:30:16Z",
+      "started_at": "2026-10-07T07:32:13Z",
+      "completed_at": "2026-10-07T07:32:40Z",
+      "name": "Formal AI authors a change and opens the pull request",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-07T07:32:14Z",
+          "completed_at": "2026-10-07T07:32:14Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-07T07:32:14Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Run ./.github/actions/automation-token",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 3,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Run ./.github/actions/cache-cargo-registry",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 4,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Run ./.github/actions/author-with-formal-ai",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Dispatch the bot pull request's checks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-07T07:32:38Z",
+          "completed_at": "2026-10-07T07:32:38Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112681635085",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000147893,
+      "runner_name": "GitHub Actions 1000147893",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

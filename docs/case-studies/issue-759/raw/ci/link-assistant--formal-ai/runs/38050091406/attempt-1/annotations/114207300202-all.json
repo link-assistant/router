@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 49,
+    "start_column": null,
+    "end_line": 49,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - regenerate",
+    "message": "31% - 292 hits, 661 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 544,
+    "start_column": null,
+    "end_line": 544,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 542,
+    "start_column": null,
+    "end_line": 542,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "self-AST census regeneration: Compiler cache rejected 100% of its writes",
+    "message": "sccache offered 661 compiled artifacts to the GitHub Actions Cache and 661 were refused (0 stored). Every refused write is a crate the next run compiles again, so this is build time the cache is not saving. Set the FORMAL_AI_CI_VERBOSE repository variable to true and rerun to capture the backend's own response (SCCACHE_LOG=debug), which is what separates rate limiting from concurrent writers of the same key -- see scripts/check-sccache-write-health.sh.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

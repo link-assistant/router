@@ -1,0 +1,282 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/0_Pipeline Status.txt.gz",
+    "sha256": "aeef6b3c153334d960e02c9ebffaabc127875261ca29791a87c2d55b96785337",
+    "bytes": 5118,
+    "uncompressed_bytes": 22911,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Pipeline Status/system.txt.gz",
+    "sha256": "3c7b12b37c88cd2cd559794783a77a98efac59ec7293d9fe7d9027d543f6b0f8",
+    "bytes": 403,
+    "uncompressed_bytes": 747,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/6_E2E Tests (agent CLI \u2194 formal-ai) _ E2E Tests (agent CLI \u2194 formal-ai).txt.gz",
+    "sha256": "b67988dc9fbc2eaa97ac0937ebb4d0ce03cf36411c860f8ce0b105669768c312",
+    "bytes": 18773,
+    "uncompressed_bytes": 91225,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/E2E Tests (agent CLI \u2194 formal-ai) _ E2E Tests (agent CLI \u2194 formal-ai)/system.txt.gz",
+    "sha256": "e784cfe7249a790f8195a86e41306af3d2f8c6a6424a43936035eb1aa76f1712",
+    "bytes": 614,
+    "uncompressed_bytes": 1862,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/7_Box Image Projects (go).txt.gz",
+    "sha256": "438214d2ae49f4842f4d9b0282c0ccfdd8580801d4d51295fb274e5a502105a5",
+    "bytes": 8485,
+    "uncompressed_bytes": 37602,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (go)/system.txt.gz",
+    "sha256": "f1149f9a2b752dbc76e2495382b6215c43cabe26ebda0f119c6fab2547a83ae6",
+    "bytes": 540,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/8_Box Image Projects (java).txt.gz",
+    "sha256": "991368e7a33266d68d72372c766b500b1a4b1d17529889af848291f293f7665a",
+    "bytes": 8456,
+    "uncompressed_bytes": 37626,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (java)/system.txt.gz",
+    "sha256": "3b9cca0b58db66b5dc6786b9de38e91356f697aca99cff49fe91481406f588b8",
+    "bytes": 533,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/9_Test (macos-15-intel _ specification).txt.gz",
+    "sha256": "79875e0ffaf780b76ebdb2002fd1f6f5fc8ecf07676ed3e9844d9cb12cab38d8",
+    "bytes": 20456,
+    "uncompressed_bytes": 118291,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Test (macos-15-intel _ specification)/system.txt.gz",
+    "sha256": "f2d933598173258cdf92b9e06c1e45f749293bb0b56688974e482fb214277d6d",
+    "bytes": 518,
+    "uncompressed_bytes": 1316,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/10_Box Image Projects (javascript).txt.gz",
+    "sha256": "0262825dade6feb8e5b9d4a8bf9bf65553d6bd64ae28e86250940ebd13440ade",
+    "bytes": 8465,
+    "uncompressed_bytes": 37704,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (javascript)/system.txt.gz",
+    "sha256": "8ec1a0e0e98c265db2c9d6f2c55265972989f69109c4216ece1e3d93de071ec1",
+    "bytes": 540,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/11_Test (ubuntu-latest _ specification).txt.gz",
+    "sha256": "1ed21a5c54eb253d555033dd36caf28583694755282037ab1344513a9ffbe42d",
+    "bytes": 26383,
+    "uncompressed_bytes": 144759,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Test (ubuntu-latest _ specification)/system.txt.gz",
+    "sha256": "e732b14d502a73b06b8d9879aa0ad6149805bf34d32fd6b57c0776198108a363",
+    "bytes": 522,
+    "uncompressed_bytes": 1314,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/12_Test (ubuntu-latest _ full).txt.gz",
+    "sha256": "76066be610df7277b9e1af7fcdf00b7aff8e2e84cf6155d14a7b3b71af85f7d4",
+    "bytes": 42037,
+    "uncompressed_bytes": 220784,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Test (ubuntu-latest _ full)/system.txt.gz",
+    "sha256": "49be584325e76b5460f3cf1c4dee08e8bd2fb099d4a652df7917b4d9b0100bbf",
+    "bytes": 523,
+    "uncompressed_bytes": 1314,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/13_Box Image Projects (rust).txt.gz",
+    "sha256": "e24c752d12301e8e69817ba8c41061528e107f0457edc75287c88f1f0dca072d",
+    "bytes": 8469,
+    "uncompressed_bytes": 37625,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (rust)/system.txt.gz",
+    "sha256": "2c190b35099af4a4ecd1e2dc41d56fe46652754760f2f3656f8d85e7b5302586",
+    "bytes": 534,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/14_Box Image Projects (typescript).txt.gz",
+    "sha256": "66a8b7e1d15fbea487eba5b34e97b50a5054edbdfe911712c842b1602466dc40",
+    "bytes": 8430,
+    "uncompressed_bytes": 37571,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (typescript)/system.txt.gz",
+    "sha256": "13030143df3f4c8c4f073a32af49491187250c8191118fb5484733cd08f4266f",
+    "bytes": 540,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/15_Box Image Projects (python).txt.gz",
+    "sha256": "6bd1c5b29f2fb26b69c35d5ba93f05cf1b4a73223e073e6391c39130e4d523b5",
+    "bytes": 8493,
+    "uncompressed_bytes": 37713,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (python)/system.txt.gz",
+    "sha256": "fe3b02af0e83bf51277546e756206bd7f2e0eac0ac66e6fb9298cb9e1b92649f",
+    "bytes": 541,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/16_Box Image Projects (ruby).txt.gz",
+    "sha256": "3849f42dc34b23800bebd3bad1c6dd96ccd1fd5b5e8b682ea5944bb80e7c5279",
+    "bytes": 8540,
+    "uncompressed_bytes": 37775,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Box Image Projects (ruby)/system.txt.gz",
+    "sha256": "0a9ef60dc3b5e45c7469ff6c524286c0c9453e4c181b52ee3935cfa04e93cedd",
+    "bytes": 541,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/19_Lint and Format Check.txt.gz",
+    "sha256": "a863b323beb302e0a193ae880aaae26dc90ac7912b9981e109c0875687f29895",
+    "bytes": 45163,
+    "uncompressed_bytes": 230350,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Lint and Format Check/system.txt.gz",
+    "sha256": "dc7ef35986fd91ee3238284c2859b94d85a6974be9fb21ae2dc663120086f07e",
+    "bytes": 531,
+    "uncompressed_bytes": 1550,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/21_E2E Tests (local web app) _ E2E Tests (local web app).txt.gz",
+    "sha256": "2a084e000207b620e938917c99b2c35b8c3dd3edb73c0c01e15932c3221f8fda",
+    "bytes": 33600,
+    "uncompressed_bytes": 154074,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app)/system.txt.gz",
+    "sha256": "c598a494185144264b5f099824bdfc1d51d6d7a341b117d2ddfc9cb27732a86d",
+    "bytes": 590,
+    "uncompressed_bytes": 1496,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/22_Secrets Scan.txt.gz",
+    "sha256": "1243d67c819a9f2d6b1be355c17fa83b34d783937e2fc781fbdc4a7efe48d157",
+    "bytes": 20014,
+    "uncompressed_bytes": 114550,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Secrets Scan/system.txt.gz",
+    "sha256": "81e43ee196f4470a5d563cb0cc0107ffd54690e75c39926bd11596d8636a7f14",
+    "bytes": 527,
+    "uncompressed_bytes": 1212,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/23_Build binaries and tests.txt.gz",
+    "sha256": "a8a7555ca0dd570d72ba4d0bdd2562792aeb597c68507a7b90fca1ad9b3a1880",
+    "bytes": 19752,
+    "uncompressed_bytes": 94219,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Build binaries and tests/system.txt.gz",
+    "sha256": "aa268a94913b1cd8cd42f43fcae8c8301620e4b1b2160e2683f03a84116d3b74",
+    "bytes": 534,
+    "uncompressed_bytes": 1325,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/24_base _ Pin base commit.txt.gz",
+    "sha256": "fc91f51d5dfe4e806762e2a9ec8d2a75187b2d12d79fffd4dd2d1176fca938b1",
+    "bytes": 4757,
+    "uncompressed_bytes": 20733,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/base _ Pin base commit/system.txt.gz",
+    "sha256": "d3c747a5d6f7b4e408b10227590d6ed0021f8c72ef3797986993a34b7c5f33d1",
+    "bytes": 567,
+    "uncompressed_bytes": 1795,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/25_Detect Changes.txt.gz",
+    "sha256": "9241f37174cd0cfeae5f7e488ffd7d2f89f026c2813dca97301261367f8e7edd",
+    "bytes": 42405,
+    "uncompressed_bytes": 249166,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "ffc54e1695ec0d26cfaf0302f9e4d2817fd9fcb025bb2ee9942d62b7166e2a10",
+    "bytes": 457,
+    "uncompressed_bytes": 886,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/26_Release Preflight.txt.gz",
+    "sha256": "82f3768cd7dce7c6f81fa0fe4f79370f277406224965372a2bc4dc93638978ec",
+    "bytes": 4920,
+    "uncompressed_bytes": 21436,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Release Preflight/system.txt.gz",
+    "sha256": "c3e9505e7ace782ef745365b21718a81d76d974fa73bda4de0af5da0e1f6bc4e",
+    "bytes": 409,
+    "uncompressed_bytes": 750,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/27_Version Modification Check.txt.gz",
+    "sha256": "baced7a16d522c74960fefd260fac556989d119e4d52702eec2fc319e35cc511",
+    "bytes": 26467,
+    "uncompressed_bytes": 148689,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477908680/attempt-1/logs/Version Modification Check/system.txt.gz",
+    "sha256": "91b6389de4e8af363c402e8c509ab7855de80dda7d5d45379aac7ec404a98caf",
+    "bytes": 455,
+    "uncompressed_bytes": 875,
+    "redacted": false
+  }
+]

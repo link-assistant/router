@@ -1,0 +1,9 @@
+{
+  "complete_available_inventory": true,
+  "per_page": 50,
+  "repository_artifacts_scanned": 4500,
+  "branch_snapshot_relevant_artifacts": 4380,
+  "duplicate_artifact_ids_removed": 7,
+  "oldest_run_in_snapshot": "2026-09-30T11:12:23Z",
+  "note": "Membership is by run id in the pinned complete branch-run snapshot; later-created runs are outside this frozen evidence population."
+}

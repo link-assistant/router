@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37778965426/attempt-1/logs/4_Detect Changes.txt.gz",
+    "sha256": "93e251ebb2c09edd199d922aa4196696dd98e37d5092b039dcb17102742c69ab",
+    "bytes": 25834,
+    "uncompressed_bytes": 139525,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37778965426/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "80bb1ec6d53ee8590ce92f54647ee273ff8335c3a6ec3547826a75576bd2f48f",
+    "bytes": 453,
+    "uncompressed_bytes": 887,
+    "redacted": false
+  }
+]

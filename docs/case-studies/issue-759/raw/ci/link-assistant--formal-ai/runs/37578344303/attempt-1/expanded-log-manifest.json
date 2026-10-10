@@ -1,0 +1,38 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37578344303/attempt-1/logs/0_Run upstream suites.txt.gz",
+    "sha256": "86a362694d751f9db3b0b947d9a1869f035ddc0af8eccf42d628178b05149658",
+    "bytes": 50941,
+    "uncompressed_bytes": 270484,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "863077e03746f588b2e1495ef6ae5d6a71d8a28c383d903a9e3f8ecc12efd126"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37578344303/attempt-1/logs/Run upstream suites/system.txt.gz",
+    "sha256": "7478830dc2fbb5b1a21b6eb96321902e9bd96976e7063479fb9bdba5daeed5ce",
+    "bytes": 385,
+    "uncompressed_bytes": 764,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "db5a064fa9e678664e81bfe9e08f0a509155fa5ab5055eae4f43a88a3b31f643"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37578344303/attempt-1/logs/1_Verify monotonic ledger.txt.gz",
+    "sha256": "dcacdfbcb5c6cad7be01ad39568272e767171c0bcd57977c35fa901b4dd231b0",
+    "bytes": 38042,
+    "uncompressed_bytes": 202691,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "401386c2d33264fa67dd674e167d631f17c9de97717ba3942954f3dd8ffd3812"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37578344303/attempt-1/logs/Verify monotonic ledger/system.txt.gz",
+    "sha256": "65106efe41c8c24ac52e8475d6fb4bf7efee814014c2c77240f955e6960c13b6",
+    "bytes": 328,
+    "uncompressed_bytes": 618,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "fa0c51facabf8fd9346d1db9080763ee8826863ceb6de2436d9b381a4c4ed623"
+  }
+]

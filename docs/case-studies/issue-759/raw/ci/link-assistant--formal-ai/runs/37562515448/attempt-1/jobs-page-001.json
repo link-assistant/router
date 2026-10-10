@@ -1,0 +1,32 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112603141243,
+      "run_id": 37562515448,
+      "workflow_name": "Coding Ladder",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37562515448",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaN6uUew",
+      "head_sha": "dc4813762ec3a1392160ed5c0dcd9544b3f3e57b",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112603141243",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37562515448/job/112603141243",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-07T02:34:33Z",
+      "started_at": "2026-10-07T02:34:33Z",
+      "completed_at": "2026-10-07T02:38:01Z",
+      "name": "130-task coding ladder",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112603141243",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    }
+  ]
+}

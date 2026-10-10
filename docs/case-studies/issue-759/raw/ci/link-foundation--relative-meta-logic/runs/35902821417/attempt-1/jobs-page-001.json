@@ -1,0 +1,125 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 107323011510,
+      "run_id": 35902821417,
+      "workflow_name": "tests",
+      "head_branch": "issue-183-7fedfddffe9c",
+      "run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/runs/35902821417",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOP9nMvc8AAAAY_PMxtg",
+      "head_sha": "c8b33e0b8db8faa35eae60f237d1f578c56999bf",
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/jobs/107323011510",
+      "html_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35902821417/job/107323011510",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-23T18:29:27Z",
+      "started_at": "2026-09-23T18:29:28Z",
+      "completed_at": "2026-09-23T18:29:32Z",
+      "name": "Rust (cargo test)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-23T18:29:29Z",
+          "completed_at": "2026-09-23T18:29:30Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 2,
+          "started_at": "2026-09-23T18:29:30Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        },
+        {
+          "name": "Run dtolnay/rust-toolchain@stable",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 3,
+          "started_at": "2026-09-23T18:29:31Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        },
+        {
+          "name": "Run Swatinem/rust-cache@v2",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 4,
+          "started_at": "2026-09-23T18:29:31Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        },
+        {
+          "name": "Run full Rust test suite",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-09-23T18:29:31Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-09-23T18:29:31Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-09-23T18:29:31Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/check-runs/107323011510",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000063425,
+      "runner_name": "GitHub Actions 1000063425",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 107323011783,
+      "run_id": 35902821417,
+      "workflow_name": "tests",
+      "head_branch": "issue-183-7fedfddffe9c",
+      "run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/runs/35902821417",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOP9nMvc8AAAAY_PMyxw",
+      "head_sha": "c8b33e0b8db8faa35eae60f237d1f578c56999bf",
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/jobs/107323011783",
+      "html_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35902821417/job/107323011783",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-23T18:29:27Z",
+      "started_at": "2026-09-23T18:29:29Z",
+      "completed_at": "2026-09-23T18:29:33Z",
+      "name": "JS (node --test)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 1,
+          "started_at": "2026-09-23T18:29:30Z",
+          "completed_at": "2026-09-23T18:29:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/check-runs/107323011783",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000063426,
+      "runner_name": "GitHub Actions 1000063426",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

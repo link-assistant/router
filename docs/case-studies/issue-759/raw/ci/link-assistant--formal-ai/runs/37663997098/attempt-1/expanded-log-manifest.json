@@ -1,0 +1,53 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/0_Browser Code Coverage.txt.xz",
+    "sha256": "a4aa252604f74e84f911c516923bdb2ce135ea8678d8198dd82de7483e6226d5",
+    "bytes": 56716,
+    "uncompressed_bytes": 261705,
+    "redacted": false,
+    "original_gzip_sha256": "61b25c1f14ae53693cfdb94782f1199e4501e7c952141935f253e563f0604eee",
+    "compression": "xz",
+    "decoded_sha256": "457fead3631885f68e6539ebed223932f980a986d3b2339a23d1dfed736cfd6e"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/Browser Code Coverage/system.txt.gz",
+    "sha256": "048acfd9eb0d9710dcef1b087f0d6beb0e0e49ef5ac1ff5d72627fd4cec2566b",
+    "bytes": 509,
+    "uncompressed_bytes": 1103,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/1_Code Coverage.txt.xz",
+    "sha256": "16e349445461dd1bb3537c30fda578255e9e87fdb768d5cbb0f24ccbd75ca984",
+    "bytes": 100548,
+    "uncompressed_bytes": 570000,
+    "redacted": false,
+    "original_gzip_sha256": "67f7be246d3830b35ebe99b1c96b01166b0d51a84d183473e61b22c384ee0196",
+    "compression": "xz",
+    "decoded_sha256": "106c61ff79e0ed80b3c5c81279c24fb40a2571f8a511ff971ca0d93217261a8f"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/Code Coverage/system.txt.gz",
+    "sha256": "2681601ec0d401f10294ed3f07fc3648274b2c1b4c146ce4a174bac44b37bf04",
+    "bytes": 498,
+    "uncompressed_bytes": 1081,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/2_Detect Changes.txt.xz",
+    "sha256": "017aae0830fe37a62575fddd40b1dff55b86282659d7e434d47dcb81cc30ebf2",
+    "bytes": 51564,
+    "uncompressed_bytes": 577527,
+    "redacted": false,
+    "original_gzip_sha256": "8d8d1e807a0678f2c4822dc7d32fd0982d88d1c87bdf918eab70f95fb7b29846",
+    "compression": "xz",
+    "decoded_sha256": "7288cf6fff643d7fb12e8f15336b84114458ec1a5b439ed06f7cee86cec6012b"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37663997098/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "53654203ca94d8ba844606e3c0935b1b2cdf2156d2031b2b8a12af255f4b69b2",
+    "bytes": 452,
+    "uncompressed_bytes": 887,
+    "redacted": false
+  }
+]

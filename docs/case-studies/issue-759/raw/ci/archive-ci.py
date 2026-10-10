@@ -3,15 +3,19 @@
 
 Requires authenticated gh. Expanded logs are retained; ZIPs stay in memory.
 """
-import concurrent.futures, datetime, fcntl, gzip, hashlib, io, json, pathlib, re, subprocess, threading, urllib.parse, zipfile
+import concurrent.futures, datetime, fcntl, gzip, hashlib, io, json, lzma, os, pathlib, re, subprocess, threading, time, urllib.parse, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent
+GH_CWD=ROOT
+for ancestor in ROOT.parents:
+    if ancestor.name=='.worktrees':GH_CWD=ancestor.parent;break
 LOCK = threading.Lock()
 MANIFEST = []
 BUDGET_EXHAUSTED = threading.Event()
+XZ_COMPRESSORS = threading.Semaphore(2)
 REPOS = [('link-assistant/router',749),('link-foundation/meta-language',201),('link-foundation/relative-meta-logic',184),('link-assistant/formal-ai',1188)]
 
-def write_bounded(path, payload):
+def write_bounded(path, payload, allow_payload_reserve=False):
     """Share a serialized byte allocation between both collectors; never overshoot."""
     path.parent.mkdir(parents=True,exist_ok=True)
     with (ROOT/'.disk-budget.lock').open('a') as lock:
@@ -19,18 +23,26 @@ def write_bounded(path, payload):
         state_path=ROOT/'.disk-budget-state.json'
         if state_path.exists():state=json.loads(state_path.read_text())
         else:state={'ci_bytes':sum(p.stat().st_size for p in ROOT.rglob('*') if p.is_file()),'limit_bytes':460000000,'note':'Leaves40MB for other evidence within total500MB; streamed gzip payloads are counted before disk writes.'}
+        if 'ci_allocated_bytes' not in state:
+            state['ci_allocated_bytes']=sum(p.stat().st_blocks*512 for p in ROOT.rglob('*') if p.is_file())
+        old_allocated=path.stat().st_blocks*512 if path.exists() else 0
+        allocated_delta=((len(payload)+4095)//4096)*4096-old_allocated
         delta=len(payload)-(path.stat().st_size if path.exists() else 0)
-        if state['ci_bytes']+delta>state['limit_bytes']:
+        payload_limit=430000000 if ('logs' in path.parts or 'text-objects' in path.parts) and not allow_payload_reserve else 460000000
+        if state['ci_bytes']+delta>state['limit_bytes'] or state['ci_allocated_bytes']+allocated_delta>payload_limit:
             BUDGET_EXHAUSTED.set()
             raise RuntimeError('CI460MB allocation exhausted within total500MB evidence cap')
-        path.write_bytes(payload)
+        temporary=path.with_name(path.name+f'.pending-{os.getpid()}-{threading.get_ident()}')
+        temporary.write_bytes(payload)
+        os.replace(temporary,path)
         state['ci_bytes']+=delta
+        state['ci_allocated_bytes']+=path.stat().st_blocks*512-old_allocated
         state_path.write_text(json.dumps(state,indent=2)+'\n')
 
 def write_json(path, data):
     path.parent.mkdir(parents=True,exist_ok=True)
     text=json.dumps(data,indent=2)+'\n'
-    if len(text)>300000:
+    if len(text)>5000:
         path=path.with_suffix(path.suffix+'.gz')
         write_bounded(path,gzip.compress(text.encode(),compresslevel=9,mtime=0))
     else:write_bounded(path,text.encode())
@@ -53,8 +65,19 @@ def fetch(endpoint, path, binary=False):
         with LOCK:
             with (ROOT/'source-manifest.jsonl').open('a') as f: f.write(json.dumps({'endpoint':'https://api.github.com/'+endpoint,'retrieved_at':timestamp,'path':str(path.relative_to(ROOT)),'status':'not_downloaded_evidence_budget_exhausted'})+'\n')
         return None
-    result = subprocess.run(['gh','api',endpoint],capture_output=True)
-    item = {'endpoint':'https://api.github.com/'+endpoint, 'retrieved_at':timestamp, 'exit_code':result.returncode, 'path':str(path.relative_to(ROOT))}
+    retries=[]
+    for retry in range(5):
+        result = subprocess.run(['gh','api',endpoint],capture_output=True,cwd=GH_CWD)
+        invalid_json=False
+        if not result.returncode and not binary:
+            try:json.loads(result.stdout)
+            except (ValueError,UnicodeError):invalid_json=True
+        if not invalid_json and (not result.returncode or 'unexpected end of JSON input' not in result.stderr.decode(errors='replace')):break
+        retries.append({'attempt':retry+1,'stdout_bytes':len(result.stdout),'stdout_sha256':hashlib.sha256(result.stdout).hexdigest(),'error':scrub(result.stderr.decode(errors='replace')),'invalid_json':invalid_json})
+        time.sleep(2*(retry+1))
+    item = {'endpoint':'https://api.github.com/'+endpoint, 'retrieved_at':timestamp, 'exit_code':result.returncode, 'path':str(path.relative_to(ROOT)), 'gh_working_directory':str(GH_CWD)}
+    if retries:item['transient_attempts']=retries
+    if invalid_json:result.returncode=1;item['exit_code']=1;result.stderr=b'Invalid JSON response after retries'
     if result.returncode:
         item['error'] = scrub(result.stderr.decode(errors='replace'))
         path = path.with_suffix(path.suffix+'.error.txt')
@@ -96,9 +119,12 @@ def archive_attempt(repo, directory, run, attempt):
     if data is None: return
     if data.get('conclusion') not in ['failure','cancelled','timed_out','action_required','startup_failure']: return
     jobs=paginate(endpoint+'/jobs',folder,'jobs','jobs')
-    if (folder/'expanded-log-manifest.json').exists():return
+    if (folder/'expanded-log-manifest.json').exists() or (folder/'expanded-log-manifest.json.gz').exists():return
     blob=fetch(endpoint+'/logs',folder/'logs.zip',binary=True)
     if blob is None:
+        if BUDGET_EXHAUSTED.is_set():
+            write_json(folder/'logs-not-downloaded.json',{'reason':'evidence_allocated_disk_budget_exhausted','endpoint':'https://api.github.com/'+endpoint+'/logs','note':'Metadata collection continues; full log bytes were not fetched after the hard cap.'})
+            return
         for job in jobs:
             if job.get('conclusion') in ['failure','timed_out','action_required'] and job.get('check_run_url'):
                 paginate(job['check_run_url'].removeprefix('https://api.github.com/')+'/annotations', folder/'annotations',str(job['id']))
@@ -113,14 +139,23 @@ def archive_attempt(repo, directory, run, attempt):
                 path=folder/'logs'/pathlib.Path(*parts)
                 path=path.with_suffix(path.suffix+'.gz')
                 redacted=False
+                decoded_hash=hashlib.sha256()
                 compressed=io.BytesIO()
                 with archive.open(member) as src, gzip.GzipFile(fileobj=compressed,mode='wb',compresslevel=6,mtime=0) as packed:
                     dst=io.TextIOWrapper(packed,encoding='utf-8')
                     for line in io.TextIOWrapper(src,encoding='utf-8',errors='replace'):
-                        clean=scrub(line);redacted|=clean!=line;dst.write(clean)
+                        clean=scrub(line);redacted|=clean!=line;dst.write(clean);decoded_hash.update(clean.encode())
                     dst.flush()
-                write_bounded(path,compressed.getvalue())
-                files.append({'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'bytes':path.stat().st_size,'uncompressed_bytes':member.file_size,'redacted':redacted})
+                payload=compressed.getvalue();compression='gzip'
+                if len(payload)>200*1024:
+                    with XZ_COMPRESSORS:
+                        compression_started=time.monotonic()
+                        packed_xz=io.BytesIO()
+                        with gzip.GzipFile(fileobj=io.BytesIO(payload),mode='rb') as src,lzma.LZMAFile(packed_xz,'wb',preset=6) as dst:
+                            while chunk:=src.read(1024*1024):dst.write(chunk)
+                    if len(packed_xz.getvalue())<len(payload):payload=packed_xz.getvalue();path=path.with_suffix('.xz');compression='xz'
+                write_bounded(path,payload)
+                files.append({'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'bytes':path.stat().st_size,'uncompressed_bytes':member.file_size,'redacted':redacted,'compression':compression,'decoded_sha256':decoded_hash.hexdigest(),**({'xz_compression_elapsed_seconds':time.monotonic()-compression_started} if compression=='xz' else {})})
             write_json(folder/'expanded-log-manifest.json',files)
     except Exception as error:
         (folder/'log-extract-error.txt').write_text(str(error))
@@ -161,7 +196,9 @@ def main():
         future_map={pool.submit(archive_attempt,*task):task for task in tasks}
         for i,future in enumerate(concurrent.futures.as_completed(future_map),1):
             try: future.result()
-            except Exception as error: print('ERROR',future_map[future],str(error),flush=True)
+            except Exception as error:
+                repo,directory,run,attempt=future_map[future]
+                print('ERROR',repo,run['id'],attempt,str(error),flush=True)
             if i%20==0: print(f'Archived {i}/{len(tasks)} attempts',flush=True)
     (ROOT/'collection-summary.json').write_text(json.dumps(summaries,indent=2)+'\n')
     (ROOT/'source-manifest.json').write_text(json.dumps(MANIFEST,indent=2)+'\n')

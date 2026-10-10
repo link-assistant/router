@@ -1,0 +1,2005 @@
+{
+  "total_count": 581,
+  "artifacts": [
+    {
+      "id": 11576726347,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjcyNjM0Nw==",
+      "name": "cache-portability-windows-latest-1",
+      "size_in_bytes": 5351,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576726347",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576726347/zip",
+      "expired": false,
+      "digest": "sha256:86a52b6a729b9b6d7b1aaf82b70a982f454a5d7a0ed9e0048656021d5dd092b2",
+      "created_at": "2026-10-08T20:17:23Z",
+      "updated_at": "2026-10-08T20:17:23Z",
+      "expires_at": "2026-11-07T20:17:22Z",
+      "workflow_run": {
+        "id": 37837996455,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576621396,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjYyMTM5Ng==",
+      "name": "cache-diagnostics-formal-lean-1",
+      "size_in_bytes": 2688,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576621396",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576621396/zip",
+      "expired": false,
+      "digest": "sha256:cc9725e26dc9840bdbc8be39966056dd512025be0a1c5b847042682266712039",
+      "created_at": "2026-10-08T20:16:19Z",
+      "updated_at": "2026-10-08T20:16:19Z",
+      "expires_at": "2026-10-15T20:16:17Z",
+      "workflow_run": {
+        "id": 37837996508,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576616462,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjYxNjQ2Mg==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15719,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576616462",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576616462/zip",
+      "expired": false,
+      "digest": "sha256:ed18093fe0a391193f1c7cad7480eac7f7d2de1617a2b197f45fd3ef338837df",
+      "created_at": "2026-10-08T20:17:03Z",
+      "updated_at": "2026-10-08T20:17:03Z",
+      "expires_at": "2026-10-15T20:17:02Z",
+      "workflow_run": {
+        "id": 37837996388,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576427367,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjQyNzM2Nw==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 18718,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576427367",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576427367/zip",
+      "expired": false,
+      "digest": "sha256:8e2980ae9a7f5f87c7975eb227283991f84921d8db3c7e5864ee3f39a7ebba61",
+      "created_at": "2026-10-08T20:18:28Z",
+      "updated_at": "2026-10-08T20:18:28Z",
+      "expires_at": "2026-10-15T20:18:27Z",
+      "workflow_run": {
+        "id": 37837996517,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576287922,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjI4NzkyMg==",
+      "name": "cache-diagnostics-relational-kernel-1",
+      "size_in_bytes": 14738,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576287922",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576287922/zip",
+      "expired": false,
+      "digest": "sha256:444775c0fff3c1a2434efe72ed29632fb2feed4fc30d52e0e9a0f4cd39b5464e",
+      "created_at": "2026-10-08T20:21:07Z",
+      "updated_at": "2026-10-08T20:21:07Z",
+      "expires_at": "2026-10-15T20:21:06Z",
+      "workflow_run": {
+        "id": 37837996506,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576172569,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjE3MjU2OQ==",
+      "name": "orientation-lean-1",
+      "size_in_bytes": 2290,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576172569",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576172569/zip",
+      "expired": false,
+      "digest": "sha256:6c1a5742537e712cf60c44c45a184cf528a4bf1ebe4008e8473c598bf61b8afa",
+      "created_at": "2026-10-08T20:15:22Z",
+      "updated_at": "2026-10-08T20:15:22Z",
+      "expires_at": "2026-10-15T20:15:21Z",
+      "workflow_run": {
+        "id": 37837996386,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11576088746,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NjA4ODc0Ng==",
+      "name": "linked-target-evidence",
+      "size_in_bytes": 5228,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576088746",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11576088746/zip",
+      "expired": false,
+      "digest": "sha256:81cd2cf3575a7a97fe065f2e5f796f043dbb90db86eefc3d587f6b84a7748ab7",
+      "created_at": "2026-10-08T20:20:45Z",
+      "updated_at": "2026-10-08T20:20:45Z",
+      "expires_at": "2027-01-06T20:14:51Z",
+      "workflow_run": {
+        "id": 37837996364,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11575948757,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NTk0ODc1Nw==",
+      "name": "proposed-cache-repair-only-ubuntu-latest-1",
+      "size_in_bytes": 36383,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575948757",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575948757/zip",
+      "expired": false,
+      "digest": "sha256:fc53cca0692d8a55e6d77373f2d86e07273d5d52077bf3092e3e853e57cc0e5c",
+      "created_at": "2026-10-08T20:15:19Z",
+      "updated_at": "2026-10-08T20:15:19Z",
+      "expires_at": "2026-11-07T20:15:18Z",
+      "workflow_run": {
+        "id": 37837996369,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11575794389,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NTc5NDM4OQ==",
+      "name": "cache-portability-ubuntu-latest-1",
+      "size_in_bytes": 4780,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575794389",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575794389/zip",
+      "expired": false,
+      "digest": "sha256:654954419b66a444e863411da210f888da2f5a8506d26f8fa49d878276a6b040",
+      "created_at": "2026-10-08T20:15:57Z",
+      "updated_at": "2026-10-08T20:15:57Z",
+      "expires_at": "2026-11-07T20:15:56Z",
+      "workflow_run": {
+        "id": 37837996455,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11575724724,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NTcyNDcyNA==",
+      "name": "cache-diagnostics-parity-test-corpus-1",
+      "size_in_bytes": 12108,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575724724",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575724724/zip",
+      "expired": false,
+      "digest": "sha256:685d6d7edcf027188f21cd6799686a0f46f37d01895bff99d863aadc2f72c435",
+      "created_at": "2026-10-08T20:17:45Z",
+      "updated_at": "2026-10-08T20:17:45Z",
+      "expires_at": "2026-10-15T20:17:45Z",
+      "workflow_run": {
+        "id": 37837996473,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11575469769,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NTQ2OTc2OQ==",
+      "name": "issue-183-acceptance-68bc43dec0cb5001c3bc00ef68172f00ebb7d3a5-1",
+      "size_in_bytes": 159718,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575469769",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575469769/zip",
+      "expired": false,
+      "digest": "sha256:30b0de6b11929200e797b8098fb1ae2d7744db4066eb411440ad0998102f306b",
+      "created_at": "2026-10-08T20:16:13Z",
+      "updated_at": "2026-10-08T20:16:13Z",
+      "expires_at": "2026-11-07T20:16:12Z",
+      "workflow_run": {
+        "id": 37837996776,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11575254977,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NTI1NDk3Nw==",
+      "name": "cache-portability-macos-latest-1",
+      "size_in_bytes": 4761,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575254977",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11575254977/zip",
+      "expired": false,
+      "digest": "sha256:d397b46cba20c2fb0b0642494d452b1ff4ecec0db6da57d38d1c0a3dc10ddc00",
+      "created_at": "2026-10-08T20:15:42Z",
+      "updated_at": "2026-10-08T20:15:42Z",
+      "expires_at": "2026-11-07T20:15:41Z",
+      "workflow_run": {
+        "id": 37837996455,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    },
+    {
+      "id": 11574470403,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NDQ3MDQwMw==",
+      "name": "linked-implementation-evidence",
+      "size_in_bytes": 11867,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574470403",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574470403/zip",
+      "expired": false,
+      "digest": "sha256:c0002e3360ce43cefa539af025c8e6028aa6df2736434b09681f6b8c3ad1c4b0",
+      "created_at": "2026-10-08T19:28:37Z",
+      "updated_at": "2026-10-08T19:28:37Z",
+      "expires_at": "2027-01-06T19:21:35Z",
+      "workflow_run": {
+        "id": 37831346801,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11574325343,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NDMyNTM0Mw==",
+      "name": "cache-portability-ubuntu-latest-1",
+      "size_in_bytes": 4796,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574325343",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574325343/zip",
+      "expired": false,
+      "digest": "sha256:ae35f7c86390238d77f691c601855c00b3b822bb50ac6b5c30c04fc66b558f66",
+      "created_at": "2026-10-08T19:22:24Z",
+      "updated_at": "2026-10-08T19:22:24Z",
+      "expires_at": "2026-11-07T19:22:23Z",
+      "workflow_run": {
+        "id": 37831346805,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11574211789,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NDIxMTc4OQ==",
+      "name": "cache-portability-windows-latest-1",
+      "size_in_bytes": 5354,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574211789",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574211789/zip",
+      "expired": false,
+      "digest": "sha256:b5d4e97c282cd4ce9b47426cc3498cd203c6147deaf971a057cfc3fcd8ae4b22",
+      "created_at": "2026-10-08T19:24:29Z",
+      "updated_at": "2026-10-08T19:24:29Z",
+      "expires_at": "2026-11-07T19:24:28Z",
+      "workflow_run": {
+        "id": 37831346805,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11574202324,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NDIwMjMyNA==",
+      "name": "cache-diagnostics-relational-kernel-1",
+      "size_in_bytes": 14752,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574202324",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574202324/zip",
+      "expired": false,
+      "digest": "sha256:f4363a705827b8155487087742c1af1c6507c27354a6e03d6227b88ac10bd751",
+      "created_at": "2026-10-08T19:30:23Z",
+      "updated_at": "2026-10-08T19:30:23Z",
+      "expires_at": "2026-10-15T19:30:22Z",
+      "workflow_run": {
+        "id": 37831346719,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11574177190,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3NDE3NzE5MA==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 18584,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574177190",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11574177190/zip",
+      "expired": false,
+      "digest": "sha256:3af4f58e04fc03fd208039710d6393b929c4dace8f5228f0423e73900ad2fdfb",
+      "created_at": "2026-10-08T19:26:33Z",
+      "updated_at": "2026-10-08T19:26:33Z",
+      "expires_at": "2026-10-15T19:26:32Z",
+      "workflow_run": {
+        "id": 37831346981,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573781949,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3Mzc4MTk0OQ==",
+      "name": "orientation-lean-1",
+      "size_in_bytes": 2289,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573781949",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573781949/zip",
+      "expired": false,
+      "digest": "sha256:348dc98fc20b5df41e507589928ec5e3f429579098b76e875fc30c739a6726b5",
+      "created_at": "2026-10-08T19:22:12Z",
+      "updated_at": "2026-10-08T19:22:12Z",
+      "expires_at": "2026-10-15T19:22:11Z",
+      "workflow_run": {
+        "id": 37831346895,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573519425,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzUxOTQyNQ==",
+      "name": "cache-diagnostics-tests-rust-1",
+      "size_in_bytes": 42222,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573519425",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573519425/zip",
+      "expired": false,
+      "digest": "sha256:956a65132423670c3c435ad1dc08b100790ce877c0afa037eee43875d8a0c858",
+      "created_at": "2026-10-08T19:40:10Z",
+      "updated_at": "2026-10-08T19:40:10Z",
+      "expires_at": "2026-10-15T19:40:09Z",
+      "workflow_run": {
+        "id": 37831346705,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573516945,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzUxNjk0NQ==",
+      "name": "cache-portability-macos-latest-1",
+      "size_in_bytes": 4770,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573516945",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573516945/zip",
+      "expired": false,
+      "digest": "sha256:600235a684e46dec87e6e1993ea82fc94f4e48fdc225a52a07f0c02121082de0",
+      "created_at": "2026-10-08T19:22:57Z",
+      "updated_at": "2026-10-08T19:22:57Z",
+      "expires_at": "2026-11-07T19:22:56Z",
+      "workflow_run": {
+        "id": 37831346805,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573409248,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzQwOTI0OA==",
+      "name": "orientation-rocq-1",
+      "size_in_bytes": 3823,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573409248",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573409248/zip",
+      "expired": false,
+      "digest": "sha256:d975dbc24f6e47937f1eeb2f390de751c2829fc7af41bb84e41aa8f8c521ef3b",
+      "created_at": "2026-10-08T19:35:02Z",
+      "updated_at": "2026-10-08T19:35:02Z",
+      "expires_at": "2026-10-15T19:35:02Z",
+      "workflow_run": {
+        "id": 37831346895,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573392011,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzM5MjAxMQ==",
+      "name": "cache-diagnostics-lint-english-lint-english-1",
+      "size_in_bytes": 3481,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573392011",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573392011/zip",
+      "expired": false,
+      "digest": "sha256:aa2cb8fa660534a1c4bb8d6ceb6bfbfab1388ae0f41609c06d4c6d9f427f4452",
+      "created_at": "2026-10-08T19:21:57Z",
+      "updated_at": "2026-10-08T19:21:57Z",
+      "expires_at": "2026-10-15T19:21:56Z",
+      "workflow_run": {
+        "id": 37831346842,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573357089,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzM1NzA4OQ==",
+      "name": "cache-diagnostics-bootstrap-encoded-rml-corpus-1",
+      "size_in_bytes": 1933,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573357089",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573357089/zip",
+      "expired": false,
+      "digest": "sha256:4683563bdbf1a24ab7e23dae631fad0024baa4fb632fcb47eadfdac1a0e8ada4",
+      "created_at": "2026-10-08T19:22:03Z",
+      "updated_at": "2026-10-08T19:22:03Z",
+      "expires_at": "2026-10-15T19:22:03Z",
+      "workflow_run": {
+        "id": 37831346794,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573322952,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzMyMjk1Mg==",
+      "name": "cache-diagnostics-formal-lean-1",
+      "size_in_bytes": 2691,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573322952",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573322952/zip",
+      "expired": false,
+      "digest": "sha256:0eba122cd29eca5a78bddb2c797467fb4d6e845efa92f02451b4b91725512b66",
+      "created_at": "2026-10-08T19:22:16Z",
+      "updated_at": "2026-10-08T19:22:16Z",
+      "expires_at": "2026-10-15T19:22:15Z",
+      "workflow_run": {
+        "id": 37831346899,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573299193,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzI5OTE5Mw==",
+      "name": "cache-diagnostics-tests-js-1",
+      "size_in_bytes": 85534,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573299193",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573299193/zip",
+      "expired": false,
+      "digest": "sha256:abdac31b2d16047fcc512925b7b1135f36a94dbb5ac913c63057a76fb9089e5e",
+      "created_at": "2026-10-08T19:33:08Z",
+      "updated_at": "2026-10-08T19:33:08Z",
+      "expires_at": "2026-10-15T19:33:07Z",
+      "workflow_run": {
+        "id": 37831346705,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573267772,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzI2Nzc3Mg==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15692,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573267772",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573267772/zip",
+      "expired": false,
+      "digest": "sha256:bb83f2ccb475d855259b5116bc8ea9e230bd844379f09a850bbb99dcd20f733f",
+      "created_at": "2026-10-08T19:23:49Z",
+      "updated_at": "2026-10-08T19:23:49Z",
+      "expires_at": "2026-10-15T19:23:48Z",
+      "workflow_run": {
+        "id": 37831346756,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573217717,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzIxNzcxNw==",
+      "name": "cache-diagnostics-formal-semantic-1",
+      "size_in_bytes": 1652,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573217717",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573217717/zip",
+      "expired": false,
+      "digest": "sha256:117fc4e21e0b3ae86ddbf9f6638883fcbb94dcf81f03b3bd6b7e9ec475c78859",
+      "created_at": "2026-10-08T19:22:00Z",
+      "updated_at": "2026-10-08T19:22:00Z",
+      "expires_at": "2026-10-15T19:21:59Z",
+      "workflow_run": {
+        "id": 37831346899,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573212705,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzIxMjcwNQ==",
+      "name": "proposed-cache-repair-only-ubuntu-latest-1",
+      "size_in_bytes": 36400,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573212705",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573212705/zip",
+      "expired": false,
+      "digest": "sha256:0a685028da0cac4a246e12887f3ceec64e5533c025af8941f43c7ea70c65fa85",
+      "created_at": "2026-10-08T19:22:42Z",
+      "updated_at": "2026-10-08T19:22:42Z",
+      "expires_at": "2026-11-07T19:22:41Z",
+      "workflow_run": {
+        "id": 37831346914,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573148222,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzE0ODIyMg==",
+      "name": "proposed-cache-repair-only-windows-latest-1",
+      "size_in_bytes": 36311,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573148222",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573148222/zip",
+      "expired": false,
+      "digest": "sha256:5227b271f77ca3ad660828cf2052ad98ab622c90778de48888508b621cdc1b0f",
+      "created_at": "2026-10-08T19:24:05Z",
+      "updated_at": "2026-10-08T19:24:05Z",
+      "expires_at": "2026-11-07T19:24:04Z",
+      "workflow_run": {
+        "id": 37831346914,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573144073,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzE0NDA3Mw==",
+      "name": "cache-diagnostics-formal-rocq-1",
+      "size_in_bytes": 4249,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573144073",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573144073/zip",
+      "expired": false,
+      "digest": "sha256:161b5b4144b99dee0282e7f9a559c3c69697bc5015fbf586796b68f78f8d132e",
+      "created_at": "2026-10-08T19:31:59Z",
+      "updated_at": "2026-10-08T19:31:59Z",
+      "expires_at": "2026-10-15T19:31:59Z",
+      "workflow_run": {
+        "id": 37831346899,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573088235,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzA4ODIzNQ==",
+      "name": "proposed-cache-repair-only-macos-latest-1",
+      "size_in_bytes": 36399,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573088235",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573088235/zip",
+      "expired": false,
+      "digest": "sha256:9db22d0aa9a5ddccc744ac7adbfe77e7ff81ba419bd609960ce20a34f0f07cfb",
+      "created_at": "2026-10-08T19:22:48Z",
+      "updated_at": "2026-10-08T19:22:48Z",
+      "expires_at": "2026-11-07T19:22:48Z",
+      "workflow_run": {
+        "id": 37831346914,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573008744,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzAwODc0NA==",
+      "name": "issue-183-acceptance-c929929c5397c5fde34cf97c5a89187557b4f2bb-1",
+      "size_in_bytes": 159709,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573008744",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573008744/zip",
+      "expired": false,
+      "digest": "sha256:bf29b420f81af3ebbeb862b07b1d66d56e9f9b790d62fdf9a88b499ce7bf670e",
+      "created_at": "2026-10-08T19:22:11Z",
+      "updated_at": "2026-10-08T19:22:11Z",
+      "expires_at": "2026-11-07T19:22:11Z",
+      "workflow_run": {
+        "id": 37831346731,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11573004254,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MzAwNDI1NA==",
+      "name": "linked-target-evidence",
+      "size_in_bytes": 5218,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573004254",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11573004254/zip",
+      "expired": false,
+      "digest": "sha256:1413b2ca5b36fe6266c639c5072383a28140bd055222e6c31dc7af9fec07109c",
+      "created_at": "2026-10-08T19:27:40Z",
+      "updated_at": "2026-10-08T19:27:40Z",
+      "expires_at": "2027-01-06T19:21:35Z",
+      "workflow_run": {
+        "id": 37831346860,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11572714659,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU3MjcxNDY1OQ==",
+      "name": "cache-diagnostics-parity-test-corpus-1",
+      "size_in_bytes": 12108,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11572714659",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11572714659/zip",
+      "expired": false,
+      "digest": "sha256:9d147172c953295f4865b12a1773d0df444c14f6faeecadc1e2abb17bb8b99e7",
+      "created_at": "2026-10-08T19:23:34Z",
+      "updated_at": "2026-10-08T19:23:34Z",
+      "expires_at": "2026-10-15T19:23:32Z",
+      "workflow_run": {
+        "id": 37831346787,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    },
+    {
+      "id": 11536220027,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNjIyMDAyNw==",
+      "name": "orientation-rocq-1",
+      "size_in_bytes": 3824,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11536220027",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11536220027/zip",
+      "expired": false,
+      "digest": "sha256:899b4a176be17c61462b761025b71db0ed503f0970522cba4325a9770eed5558",
+      "created_at": "2026-10-08T07:49:12Z",
+      "updated_at": "2026-10-08T07:49:12Z",
+      "expires_at": "2026-10-15T07:49:11Z",
+      "workflow_run": {
+        "id": 37744692735,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11536201359,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNjIwMTM1OQ==",
+      "name": "cache-diagnostics-tests-rust-1",
+      "size_in_bytes": 42212,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11536201359",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11536201359/zip",
+      "expired": false,
+      "digest": "sha256:fcdbde157162305180360046caebf46534b81807872e02ca0f9a9afffbd279fc",
+      "created_at": "2026-10-08T07:58:13Z",
+      "updated_at": "2026-10-08T07:58:13Z",
+      "expires_at": "2026-10-15T07:58:12Z",
+      "workflow_run": {
+        "id": 37744692905,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535977477,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTk3NzQ3Nw==",
+      "name": "cache-diagnostics-tests-js-1",
+      "size_in_bytes": 84643,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535977477",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535977477/zip",
+      "expired": false,
+      "digest": "sha256:d6c19703a02c8f036b6c6ec0ade578c28e8dc0e7c7345ebb606193bd49a2429a",
+      "created_at": "2026-10-08T07:55:01Z",
+      "updated_at": "2026-10-08T07:55:01Z",
+      "expires_at": "2026-10-15T07:55:00Z",
+      "workflow_run": {
+        "id": 37744692905,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535695832,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTY5NTgzMg==",
+      "name": "proposed-cache-repair-only-windows-latest-1",
+      "size_in_bytes": 36319,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535695832",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535695832/zip",
+      "expired": false,
+      "digest": "sha256:3d548f1811e9c76e782ad0663dfa524ad80d493a5de34418c56abb4bfd4f6a25",
+      "created_at": "2026-10-08T07:41:27Z",
+      "updated_at": "2026-10-08T07:41:27Z",
+      "expires_at": "2026-11-07T07:41:26Z",
+      "workflow_run": {
+        "id": 37744692773,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535647181,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTY0NzE4MQ==",
+      "name": "cache-diagnostics-relational-kernel-1",
+      "size_in_bytes": 14753,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535647181",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535647181/zip",
+      "expired": false,
+      "digest": "sha256:33c799958422613700ee935ffc491b57d287ace33ad3598099c6933c7194d5b0",
+      "created_at": "2026-10-08T07:47:21Z",
+      "updated_at": "2026-10-08T07:47:21Z",
+      "expires_at": "2026-10-15T07:47:21Z",
+      "workflow_run": {
+        "id": 37744692820,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535580776,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTU4MDc3Ng==",
+      "name": "cache-diagnostics-bootstrap-encoded-rml-corpus-1",
+      "size_in_bytes": 1930,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535580776",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535580776/zip",
+      "expired": false,
+      "digest": "sha256:94d96bccba541d446eeac527370091662fddf0e4f3979e08f7a47679c5e652a6",
+      "created_at": "2026-10-08T07:39:39Z",
+      "updated_at": "2026-10-08T07:39:39Z",
+      "expires_at": "2026-10-15T07:39:38Z",
+      "workflow_run": {
+        "id": 37744692882,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535496737,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTQ5NjczNw==",
+      "name": "cache-diagnostics-parity-test-corpus-1",
+      "size_in_bytes": 12135,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535496737",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535496737/zip",
+      "expired": false,
+      "digest": "sha256:eb66dc4da7e2f02601bba5f4701a84e6c9d9bf23117defaf2ba1133ba06a1165",
+      "created_at": "2026-10-08T07:41:51Z",
+      "updated_at": "2026-10-08T07:41:51Z",
+      "expires_at": "2026-10-15T07:41:51Z",
+      "workflow_run": {
+        "id": 37744692870,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535461319,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTQ2MTMxOQ==",
+      "name": "cache-diagnostics-lint-english-lint-english-1",
+      "size_in_bytes": 3475,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535461319",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535461319/zip",
+      "expired": false,
+      "digest": "sha256:59759730a696ac0160c0c57bdf2c2de5e6bd1b7bea195b9837ae5009281194ac",
+      "created_at": "2026-10-08T07:39:30Z",
+      "updated_at": "2026-10-08T07:39:30Z",
+      "expires_at": "2026-10-15T07:39:29Z",
+      "workflow_run": {
+        "id": 37744692833,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535451342,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTQ1MTM0Mg==",
+      "name": "proposed-cache-repair-only-macos-latest-1",
+      "size_in_bytes": 36394,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535451342",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535451342/zip",
+      "expired": false,
+      "digest": "sha256:2bc7a1315172d6656b5bb8dd3aad10edecc1b9e12283789faeddc6f231637ab0",
+      "created_at": "2026-10-08T07:39:53Z",
+      "updated_at": "2026-10-08T07:39:53Z",
+      "expires_at": "2026-11-07T07:39:52Z",
+      "workflow_run": {
+        "id": 37744692773,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535436486,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTQzNjQ4Ng==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15717,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535436486",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535436486/zip",
+      "expired": false,
+      "digest": "sha256:6e70f0cbc3aae5bdf2aaf64074165d8b26cc0f3d5afc0ab2f2b706e641a594b2",
+      "created_at": "2026-10-08T07:40:37Z",
+      "updated_at": "2026-10-08T07:40:37Z",
+      "expires_at": "2026-10-15T07:40:36Z",
+      "workflow_run": {
+        "id": 37744692755,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535421559,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTQyMTU1OQ==",
+      "name": "orientation-lean-1",
+      "size_in_bytes": 2291,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535421559",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535421559/zip",
+      "expired": false,
+      "digest": "sha256:fedfe3e0caf26e9ec2d1b105e25b71bf509650d44e2c89ee0d45772b09cba555",
+      "created_at": "2026-10-08T07:39:08Z",
+      "updated_at": "2026-10-08T07:39:08Z",
+      "expires_at": "2026-10-15T07:39:07Z",
+      "workflow_run": {
+        "id": 37744692735,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535373026,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTM3MzAyNg==",
+      "name": "linked-target-evidence",
+      "size_in_bytes": 3175,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535373026",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535373026/zip",
+      "expired": false,
+      "digest": "sha256:3a84a047bce8f61292ae6b6d5979d72595a5d8a8dc6eb4d73d66f7a7b0fb9f3d",
+      "created_at": "2026-10-08T07:40:53Z",
+      "updated_at": "2026-10-08T07:40:53Z",
+      "expires_at": "2027-01-06T07:38:34Z",
+      "workflow_run": {
+        "id": 37744693006,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535283289,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTI4MzI4OQ==",
+      "name": "proposed-cache-repair-only-ubuntu-latest-1",
+      "size_in_bytes": 36401,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535283289",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535283289/zip",
+      "expired": false,
+      "digest": "sha256:26099cc271b6a327de11c5d82e2d9d6e52cd253f4f601517f9087b83c65f9bce",
+      "created_at": "2026-10-08T07:39:01Z",
+      "updated_at": "2026-10-08T07:39:01Z",
+      "expires_at": "2026-11-07T07:38:59Z",
+      "workflow_run": {
+        "id": 37744692773,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11535114287,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNTExNDI4Nw==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 11166,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535114287",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11535114287/zip",
+      "expired": false,
+      "digest": "sha256:f5cb3bb7b271c2c6a7d5d9420f303f9b6cc4bff1c037d3b3dc668e5e3ee95faa",
+      "created_at": "2026-10-08T07:40:26Z",
+      "updated_at": "2026-10-08T07:40:26Z",
+      "expires_at": "2026-10-15T07:40:26Z",
+      "workflow_run": {
+        "id": 37744692890,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11534893841,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNDg5Mzg0MQ==",
+      "name": "linked-implementation-evidence",
+      "size_in_bytes": 11865,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534893841",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534893841/zip",
+      "expired": false,
+      "digest": "sha256:9fd573260aeaf6fcfa852b0ad9651d1d93e7a7db3547ba71096bbf33cbec4a85",
+      "created_at": "2026-10-08T07:44:18Z",
+      "updated_at": "2026-10-08T07:44:18Z",
+      "expires_at": "2027-01-06T07:38:34Z",
+      "workflow_run": {
+        "id": 37744692914,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11534843135,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNDg0MzEzNQ==",
+      "name": "cache-portability-ubuntu-latest-1",
+      "size_in_bytes": 4446,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534843135",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534843135/zip",
+      "expired": false,
+      "digest": "sha256:5a7d1ab5cdcd0b6ff221f157e41644bef2d3b098437dbddcbd110fbf15d81d2e",
+      "created_at": "2026-10-08T07:39:00Z",
+      "updated_at": "2026-10-08T07:39:00Z",
+      "expires_at": "2026-11-07T07:38:59Z",
+      "workflow_run": {
+        "id": 37744692725,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11534758488,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNDc1ODQ4OA==",
+      "name": "cache-portability-macos-latest-1",
+      "size_in_bytes": 4424,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534758488",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534758488/zip",
+      "expired": false,
+      "digest": "sha256:bdc4bd9a7e7c9c85291c4dc9f8f2fd2124543f67028550f14ac3a3c0da775486",
+      "created_at": "2026-10-08T07:39:48Z",
+      "updated_at": "2026-10-08T07:39:48Z",
+      "expires_at": "2026-11-07T07:39:46Z",
+      "workflow_run": {
+        "id": 37744692725,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11534618624,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzNDYxODYyNA==",
+      "name": "issue-183-acceptance-1d62c4e481c23a88f3e4762de7160d2a8749a731-1",
+      "size_in_bytes": 159683,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534618624",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11534618624/zip",
+      "expired": false,
+      "digest": "sha256:64d954f7ac22b46edd536eadd8f6b818083b3a3dffdb57d12c6c9519c54f4425",
+      "created_at": "2026-10-08T07:39:12Z",
+      "updated_at": "2026-10-08T07:39:12Z",
+      "expires_at": "2026-11-07T07:39:11Z",
+      "workflow_run": {
+        "id": 37744692851,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    },
+    {
+      "id": 11530590047,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDU5MDA0Nw==",
+      "name": "cache-diagnostics-formal-lean-1",
+      "size_in_bytes": 2689,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530590047",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530590047/zip",
+      "expired": false,
+      "digest": "sha256:6e83090a7f513ba3744185617210af7695a9c25df35321cc2f3fad0a7e7273d0",
+      "created_at": "2026-10-08T05:15:19Z",
+      "updated_at": "2026-10-08T05:15:19Z",
+      "expires_at": "2026-10-15T05:15:18Z",
+      "workflow_run": {
+        "id": 37731409700,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530515862,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDUxNTg2Mg==",
+      "name": "cache-diagnostics-tests-js-1",
+      "size_in_bytes": 77987,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530515862",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530515862/zip",
+      "expired": false,
+      "digest": "sha256:b4457b448f3f0abee0fd3e6dfa493a8a5efb07d8512903a2c74317a20ad5cf5a",
+      "created_at": "2026-10-08T05:23:27Z",
+      "updated_at": "2026-10-08T05:23:27Z",
+      "expires_at": "2026-10-15T05:23:26Z",
+      "workflow_run": {
+        "id": 37731409765,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530500550,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDUwMDU1MA==",
+      "name": "cache-diagnostics-parity-test-corpus-1",
+      "size_in_bytes": 12117,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530500550",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530500550/zip",
+      "expired": false,
+      "digest": "sha256:fe6aacca886151b7c35fc10697fb31ff9c72d38b101105a669598da4020956b4",
+      "created_at": "2026-10-08T05:16:51Z",
+      "updated_at": "2026-10-08T05:16:51Z",
+      "expires_at": "2026-10-15T05:16:50Z",
+      "workflow_run": {
+        "id": 37731409702,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530350448,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDM1MDQ0OA==",
+      "name": "proposed-cache-repair-only-windows-latest-1",
+      "size_in_bytes": 36319,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530350448",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530350448/zip",
+      "expired": false,
+      "digest": "sha256:6fff2e712fc9cdb5a76d5888088b8b4408ffc666120d03588f2a15915a849131",
+      "created_at": "2026-10-08T05:17:08Z",
+      "updated_at": "2026-10-08T05:17:08Z",
+      "expires_at": "2026-11-07T05:17:07Z",
+      "workflow_run": {
+        "id": 37731409674,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530330665,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDMzMDY2NQ==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 19657,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530330665",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530330665/zip",
+      "expired": false,
+      "digest": "sha256:48656808dce07b4fa15d3d341a306650f35da6472c2f23765995e56f81f5f072",
+      "created_at": "2026-10-08T05:19:04Z",
+      "updated_at": "2026-10-08T05:19:04Z",
+      "expires_at": "2026-10-15T05:19:03Z",
+      "workflow_run": {
+        "id": 37731409878,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530266639,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDI2NjYzOQ==",
+      "name": "cache-diagnostics-formal-rocq-1",
+      "size_in_bytes": 4248,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530266639",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530266639/zip",
+      "expired": false,
+      "digest": "sha256:66a1514103ecdf51229355bfed947696173784f667e057f37f82319b86ddcef4",
+      "created_at": "2026-10-08T05:25:31Z",
+      "updated_at": "2026-10-08T05:25:31Z",
+      "expires_at": "2026-10-15T05:25:30Z",
+      "workflow_run": {
+        "id": 37731409700,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530206332,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDIwNjMzMg==",
+      "name": "cache-diagnostics-relational-kernel-1",
+      "size_in_bytes": 14747,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530206332",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530206332/zip",
+      "expired": false,
+      "digest": "sha256:5ea8e0ea9e8634f3ffbfe40c06e07875641a8a5be0acb3559b67e0b5545b0db7",
+      "created_at": "2026-10-08T05:22:43Z",
+      "updated_at": "2026-10-08T05:22:43Z",
+      "expires_at": "2026-10-15T05:22:43Z",
+      "workflow_run": {
+        "id": 37731409945,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11530101398,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUzMDEwMTM5OA==",
+      "name": "cache-diagnostics-bootstrap-encoded-rml-corpus-1",
+      "size_in_bytes": 1930,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530101398",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11530101398/zip",
+      "expired": false,
+      "digest": "sha256:99acb34241eb1fdd2b3bb534a9a47b05f1139e2d4fd957f859e2fae535f70c36",
+      "created_at": "2026-10-08T05:15:16Z",
+      "updated_at": "2026-10-08T05:15:16Z",
+      "expires_at": "2026-10-15T05:15:15Z",
+      "workflow_run": {
+        "id": 37731409813,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529985851,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTk4NTg1MQ==",
+      "name": "orientation-lean-1",
+      "size_in_bytes": 2291,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529985851",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529985851/zip",
+      "expired": false,
+      "digest": "sha256:f0efd19df2130df1de214443e86bea8470553a71a27ad9109a5974c3053ffb49",
+      "created_at": "2026-10-08T05:15:13Z",
+      "updated_at": "2026-10-08T05:15:13Z",
+      "expires_at": "2026-10-15T05:15:12Z",
+      "workflow_run": {
+        "id": 37731409787,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529969284,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTk2OTI4NA==",
+      "name": "cache-diagnostics-tests-rust-1",
+      "size_in_bytes": 42196,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529969284",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529969284/zip",
+      "expired": false,
+      "digest": "sha256:38df958203276e0360fa1f3b91692d80376437268462fa6f9d0f7714cdbc5f17",
+      "created_at": "2026-10-08T05:33:14Z",
+      "updated_at": "2026-10-08T05:33:14Z",
+      "expires_at": "2026-10-15T05:33:13Z",
+      "workflow_run": {
+        "id": 37731409765,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529921564,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTkyMTU2NA==",
+      "name": "cache-diagnostics-tests-rust-1",
+      "size_in_bytes": 42073,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529921564",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529921564/zip",
+      "expired": false,
+      "digest": "sha256:8e2ce8c8127589b2e508ed64b74b5984b0c5eb6ae62ee1125fc09c7fcc767dca",
+      "created_at": "2026-10-08T05:14:23Z",
+      "updated_at": "2026-10-08T05:14:23Z",
+      "expires_at": "2026-10-15T05:14:22Z",
+      "workflow_run": {
+        "id": 37729747808,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529897262,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTg5NzI2Mg==",
+      "name": "orientation-rocq-1",
+      "size_in_bytes": 3827,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529897262",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529897262/zip",
+      "expired": false,
+      "digest": "sha256:24d386ae0bf7c3be8b6f72ed1d21968bef29bd46c7ed31911d3933b0d4d29b2f",
+      "created_at": "2026-10-08T05:25:58Z",
+      "updated_at": "2026-10-08T05:25:58Z",
+      "expires_at": "2026-10-15T05:25:57Z",
+      "workflow_run": {
+        "id": 37731409787,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529872234,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTg3MjIzNA==",
+      "name": "cache-portability-windows-latest-1",
+      "size_in_bytes": 4194,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529872234",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529872234/zip",
+      "expired": false,
+      "digest": "sha256:84a424154a504647cbf081d67d4ae39bb4eae2473405a507f7011dea8cfbafb9",
+      "created_at": "2026-10-08T05:17:07Z",
+      "updated_at": "2026-10-08T05:17:07Z",
+      "expires_at": "2026-11-07T05:17:06Z",
+      "workflow_run": {
+        "id": 37731409875,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529846349,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTg0NjM0OQ==",
+      "name": "cache-diagnostics-formal-semantic-1",
+      "size_in_bytes": 1648,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529846349",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529846349/zip",
+      "expired": false,
+      "digest": "sha256:898962c529ab57e77020ce27b2a0ba607e2c61df5f45ef0bcd6a015ce2fcce1a",
+      "created_at": "2026-10-08T05:15:07Z",
+      "updated_at": "2026-10-08T05:15:07Z",
+      "expires_at": "2026-10-15T05:15:07Z",
+      "workflow_run": {
+        "id": 37731409700,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529826415,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTgyNjQxNQ==",
+      "name": "cache-portability-ubuntu-latest-1",
+      "size_in_bytes": 3961,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529826415",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529826415/zip",
+      "expired": false,
+      "digest": "sha256:e94486055447be8fa98504fe8809cc4fdd8266a2bd8dde39eb17d79ea473e98e",
+      "created_at": "2026-10-08T05:15:10Z",
+      "updated_at": "2026-10-08T05:15:10Z",
+      "expires_at": "2026-11-07T05:15:10Z",
+      "workflow_run": {
+        "id": 37731409875,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529787959,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTc4Nzk1OQ==",
+      "name": "proposed-cache-repair-only-macos-latest-1",
+      "size_in_bytes": 36383,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529787959",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529787959/zip",
+      "expired": false,
+      "digest": "sha256:70e678b11cc93ecde5590360593d7c18f4f45fdf27105c1d663095a848e7849e",
+      "created_at": "2026-10-08T05:15:26Z",
+      "updated_at": "2026-10-08T05:15:26Z",
+      "expires_at": "2026-11-07T05:15:25Z",
+      "workflow_run": {
+        "id": 37731409674,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529775481,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTc3NTQ4MQ==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 19699,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529775481",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529775481/zip",
+      "expired": false,
+      "digest": "sha256:1d6aa24f540e5c97fd6a334b8f6cbee5226dd376d6c2b55dd878e13c32dad4b6",
+      "created_at": "2026-10-08T04:58:54Z",
+      "updated_at": "2026-10-08T04:58:54Z",
+      "expires_at": "2026-10-15T04:58:54Z",
+      "workflow_run": {
+        "id": 37729747759,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529760072,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTc2MDA3Mg==",
+      "name": "proposed-cache-repair-only-ubuntu-latest-1",
+      "size_in_bytes": 36403,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529760072",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529760072/zip",
+      "expired": false,
+      "digest": "sha256:180427ef4962389fb5d3c3452f333bd9bad9cf1a4e6042da3d9d6ca7901b5eff",
+      "created_at": "2026-10-08T04:55:03Z",
+      "updated_at": "2026-10-08T04:55:03Z",
+      "expires_at": "2026-11-07T04:55:03Z",
+      "workflow_run": {
+        "id": 37729747834,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529748464,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTc0ODQ2NA==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15708,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529748464",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529748464/zip",
+      "expired": false,
+      "digest": "sha256:01725205c9c94aa5321e9aa6deee4a486cb94f1bfb6c005751c5892063c71b7b",
+      "created_at": "2026-10-08T05:16:25Z",
+      "updated_at": "2026-10-08T05:16:25Z",
+      "expires_at": "2026-10-15T05:16:24Z",
+      "workflow_run": {
+        "id": 37731409889,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529710706,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTcxMDcwNg==",
+      "name": "cache-diagnostics-parity-test-corpus-1",
+      "size_in_bytes": 12117,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529710706",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529710706/zip",
+      "expired": false,
+      "digest": "sha256:6d9f97c71f30735efa001d713f54ed61a01ed0a8e584ea9ab17190bf426b14ce",
+      "created_at": "2026-10-08T04:56:28Z",
+      "updated_at": "2026-10-08T04:56:28Z",
+      "expires_at": "2026-10-15T04:56:28Z",
+      "workflow_run": {
+        "id": 37729747781,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529697298,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTY5NzI5OA==",
+      "name": "cache-diagnostics-formal-rocq-1",
+      "size_in_bytes": 4239,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529697298",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529697298/zip",
+      "expired": false,
+      "digest": "sha256:557b1af6c083974aa591e15d60493e965ec79722b8dab67c74f802389f334482",
+      "created_at": "2026-10-08T05:06:46Z",
+      "updated_at": "2026-10-08T05:06:46Z",
+      "expires_at": "2026-10-15T05:06:45Z",
+      "workflow_run": {
+        "id": 37729747791,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529626173,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTYyNjE3Mw==",
+      "name": "cache-portability-macos-latest-1",
+      "size_in_bytes": 3933,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529626173",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529626173/zip",
+      "expired": false,
+      "digest": "sha256:636273d80615262e3d9a70d07dcddd86b8b9a6b9841b699e5d0b741040c27829",
+      "created_at": "2026-10-08T04:55:29Z",
+      "updated_at": "2026-10-08T04:55:29Z",
+      "expires_at": "2026-11-07T04:55:28Z",
+      "workflow_run": {
+        "id": 37729747728,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529589647,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTU4OTY0Nw==",
+      "name": "issue-183-acceptance-63ae3945208ce7200b489a47aca3e1b6dd1b0291-1",
+      "size_in_bytes": 179117,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529589647",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529589647/zip",
+      "expired": false,
+      "digest": "sha256:60f0856fc03eb497de71ffb3f84ff7289a92481aa04901f8b050db953fc27c43",
+      "created_at": "2026-10-08T05:16:14Z",
+      "updated_at": "2026-10-08T05:16:14Z",
+      "expires_at": "2026-11-07T05:16:13Z",
+      "workflow_run": {
+        "id": 37731409958,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11529482990,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTQ4Mjk5MA==",
+      "name": "cache-diagnostics-relational-kernel-1",
+      "size_in_bytes": 14756,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529482990",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529482990/zip",
+      "expired": false,
+      "digest": "sha256:3fcf1923e63d6715925793ecf5c48dedde268766d0d6821803b3fd0b4b42e156",
+      "created_at": "2026-10-08T05:02:33Z",
+      "updated_at": "2026-10-08T05:02:33Z",
+      "expires_at": "2026-10-15T05:02:32Z",
+      "workflow_run": {
+        "id": 37729747766,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529400530,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTQwMDUzMA==",
+      "name": "cache-diagnostics-tests-rust-1",
+      "size_in_bytes": 42106,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529400530",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529400530/zip",
+      "expired": false,
+      "digest": "sha256:d76386ae2fee8548d31fc043c858af83e41bc302e4428919035c91197f2cc196",
+      "created_at": "2026-10-08T04:42:43Z",
+      "updated_at": "2026-10-08T04:42:43Z",
+      "expires_at": "2026-10-15T04:42:42Z",
+      "workflow_run": {
+        "id": 37727267828,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11529337603,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTMzNzYwMw==",
+      "name": "proposed-cache-repair-only-macos-latest-1",
+      "size_in_bytes": 36392,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529337603",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529337603/zip",
+      "expired": false,
+      "digest": "sha256:07b99f19acbccc2c5c5e344178a1407df1ab5e1495a6ded8e7a1e74eec5eed60",
+      "created_at": "2026-10-08T04:55:26Z",
+      "updated_at": "2026-10-08T04:55:26Z",
+      "expires_at": "2026-11-07T04:55:23Z",
+      "workflow_run": {
+        "id": 37729747834,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529233103,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTIzMzEwMw==",
+      "name": "proposed-cache-repair-only-windows-latest-1",
+      "size_in_bytes": 36314,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529233103",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529233103/zip",
+      "expired": false,
+      "digest": "sha256:1e54085a7e78a6e1ff96a364141c6cbd0c38cdd3bfefca60a5395fdedbe90528",
+      "created_at": "2026-10-08T04:56:48Z",
+      "updated_at": "2026-10-08T04:56:48Z",
+      "expires_at": "2026-11-07T04:56:48Z",
+      "workflow_run": {
+        "id": 37729747834,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529223096,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTIyMzA5Ng==",
+      "name": "cache-diagnostics-formal-semantic-1",
+      "size_in_bytes": 1647,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529223096",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529223096/zip",
+      "expired": false,
+      "digest": "sha256:b13e0c09db2a69449fb00e6ac94176c35e20e2f4f628cc76cae74ded57472901",
+      "created_at": "2026-10-08T04:55:02Z",
+      "updated_at": "2026-10-08T04:55:02Z",
+      "expires_at": "2026-10-15T04:55:01Z",
+      "workflow_run": {
+        "id": 37729747791,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529184936,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTE4NDkzNg==",
+      "name": "orientation-rocq-1",
+      "size_in_bytes": 3827,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529184936",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529184936/zip",
+      "expired": false,
+      "digest": "sha256:e9a7c398af1129bbdb3f67aa6abd7aed0387a4a7f41f2f5b4e0e286474be3ff4",
+      "created_at": "2026-10-08T05:05:52Z",
+      "updated_at": "2026-10-08T05:05:52Z",
+      "expires_at": "2026-10-15T05:05:51Z",
+      "workflow_run": {
+        "id": 37729747732,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529160306,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTE2MDMwNg==",
+      "name": "orientation-rocq-1",
+      "size_in_bytes": 3695,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529160306",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529160306/zip",
+      "expired": false,
+      "digest": "sha256:acab6277532ccd8601cd3b1ba8c155c4548268be04ac4aec5b7e905e79ee00ed",
+      "created_at": "2026-10-08T04:35:08Z",
+      "updated_at": "2026-10-08T04:35:08Z",
+      "expires_at": "2026-10-15T04:35:08Z",
+      "workflow_run": {
+        "id": 37727267785,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11529102083,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTEwMjA4Mw==",
+      "name": "cache-diagnostics-lint-english-lint-english-1",
+      "size_in_bytes": 3452,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529102083",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529102083/zip",
+      "expired": false,
+      "digest": "sha256:51a866db82df9a6b6d09a3bae91cbcf3b9fbb7525702d7ea814108173ce5541e",
+      "created_at": "2026-10-08T04:54:52Z",
+      "updated_at": "2026-10-08T04:54:52Z",
+      "expires_at": "2026-10-15T04:54:51Z",
+      "workflow_run": {
+        "id": 37729747762,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529007667,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTAwNzY2Nw==",
+      "name": "issue-183-acceptance-beb588a88d9f00f07eb23a00538d0f0554da7b17-1",
+      "size_in_bytes": 179119,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529007667",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529007667/zip",
+      "expired": false,
+      "digest": "sha256:dddbd1d58806fa968d90dcf7bab3749742976389e9578399acc8cc86f3f9df79",
+      "created_at": "2026-10-08T04:56:00Z",
+      "updated_at": "2026-10-08T04:56:00Z",
+      "expires_at": "2026-11-07T04:56:00Z",
+      "workflow_run": {
+        "id": 37729747798,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11529007586,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyOTAwNzU4Ng==",
+      "name": "orientation-lean-1",
+      "size_in_bytes": 2291,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529007586",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11529007586/zip",
+      "expired": false,
+      "digest": "sha256:f97e7e82b7c15c4075b5b524a89c6c3e15115b642525578d0f47500ab9020c00",
+      "created_at": "2026-10-08T04:55:06Z",
+      "updated_at": "2026-10-08T04:55:06Z",
+      "expires_at": "2026-10-15T04:55:06Z",
+      "workflow_run": {
+        "id": 37729747732,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528984734,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODk4NDczNA==",
+      "name": "cache-diagnostics-lint-english-lint-english-1",
+      "size_in_bytes": 3481,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528984734",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528984734/zip",
+      "expired": false,
+      "digest": "sha256:c6c5c3b6cd0feb5302278f519b1af155d1cfa68b3bce81ef3bc5699db0060afb",
+      "created_at": "2026-10-08T05:14:59Z",
+      "updated_at": "2026-10-08T05:14:59Z",
+      "expires_at": "2026-10-15T05:14:59Z",
+      "workflow_run": {
+        "id": 37731409836,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11528969797,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODk2OTc5Nw==",
+      "name": "cache-portability-macos-latest-1",
+      "size_in_bytes": 3933,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528969797",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528969797/zip",
+      "expired": false,
+      "digest": "sha256:3b8aa2661e1dc4142db7bcfbbc3cf9326406c12d0a1e8071b6364ba36b7e3076",
+      "created_at": "2026-10-08T05:15:33Z",
+      "updated_at": "2026-10-08T05:15:33Z",
+      "expires_at": "2026-11-07T05:15:31Z",
+      "workflow_run": {
+        "id": 37731409875,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11528954110,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODk1NDExMA==",
+      "name": "cache-portability-ubuntu-latest-1",
+      "size_in_bytes": 3967,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528954110",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528954110/zip",
+      "expired": false,
+      "digest": "sha256:6c68216b6e8848fe4a760fd5ea143f2a31e2460c98ccad6285c22b7027b28076",
+      "created_at": "2026-10-08T04:55:10Z",
+      "updated_at": "2026-10-08T04:55:10Z",
+      "expires_at": "2026-11-07T04:55:09Z",
+      "workflow_run": {
+        "id": 37729747728,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528948936,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODk0ODkzNg==",
+      "name": "cache-diagnostics-tests-js-1",
+      "size_in_bytes": 76196,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528948936",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528948936/zip",
+      "expired": false,
+      "digest": "sha256:8a7014ee5bf0f634ec3d44fb0ecf9ca0d98e4c1cf3f3238a641b5f589f761bb1",
+      "created_at": "2026-10-08T05:06:41Z",
+      "updated_at": "2026-10-08T05:06:41Z",
+      "expires_at": "2026-10-15T05:06:40Z",
+      "workflow_run": {
+        "id": 37729747808,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528914973,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODkxNDk3Mw==",
+      "name": "proposed-cache-repair-only-ubuntu-latest-1",
+      "size_in_bytes": 36401,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528914973",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528914973/zip",
+      "expired": false,
+      "digest": "sha256:1714d834a90e1ab1a5ed346f2e5c6baf2e3060fccedcef24a089e9b7763d74b1",
+      "created_at": "2026-10-08T05:15:09Z",
+      "updated_at": "2026-10-08T05:15:09Z",
+      "expires_at": "2026-11-07T05:15:09Z",
+      "workflow_run": {
+        "id": 37731409674,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    },
+    {
+      "id": 11528798389,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODc5ODM4OQ==",
+      "name": "cache-diagnostics-formal-lean-1",
+      "size_in_bytes": 2691,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528798389",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528798389/zip",
+      "expired": false,
+      "digest": "sha256:e9e6a1fe70e8940fc8949d109b560e697d9890ddd89dd32288f6a7d038850c52",
+      "created_at": "2026-10-08T04:55:12Z",
+      "updated_at": "2026-10-08T04:55:12Z",
+      "expires_at": "2026-10-15T04:55:11Z",
+      "workflow_run": {
+        "id": 37729747791,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528775521,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODc3NTUyMQ==",
+      "name": "cache-diagnostics-docker-1",
+      "size_in_bytes": 19675,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528775521",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528775521/zip",
+      "expired": false,
+      "digest": "sha256:a85adff7fa2ef82bc264b0a5982a94ab8c10cfd990bd7c6478ba7862b129b2ac",
+      "created_at": "2026-10-08T04:27:45Z",
+      "updated_at": "2026-10-08T04:27:45Z",
+      "expires_at": "2026-10-15T04:27:45Z",
+      "workflow_run": {
+        "id": 37727267815,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528775072,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODc3NTA3Mg==",
+      "name": "cache-diagnostics-lint-english-lint-english-1",
+      "size_in_bytes": 3464,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528775072",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528775072/zip",
+      "expired": false,
+      "digest": "sha256:acd6769fcf18686c20fb9e96e503f109c3e54179d7e6c4dbe2c66ae001a5b476",
+      "created_at": "2026-10-08T04:23:53Z",
+      "updated_at": "2026-10-08T04:23:53Z",
+      "expires_at": "2026-10-15T04:23:52Z",
+      "workflow_run": {
+        "id": 37727267779,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528748572,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODc0ODU3Mg==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15671,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528748572",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528748572/zip",
+      "expired": false,
+      "digest": "sha256:d39dcf28098cf78f9256b8b25d7a8829ef88c7cf9b5e0dec015da9feca48c4e2",
+      "created_at": "2026-10-08T04:56:24Z",
+      "updated_at": "2026-10-08T04:56:24Z",
+      "expires_at": "2026-10-15T04:56:24Z",
+      "workflow_run": {
+        "id": 37729747733,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528715180,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODcxNTE4MA==",
+      "name": "cache-diagnostics-formal-lean-1",
+      "size_in_bytes": 2692,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528715180",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528715180/zip",
+      "expired": false,
+      "digest": "sha256:e32d3f124ac0c24f73db354565315f12974d6d5955ad0945d41cfad7a64c9ab1",
+      "created_at": "2026-10-08T04:24:13Z",
+      "updated_at": "2026-10-08T04:24:13Z",
+      "expires_at": "2026-10-15T04:24:12Z",
+      "workflow_run": {
+        "id": 37727267789,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528710459,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODcxMDQ1OQ==",
+      "name": "cache-diagnostics-api-docs-1",
+      "size_in_bytes": 15697,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528710459",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528710459/zip",
+      "expired": false,
+      "digest": "sha256:501d942e65e5c29131db41ac5b9c434e4d07814b4117a1b93ce718881881d45b",
+      "created_at": "2026-10-08T04:26:06Z",
+      "updated_at": "2026-10-08T04:26:06Z",
+      "expires_at": "2026-10-15T04:26:05Z",
+      "workflow_run": {
+        "id": 37727267810,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528685311,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODY4NTMxMQ==",
+      "name": "proposed-cache-repair-only-macos-latest-1",
+      "size_in_bytes": 36393,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528685311",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528685311/zip",
+      "expired": false,
+      "digest": "sha256:3652ae0c2e5005096cd58bda8bfbbdc56421362b0b854a71ed18c42e56845ac3",
+      "created_at": "2026-10-08T04:24:33Z",
+      "updated_at": "2026-10-08T04:24:33Z",
+      "expires_at": "2026-11-07T04:24:32Z",
+      "workflow_run": {
+        "id": 37727267768,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528648655,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODY0ODY1NQ==",
+      "name": "cache-diagnostics-bootstrap-encoded-rml-corpus-1",
+      "size_in_bytes": 1928,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528648655",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528648655/zip",
+      "expired": false,
+      "digest": "sha256:b8617b9f05e61dcc61b53dc37f85a4cd6d6f1de33b3c0c1c87dff13ea4aeafd5",
+      "created_at": "2026-10-08T04:55:02Z",
+      "updated_at": "2026-10-08T04:55:02Z",
+      "expires_at": "2026-10-15T04:55:01Z",
+      "workflow_run": {
+        "id": 37729747755,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    },
+    {
+      "id": 11528605545,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODYwNTU0NQ==",
+      "name": "proposed-cache-repair-only-windows-latest-1",
+      "size_in_bytes": 36324,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528605545",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528605545/zip",
+      "expired": false,
+      "digest": "sha256:f5c3dd006c7b2f040e31fc2b6ea59b74db2afde723898e8f24f083d3e19d216d",
+      "created_at": "2026-10-08T04:26:11Z",
+      "updated_at": "2026-10-08T04:26:11Z",
+      "expires_at": "2026-11-07T04:26:11Z",
+      "workflow_run": {
+        "id": 37727267768,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    },
+    {
+      "id": 11528476822,
+      "node_id": "MDg6QXJ0aWZhY3QxMTUyODQ3NjgyMg==",
+      "name": "cache-diagnostics-formal-rocq-1",
+      "size_in_bytes": 4241,
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528476822",
+      "archive_download_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/artifacts/11528476822/zip",
+      "expired": false,
+      "digest": "sha256:260238395b5d49ae454078c325268eb4d79aeaa7dafcf3b72a7fe697e74f1eae",
+      "created_at": "2026-10-08T04:33:19Z",
+      "updated_at": "2026-10-08T04:33:19Z",
+      "expires_at": "2026-10-15T04:33:19Z",
+      "workflow_run": {
+        "id": 37727267789,
+        "repository_id": 1071238333,
+        "head_repository_id": 1071238333,
+        "head_branch": "issue-183-7fedfddffe9c",
+        "head_sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    }
+  ]
+}

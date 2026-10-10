@@ -1,0 +1,50 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/0_Code Coverage.txt.xz",
+    "sha256": "28500ccdc261361a1755ae358ffbb5574af276fdabb372d3e018379f7740b819",
+    "bytes": 46844,
+    "uncompressed_bytes": 255708,
+    "redacted": false,
+    "original_gzip_sha256": "1e017900a13919e1848f67671d9d16f890287fdfe4b1e30710c09257a7bccd93",
+    "compression": "xz",
+    "decoded_sha256": "7d8bbf35f4e30855acde0c63be62f22103fd31f1be068110a8cf219765adcfbf"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/Code Coverage/system.txt.gz",
+    "sha256": "1a1653205531e982a3362cc537ba5489ce050caf368d4ea67a128dd988664fe7",
+    "bytes": 495,
+    "uncompressed_bytes": 1081,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/1_Browser Code Coverage.txt.gz",
+    "sha256": "61d2728dfa4b57e73659557841a2890578bc8c59a80b7fd73d4cb0c50399cb02",
+    "bytes": 37626,
+    "uncompressed_bytes": 141413,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/Browser Code Coverage/system.txt.gz",
+    "sha256": "7005d2db3d2f6b67c1bca9bb372f0c0d5a47dbb32b35c7b60b6ffc98b9382233",
+    "bytes": 504,
+    "uncompressed_bytes": 1103,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/2_Detect Changes.txt.xz",
+    "sha256": "88d615005d52e942d9d2c6bcce99b9ebb8287a17b2fbe4f3e412eb1505540722",
+    "bytes": 35464,
+    "uncompressed_bytes": 354721,
+    "redacted": false,
+    "original_gzip_sha256": "60c4926f4fa2d26c8aece2283a569eae2a6e119f21c6f742b2e338f1c7073956",
+    "compression": "xz",
+    "decoded_sha256": "ecd3dcf2ec665847fac2efdfbed4f139781b0b0ae72a08400fd95d902cb5d445"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37522181957/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "5c689845b85708bdb64fcf20c6010e809aa23776939d3f10100d5780c6c1e835",
+    "bytes": 457,
+    "uncompressed_bytes": 887,
+    "redacted": false
+  }
+]

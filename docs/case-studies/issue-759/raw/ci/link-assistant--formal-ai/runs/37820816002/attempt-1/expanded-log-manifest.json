@@ -1,0 +1,38 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37820816002/attempt-1/logs/6_Corpus shard 5.txt.gz",
+    "sha256": "32e5dede4d1f830410fadf2db6787755c97b12942ca73d90991a11beb1eb7fd1",
+    "bytes": 6066,
+    "uncompressed_bytes": 23877,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "0efe46f097d04f64bd0800357e76695107de99ec116f21c7524713d30e5a5441"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816002/attempt-1/logs/Corpus shard 5/system.txt.gz",
+    "sha256": "7e46c3b084fd7125e90cf60c69f9a3bf3eab5d126f4003ad39f8ca0a288a91cd",
+    "bytes": 401,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "6a5d63face5113eb44b704d1e310971695115756e9cc6abf4504f2bbea663a4a"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816002/attempt-1/logs/7_Build the corpus gate binary.txt.gz",
+    "sha256": "f5467ee9133ee7481f5b6dd867ab8a3d57be5dccf4ab5b1edc80f3253ab750d0",
+    "bytes": 23236,
+    "uncompressed_bytes": 97792,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d40c218cc195dd5d80ffd8c499a1b6127bcb375fc63bcf1722386a4bc00a06c8"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816002/attempt-1/logs/Build the corpus gate binary/system.txt.gz",
+    "sha256": "b41cb346feac17ad94775026611bf2e189b2094d0178fe39509972bb3545850f",
+    "bytes": 401,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "94ed6441d6e5220ed6d4944e08c3ba0cb95409249a85fa5b15afe8adb698968f"
+  }
+]

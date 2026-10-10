@@ -1,0 +1,117 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/8_js tier (node --check over js, suites 2_4).txt.gz",
+    "sha256": "3d1fa27ccf64afa6dd7a83a0817e29d45ef27f1b9dfd9969e640c98158b677d0",
+    "bytes": 23514,
+    "uncompressed_bytes": 111891,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/js tier (node --check over js, suites 2_4)/system.txt.gz",
+    "sha256": "f7176e9270110fdfc664192c2231937a2c8a3f326397eca40c45d67c085568e2",
+    "bytes": 437,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/11_Full source network serialization (7_8).txt.gz",
+    "sha256": "d3c838ed25d6f42426368f37a247f6846a67ebaf4e908697a13a959cccb0baa3",
+    "bytes": 9536,
+    "uncompressed_bytes": 51411,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (7_8)/system.txt.gz",
+    "sha256": "7e11a29d3e80992ed60ff69a1fdf3b5edfaf74db4f960d666ee5f9877e5b91eb",
+    "bytes": 396,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/12_Full source network serialization (5_8).txt.gz",
+    "sha256": "4bf032a147c028c1094d3d9bd0ae4a063a17d26f81fb7a6430d5726e4894fbdb",
+    "bytes": 21285,
+    "uncompressed_bytes": 119682,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (5_8)/system.txt.gz",
+    "sha256": "d30682624e1b6774774a1ace57e76569c92f827c0a47a531f5cc0183ea5c1737",
+    "bytes": 392,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/13_Full source network serialization (2_8).txt.gz",
+    "sha256": "861aa4858d8cb91bb989e6b8b16cdd94b1a40c0bbd2fa9deb58a430f745a87dd",
+    "bytes": 20593,
+    "uncompressed_bytes": 117176,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (2_8)/system.txt.gz",
+    "sha256": "10e99f711337b7f3584a5c857e611913465f0d46f274da73eb7ea9b6258d7c59",
+    "bytes": 396,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/14_Full source network serialization (3_8).txt.gz",
+    "sha256": "8e360f5843b9478acc25308f6583f38959a2606789cabf5d4583bbb61563b680",
+    "bytes": 21252,
+    "uncompressed_bytes": 119449,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (3_8)/system.txt.gz",
+    "sha256": "ec35a09fcd3d68fdc4677ebf50b39c4923286e7cce340eeb07f56f54059be98c",
+    "bytes": 396,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/15_Full source network serialization (4_8).txt.gz",
+    "sha256": "9fd64ce32e82bbe3dcc8ca925a3ae695da229ed71f0bb163739e80e0d4bf22f3",
+    "bytes": 21123,
+    "uncompressed_bytes": 119292,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (4_8)/system.txt.gz",
+    "sha256": "543129dea1295d18e477f3cf74867520a05f91e20eab67cee8dea76140f4b399",
+    "bytes": 395,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/16_Detect tier changes.txt.xz",
+    "sha256": "899fc114d500545ce8a2d6b6e568e7e7d2fa1768f80ec83af3be8a39b1e28824",
+    "bytes": 225576,
+    "uncompressed_bytes": 2743056,
+    "redacted": false,
+    "original_gzip_sha256": "81daafacf0779eff78420f5d15b938b65c9592d8b18574ab03b4aa1fca4417ab",
+    "compression": "xz",
+    "decoded_sha256": "9314748d91427b980b10b22102563b44fb60f9e767aa100e95994eb107de919f"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "07134f9e34cebd21ff11b293a6e84890729536897cdabd824f6e25d0eedb68aa",
+    "bytes": 395,
+    "uncompressed_bytes": 743,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/17_Full source network serialization (0_8).txt.gz",
+    "sha256": "54916c960de88de7ecb8727049d0448fe7696f60fe953321d9bdb2449fd28468",
+    "bytes": 21305,
+    "uncompressed_bytes": 119355,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703541/attempt-1/logs/Full source network serialization (0_8)/system.txt.gz",
+    "sha256": "7d81960fc6d1a953ee38a0b97964afc8b9724f27ace72d6385f34fcc690d5d82",
+    "bytes": 397,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  }
+]

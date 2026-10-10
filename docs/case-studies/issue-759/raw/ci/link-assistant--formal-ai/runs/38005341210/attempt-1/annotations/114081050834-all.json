@@ -1,0 +1,98 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 184,
+    "start_column": null,
+    "end_line": 184,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 41,
+    "start_column": null,
+    "end_line": 41,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "macOS signing/notarization secrets are not configured: MAC_CSC_LINK MAC_CSC_KEY_PASSWORD APPLE_API_KEY APPLE_API_KEY_ID APPLE_API_ISSUER",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 27,
+    "start_column": null,
+    "end_line": 27,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "fetch-blob upstream deprecation",
+    "message": "deprecated node-domexception@1.0.0: Use your platform's native DOMException instead See https://github.com/node-fetch/fetch-blob/issues/175",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 26,
+    "start_column": null,
+    "end_line": 26,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "electron-builder upstream deprecation",
+    "message": "deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead. See https://github.com/electron-userland/electron-builder/issues/10016",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 25,
+    "start_column": null,
+    "end_line": 25,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "electron-builder upstream deprecation",
+    "message": "deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful. See https://github.com/electron-userland/electron-builder/issues/10016",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 24,
+    "start_column": null,
+    "end_line": 24,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "archiver/electron-builder upstream deprecation",
+    "message": "deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me See https://github.com/isaacs/node-glob/issues/644",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 23,
+    "start_column": null,
+    "end_line": 23,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "electron-builder upstream deprecation",
+    "message": "deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported See https://github.com/electron-userland/electron-builder/issues/10016",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/8ff601e30b2aa343e52eea70b9be75d370b02d2d/.github",
+    "start_line": 22,
+    "start_column": null,
+    "end_line": 22,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "vsce upstream deprecation",
+    "message": "deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation See https://github.com/microsoft/vscode-vsce/issues/1290",
+    "raw_details": ""
+  }
+]

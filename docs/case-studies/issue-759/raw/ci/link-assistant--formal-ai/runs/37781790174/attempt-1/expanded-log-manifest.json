@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37781790174/attempt-1/logs/0_Pipeline Status.txt.gz",
+    "sha256": "e9b507ffb93f9de474b36db107446f12774b83f5cdd37a0f0f0671df17953f7a",
+    "bytes": 5032,
+    "uncompressed_bytes": 22601,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37781790174/attempt-1/logs/Pipeline Status/system.txt.gz",
+    "sha256": "3d63aff32aad6e74407a821a27794d004dee840264632c5be3eda8571e5bcf8b",
+    "bytes": 399,
+    "uncompressed_bytes": 747,
+    "redacted": false
+  }
+]

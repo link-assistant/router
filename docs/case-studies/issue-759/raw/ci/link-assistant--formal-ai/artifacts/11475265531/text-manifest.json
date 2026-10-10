@@ -1,0 +1,12 @@
+[
+  {
+    "path": "text-objects/f4/f405b0b15eb6638c1d8beb056dab68ce5bfe75d9663f6f7fce2e6823b98ceb86.gz",
+    "artifact_member_name": "ci-logs/external-benchmarks.log",
+    "scrubbed_content_sha256": "f405b0b15eb6638c1d8beb056dab68ce5bfe75d9663f6f7fce2e6823b98ceb86",
+    "sha256": "993a004e58a6ed36c9e278c4599bdd46f0e056b280a51113c89c1490d07d93d1",
+    "compressed_bytes": 1154,
+    "original_bytes": 6351,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

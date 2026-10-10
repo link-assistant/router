@@ -1,0 +1,92 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/3_Corpus shard 6.txt.gz",
+    "sha256": "c1f209fc7007f41a90f7c3c93e71ffecff6ec3891f6df590224298261cb8d3e9",
+    "bytes": 6151,
+    "uncompressed_bytes": 24062,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "478279caa115ff66a674363fb2b5013d0fe5558cbf901b12826ef2aa72ff9699"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/Corpus shard 6/system.txt.gz",
+    "sha256": "243b2b3e72430c596101554fd972660437c00b7f179b7e153baffc29219c6889",
+    "bytes": 396,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "9ecf94660fa1fa7298185a358bb9013bf3b667a0d9d1920a2491bcd32508c598"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/4_Corpus shard 4.txt.gz",
+    "sha256": "4ff51365a3b0401fb2770f28d55292d8ee12ad1e76348f2b6a4732a2af8806c3",
+    "bytes": 6119,
+    "uncompressed_bytes": 23991,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "5186974d9def302cce01c551fd0b93e0fa484f1eb2b75ed4543bbe01e6faf3c5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/Corpus shard 4/system.txt.gz",
+    "sha256": "c234f1bb5e076fcfdee03514c82491829850672b920c59d4a12fb386aa47a00d",
+    "bytes": 396,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a9d99db7ff218adb724b31cd047d395cf93523c2a4ef2ab394cdbb38970f91ff"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/5_Corpus shard 5.txt.gz",
+    "sha256": "4f6e8fcc4b53816d112691e43e553d1d0f0764d0b0748460e4ad0897928de63b",
+    "bytes": 6148,
+    "uncompressed_bytes": 24065,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "3234e23008dcdaf0e2ebced3bd60cbd074b2236332e318eea91a7a15254c18c4"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/Corpus shard 5/system.txt.gz",
+    "sha256": "af99222bfe8450e16a66763d15f4996008d3c1e9036bafe85d959c245f387739",
+    "bytes": 398,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "9244ac894ae5dc8a69e1aedd8877508c80d93a475ca8072f3fc060d718b8684b"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/6_Corpus shard 3.txt.gz",
+    "sha256": "45c18eebbb46307317eae076f38387ab3cad7fe85716a67d564239d67817aa1a",
+    "bytes": 6108,
+    "uncompressed_bytes": 23965,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a71908c11faba00b909ea82c2b6d894385d5d54ccf8856f9d4dd780eff9aa864"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/Corpus shard 3/system.txt.gz",
+    "sha256": "ac475f0528a8d4e290b3193a0928f8b797b2c3c9969e4e488f1c9f70f2638708",
+    "bytes": 396,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "3464491247ecad19eb02188c07ee3bb75fd1098b020cb1636e50e87e2d15ca1a"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/7_Build the corpus gate binary.txt.gz",
+    "sha256": "bf32f87d64b3931d4bdc6859096429b8f9f2fc9edfbff092117aa7cd8cc062b5",
+    "bytes": 23232,
+    "uncompressed_bytes": 98102,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "14df29ca7a560f94c1ac94649e35a0f7e598f1fcf442bec1ee76451332536fd5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37788072982/attempt-1/logs/Build the corpus gate binary/system.txt.gz",
+    "sha256": "5bcc5a01d2da438addce82f59b9d8b3441aaa179c76ef96a00eee8a12a9c7727",
+    "bytes": 401,
+    "uncompressed_bytes": 759,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "83dc8b53e20fc9ef247de785633642f4fbb1b2a73209c75ded60955df20a9dd5"
+  }
+]

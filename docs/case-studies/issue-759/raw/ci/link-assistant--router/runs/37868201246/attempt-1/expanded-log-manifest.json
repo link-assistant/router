@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--router/runs/37868201246/attempt-1/logs/4_Claude Code 2.1.291 (capture 2).txt.gz",
+    "sha256": "8e7716d38f0a69d10043fbfc8c7943e5afb570b5129e1f9563fdf8274057dae8",
+    "bytes": 10518,
+    "uncompressed_bytes": 46498,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201246/attempt-1/logs/Claude Code 2.1.291 (capture 2)/system.txt.gz",
+    "sha256": "0a705b82e418849726b44f140344e40b3134afc3d5f35564f3247e0d9a0daf02",
+    "bytes": 412,
+    "uncompressed_bytes": 752,
+    "redacted": false
+  }
+]

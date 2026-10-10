@@ -1,0 +1,25 @@
+{
+  "verified_at": "2026-10-10T20:30:56.861735+00:00",
+  "counts": {
+    "receipt_references": 19964,
+    "unique_receipt_files": 18174,
+    ".gz": 16540,
+    ".xz": 1634,
+    "metadata_migration_receipts": 1997
+  },
+  "decoded_bytes_streamed": 2916309416,
+  "ci_logical_bytes": 368840315,
+  "case_allocated_bytes": 465051648,
+  "hard_cap_bytes": 500000000,
+  "errors": [
+    {
+      "path": "link-assistant--router/artifacts/artifact-selection-manifest.json.gz",
+      "error": "metadata_compressed_sha256_mismatch"
+    },
+    {
+      "path": "link-assistant--router/artifacts/artifact-selection-manifest.json.gz",
+      "error": "metadata_original_sha256_mismatch"
+    }
+  ],
+  "method": "Checks every current run-log, direct-job and artifact text manifest; exact compressed receipt hashes, declared decoded hashes, streaming UTF8-token patterns. No raw files expanded on disk. Historical migration receipts preserve old paths/hashes separately."
+}

@@ -1,0 +1,282 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/0_Pipeline Status.txt.gz",
+    "sha256": "792f66597fee57852704862392cd3d7073d1f5ccd9de4608bcdece4646dec960",
+    "bytes": 5043,
+    "uncompressed_bytes": 22721,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Pipeline Status/system.txt.gz",
+    "sha256": "cbe9db9c91d0e5d439917b1e7fd72f9aadb493fa74f597ca21ca4946409a9814",
+    "bytes": 324,
+    "uncompressed_bytes": 592,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/10_Test (macos-15-intel _ specification).txt.gz",
+    "sha256": "341cbc49cd2b266b5d3f44679cc3878486d65423645659257b7294b3634c8ecb",
+    "bytes": 19985,
+    "uncompressed_bytes": 117085,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Test (macos-15-intel _ specification)/system.txt.gz",
+    "sha256": "aef4d574f425ab943dc974df89aee628c53db11fc6c9cf201b3081449af94a67",
+    "bytes": 441,
+    "uncompressed_bytes": 1160,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/13_Box Image Projects (python).txt.gz",
+    "sha256": "1b2e7401796cf4699d978a0f66f702fa1869ee5227da79ea96c136e01fd74acf",
+    "bytes": 10163,
+    "uncompressed_bytes": 44744,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Box Image Projects (python)/system.txt.gz",
+    "sha256": "dfc9b8040e41790d1dda75a73d40039d8b80f13cd3755f7912c956e38f3b7f09",
+    "bytes": 540,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/14_Test (ubuntu-latest _ specification).txt.gz",
+    "sha256": "a94bdc65aa3fa45cc78b3b4878b2906c1d00cdff9023515a257e3d4702ca25e9",
+    "bytes": 171160,
+    "uncompressed_bytes": 1289775,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Test (ubuntu-latest _ specification)/system.txt.gz",
+    "sha256": "f5c22f86f21729d3a59d266ff019057b8a96b743b419239713368d96a519d5b9",
+    "bytes": 525,
+    "uncompressed_bytes": 1314,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/15_Box Image Projects (java).txt.gz",
+    "sha256": "24b6906d3cc977fd7ec7f2bcc4917138140c0beea26eac786f6ba9057c64b5f9",
+    "bytes": 10192,
+    "uncompressed_bytes": 44684,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Box Image Projects (java)/system.txt.gz",
+    "sha256": "6dcd252a03759242840644f151c9ba3f4f275a9e3a768036fccd1b7022d72433",
+    "bytes": 537,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/16_Box Image Projects (typescript).txt.gz",
+    "sha256": "21c75f0877c3ef38c1bbee108b2b1c38528ae8da1763d7adc36c2f46dbcf52b2",
+    "bytes": 10471,
+    "uncompressed_bytes": 45899,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Box Image Projects (typescript)/system.txt.gz",
+    "sha256": "e60d2d89c43d0955cd9cd4a847b2bbf5847843bbf002eeb72134a988092a32b1",
+    "bytes": 539,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/17_Box Image Projects (ruby).txt.gz",
+    "sha256": "9d7643318c6cc759cc45f305f482461306809bb299b91c5be0d9b702c2ae1b6b",
+    "bytes": 10160,
+    "uncompressed_bytes": 44640,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Box Image Projects (ruby)/system.txt.gz",
+    "sha256": "c3ff0cb96d9af61e3b26ba8fb2a4f7b87169ddd9e07fcc3c39c5536d19cb5092",
+    "bytes": 540,
+    "uncompressed_bytes": 1331,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/18_Test (ubuntu-latest _ full) shard 4_4.txt.gz",
+    "sha256": "a5155a556a16be7a8676122c895e866a54562972f5daef0a88beec741b797a37",
+    "bytes": 72255,
+    "uncompressed_bytes": 330463,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Test (ubuntu-latest _ full) shard 4_4/system.txt.gz",
+    "sha256": "70ae3d71034edbb8e2bbdbaf87f1e53088e2796bf862871a68df7f6db3b0a805",
+    "bytes": 523,
+    "uncompressed_bytes": 1314,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/19_Test (ubuntu-latest _ full) shard 3_4.txt.gz",
+    "sha256": "e98cf1fe0985a634840b01e890c4e84dfd23fb52e2515e0891a230fdb284ecc3",
+    "bytes": 73377,
+    "uncompressed_bytes": 333435,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Test (ubuntu-latest _ full) shard 3_4/system.txt.gz",
+    "sha256": "6a3bee098a121c1bb9b6fff75865051f4cc5a17decff61535108327aad47af4b",
+    "bytes": 443,
+    "uncompressed_bytes": 1159,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/20_Server parity (JavaScript vs Rust).txt.gz",
+    "sha256": "21cf2e84750fec17cbc31c92de9c9b511af6d78b314fc62cdcf4b6bc8a35d768",
+    "bytes": 6544,
+    "uncompressed_bytes": 28547,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Server parity (JavaScript vs Rust)/system.txt.gz",
+    "sha256": "dfe9dd7766b6ae85d9c41d7fdcdc87cec5d8aff9d31e7d0c123bd362c92fd1b0",
+    "bytes": 380,
+    "uncompressed_bytes": 719,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/21_Docker Image Build & Runtime Check.txt.gz",
+    "sha256": "66e49cc7bae1908fb44ac317a22caebf28149d75f607e7aa287d4dfe47d07cde",
+    "bytes": 58574,
+    "uncompressed_bytes": 257287,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Docker Image Build & Runtime Check/system.txt.gz",
+    "sha256": "efad14fbc4b796127b44431d751ecac8af3dfb789f3be108e25df5261976bb51",
+    "bytes": 411,
+    "uncompressed_bytes": 806,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/22_Changelog Fragment Check.txt.gz",
+    "sha256": "9c5d11973869ecebb08fc2497275210141447fd4765e360816a9c5aed4fda003",
+    "bytes": 69883,
+    "uncompressed_bytes": 424082,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Changelog Fragment Check/system.txt.gz",
+    "sha256": "bf206595e755b14a291c7edfc45bbbb6330139af0ee2ea9dfd2ee521e69b12e8",
+    "bytes": 406,
+    "uncompressed_bytes": 803,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/23_Lint and Format Check.txt.gz",
+    "sha256": "d146bab8d75d42e0d28063446a3edf15e15448fbb10f4e163f9e9bcd946c619a",
+    "bytes": 95372,
+    "uncompressed_bytes": 437146,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Lint and Format Check/system.txt.gz",
+    "sha256": "cdefd0c0324dc9565f97a4a099dd0da2f8e09cabe76db63f158a023f3ecfda96",
+    "bytes": 535,
+    "uncompressed_bytes": 1550,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/25_E2E Tests (local web app) _ E2E Tests (local web app).txt.gz",
+    "sha256": "3b2c8056c65898d06789344faf27e0b1c13a08013cae72cbf9b6c72ef493441b",
+    "bytes": 39658,
+    "uncompressed_bytes": 182436,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app)/system.txt.gz",
+    "sha256": "41724a0737b31d8b15ab5927c91a1851d403a6a8bb47d66d5d750216e44d437e",
+    "bytes": 588,
+    "uncompressed_bytes": 1496,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/26_Secrets Scan.txt.gz",
+    "sha256": "0a62b696b97ff8540309572e86df238ff2c54a2bd920f6055386b430cedc1a65",
+    "bytes": 20098,
+    "uncompressed_bytes": 114661,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Secrets Scan/system.txt.gz",
+    "sha256": "251013ff5fba89fc09e3d02f6b1fa69c872886d7e426e01bca7bc1891cb0edf5",
+    "bytes": 522,
+    "uncompressed_bytes": 1212,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/27_Build binaries and tests.txt.gz",
+    "sha256": "cc5fbe58991b2b6d0c20edaf753ee4557c6a25c2fc093644f38914cb08b97b2c",
+    "bytes": 27246,
+    "uncompressed_bytes": 126947,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Build binaries and tests/system.txt.gz",
+    "sha256": "20a9bad7a8a5ea17da98dfc9ded3ddad051b805e9aa247d31facae90295f0ea9",
+    "bytes": 533,
+    "uncompressed_bytes": 1325,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/28_base _ Pin base commit.txt.gz",
+    "sha256": "13bec1630b71de7100be0ddbc072cc4328f45871586a5bc35c90f3d014d6b89d",
+    "bytes": 4752,
+    "uncompressed_bytes": 20704,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/base _ Pin base commit/system.txt.gz",
+    "sha256": "9a9769deb563f350a89d577daa9eb1f68a989001a4eb9c1d19d23ca7f0429668",
+    "bytes": 527,
+    "uncompressed_bytes": 1380,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/29_Release Preflight.txt.gz",
+    "sha256": "b3ba8fb4765b01400a411609349d9af88002caf284d79a876e28847778913541",
+    "bytes": 4923,
+    "uncompressed_bytes": 21314,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Release Preflight/system.txt.gz",
+    "sha256": "7fcc6e8e0ec2758686fbf91bd7e547942e28b86600f3695f686780d34b7570b1",
+    "bytes": 403,
+    "uncompressed_bytes": 750,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/30_Detect Changes.txt.gz",
+    "sha256": "dd7d462e9ee105b462c5d364acb71a00c869b84d29bf206d8cb6282f9ee79e62",
+    "bytes": 92438,
+    "uncompressed_bytes": 581335,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "042bb786374d9f0bd71fda9db62a14c493ec87d4b56985969c19f21c6c55ce81",
+    "bytes": 466,
+    "uncompressed_bytes": 943,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/31_Version Modification Check.txt.gz",
+    "sha256": "97f50c409ce0907353339ac68cf6657e44387c62ec15055a60a52acd53de1688",
+    "bytes": 26665,
+    "uncompressed_bytes": 148692,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37652296393/attempt-1/logs/Version Modification Check/system.txt.gz",
+    "sha256": "1277f2eec3c38d7cba321d41b9e26a0542f4b3a842c217f721f33bb3e097cbdb",
+    "bytes": 453,
+    "uncompressed_bytes": 875,
+    "redacted": false
+  }
+]

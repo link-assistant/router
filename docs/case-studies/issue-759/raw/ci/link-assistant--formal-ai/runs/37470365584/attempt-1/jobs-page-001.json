@@ -1,0 +1,129 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112291957178,
+      "run_id": 37470365584,
+      "workflow_name": "Proactive failure report Agent CLI E2E",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37470365584",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJR9Jug",
+      "head_sha": "9e2f73b148e0236aa2e732b00ed1e27221b5c5bd",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112291957178",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37470365584/job/112291957178",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-06T13:23:08Z",
+      "started_at": "2026-10-06T13:23:10Z",
+      "completed_at": "2026-10-06T13:28:35Z",
+      "name": "agent-cli-failure-report",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T13:23:11Z",
+          "completed_at": "2026-10-06T13:23:12Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T13:23:12Z",
+          "completed_at": "2026-10-06T13:23:26Z"
+        },
+        {
+          "name": "Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T13:23:26Z",
+          "completed_at": "2026-10-06T13:23:28Z"
+        },
+        {
+          "name": "Install the real Agent CLI",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T13:23:28Z",
+          "completed_at": "2026-10-06T13:23:31Z"
+        },
+        {
+          "name": "Run ./.github/actions/formal-ai-binary",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5,
+          "started_at": "2026-10-06T13:23:31Z",
+          "completed_at": "2026-10-06T13:28:30Z"
+        },
+        {
+          "name": "Failed command proactively offers an issue report",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-06T13:28:30Z",
+          "completed_at": "2026-10-06T13:28:30Z"
+        },
+        {
+          "name": "Show the Agent CLI evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-06T13:28:30Z",
+          "completed_at": "2026-10-06T13:28:30Z"
+        },
+        {
+          "name": "Upload failure evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-06T13:28:30Z",
+          "completed_at": "2026-10-06T13:28:30Z"
+        },
+        {
+          "name": "Post Run ./.github/actions/formal-ai-binary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-06T13:28:30Z",
+          "completed_at": "2026-10-06T13:28:31Z"
+        },
+        {
+          "name": "Post Run oven-sh/setup-bun@v2",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-06T13:28:31Z",
+          "completed_at": "2026-10-06T13:28:31Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-06T13:28:31Z",
+          "completed_at": "2026-10-06T13:28:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-06T13:28:31Z",
+          "completed_at": "2026-10-06T13:28:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112291957178",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000144268,
+      "runner_name": "GitHub Actions 1000144268",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

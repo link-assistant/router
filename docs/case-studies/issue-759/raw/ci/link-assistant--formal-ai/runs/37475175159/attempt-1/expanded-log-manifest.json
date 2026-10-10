@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37475175159/attempt-1/logs/0_Summarization quality ratchet (issue #893).txt.gz",
+    "sha256": "af8f4e73d8855125db84fae79236d8be895b4d709ae8e222c4fef10c648b7f97",
+    "bytes": 27063,
+    "uncompressed_bytes": 121334,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37475175159/attempt-1/logs/Summarization quality ratchet (issue #893)/system.txt.gz",
+    "sha256": "bb19df69a403f69659040fd42426f49df608160dd22c03ef33997e04646b33c7",
+    "bytes": 392,
+    "uncompressed_bytes": 768,
+    "redacted": false
+  }
+]

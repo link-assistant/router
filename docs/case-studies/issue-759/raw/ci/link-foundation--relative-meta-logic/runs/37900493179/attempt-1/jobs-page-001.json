@@ -1,0 +1,129 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 113721642358,
+      "run_id": 37900493179,
+      "workflow_name": "issue-183-acceptance",
+      "head_branch": "issue-183-7fedfddffe9c",
+      "run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/runs/37900493179",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOP9nMvc8AAAAaelaNdg",
+      "head_sha": "254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/jobs/113721642358",
+      "html_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37900493179/job/113721642358",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-09T07:41:45Z",
+      "started_at": "2026-10-09T07:42:12Z",
+      "completed_at": "2026-10-09T07:53:36Z",
+      "name": "Issue 183 complete delivery",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-09T07:42:12Z",
+          "completed_at": "2026-10-09T07:42:14Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-09T07:42:14Z",
+          "completed_at": "2026-10-09T07:42:19Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-09T07:42:19Z",
+          "completed_at": "2026-10-09T07:42:22Z"
+        },
+        {
+          "name": "Run dtolnay/rust-toolchain@stable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-09T07:42:22Z",
+          "completed_at": "2026-10-09T07:42:22Z"
+        },
+        {
+          "name": "Install repository build lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-09T07:42:22Z",
+          "completed_at": "2026-10-09T07:42:23Z"
+        },
+        {
+          "name": "Install JavaScript dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-09T07:42:23Z",
+          "completed_at": "2026-10-09T07:42:27Z"
+        },
+        {
+          "name": "Enforce complete execution-backed delivery",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 7,
+          "started_at": "2026-10-09T07:42:27Z",
+          "completed_at": "2026-10-09T07:53:31Z"
+        },
+        {
+          "name": "Archive acceptance evidence before teardown",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-09T07:53:31Z",
+          "completed_at": "2026-10-09T07:53:32Z"
+        },
+        {
+          "name": "Tear down repository-owned build caches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-09T07:53:32Z",
+          "completed_at": "2026-10-09T07:53:33Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2026-10-09T07:53:33Z",
+          "completed_at": "2026-10-09T07:53:33Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-09T07:53:33Z",
+          "completed_at": "2026-10-09T07:53:34Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-09T07:53:34Z",
+          "completed_at": "2026-10-09T07:53:34Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/check-runs/113721642358",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000097698,
+      "runner_name": "GitHub Actions 1000097698",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

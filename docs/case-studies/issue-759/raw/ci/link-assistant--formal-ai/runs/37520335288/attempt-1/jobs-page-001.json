@@ -1,0 +1,121 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112463807131,
+      "run_id": 37520335288,
+      "workflow_name": "Question necessity ratchet",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37520335288",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaL12Cmw",
+      "head_sha": "5a56705b55400796bf830e56ba26de520744b1f2",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112463807131",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37520335288/job/112463807131",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T19:37:13Z",
+      "started_at": "2026-10-06T19:39:25Z",
+      "completed_at": "2026-10-06T19:40:56Z",
+      "name": "Question necessity ratchet (issue #920)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T19:39:26Z",
+          "completed_at": "2026-10-06T19:39:27Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T19:39:27Z",
+          "completed_at": "2026-10-06T19:39:49Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T19:39:49Z",
+          "completed_at": "2026-10-06T19:39:58Z"
+        },
+        {
+          "name": "Run ./.github/actions/setup-sccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T19:39:58Z",
+          "completed_at": "2026-10-06T19:40:00Z"
+        },
+        {
+          "name": "Install rust-script",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-06T19:40:00Z",
+          "completed_at": "2026-10-06T19:40:28Z"
+        },
+        {
+          "name": "Test the ratchet checker",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-06T19:40:28Z",
+          "completed_at": "2026-10-06T19:40:28Z"
+        },
+        {
+          "name": "Enforce the monotonic ceiling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-06T19:40:28Z",
+          "completed_at": "2026-10-06T19:40:28Z"
+        },
+        {
+          "name": "Run the deterministic question benchmark",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 8,
+          "started_at": "2026-10-06T19:40:28Z",
+          "completed_at": "2026-10-06T19:40:53Z"
+        },
+        {
+          "name": "Post Run ./.github/actions/setup-sccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-06T19:40:53Z",
+          "completed_at": "2026-10-06T19:40:53Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-06T19:40:53Z",
+          "completed_at": "2026-10-06T19:40:53Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-06T19:40:53Z",
+          "completed_at": "2026-10-06T19:40:53Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112463807131",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000145604,
+      "runner_name": "GitHub Actions 1000145604",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

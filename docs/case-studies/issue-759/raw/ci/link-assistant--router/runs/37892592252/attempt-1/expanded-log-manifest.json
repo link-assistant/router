@@ -1,0 +1,58 @@
+[
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/2_bindings (macos-15, 20).txt.gz",
+    "sha256": "a8cda73c5b94139241e316eb159f3d7b253448a87879d05106d2fd297e08b6e1",
+    "bytes": 37598,
+    "uncompressed_bytes": 225575,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 20)/system.txt.gz",
+    "sha256": "30ccd108247e26fc3103f5d6b6764cc3cd06742b82fd8a77708d8ea3116fbedf",
+    "bytes": 387,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/3_bindings (macos-15, 24).txt.gz",
+    "sha256": "5f37be5d7a54fcdd8a4b5ca35928cb8dfec71caf3d8fda605573062558bdaf7c",
+    "bytes": 36667,
+    "uncompressed_bytes": 222417,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 24)/system.txt.gz",
+    "sha256": "909b1a00f85c2d72343782bfd0dfb8472b775e11afbad183b99b9547e4ab0eab",
+    "bytes": 391,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/4_semver.txt.gz",
+    "sha256": "c06166062de3ee2d9817753eaa3543092ad087c6b76b575be8f5cece5437dcf6",
+    "bytes": 22342,
+    "uncompressed_bytes": 121447,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/semver/system.txt.gz",
+    "sha256": "a0f2f27508a825af6c41522a762a6845075df8710bef3ee5ea41c1a7d5a3339c",
+    "bytes": 446,
+    "uncompressed_bytes": 863,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/5_generated-http.txt.gz",
+    "sha256": "9d66458ad54a69dabb63f83a813070fed164fa1947d89f9ed306e91d37060290",
+    "bytes": 45560,
+    "uncompressed_bytes": 433655,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/generated-http/system.txt.gz",
+    "sha256": "76020cbaee0fe92ec783be5870efc2da73f97d985bf7deba2dcac064a3186b63",
+    "bytes": 404,
+    "uncompressed_bytes": 742,
+    "redacted": false
+  }
+]

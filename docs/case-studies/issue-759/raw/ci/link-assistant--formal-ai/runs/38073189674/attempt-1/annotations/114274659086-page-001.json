@@ -1,0 +1,110 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 51,
+    "start_column": null,
+    "end_line": 51,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - plan",
+    "message": "64% - 651 hits, 360 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 1464,
+    "start_column": null,
+    "end_line": 1464,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 411,
+    "start_column": null,
+    "end_line": 411,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 410,
+    "start_column": null,
+    "end_line": 410,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 7 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 49,
+    "start_column": null,
+    "end_line": 49,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 48,
+    "start_column": null,
+    "end_line": 48,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 14 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 45,
+    "start_column": null,
+    "end_line": 45,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 44,
+    "start_column": null,
+    "end_line": 44,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 15 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

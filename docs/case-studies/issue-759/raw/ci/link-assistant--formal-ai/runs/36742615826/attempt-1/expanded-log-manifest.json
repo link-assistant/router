@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/36742615826/attempt-1/logs/0_Question necessity ratchet (issue #920).txt.gz",
+    "sha256": "9cfd116319bbf526467ba057bfc03ba1b5ac01c516531bfe4002a19a13402a9d",
+    "bytes": 45390,
+    "uncompressed_bytes": 237718,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/36742615826/attempt-1/logs/Question necessity ratchet (issue #920)/system.txt.gz",
+    "sha256": "79a0b6f7846355f46c489e2b5396bce42d51fa2b0ad296a82159a00496098ecd",
+    "bytes": 309,
+    "uncompressed_bytes": 623,
+    "redacted": false
+  }
+]

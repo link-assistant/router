@@ -1,0 +1,56 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/5_packets (2).txt.gz",
+    "sha256": "6003d1146593a0bfd6dddca4eec507ebcca15a348586ec0f5088487ae85e2004",
+    "bytes": 39773,
+    "uncompressed_bytes": 232086,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "e632a3207cafec6c9ee06fc042eb765afbb56e1028b92feb55e168204bf5760b"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/packets (2)/system.txt.gz",
+    "sha256": "862c9b9da72cf31fdfb3a66c9c353a0497507a12849b95a6218280871896cfb2",
+    "bytes": 449,
+    "uncompressed_bytes": 874,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "42899cf56ac62051c5c4f7bdf220d76a666ecb28fd5094e5df0dd0216ebdf280"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/6_packets (1).txt.gz",
+    "sha256": "73bfccbda2fa54cfa3e90d49c516fc09181008ca6770a20027fa6762d44c4b8d",
+    "bytes": 32218,
+    "uncompressed_bytes": 188194,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f661839d5e9add869aa65a40a636c7422b7341205ea63286faf9026e1cd3ce1d"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/packets (1)/system.txt.gz",
+    "sha256": "0aaccf73b82ff407599ba0858d99534890c667d1324bfdb7ca4fc7cedb8c488a",
+    "bytes": 453,
+    "uncompressed_bytes": 874,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "644c6a38a3b290fee4bb43a6bf8ab8b242b93ac82e35d81ee84b6d52ab0ac856"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/9_resolve.txt.gz",
+    "sha256": "083cf6aadafcdb6551deefc6b74cc7ddd067126a905e096197b79f5d3fbd1cb5",
+    "bytes": 5330,
+    "uncompressed_bytes": 22368,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "ecae9aca23e27c1f932444f90354a1788f9dcd38eb2d650f0fa42a238f2be764"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs/resolve/system.txt.gz",
+    "sha256": "107223545e48e70b5a20a7c5373c242ec3ea66a9430e13e6a2f47c9008ba0a5b",
+    "bytes": 531,
+    "uncompressed_bytes": 1381,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b7be3e797721e8fc9e65a48dff776135aaea953e6b8372b68f78bae158d254b6"
+  }
+]

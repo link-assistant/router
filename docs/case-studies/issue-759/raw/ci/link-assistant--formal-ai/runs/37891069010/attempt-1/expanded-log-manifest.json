@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37891069010/attempt-1/logs/0_stock-rust-install.txt.gz",
+    "sha256": "0c51c2f95ae8a01600bed3a424d7a3a30145696342235ae02a454f79a1e03d5f",
+    "bytes": 18422,
+    "uncompressed_bytes": 74613,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "6da9b6ae3ae364c73816931c5947acb446e65b2bce7913569b85f528c2928a92"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37891069010/attempt-1/logs/stock-rust-install/system.txt.gz",
+    "sha256": "41a01250d05d59a85af1078fa1c8f80d2144992687d2a14c701e676522eb3636",
+    "bytes": 396,
+    "uncompressed_bytes": 762,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "76492fc3f504792bf2a7192ea4886df304f5ce83b13465b89946ab2d6e0da248"
+  }
+]

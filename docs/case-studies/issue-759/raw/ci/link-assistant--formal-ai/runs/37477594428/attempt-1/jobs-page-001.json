@@ -1,0 +1,116 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 112316985033,
+      "run_id": 37477594428,
+      "workflow_name": "External Benchmarks",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37477594428",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJp0uyQ",
+      "head_sha": "922710934be9662872a157a25e46e5de8e1ef5b7",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112316985033",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37477594428/job/112316985033",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-06T14:16:36Z",
+      "started_at": "2026-10-06T14:16:36Z",
+      "completed_at": "2026-10-06T14:16:35Z",
+      "name": "Run upstream suites",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112316985033",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 112316985207,
+      "run_id": 37477594428,
+      "workflow_name": "External Benchmarks",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37477594428",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJp0vdw",
+      "head_sha": "922710934be9662872a157a25e46e5de8e1ef5b7",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112316985207",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37477594428/job/112316985207",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T14:16:36Z",
+      "started_at": "2026-10-06T14:18:40Z",
+      "completed_at": "2026-10-06T14:18:55Z",
+      "name": "Verify monotonic ledger",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T14:18:41Z",
+          "completed_at": "2026-10-06T14:18:42Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 2,
+          "started_at": "2026-10-06T14:18:42Z",
+          "completed_at": "2026-10-06T14:18:52Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 3,
+          "started_at": "2026-10-06T14:18:52Z",
+          "completed_at": "2026-10-06T14:18:52Z"
+        },
+        {
+          "name": "Compare with pull-request base",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 4,
+          "started_at": "2026-10-06T14:18:52Z",
+          "completed_at": "2026-10-06T14:18:52Z"
+        },
+        {
+          "name": "Verify scheduled branch ledger",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-06T14:18:52Z",
+          "completed_at": "2026-10-06T14:18:52Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-06T14:18:52Z",
+          "completed_at": "2026-10-06T14:18:53Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-06T14:18:53Z",
+          "completed_at": "2026-10-06T14:18:53Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112316985207",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000144600,
+      "runner_name": "GitHub Actions 1000144600",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

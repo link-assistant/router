@@ -1,0 +1,17 @@
+{
+  "verified_at": "2026-10-10T20:34:43.353935+00:00",
+  "counts": {
+    "receipt_references": 19964,
+    "unique_receipt_files": 18174,
+    ".gz": 16540,
+    ".xz": 1634,
+    "metadata_migration_receipts": 1997,
+    "superseded_derived_metadata_receipts": 1
+  },
+  "decoded_bytes_streamed": 2916309416,
+  "ci_logical_bytes": 368838326,
+  "case_allocated_bytes": 465063936,
+  "hard_cap_bytes": 500000000,
+  "errors": [],
+  "method": "Checks every current run-log, direct-job and artifact text manifest; exact compressed receipt hashes, declared decoded hashes, streaming UTF8-token patterns. No raw files expanded on disk. Historical migration receipts preserve old paths/hashes separately."
+}

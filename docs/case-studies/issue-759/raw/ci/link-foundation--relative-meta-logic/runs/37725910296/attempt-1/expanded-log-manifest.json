@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37725910296/attempt-1/logs/0_Issue 183 complete delivery.txt.gz",
+    "sha256": "68d6937ecfcec88268945372a5de259ece4a7c71e9ad16fa4b51c070824c79ac",
+    "bytes": 16604,
+    "uncompressed_bytes": 124628,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37725910296/attempt-1/logs/Issue 183 complete delivery/system.txt.gz",
+    "sha256": "47b6211db45f2d62f44ccde6866d016c9d221db34514c7f74880c9906b1c3b97",
+    "bytes": 334,
+    "uncompressed_bytes": 618,
+    "redacted": false
+  }
+]

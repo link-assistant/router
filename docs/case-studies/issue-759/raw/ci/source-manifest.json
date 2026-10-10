@@ -1,0 +1,1062 @@
+[
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37470357151/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.672412+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37470357151/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/36742610499/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.655088+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/36742610499/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37471454013/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.717892+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37471454013/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37470355411/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.680615+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37470355411/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/36742609070/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.650312+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/36742609070/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37473903224/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.364952+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37473903224/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37474753363/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.387744+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37474753363/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37472256829/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.334359+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37472256829/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37472280514/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.351704+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37472280514/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37475166784/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.860506+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37475166784/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37477586541/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:28.895940+00:00",
+    "exit_code": 1,
+    "path": "link-assistant--formal-ai/runs/37477586541/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "error": "gh: Not Found (HTTP 404)\n"
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-foundation/meta-language/actions/runs/37984660603/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:27.286078+00:00",
+    "exit_code": 0,
+    "path": "link-foundation--meta-language/runs/37984660603/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "9018ad2d863c8d9d0ae736f842e835fb3d5b1301686c194fc24fe57d678f772c",
+    "download_bytes": 217804
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703372/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:29.730178+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703372/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "6430fe88c98e8307c2b5004ccef1d463fb5ca79a1bdf75df66ea1865acf87cb3",
+    "download_bytes": 25873
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703298/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:29.726772+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703298/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "55d2d26dfe667c93a0b3d2432d43285b7330bb836b4db03e90002d194d2cb2a9",
+    "download_bytes": 23862
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703385/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:29.724159+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703385/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "7b3bdcde43b3a8c67b3eddbcec429bf96c6b603cf2f1d53a45db0151443c7a0d",
+    "download_bytes": 27104
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703549/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:29.735414+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703549/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "fa5b14f73d3cded400a4281ff0ba595cf1eb30ac7bc36ea0cae5b494a6d485e1",
+    "download_bytes": 29028
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703431/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:30.538006+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703431/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "fcfcd7a65bbedbac06cce205419f7e785f621a90812084ecc47eec0795cfc76e",
+    "download_bytes": 27826
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703558/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:29.732887+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703558/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c40bacc12ffeaaabe0e10a4ac5447d83e8649950e9cd00dc95299fecef778135",
+    "download_bytes": 4808538
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703621/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:31.597803+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703621/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "fd27cc362c23f2cad2d89cfb8ac5850b74ad8657421b6e7d550bdc2de61768e0",
+    "download_bytes": 27507
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703683/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:31.617647+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703683/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "052249a3bc08c17d4840c86c55f1945bb2f5dc06aabb969bdba465d9544f47d2",
+    "download_bytes": 30105
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703540/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:31.803255+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703540/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "70a0f30c9916a4d1965bfade01ab57f7164b670031827939066b196a93bd9541",
+    "download_bytes": 78450
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703269/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:32.415851+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703269/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "2cc73a79f4beb7629c9ff2bd4d59bca2805646997d218d272f57a95f904e449c",
+    "download_bytes": 34271
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703581/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:31.586793+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703581/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "44116add4e57e6457f38b06a840523b62ac75f9f44b5df5eb69da8ca2f552ce2",
+    "download_bytes": 45611
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37980990021/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:33.986504+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37980990021/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a96f46a67d118f649966ace1ef6cbdd59a12d1af3c187f09b394cb347eea4a74",
+    "download_bytes": 45606
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978703606/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:33.578631+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978703606/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "36e00dfa7ceb8ff898b7790d6b9dc38eae1d346d520166f0084cd532578f73f6",
+    "download_bytes": 261702
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37978704118/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:33.449308+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37978704118/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "1a9cbcd994413cd378645e205814ea1f8df16da27cc9c2de8d12ae15f811059b",
+    "download_bytes": 316780
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37980990387/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:34.427263+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37980990387/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "edb878ae2164458b0854b319ae9acb70d2da77f86e68328b93e77a088a6c2712",
+    "download_bytes": 319685
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003442078/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:36.349090+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003442078/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a0a753d5b335f0c4333dafb5c7bf79498301120e57a96072d9f1b0fef72a0552",
+    "download_bytes": 39747
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37989420638/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:36.002904+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37989420638/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b251d862f12eee052e602088c1d3a325a297300229a0f5be5b3a7a121fb90fdf",
+    "download_bytes": 211117
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37989420968/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:34.485146+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/37989420968/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "1ea7be5837b9b465fb55dcfb6a9725696e99a4059b437d4825560e9a41b0f9a4",
+    "download_bytes": 4637018
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003442122/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:36.075788+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003442122/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "51da4ee9ac295094b4c5a0fe635ddce0c1d0d55d2e2e928719b6e533e72f5e66",
+    "download_bytes": 65957
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003441998/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:37.804986+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003441998/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b89b1c64bff2f80d99b001689c0cdc631b0c73cf74cf8eab537fe7080a454c06",
+    "download_bytes": 99762
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003442061/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:38.208283+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003442061/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "49c3a668056ed64660a558fed9a857ffd9a2415c48303f9ec88cfc5e02d788ba",
+    "download_bytes": 35985
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003441991/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:38.670729+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003441991/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "9ac7b96ee89902a000897f50e2bde5aea71507e2f7e9bb87dccf1768ef480442",
+    "download_bytes": 46114
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003442081/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:38.903264+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003442081/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "547cef5e435d84eb1db95cf13d35cd45a018a9eca4a4bcd59e20571ab2f9ef9c",
+    "download_bytes": 18750
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38003442324/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:38.351141+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38003442324/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "294812ce29d2fe4f88504b9202b063ea9a43fa5de47586542ceaa238cf1cd27c",
+    "download_bytes": 757377
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973059/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:40.213216+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973059/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "15a4eebfeb082503394f61fc74fd4e73df708b0ed0f8ac29e88a316344323dc7",
+    "download_bytes": 31248
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973239/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:40.721453+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973239/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "2d9c626b6a25db1abb302e2a8a47b7c6815ee336ae224342eb1dd0160ea699d7",
+    "download_bytes": 36361
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973069/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:40.907278+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973069/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f895f29aea06bc1f83294c3c8d79b6432f0027ce45c82bf9cb25c82ed3a160bb",
+    "download_bytes": 25828
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38005341210/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:40.040372+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38005341210/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "541a86f71d16a964f22b444a79c81d13239e83af335493f3ae11eb21d34b8386",
+    "download_bytes": 924216
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973061/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:41.929733+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973061/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "ad571c2c6333ffe9b002150877d4529c3d0981453fc4150e2bc9ae16289eb171",
+    "download_bytes": 29761
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973241/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:42.285602+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973241/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b360327613e0b583e5cd1ca6a3a8c13f1d36472bb17d24a3d54943eff75e78ad",
+    "download_bytes": 27747
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973089/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:42.733741+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973089/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "7f56ce7524f47b0a2910e621085e4742df56825af58ee718fb40b565f70d794b",
+    "download_bytes": 20809
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973224/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:42.812540+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973224/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "aba184d5780f57f9f3e715fdc5cb3b1d220b9d6b549c22fba75227f12dbedd72",
+    "download_bytes": 33855
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973254/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:43.144944+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973254/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "98cb9ad5d974806b7d127eb20ce13635bb7062b0c1067943cd3aebbb7eb9131a",
+    "download_bytes": 47588
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973245/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:43.680816+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973245/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "0d1d43c8e09026415c70d72a63013bf64502a6e9a3ff7a222a5ee61ddc3badec",
+    "download_bytes": 41493
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973153/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:43.803180+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973153/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "aad0a61f6e7c74cc6270128574acfb322c78bd52ad95d59edb54cab32b29857e",
+    "download_bytes": 32013
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973476/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:45.173663+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973476/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "44c0952ea55b5c015b063ccfd5d040e8287ea1e2651f798ae692980818a54dbc",
+    "download_bytes": 35337
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973484/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:44.448711+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973484/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f85be1d1e5da9fe6b562d11d7757c0b37ef743fd6eed364f46a8b1e12a78df0b",
+    "download_bytes": 284395
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38022001269/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:45.702828+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38022001269/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "95c9ed939d1c03624fbb4265c856a460415a7403328a95b73b3936f60f46956b",
+    "download_bytes": 31927
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973346/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:45.697749+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973346/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "3a8c39a0b445aee6dccd019d6f8ae38666d7c9b3ecf9684c2c323885454e68dd",
+    "download_bytes": 17911
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973350/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:44.054487+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973350/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "7469ce6096437700d46668c2245dfe6f9deaa6f7f1a8ce005749fe4829e3280a",
+    "download_bytes": 4810533
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38017973507/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:44.714298+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38017973507/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f7f0494a2a182833e74ad2af23f9dc87d3b45aa1b23f82c2fad660e56e8c9dc8",
+    "download_bytes": 743811
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752359/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:46.875334+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752359/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b50fba2deb1f52308cce9e5ac1e7a4e36fcc64f46dbe2ca814a62aebf3d0bd70",
+    "download_bytes": 34611
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752326/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:47.107813+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752326/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "0b1c82e896e22a5bf3e1f3b56438a010deeb58b75be4ce57b3430bcd9e7b6966",
+    "download_bytes": 45209
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752369/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:47.537198+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752369/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "9454eb456c0dae8eedcbfc60d6e409b6994ada90e0d2bb63482dea370ac43424",
+    "download_bytes": 27320
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752366/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:47.539794+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752366/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "4e004c6c21ab3fe3118731ec8e088df5a435f6c1f992340e97dd1b276ce5f0a5",
+    "download_bytes": 34392
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752417/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:48.693303+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752417/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "45b8319318eb0c351e72a08688d9eeda885c7836722137dbb7283584228e5579",
+    "download_bytes": 58091
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752385/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:49.110379+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752385/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "82c5eb2c083ffe5307016c18bdc68a618551ce58c33ba5863526be432e92bb5b",
+    "download_bytes": 27382
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752429/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:48.785088+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752429/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "cd5ee4b1de01701a2489aa3cde7f63cab7a4dbe20741c17b1c60a23665dc4d55",
+    "download_bytes": 283963
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752392/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:49.417128+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752392/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "015ce1ad5b64552ac605594b8950abf81d338469e9809460f42cef33b36ad039",
+    "download_bytes": 25814
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395422/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:50.875919+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395422/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "73eadb0b95ece9b63fa9e3b0da94ba3417ef40287c3f60785dc671f73e78be70",
+    "download_bytes": 26138
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395431/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:50.990347+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395431/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c388f4994d7a231bb4017163ed81154b7c7c4fa034e372a8f8c53b4de32351fa",
+    "download_bytes": 24442
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395458/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:51.476945+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395458/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "298fe857a08153acae42757e03669bea5b6333c2ad6ac9f5913e830c3f8823bb",
+    "download_bytes": 39371
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38034752597/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:49.460580+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38034752597/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "4d48a4bfc8e9e2918b28ceb43f8bf3bf76f21de8f30041da9d978b8cd51cf3ca",
+    "download_bytes": 744652
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395392/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:51.528845+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395392/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a17a433dc7ca898799bb582fa0146ee23c80d323c6258200a5e5d706fae858e8",
+    "download_bytes": 27584
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395471/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:52.597097+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395471/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c816485fdbf34217bd49fe60282e33859acb5856751daccbeaab4da9c80d0363",
+    "download_bytes": 18529
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395388/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:52.843702+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395388/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "fb5c1fa6c0a0098f9967a2d64963246e13ddfa7b424699072e2507433a208eb8",
+    "download_bytes": 30622
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395493/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:53.374834+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395493/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "0d624f19a524cb0324663569fe908eadabe32e87d5bb74d02f88cd7f8c01ea2c",
+    "download_bytes": 45687
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395418/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:53.298519+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395418/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "393f7608a3a6bd03729033cae3196626277d1473bd988d77597231457f7343c8",
+    "download_bytes": 57949
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395409/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:53.543434+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395409/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "678f228b680a33baed55b2ffd98629bf2d72d8c1555ab8dfe161a1b7ef6f3781",
+    "download_bytes": 30002
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395448/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:52.551004+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395448/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "0aa395f4c41028c484e9960a227c4ea451e979b34095f75160c77a69bcd3ac28",
+    "download_bytes": 4808215
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395479/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:54.416418+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395479/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "273142e71eda0c27744a77ba03ee94aedbcfed582d716ba248a179078de70dd0",
+    "download_bytes": 35137
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395532/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:55.406371+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395532/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "279f2222b84c775dfb4bb46997bc1ff977346c7aa67e2aafb0db639dbaa33fcf",
+    "download_bytes": 34409
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395538/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:55.482680+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395538/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "61a358d2887f8c76815c9113c09f4ffbdcae22acb9f5d59cbbb1298cd18499a5",
+    "download_bytes": 26395
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395381/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:54.868664+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395381/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "cb3ff56089c78989c2edb184ef138256ddf63be9320f47bbba3f333c30085d1e",
+    "download_bytes": 273746
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38039395669/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:55.935701+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38039395669/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "60c744816b23b02baa70c142c78f848833d8647588511b747b0805f3227ff69f",
+    "download_bytes": 748479
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38040651006/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:56.978753+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38040651006/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "5eb2c3f477b8eddf4a967bffd20c2cc4a7a30b6ea3539d2ca5e16bdc615fb16a",
+    "download_bytes": 551307
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091319/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:57.332111+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091319/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "45e6958c855ce3014e2572a1da612cc62ee8daa8c26e6ccc7eafaba669566b06",
+    "download_bytes": 275456
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38040651207/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:57.301177+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38040651207/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a253c9c75522a99701cc91e97ededa1f9302b0eeddbc7d600674ccb9abe7ecea",
+    "download_bytes": 1092814
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091359/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:57.551564+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091359/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "98394dc9e503a97fb7edcdea2473fe612b518066880c631b1db94bd864dcb440",
+    "download_bytes": 4809341
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091410/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:59.461668+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091410/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "71c8e682c20847a8f3cc61b454ce5c28b81b43ad620f1ef87d3232d2457c31b2",
+    "download_bytes": 30324
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091377/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:10:59.935929+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091377/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "431d1d93edf71710006d3e4663dc81508aac74af4bb7d5fa5af1eab243543e05",
+    "download_bytes": 31273
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091388/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:00.452774+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091388/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "91b7c375363f26afcfd1af3ed14eef01c92d17ebac39f27757eefd6171a7ec46",
+    "download_bytes": 35306
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091406/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:01.457055+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091406/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "999736152e390e6ea2774828d20e8231ca55bd818278f22eaa0dddb9f8a5916b",
+    "download_bytes": 24775
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091311/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:01.691953+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091311/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "8391f81e236a1b3001ab5dc29751bc1380e44dac5e70b5a03a98c4e6d11fe3d9",
+    "download_bytes": 26573
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091447/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:01.949324+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091447/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "7938d323857899b04f2347293c4e6e811293fa4eafccf51b94826bcc8d2705eb",
+    "download_bytes": 27834
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091625/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:00.700012+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091625/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a0c65a5bba991d279cb2d30e646b8ac424682463b60d96dfe059f82c122051ec",
+    "download_bytes": 750908
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091363/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:03.337788+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091363/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f7d60bd7633266cdd1a332d05a3174b01240d62c316e62229f17c2c42bd7383c",
+    "download_bytes": 28510
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091403/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:03.004955+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091403/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "2b389bc812f3d3fd0f3746efad3db5530bc6f358a585a63f98e188a50dd06476",
+    "download_bytes": 39715
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091309/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:03.570474+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091309/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c0f35909cce80b50e1972194ace2cade4dcd55b2779601434a9e49945905e547",
+    "download_bytes": 26521
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091371/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:03.608829+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091371/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a7beaa01b2d62c48fa2f7b4882232255d84bf2e5ccf7dbe61ced29f99e12ebc2",
+    "download_bytes": 46368
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091349/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:04.137679+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38050091349/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "ac58046b09ac66c061eed2fa9b6ad9d3f1f10c26a349dfca1c184c74c633e3bd",
+    "download_bytes": 18962
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38055711038/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:05.635424+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38055711038/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "d429948e902cede8b851cac1dd5b52dc42a237424bb17f73b9f9a984dc72ce0d",
+    "download_bytes": 17916
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38052096447/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:05.199240+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38052096447/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b00de2a8fd5b3c909c11136e190bc4d4a6af5a985ef5b0439952bfbf05fa6f1f",
+    "download_bytes": 80321
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38052096387/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:05.489453+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38052096387/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "3f92399a68842ea554457cd8965f9fd347e9fcee8d78f35d9578d778bd79c4d9",
+    "download_bytes": 121226
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38052096486/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:05.356469+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38052096486/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "321bf024955b3df48d1d5e01d82ed278f243548025f1feefba3abb9bf6c19214",
+    "download_bytes": 66763
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38052096461/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:05.437482+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38052096461/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "90699c1a52f3a3de49b9cc8bb3134b5b5b63a7dfe19c134b6f0c955b0e8f84a2",
+    "download_bytes": 617670
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38055711022/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:06.076799+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38055711022/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "60651396aa0dcaff9d372030704fefd08946bddd06ccea8dbed5ecac1753b09e",
+    "download_bytes": 308735
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38055711023/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:07.470630+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38055711023/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "55cffe4f75d46429f24153e353f2cebd574e71b14d616024f32df12b8ac5d13f",
+    "download_bytes": 45507
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38055711115/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:07.455736+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38055711115/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "b8d55f08ee11a5ca95ba7e5a4c136ceb8bdff9b43e7a0eb6af3f0e1fcbf993fe",
+    "download_bytes": 140651
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38059927406/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:07.726819+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38059927406/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "d59ed40e8e1372650a41fba750c080ea652c635a189f7ab1decb0c8fc8230bd3",
+    "download_bytes": 158322
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189621/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:08.868393+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189621/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c9edbf0b8d9a857af9b79a771d0b39354411dfee9d9784d28f5928b10b0d1573",
+    "download_bytes": 36019
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38059927685/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:07.990215+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38059927685/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "8a28733fbf3812c3005c914181d8f189c47c68744b56e505d60b944bc7e37390",
+    "download_bytes": 1024945
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189617/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:09.552648+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189617/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "cea0f8bb7e8fe1c83484f96ab5a37e302ec0b67ff1248dd195288d225c3b59a1",
+    "download_bytes": 34728
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189706/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:09.125262+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189706/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "08543d839a06ddd1811975752d2fd55738c429e6c71b3861ae6cd3fc53e14c1c",
+    "download_bytes": 272990
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189606/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:10.500038+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189606/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f62b53eb25b59cfe94bab825acdd0f9baf1a6826490fd4a7d8ac1bd00f9a0fda",
+    "download_bytes": 25961
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189663/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:10.369919+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189663/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "ccf7fc5d720fe4cc2b13fe1501021caab17ce3bd4cc254759027e92d1a568eba",
+    "download_bytes": 38730
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189696/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:10.797136+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189696/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "524509f9f093ae7a050f4e5990d95d0a0c35e9670cee276931636109c599c725",
+    "download_bytes": 24181
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189698/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:11.389392+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189698/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "39e3c84338ceeb70e4b54e9e0935901c47e0082947aee1b50ca80963a3d90db5",
+    "download_bytes": 28038
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189578/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:11.726978+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189578/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "2e37fd11612b8795185b68d9cbdfe54b0cc411a2623cd996a67addee07fecc68",
+    "download_bytes": 18127
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189629/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:11.648604+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189629/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "3e011a128685350d0a0e9eba36835ab40104243bd33606847472b59f0aa5137e",
+    "download_bytes": 26025
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189690/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:12.422139+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189690/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "c073e370b5df9d2d0bd1f1be81ff148fc547ef46b206e341ddac868091ff543e",
+    "download_bytes": 14953
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189633/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:12.271071+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189633/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "5bc66c2c1a0c25ab0612195e91855c2555e85cf8a596773765f27828cafeee3d",
+    "download_bytes": 27285
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189595/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:12.533573+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189595/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "a26c56890a9ff945d4436868c6e817a3c6ffc86936baad872f46f0dbc2e3cd2f",
+    "download_bytes": 30579
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189603/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:13.317234+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189603/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "dfa1be9cce581b702b68ed5237839ab94fc83ba9007fe3226bccc46815581bb8",
+    "download_bytes": 45753
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-foundation/relative-meta-logic/actions/runs/35698121310/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:14.100165+00:00",
+    "exit_code": 0,
+    "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "5467c3a8f966ae2fb42110988544f2adb097fde2a351cf82695647c8e61e9c72",
+    "download_bytes": 30611
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189936/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:13.546153+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189936/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "e699f8dbd416198941e3027daa43b920e6eeba46b032667b5f62a3645992ffd5",
+    "download_bytes": 748380
+  },
+  {
+    "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38073189674/attempts/1/logs",
+    "retrieved_at": "2026-10-10T20:11:13.524297+00:00",
+    "exit_code": 0,
+    "path": "link-assistant--formal-ai/runs/38073189674/attempt-1/logs.zip",
+    "gh_working_directory": "/Users/konard/Code/Archive/link-assistant/router",
+    "download_sha256": "f9a2626f44561caeac2a6e21bd35d723451cd4b8e74fa6df11301c83b1f1d28b",
+    "download_bytes": 4813534
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5db31d1bc11a497e132ba153b6602d038bc16c97/.github",
+    "start_line": 49,
+    "start_column": null,
+    "end_line": 49,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - ladder",
+    "message": "52% - 1300 hits, 1222 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5db31d1bc11a497e132ba153b6602d038bc16c97/.github",
+    "start_line": 70,
+    "start_column": null,
+    "end_line": 70,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5db31d1bc11a497e132ba153b6602d038bc16c97/.github",
+    "start_line": 69,
+    "start_column": null,
+    "end_line": 69,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "15 of 32 leaves passed; the record is 16 (data/meta/ladder-ratchet.lino). A leaf Formal AI could change no longer changes.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/5db31d1bc11a497e132ba153b6602d038bc16c97/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

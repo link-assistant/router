@@ -1,0 +1,65 @@
+[
+  {
+    "path": "text-objects/ad/ad1f21c5d7458e798f76dc7170ea4b8a27803d9d5272c0ddde55d226a05d3fd5.gz",
+    "artifact_member_name": "crate-build.log",
+    "scrubbed_content_sha256": "ad1f21c5d7458e798f76dc7170ea4b8a27803d9d5272c0ddde55d226a05d3fd5",
+    "sha256": "46eb597529a0eac8ae3d92535043a60abb669e83b21a2c0cc704795c441080b1",
+    "compressed_bytes": 123,
+    "original_bytes": 114,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/59/594e2b2c44c547830e3043dfbba689e01ae17dc3362432fbc6bb95c812620e00.gz",
+    "artifact_member_name": "crate-consumer.log",
+    "scrubbed_content_sha256": "594e2b2c44c547830e3043dfbba689e01ae17dc3362432fbc6bb95c812620e00",
+    "sha256": "477dae9302dd511ba812247593d1035218988d92d7d11e9021863dbbfa2d72f4",
+    "compressed_bytes": 170,
+    "original_bytes": 336,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/75/7579c28f0b6d946f6bd7585171d3c8c0a3fd8ead2558919b303ffc6dee8e8ddc.gz",
+    "artifact_member_name": "crate-fetch.log",
+    "scrubbed_content_sha256": "7579c28f0b6d946f6bd7585171d3c8c0a3fd8ead2558919b303ffc6dee8e8ddc",
+    "sha256": "4d484e6874ab48d1a2657f024502c1125e84a5da7f181b687c84b018ac8ad7d2",
+    "compressed_bytes": 1709,
+    "original_bytes": 7671,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/a8/a8608d3109b429e680315c81385969fe997c56f729cf42a33b082e2b45f1fbe8.gz",
+    "artifact_member_name": "crate-private-path.log",
+    "scrubbed_content_sha256": "a8608d3109b429e680315c81385969fe997c56f729cf42a33b082e2b45f1fbe8",
+    "sha256": "2726259b25aa456ffaca357688f10a5d045a2b03a7333877c247c44e2c5123c9",
+    "compressed_bytes": 433,
+    "original_bytes": 926,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/f3/f3676e2233e1a952ae7fe073a14fc1ac893f3b5e6935712fc47b48df9a06d43b.gz",
+    "artifact_member_name": "npm-consumer.log",
+    "scrubbed_content_sha256": "f3676e2233e1a952ae7fe073a14fc1ac893f3b5e6935712fc47b48df9a06d43b",
+    "sha256": "00eda52c76b15884279caf6c27cabbb99d22862862a55b976bf9e9f15bf2a25f",
+    "compressed_bytes": 207,
+    "original_bytes": 343,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/57/57580c45fd4d1dfc2945da279fbadcdb61fbe72a014136b4970a8b0f86ce2ba8.gz",
+    "artifact_member_name": "npm-install.log",
+    "scrubbed_content_sha256": "57580c45fd4d1dfc2945da279fbadcdb61fbe72a014136b4970a8b0f86ce2ba8",
+    "sha256": "b31eb59373225e837ff7360ed186368867119d74e2e7742531e9973000a704d8",
+    "compressed_bytes": 184,
+    "original_bytes": 255,
+    "redacted": false
+  },
+  {
+    "path": "text-objects/e9/e92068f6e6f4990963143c7d8fc3a1f980d5ba898da9540d885801ca223183c5.gz",
+    "artifact_member_name": "crate-tree.log",
+    "scrubbed_content_sha256": "e92068f6e6f4990963143c7d8fc3a1f980d5ba898da9540d885801ca223183c5",
+    "sha256": "b8a46ee128858a2e7b681f3633da13820bd318f38ff424009c65f5303a840496",
+    "compressed_bytes": 1366,
+    "original_bytes": 5519,
+    "redacted": false
+  }
+]

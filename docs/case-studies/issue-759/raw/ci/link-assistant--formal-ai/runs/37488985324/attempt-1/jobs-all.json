@@ -1,0 +1,113 @@
+[
+  {
+    "id": 112356385717,
+    "run_id": 37488985324,
+    "workflow_name": "Workflows",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985324",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaKPZjtQ",
+    "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356385717",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985324/job/112356385717",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T15:36:49Z",
+    "started_at": "2026-10-06T15:37:46Z",
+    "completed_at": "2026-10-06T15:38:14Z",
+    "name": "Actionlint",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-06T15:37:47Z",
+        "completed_at": "2026-10-06T15:37:47Z"
+      },
+      {
+        "name": "Pull rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-06T15:37:47Z",
+        "completed_at": "2026-10-06T15:37:51Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-06T15:37:51Z",
+        "completed_at": "2026-10-06T15:38:06Z"
+      },
+      {
+        "name": "Run rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-06T15:38:06Z",
+        "completed_at": "2026-10-06T15:38:10Z"
+      },
+      {
+        "name": "Prove the linter can still see inside a run block",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-06T15:38:10Z",
+        "completed_at": "2026-10-06T15:38:10Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-06T15:38:10Z",
+        "completed_at": "2026-10-06T15:38:10Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-06T15:38:10Z",
+        "completed_at": "2026-10-06T15:38:10Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356385717",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000145056,
+    "runner_name": "GitHub Actions 1000145056",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  {
+    "id": 112356386181,
+    "run_id": 37488985324,
+    "workflow_name": "Workflows",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985324",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaKPZlhQ",
+    "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356386181",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985324/job/112356386181",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T15:36:49Z",
+    "started_at": "2026-10-06T15:36:49Z",
+    "completed_at": "2026-10-06T15:37:56Z",
+    "name": "Zizmor",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356386181",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

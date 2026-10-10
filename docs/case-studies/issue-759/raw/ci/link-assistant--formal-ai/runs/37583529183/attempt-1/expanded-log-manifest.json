@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37583529183/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.gz",
+    "sha256": "1dc525cebd5d04bde5590e03f2eaa0ac6ba337c276079617c57b905f72bd2921",
+    "bytes": 12968,
+    "uncompressed_bytes": 53058,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f1fae6b89edc74db14a630a0b5d2f83c59dab62f69e0373f5f22909bf5edb157"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37583529183/attempt-1/logs/Binary-tree Agent CLI ladder/system.txt.gz",
+    "sha256": "a974ca4c2861f60c06a1466db1298eda50aef04e195f612db1487a42e3b79ffd",
+    "bytes": 401,
+    "uncompressed_bytes": 755,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "0bfdd0bd5920a9eb1aed8400128ab9415c2357ca86ec5c551d0bee7f97ae3012"
+  }
+]

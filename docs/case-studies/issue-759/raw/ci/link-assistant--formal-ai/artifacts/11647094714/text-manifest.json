@@ -1,0 +1,22 @@
+[
+  {
+    "path": "text-objects/3f/3f079342132523664e08869e9e84cf30aa701a66a99f5037ce42f594abdbe2ba.gz",
+    "artifact_member_name": "agent-out-8896.log",
+    "scrubbed_content_sha256": "3f079342132523664e08869e9e84cf30aa701a66a99f5037ce42f594abdbe2ba",
+    "sha256": "dbe8bc859058a823f325661bcbe57fe5b90adbac11c525d80b43a79421e73c81",
+    "compressed_bytes": 4713,
+    "original_bytes": 42718,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/db/dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f.gz",
+    "artifact_member_name": "formal-ai-serve-8896.log",
+    "scrubbed_content_sha256": "dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f",
+    "sha256": "bf3e7989eb049c254424f3f9e98af63df4d1276c68c0d63551cbbb2bdcf4ab8b",
+    "compressed_bytes": 45831,
+    "original_bytes": 169415,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

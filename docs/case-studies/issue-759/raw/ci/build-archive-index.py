@@ -22,6 +22,13 @@ for item in requested:
         item['log_members']=len(logs);item['compressed_log_bytes']=sum(x['bytes'] for x in logs)
         if missing:item['missing_log_members']=missing
     else:item['logs_status']='download_error' if (folder/'logs.zip.error.txt').exists() else ('extract_error' if (folder/'log-extract-error.txt').exists() else 'pending')
+    if logs is None and load(folder/'logs-not-downloaded.json') is not None:item['logs_status']='not_downloaded_evidence_disk_budget'
+    if logs is None and (folder/'logs.zip.error.txt').exists():
+        latest_error=(folder/'logs.zip.error.txt').read_text()
+        item['logs_status']='retryable_api_rate_limit' if 'rate limit exceeded' in latest_error else 'download_error'
+    extract_error=folder/'log-extract-error.txt'
+    if logs is None and extract_error.exists() and 'allocation exhausted' in extract_error.read_text():
+        item['logs_status']='partial_archive_evidence_disk_budget';item['partial_log_members']=len(list((folder/'logs').rglob('*.gz')))
     if run and run.get('conclusion') not in ['failure','cancelled','timed_out','action_required','startup_failure']:
         item['logs_status']='not_required_non_adverse_historical_attempt'
         item['jobs_status']='not_required_non_adverse_historical_attempt'

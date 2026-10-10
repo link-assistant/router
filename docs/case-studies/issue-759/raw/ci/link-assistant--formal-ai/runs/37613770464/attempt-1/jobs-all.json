@@ -1,0 +1,150 @@
+[
+  {
+    "id": 112767083534,
+    "run_id": 37613770464,
+    "workflow_name": "Issue 1028 Agent CLI binary-tree ladder",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37613770464",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaQXEkDg",
+    "head_sha": "bd4942ebf80935dba52370a0dbf2032e6f0b8a58",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112767083534",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37613770464/job/112767083534",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-07T11:23:38Z",
+    "started_at": "2026-10-07T11:28:56Z",
+    "completed_at": "2026-10-07T12:06:49Z",
+    "name": "Binary-tree Agent CLI ladder",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-07T11:28:57Z",
+        "completed_at": "2026-10-07T11:28:59Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-07T11:28:59Z",
+        "completed_at": "2026-10-07T11:29:12Z"
+      },
+      {
+        "name": "Skip when identical inputs already passed",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-07T11:29:12Z",
+        "completed_at": "2026-10-07T11:29:13Z"
+      },
+      {
+        "name": "Setup Bun",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-07T11:29:13Z",
+        "completed_at": "2026-10-07T11:29:14Z"
+      },
+      {
+        "name": "Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-07T11:29:14Z",
+        "completed_at": "2026-10-07T11:31:46Z"
+      },
+      {
+        "name": "Install pinned Agent CLI",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-07T11:31:46Z",
+        "completed_at": "2026-10-07T11:31:48Z"
+      },
+      {
+        "name": "Run recursive Agent CLI tree",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "number": 7,
+        "started_at": "2026-10-07T11:31:48Z",
+        "completed_at": "2026-10-07T12:06:45Z"
+      },
+      {
+        "name": "Compare the measured ladder with the record",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 8,
+        "started_at": "2026-10-07T12:06:45Z",
+        "completed_at": "2026-10-07T12:06:45Z"
+      },
+      {
+        "name": "Show the Agent CLI evidence on failure",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 9,
+        "started_at": "2026-10-07T12:06:45Z",
+        "completed_at": "2026-10-07T12:06:45Z"
+      },
+      {
+        "name": "Upload tree evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-07T12:06:45Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17,
+        "started_at": "2026-10-07T12:06:47Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      },
+      {
+        "name": "Post Setup Bun",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 18,
+        "started_at": "2026-10-07T12:06:47Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      },
+      {
+        "name": "Post Skip when identical inputs already passed",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19,
+        "started_at": "2026-10-07T12:06:47Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 20,
+        "started_at": "2026-10-07T12:06:47Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 21,
+        "started_at": "2026-10-07T12:06:47Z",
+        "completed_at": "2026-10-07T12:06:47Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112767083534",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000148435,
+    "runner_name": "GitHub Actions 1000148435",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

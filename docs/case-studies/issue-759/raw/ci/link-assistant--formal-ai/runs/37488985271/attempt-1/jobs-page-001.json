@@ -1,0 +1,113 @@
+{
+  "total_count": 4,
+  "jobs": [
+    {
+      "id": 112356384988,
+      "run_id": 37488985271,
+      "workflow_name": "Layered CI",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985271",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaKPZg3A",
+      "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356384988",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985271/job/112356384988",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T15:36:49Z",
+      "started_at": "2026-10-06T15:36:49Z",
+      "completed_at": "2026-10-06T15:37:56Z",
+      "name": "Detect tier changes",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356384988",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 112356930079,
+      "run_id": 37488985271,
+      "workflow_name": "Layered CI",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985271",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaKP6yHw",
+      "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356930079",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985271/job/112356930079",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-06T15:37:57Z",
+      "started_at": "2026-10-06T15:37:57Z",
+      "completed_at": "2026-10-06T15:37:56Z",
+      "name": "js tier (node --check over js)",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356930079",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 112356930448,
+      "run_id": 37488985271,
+      "workflow_name": "Layered CI",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985271",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaKP6zkA",
+      "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356930448",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985271/job/112356930448",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-06T15:37:57Z",
+      "started_at": "2026-10-06T15:37:57Z",
+      "completed_at": "2026-10-06T15:37:57Z",
+      "name": "ts tier (js<->ts file-set parity)",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356930448",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    },
+    {
+      "id": 112356933268,
+      "run_id": 37488985271,
+      "workflow_name": "Layered CI",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37488985271",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaKP6-lA",
+      "head_sha": "af03b55fa0d5707978e28a38931f010adfa4da57",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356933268",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37488985271/job/112356933268",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-06T15:37:57Z",
+      "started_at": "2026-10-06T15:37:57Z",
+      "completed_at": "2026-10-06T15:37:57Z",
+      "name": "rust tier (dogfood regeneration gate)",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356933268",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}

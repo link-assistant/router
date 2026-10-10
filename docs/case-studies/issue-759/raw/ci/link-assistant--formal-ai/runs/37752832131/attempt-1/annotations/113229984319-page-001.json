@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/c8863190eb0f10cd00721c709d44f4ace7ce050b/.github",
+    "start_line": 50,
+    "start_column": null,
+    "end_line": 50,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - task-ladder",
+    "message": "55% - 554 hits, 457 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/c8863190eb0f10cd00721c709d44f4ace7ce050b/.github",
+    "start_line": 1097,
+    "start_column": null,
+    "end_line": 1097,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/c8863190eb0f10cd00721c709d44f4ace7ce050b/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

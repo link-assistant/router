@@ -1,0 +1,121 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112447395730,
+      "run_id": 37515543064,
+      "workflow_name": "Benchmark Corpus Gate",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37515543064",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaLmMXkg",
+      "head_sha": "d46713f6427d1b9f6e814efd8b56e2175314012a",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112447395730",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37515543064/job/112447395730",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T18:59:27Z",
+      "started_at": "2026-10-06T18:59:31Z",
+      "completed_at": "2026-10-06T19:09:49Z",
+      "name": "no benchmark prompt reaches the unknown opener",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T18:59:32Z",
+          "completed_at": "2026-10-06T18:59:33Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T18:59:33Z",
+          "completed_at": "2026-10-06T18:59:48Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T18:59:48Z",
+          "completed_at": "2026-10-06T18:59:57Z"
+        },
+        {
+          "name": "Run ./.github/actions/setup-sccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T18:59:57Z",
+          "completed_at": "2026-10-06T18:59:59Z"
+        },
+        {
+          "name": "Run ./.github/actions/cache-cargo-registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-06T18:59:59Z",
+          "completed_at": "2026-10-06T19:00:11Z"
+        },
+        {
+          "name": "Build the corpus gate binary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-06T19:00:11Z",
+          "completed_at": "2026-10-06T19:05:39Z"
+        },
+        {
+          "name": "Run the benchmark corpus gate",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 7,
+          "started_at": "2026-10-06T19:05:39Z",
+          "completed_at": "2026-10-06T19:09:45Z"
+        },
+        {
+          "name": "Post Run ./.github/actions/cache-cargo-registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-06T19:09:45Z",
+          "completed_at": "2026-10-06T19:09:45Z"
+        },
+        {
+          "name": "Post Run ./.github/actions/setup-sccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-06T19:09:45Z",
+          "completed_at": "2026-10-06T19:09:45Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-06T19:09:45Z",
+          "completed_at": "2026-10-06T19:09:45Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-06T19:09:45Z",
+          "completed_at": "2026-10-06T19:09:45Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112447395730",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000145423,
+      "runner_name": "GitHub Actions 1000145423",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

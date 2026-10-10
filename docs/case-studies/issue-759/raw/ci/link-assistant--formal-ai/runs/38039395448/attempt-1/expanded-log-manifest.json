@@ -1,0 +1,39 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/38039395448/attempt-1/logs/0_Compare the measured ladder with the record.txt.xz",
+    "sha256": "92f76b57cc53e707474e45de76775ebdabbc7740d426ff7a2b5a559928c99824",
+    "bytes": 234140,
+    "uncompressed_bytes": 18304802,
+    "redacted": false,
+    "compression": "xz",
+    "decoded_sha256": "92a477c55f5537c220ab7f0363c0281639e3eb2024ec18aff801442ee89ded8c",
+    "xz_compression_elapsed_seconds": 3.2016527079977095
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38039395448/attempt-1/logs/Compare the measured ladder with the record/system.txt.gz",
+    "sha256": "911766ac424510089ecc2c5a0075fbd9bf8a290f9fa1ade08628614948e83d25",
+    "bytes": 460,
+    "uncompressed_bytes": 880,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "bcc9b6780d2e24bca0fb7a0f9ee073e5aa5239c42b2777474da43291bc179566"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38039395448/attempt-1/logs/4_Plan the Agent CLI ladder.txt.gz",
+    "sha256": "c2579fb65ab9dfd416450be53e2f298dd90f476e4d6847e015b76eeeecf21580",
+    "bytes": 26223,
+    "uncompressed_bytes": 114754,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "4df4ff85b0673cd457aa7af00086145a4b591dfc49badb73f6df75924a52a6fd"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38039395448/attempt-1/logs/Plan the Agent CLI ladder/system.txt.gz",
+    "sha256": "2960f841b274ef088b815a5b21a12f734a5dbabaae21ceabb648f5452084ba5a",
+    "bytes": 316,
+    "uncompressed_bytes": 598,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "4ff0013f7850c78f70c79e72448b92541f56cc3b9d3687d81f68e1d9973e0c63"
+  }
+]

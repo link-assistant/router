@@ -19,7 +19,7 @@ The issue's CI table is a contemporaneous partial view, not a complete branch-li
 
 ### Gaps
 - Git pushes are not reconstructible exactly from unique CI head SHAs or commit counts. One push can introduce several commits, one revision can be retriggered, and a push can trigger no retained workflow.
-- Run `updated_at` supplies a final-update timestamp; it is not a billing measurement. Billable CI minutes, complete success-job execution minutes and runner-rate multipliers have not been recovered. Jobs for every adverse/historical attempt are being collected separately.
+- Run `updated_at` supplies a final-update timestamp; it is not a billing measurement. Billable CI minutes, complete success-job execution minutes and runner-rate multipliers have not been recovered. All 1,735 requested adverse/historical attempt job inventories are archived separately.
 - Retained API runs are available history, not proof that deleted runs never existed. The collection records the exact source responses and retrieval errors.
 
 ## Which causes are demonstrated by failure evidence?
@@ -39,8 +39,8 @@ Router's red runs include coverage policy, a missing release fragment, external 
 - High cancellation counts quantify adverse workflow outcomes; they do not by themselves establish cancellation initiated by concurrency versus manual intervention. Causal cancellation attribution requires workflow configuration and matching log/event evidence. — [run API fields](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository).
 
 ### Gaps
-- A durable backlog records every requested adverse/historical attempt. Detailed formal-ai and relative-meta-logic failure classification remains in progress; missing or unavailable logs must be read from the completion ledger instead of silently inferred.
-- Full logs are stored once per run attempt as scrubbed gzip members. Report artifacts are selected by failure relevance; native binaries and unrelated successful-run artifacts have metadata and explicit selection reasons, not a claim that all artifact bytes were downloaded.
+- The final durable ledger accounts for all 1,735 requested adverse/historical attempts: 1,724 complete run-log archives and 11 HTTP404 responses, with all 1,735 job inventories collected. The 11 unavailable run archives each have zero jobs and zero check runs; expiry is not established. Six failed jobs within formal-ai run37652296393 never started because runners repeatedly failed to acquire them, as their archived check-run annotations establish. Detailed failure classification is retained in `failure-analysis.json`.
+- Full logs are stored once per run attempt as scrubbed gzip or verified XZ members. The artifact inventory contains 5,691 relevant records and 616 completed selected text bundles / 4,181 member references, including all 165 selected formal-ai text bundles. Native binaries, Docker build records, raw coverage objects/profiles and unrelated successful-run artifacts retain metadata with explicit selection reasons; this is not a claim that all artifact bytes were downloaded. `collection-final-summary.json`, `archive-completeness-ledger.json.gz` and `archive-integrity.json` provide the delivery counts and verification receipts.
 
 ## What does the host incident establish about resource use?
 

@@ -1,0 +1,12 @@
+[
+  {
+    "path": "text-objects/51/51ab4deb53b73b0b9d84661e92440745ca94fcdf9a2056b44e203347e2b3bb3c.gz",
+    "artifact_member_name": "summarization-ratchet.log",
+    "scrubbed_content_sha256": "51ab4deb53b73b0b9d84661e92440745ca94fcdf9a2056b44e203347e2b3bb3c",
+    "sha256": "910971630df598596b100ac5036e763d28a175e9d5871e61870b328cede50672",
+    "compressed_bytes": 1000,
+    "original_bytes": 2734,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

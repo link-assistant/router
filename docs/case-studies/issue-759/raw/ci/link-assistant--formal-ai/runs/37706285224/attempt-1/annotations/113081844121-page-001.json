@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6367ac8f15348ad201c11be293c73a1703657825/.github",
+    "start_line": 46,
+    "start_column": null,
+    "end_line": 46,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - cli",
+    "message": "45% - 449 hits, 550 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6367ac8f15348ad201c11be293c73a1703657825/.github",
+    "start_line": 1013,
+    "start_column": null,
+    "end_line": 1013,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/6367ac8f15348ad201c11be293c73a1703657825/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+    "raw_details": ""
+  }
+]

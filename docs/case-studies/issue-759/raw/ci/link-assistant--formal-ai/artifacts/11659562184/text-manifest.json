@@ -1,0 +1,24 @@
+[
+  {
+    "path": "text-objects/ea/ea2d966f09ca0e2f721c78e8315601325dd796bf7ce76d91ebaaf133ff6ff06d.gz",
+    "artifact_member_name": "agent-out-8896.log",
+    "scrubbed_content_sha256": "ea2d966f09ca0e2f721c78e8315601325dd796bf7ce76d91ebaaf133ff6ff06d",
+    "sha256": "4bf60e939a867f7c530fdfac6565d1cf9d7f76accdcea744e1a51f7df948fa64",
+    "compressed_bytes": 5917,
+    "original_bytes": 57586,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/2d/2dba77f9f07f47452d5eae3a03be0993ec5241606c19ddb699062d6205688286.xz",
+    "artifact_member_name": "formal-ai-serve-8896.log",
+    "scrubbed_content_sha256": "2dba77f9f07f47452d5eae3a03be0993ec5241606c19ddb699062d6205688286",
+    "sha256": "4372175419beb3642bd2d11bde173157ac07c704de6dbae19e24de565ce87652",
+    "compressed_bytes": 16016,
+    "original_bytes": 228712,
+    "redacted": false,
+    "compression": "xz",
+    "prior_gzip_storage_path": "text-objects/2d/2dba77f9f07f47452d5eae3a03be0993ec5241606c19ddb699062d6205688286.gz",
+    "prior_gzip_storage_sha256": "9549126a5b5fdfc15faedee405a8807320f6d5990faa0d55db5402634d93dca8"
+  }
+]

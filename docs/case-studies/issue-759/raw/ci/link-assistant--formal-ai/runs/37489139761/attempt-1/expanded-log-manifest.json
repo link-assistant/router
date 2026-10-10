@@ -1,0 +1,170 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/1_Build windows-arm64.txt.gz",
+    "sha256": "1a80cbd3eb323fc8037ccffe366cdfed590ccc0b8518df75150cd500011dbe89",
+    "bytes": 44277,
+    "uncompressed_bytes": 226997,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build windows-arm64/system.txt.gz",
+    "sha256": "45351a699b2b456fc6f2b385c540b91e9cbb199945a0c63a257c86b1469c7d3f",
+    "bytes": 409,
+    "uncompressed_bytes": 830,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/2_Build linux-arm64.txt.gz",
+    "sha256": "d24fd6485737dca986f81ac7cd962072ca39723ca3627dc351821ad0cdb2cdb2",
+    "bytes": 44597,
+    "uncompressed_bytes": 228665,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build linux-arm64/system.txt.gz",
+    "sha256": "7a90074dc513bd44b3825a6f4dae9bb8820dd5a0d6053ce3a1f6b57317a61218",
+    "bytes": 489,
+    "uncompressed_bytes": 990,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/3_Build linux-x64.txt.gz",
+    "sha256": "6b1d57c785b1c0bd40a29c5aae338f3ecca42aee159a9a5363f81e33f921953f",
+    "bytes": 44647,
+    "uncompressed_bytes": 229033,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build linux-x64/system.txt.gz",
+    "sha256": "dd3538fbcd8a2d1e5b4df90e9af6b699bfee799b3d03b83e7f5c9dedf0b1122b",
+    "bytes": 486,
+    "uncompressed_bytes": 984,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/4_Build macos-arm64.txt.gz",
+    "sha256": "3d6a4607749ea45bcbf6f45aa2dba265b8e4dfb5dbd6efad50ff556b5e249e1e",
+    "bytes": 43012,
+    "uncompressed_bytes": 229418,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build macos-arm64/system.txt.gz",
+    "sha256": "98d9b1526f9ef55841cab4f462fa3bc6d3db6f1291aeed7fe5b4c1041eddbb0c",
+    "bytes": 485,
+    "uncompressed_bytes": 974,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/5_Build windows-x64.txt.gz",
+    "sha256": "f35ad2287fcb1ac6663ba08bc5ddc2959cee466eede17530056d0cf31ab67a0f",
+    "bytes": 43604,
+    "uncompressed_bytes": 224010,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build windows-x64/system.txt.gz",
+    "sha256": "905d81ea0a817729f60f9b22b1cea4f76172f362d6764535283a02949fa3f575",
+    "bytes": 408,
+    "uncompressed_bytes": 830,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/6_Build macos-x64.txt.gz",
+    "sha256": "d66271d0bfb6ce051c27085f4e30ee3559a9ecb1532f414054efefb0450a61e9",
+    "bytes": 45592,
+    "uncompressed_bytes": 232389,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build macos-x64/system.txt.gz",
+    "sha256": "e6748a502f7e77062ceef81acac6ec5c7d56bd0d24fe89d1597764354b6e3120",
+    "bytes": 403,
+    "uncompressed_bytes": 830,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/7_Build CLI cli-macos-arm64.txt.gz",
+    "sha256": "e8f09678cc568ec0294f18c2ac42c4b6d971d8be929a3e703f67ea745ce0be6e",
+    "bytes": 42219,
+    "uncompressed_bytes": 225641,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build CLI cli-macos-arm64/system.txt.gz",
+    "sha256": "eb2fb43b9b053edc860e81e6f821fbfb0b5ee17b7105d594a318aeafcd2dc47b",
+    "bytes": 488,
+    "uncompressed_bytes": 972,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/8_Build CLI cli-linux-x64.txt.gz",
+    "sha256": "989e3620c767eceae661f3ad00e759e4a063b90007e00aa92f2f954b57fb0a98",
+    "bytes": 45433,
+    "uncompressed_bytes": 236633,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build CLI cli-linux-x64/system.txt.gz",
+    "sha256": "dc155ebe4f5a6c84a184ae4ad6eec609ab5334db33d467ff0778dda7ebf0ab69",
+    "bytes": 487,
+    "uncompressed_bytes": 982,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/9_Build CLI cli-macos-x64.txt.gz",
+    "sha256": "2e0422a0219170f10a1bc41fcc88e54ad388d76a63b3ba555ca7f8c25eb14024",
+    "bytes": 43636,
+    "uncompressed_bytes": 229222,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build CLI cli-macos-x64/system.txt.gz",
+    "sha256": "91ceb47c8fcf00f3f962c470e65a3ab52e46a395165592edf91acfe7a6a35745",
+    "bytes": 410,
+    "uncompressed_bytes": 828,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/10_Build CLI cli-windows-x64.txt.gz",
+    "sha256": "fef563bd75224be02371c4e8d953c51c7a233df836a992b6164ec05eda6a20c3",
+    "bytes": 42920,
+    "uncompressed_bytes": 221862,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build CLI cli-windows-x64/system.txt.gz",
+    "sha256": "828c6ba34b3b23ff642e780d11aab409233a9beb97652263822a23ab426eb0b3",
+    "bytes": 404,
+    "uncompressed_bytes": 828,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/11_Build CLI cli-linux-arm64.txt.gz",
+    "sha256": "5d3c4dac439147b8413ed616cc3dba30fc89da2ccedd08df4c4255fee8873cf4",
+    "bytes": 45539,
+    "uncompressed_bytes": 236155,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Build CLI cli-linux-arm64/system.txt.gz",
+    "sha256": "dbd0dd4e68ef06b0bd40bf49cea56819c7f8739a23ca0b634dd9daf789a21afc",
+    "bytes": 488,
+    "uncompressed_bytes": 988,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/12_Package VS Code extension (.vsix).txt.gz",
+    "sha256": "f5bde60d3e10c215f301d86beec203579884fdd6ac81aa05e3c9c97c5591102e",
+    "bytes": 24260,
+    "uncompressed_bytes": 130319,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139761/attempt-1/logs/Package VS Code extension (.vsix)/system.txt.gz",
+    "sha256": "e9280823dfd825bb00fb29e77873f91d79fe44204b20471a0626fdd02be1f63c",
+    "bytes": 487,
+    "uncompressed_bytes": 985,
+    "redacted": false
+  }
+]

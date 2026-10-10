@@ -1,0 +1,32 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112316982926,
+      "run_id": 37477594020,
+      "workflow_name": "Summarization Ratchet",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37477594020",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJp0mjg",
+      "head_sha": "922710934be9662872a157a25e46e5de8e1ef5b7",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112316982926",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37477594020/job/112316982926",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T14:16:35Z",
+      "started_at": "2026-10-06T14:16:35Z",
+      "completed_at": "2026-10-06T14:18:51Z",
+      "name": "Summarization quality ratchet (issue #893)",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112316982926",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    }
+  ]
+}

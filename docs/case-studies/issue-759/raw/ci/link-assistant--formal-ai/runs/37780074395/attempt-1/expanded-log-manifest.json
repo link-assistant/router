@@ -1,0 +1,56 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/1_CodeQL (rust).txt.gz",
+    "sha256": "4ac0974f9bea55b8f0bea5d205213a3a838e3ba83e56a487f2792e1f58565659",
+    "bytes": 32904,
+    "uncompressed_bytes": 290257,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "1a75fe7d7eff2863b7841a659f1e8e034d665240ab5879295c18284c37c7b3dc"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/CodeQL (rust)/system.txt.gz",
+    "sha256": "ed6f03664b5eeaa9d06b832f70d19294178ab203bd2e512f24a64b3ae14659e1",
+    "bytes": 393,
+    "uncompressed_bytes": 740,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "6710c4985e714cb3c07881923129bb1681f6eab1ea4be169be0d1e617641a0f2"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/2_CodeQL (actions).txt.gz",
+    "sha256": "f7c3dffeb66d44c60d34f3b6ebc93ca47d3289d91cb5d858e8f94be92807ff0f",
+    "bytes": 26619,
+    "uncompressed_bytes": 161336,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "3aab97aacd0c23259d3527c8e8b3a8762652901f58ec1f5a514dadee70f148b5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/CodeQL (actions)/system.txt.gz",
+    "sha256": "78f80dd806568d6d731a7a983e99cdf569fa2443d5b76b7872878254af9e9b7b",
+    "bytes": 393,
+    "uncompressed_bytes": 740,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "50d0fb35845ded0094627644be9dc7d71c23791629a3a393e8f5d0caf134f058"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/3_Dependency Review.txt.gz",
+    "sha256": "df543815d492e87feb792ebbe6beafab2e53dda699023ef53da1a38d954bb8d3",
+    "bytes": 9646,
+    "uncompressed_bytes": 45844,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "0e85b326fa6f833d77a13995590676461162afb796a34220d09566f6717f31bc"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37780074395/attempt-1/logs/Dependency Review/system.txt.gz",
+    "sha256": "c2869691f83ad980ad53d344fc0a09681496605dcf9d06e2d2119feab2f60cb4",
+    "bytes": 445,
+    "uncompressed_bytes": 880,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "341b2f8f09fdcb910df3868efd6cb0a14ae54766ff21cc1496871e2d50240f13"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/0_Cargo audit.txt.gz",
+    "sha256": "9560c135bd2636c77b167d082ac85705be2448a75762fdc1f9fbb138e51da183",
+    "bytes": 9460,
+    "uncompressed_bytes": 40693,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/Cargo audit/system.txt.gz",
+    "sha256": "deeaa0e08a8c10e3702b149b903cd0c14e51e732c2d977772efc866c09338f3a",
+    "bytes": 388,
+    "uncompressed_bytes": 745,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/1_CodeQL (actions).txt.gz",
+    "sha256": "14a4d02bdb8aa273a118b7581c0170ccb0430c55a875f67755a3492ce21c5172",
+    "bytes": 26493,
+    "uncompressed_bytes": 161363,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/CodeQL (actions)/system.txt.gz",
+    "sha256": "0455f43bae2368b7f6d8c9ef4aac5cb2b932df93776c1a0700b789bfc2018be7",
+    "bytes": 320,
+    "uncompressed_bytes": 553,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/2_CodeQL (rust).txt.gz",
+    "sha256": "3b4f9cc32896a3a904e68472e435201b459a2cf63cee67ba91215c4026f83d23",
+    "bytes": 30677,
+    "uncompressed_bytes": 245062,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/CodeQL (rust)/system.txt.gz",
+    "sha256": "44dbe998824a0062926cba035ffef35e42a33af6f0745a7a0dffbcb68aa4fa57",
+    "bytes": 394,
+    "uncompressed_bytes": 740,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/3_Dependency Review.txt.gz",
+    "sha256": "4c15e0e9cbdbbe5780fc6596275043586bf21e7bc1e9845ad8f16011a4891cb6",
+    "bytes": 9835,
+    "uncompressed_bytes": 48149,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914270/attempt-1/logs/Dependency Review/system.txt.gz",
+    "sha256": "c8ce670ad993cd08d25d79e141486e095dcda7bc65e14fe01de676ac97f6d0f8",
+    "bytes": 444,
+    "uncompressed_bytes": 880,
+    "redacted": false
+  }
+]
