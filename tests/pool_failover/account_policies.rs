@@ -168,12 +168,10 @@ async fn explicit_account_retry_limit_bounds_additional_global_rounds() {
 
 #[tokio::test]
 async fn an_initial_policy_cooldown_wait_consumes_the_retry_round() {
-    use tracing_subscriber::prelude::*;
     let now = link_assistant_router::account_limits::now_unix();
-    let clock = Arc::new(AtomicU64::new(now));
     let pool = Pool::start(Options {
         cooldown: Duration::from_secs(1),
-        clock: Some(clock),
+        clock: Some(Clock::Advancing(now)),
         retry: link_assistant_router::pool_retry::RetryPolicy {
             rounds: 1,
             max_credentials: 1,
@@ -182,52 +180,22 @@ async fn an_initial_policy_cooldown_wait_consumes_the_retry_round() {
         ..options()
     })
     .await;
-    let context = cool_at(&pool, now);
+    cool_at(&pool, now);
     pool.vendor.always("primary", Reply::status(503));
-    let waiting = Arc::new(tokio::sync::Notify::new());
-    let subscriber = tracing_subscriber::registry().with(RetryWaitStarted(waiting.clone()));
-    let _subscriber = tracing::subscriber::set_default(subscriber);
-    let body = turn("gpt-5");
-    let request = pool.send_codex(&body);
-    tokio::pin!(request);
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
-    tokio::time::timeout_at(deadline, async {
-        tokio::select! {
-            () = waiting.notified() => {},
-            response = &mut request => panic!("request skipped its initial cooldown wait: {response:?}"),
-        }
-    })
-    .await
-    .unwrap();
-    assert!(pool.vendor.accounts_seen().is_empty());
-    // Freeze Unix time until selection has consumed the retry round. Release
-    // the cooldown explicitly, so crossing a wall-clock second cannot skip it.
-    assert_eq!(
-        context.scope(|| pool.router.reset_cooldowns(None, Some("gpt-5")).unwrap()),
-        ACCOUNTS.len()
-    );
-    let (status, output) = tokio::time::timeout_at(deadline, request).await.unwrap();
+    let started = tokio::time::Instant::now();
+    let (status, output) =
+        tokio::time::timeout(Duration::from_secs(5), pool.send_codex(&turn("gpt-5")))
+            .await
+            .unwrap();
     assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE, "{output}");
-    assert_eq!(pool.vendor.accounts_seen(), ["primary"]);
+    assert_eq!(pool.vendor.accounts_seen(), ["primary"], "{output}");
+    assert!(
+        started.elapsed() >= Duration::from_secs(1),
+        "request skipped its initial cooldown wait: {output}"
+    );
 }
 
-struct RetryWaitStarted(Arc<tokio::sync::Notify>);
-
-impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for RetryWaitStarted {
-    fn on_event(
-        &self,
-        event: &tracing::Event<'_>,
-        _context: tracing_subscriber::layer::Context<'_, S>,
-    ) {
-        if event.metadata().target() == "link_assistant_router::pool_retry"
-            && event.metadata().fields().field("wait_ms").is_some()
-        {
-            self.0.notify_one();
-        }
-    }
-}
-
-fn cool_at(pool: &Pool, now: u64) -> link_assistant_router::operation_context::OperationContext {
+fn cool_at(pool: &Pool, now: u64) {
     let mut context = link_assistant_router::operation_context::OperationContext::default();
     context.now = chrono::DateTime::from_timestamp(now.try_into().unwrap(), 0);
     context.scope(|| {
@@ -243,7 +211,6 @@ fn cool_at(pool: &Pool, now: u64) -> link_assistant_router::operation_context::O
                 });
         }
     });
-    context
 }
 
 #[tokio::test]
@@ -252,7 +219,7 @@ async fn an_expired_initial_policy_cooldown_leaves_the_retry_round_available() {
     let clock = Arc::new(AtomicU64::new(now));
     let pool = Pool::start(Options {
         cooldown: Duration::from_secs(1),
-        clock: Some(clock.clone()),
+        clock: Some(Clock::Frozen(clock.clone())),
         retry: link_assistant_router::pool_retry::RetryPolicy {
             rounds: 1,
             max_credentials: 1,

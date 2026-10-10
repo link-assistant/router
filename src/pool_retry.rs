@@ -78,14 +78,28 @@ impl RetryBudget {
         deadline: Instant,
     ) -> bool {
         if self.round >= self.policy.rounds.min(16) {
+            tracing::debug!(
+                round = self.round,
+                rounds = self.policy.rounds,
+                "account retry rounds are exhausted"
+            );
             return false;
         }
         let Some(delay) = router.and_then(|router| router.retry_delay(context)) else {
+            tracing::debug!("no account has an eligible retry recovery");
             return false;
         };
         if delay > self.policy.max_interval
             || deadline.saturating_duration_since(Instant::now()) <= delay
         {
+            tracing::debug!(
+                delay_ms = delay.as_millis(),
+                max_interval_ms = self.policy.max_interval.as_millis(),
+                remaining_ms = deadline
+                    .saturating_duration_since(Instant::now())
+                    .as_millis(),
+                "account retry wait exceeds its time bounds"
+            );
             return false;
         }
         tracing::debug!(

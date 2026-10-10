@@ -380,10 +380,17 @@ impl Drop for Pool {
     }
 }
 
+/// A fixed clock for boundary tests, or one advanced by request elapsed time.
+#[derive(Clone)]
+enum Clock {
+    Frozen(Arc<AtomicU64>),
+    Advancing(u64),
+}
+
 struct Options {
     failover: bool,
     cooldown: Duration,
-    clock: Option<Arc<AtomicU64>>,
+    clock: Option<Clock>,
     pause_at_percent: Option<u8>,
     /// Pool Codex accounts behind the native Responses route instead of
     /// Claude accounts behind the Anthropic pass-through.
@@ -658,11 +665,33 @@ impl Pool {
                 move |request: Request, next: axum::middleware::Next| {
                     let mut context =
                         link_assistant_router::operation_context::OperationContext::default();
-                    context.now = chrono::DateTime::from_timestamp(
-                        clock.load(Ordering::Relaxed).try_into().unwrap(),
-                        0,
-                    );
-                    async move { context.scope_async(next.run(request)).await }
+                    let (initial, advance_clock) = match &clock {
+                        Clock::Frozen(clock) => (clock.load(Ordering::Relaxed), false),
+                        Clock::Advancing(now) => (*now, true),
+                    };
+                    let started = tokio::time::Instant::now();
+                    async move {
+                        let mut response = std::pin::pin!(next.run(request));
+                        // Start every request at the injected timestamp, then
+                        // advance its scoped clock as Tokio's retry sleep runs.
+                        // Cooldown expiry must not depend on the delivery of
+                        // tracing events during concurrent tests.
+                        std::future::poll_fn(|cx| {
+                            context.now = chrono::DateTime::from_timestamp(
+                                initial
+                                    .saturating_add(if advance_clock {
+                                        started.elapsed().as_secs()
+                                    } else {
+                                        0
+                                    })
+                                    .try_into()
+                                    .unwrap(),
+                                0,
+                            );
+                            context.scope(|| response.as_mut().poll(cx))
+                        })
+                        .await
+                    }
                 },
             ))
         } else {

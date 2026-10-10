@@ -115,7 +115,7 @@ async fn a_session_returns_to_its_account_after_the_cooldown() {
     ));
     let pool = Pool::start(Options {
         cooldown: Duration::from_secs(1),
-        clock: Some(clock.clone()),
+        clock: Some(Clock::Frozen(clock.clone())),
         ..Options::default()
     })
     .await;
