@@ -12,6 +12,8 @@ export interface NativeRouterOptions {
   clock?: () => number;
   /** HTTP runtime clock in milliseconds. */
   serverClock?: () => number;
+  responseStore?: ResponsesStore;
+  responseStoreOptions?: { ttlMs?: number; maxRecords?: number; maxBytes?: number; maxRecordBytes?: number };
 }
 export class NativeRouterError extends Error {
   constructor(message: string, options?: { code?: string; result?: Result | null; cause?: unknown });
@@ -56,7 +58,7 @@ export interface NativeTokenManager {
   expire(id: string): Promise<TokenRecord>;
   rotate(id: string, options?: NativeTokenOptions): Promise<{ token: string; id: string; record: TokenRecord }>;
   admit(id: string, reserve?: number): Promise<string>;
-  settle(id: string, reserved?: number, used?: number): Promise<void>;
+  settle(id: string, reserved: number, used: number): Promise<void>;
 }
 export class RouterCore {
   constructor(options: NativeRouterOptions & { config: Record<string, unknown> });
@@ -83,3 +85,16 @@ export const nativeOperationSupport: Readonly<Record<string, 'implemented' | 'pa
 export function validateNativeResult(name: string, result: unknown): Result;
 export function operationResult(name: string, data: unknown, diagnostics?: string[], exitCode?: number): Result;
 export { catalog, version, operationNames } from './index.js';
+
+/** Bounded process-retained foreground Responses resources, isolated by owner and namespace. */
+export class ResponsesStore {
+  constructor(options?: { clock?: () => number; ttlMs?: number; maxRecords?: number; maxBytes?: number; maxRecordBytes?: number });
+  save(namespace: string, owner: string, response: Record<string, unknown>, input: unknown[], options?: { abort?: () => void; update?: boolean }): Record<string, unknown>;
+  get(namespace: string, owner: string, id: string): Record<string, unknown>;
+  delete(namespace: string, owner: string, id: string): { id: string; object: string; deleted: boolean };
+  cancel(namespace: string, owner: string, id: string): Record<string, unknown>;
+  inputItems(namespace: string, owner: string, id: string, query?: URLSearchParams): Record<string, unknown>;
+  close(): void;
+}
+export function responseOwner(claims: Record<string, unknown>, credential?: string): string;
+export function normalizeResponseInput(body: { input: string | unknown[] }): Array<Record<string, unknown>>;

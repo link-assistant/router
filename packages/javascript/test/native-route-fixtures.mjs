@@ -2,9 +2,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRouterCore } from '../native/core.mjs';
+import { ResponsesStore, responseOwner, normalizeResponseInput } from '../native/responses.mjs';
 import { createNativeRouter } from '../native/server.mjs';
 const methods = new Set(['get','post','put','patch','delete','options','head','trace']);
 export const nativeRouteSubset = Object.freeze(new Set([
+  'POST /api/services/openai/v1/responses', 'GET /api/services/openai/v1/responses/{response_id}',
+  'DELETE /api/services/openai/v1/responses/{response_id}', 'POST /api/services/openai/v1/responses/{response_id}/cancel',
+  'GET /api/services/openai/v1/responses/{response_id}/input_items',
   'GET /api/health', 'GET /api/models', 'GET /api/management/accounts',
   'POST /api/management/accounts/{name}/pause', 'POST /api/management/accounts/{name}/resume',
   'GET /api/management/accounts/{name}/policy', 'POST /api/management/accounts/{name}/policy',
@@ -31,9 +35,18 @@ export async function runParityFixtures() {
       admin_token: 'native-route-admin', providers: [{ name: 'fixture', kind: 'openai-compatible', base_url: 'https://fixture.invalid/v1', models: ['fixture-model'] }],
       accounts: [{ name: 'fixture', provider: 'fixture' }] }, env: {} });
     const issued = await core.tokens.issue({ label: 'route-fixture' });
-    const runtime = createNativeRouter({ core, fetch() { assert.fail('Unimplemented routes must never reach upstream'); } });
+    const responseStore = new ResponsesStore(); let cancelled = false;
+    if (template.includes('{response_id}') && template.startsWith('/api/services/openai/')) {
+      responseStore.save('/api/services/openai/v1', responseOwner({ admin: true }, 'native-route-admin'),
+        { id: 'fixture', object: 'response', model: 'fixture-model', status: template.endsWith('/cancel') ? 'in_progress' : 'completed', output: [] },
+        normalizeResponseInput({ input: 'hello' }), { abort() { cancelled = true; } });
+    }
+    const runtime = createNativeRouter({ core, responseStore, fetch() {
+      if (key === 'POST /api/services/openai/v1/responses') return Response.json({ id: 'fixture', model: 'fixture-model', choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'hello' } }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } });
+      assert.fail('Unimplemented routes must never reach upstream');
+    } });
     const path = template.replace(/\{[^}]+\}/g, 'fixture');
-    const body = template.endsWith('/revoke') ? { id: issued.id }
+    const body = key === 'POST /api/services/openai/v1/responses' ? { model: 'fixture-model', input: 'hello' } : template.endsWith('/revoke') ? { id: issued.id }
       : template.endsWith('/policy') ? { weight: 2 }
       : template.endsWith('/routing') ? { strategy: 'priority' }
       : template.endsWith('/providers') ? { name: 'fixture-new', kind: 'openai-compatible', base_url: 'https://fixture.invalid/v1', models: ['fixture-model'] }
@@ -51,6 +64,10 @@ export async function runParityFixtures() {
         if (key === 'POST /api/management/tokens/revoke') assert.equal((await core.tokens.get(issued.id)).revoked, true);
         if (key === 'POST /api/management/accounts/{name}/pause') assert.ok((await core.accounts.list())[0].limits.pause);
         if (key === 'POST /api/management/accounts/{name}/policy') assert.equal(core.accounts.records.get('fixture').policy.weight, 2);
+        if (key === 'POST /api/services/openai/v1/responses') assert.equal(data.object, 'response');
+        if (key === 'POST /api/services/openai/v1/responses/{response_id}/cancel') { assert.equal(data.status, 'cancelled'); assert.equal(cancelled, true); }
+        if (key === 'GET /api/services/openai/v1/responses/{response_id}/input_items') assert.equal(data.data[0].content[0].text, 'hello');
+        if (key === 'DELETE /api/services/openai/v1/responses/{response_id}') assert.equal(data.deleted, true);
         if (key === 'GET /api/models') assert.equal(data.data[0].id, 'fixture-model');
       }
       evidence.set(`route:${key}`, { route: key, success: true });

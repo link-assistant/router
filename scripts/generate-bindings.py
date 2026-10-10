@@ -98,7 +98,7 @@ def main():
         if name=='with':typ='('+typ+') & ((client: string, args: readonly string[], options?: WithOptions, invocation?: Invocation) => Promise<Result<{ client_exit_code: number | null; stdout: string; stderr: string }>>)'
         declarations.append('  '+name+': '+typ+';')
     declarations.append('  deployStatus(options?: DeployOptions, invocation?: Invocation): ReturnType<Router["deploy"]>;')
-    declarations+=['}','export function createRouter(options?: RouterOptions): Router;', 'export function resolveBinary(options?: RouterOptions): Promise<string>;','export function validateOperation(name: string, result: unknown): Result;','export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;','',"export { NativeRouter, NativeRouterError, createNativeRouter } from './native.js';",'']
+    declarations+=['}','export function createRouter(options?: RouterOptions): Router;', 'export function resolveBinary(options?: RouterOptions): Promise<string>;','export function validateOperation(name: string, result: unknown): Result;','export function runProcess(binary: string, args: string[], options?: Invocation): Promise<{ stdout: string; stderr: string; exitCode: number }>;','',"export { NativeRouter, NativeRouterError, createNativeRouter } from './native.js';","export type { NativeRouterOptions, NativeHttpRouter, NativeTokenOptions, NativeTokenManager } from './native.js';",'']
     def pytree(node,classname):
         lines=[]; body=['class '+classname+':']
         for name,child in node.items():
