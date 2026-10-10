@@ -1,0 +1,3528 @@
+[
+  {
+    "sha": "0fd3cb36c48e8aa7518858f36837848620762edd",
+    "node_id": "C_kwDOP9nMvdoAKDBmZDNjYjM2YzQ4ZThhYTc1MTg4NThmMzY4Mzc4NDg2MjA3NjJlZGQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T10:35:43Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T10:36:00Z"
+      },
+      "message": "Escape characters outside ASCII in case-entry without literal characters\n\nThe pattern ended its range with a literal U+FFFF, an invisible\ncharacter in the source. It now names the range with code point\nescapes and the `u` flag, and escapes every UTF-16 code unit of each\ncharacter it matches, so it prints the same escapes as before.",
+      "tree": {
+        "sha": "4d01549e7041b76cca5f5a1b7d104bad1bc09e9c",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/4d01549e7041b76cca5f5a1b7d104bad1bc09e9c"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/0fd3cb36c48e8aa7518858f36837848620762edd",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0fd3cb36c48e8aa7518858f36837848620762edd",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/0fd3cb36c48e8aa7518858f36837848620762edd",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0fd3cb36c48e8aa7518858f36837848620762edd/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "8b923a1a4e3b2e0b93c8caa6bae3ef9759e82105",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/8b923a1a4e3b2e0b93c8caa6bae3ef9759e82105",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/8b923a1a4e3b2e0b93c8caa6bae3ef9759e82105"
+      }
+    ]
+  },
+  {
+    "sha": "be5a5bc14f5810191cfd1f6523fbd153e32df729",
+    "node_id": "C_kwDOP9nMvdoAKGJlNWE1YmMxNGY1ODEwMTkxY2ZkMWY2NTIzZmJkMTUzZTMyZGY3Mjk",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:09:34Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:09:34Z"
+      },
+      "message": "Point the front-end documents to the links-notation reports\n\nARCHITECTURE.md said the two repairs keep the runtimes reading the\nsame forms where links-notation 0.20 does not, but both of its parsers\nread `a:` over `b: c` as `(a: c)`; the repairs work around what both\ndrop, reported as link-foundation/links-notation#313, and around the\nlast line of spaces the two read differently, reported as\nlink-foundation/links-notation#312. The shared corpus README names the\nnested indented id experiment, and the ledger records the reports, the\nnew case and limit counts, and the latest comment scan.",
+      "tree": {
+        "sha": "42724ced882ce71c6c1c43a9a7561b1998ae2653",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/42724ced882ce71c6c1c43a9a7561b1998ae2653"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/be5a5bc14f5810191cfd1f6523fbd153e32df729",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/be5a5bc14f5810191cfd1f6523fbd153e32df729",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/be5a5bc14f5810191cfd1f6523fbd153e32df729",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/be5a5bc14f5810191cfd1f6523fbd153e32df729/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "0fd3cb36c48e8aa7518858f36837848620762edd",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0fd3cb36c48e8aa7518858f36837848620762edd",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/0fd3cb36c48e8aa7518858f36837848620762edd"
+      }
+    ]
+  },
+  {
+    "sha": "16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+    "node_id": "C_kwDOP9nMvdoAKDE2YzhhNTdkZDdmYjA2NTA2YTM3ZGJiNGFkYjVmMWJiOTliNzBjY2M",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:09:39Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:09:39Z"
+      },
+      "message": "Check in both runtimes that only callers select the default type ontology\n\nR129 said the link-cli mapping was not implemented, while R113 already\ncites the mirrored interop profile. The new mirrored tests check the\nother half of R129: the constructor's definition is the only line of\neither runtime's sources that names it, and the evaluator keeps its\nstratified universes, answering `Type of Type` only for a source that\ndeclares `(Type: Type Type)`. Adding a call to it in any source file\nfails them. recursive-type-ontology.md now calls the ontology a\ncandidate default construction, and R129 is complete.",
+      "tree": {
+        "sha": "39f777552ec73601aca1a8ed9ddd14095809d936",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/39f777552ec73601aca1a8ed9ddd14095809d936"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "be5a5bc14f5810191cfd1f6523fbd153e32df729",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/be5a5bc14f5810191cfd1f6523fbd153e32df729",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/be5a5bc14f5810191cfd1f6523fbd153e32df729"
+      }
+    ]
+  },
+  {
+    "sha": "f76672fb011c05f522debae198a5545a0093dd9d",
+    "node_id": "C_kwDOP9nMvdoAKGY3NjY3MmZiMDExYzA1ZjUyMmRlYmFlMTk4YTU1NDVhMDA5M2RkOWQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:11:23Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:11:23Z"
+      },
+      "message": "Cite the ontology selection tests in R114\n\nR114 stays partial: the new mirrored tests show that no runtime module selects the default type ontology and that the evaluator's universes stay stratified, while universe and soundness contracts declared by a foundation remain open.",
+      "tree": {
+        "sha": "06f5dce63b02d795b0f07cfe4bcd440d4daa4158",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/06f5dce63b02d795b0f07cfe4bcd440d4daa4158"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/f76672fb011c05f522debae198a5545a0093dd9d",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f76672fb011c05f522debae198a5545a0093dd9d",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f76672fb011c05f522debae198a5545a0093dd9d",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f76672fb011c05f522debae198a5545a0093dd9d/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/16c8a57dd7fb06506a37dbb4adb5f1bb99b70ccc"
+      }
+    ]
+  },
+  {
+    "sha": "a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+    "node_id": "C_kwDOP9nMvdoAKGE4OTNkOTQ1ZjI2NzU4YmZhZWMyYjhmMTljZGJmMTdlOWFhYmE2MDQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:59:23Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T11:59:23Z"
+      },
+      "message": "Register the public links-notation denial-of-service reports in the ledger\n\nThe three denial-of-service findings against links-notation 0.20.0 are now\nfiled publicly as link-foundation/links-notation#314, #315, and #316 after\nthe maintainer authorized it: PR comment 5831357798 answered the solver's\nquestion 5831221597. R51 records the three reports with brief descriptions\nand notes that the LiNo front end already caps size and depth and reads\nquoted references itself; R12 cites their timings alongside the differential\nreports #312 and #313. R21, R56, and the ledger header advance the\nregistered cutoff to comment 5831357798, the latest non-bot requirement,\nand R97 records the fresh paginated scan at 2026-09-25T11:55:53Z and notes\nthat the solver's own PR comments 5831221597 and 5831902886 carry no\nrequirement. The traceability test enforces the new source.",
+      "tree": {
+        "sha": "c7a4b3011d3854898a4a3f8d47c2d0845a45273a",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/c7a4b3011d3854898a4a3f8d47c2d0845a45273a"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/a893d945f26758bfaec2b8f19cdbf17e9aaba604/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "f76672fb011c05f522debae198a5545a0093dd9d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f76672fb011c05f522debae198a5545a0093dd9d",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f76672fb011c05f522debae198a5545a0093dd9d"
+      }
+    ]
+  },
+  {
+    "sha": "0abdbd97c77f37769237a1184d164e3166e2bb77",
+    "node_id": "C_kwDOP9nMvdoAKDBhYmRiZDk3Yzc3ZjM3NzY5MjM3YTExODRkMTY0ZTMxNjZlMmJiNzc",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T13:21:48Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T13:21:48Z"
+      },
+      "message": "Report why a linked proof search ended in both runtimes\n\nLinkedProgramRegistry.search runs one saturation for several goals and\nreports whether it found every goal, reached a fixed point, spent the\ntransition bound, or exceeded the fact bound. Goals whose ordered\nreduction has no normal form are reported as a rewrite limit, cycle, or\nstall instead of rethrown. prove keeps its behavior and now shares the\nsame saturation in every execution basis.",
+      "tree": {
+        "sha": "216d1a864d69d6bd638120e3fa58633c0568e56e",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/216d1a864d69d6bd638120e3fa58633c0568e56e"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/0abdbd97c77f37769237a1184d164e3166e2bb77",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0abdbd97c77f37769237a1184d164e3166e2bb77",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/0abdbd97c77f37769237a1184d164e3166e2bb77",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0abdbd97c77f37769237a1184d164e3166e2bb77/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/a893d945f26758bfaec2b8f19cdbf17e9aaba604",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/a893d945f26758bfaec2b8f19cdbf17e9aaba604"
+      }
+    ]
+  },
+  {
+    "sha": "aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+    "node_id": "C_kwDOP9nMvdoAKGFhOTJmYWQ1YmRkMGE3ZjZjMTk0OGQ1Y2U5YmIwMjIwOTNkMzQwOTQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:10:04Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:10:04Z"
+      },
+      "message": "Let a layer load derived forms through the single linked front end in both runtimes\n\nA layer that declares programs through its own top-level forms can now hand\nthe registry the forms it derives from the same parse (JS `expandForms`,\nRust `from_rml_expanded`), so the source is read once. The Rust registry also\nexposes its program outlines and a classified reduction that reports a rewrite\nlimit, cycle, or stall as a value, mirroring the JS registry.",
+      "tree": {
+        "sha": "b305be2429b544ffa035a507198ee2c42e7e9c3a",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/b305be2429b544ffa035a507198ee2c42e7e9c3a"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "0abdbd97c77f37769237a1184d164e3166e2bb77",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/0abdbd97c77f37769237a1184d164e3166e2bb77",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/0abdbd97c77f37769237a1184d164e3166e2bb77"
+      }
+    ]
+  },
+  {
+    "sha": "7b055ca258679b737c621889d64302cc15b9c4f8",
+    "node_id": "C_kwDOP9nMvdoAKDdiMDU1Y2EyNTg2NzliNzM3YzYyMTg4OWQ2NDMwMmNjMTViOWM0Zjg",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:21:58Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:21:58Z"
+      },
+      "message": "Keep the probes that sized S/K witnesses for foundation packages",
+      "tree": {
+        "sha": "3b0aae3f4b40815de4230e7ba3e8120b49a90344",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/3b0aae3f4b40815de4230e7ba3e8120b49a90344"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/7b055ca258679b737c621889d64302cc15b9c4f8",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7b055ca258679b737c621889d64302cc15b9c4f8",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7b055ca258679b737c621889d64302cc15b9c4f8",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7b055ca258679b737c621889d64302cc15b9c4f8/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/aa92fad5bdd0a7f6c1948d5ce9bb022093d34094"
+      }
+    ]
+  },
+  {
+    "sha": "1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+    "node_id": "C_kwDOP9nMvdoAKDFhZjFkMDg1NzY1MWY0ZDU2ZDRmZjc0NWRiNjZjN2NkMGQyNDEzYzE",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:43:01Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T14:43:01Z"
+      },
+      "message": "Add linked foundation packages that witness differing logics, resources, truth policies, and stream typing\n\nEach foundation is a named, versioned package of ordinary linked programs\nthat play declared roles (axioms, inference, typing, reduction, equality,\ntruth, proof) with an explicit signature and cycle policy.  Linked\ninstances import one unchanged theory into a selected foundation, with\noptional constant renaming.  The registry ignores the new heads, so the\nfile already loads as 18 linked programs in both runtimes.",
+      "tree": {
+        "sha": "6a65bdd355685e016080209dcc79fcb0c99bb688",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/6a65bdd355685e016080209dcc79fcb0c99bb688"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/1af1d0857651f4d56d4ff745db66c7cd0d2413c1/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "7b055ca258679b737c621889d64302cc15b9c4f8",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7b055ca258679b737c621889d64302cc15b9c4f8",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7b055ca258679b737c621889d64302cc15b9c4f8"
+      }
+    ]
+  },
+  {
+    "sha": "45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+    "node_id": "C_kwDOP9nMvdoAKDQ1ZjI4M2EwMmU5ZTc4Mzg1NmI5YmFlNjFjYTZkOTZkYzZmNDNlZjk",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T15:19:05Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T15:19:05Z"
+      },
+      "message": "Ask one theory under versioned linked foundations with role-attributed evidence\n\nA linked-foundation packages ordinary linked programs in named roles\n(axioms, inference, typing, reduction, equality, truth, proof), depends on\nother foundations by version, restricts judgements by signature, and\nchooses an inductive or guarded-coinductive cycle policy.  A\nlinked-instance binds an unchanged theory to one foundation.\n\nFoundationWorkspace answers ground and pattern queries with proved,\nrefuted, contradictory, unknown, exhausted, and unsupported statuses,\nrole-attributed proofs, dependency scopes, and incremental revision after\na rule or assumption change.  The module names no logic: the lawn, cafe,\nweather, stream, and unseen necessity witnesses are links only, and the\nS/K basis stays inside the K0 operations.",
+      "tree": {
+        "sha": "0b64f19fcf23dc331162cfb51ae8059f38c3f2aa",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/0b64f19fcf23dc331162cfb51ae8059f38c3f2aa"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/45f283a02e9e783856b9bae61ca6d96dc6f43ef9/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/1af1d0857651f4d56d4ff745db66c7cd0d2413c1",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/1af1d0857651f4d56d4ff745db66c7cd0d2413c1"
+      }
+    ]
+  },
+  {
+    "sha": "9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+    "node_id": "C_kwDOP9nMvdoAKDlhNDc0ZTA0OTQ3YjMxYmQ5M2Q5OTlkNjE0YjVjNGEzYTMzYzQwZmQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T15:26:32Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T15:26:32Z"
+      },
+      "message": "Report a search fact without a normal form as a value in Rust\n\nDirect saturation normalizes every input and derived fact with the\nordered rewrites. JavaScript keeps the rewrite-limit, cycle, and stall\nclassification on the thrown error, but Rust collapsed it into a plain\nmessage. Saturation now carries the classified failure, and\nsearch_or_stop returns it as a ReductionStopped value the way\nreduce_or_stop does, so a layer above search can tell a derivation that\nran out of steps from one that cycles. search keeps its error.\n\nThe probe in experiments/derived-fact-failure.mjs records the\nJavaScript behaviour under both bases.",
+      "tree": {
+        "sha": "59d61c65c2436e1590d86d421e73440ee64d3aaa",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/59d61c65c2436e1590d86d421e73440ee64d3aaa"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9a474e04947b31bd93d999d614b5c4a3a33c40fd/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/45f283a02e9e783856b9bae61ca6d96dc6f43ef9",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/45f283a02e9e783856b9bae61ca6d96dc6f43ef9"
+      }
+    ]
+  },
+  {
+    "sha": "c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+    "node_id": "C_kwDOP9nMvdoAKGM3OTg3MTY3MWZjMWJmZGQ2MGI1OWQ4ZGU1ZmM2NjliYjdlY2FiMGQ",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T16:08:04Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T16:08:04Z"
+      },
+      "message": "Ask one theory under versioned linked foundations in Rust\n\nPort the linked foundation workspace to Rust with the same packages,\ninstances, statuses, reasons, dependencies, and change tracking as the\nJavaScript runtime, and mirror its eleven witness tests over\nlib/foundations/packages.lino on the direct-structural and closed S/K\nbases.",
+      "tree": {
+        "sha": "4f47a96116ab8ea19f830469e02643dc4eb82347",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/4f47a96116ab8ea19f830469e02643dc4eb82347"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9a474e04947b31bd93d999d614b5c4a3a33c40fd",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/9a474e04947b31bd93d999d614b5c4a3a33c40fd"
+      }
+    ]
+  },
+  {
+    "sha": "2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+    "node_id": "C_kwDOP9nMvdoAKDI1NzVlMTMwZjZiMTBkZmM2MzI3MzU3ZTBjNTY4NmFkODJhZWIzOGY",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T16:13:25Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T16:13:25Z"
+      },
+      "message": "Iterate foundations directly when resolving their dependencies in Rust\n\nClippy flagged the index loop as needless_range_loop; rustfmt also\nre-wrapped the rule-form closure of revise.",
+      "tree": {
+        "sha": "2d1b6adf5ccd71fed0d6f54708fd3305922a0f77",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/2d1b6adf5ccd71fed0d6f54708fd3305922a0f77"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/2575e130f6b10dfc6327357e0c5686ad82aeb38f/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/c79871671fc1bfdd60b59d8de5fc669bb7ecab0d"
+      }
+    ]
+  },
+  {
+    "sha": "200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+    "node_id": "C_kwDOP9nMvdoAKDIwMGUyNzQxYTRiZWJiODk5ZTVkY2Q3YmM3NmMwM2NmNzBhN2NhYTA",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T17:00:46Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T17:00:46Z"
+      },
+      "message": "Report a spent contraction budget of the closed kernel as exhaustion in both runtimes\n\nA foundation question on the closed S/K basis threw the kernel error once\none kernel call spent the fixed budget of 100 000 000 contractions. The\nbudget is now a per-call option of the linked-program registry and the\nfoundation workspace (maxContractions in JavaScript, with_max_contractions\nin Rust, each with a getter). A spent budget is classified as the\ncontraction-limit reason and ends the question exhausted, with the stage\nthat spent it in the detail.",
+      "tree": {
+        "sha": "5329a53bea47c9881fbda5aa8d5b7e2c2a0ff549",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/5329a53bea47c9881fbda5aa8d5b7e2c2a0ff549"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/2575e130f6b10dfc6327357e0c5686ad82aeb38f",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/2575e130f6b10dfc6327357e0c5686ad82aeb38f"
+      }
+    ]
+  },
+  {
+    "sha": "9e6041871840cb04aa804b493ee3762734122898",
+    "node_id": "C_kwDOP9nMvdoAKDllNjA0MTg3MTg0MGNiMDRhYTgwNGI0OTNlZTM3NjI3MzQxMjI4OTg",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:03:56Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:03:56Z"
+      },
+      "message": "Execute a replaced linked definition of K1 on the unchanged JavaScript runtime\n\nSwap one links-meta-foundation rule body at a time (repeated-variable\nmatching, pair substitution, the step after a missed rule, and result\nverification) and run the same request on the same runtime. Each\nreplacement changes the answer while the observed host operations stay\nS/K contraction, parsing, and bounds, and the runtime names none of the\nconstructors those rules use.\n\nWith pair substitution mirrored, K1's interpretation of its own rule\nfollows the new definition and stops agreeing with direct execution,\nwhich still substitutes inside the compiled fixed-point.ski.",
+      "tree": {
+        "sha": "ecdb33f068772d8489c82381d3d80145aa7b447b",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/ecdb33f068772d8489c82381d3d80145aa7b447b"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/9e6041871840cb04aa804b493ee3762734122898",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9e6041871840cb04aa804b493ee3762734122898",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/9e6041871840cb04aa804b493ee3762734122898",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9e6041871840cb04aa804b493ee3762734122898/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/200e2741a4bebb899e5dcd7bc76c03cf70a7caa0"
+      }
+    ]
+  },
+  {
+    "sha": "05b31b07df24cc97aad98384d620582e480dcf82",
+    "node_id": "C_kwDOP9nMvdoAKDA1YjMxYjA3ZGYyNGNjOTdhYWQ5ODM4NGQ2MjA1ODJlNDgwZGNmODI",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:09:09Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:09:09Z"
+      },
+      "message": "Register the full-closure acceptance gate of review 5836717056 in the ledger\n\nR149 records the gate of two comparable minimal meta-foundations with the\nseven properties, R150 the D/D' definition-replacement witness (K1 now,\nK0 still fixed in the compiled kernel), and R151 the host parser,\nelaborator, compiler, and code generation still outside the closure.",
+      "tree": {
+        "sha": "16be8e280a9607d41972d190d23ad69802997176",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/16be8e280a9607d41972d190d23ad69802997176"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/05b31b07df24cc97aad98384d620582e480dcf82",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/05b31b07df24cc97aad98384d620582e480dcf82",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/05b31b07df24cc97aad98384d620582e480dcf82",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/05b31b07df24cc97aad98384d620582e480dcf82/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "9e6041871840cb04aa804b493ee3762734122898",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9e6041871840cb04aa804b493ee3762734122898",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/9e6041871840cb04aa804b493ee3762734122898"
+      }
+    ]
+  },
+  {
+    "sha": "f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+    "node_id": "C_kwDOP9nMvdoAKGYyNGQwZjFmMTgzZmM5MmIzOTU2M2QyZjZmZDVkMzc5NWQzMjM1YzU",
+    "commit": {
+      "author": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:24:14Z"
+      },
+      "committer": {
+        "name": "konard",
+        "email": "drakonard@gmail.com",
+        "date": "2026-09-25T18:24:14Z"
+      },
+      "message": "Execute a replaced linked definition of K1 on the unchanged Rust runtime\n\nMirror the JavaScript witness: replacing the matching, substitution,\nselection, or verification rule of links-meta-foundation changes the\nanswer while the host operations stay the same, and replacing K1\nsubstitution leaves K0 substitution in the compiled kernel unchanged.",
+      "tree": {
+        "sha": "249161c922a97f92f9b493e6a4ec7b3717a99a59",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/249161c922a97f92f9b493e6a4ec7b3717a99a59"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "05b31b07df24cc97aad98384d620582e480dcf82",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/05b31b07df24cc97aad98384d620582e480dcf82",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/05b31b07df24cc97aad98384d620582e480dcf82"
+      }
+    ]
+  },
+  {
+    "sha": "17e2f9c94d776d41fd75712b6fc847008b9cea09",
+    "node_id": "C_kwDOP9nMvdoAKDE3ZTJmOWM5NGQ3NzZkNDFmZDc1NzEyYjZmYzg0NzAwOGI5Y2VhMDk",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T13:25:34Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T13:25:34Z"
+      },
+      "message": "Load replaceable linked K0 definitions per runtime registry\n\nSelect a caller-provided closed Links artifact without rebuilding either runtime. Add a shared nested-substitution replacement witness, isolation and rejection tests, and an explicit remaining trust boundary.",
+      "tree": {
+        "sha": "c657fcad3ca4bae5ffa0800408e00f5ab3c80e33",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/c657fcad3ca4bae5ffa0800408e00f5ab3c80e33"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/17e2f9c94d776d41fd75712b6fc847008b9cea09",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/17e2f9c94d776d41fd75712b6fc847008b9cea09",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/17e2f9c94d776d41fd75712b6fc847008b9cea09",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/17e2f9c94d776d41fd75712b6fc847008b9cea09/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f24d0f1f183fc92b39563d2f6fd5d3795d3235c5"
+      }
+    ]
+  },
+  {
+    "sha": "fddfba1dda94ec177c652e1406e2d3383a337847",
+    "node_id": "C_kwDOP9nMvdoAKGZkZGZiYTFkZGE5NGVjMTc3YzY1MmUxNDA2ZTJkMzM4M2EzMzc4NDc",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T14:47:16Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T14:47:16Z"
+      },
+      "message": "Implement structured RML networks and isolated foundation evidence\n\nAdd source-free syntax import/export with bounded expansion, conservative capture-safe identifier rewriting, correct independent guarded truth/refutation search, and linked rational probability/confidence policies. Preserve explicit unsupported language obligations and document remaining semantic closure gaps.\n\nVerified baseline integration: JavaScript 1633 tests and Rust 969 tests; shared corpus and declaration checks pass. Added adversarial expansion tests accompany the final structure safety repair.",
+      "tree": {
+        "sha": "deddccb4779305e10e1cbe669c97e963c14a75ce",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/deddccb4779305e10e1cbe669c97e963c14a75ce"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/fddfba1dda94ec177c652e1406e2d3383a337847",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/fddfba1dda94ec177c652e1406e2d3383a337847",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/fddfba1dda94ec177c652e1406e2d3383a337847",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/fddfba1dda94ec177c652e1406e2d3383a337847/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "17e2f9c94d776d41fd75712b6fc847008b9cea09",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/17e2f9c94d776d41fd75712b6fc847008b9cea09",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/17e2f9c94d776d41fd75712b6fc847008b9cea09"
+      }
+    ]
+  },
+  {
+    "sha": "307842639e7e1064e996d8541c46f07792bb48cd",
+    "node_id": "C_kwDOP9nMvdoAKDMwNzg0MjYzOWU3ZTEwNjRlOTk2ZDg1NDFjNDZmMDc3OTJiYjQ4Y2Q",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T16:23:27Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T16:23:27Z"
+      },
+      "message": "Deliver linked proofs, isolated packages, translations and safe build lifecycle\n\nAdd bounded inductive certificate verification with independent replay, version-private foundation packages, strict typed-link archives, all twelve portable-natural translation paths with native observations, and direct linked-source execution controls.\n\nInstall repository-scoped cache lifecycle and composed hooks, protect source/evidence/worktrees, coordinate process-realm leases, and record measured clean rebuilds. Preserve the existing completion-check entry point pending the separate source-inventory acceptance checkpoint.\n\nThis is verified implementation progress in issue 183; full-language, whole-corpus and minimal-foundation closure remain open.",
+      "tree": {
+        "sha": "8bf7ab4014f25d0143c5799178948aec9dfbcfc2",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/8bf7ab4014f25d0143c5799178948aec9dfbcfc2"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/307842639e7e1064e996d8541c46f07792bb48cd",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/307842639e7e1064e996d8541c46f07792bb48cd",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/307842639e7e1064e996d8541c46f07792bb48cd",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/307842639e7e1064e996d8541c46f07792bb48cd/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "fddfba1dda94ec177c652e1406e2d3383a337847",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/fddfba1dda94ec177c652e1406e2d3383a337847",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/fddfba1dda94ec177c652e1406e2d3383a337847"
+      }
+    ]
+  },
+  {
+    "sha": "b561767d6c104bcb222ac8e5530a728f791326fe",
+    "node_id": "C_kwDOP9nMvdoAKGI1NjE3NjdkNmMxMDRiY2IyMjJhYzhlNTUzMGE3MjhmNzkxMzI2ZmU",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T17:47:11Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T17:47:11Z"
+      },
+      "message": "Consume official language source and enforce execution-backed acceptance",
+      "tree": {
+        "sha": "2156ed20d964ae71c4bbe9814173ee03b60ae4af",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/2156ed20d964ae71c4bbe9814173ee03b60ae4af"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/b561767d6c104bcb222ac8e5530a728f791326fe",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/b561767d6c104bcb222ac8e5530a728f791326fe",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/b561767d6c104bcb222ac8e5530a728f791326fe",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/b561767d6c104bcb222ac8e5530a728f791326fe/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "307842639e7e1064e996d8541c46f07792bb48cd",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/307842639e7e1064e996d8541c46f07792bb48cd",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/307842639e7e1064e996d8541c46f07792bb48cd"
+      }
+    ]
+  },
+  {
+    "sha": "c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+    "node_id": "C_kwDOP9nMvdoAKGM4ZjQ0M2YxZjdiODEwNWRmMjE5OWFhZWVhMWVlYjUwZTM0ZjgzZGY",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T20:19:45Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T20:19:45Z"
+      },
+      "message": "Check source-bound RML definitions and preserve upstream source bytes",
+      "tree": {
+        "sha": "4e53d23d1bf5a4dbfa5b0daee7214c5041c84b92",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/4e53d23d1bf5a4dbfa5b0daee7214c5041c84b92"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c8f443f1f7b8105df2199aaeea1eeb50e34f83df/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "b561767d6c104bcb222ac8e5530a728f791326fe",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/b561767d6c104bcb222ac8e5530a728f791326fe",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/b561767d6c104bcb222ac8e5530a728f791326fe"
+      }
+    ]
+  },
+  {
+    "sha": "23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+    "node_id": "C_kwDOP9nMvdoAKDIzY2NiYjgwYThmNmE2Y2VhYWMzNzdhMjI5ZTBjNTFmNWMwMDNlNmM",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T21:11:22Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T21:11:22Z"
+      },
+      "message": "Check indexed and record definitions through linked native semantics",
+      "tree": {
+        "sha": "6113a723b7ded4528b6a1beb5300c89ca96f212c",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/6113a723b7ded4528b6a1beb5300c89ca96f212c"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/c8f443f1f7b8105df2199aaeea1eeb50e34f83df",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/c8f443f1f7b8105df2199aaeea1eeb50e34f83df"
+      }
+    ]
+  },
+  {
+    "sha": "5980ee384c2382ddefa59953fe7be82e69c5def9",
+    "node_id": "C_kwDOP9nMvdoAKDU5ODBlZTM4NGMyMzgyZGRlZmE1OTk1M2ZlN2JlODJlNjljNWRlZjk",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T21:58:08Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T21:58:08Z"
+      },
+      "message": "Prove conditional orientation results and check cache portability",
+      "tree": {
+        "sha": "ac3d9e38f0308a4a92be5bc6b9d2f6043801ccb6",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/ac3d9e38f0308a4a92be5bc6b9d2f6043801ccb6"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/5980ee384c2382ddefa59953fe7be82e69c5def9",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/5980ee384c2382ddefa59953fe7be82e69c5def9",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/5980ee384c2382ddefa59953fe7be82e69c5def9",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/5980ee384c2382ddefa59953fe7be82e69c5def9/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/23ccbb80a8f6a6ceaac377a229e0c51f5c003e6c"
+      }
+    ]
+  },
+  {
+    "sha": "90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+    "node_id": "C_kwDOP9nMvdoAKDkwZmMyODUzYmJmNTg2NTVmNDg5MzEyYWQyMWI5NDcxZmJlNGMxYzk",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T22:57:21Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T22:57:21Z"
+      },
+      "message": "Add source-driven Horn semantics and checked logical propositions",
+      "tree": {
+        "sha": "7fdce075ddc5b85c9a4e9babee595c1b7de26cbc",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/7fdce075ddc5b85c9a4e9babee595c1b7de26cbc"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/90fc2853bbf58655f489312ad21b9471fbe4c1c9/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "5980ee384c2382ddefa59953fe7be82e69c5def9",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/5980ee384c2382ddefa59953fe7be82e69c5def9",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/5980ee384c2382ddefa59953fe7be82e69c5def9"
+      }
+    ]
+  },
+  {
+    "sha": "e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+    "node_id": "C_kwDOP9nMvdoAKGU2MWQxY2FkOTBhNWE4NjU1MTFhYTM4ZjljNmMzZWJjMjgwZDQ3MTQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T23:21:29Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T23:21:29Z"
+      },
+      "message": "Validate frozen cache portability candidate on three native platforms",
+      "tree": {
+        "sha": "b7c4b3120c743b9087c58b68fbc93ea68d9c5236",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/b7c4b3120c743b9087c58b68fbc93ea68d9c5236"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e61d1cad90a5a865511aa38f9c6c3ebc280d4714/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/90fc2853bbf58655f489312ad21b9471fbe4c1c9",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/90fc2853bbf58655f489312ad21b9471fbe4c1c9"
+      }
+    ]
+  },
+  {
+    "sha": "24ad4965efea139846cc9b01d8d8f57b55faf27f",
+    "node_id": "C_kwDOP9nMvdoAKDI0YWQ0OTY1ZWZlYTEzOTg0NmNjOWIwMWQ4ZDhmNTdiNTVmYWYyN2Y",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T23:32:06Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-07T23:32:06Z"
+      },
+      "message": "Resolve Windows aliases in candidate checkout validation",
+      "tree": {
+        "sha": "00c5d233d4e5a5f8b775d62d6a88975824915217",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/00c5d233d4e5a5f8b775d62d6a88975824915217"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/24ad4965efea139846cc9b01d8d8f57b55faf27f",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/24ad4965efea139846cc9b01d8d8f57b55faf27f",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/24ad4965efea139846cc9b01d8d8f57b55faf27f",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/24ad4965efea139846cc9b01d8d8f57b55faf27f/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e61d1cad90a5a865511aa38f9c6c3ebc280d4714",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/e61d1cad90a5a865511aa38f9c6c3ebc280d4714"
+      }
+    ]
+  },
+  {
+    "sha": "f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+    "node_id": "C_kwDOP9nMvdoAKGY0NTM3ZDlmMzViMmI0NzJjZjVhOTg4OWJjZWY1OGJkYmY5MzVhNWY",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T00:04:41Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T00:04:41Z"
+      },
+      "message": "Repair production build-cache lifecycle across platforms",
+      "tree": {
+        "sha": "0a195dafc3a64b3f83aacf1dd88fea489c0c78b0",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/0a195dafc3a64b3f83aacf1dd88fea489c0c78b0"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "24ad4965efea139846cc9b01d8d8f57b55faf27f",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/24ad4965efea139846cc9b01d8d8f57b55faf27f",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/24ad4965efea139846cc9b01d8d8f57b55faf27f"
+      }
+    ]
+  },
+  {
+    "sha": "e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+    "node_id": "C_kwDOP9nMvdoAKGUyM2JhZTE0ZmVhZGNiZTZiNjM4MWFmM2Q3MDk4MjBmZDYwZThjOWQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T01:15:06Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T01:15:06Z"
+      },
+      "message": "Harden certificate and cache validation and update proof toolchains",
+      "tree": {
+        "sha": "5f82bdf4025683b7c309eacf7f5d09a36e4ba03e",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/5f82bdf4025683b7c309eacf7f5d09a36e4ba03e"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e23bae14feadcbe6b6381af3d709820fd60e8c9d/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f4537d9f35b2b472cf5a9889bcef58bdbf935a5f"
+      }
+    ]
+  },
+  {
+    "sha": "6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+    "node_id": "C_kwDOP9nMvdoAKDZmMDk2NzBiYzlhM2NjNmRhMzM2YWQyZTdiZjE1YTI2NmI0ZjQ2YjM",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T01:54:00Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T01:54:00Z"
+      },
+      "message": "Deliver researcher workflows and install stable proof kernels",
+      "tree": {
+        "sha": "e997b0b67e72bf89418aacd76177b0ce2f2078c7",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/e997b0b67e72bf89418aacd76177b0ce2f2078c7"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/e23bae14feadcbe6b6381af3d709820fd60e8c9d",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/e23bae14feadcbe6b6381af3d709820fd60e8c9d"
+      }
+    ]
+  },
+  {
+    "sha": "53242b60d0ebddf653255ad99787fe586aa1a018",
+    "node_id": "C_kwDOP9nMvdoAKDUzMjQyYjYwZDBlYmRkZjY1MzI1NWFkOTk3ODdmZTU4NmFhMWEwMTg",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T02:14:25Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T02:14:25Z"
+      },
+      "message": "Fix stable Rocq bootstrap pins and evidence ownership",
+      "tree": {
+        "sha": "a76a9acefcd60b5553b30e3eeca6e420f0405dcb",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/a76a9acefcd60b5553b30e3eeca6e420f0405dcb"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/53242b60d0ebddf653255ad99787fe586aa1a018",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/53242b60d0ebddf653255ad99787fe586aa1a018",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/53242b60d0ebddf653255ad99787fe586aa1a018",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/53242b60d0ebddf653255ad99787fe586aa1a018/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/6f09670bc9a3cc6da336ad2e7bf15a266b4f46b3"
+      }
+    ]
+  },
+  {
+    "sha": "7627700475176a833277942011e86c3d56d2b5c0",
+    "node_id": "C_kwDOP9nMvdoAKDc2Mjc3MDA0NzUxNzZhODMzMjc3OTQyMDExZTg2YzNkNTZkMmI1YzA",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T02:54:23Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T02:54:23Z"
+      },
+      "message": "Improve bounded linked execution and preserve queued cache ownership",
+      "tree": {
+        "sha": "02299892d589b9610782875c20a25694ca52a012",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/02299892d589b9610782875c20a25694ca52a012"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/7627700475176a833277942011e86c3d56d2b5c0",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7627700475176a833277942011e86c3d56d2b5c0",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7627700475176a833277942011e86c3d56d2b5c0",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7627700475176a833277942011e86c3d56d2b5c0/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "53242b60d0ebddf653255ad99787fe586aa1a018",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/53242b60d0ebddf653255ad99787fe586aa1a018",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/53242b60d0ebddf653255ad99787fe586aa1a018"
+      }
+    ]
+  },
+  {
+    "sha": "66c6a9431b86fbac0c8edb9f68a80d770352756d",
+    "node_id": "C_kwDOP9nMvdoAKDY2YzZhOTQzMWI4NmZiYWMwYzhlZGI5ZjY4YTgwZDc3MDM1Mjc1NmQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:05:55Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:05:55Z"
+      },
+      "message": "Preserve structural identities and accelerate bounded replay",
+      "tree": {
+        "sha": "45dda61eb58c9016a968b6fcbf49c1248b2507c9",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/45dda61eb58c9016a968b6fcbf49c1248b2507c9"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/66c6a9431b86fbac0c8edb9f68a80d770352756d",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/66c6a9431b86fbac0c8edb9f68a80d770352756d",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/66c6a9431b86fbac0c8edb9f68a80d770352756d",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/66c6a9431b86fbac0c8edb9f68a80d770352756d/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "7627700475176a833277942011e86c3d56d2b5c0",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7627700475176a833277942011e86c3d56d2b5c0",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7627700475176a833277942011e86c3d56d2b5c0"
+      }
+    ]
+  },
+  {
+    "sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82",
+    "node_id": "C_kwDOP9nMvdoAKDdjNTI5MzE0YTVlYzE4NDBlYjRiY2QyZjIxMzA1NDIxOTg2Y2JjODI",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:22:57Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:22:57Z"
+      },
+      "message": "Accelerate native bounded replay with owned normality tracking",
+      "tree": {
+        "sha": "c7353d335790a10c0acb327570abb5d7cb37f8b3",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/c7353d335790a10c0acb327570abb5d7cb37f8b3"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/7c529314a5ec1840eb4bcd2f21305421986cbc82",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7c529314a5ec1840eb4bcd2f21305421986cbc82",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7c529314a5ec1840eb4bcd2f21305421986cbc82",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7c529314a5ec1840eb4bcd2f21305421986cbc82/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "66c6a9431b86fbac0c8edb9f68a80d770352756d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/66c6a9431b86fbac0c8edb9f68a80d770352756d",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/66c6a9431b86fbac0c8edb9f68a80d770352756d"
+      }
+    ]
+  },
+  {
+    "sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d",
+    "node_id": "C_kwDOP9nMvdoAKDM2ZTc2MzU2MjJiMDM4NmIyZjdkMWMxZjk0NjU5OTNiZWYyYjc4NGQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:53:48Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T04:53:48Z"
+      },
+      "message": "Expand orientation independence proofs and negative controls",
+      "tree": {
+        "sha": "8bd709b1c9a9440c635baaddf73c8c995d04ea06",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/8bd709b1c9a9440c635baaddf73c8c995d04ea06"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/36e7635622b0386b2f7d1c1f9465993bef2b784d",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/36e7635622b0386b2f7d1c1f9465993bef2b784d",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/36e7635622b0386b2f7d1c1f9465993bef2b784d",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/36e7635622b0386b2f7d1c1f9465993bef2b784d/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "7c529314a5ec1840eb4bcd2f21305421986cbc82",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/7c529314a5ec1840eb4bcd2f21305421986cbc82",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/7c529314a5ec1840eb4bcd2f21305421986cbc82"
+      }
+    ]
+  },
+  {
+    "sha": "78f6204b103ba3d76660369033d2b35cb82e327a",
+    "node_id": "C_kwDOP9nMvdoAKDc4ZjYyMDRiMTAzYmEzZDc2NjYwMzY5MDMzZDJiMzVjYjgyZTMyN2E",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T05:14:24Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T05:14:24Z"
+      },
+      "message": "Add generic typed structural recursion contracts\n\nDefine natural and list eliminators, collection operations, and closed definition contexts through linked rules. Share 37 source-independent recursion obligations across JavaScript and Rust, with adversarial typing and context contracts.\n\nDocument the generic scope and execution commands without claiming complete upstream source elaboration.",
+      "tree": {
+        "sha": "6e7652432602a917cdc09a6e1827484458355d2f",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/6e7652432602a917cdc09a6e1827484458355d2f"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/78f6204b103ba3d76660369033d2b35cb82e327a",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/78f6204b103ba3d76660369033d2b35cb82e327a",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/78f6204b103ba3d76660369033d2b35cb82e327a",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/78f6204b103ba3d76660369033d2b35cb82e327a/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "36e7635622b0386b2f7d1c1f9465993bef2b784d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/36e7635622b0386b2f7d1c1f9465993bef2b784d",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/36e7635622b0386b2f7d1c1f9465993bef2b784d"
+      }
+    ]
+  },
+  {
+    "sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3",
+    "node_id": "C_kwDOP9nMvdoAKDc4N2VhMzAyZTkyZDhlNjk0ODVjMzI3Y2QxYTBmMWM4MjFhNDYzZTM",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T07:37:33Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T07:37:33Z"
+      },
+      "message": "Integrate linked source runtimes and build resource monitoring",
+      "tree": {
+        "sha": "10b33b1a300db4775afdced4733055531a9b134c",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/10b33b1a300db4775afdced4733055531a9b134c"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/787ea302e92d8e69485c327cd1a0f1c821a463e3",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/787ea302e92d8e69485c327cd1a0f1c821a463e3",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/787ea302e92d8e69485c327cd1a0f1c821a463e3",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/787ea302e92d8e69485c327cd1a0f1c821a463e3/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "78f6204b103ba3d76660369033d2b35cb82e327a",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/78f6204b103ba3d76660369033d2b35cb82e327a",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/78f6204b103ba3d76660369033d2b35cb82e327a"
+      }
+    ]
+  },
+  {
+    "sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+    "node_id": "C_kwDOP9nMvdoAKDhjZjJhZjY2NWFkYWE5NGI4ZjI1ZjVjYTMzYjgxY2JlMjJmMGE3NWI",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T19:19:16Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T19:19:16Z"
+      },
+      "message": "fix: restore guarded CI with pinned checkout and editor inputs\n\nKeep external formal checkouts outside owned-source discovery, preserve pinned bytes across line-ending settings, and provide complete Docker contexts and locked editor/target dependencies before guarded verification.\n\nValidation: the ordinary linked implementation guard and 18 focused CI/source-free integration tests pass.",
+      "tree": {
+        "sha": "408756ddbc22d24677ff7cb90628e1d03eb6387e",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/408756ddbc22d24677ff7cb90628e1d03eb6387e"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "787ea302e92d8e69485c327cd1a0f1c821a463e3",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/787ea302e92d8e69485c327cd1a0f1c821a463e3",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/787ea302e92d8e69485c327cd1a0f1c821a463e3"
+      }
+    ]
+  },
+  {
+    "sha": "58d7efcbb449538154f22dfc4662c32294529066",
+    "node_id": "C_kwDOP9nMvdoAKDU4ZDdlZmNiYjQ0OTUzODE1NGYyMmRmYzQ2NjJjMzIyOTQ1MjkwNjY",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T20:13:49Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T20:13:49Z"
+      },
+      "message": "test: match Rust container source context",
+      "tree": {
+        "sha": "a8b21fcf0c657968b6c7f02f55e6b411de769683",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/a8b21fcf0c657968b6c7f02f55e6b411de769683"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/58d7efcbb449538154f22dfc4662c32294529066",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/58d7efcbb449538154f22dfc4662c32294529066",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/58d7efcbb449538154f22dfc4662c32294529066",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/58d7efcbb449538154f22dfc4662c32294529066/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/8cf2af665adaa94b8f25f5ca33b81cbe22f0a75b"
+      }
+    ]
+  },
+  {
+    "sha": "f6d30694435a3f3523abfa615c5b5a83af668c13",
+    "node_id": "C_kwDOP9nMvdoAKGY2ZDMwNjk0NDM1YTNmMzUyM2FiZmE2MTVjNWI1YTgzYWY2NjhjMTM",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T21:14:35Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-08T21:14:35Z"
+      },
+      "message": "docs: refresh acceptance hashes and hosted proof evidence\n\nRefresh 160 existing acceptance input hashes without changing requirement statuses or assertion bindings. Record maintained Lean and Rocq verification for the 42-theorem orientation sources while retaining partial proof scope.",
+      "tree": {
+        "sha": "322fe09667bad82fa880e507e2a4d24d5f55c3aa",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/322fe09667bad82fa880e507e2a4d24d5f55c3aa"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/f6d30694435a3f3523abfa615c5b5a83af668c13",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f6d30694435a3f3523abfa615c5b5a83af668c13",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f6d30694435a3f3523abfa615c5b5a83af668c13",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f6d30694435a3f3523abfa615c5b5a83af668c13/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "58d7efcbb449538154f22dfc4662c32294529066",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/58d7efcbb449538154f22dfc4662c32294529066",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/58d7efcbb449538154f22dfc4662c32294529066"
+      }
+    ]
+  },
+  {
+    "sha": "254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+    "node_id": "C_kwDOP9nMvdoAKDI1NGFjMzZlYmU0N2E3ZDhlMjA1N2Q5YTA1MTlkM2VhNzBjZDQxNzQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T07:41:19Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T07:41:19Z"
+      },
+      "message": "Test preservation of admitted upstream proofs\n\nAdd mirrored JavaScript and Rust mutation checks for the four upstream Lean admissions. Reject forged verified flags, altered sorry tokens and invented admissions. The strict issue completion gate remains unchanged.",
+      "tree": {
+        "sha": "2bf367e355ceaa1fb14355c3054527112d988d9d",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/2bf367e355ceaa1fb14355c3054527112d988d9d"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "f6d30694435a3f3523abfa615c5b5a83af668c13",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/f6d30694435a3f3523abfa615c5b5a83af668c13",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/f6d30694435a3f3523abfa615c5b5a83af668c13"
+      }
+    ]
+  },
+  {
+    "sha": "09ad01fc95eaed332de2ade5fe139b4d097ab244",
+    "node_id": "C_kwDOP9nMvdoAKDA5YWQwMWZjOTVlYWVkMzMyZGUyYWRlNWZlMTM5YjRkMDk3YWIyNDQ",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T19:47:29Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T19:47:29Z"
+      },
+      "message": "Integrate structural evidence and isolated build lifecycle\n\nRefresh LiNo/meta-language inputs, typed structural checks, exact-reference compiler fixtures, and authenticated implementation/configuration graphs. Route build producers through owned private targets and retain provisional acceptance receipts after interruption.\n\nValidation: 125 focused tests passed; all 21 cache producer assertions passed through the live reporter; source graph checks passed. The preceding full diagnostic passed 38 of 39 producers before the cache fixture correction. Full issue-183 acceptance remains incomplete.",
+      "tree": {
+        "sha": "151bae2fee9ce9fc8d0c0505649685284d7fd907",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/151bae2fee9ce9fc8d0c0505649685284d7fd907"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/09ad01fc95eaed332de2ade5fe139b4d097ab244",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/09ad01fc95eaed332de2ade5fe139b4d097ab244",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/09ad01fc95eaed332de2ade5fe139b4d097ab244",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/09ad01fc95eaed332de2ade5fe139b4d097ab244/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/254ac36ebe47a7d8e2057d9a0519d3ea70cd4174"
+      }
+    ]
+  },
+  {
+    "sha": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "node_id": "C_kwDOP9nMvdoAKDliNTA5ZWMwZjRmMzU1NGIyMzRhMjc1YmJkMjFmNGM1NDA5OTUyNDM",
+    "commit": {
+      "author": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T20:13:40Z"
+      },
+      "committer": {
+        "name": "Konstantin Diachenko",
+        "email": "drakonard@gmail.com",
+        "date": "2026-10-09T20:13:40Z"
+      },
+      "message": "Fix Docker accounting and portable cache output paths\n\nRead exact BuildKit byte counts through the verified owned container, preserve host ownership of private Rocq output roots, and normalize Windows paths before validation.\n\nValidation: 82 lifecycle/accounting tests and 57 acceptance/traceability tests passed without skips. Actual Docker and Windows verification continues in CI; full issue-183 acceptance remains incomplete.",
+      "tree": {
+        "sha": "a1ca454808fb2e01716f631378e429d73c683dc2",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/trees/a1ca454808fb2e01716f631378e429d73c683dc2"
+      },
+      "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/git/commits/9b509ec0f4f3554b234a275bbd21f4c540995243",
+      "comment_count": 0,
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    },
+    "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "comments_url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/9b509ec0f4f3554b234a275bbd21f4c540995243/comments",
+    "author": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "committer": {
+      "login": "konard",
+      "id": 1431904,
+      "node_id": "MDQ6VXNlcjE0MzE5MDQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1431904?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/konard",
+      "html_url": "https://github.com/konard",
+      "followers_url": "https://api.github.com/users/konard/followers",
+      "following_url": "https://api.github.com/users/konard/following{/other_user}",
+      "gists_url": "https://api.github.com/users/konard/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/konard/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/konard/subscriptions",
+      "organizations_url": "https://api.github.com/users/konard/orgs",
+      "repos_url": "https://api.github.com/users/konard/repos",
+      "events_url": "https://api.github.com/users/konard/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/konard/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "parents": [
+      {
+        "sha": "09ad01fc95eaed332de2ade5fe139b4d097ab244",
+        "url": "https://api.github.com/repos/link-foundation/relative-meta-logic/commits/09ad01fc95eaed332de2ade5fe139b4d097ab244",
+        "html_url": "https://github.com/link-foundation/relative-meta-logic/commit/09ad01fc95eaed332de2ade5fe139b4d097ab244"
+      }
+    ]
+  }
+]

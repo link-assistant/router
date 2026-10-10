@@ -1,0 +1,786 @@
+[
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "pull_request": 184,
+    "created_at": "2026-09-20T14:32:54Z",
+    "merged_at": null,
+    "branch_runs": 831,
+    "conclusions": {
+      "success": 752,
+      "failure": 54,
+      "cancelled": 25
+    },
+    "distinct_head_shas": 93,
+    "workflow_stats": [
+      {
+        "name": "api-docs",
+        "runs": 92,
+        "conclusions": {
+          "success": 92
+        },
+        "distinct_head_shas": 92,
+        "first_green_updated_at": "2026-09-20T14:57:55Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35518012186",
+        "first_green_after_pr_creation_hours": 0.4169
+      },
+      {
+        "name": "bootstrap",
+        "runs": 92,
+        "conclusions": {
+          "success": 92
+        },
+        "distinct_head_shas": 92,
+        "first_green_updated_at": "2026-09-20T14:56:46Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35518012187",
+        "first_green_after_pr_creation_hours": 0.3978
+      },
+      {
+        "name": "cache-candidate-validation",
+        "runs": 18,
+        "conclusions": {
+          "success": 17,
+          "failure": 1
+        },
+        "distinct_head_shas": 18,
+        "first_green_updated_at": "2026-10-07T23:34:59Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37702855309",
+        "first_green_after_pr_creation_hours": 417.0347
+      },
+      {
+        "name": "cache-portability",
+        "runs": 20,
+        "conclusions": {
+          "failure": 7,
+          "success": 13
+        },
+        "distinct_head_shas": 20,
+        "first_green_updated_at": "2026-10-08T00:07:02Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37705855965",
+        "first_green_after_pr_creation_hours": 417.5689
+      },
+      {
+        "name": "docker",
+        "runs": 92,
+        "conclusions": {
+          "success": 89,
+          "failure": 3
+        },
+        "distinct_head_shas": 92,
+        "first_green_updated_at": "2026-09-20T15:01:23Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35518012191",
+        "first_green_after_pr_creation_hours": 0.4747
+      },
+      {
+        "name": "formal-corpus",
+        "runs": 86,
+        "conclusions": {
+          "failure": 5,
+          "success": 81
+        },
+        "distinct_head_shas": 86,
+        "first_green_updated_at": "2026-09-21T10:50:31Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35590744308",
+        "first_green_after_pr_creation_hours": 20.2936
+      },
+      {
+        "name": "issue-183-acceptance",
+        "runs": 23,
+        "conclusions": {
+          "failure": 22,
+          "cancelled": 1
+        },
+        "distinct_head_shas": 23,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      },
+      {
+        "name": "linked-implementation",
+        "runs": 7,
+        "conclusions": {
+          "success": 7
+        },
+        "distinct_head_shas": 7,
+        "first_green_updated_at": "2026-10-08T07:44:22Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37744692914",
+        "first_green_after_pr_creation_hours": 425.1911
+      },
+      {
+        "name": "linked-target",
+        "runs": 7,
+        "conclusions": {
+          "success": 6,
+          "failure": 1
+        },
+        "distinct_head_shas": 7,
+        "first_green_updated_at": "2026-10-08T19:27:46Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37831346860",
+        "first_green_after_pr_creation_hours": 436.9144
+      },
+      {
+        "name": "lint-english",
+        "runs": 93,
+        "conclusions": {
+          "success": 93
+        },
+        "distinct_head_shas": 93,
+        "first_green_updated_at": "2026-09-20T14:33:09Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35516821697",
+        "first_green_after_pr_creation_hours": 0.0042
+      },
+      {
+        "name": "orientation-proofs",
+        "runs": 20,
+        "conclusions": {
+          "success": 17,
+          "failure": 3
+        },
+        "distinct_head_shas": 20,
+        "first_green_updated_at": "2026-10-07T22:00:13Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37693094417",
+        "first_green_after_pr_creation_hours": 415.4553
+      },
+      {
+        "name": "parity",
+        "runs": 92,
+        "conclusions": {
+          "success": 92
+        },
+        "distinct_head_shas": 92,
+        "first_green_updated_at": "2026-09-20T14:58:23Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35518012319",
+        "first_green_after_pr_creation_hours": 0.4247
+      },
+      {
+        "name": "relational-kernel",
+        "runs": 19,
+        "conclusions": {
+          "success": 19
+        },
+        "distinct_head_shas": 19,
+        "first_green_updated_at": "2026-10-07T23:03:53Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/37699415226",
+        "first_green_after_pr_creation_hours": 416.5164
+      },
+      {
+        "name": "tests",
+        "runs": 170,
+        "conclusions": {
+          "failure": 12,
+          "success": 134,
+          "cancelled": 24
+        },
+        "distinct_head_shas": 93,
+        "first_green_updated_at": "2026-09-20T14:35:14Z",
+        "first_green_url": "https://github.com/link-foundation/relative-meta-logic/actions/runs/35516821763",
+        "first_green_after_pr_creation_hours": 0.0389
+      }
+    ],
+    "source_paths": [
+      "link-foundation--relative-meta-logic/complete-branch-runs-all.json",
+      "link-foundation--relative-meta-logic/pull.json"
+    ],
+    "caveats": [
+      "Latest attempt conclusions are used in workflow_stats; historical failed attempts remain separately archived.",
+      "Distinct head SHAs are observed CI revisions, not the number of git pushes.",
+      "updated_at is a run final-update timestamp, not a billing measurement or guaranteed exact finish time."
+    ],
+    "requiredPipeline": "issue-183-acceptance",
+    "firstFullyGreen": null
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "pull_request": 201,
+    "created_at": "2026-10-07T13:05:18Z",
+    "merged_at": null,
+    "branch_runs": 59,
+    "conclusions": {
+      "failure": 34,
+      "cancelled": 25
+    },
+    "distinct_head_shas": 59,
+    "workflow_stats": [
+      {
+        "name": "CI",
+        "runs": 59,
+        "conclusions": {
+          "failure": 34,
+          "cancelled": 25
+        },
+        "distinct_head_shas": 59,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      }
+    ],
+    "source_paths": [
+      "link-foundation--meta-language/complete-branch-runs-all.json",
+      "link-foundation--meta-language/pull.json"
+    ],
+    "caveats": [
+      "Latest attempt conclusions are used in workflow_stats; historical failed attempts remain separately archived.",
+      "Distinct head SHAs are observed CI revisions, not the number of git pushes.",
+      "updated_at is a run final-update timestamp, not a billing measurement or guaranteed exact finish time."
+    ],
+    "requiredPipeline": "CI",
+    "firstFullyGreen": null
+  },
+  {
+    "repository": "link-assistant/router",
+    "pull_request": 749,
+    "created_at": "2026-10-08T23:55:31Z",
+    "merged_at": "2026-10-10T03:25:23Z",
+    "branch_runs": 122,
+    "conclusions": {
+      "success": 96,
+      "failure": 11,
+      "cancelled": 15
+    },
+    "distinct_head_shas": 18,
+    "workflow_stats": [
+      {
+        "name": "Benchmarks",
+        "runs": 17,
+        "conclusions": {
+          "success": 17
+        },
+        "distinct_head_shas": 17,
+        "first_green_updated_at": "2026-10-09T01:15:31Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37868201247",
+        "first_green_after_pr_creation_hours": 1.3333
+      },
+      {
+        "name": "CI/CD Pipeline",
+        "runs": 18,
+        "conclusions": {
+          "success": 4,
+          "failure": 9,
+          "cancelled": 5
+        },
+        "distinct_head_shas": 18,
+        "first_green_updated_at": "2026-10-09T09:25:05Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37902729126",
+        "first_green_after_pr_creation_hours": 9.4928
+      },
+      {
+        "name": "Docker Runtime Build",
+        "runs": 17,
+        "conclusions": {
+          "success": 14,
+          "failure": 1,
+          "cancelled": 2
+        },
+        "distinct_head_shas": 17,
+        "first_green_updated_at": "2026-10-09T01:38:26Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37869397558",
+        "first_green_after_pr_creation_hours": 1.7153
+      },
+      {
+        "name": "Downstream Operations and Contracts",
+        "runs": 18,
+        "conclusions": {
+          "success": 14,
+          "cancelled": 3,
+          "failure": 1
+        },
+        "distinct_head_shas": 18,
+        "first_green_updated_at": "2026-10-09T00:09:06Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37862094368",
+        "first_green_after_pr_creation_hours": 0.2264
+      },
+      {
+        "name": "Fuzz",
+        "runs": 17,
+        "conclusions": {
+          "success": 16,
+          "cancelled": 1
+        },
+        "distinct_head_shas": 17,
+        "first_green_updated_at": "2026-10-09T01:59:59Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37869397654",
+        "first_green_after_pr_creation_hours": 2.0744
+      },
+      {
+        "name": "Real Client Capture",
+        "runs": 18,
+        "conclusions": {
+          "success": 15,
+          "cancelled": 3
+        },
+        "distinct_head_shas": 18,
+        "first_green_updated_at": "2026-10-09T00:17:31Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37862094497",
+        "first_green_after_pr_creation_hours": 0.3667
+      },
+      {
+        "name": "Soak",
+        "runs": 17,
+        "conclusions": {
+          "success": 16,
+          "cancelled": 1
+        },
+        "distinct_head_shas": 17,
+        "first_green_updated_at": "2026-10-09T01:46:29Z",
+        "first_green_url": "https://github.com/link-assistant/router/actions/runs/37869397562",
+        "first_green_after_pr_creation_hours": 1.8494
+      }
+    ],
+    "source_paths": [
+      "link-assistant--router/complete-branch-runs-all.json",
+      "link-assistant--router/pull.json"
+    ],
+    "caveats": [
+      "Latest attempt conclusions are used in workflow_stats; historical failed attempts remain separately archived.",
+      "Distinct head SHAs are observed CI revisions, not the number of git pushes.",
+      "updated_at is a run final-update timestamp, not a billing measurement or guaranteed exact finish time."
+    ],
+    "requiredPipeline": "CI/CD Pipeline",
+    "firstFullyGreen": {
+      "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa",
+      "all_recorded_workflows_green_updated_at": "2026-10-09T09:25:05Z",
+      "recorded_workflow_count": 7,
+      "caveat": "Full set of branch workflows observed for this revision; branch protection required-check list not independently available."
+    }
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "pull_request": 1188,
+    "created_at": "2026-09-30T11:12:19Z",
+    "merged_at": null,
+    "branch_runs": 3172,
+    "conclusions": {
+      "failure": 457,
+      "success": 1623,
+      "cancelled": 1092
+    },
+    "distinct_head_shas": 142,
+    "workflow_stats": [
+      {
+        "name": ".github/workflows/container-images.yml",
+        "runs": 9,
+        "conclusions": {
+          "failure": 9
+        },
+        "distinct_head_shas": 9,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      },
+      {
+        "name": ".github/workflows/e2e-isolation.yml",
+        "runs": 2,
+        "conclusions": {
+          "failure": 2
+        },
+        "distinct_head_shas": 2,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      },
+      {
+        "name": "Agentic CLI Matrix",
+        "runs": 142,
+        "conclusions": {
+          "failure": 23,
+          "cancelled": 80,
+          "success": 39
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:34:45Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093389",
+        "first_green_after_pr_creation_hours": 0.3739
+      },
+      {
+        "name": "Benchmark Corpus Gate",
+        "runs": 142,
+        "conclusions": {
+          "failure": 11,
+          "success": 38,
+          "cancelled": 93
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:54:03Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093273",
+        "first_green_after_pr_creation_hours": 0.6956
+      },
+      {
+        "name": "Broken Link Checker",
+        "runs": 142,
+        "conclusions": {
+          "success": 110,
+          "failure": 8,
+          "cancelled": 24
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:13:36Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093441",
+        "first_green_after_pr_creation_hours": 0.0214
+      },
+      {
+        "name": "CI/CD Pipeline",
+        "runs": 142,
+        "conclusions": {
+          "failure": 64,
+          "cancelled": 78
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      },
+      {
+        "name": "Coding Ladder",
+        "runs": 119,
+        "conclusions": {
+          "failure": 11,
+          "success": 39,
+          "cancelled": 69
+        },
+        "distinct_head_shas": 119,
+        "first_green_updated_at": "2026-10-06T23:09:10Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37541942334",
+        "first_green_after_pr_creation_hours": 155.9475
+      },
+      {
+        "name": "Coverage",
+        "runs": 142,
+        "conclusions": {
+          "failure": 40,
+          "cancelled": 101,
+          "success": 1
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-08T05:02:19Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37725193615",
+        "first_green_after_pr_creation_hours": 185.8333
+      },
+      {
+        "name": "Desktop Release",
+        "runs": 142,
+        "conclusions": {
+          "failure": 35,
+          "cancelled": 61,
+          "success": 46
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-06T23:13:49Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37541942923",
+        "first_green_after_pr_creation_hours": 156.025
+      },
+      {
+        "name": "External Benchmarks",
+        "runs": 146,
+        "conclusions": {
+          "failure": 13,
+          "success": 100,
+          "cancelled": 33
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:15:43Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093259",
+        "first_green_after_pr_creation_hours": 0.0567
+      },
+      {
+        "name": "Guarded staged release authority refusal",
+        "runs": 5,
+        "conclusions": {
+          "success": 5
+        },
+        "distinct_head_shas": 5,
+        "first_green_updated_at": "2026-10-10T11:55:57Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/38050091475",
+        "first_green_after_pr_creation_hours": 240.7272
+      },
+      {
+        "name": "Harmless reusable release runtime fixture",
+        "runs": 12,
+        "conclusions": {
+          "success": 12
+        },
+        "distinct_head_shas": 12,
+        "first_green_updated_at": "2026-10-09T23:50:20Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/38003442411",
+        "first_green_after_pr_creation_hours": 228.6336
+      },
+      {
+        "name": "Issue 1028 Agent CLI binary-tree ladder",
+        "runs": 144,
+        "conclusions": {
+          "failure": 22,
+          "success": 18,
+          "cancelled": 104
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-07T01:42:47Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37552997088",
+        "first_green_after_pr_creation_hours": 158.5078
+      },
+      {
+        "name": "Layered CI",
+        "runs": 142,
+        "conclusions": {
+          "failure": 53,
+          "cancelled": 53,
+          "success": 36
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-06T14:07:13Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37475175096",
+        "first_green_after_pr_creation_hours": 146.915
+      },
+      {
+        "name": "Observe read-only GitHub authorization profiles",
+        "runs": 5,
+        "conclusions": {
+          "success": 5
+        },
+        "distinct_head_shas": 5,
+        "first_green_updated_at": "2026-10-10T11:56:34Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/38050091457",
+        "first_green_after_pr_creation_hours": 240.7375
+      },
+      {
+        "name": "Proactive failure report Agent CLI E2E",
+        "runs": 142,
+        "conclusions": {
+          "failure": 16,
+          "success": 91,
+          "cancelled": 35
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-06T13:45:01Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37472289548",
+        "first_green_after_pr_creation_hours": 146.545
+      },
+      {
+        "name": "Publish VS Code extension",
+        "runs": 27,
+        "conclusions": {
+          "success": 24,
+          "cancelled": 3
+        },
+        "distinct_head_shas": 27,
+        "first_green_updated_at": "2026-10-08T20:44:45Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840803539",
+        "first_green_after_pr_creation_hours": 201.5406
+      },
+      {
+        "name": "Publish browser engine",
+        "runs": 27,
+        "conclusions": {
+          "success": 23,
+          "failure": 2,
+          "cancelled": 2
+        },
+        "distinct_head_shas": 27,
+        "first_green_updated_at": "2026-10-08T20:47:29Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840803478",
+        "first_green_after_pr_creation_hours": 201.5861
+      },
+      {
+        "name": "Publish source networks",
+        "runs": 20,
+        "conclusions": {
+          "success": 18,
+          "cancelled": 1,
+          "failure": 1
+        },
+        "distinct_head_shas": 20,
+        "first_green_updated_at": "2026-10-09T08:56:48Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37900412425",
+        "first_green_after_pr_creation_hours": 213.7414
+      },
+      {
+        "name": "Question necessity ratchet",
+        "runs": 142,
+        "conclusions": {
+          "failure": 31,
+          "success": 66,
+          "cancelled": 45
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:22:40Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093304",
+        "first_green_after_pr_creation_hours": 0.1725
+      },
+      {
+        "name": "Regenerate native session projections",
+        "runs": 1,
+        "conclusions": {
+          "failure": 1
+        },
+        "distinct_head_shas": 1,
+        "first_green_updated_at": null,
+        "first_green_url": null,
+        "first_green_after_pr_creation_hours": null
+      },
+      {
+        "name": "Regenerate self-AST census",
+        "runs": 142,
+        "conclusions": {
+          "failure": 13,
+          "success": 101,
+          "cancelled": 28
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:17:48Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093426",
+        "first_green_after_pr_creation_hours": 0.0914
+      },
+      {
+        "name": "Security",
+        "runs": 142,
+        "conclusions": {
+          "success": 79,
+          "cancelled": 61,
+          "failure": 2
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:22:51Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093386",
+        "first_green_after_pr_creation_hours": 0.1756
+      },
+      {
+        "name": "Self-authored pull request",
+        "runs": 91,
+        "conclusions": {
+          "success": 80,
+          "cancelled": 7,
+          "failure": 4
+        },
+        "distinct_head_shas": 91,
+        "first_green_updated_at": "2026-10-07T08:36:17Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37594789335",
+        "first_green_after_pr_creation_hours": 165.3994
+      },
+      {
+        "name": "Self-development status",
+        "runs": 142,
+        "conclusions": {
+          "success": 112,
+          "failure": 19,
+          "cancelled": 11
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:13:39Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093350",
+        "first_green_after_pr_creation_hours": 0.0222
+      },
+      {
+        "name": "Self-hosting evidence",
+        "runs": 142,
+        "conclusions": {
+          "success": 98,
+          "cancelled": 42,
+          "failure": 2
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-10-06T13:24:55Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37470365717",
+        "first_green_after_pr_creation_hours": 146.21
+      },
+      {
+        "name": "Stock Rust Install",
+        "runs": 142,
+        "conclusions": {
+          "failure": 13,
+          "success": 84,
+          "cancelled": 45
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:19:34Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093353",
+        "first_green_after_pr_creation_hours": 0.1208
+      },
+      {
+        "name": "Summarization Ratchet",
+        "runs": 142,
+        "conclusions": {
+          "failure": 18,
+          "success": 91,
+          "cancelled": 33
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:19:40Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093328",
+        "first_green_after_pr_creation_hours": 0.1225
+      },
+      {
+        "name": "Task Ladder",
+        "runs": 91,
+        "conclusions": {
+          "failure": 11,
+          "success": 58,
+          "cancelled": 22
+        },
+        "distinct_head_shas": 91,
+        "first_green_updated_at": "2026-10-07T06:47:07Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37582735568",
+        "first_green_after_pr_creation_hours": 163.58
+      },
+      {
+        "name": "Web UI boundary",
+        "runs": 93,
+        "conclusions": {
+          "success": 77,
+          "cancelled": 7,
+          "failure": 9
+        },
+        "distinct_head_shas": 93,
+        "first_green_updated_at": "2026-09-30T16:13:47Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36742616065",
+        "first_green_after_pr_creation_hours": 5.0244
+      },
+      {
+        "name": "Workflows",
+        "runs": 142,
+        "conclusions": {
+          "success": 104,
+          "failure": 6,
+          "cancelled": 32
+        },
+        "distinct_head_shas": 142,
+        "first_green_updated_at": "2026-09-30T11:13:03Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/36707093365",
+        "first_green_after_pr_creation_hours": 0.0122
+      },
+      {
+        "name": "Write-Effect Ladder",
+        "runs": 91,
+        "conclusions": {
+          "failure": 12,
+          "success": 58,
+          "cancelled": 21
+        },
+        "distinct_head_shas": 91,
+        "first_green_updated_at": "2026-10-07T06:47:59Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37582735510",
+        "first_green_after_pr_creation_hours": 163.5944
+      },
+      {
+        "name": "container-images",
+        "runs": 17,
+        "conclusions": {
+          "failure": 6,
+          "success": 10,
+          "cancelled": 1
+        },
+        "distinct_head_shas": 17,
+        "first_green_updated_at": "2026-10-09T14:47:16Z",
+        "first_green_url": "https://github.com/link-assistant/formal-ai/actions/runs/37941877728",
+        "first_green_after_pr_creation_hours": 219.5825
+      }
+    ],
+    "source_paths": [
+      "link-assistant--formal-ai/complete-branch-runs-all.json",
+      "link-assistant--formal-ai/pull.json"
+    ],
+    "caveats": [
+      "Latest attempt conclusions are used in workflow_stats; historical failed attempts remain separately archived.",
+      "Distinct head SHAs are observed CI revisions, not the number of git pushes.",
+      "updated_at is a run final-update timestamp, not a billing measurement or guaranteed exact finish time."
+    ],
+    "requiredPipeline": "CI/CD Pipeline",
+    "firstFullyGreen": null
+  }
+]
