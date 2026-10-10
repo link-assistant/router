@@ -16,6 +16,10 @@
     "./testing": {
       "types": "./testing.d.ts",
       "import": "./testing.js"
+    },
+    "./native": {
+      "types": "./native.d.ts",
+      "import": "./native/index.mjs"
     }
   },
   "files": [
@@ -23,11 +27,15 @@
     "*.d.ts",
     "catalog.json",
     "schemas",
-    "README.md"
+    "README.md",
+    "native"
   ],
   "scripts": {
     "test": "node --test test/*.test.js",
-    "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts"
+    "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/types.ts",
+    "native:test": "node --test test/native-*.test.*",
+    "native:test:bun": "bun test test/native-*.test.*",
+    "native:typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts"
   },
   "dependencies": {
     "ajv": "^8.17.1"
@@ -45,5 +53,8 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "bin": {
+    "router-native": "native/cli.mjs"
   }
 }

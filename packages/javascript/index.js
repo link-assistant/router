@@ -219,3 +219,6 @@ export class Router {
   }
 }
 export const createRouter = options => new Router(options);
+
+// Native execution is explicitly opt-in; the existing Router transport is unchanged.
+export { NativeRouter, NativeRouterError, createNativeRouter } from './native/operations.mjs';

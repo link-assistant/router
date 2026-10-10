@@ -1,0 +1,1054 @@
+{
+  "schema": "link-assistant-router/native-parity/v1",
+  "scope": "Draft native JavaScript inventory; unsupported entries never count as implemented parity",
+  "features": [
+    {
+      "id": "operation:accounts.list",
+      "operation": "accounts.list",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:accounts.list"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:accounts.pause",
+      "operation": "accounts.pause",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:accounts.pause"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:accounts.policy",
+      "operation": "accounts.policy",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:accounts.policy"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:accounts.resume",
+      "operation": "accounts.resume",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:accounts.resume"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:auth.claude",
+      "operation": "auth.claude",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:auth.claude"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:auth.clear",
+      "operation": "auth.clear",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:auth.clear"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:auth.codex",
+      "operation": "auth.codex",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:auth.codex"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:auth.gh",
+      "operation": "auth.gh",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:auth.gh"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:auth.import",
+      "operation": "auth.import",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:auth.import"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:auth.status",
+      "operation": "auth.status",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:auth.status"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:clients.backup.create",
+      "operation": "clients.backup.create",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.backup.create"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.backup.list",
+      "operation": "clients.backup.list",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.backup.list"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.backup.restore",
+      "operation": "clients.backup.restore",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.backup.restore"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.backup.verify",
+      "operation": "clients.backup.verify",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.backup.verify"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.doctor",
+      "operation": "clients.doctor",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.doctor"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.install",
+      "operation": "clients.install",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.install"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.list",
+      "operation": "clients.list",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.list"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.reinstall",
+      "operation": "clients.reinstall",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.reinstall"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.remove",
+      "operation": "clients.remove",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.remove"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.repair",
+      "operation": "clients.repair",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.repair"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.reset",
+      "operation": "clients.reset",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.reset"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.setup",
+      "operation": "clients.setup",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.setup"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.show",
+      "operation": "clients.show",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.show"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:clients.update",
+      "operation": "clients.update",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:clients.update"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:configure",
+      "operation": "configure",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:configure"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:contracts",
+      "operation": "contracts",
+      "status": "implemented",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:contracts"
+        }
+      ]
+    },
+    {
+      "id": "operation:deploy",
+      "operation": "deploy",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:deploy"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:doctor",
+      "operation": "doctor",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:doctor"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:logs.anomalies",
+      "operation": "logs.anomalies",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:logs.anomalies"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:logs.show",
+      "operation": "logs.show",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:logs.show"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:logs.summary",
+      "operation": "logs.summary",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:logs.summary"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:models.explain",
+      "operation": "models.explain",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:models.explain"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:providers.add",
+      "operation": "providers.add",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:providers.add"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:providers.import",
+      "operation": "providers.import",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:providers.import"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:providers.list",
+      "operation": "providers.list",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:providers.list"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:providers.remove",
+      "operation": "providers.remove",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:providers.remove"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:providers.show",
+      "operation": "providers.show",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:providers.show"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:serve",
+      "operation": "serve",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:serve"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:server.claim",
+      "operation": "server.claim",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.claim"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.reap",
+      "operation": "server.reap",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.reap"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.remove",
+      "operation": "server.remove",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.remove"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.start",
+      "operation": "server.start",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.start"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.status",
+      "operation": "server.status",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.status"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.stop",
+      "operation": "server.stop",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.stop"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:server.use",
+      "operation": "server.use",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:server.use"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:tls.ca",
+      "operation": "tls.ca",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:tls.ca"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:tls.generate",
+      "operation": "tls.generate",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:tls.generate"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:tokens.expire",
+      "operation": "tokens.expire",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.expire"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.import",
+      "operation": "tokens.import",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.import"
+        }
+      ],
+      "gaps": [
+        "Native JSON export merge/dry-run import only; replace, binary, lino and deployment directory import remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.issue",
+      "operation": "tokens.issue",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.issue"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.list",
+      "operation": "tokens.list",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.list"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.recover-admin",
+      "operation": "tokens.recover-admin",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.recover-admin"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.revoke",
+      "operation": "tokens.revoke",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.revoke"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.rotate",
+      "operation": "tokens.rotate",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.rotate"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tokens.show",
+      "operation": "tokens.show",
+      "status": "partial",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:tokens.show"
+        }
+      ],
+      "gaps": [
+        "Local native subset only; remote/managed selection and complete Rust option/behavior parity remain unimplemented"
+      ]
+    },
+    {
+      "id": "operation:tunnel.down",
+      "operation": "tunnel.down",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:tunnel.down"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:tunnel.status",
+      "operation": "tunnel.status",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:tunnel.status"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:tunnel.up",
+      "operation": "tunnel.up",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:tunnel.up"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:usage",
+      "operation": "usage",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:usage"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:verify",
+      "operation": "verify",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:verify"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    },
+    {
+      "id": "operation:version",
+      "operation": "version",
+      "status": "implemented",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "operation:version"
+        }
+      ]
+    },
+    {
+      "id": "operation:with",
+      "operation": "with",
+      "status": "unsupported",
+      "implementation": [
+        "packages/javascript/native/operations.mjs"
+      ],
+      "evidence": [
+        {
+          "file": "packages/javascript/test/native-operation-fixtures.mjs",
+          "fixture": "unsupported:with"
+        }
+      ],
+      "gaps": [
+        "Native operation not implemented; returns a schema-valid failure and requires explicit Rust wrapper for this behavior"
+      ]
+    }
+  ]
+}
