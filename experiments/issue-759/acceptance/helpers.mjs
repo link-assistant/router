@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 
-export const repository = resolve(process.env.ROUTER_ACCEPTANCE_ROOT ?? fileURLToPath(new URL('../../../..', import.meta.url)));
+export const repository = resolve(process.env.ROUTER_ACCEPTANCE_ROOT ?? fileURLToPath(new URL('../../../', import.meta.url)));
 export const load = path => import(pathToFileURL(join(repository, path)).href);
 export async function temporary(t) {
   const directory = await mkdtemp(join(tmpdir(), 'router-759-acceptance-'));
