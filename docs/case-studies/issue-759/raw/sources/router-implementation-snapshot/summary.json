@@ -1,0 +1,123 @@
+{
+  "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+  "status": "Frozen interim snapshot, not final post-archive inventory",
+  "features": {
+    "total": 443,
+    "statuses": {
+      "partial": 79,
+      "unsupported": 362,
+      "implemented": 2
+    },
+    "operations": {
+      "partial": 36,
+      "unsupported": 24,
+      "implemented": 2
+    },
+    "canonical_routes": {
+      "unsupported": 338,
+      "partial": 30
+    },
+    "strict_blockers": 442,
+    "strict_blocker_derivation": "441 partial/unsupported feature entries plus one aggregate translation gap; the aggregate is not another feature. scripts/check-router-parity.mjs lines84-85 and121-122 append these distinct gap entries."
+  },
+  "rust_inventory": {
+    "totals": {
+      "sources": 804,
+      "executable": 535,
+      "executableFunctions": 64,
+      "executableConstants": 471,
+      "carried": 12140,
+      "preserved": 13279
+    },
+    "runtimeParity": false,
+    "path_root_counts": {
+      "benches": 1,
+      "build.rs": 1,
+      "dev": 2,
+      "docs": 16,
+      "examples": 3,
+      "experiments": 19,
+      "fuzz": 3,
+      "scripts": 29,
+      "src": 558,
+      "tests": 172
+    },
+    "docs_evidence_paths": 16,
+    "raw_evidence_paths": 15,
+    "dev_archived_paths": 2,
+    "source_production_path_files": 394,
+    "functionCoverage": {
+      "scope": "top-level fn items; nested declarations inside carried enclosing items are excluded",
+      "productionPathRule": "src/ paths excluding names containing tests or test_support",
+      "all": {
+        "topLevelFunctions": 6348,
+        "executableFunctions": 64,
+        "carriedFunctions": 6284,
+        "refusalCategories": {
+          "other unsupported methods": 472,
+          "mutation or iteration": 395,
+          "unsupported": 1025,
+          "attributes or compilation conditions": 2716,
+          "syntax": 280,
+          "tuples or destructuring": 199,
+          "unresolved or generic types": 381,
+          "unresolved declaration or carried dependency": 27,
+          "closures or iterator methods": 231,
+          "async or effects": 558
+        }
+      },
+      "production": {
+        "topLevelFunctions": 2543,
+        "executableFunctions": 37,
+        "carriedFunctions": 2506,
+        "refusalCategories": {
+          "closures or iterator methods": 185,
+          "unresolved or generic types": 305,
+          "tuples or destructuring": 108,
+          "mutation or iteration": 294,
+          "other unsupported methods": 310,
+          "syntax": 136,
+          "unsupported": 616,
+          "unresolved declaration or carried dependency": 18,
+          "async or effects": 445,
+          "attributes or compilation conditions": 89
+        }
+      }
+    },
+    "scope": "All tracked *.rs, including documentation fixtures, local incident reproductions and copied upstream Rust evidence. 804 is not a production runtime module denominator. productionPathRule is only a path-based source-function census; neither census proves runtime parity.",
+    "archived_upstream_examples": [
+      "dev/log/issues/184/pulls/185/cargo-cyclonedx-0.5.9-cli-test.rs",
+      "dev/log/issues/184/pulls/185/cargo-cyclonedx-0.5.9-generator.rs",
+      "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/tests/query_processor_csharp_parity_tests.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-cargo-lock.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-changelog-fragment.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-release-needed.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-version-modification.rs",
+      "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-workflow-tools.rs",
+      "docs/case-studies/issue-759/raw/sources/start/files/rust/src/lib/generated/parity_threshold.rs"
+    ]
+  },
+  "js_first_policy": {
+    "source_files": 1,
+    "functions": 20,
+    "independently_authored_vectors": 58,
+    "native_module_source_items": {
+      "files": 16,
+      "items": 277,
+      "translated": 11,
+      "unsupported": 266
+    }
+  },
+  "native_typescript": {
+    "source_modules": 19,
+    "generated_ts_paths_in_native_manifest": 19,
+    "additional_portable_policy_ts_paths": [
+      "packages/typescript/native/js-first-policy.ts"
+    ],
+    "total_ts_outputs_combined_manifests": 20,
+    "fullNativeRustTranslation": false,
+    "scope": "TypeScript module lowering/type-erasure AST identity and separately generated bounded policy; this does not certify full native Rust translation."
+  }
+}

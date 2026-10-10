@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+  "captured_at": "2026-10-10T20:08:40.617225+00:00",
+  "capture_method": "Read-only git show COMMIT:PATH from gate Git object database; working-tree contents not read. Lossless deterministic gzip storage, decoded hash and Git blob identity retained.",
+  "status": "Frozen interim implementation snapshot; subsequent archive assembly may regenerate inventories. Counts are not production coverage percentages.",
+  "files": [
+    {
+      "repository": "link-assistant/router",
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "path": "parity/router-features.json",
+      "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__router-features.json.gz",
+      "decoded_sha256": "5f4c0ad5b128cea2a38e653aa4150d3f35db8bcb6ef366a24d4703ac85955046",
+      "stored_sha256": "aab718e618fa141577d1ccc3fca98b8e9f674870cf4ddebd46f590117ec4fe39",
+      "decoded_bytes": 226191,
+      "stored_bytes": 9446,
+      "git_blob_sha1": "d2d077481084a13b2e1f6740c0c58dd6f9e7b105",
+      "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/router-features.json"
+    },
+    {
+      "repository": "link-assistant/router",
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "path": "parity/rust-source-inventory.json",
+      "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__rust-source-inventory.json.gz",
+      "decoded_sha256": "5db716dc6639576630e11958996d7f6d1a522d4c76d44ba8a4692c9e6a3d7f7f",
+      "stored_sha256": "4b4d2c3b7e22e926035d39545643dacddec1261473f09817907006ec7bdc8472",
+      "decoded_bytes": 445127,
+      "stored_bytes": 64281,
+      "git_blob_sha1": "0beb56794e069e3be2017c35188777ac19da45be",
+      "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/rust-source-inventory.json"
+    },
+    {
+      "repository": "link-assistant/router",
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "path": "parity/js-first-translation.json",
+      "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__js-first-translation.json.gz",
+      "decoded_sha256": "5ebc440c52c0fc82ec4300e596b9539da42182defca9ba5c2052edba1b6d224d",
+      "stored_sha256": "1b2cf33ec291db1ccacf01b6050be918eb484ff5b0bb1812497ee8bbd959581f",
+      "decoded_bytes": 121533,
+      "stored_bytes": 18741,
+      "git_blob_sha1": "aac754f56adbf34afa3c252699706a7dec54d3dc",
+      "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/js-first-translation.json"
+    },
+    {
+      "repository": "link-assistant/router",
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "path": "tools/translation/js-to-rust/generated/native-typescript/manifest.json",
+      "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/tools__translation__js-to-rust__generated__native-typescript__manifest.json.gz",
+      "decoded_sha256": "6e79e9676128578427f9a98a3693d3f287bf898310ad26b51eca7498564341d5",
+      "stored_sha256": "74b5da4f7fd94805036e6659f491a4ca3423b555a5502d0981a61ca2df2d8e8d",
+      "decoded_bytes": 35180,
+      "stored_bytes": 8550,
+      "git_blob_sha1": "abb0af5b0357490924d796002ef29d3f79a2229e",
+      "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/tools/translation/js-to-rust/generated/native-typescript/manifest.json"
+    },
+    {
+      "repository": "link-assistant/router",
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "path": "scripts/check-router-parity.mjs",
+      "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/scripts__check-router-parity.mjs.gz",
+      "decoded_sha256": "24a2453cdb13a11c03b65d3f3f655965b56a2edc871d0b3e626f2e03b1f305bc",
+      "stored_sha256": "0d6bc118d61589264acfd6f1ae127a53b2692b39e9255822e8b2b786a96829f7",
+      "decoded_bytes": 10979,
+      "stored_bytes": 3586,
+      "git_blob_sha1": "ab9d5fc1b855704a1ebeea121968e1a6b1e01013",
+      "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/scripts/check-router-parity.mjs"
+    }
+  ]
+}

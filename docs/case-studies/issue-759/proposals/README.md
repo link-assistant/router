@@ -30,3 +30,7 @@ nine small published source files. [source-pins.json](source-pins.json) records 
 audited bases. Exact filed issue metadata/bodies, first100 comments, PR metadata
 and file lists are captured under
 [raw/sources/upstream-proposals](../raw/sources/upstream-proposals/).
+
+The additional [solve scheduler design](hive-mind-solve-scheduler-design.md) and [additive patch](hive-mind-solve-scheduler.patch) extend the same Hive Mind3043/3044 scope; [provenance](hive-mind-solve-scheduler-provenance.json) pins the existing public PR head. They specify required runtime enforcement without claiming implementation. The support-comment file is review text and has not been posted.
+
+The Hive scheduler design is now published in [draft PR #3044](https://github.com/link-assistant/hive-mind/pull/3044) at [immutable document head aeb41d56](https://github.com/link-assistant/hive-mind/blob/aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md). [Publication provenance](hive-mind-solve-scheduler-publication.json) records parent/head hashes, exact source bytes and the head-specific run API snapshot. This publishes the design; runtime scheduler support remains proposed, and no successful remote CI is claimed.

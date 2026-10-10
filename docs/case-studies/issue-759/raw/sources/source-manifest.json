@@ -1723,8 +1723,10 @@
     "repository": "link-foundation/link-cli",
     "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
     "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-tree.json.gz",
-    "sha256": "153ccd69d93c9b94f4b03e98e1b3aebf2805e9c56ef31fb145ed354d0e64fdd5",
-    "captured_at": "2026-10-10T19:49:00.258502+00:00"
+    "sha256": "2d5cb9a348029b8d64fbff1d5b3b8291d4739c91c1ff5ba8d1de269d788f8a53",
+    "captured_at": "2026-10-10T19:49:00.258502+00:00",
+    "stored_sha256": "153ccd69d93c9b94f4b03e98e1b3aebf2805e9c56ef31fb145ed354d0e64fdd5",
+    "sha256_scope": "Decoded retained bytes; stored_sha256 hashes gzip container. Prior sha256 field contained the matching stored container digest, clarified during final integrity review."
   },
   {
     "kind": "github-repository-audit-snapshot",
@@ -1793,8 +1795,10 @@
     "repository": "link-foundation/links-notation",
     "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
     "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-tree.json.gz",
-    "sha256": "6a89624cae750381ff9dbe4c8b12c1d60061e953d3c11fb82d3b89a94ab4fef2",
-    "captured_at": "2026-10-10T19:49:00.263827+00:00"
+    "sha256": "a29688119e5e7d0dd46f264711f922a32194e36e49e222e10402429cb3aacb60",
+    "captured_at": "2026-10-10T19:49:00.263827+00:00",
+    "stored_sha256": "6a89624cae750381ff9dbe4c8b12c1d60061e953d3c11fb82d3b89a94ab4fef2",
+    "sha256_scope": "Decoded retained bytes; stored_sha256 hashes gzip container. Prior sha256 field contained the matching stored container digest, clarified during final integrity review."
   },
   {
     "kind": "github-repository-audit-snapshot",
@@ -1863,8 +1867,10 @@
     "repository": "link-foundation/start",
     "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
     "local_path": "docs/case-studies/issue-759/raw/sources/start/default-head-tree.json.gz",
-    "sha256": "ffd02f70f839bd7b9d5a5563514e437de9e417d7453a1fcff3d0dc34de509c8f",
-    "captured_at": "2026-10-10T19:49:00.267829+00:00"
+    "sha256": "80350ff6633613c23c096513a888f877b7c241de8899075f208e199d9685910a",
+    "captured_at": "2026-10-10T19:49:00.267829+00:00",
+    "stored_sha256": "ffd02f70f839bd7b9d5a5563514e437de9e417d7453a1fcff3d0dc34de509c8f",
+    "sha256_scope": "Decoded retained bytes; stored_sha256 hashes gzip container. Prior sha256 field contained the matching stored container digest, clarified during final integrity review."
   },
   {
     "kind": "github-repository-audit-snapshot",
@@ -1943,8 +1949,10 @@
     "repository": "link-assistant/calculator",
     "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
     "local_path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-tree.json.gz",
-    "sha256": "bf6cf5bc47796abe79628726004b3e07152866b4274763c58db119341ab2b8cc",
-    "captured_at": "2026-10-10T19:49:00.272278+00:00"
+    "sha256": "015e193079525a5bce24e2f14c2f6df35416cb7e42e5fd4df0c4d88cb193de66",
+    "captured_at": "2026-10-10T19:49:00.272278+00:00",
+    "stored_sha256": "bf6cf5bc47796abe79628726004b3e07152866b4274763c58db119341ab2b8cc",
+    "sha256_scope": "Decoded retained bytes; stored_sha256 hashes gzip container. Prior sha256 field contained the matching stored container digest, clarified during final integrity review."
   },
   {
     "kind": "github-repository-audit-snapshot",
@@ -1985,5 +1993,193 @@
     "local_path": "docs/case-studies/issue-759/raw/sources/calculator/rulesets.json",
     "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
     "captured_at": "2026-10-10T19:49:00.272579+00:00"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/git-push-guard.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/git-push-guard.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/git-push-guard.lib.mjs",
+    "sha256": "129ded2d5e19079a81aa90b36b78f99fbca72a6cfd5f5644fef0f60fbdca5f82",
+    "stored_sha256": "129ded2d5e19079a81aa90b36b78f99fbca72a6cfd5f5644fef0f60fbdca5f82",
+    "decoded_bytes": 10030
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/github-merge-ci-wait.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/github-merge-ci-wait.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge-ci-wait.lib.mjs",
+    "sha256": "9b356a0a1d017d51366fe9466dd5be383240028d8a8b6d4edabaf49a241560fb",
+    "stored_sha256": "9b356a0a1d017d51366fe9466dd5be383240028d8a8b6d4edabaf49a241560fb",
+    "decoded_bytes": 8406
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/github-merge.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/github-merge.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge.lib.mjs.gz",
+    "sha256": "2140eb24729bdd6726fd7a8f0f31072b74700ceb8870438223400e28b9c9e512",
+    "stored_sha256": "d266c375a636f426cbd111baf17c638984a90b740c28a3e55b59da0c0ed6843b",
+    "decoded_bytes": 56031
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/solve.auto-pr-push-sync.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/solve.auto-pr-push-sync.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.auto-pr-push-sync.lib.mjs",
+    "sha256": "9bb35d6e2304e1a782011ea842c5d972fe4607bf3c64e09c1b6a4f77e470e630",
+    "stored_sha256": "9bb35d6e2304e1a782011ea842c5d972fe4607bf3c64e09c1b6a4f77e470e630",
+    "decoded_bytes": 7560
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/solve.feedback.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/solve.feedback.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.feedback.lib.mjs",
+    "sha256": "fb99a675b92fb8b95afd200b90d9a6a1852db96118075fca00b2682256838529",
+    "stored_sha256": "fb99a675b92fb8b95afd200b90d9a6a1852db96118075fca00b2682256838529",
+    "decoded_bytes": 23922
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/solve.config.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/solve.config.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.config.lib.mjs.gz",
+    "sha256": "a5c10380e7464d3ea414423d6d8ff8ebb494c45121c2acdfeb4c2575e9481819",
+    "stored_sha256": "58a93813388393117ba8c67031c53d551c2876c34cf1f5e1b0f27e49680705ad",
+    "decoded_bytes": 71822
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+    "path": "docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+    "url": "https://github.com/link-assistant/hive-mind/blob/aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/published-heads/hive-mind-scheduler/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+    "sha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a"
+  },
+  {
+    "kind": "pr-metadata",
+    "repository": "link-assistant/hive-mind",
+    "commit": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+    "endpoint": "repos/link-assistant/hive-mind/pulls/3044",
+    "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json",
+    "sha256": "38b672beca2d07dfddc0c12823a5dac6132ccdd86f38a6d464c5e55da45bbdde",
+    "bytes": 18226,
+    "captured_at": "2026-10-10T20:08:06.918389+00:00"
+  },
+  {
+    "kind": "pr-files",
+    "repository": "link-assistant/hive-mind",
+    "commit": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+    "endpoint": "repos/link-assistant/hive-mind/pulls/3044/files?per_page=100",
+    "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json",
+    "sha256": "92180db228819d62b8fdbddbe8cb1534c9a6142b49f841ea6c1af0d3e437988d",
+    "bytes": 16044,
+    "captured_at": "2026-10-10T20:08:06.918389+00:00"
+  },
+  {
+    "kind": "head-runs",
+    "repository": "link-assistant/hive-mind",
+    "commit": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+    "endpoint": "repos/link-assistant/hive-mind/actions/runs?head_sha=aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08&per_page=100",
+    "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-head-runs.json",
+    "sha256": "a2790a384d7d281e7395679000c35d27768d89dbd7052f725b8f4688beb59915",
+    "bytes": 36,
+    "captured_at": "2026-10-10T20:08:06.918389+00:00"
+  },
+  {
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "path": "parity/router-features.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__router-features.json.gz",
+    "decoded_sha256": "5f4c0ad5b128cea2a38e653aa4150d3f35db8bcb6ef366a24d4703ac85955046",
+    "stored_sha256": "aab718e618fa141577d1ccc3fca98b8e9f674870cf4ddebd46f590117ec4fe39",
+    "decoded_bytes": 226191,
+    "stored_bytes": 9446,
+    "git_blob_sha1": "d2d077481084a13b2e1f6740c0c58dd6f9e7b105",
+    "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/router-features.json"
+  },
+  {
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "path": "parity/rust-source-inventory.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__rust-source-inventory.json.gz",
+    "decoded_sha256": "5db716dc6639576630e11958996d7f6d1a522d4c76d44ba8a4692c9e6a3d7f7f",
+    "stored_sha256": "4b4d2c3b7e22e926035d39545643dacddec1261473f09817907006ec7bdc8472",
+    "decoded_bytes": 445127,
+    "stored_bytes": 64281,
+    "git_blob_sha1": "0beb56794e069e3be2017c35188777ac19da45be",
+    "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/rust-source-inventory.json"
+  },
+  {
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "path": "parity/js-first-translation.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__js-first-translation.json.gz",
+    "decoded_sha256": "5ebc440c52c0fc82ec4300e596b9539da42182defca9ba5c2052edba1b6d224d",
+    "stored_sha256": "1b2cf33ec291db1ccacf01b6050be918eb484ff5b0bb1812497ee8bbd959581f",
+    "decoded_bytes": 121533,
+    "stored_bytes": 18741,
+    "git_blob_sha1": "aac754f56adbf34afa3c252699706a7dec54d3dc",
+    "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/parity/js-first-translation.json"
+  },
+  {
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "path": "tools/translation/js-to-rust/generated/native-typescript/manifest.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/tools__translation__js-to-rust__generated__native-typescript__manifest.json.gz",
+    "decoded_sha256": "6e79e9676128578427f9a98a3693d3f287bf898310ad26b51eca7498564341d5",
+    "stored_sha256": "74b5da4f7fd94805036e6659f491a4ca3423b555a5502d0981a61ca2df2d8e8d",
+    "decoded_bytes": 35180,
+    "stored_bytes": 8550,
+    "git_blob_sha1": "abb0af5b0357490924d796002ef29d3f79a2229e",
+    "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/tools/translation/js-to-rust/generated/native-typescript/manifest.json"
+  },
+  {
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "path": "scripts/check-router-parity.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/scripts__check-router-parity.mjs.gz",
+    "decoded_sha256": "24a2453cdb13a11c03b65d3f3f655965b56a2edc871d0b3e626f2e03b1f305bc",
+    "stored_sha256": "0d6bc118d61589264acfd6f1ae127a53b2692b39e9255822e8b2b786a96829f7",
+    "decoded_bytes": 10979,
+    "stored_bytes": 3586,
+    "git_blob_sha1": "ab9d5fc1b855704a1ebeea121968e1a6b1e01013",
+    "url": "https://github.com/link-assistant/router/blob/ae950a3025945b32b6744848e81d4c6ae2ab4048/scripts/check-router-parity.mjs"
+  },
+  {
+    "kind": "completed-local-preflight-log",
+    "repository": "link-assistant/router",
+    "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+    "local_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-ae950a30.log.gz",
+    "sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd",
+    "stored_sha256": "c7390108ac01edcd20bce2f69de75948311832273d049e5cfa5e1ec0075b48bd",
+    "source_path": "/tmp/router-759-preflight-ae950a30.log",
+    "source_sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd"
+  },
+  {
+    "kind": "completed-local-preflight-log",
+    "repository": "link-assistant/router",
+    "commit": "68982814ea98c3800451a1a565eeae71b8def86f",
+    "local_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-68982814.log.gz",
+    "sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8",
+    "stored_sha256": "d681945f60ab3e8c1327ccb451d40721b5d4a5f535aa4041ed4dcf400748ad14",
+    "source_path": "/tmp/router-759-preflight-68982814.log",
+    "source_sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8"
+  },
+  {
+    "kind": "observed-local-verification-receipt",
+    "repository": "link-assistant/router",
+    "commit": "03dce5099804fbf6215e5c6db8285bddd8f90e38",
+    "local_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-auditor-03dce509-receipt.json.gz",
+    "sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed",
+    "stored_sha256": "4003103eb3196b264c2d84c466fa185e20fd5b4670837fae70e9ff6fda46574d",
+    "source_path": "/tmp/router-759-auditor-03dce509-receipt.json",
+    "source_sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed"
   }
 ]

@@ -1,0 +1,18 @@
+{
+  "repository": "link-assistant/hive-mind",
+  "target_pr": 3044,
+  "issue": 3043,
+  "base_commit": "0f497abc289aad95f62fd2ac34724c972b703520",
+  "original_pr_base_commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+  "target_branch": "issue-759-js-first-standard",
+  "operation": "add one design proposal document; no runtime implementation",
+  "added_path": "docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+  "patch_path": "docs/case-studies/issue-759/proposals/hive-mind-solve-scheduler.patch",
+  "patch_sha256": "cec6251ca134033636cd330022928237c9216b8c34a0f382df1e541817386731",
+  "design_sha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a",
+  "source_manifest": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
+  "source_commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+  "review_body_path": "docs/case-studies/issue-759/proposals/hive-mind-solve-support-comment.md",
+  "review_body_sha256": "8725f07ca8b9af0961219f68c8b251802bf1c2b4de9aea8dce3f1c4ce9ce215a",
+  "publication_policy": "Strict readiness stamp gates Rust execution and production publication; separately authorized exact-candidate review draft stamp records incomplete behavior and leaves Rust blocked."
+}

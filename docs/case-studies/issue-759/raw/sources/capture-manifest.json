@@ -1,6 +1,6 @@
 {
-  "captured_at": "2026-10-10T19:49:00.360384+00:00",
-  "scope": "Pinned primary sources; metadata snapshots; compressed complete source trees except formal-ai documented truncation; published proposals; four additional current repository audits",
+  "captured_at": "2026-10-10T20:17:47.454365+00:00",
+  "scope": "Pinned primary sources, metadata snapshots, compressed source trees with formal-ai truncation disclosed, published proposals, four additional current repository audits, immutable implementation snapshot and local verification receipts. sha256 in this capture manifest always hashes stored file bytes.",
   "files": [
     {
       "path": "docs/case-studies/issue-759/raw/sources/additional-repository-audit-summary.json",
@@ -251,6 +251,36 @@
       "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/contributing-guidelines.lib.mjs",
       "bytes": 9122,
       "sha256": "1ab5a7fb6c913ae555f66b0e510e7f50b156f35aaa5e41aa633e539f0aeed889"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/git-push-guard.lib.mjs",
+      "bytes": 10030,
+      "sha256": "129ded2d5e19079a81aa90b36b78f99fbca72a6cfd5f5644fef0f60fbdca5f82"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge-ci-wait.lib.mjs",
+      "bytes": 8406,
+      "sha256": "9b356a0a1d017d51366fe9466dd5be383240028d8a8b6d4edabaf49a241560fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge.lib.mjs.gz",
+      "bytes": 13170,
+      "sha256": "d266c375a636f426cbd111baf17c638984a90b740c28a3e55b59da0c0ed6843b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.auto-pr-push-sync.lib.mjs",
+      "bytes": 7560,
+      "sha256": "9bb35d6e2304e1a782011ea842c5d972fe4607bf3c64e09c1b6a4f77e470e630"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.config.lib.mjs.gz",
+      "bytes": 21102,
+      "sha256": "58a93813388393117ba8c67031c53d551c2876c34cf1f5e1b0f27e49680705ad"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.feedback.lib.mjs",
+      "bytes": 23922,
+      "sha256": "fb99a675b92fb8b95afd200b90d9a6a1852db96118075fca00b2682256838529"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-concurrency-2128.test.mjs",
@@ -718,6 +748,31 @@
       "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/provenance.json",
+      "bytes": 20443,
+      "sha256": "ea3af87875d6e7ecda0c939ed70aee8b49c9eceef77beaa370b557ffa6b1d14b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-auditor-03dce509-receipt.json.gz",
+      "bytes": 538,
+      "sha256": "4003103eb3196b264c2d84c466fa185e20fd5b4670837fae70e9ff6fda46574d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-68982814.log.gz",
+      "bytes": 11520,
+      "sha256": "d681945f60ab3e8c1327ccb451d40721b5d4a5f535aa4041ed4dcf400748ad14"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-ae950a30.log.gz",
+      "bytes": 10813,
+      "sha256": "c7390108ac01edcd20bce2f69de75948311832273d049e5cfa5e1ec0075b48bd"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/summary.json",
+      "bytes": 9858,
+      "sha256": "30b719a2b47e899c682fd0babc6b5f2e3fce91e3d0ca27fe28e12043ddf20e16"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/meta-language/comment-6101425254.json",
       "bytes": 4108,
       "sha256": "c183e3466e482441895c23d5f993215511ffd99b43cfccc414bedc8dfc391ee1"
@@ -948,6 +1003,11 @@
       "sha256": "77297052f8c1debd8b3783e58a2c4040fc5c5a672e86c97075317d7a344ace47"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/published-heads/hive-mind-scheduler/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+      "bytes": 10423,
+      "sha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/README.md",
       "bytes": 55895,
       "sha256": "4f2de62835c96bf23fbb9c15075ed897a3a2eeff0edf8ab76e831bfe46db48d5"
@@ -1031,6 +1091,41 @@
       "path": "docs/case-studies/issue-759/raw/sources/router/issue-760.json",
       "bytes": 9963,
       "sha256": "e234e4f6077d0c6e3e64864a9c2b5526f13775be38fdd8dfec205553757f6791"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__js-first-translation.json.gz",
+      "bytes": 18741,
+      "sha256": "1b2cf33ec291db1ccacf01b6050be918eb484ff5b0bb1812497ee8bbd959581f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__router-features.json.gz",
+      "bytes": 9446,
+      "sha256": "aab718e618fa141577d1ccc3fca98b8e9f674870cf4ddebd46f590117ec4fe39"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__rust-source-inventory.json.gz",
+      "bytes": 64281,
+      "sha256": "4b4d2c3b7e22e926035d39545643dacddec1261473f09817907006ec7bdc8472"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/provenance.json",
+      "bytes": 4328,
+      "sha256": "960b90765f76e6d8fc52ab4cebaf379c9b1b3b2d0a1756f5cf7cb6eab6afb8b3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/scripts__check-router-parity.mjs.gz",
+      "bytes": 3586,
+      "sha256": "0d6bc118d61589264acfd6f1ae127a53b2692b39e9255822e8b2b786a96829f7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/summary.json",
+      "bytes": 5043,
+      "sha256": "850f00f81294646b8bc4af5a4666295422201f409cee669fa2b2f521343c3a52"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/tools__translation__js-to-rust__generated__native-typescript__manifest.json.gz",
+      "bytes": 8550,
+      "sha256": "74b5da4f7fd94805036e6659f491a4ca3423b555a5502d0981a61ca2df2d8e8d"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/desktop-release.yml",
@@ -1154,8 +1249,8 @@
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
-      "bytes": 124537,
-      "sha256": "4326ee9305c564073f72a86a169baeaae47065f485c0ccff2ebef4180c70ed89"
+      "bytes": 136764,
+      "sha256": "da658ab6a5a19006857ed5d1a4eb36b8ad14b76549f7b3997885478dff2e19ac"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/start/default-branch.json",
@@ -1361,6 +1456,21 @@
       "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-metadata.json",
       "bytes": 17620,
       "sha256": "b2ac67877b07cc8b7290e80f3bc6bc834fb5fda1515147b8fbe2d8933aef27b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json",
+      "bytes": 16044,
+      "sha256": "92180db228819d62b8fdbddbe8cb1534c9a6142b49f841ea6c1af0d3e437988d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-head-runs.json",
+      "bytes": 36,
+      "sha256": "a2790a384d7d281e7395679000c35d27768d89dbd7052f725b8f4688beb59915"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json",
+      "bytes": 18226,
+      "sha256": "38b672beca2d07dfddc0c12823a5dac6132ccdd86f38a6d464c5e55da45bbdde"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-230-comments.json",
