@@ -8,9 +8,13 @@ const { NativeRouter } = await load('packages/javascript/native/operations.mjs')
 const config = data_dir => ({ data_dir, token_secret: 'independent-local-secret', storage_policy: 'memory', providers: [], accounts: [] });
 
 test('managed operation envelopes preserve claimed authority across restart and reject counterfeit control identity', async t => {
-  const directory = await temporary(t), router = new NativeRouter({ config: config(directory), env: {} });
+  let router;
+  // Stop the owned process before temporary() removes its identity registry,
+  // including when an assertion fails halfway through the lifecycle.
+  t.after(async () => { await router?.server.stop().catch(() => {}); await router?.close(); });
+  const directory = await temporary(t);
+  router = new NativeRouter({ config: config(directory), env: {} });
   const statePath = join(directory, 'native-managed', 'state.json');
-  t.after(async () => { await router.server.stop().catch(() => {}); await router.close(); });
   await router.server.start();
   const initial = JSON.parse(await readFile(statePath, 'utf8'));
   const status = await router.server.status();
