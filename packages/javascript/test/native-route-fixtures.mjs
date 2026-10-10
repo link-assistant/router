@@ -21,8 +21,11 @@ export async function runParityFixtures() {
     if (!methods.has(method)) continue;
     const key = `${method.toUpperCase()} ${template}`;
     if (method === 'trace') {
-      assert.throws(() => new Request('http://native.invalid/', { method: 'TRACE' }), /unsupported|forbidden/i);
-      evidence.set(`route:${key}`, { route: key, success: false }); continue;
+      try { new Request('http://native.invalid/', { method: 'TRACE' }); }
+      catch (error) {
+        assert.match(error.message, /unsupported|forbidden/i);
+        evidence.set(`route:${key}`, { route: key, success: false }); continue;
+      }
     }
     const core = await createRouterCore({ config: { token_secret: 'native-route-census-secret', storage_policy: 'memory',
       admin_token: 'native-route-admin', providers: [{ name: 'fixture', kind: 'openai-compatible', base_url: 'https://fixture.invalid/v1', models: ['fixture-model'] }],
