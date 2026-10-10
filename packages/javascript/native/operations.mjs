@@ -2,6 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';
+import { executeAuthOperation } from './oauth.mjs';
+import { executeManagedOperation, supportedManagedOperations, selectedManagedServer } from './managed-server.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 
 export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));
@@ -37,6 +39,8 @@ const output = (...lines) => ({ output: lines });
 const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };
 export const nativeOperationSupport = Object.freeze({
   ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])),
+  ...Object.fromEntries(Object.keys(supportedManagedOperations).map(name => [name, 'partial'])),
+  'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial',
   version: 'implemented', contracts: 'implemented',
   'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
   'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
@@ -106,6 +110,19 @@ async function dispatch(router, name, options, invocation) {
   if (name === 'contracts') { localOnly(options); return catalog; }
   if (!nativeOperationSupport[name]) unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
   const core = await runtimeFor(router);
+  const env = router.options.env ?? process.env;
+  if (supportedManagedOperations[name]) return executeManagedOperation({ name, options, invocation, core, config: core.config, env, routerOptions: router.options });
+  if (options.local !== true && await selectedManagedServer({ core, config: core.config ?? {}, env }))
+    unsupported('Native remote delegation is not implemented; use local:true to explicitly operate on local state or use the Rust wrapper');
+  if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
+    const accepted = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
+      : name === 'auth.claude' ? ['home', 'code', 'flow', 'mode', 'from_claude_home'] : ['home', 'from_codex_home'];
+    localOnly(options, accepted);
+    if (options.follow && options.snapshot) throw new NativeRouterError('follow and snapshot cannot be combined', { code: 'options' });
+    const data = await executeAuthOperation({ name, options, core, config: core.config, env, fetch: router.options.fetch,
+      clockSeconds: core.clock, oauth: router.options.oauth });
+    return name !== 'auth.import' && data.results ? output(`${name.slice(5)} credential ${data.results[0].outcome}.`) : data;
+  }
   if (supportedResourceOperations[name]) {
     localOnly(options, name.startsWith('logs.') ? ['correlation_id', 'token'] : name === 'tls.generate' ? ['dns'] : []);
     return executeResourceOperation({ name, options, invocation, core, config: core.config });

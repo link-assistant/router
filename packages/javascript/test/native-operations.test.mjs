@@ -37,7 +37,7 @@ test('native CLI writes one JSON result and returns its actual exit code', async
 
 test('schema-invalid native handlers cannot inherit a successful exit status', async () => {
   const core = { tokens: { list: async () => [{ id: 'invalid-contract' }] } };
-  const result = await new NativeRouter({ core }).execute('tokens.list');
+  const result = await new NativeRouter({ core }).execute('tokens.list', { local: true });
   assert.equal(result.success, false); assert.equal(result.exit_code, 1);
   assert.match(result.diagnostics[0], /schema/);
 });

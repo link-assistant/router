@@ -6,6 +6,9 @@ import { ResponsesStore, responseOwner, normalizeResponseInput } from '../native
 import { createNativeRouter } from '../native/server.mjs';
 const methods = new Set(['get','post','put','patch','delete','options','head','trace']);
 export const nativeRouteSubset = Object.freeze(new Set([
+  'POST /api/services/openai/v1/chat/completions', 'POST /api/services/anthropic/v1/messages',
+  'GET /api/services/openai/v1/models', 'GET /api/services/openai/v1/models/{model_id}',
+  'GET /api/services/anthropic/v1/models', 'GET /api/services/anthropic/v1/models/{model_id}',
   'POST /api/services/openai/v1/responses', 'GET /api/services/openai/v1/responses/{response_id}',
   'DELETE /api/services/openai/v1/responses/{response_id}', 'POST /api/services/openai/v1/responses/{response_id}/cancel',
   'GET /api/services/openai/v1/responses/{response_id}/input_items',
@@ -42,11 +45,11 @@ export async function runParityFixtures() {
         normalizeResponseInput({ input: 'hello' }), { abort() { cancelled = true; } });
     }
     const runtime = createNativeRouter({ core, responseStore, fetch() {
-      if (key === 'POST /api/services/openai/v1/responses') return Response.json({ id: 'fixture', model: 'fixture-model', choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'hello' } }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } });
+      if (['POST /api/services/openai/v1/responses', 'POST /api/services/openai/v1/chat/completions', 'POST /api/services/anthropic/v1/messages'].includes(key)) return Response.json({ id: 'fixture', model: 'fixture-model', choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'hello' } }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } });
       assert.fail('Unimplemented routes must never reach upstream');
     } });
-    const path = template.replace(/\{[^}]+\}/g, 'fixture');
-    const body = key === 'POST /api/services/openai/v1/responses' ? { model: 'fixture-model', input: 'hello' } : template.endsWith('/revoke') ? { id: issued.id }
+    const path = template.replace(/\{[^}]+\}/g, placeholder => placeholder === '{model_id}' ? 'fixture-model' : 'fixture');
+    const body = ['POST /api/services/openai/v1/chat/completions', 'POST /api/services/anthropic/v1/messages'].includes(key) ? { model: 'fixture-model', messages: [{ role: 'user', content: 'hello' }], max_tokens: 10 } : key === 'POST /api/services/openai/v1/responses' ? { model: 'fixture-model', input: 'hello' } : template.endsWith('/revoke') ? { id: issued.id }
       : template.endsWith('/policy') ? { weight: 2 }
       : template.endsWith('/routing') ? { strategy: 'priority' }
       : template.endsWith('/providers') ? { name: 'fixture-new', kind: 'openai-compatible', base_url: 'https://fixture.invalid/v1', models: ['fixture-model'] }
@@ -68,6 +71,10 @@ export async function runParityFixtures() {
         if (key === 'POST /api/services/openai/v1/responses/{response_id}/cancel') { assert.equal(data.status, 'cancelled'); assert.equal(cancelled, true); }
         if (key === 'GET /api/services/openai/v1/responses/{response_id}/input_items') assert.equal(data.data[0].content[0].text, 'hello');
         if (key === 'DELETE /api/services/openai/v1/responses/{response_id}') assert.equal(data.deleted, true);
+        if (key === 'POST /api/services/openai/v1/chat/completions') assert.equal(data.choices[0].message.content, 'hello');
+        if (key === 'POST /api/services/anthropic/v1/messages') assert.equal(data.content[0].text, 'hello');
+        if (key.startsWith('GET /api/services/') && template.endsWith('/models')) assert.equal(data.data[0].id, 'fixture-model');
+        if (key.startsWith('GET /api/services/') && template.endsWith('/{model_id}')) assert.equal(data.id, 'fixture-model');
         if (key === 'GET /api/models') assert.equal(data.data[0].id, 'fixture-model');
       }
       evidence.set(`route:${key}`, { route: key, success: true });

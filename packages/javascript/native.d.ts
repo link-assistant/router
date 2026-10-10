@@ -12,6 +12,9 @@ export interface NativeRouterOptions {
   clock?: () => number;
   /** HTTP runtime clock in milliseconds. */
   serverClock?: () => number;
+  /** Native OAuth validation/endpoint overrides, useful for isolated integrations. */
+  oauth?: { endpoints?: Partial<Record<'claude' | 'codex', string>>; allowLoopback?: boolean; catalogBaseURL?: string;
+    validateCatalog?: (options: Record<string, unknown>) => Promise<string[]> };
   responseStore?: ResponsesStore;
   responseStoreOptions?: { ttlMs?: number; maxRecords?: number; maxBytes?: number; maxRecordBytes?: number };
 }
@@ -75,6 +78,9 @@ export class RouterCore {
   models(): Promise<Array<Record<string, unknown>>>;
   candidates(context?: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
   route(context?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  catalogFor(context?: Record<string, unknown>): Promise<Array<Record<string, unknown>>>;
+  prepareCandidate(candidate: Record<string, unknown>, context?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  updateRouting(update: Record<string, unknown>): Promise<Record<string, unknown>>;
   reportFailure(candidate: Record<string, unknown>, details: Record<string, unknown>): Promise<string>;
   reportSuccess(candidate: Record<string, unknown>): Promise<void>;
 }
