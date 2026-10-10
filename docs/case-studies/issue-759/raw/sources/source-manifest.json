@@ -2181,5 +2181,14 @@
     "stored_sha256": "4003103eb3196b264c2d84c466fa185e20fd5b4670837fae70e9ff6fda46574d",
     "source_path": "/tmp/router-759-auditor-03dce509-receipt.json",
     "source_sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed"
+  },
+  {
+    "kind": "observed-official-action-verification-receipt",
+    "local_path": "docs/case-studies/issue-759/raw/sources/official-action-pins.json",
+    "source_path": "/tmp/router-759-action-pins.json",
+    "sha256": "fba9f0db64c67ce5811bc82cb1fa07c9f815d034f657aad321b3e74566b0f590",
+    "source_sha256": "fba9f0db64c67ce5811bc82cb1fa07c9f815d034f657aad321b3e74566b0f590",
+    "observed_at": "2026-10-10 20:27:43 UTC",
+    "provenance": "Read-only official GitHub API verification by sole publication owner; this observed summary records immutable commit/action-definition/entrypoint tree metadata, not full redirected raw API responses or a workflow execution."
   }
 ]

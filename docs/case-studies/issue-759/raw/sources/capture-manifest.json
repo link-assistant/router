@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-10-10T20:17:47.454365+00:00",
+  "captured_at": "2026-10-10T20:31:34.793353+00:00",
   "scope": "Pinned primary sources, metadata snapshots, compressed source trees with formal-ai truncation disclosed, published proposals, four additional current repository audits, immutable implementation snapshot and local verification receipts. sha256 in this capture manifest always hashes stored file bytes.",
   "files": [
     {
@@ -993,6 +993,11 @@
       "sha256": "795788f32281ca6997fd92edfe263f0301ad09951c5eae9bf8cddf29add2c190"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/official-action-pins.json",
+      "bytes": 2672,
+      "sha256": "fba9f0db64c67ce5811bc82cb1fa07c9f815d034f657aad321b3e74566b0f590"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/official-docs-findings.md",
       "bytes": 3285,
       "sha256": "8b9363553ebd4d7b2d1b86a13db5ffefd17af1880726695093aa05813d351787"
@@ -1248,9 +1253,14 @@
       "sha256": "334e3b7681c542b5360e13a5fd3a73519182bb0e96f9b57e1701f7a8f4d36486"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/source-integrity.json",
+      "bytes": 428,
+      "sha256": "97a0a7eae024365ec94c2b8ffa772ee6ffb6f3bed2942dcd68e26b7e9ee1eee6"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
-      "bytes": 136764,
-      "sha256": "da658ab6a5a19006857ed5d1a4eb36b8ad14b76549f7b3997885478dff2e19ac"
+      "bytes": 137437,
+      "sha256": "43a90d95bf617107a8909fd6afbb9610e3cc699b0786ff4837544cc61aa6e094"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/start/default-branch.json",
