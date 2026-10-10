@@ -1,9 +1,9 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { access, mkdir, open, readFile, realpath, rename, rm, unlink } from 'node:fs/promises';
+import { access, mkdir, open, realpath, rename, rm, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { constants } from 'node:fs';
 import { tokenExpired } from '../portable/policy.mjs';
-import { atomicWrite, decodeLino, encodeLino, readOptional, serialized, withNativeFileLock } from './storage.mjs';
+import { atomicWrite, decodeLino, encodeLino, serialized, withNativeFileLock } from './storage.mjs';
 import { RouterError } from './tokens.mjs';
 
 export const CLAUDE_CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e';
@@ -22,6 +22,38 @@ const uncertain = new Map();
 const nonempty = value => typeof value === 'string' && value.length ? value : null;
 const field = (object,...names) => names.map(name => object?.[name]).find(value => value != null) ?? null;
 const fail = (code,message,status = 400) => new RouterError(code,message,status);
+const CREDENTIAL_FILE_LIMIT = 4*1024*1024;
+const PENDING_FILE_LIMIT = 16*1024;
+// Check the opened inode, not a path stat that could be replaced before reading.
+// Nonblocking open also lets a FIFO/device be rejected without waiting for data.
+async function boundedOAuthFile(path,{maxBytes = CREDENTIAL_FILE_LIMIT,optional = false,code = 'credential_read_failed',status = 401} = {}) {
+  let handle;
+  try { handle = await open(path,constants.O_RDONLY | (constants.O_NONBLOCK ?? 0)); }
+  catch (error) { if (optional && error.code === 'ENOENT') return null; throw fail(code,'OAuth state file cannot be read',status); }
+  try {
+    const metadata = await handle.stat();
+    if (!metadata.isFile()) throw fail(code,'OAuth state must be stored in a regular file',status);
+    if (metadata.size > maxBytes) throw fail(code,'OAuth state file exceeds the allowed size',status);
+    const buffer = Buffer.alloc(Math.min(64*1024,maxBytes+1));
+    const decoder = new TextDecoder('utf-8',{fatal:true});
+    let bytes = 0, text = '';
+    for (;;) {
+      // Read one byte beyond the bound to detect growth after the size check,
+      // without ever allocating in proportion to the file's declared size.
+      const length = Math.min(buffer.length,maxBytes-bytes+1);
+      const {bytesRead} = await handle.read(buffer,0,length,null);
+      if (!bytesRead) break;
+      bytes += bytesRead;
+      if (bytes > maxBytes) throw fail(code,'OAuth state file exceeds the allowed size',status);
+      text += decoder.decode(buffer.subarray(0,bytesRead),{stream:true});
+    }
+    return text+decoder.decode();
+  } catch (error) {
+    if (error instanceof RouterError) throw error;
+    throw fail(code,'OAuth state file is unreadable or invalid UTF-8',status);
+  } finally { await handle.close(); }
+}
+
 export function subscriptionProvider(value) {
   const name = String(value).trim().toLowerCase();
   if (['claude','anthropic','claude-code'].includes(name)) return 'claude';
@@ -138,9 +170,8 @@ export class CredentialFileStore {
     let lastError;
     for (const candidate of this.path ? [this.path] : files[this.provider].map(name => join(this.home,name))) {
       let raw;
-      try { raw = await readOptional(candidate,null); } catch { throw fail('credential_read_failed','Subscription credential file cannot be read',401); }
+      raw = await boundedOAuthFile(candidate,{optional:true});
       if (raw == null) continue;
-      if (Buffer.byteLength(raw) > 4*1024*1024) throw fail('credential_invalid','Credential file exceeds the allowed size');
       try {
         let parsed = JSON.parse(raw), target = candidate, origin = this.origin;
         const metadata = parsed?._link_assistant_router;
@@ -148,7 +179,7 @@ export class CredentialFileStore {
           const source = metadata.credential_source;
           if (typeof source !== 'string' || !isAbsolute(source) || resolve(source) === resolve(candidate)) throw fail('credential_invalid','Adopted credential source is invalid');
           target = await realpath(source);
-          parsed = JSON.parse(await readFile(target,'utf8'));
+          parsed = JSON.parse(await boundedOAuthFile(target));
           if (parsed?._link_assistant_router?.credential_source) throw fail('credential_invalid','Nested adopted credential sources are unsupported');
           origin = 'adopted';
         }
@@ -162,7 +193,7 @@ export class CredentialFileStore {
   }
   async reload() {
     const primary = await this.readPrimary();
-    const raw = await readOptional(this.recoveryPath,null); if (raw == null) return primary;
+    const raw = await boundedOAuthFile(this.recoveryPath,{optional:true,code:'credential_recovery_invalid',status:503}); if (raw == null) return primary;
     let record;
     try { record = JSON.parse(raw); }
     catch { throw fail('credential_recovery_invalid','Credential recovery record is unusable',503); }
@@ -374,7 +405,7 @@ export class ClaudeLogin {
     const path = join(resolve(options.home),PENDING_FILE), claimed = `${path}.${randomUUID()}.claimed`;
     try { await rename(path,claimed); } catch { throw fail('pending_login_missing','No pending Claude authorization; begin a code flow first',404); }
     let pending;
-    try { const raw = await readFile(claimed,'utf8'); pending = raw.trim().startsWith('{') ? JSON.parse(raw) : decodeLino(raw); }
+    try { const raw = await boundedOAuthFile(claimed,{maxBytes:PENDING_FILE_LIMIT,code:'pending_login_invalid',status:400}); pending = raw.trim().startsWith('{') ? JSON.parse(raw) : decodeLino(raw); }
     catch { throw fail('pending_login_invalid','Pending Claude authorization is invalid'); }
     finally { await unlink(claimed); }
     const now = (options.clock?.() ?? Math.floor(Date.now()/1000))*1000;

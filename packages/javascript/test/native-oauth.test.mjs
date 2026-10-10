@@ -221,3 +221,29 @@ test('completing a begun PKCE object atomically consumes its persisted pending g
   await login.complete('code',{validateCatalog:async()=>['model-a']});
   await rejectCode(ClaudeLogin.resume({home,clock,manager}),'pending_login_missing');
 });
+
+test('oversized regular OAuth state, adopted source and recovery files fail before parsing or refresh',async t => {
+  const root = await temporary(t), source = join(root,'source'), adopted = join(root,'adopted');
+  await seed(source,'claude',fixture.claude_nested); await mkdir(adopted);
+  const {open} = await import('node:fs/promises');
+  const enlarge = async path => { const handle = await open(path,'r+'); try { await handle.truncate(4*1024*1024+1); } finally { await handle.close(); } };
+  await enlarge(join(source,'.credentials.json'));
+  const manager = new OAuthManager({clock,fetch:async()=>assert.fail('oversized state must not exchange')});
+  await rejectCode(manager.getFresh(store(source)),'credential_read_failed');
+  await writeFile(join(adopted,'.credentials.json'),JSON.stringify({_link_assistant_router:{credential_source:join(source,'.credentials.json')}}));
+  await rejectCode(store(adopted).readPrimary(),'credential_read_failed');
+  await seed(source,'claude',fixture.claude_nested);
+  const credential = store(source); await atomicWrite(credential.recoveryPath,'{}'); await enlarge(credential.recoveryPath);
+  await rejectCode(manager.getFresh(credential),'credential_recovery_invalid');
+});
+test('pending OAuth state has a small byte bound and invalid UTF-8 cannot be normalized into credentials',async t => {
+  const home = await temporary(t), manager = new OAuthManager({clock,fetch:async()=>assert.fail('invalid state must not exchange')});
+  await ClaudeLogin.begin({home,clock,manager});
+  const {open} = await import('node:fs/promises');
+  const path = join(home,'.link-assistant-router-claude-login.json'), handle = await open(path,'r+');
+  try { await handle.truncate(16*1024+1); } finally { await handle.close(); }
+  await rejectCode(ClaudeLogin.resume({home,clock,manager}),'pending_login_invalid');
+  await seed(home,'claude',fixture.claude_nested);
+  await writeFile(join(home,'.credentials.json'),Buffer.from([0xff,0xfe]));
+  await rejectCode(store(home).readPrimary(),'credential_read_failed');
+});
