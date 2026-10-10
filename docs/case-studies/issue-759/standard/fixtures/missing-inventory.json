@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "inventoryRoots": [
+    {
+      "path": "javascript",
+      "extensions": [
+        ".js",
+        ".mjs"
+      ]
+    },
+    {
+      "path": "rust",
+      "extensions": [
+        ".rs"
+      ]
+    }
+  ],
+  "entries": [],
+  "exclusions": []
+}

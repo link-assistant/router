@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "workflow_runs": [
+    { "id": 10, "run_attempt": 1, "head_sha": "synthetic-head-a", "name": "JS gate", "conclusion": "failure", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:02:00Z" },
+    { "id": 10, "run_attempt": 2, "head_sha": "synthetic-head-a", "name": "JS gate", "conclusion": "success", "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:04:00Z" }
+  ],
+  "jobs": [
+    { "id": 100, "run_id": 10, "name": "JS", "started_at": "2026-01-01T00:00:30Z", "completed_at": "2026-01-01T00:01:30Z", "conclusion": "failure" },
+    { "id": 101, "run_id": 10, "name": "JS rerun", "started_at": "2026-01-01T00:03:00Z", "completed_at": "2026-01-01T00:04:00Z", "conclusion": "success" }
+  ],
+  "pull_requests": [{ "number": 759, "head": { "sha": "synthetic-head-a" }, "base": { "sha": "synthetic-base" }, "commits": 2 }]
+}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "inventoryRoots": [
+    {
+      "path": "javascript",
+      "extensions": [
+        ".js",
+        ".mjs"
+      ]
+    },
+    {
+      "path": "rust",
+      "extensions": [
+        ".rs"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "synthetic-answer",
+      "state": "partial",
+      "inputs": [
+        "javascript/example.js"
+      ],
+      "outputs": [
+        "rust/example.rs"
+      ],
+      "fixtures": [
+        "tests/example.json"
+      ],
+      "reason": "Synthetic incomplete parity fixture."
+    }
+  ],
+  "exclusions": []
+}
