@@ -123,7 +123,9 @@ export function createNativeRouter(options = {}) {
     const account = /^\/api\/management\/accounts\/([^/]+)\/(pause|resume|policy)$/.exec(path);
     if (account) {
       const name = decodeURIComponent(account[1]), action = account[2]; let result;
-      if (action === 'policy' && method === 'GET') result = await core.accounts?.getPolicy?.(name);
+      if (action === 'policy' && method === 'GET') {
+        result = core.accounts?.getPolicy ? await core.accounts.getPolicy(name) : core.accounts?.records?.has(name) ? { account: name, policy: structuredClone(core.accounts.records.get(name).policy) } : undefined;
+      }
       else if (method === 'POST') result = core.accountAction ? await core.accountAction(name, action, body) : await core.accounts?.[action === 'policy' ? 'setPolicy' : action]?.(name, body);
       if (result === undefined) throw new ProtocolError('Account operation is not supported by this core', 501);
       return json(redact(result));
@@ -134,7 +136,8 @@ export function createNativeRouter(options = {}) {
       return json(redact(result));
     }
     if (path === '/api/management/routing/cooldown/reset' && method === 'POST') {
-      const result = core.resetCooldown ? await core.resetCooldown(body) : core.resetCooldowns ? await core.resetCooldowns(body) : undefined;
+      if (body.model && !body.account || body.account != null && (typeof body.account !== 'string' || !body.account.trim()) || body.model != null && (typeof body.model !== 'string' || !body.model.trim())) throw new ProtocolError('A model reset requires a nonempty account and model');
+      const result = body.account ? await core.resetCooldown?.(body.account, body.model) : await core.resetCooldowns?.();
       if (result === undefined) throw new ProtocolError('Cooldown reset is not supported by this core', 501);
       return json(result);
     }
@@ -241,10 +244,11 @@ export function createNativeRouter(options = {}) {
           if (!result.body) outgoing.end(); else Readable.fromWeb(result.body).on('error', () => outgoing.destroy()).pipe(outgoing);
         } catch { if (!outgoing.headersSent) outgoing.writeHead(500, JSON_HEADERS); outgoing.end(JSON.stringify({ error: { message: 'Router request failed' } })); }
       });
-      await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, () => { server.off('error', reject); resolve(); }); });
+      try { await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, () => { server.off('error', reject); resolve(); }); }); }
+      catch (error) { server = undefined; throw error; }
       return router;
     },
-    async close() { if (!server) return; const current = server; server = undefined; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
+    async close() { if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
   };
   return router;
 }

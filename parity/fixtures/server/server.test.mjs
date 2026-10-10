@@ -123,3 +123,10 @@ test('cache token accounting is preserved across JSON dialects', () => {
   const result = translateResponse(anthropic, 'anthropic', 'chat', 'alias'); assert.equal(result.usage.prompt_tokens, 6); assert.equal(result.usage.total_tokens, 10); assert.equal(result.usage.prompt_tokens_details.cached_tokens, 2);
   const image = translateRequest({ model: 'x', messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'https://image.example/a.png' } }] }] }, 'chat', 'responses'); assert.equal(image.input[0].content[0].type, 'input_image');
 });
+test('failed listen leaves shutdown safe and permits a later retry', async t => {
+  const occupied = createServer(); await new Promise(resolve => occupied.listen(0, '127.0.0.1', resolve)); t.after(() => new Promise(resolve => occupied.close(resolve)));
+  const router = createNativeRouter({ core: core() }); t.after(() => router.close());
+  await assert.rejects(() => router.listen({ port: occupied.address().port }), { code: 'EADDRINUSE' });
+  await router.close(); assert.equal(router.address, undefined);
+  await router.listen({ port: 0 }); assert.ok(router.address.port);
+});
