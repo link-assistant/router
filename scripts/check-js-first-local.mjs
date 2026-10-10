@@ -17,14 +17,16 @@ export const stages = [
 ];
 function git(...args) {
   const result = spawnSync('git', args, { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error(result.stderr);
+  if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ${args[0]} failed (${result.status ?? result.signal}).`);
   return result.stdout.trim();
 }
 export function fingerprint(stampPath) {
   const root = git('rev-parse', '--show-toplevel');
   const resolvedStamp = path.join(fs.realpathSync(path.dirname(path.resolve(stampPath))), path.basename(stampPath));
-  const result = spawnSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error(result.stderr);
+  // The conserved source and compressed evidence include tens of thousands of
+  // paths. Keep a bounded buffer above Node's default 1 MiB listing limit.
+  const result = spawnSync('git', ['ls-files', '-co', '--exclude-standard', '-z'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+  if (result.status !== 0) throw new Error(result.error?.message || result.stderr || `git ls-files failed (${result.status ?? result.signal}).`);
   const files = [...new Set(result.stdout.split('\0').filter(Boolean))].sort();
   const hash = createHash('sha256');
   for (const relative of files) {
