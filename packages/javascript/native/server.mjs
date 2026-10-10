@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { timingSafeEqual } from 'node:crypto';
-import { ProtocolError, translateRequest, translateResponse, normalizeUsage } from './protocols.mjs';
+import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
 
@@ -23,6 +23,7 @@ const protocolOf = candidate => {
   throw new ProtocolError(`Unsupported upstream protocol ${typeof value === 'string' ? value : 'unknown'}`, 501);
 };
 const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };
+const serviceOf = path => /^\/api\/services\/(openai|anthropic)\/v1(?:\/|$)/.exec(path)?.[1];
 function upstreamURL(base, protocol, endpointPath) {
   let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash) throw new ProtocolError('Provider base URL must be an HTTP(S) URL without credentials, query or fragment', 500);
@@ -101,10 +102,23 @@ export function createNativeRouter(options = {}) {
     if (claims) return claims;
     throw new ProtocolError(admin ? 'Administrator credential required' : 'Invalid or missing Router credential', 401);
   }
-  async function models() {
-    const value = core.models ? await core.models() : configuration().models ?? [];
+  function routingContext(request, claims) {
+    const path = new URL(request.url).pathname, service = serviceOf(path);
+    const client = typeof claims.client === 'string' ? claims.client : typeof claims.client_kind === 'string' ? claims.client_kind : undefined;
+    const pin = service ? configuration().services?.[service]?.provider : undefined;
+    if (pin !== undefined && (typeof pin !== 'string' || !pin)) throw new ProtocolError('Configured service provider pin is invalid', 500);
+    return { client, pinnedAccount: claims.account ?? undefined, provider: pin, service, path };
+  }
+  async function models(request, claims) {
+    if ((claims.sub ?? claims.id) && !claims.record) throw new ProtocolError('Durable model authority is unavailable', 403);
+    const context = routingContext(request, claims);
+    const value = core.catalogFor ? await core.catalogFor(context) : core.models ? await core.models() : configuration().models ?? [];
     const list = Array.isArray(value) ? value : value?.data ?? Object.keys(value ?? {});
-    return list.map(m => typeof m === 'string' ? { id: m, object: 'model', created: 0, owned_by: 'router' } : { object: 'model', created: 0, owned_by: m.provider ?? 'router', ...m, id: m.id ?? m.name });
+    const allowed = claims.record?.model_policy?.allowed_models ?? [];
+    const filtered = list.map(m => typeof m === 'string' ? { id: m, object: 'model', created: 0, owned_by: 'router' } : { object: 'model', created: 0, owned_by: m.provider ?? 'router', ...m, id: m.id ?? m.name }).filter(m => (!allowed.length || allowed.includes(m.id)) && (!context.client || m.supported_clients?.includes(context.client)) && (!context.provider || (m.provider ?? m.owned_by) === context.provider) && (!context.pinnedAccount || core.catalogFor || m.account === context.pinnedAccount));
+    const seen = new Set();
+    for (const m of filtered) { if (seen.has(m.id)) throw new ProtocolError(`Exact model id '${m.id}' is advertised more than once`, 409); seen.add(m.id); }
+    return filtered;
   }
   async function management(request, path) {
     await authorize(request, true);
@@ -171,8 +185,7 @@ export function createNativeRouter(options = {}) {
     const owner = retain ? responseOwner(claims, bearer(request.headers)) : undefined;
     const responseInput = retain ? normalizeResponseInput(body) : undefined;
     let retainedId;
-    const client = typeof claims.client === 'string' ? claims.client : typeof claims.client_kind === 'string' ? claims.client_kind : undefined;
-    const context = { model: body.model, client, sessionKey: request.headers.get('x-router-session') ?? undefined, pinnedAccount: claims.account, exclude: [] };
+    const context = { ...routingContext(request, claims), model: body.model, protocol: source, sessionKey: request.headers.get('x-router-session') ?? undefined, exclude: [] };
     const candidates = core.candidates ? await core.candidates(context) : [await core.route(context)];
     if (!candidates?.length) throw new ProtocolError('No eligible upstream account for this model', 503);
     const reserve = body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens ?? 0;
@@ -255,7 +268,7 @@ export function createNativeRouter(options = {}) {
     } catch (error) { await settle(); throw error; }
   }
   async function handle(request) {
-    const path = new URL(request.url).pathname, source = path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
+    const path = new URL(request.url).pathname, source = serviceOf(path) === 'anthropic' || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
     const started = clock(); counters.requests++;
     let response;
     try {
@@ -272,9 +285,18 @@ export function createNativeRouter(options = {}) {
         else if (match[3] === 'input_items' && request.method === 'GET') response = json(responseStore.inputItems(match[1], owner, id, new URL(request.url).searchParams));
         else throw new ProtocolError('Route not found', 404);
       }
-      else if (['/v1/models', '/api/models'].includes(path) && request.method === 'GET') { await authorize(request, false); response = json({ object: 'list', data: await models() }); }
-      else if (/^\/v1\/models\/[^/]+$/.test(path) && request.method === 'GET') { await authorize(request, false); const id = decodeURIComponent(path.slice('/v1/models/'.length)), model = (await models()).find(m => m.id === id); if (!model) throw new ProtocolError('Model not found', 404); response = json(model); }
-      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', '/api/services/openai/v1/responses'].includes(path) && request.method === 'POST') response = await inference(request, source, await boundedJSON(request, maxBodyBytes));
+      else if (['/v1/models', '/api/models', '/api/services/openai/v1/models', '/api/services/anthropic/v1/models'].includes(path) && request.method === 'GET') {
+        const claims = await authorize(request, false); response = json(projectModels(await models(request, claims), source, new URL(request.url).searchParams));
+      }
+      else if (/^(?:\/v1|\/api\/services\/(?:openai|anthropic)\/v1)\/models\/[^/]+$/.test(path) && request.method === 'GET') {
+        const id = decodeURIComponent(path.slice(path.lastIndexOf('/') + 1)), claims = await authorize(request, false);
+        if (!id || id.length > 512 || /[\/\x00-\x1f\x7f]/.test(id)) throw new ProtocolError('Model not found', 404);
+        const model = (await models(request, claims)).find(m => m.id === id);
+        if (!model) throw new ProtocolError('Model not found', 404);
+        const projected = projectModels([model], source).data[0]; if (source === 'anthropic') projected.display_name ??= id;
+        response = json(projected);
+      }
+      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', '/api/services/openai/v1/responses', '/api/services/openai/v1/chat/completions', '/api/services/anthropic/v1/messages'].includes(path) && request.method === 'POST') response = await inference(request, source, await boundedJSON(request, maxBodyBytes));
       else throw new ProtocolError('Route not found', 404);
     } catch (error) { counters.failures++; response = errorResponse(error, source); }
     logs.push({ time: started, method: request.method, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();

@@ -201,3 +201,23 @@ export function translateResponse(body, source, target, model, now) {
   try { return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), target, model, now); }
   catch (error) { if (error instanceof ProtocolError) error.status = 502; throw error; }
 }
+
+export function projectModels(entries, protocol = 'chat', query = new URLSearchParams()) {
+  const data = entries.map(model => protocol === 'anthropic' ? Object.fromEntries(Object.entries({ id: model.id, type: 'model', display_name: model.display_name, created_at: model.created_at, max_input_tokens: model.max_input_tokens, max_tokens: model.max_tokens, capabilities: model.capabilities, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]) => value !== undefined)) : Object.fromEntries(Object.entries({ id: model.id, object: 'model', created: model.created, owned_by: model.owned_by, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]) => value !== undefined)));
+  if (protocol !== 'anthropic') return { object: 'list', data };
+  for (const key of ['limit', 'before_id', 'after_id']) if (query.getAll(key).length > 1) throw new ProtocolError(`${key} may be supplied only once`);
+  if (query.has('before_id') && query.has('after_id')) throw new ProtocolError('before_id and after_id cannot be used together');
+  if (query.has('limit') && !/^\d+$/.test(query.get('limit'))) throw new ProtocolError('limit must be between 1 and 1000');
+  const limit = query.has('limit') ? Number(query.get('limit')) : 20;
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000) throw new ProtocolError('limit must be between 1 and 1000');
+  let start = 0, end, has_more;
+  if (query.has('before_id')) {
+    end = data.findIndex(m => m.id === query.get('before_id')); if (end < 0) throw new ProtocolError('before_id cursor not found');
+    start = Math.max(0, end - limit); has_more = start > 0;
+  } else {
+    if (query.has('after_id')) { const index = data.findIndex(m => m.id === query.get('after_id')); if (index < 0) throw new ProtocolError('after_id cursor not found'); start = index + 1; }
+    end = Math.min(data.length, start + limit); has_more = end < data.length;
+  }
+  const page = data.slice(start, end);
+  return { data: page, first_id: page[0]?.id ?? null, last_id: page.at(-1)?.id ?? null, has_more };
+}
