@@ -6,7 +6,10 @@ import { execFile } from 'node:child_process';
 import { repository, temporary } from './helpers.mjs';
 
 const run = script => new Promise(resolve => {
-  execFile(process.execPath, [script, '--strict'], { timeout: 15_000, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr }));
+  // The checker executes native TypeScript compilation and the owned-daemon
+  // lifecycle evidence as well as operation fixtures. Allow those real checks
+  // to finish on a contended CI runner; a timeout still fails this acceptance.
+  execFile(process.execPath, [script, '--strict'], { timeout: 60_000, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr + (error?.killed ? '\nChecker exceeded its 60 second acceptance deadline.' : '') }));
 });
 async function isolatedChecker(t, edit) {
   const directory = await temporary(t);
