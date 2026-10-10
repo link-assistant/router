@@ -49,7 +49,7 @@ export function auditWorkflows(sources) {
       lint: ['node scripts/lint-js-first.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
       'node-tests': ['npm run native:test --prefix packages/javascript'],
       'bun-tests': ['npm run native:test:bun --prefix packages/javascript'],
-      typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'npm run build --prefix ui'],
+      typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
       translation: ['node scripts/translate-router.mjs --check', 'node --test tools/translation/test/*.test.mjs'],
       'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test tools/translation/js-to-rust/test/*.test.mjs'],

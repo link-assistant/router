@@ -101,7 +101,7 @@ jobs:
       - run: npm run typecheck --prefix packages/javascript
       - run: npm run native:typecheck --prefix packages/javascript
       - run: npm ci --prefix ui --ignore-scripts
-      - run: npm run build --prefix ui
+      - run: node scripts/build-js-first-ui.mjs
   parity:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
