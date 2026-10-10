@@ -1,3 +1,23 @@
 docs/case-studies/**/raw/*.log -whitespace
 tests/fixtures/token_stores/*.lino text eol=lf
 src/deploy/remote_agent.sh text eol=lf
+
+# Collapse generated bulk drafts while retaining their files for inspection.
+packages/javascript/generated/rust-draft/** linguist-generated=true
+packages/typescript/generated/rust-draft/** linguist-generated=true
+tools/translation/meta/** linguist-generated=true
+packages/typescript/native/** linguist-generated=true
+packages/typescript/portable/policy.ts linguist-generated=true
+packages/typescript/index.ts linguist-generated=true
+packages/typescript/testing.ts linguist-generated=true
+packages/typescript/catalog.json linguist-generated=true
+packages/typescript/schemas/** linguist-generated=true
+tools/translation/js-to-rust/generated/native-typescript/**/*.meta.json linguist-generated=true
+docs/case-studies/issue-759/raw/** linguist-generated=true
+
+# Keep evidence provenance and the authored collection tools easy to review.
+docs/case-studies/issue-759/raw/**/*manifest*.json linguist-generated=false
+docs/case-studies/issue-759/raw/**/*provenance*.json linguist-generated=false
+docs/case-studies/issue-759/raw/**/*ledger*.json* linguist-generated=false
+docs/case-studies/issue-759/raw/**/archive-index*.json* linguist-generated=false
+docs/case-studies/issue-759/raw/ci/*.py linguist-generated=false
