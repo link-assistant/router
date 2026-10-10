@@ -6,7 +6,7 @@ const { createRouterCore } = await load('packages/javascript/native/core.mjs');
 const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
 const configuration = directory => ({ token_secret: 'core-acceptance-secret', storage_policy: 'memory', data_dir: directory,
   providers: [{ name: 'fixture', base_url: 'http://127.0.0.1:1', models: ['one', 'two'], supported_clients: ['codex'] }],
-  accounts: [{ name: 'primary', provider: 'fixture' }, { name: 'secondary', provider: 'fixture' }] });
+  accounts: [{ name: 'primary', provider: 'fixture', policy: { prefix: 'fixture' } }, { name: 'secondary', provider: 'fixture' }] });
 
 test('exact model selection, pinning, pause, cooldown isolation and aliases observe actual routing state', async t => {
   let now = 1000;
@@ -14,7 +14,8 @@ test('exact model selection, pinning, pause, cooldown isolation and aliases obse
   config.accounts[1].policy = { prefix: 'team', model_aliases: [{ model: 'two', alias: 'second', fork: false }], excluded_models: ['one'] };
   const core = await createRouterCore({ config, env: {}, clock: () => now });
   assert.equal((await core.route({ model: 'fixture/one' })).account, 'primary');
-  assert.equal((await core.route({ model: 'fixture/team/second' })).model, 'two');
+  assert.equal((await core.route({ model: 'team/second' })).model, 'two');
+  await assert.rejects(core.route({ model: 'fixture/team/second' }), { code: 'model_not_found' });
   await assert.rejects(core.route({ model: 'unknown' }), { code: 'model_not_found' });
   await assert.rejects(core.route({}), { code: 'model_required' });
   await core.accounts.pause('primary', { reason: 'maintenance' });
@@ -28,9 +29,10 @@ test('exact model selection, pinning, pause, cooldown isolation and aliases obse
   assert.equal((await core.route({ model: 'one', pinnedAccount: 'primary' })).account, 'primary');
 });
 
-test('ambiguous bare selectors reject; provider-qualified selectors preserve authority', async t => {
+test('ambiguous bare selectors reject; explicitly published namespace selectors preserve authority', async t => {
   const config = configuration(await temporary(t));
   config.providers.push({ name: 'other', base_url: 'http://127.0.0.1:2', models: ['one'] });
+  config.accounts.push({ name: 'other-account', provider: 'other', policy: { prefix: 'other' } });
   const core = await createRouterCore({ config, env: {} });
   await assert.rejects(core.route({ model: 'one' }), { code: 'model_conflict' });
   assert.equal((await core.route({ model: 'fixture/one' })).provider, 'fixture');

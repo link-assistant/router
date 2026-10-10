@@ -60,7 +60,7 @@ test('schema-invalid core output cannot be transformed into a successful fallbac
 
 test('model explanation returns an actual requested selector and candidate observations', async t => {
   const router = new NativeRouter({ config: { token_secret: 'explain-secret', storage_policy: 'memory', data_dir: await temporary(t),
-    providers: [{ name: 'fixture', base_url: 'http://127.0.0.1:1', models: ['one'] }], accounts: [] }, env: {} });
+    providers: [{ name: 'fixture', base_url: 'http://127.0.0.1:1', models: ['fixture/one'] }], accounts: [] }, env: {} });
   t.after(() => router.close());
   const result = await router.models.explain({ id: 'fixture/one' });
   assert.equal(result.data.requested_selector, 'fixture/one');
