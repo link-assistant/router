@@ -219,6 +219,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [1.24.1] - 2026-10-10
+
+bump: minor
+
+Preserve sibling models during ordinary account-pool quota cooldowns while keeping terminal quota and authentication failures account-wide. Add bounded pre-first-byte retry rounds, audited runtime routing strategy and cooldown reset endpoints, and configurable parent-session affinity for subagents. Handle empty upstream streams before relay and observe quota errors delivered inside streams.
+
+Preserve explicit false values for value-taking boolean flags in the JavaScript and Python bindings, including default-enabled subagent affinity.
+
+Share model cooldowns across recognized thinking suffixes. Preserve signed and encrypted history when an additional retry round returns to the same account, while revalidating thinking controls for every selected account.
+
 ## [1.24.0] - 2026-10-09
 
 ### Added
