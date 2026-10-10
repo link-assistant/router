@@ -1,0 +1,24 @@
+{
+  "name": "@link-assistant/router-typescript-draft",
+  "version": "1.24.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./native": "./dist/native/index.js",
+    "./testing": "./dist/testing.js"
+  },
+  "scripts": {
+    "build": "node ../../scripts/check-native-typescript.mjs --out-dir packages/typescript/dist"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.3"
+  }
+}

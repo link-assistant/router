@@ -62,3 +62,59 @@ Public module `translator.mjs` exports:
 - `emitRust(program)` and `emitTypeScript(program)` emit checked IR.
 - `TranslationError` has a `diagnostic` containing `kind`, `message`, `span`
   and a compact source `example`.
+
+## Complete native TypeScript draft
+
+The separate `native-typescript.mjs` adapter translates every native JavaScript
+module, the portable policy, and the package index/testing wrappers. It uses
+the official TypeScript compiler syntax AST, serializes each node's kind and
+children plus lexical leaf tokens, reparses that serialized document, and
+emits TypeScript. The meta files contain no opaque file or function-body
+source field. The compiler version, source/meta/target hashes, node counts,
+explicit `any` counts and output asset hashes are recorded in
+`generated/native-typescript/manifest.json`.
+
+JavaScript and TypeScript share the runtime language, so this target uses
+identity lowering. JSDoc primitive parameter contracts become types; dynamic
+parameters, returns, locals and discovered class fields have explicit `any`
+draft annotations. Class fields added for typing use `declare` and emit no
+runtime property. Strict compilation checks every generated module without
+`ts-nocheck`, `ts-ignore` or `ts-expect-error`. Passing strict compilation does
+not mean those dynamic types have been inferred or proved.
+
+Each module must also pass an independent structural runtime AST comparison
+after type erasure. Only relative `.mjs` module extensions intentionally become
+`.js`; neutral parentheses are normalized while optional-chain boundaries are
+retained. Evaluation order, receiver binding, async/await and literal data are
+checked. Independent executable fixtures cover grouped optional chains,
+getters evaluated once, method calls, defaults, short circuiting, regex,
+BigInt and raw template data.
+
+Regenerate and check with:
+
+```sh
+node scripts/regenerate-native-typescript.mjs
+node scripts/regenerate-native-typescript.mjs --check
+node scripts/check-native-typescript.mjs
+node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
+node scripts/check-native-typescript.mjs --out-dir packages/typescript/dist
+```
+
+The existing JavaScript package's TypeScript/Ajv dependencies are reused during
+repository checks. The generated package records its own dependencies and
+contains exact catalog/schema asset copies. Local dependency symlinks and
+`dist` output are ignored. `--check` detects stale, missing and unexpected
+generated TypeScript, meta and asset files. Cross-worktree development can
+pass `--source-root <assembled-repository>` to both scripts and set
+`ROUTER_NATIVE_TS_SOURCE_ROOT` for the test.
+
+The runtime test runs the same independently authored native expectations
+against original JavaScript in Node, compiled TypeScript in Node, and compiled
+TypeScript in Bun when installed. It exercises auth and budgets, provider
+storage, HTTP/SSE/Responses, OAuth and managed resources. Compiled JavaScript
+is the execution artifact, including managed-server subprocesses; direct
+TypeScript source execution is not covered. Shared fixtures temporarily alias
+compiled `.js` files to `.mjs` paths and never load original runtime modules
+or a Rust fallback. Native feature/endpoint coverage limitations remain those
+of the JavaScript draft. This complete TypeScript target does not expand the
+bounded Rust translator's supported native I/O or service constructs.
