@@ -1119,5 +1119,871 @@
     "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/docs/javascript-first.md",
     "sha256": "2bc2d21e51eeb41b292566cdfdaefc8fb0389ccbb1a1a39ad4553b0db18539b3",
     "capture_source": "published draft PR231"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/csharp.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/csharp.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/csharp.yml",
+    "sha256": "6b547c24831bc36c8086f2a7a4fb1ccd75823cd11c52afbf51499837ada82006"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/dependencies.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/dependencies.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/dependencies.yml",
+    "sha256": "6a1c0125a1c034585e081e6fbac8a06a5094683d8be80988c31b7144029541fb"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/docs.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/docs.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/docs.yml",
+    "sha256": "76a766b56b4fb5301d36522d69d64463754cb1bab766d9be1080f85efde8f0f6"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/links.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/links.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/links.yml",
+    "sha256": "ee979ed02d7d0db79ac57c0e4a4b6a03b9321fd163c393dd741a123c73529f90"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/rust.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/rust.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/rust.yml",
+    "sha256": "5b9c411253af4c4dcd8129379bec58f8ff67e1bd2addabac757ebf3776b9bf25"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/security.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/security.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/security.yml",
+    "sha256": "4c24db14d362f90c423e8b656f64b2058c7bf9cb48c0865bec0ab248324d4189"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": ".github/workflows/wasm.yml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/.github/workflows/wasm.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/wasm.yml",
+    "sha256": "23e2b561ddb453dc46d192496978e03b13299e85bd8f73738474ee9737d0b4a4"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "js/package.json",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/js/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/package.json",
+    "sha256": "06f105055c13816e8be5f001e71d9543f14a6aedf2ba268ce794d08dadbb5072"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "rust/Cargo.toml",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/rust/Cargo.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml",
+    "sha256": "7f2a6ef4ba92cd8d6e96473d981168df8cb1b218caa13b10c23e4931737908ae"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/AutoMerge.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/AutoMerge.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/AutoMerge.yml",
+    "sha256": "9cc8db3c604b7e206a619fa5798faa16076a286aa547e7b43bb703d9a533ede1"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/benchmarks.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/benchmarks.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/benchmarks.yml",
+    "sha256": "4210d1b4fbc6fa60ca6d6be13d87bd2f83aa74a550544f7d05459501a03cd71f"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/binary-interop.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/binary-interop.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/binary-interop.yml",
+    "sha256": "48f99213f379da533002fdeecb0595c9b5607b4906d8b3c9f0044fd0a4533b53"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/bom-check.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/bom-check.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/bom-check.yml",
+    "sha256": "c31455f27d8c3125f6162e572f81d9b549f173c7a8b58b290e438d66ad27ab9c"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/csharp.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/csharp.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/csharp.yml",
+    "sha256": "70a54da28d2caa40025f5037cf0f011117c8f3d02429835be6ecf15385feedb2"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/dependencies.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/dependencies.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/dependencies.yml",
+    "sha256": "acfb70e824d8fc4af0f25fc8eeb4cc1ec80e14c8956b56ae82e5e90adabb4081"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/docs.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/docs.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/docs.yml",
+    "sha256": "f1f40472e6f8034e7792af2cef14cdf36a66478e905303a8463fb72cf0948051"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/go.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/go.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/go.yml",
+    "sha256": "df64bd1d25af35c3b2fbc291d60e6307511d36ced76a0214c4c7ebf71b637d12"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/java.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/java.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/java.yml",
+    "sha256": "9cdcb6d9a8df766c85b5aae2813cdf14686b328173d446302d295c5fe6cf0664"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/js.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/js.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/js.yml",
+    "sha256": "b57fa8eaa5654658ca241d81178adecaf4856ba76b97f1eaa313fa7cb2114a17"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/links.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/links.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/links.yml",
+    "sha256": "23c62adbedb28c5c4ae7088c89c3840f55783964b51c4f3da9d4e780220fa5a5"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/pages.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/pages.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/pages.yml",
+    "sha256": "b3c5c531ef28bc89133b0c790c7660b094d1c16ef404fcdaa134c6beda69cd7b"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/php.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/php.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/php.yml",
+    "sha256": "2f813c9b9998f021ab2d08b1c07e21b1d3f0a35b2ecb2cb9597bee9a0d57f51b"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/python.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/python.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/python.yml",
+    "sha256": "4daa38117dd1e4b26ec1b53dcf8d1870f8c2448c9f15e628890042413b0857f3"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/release-audit.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/release-audit.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/release-audit.yml",
+    "sha256": "74853b699dbe2d6ec35750609f3508558722dda89c3b2668876c5e2926ad3731"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/rust.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/rust.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/rust.yml",
+    "sha256": "6aaedc4c74f9b7099e3d23ea4121f588db885b2aef2c79982843a0d8bd95522e"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/security.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/security.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/security.yml",
+    "sha256": "18b10f81ea8817d6b66521635438f6061c18fe71129f8f28fcf440c8b6fcab70"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": ".github/workflows/workflows.yml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/.github/workflows/workflows.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/workflows.yml",
+    "sha256": "b77adc5414bd80782db8c3232fbcd530a5ea7504067b092274b232113b4c8d34"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": "js/package.json",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/js/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/package.json",
+    "sha256": "bec56bf47ceb0a8529a51afacd717bd8df990449200cae60ebe118e37d8963dc"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": "rust/Cargo.toml",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/rust/Cargo.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/rust/Cargo.toml",
+    "sha256": "55a5a2d00e0ddbd2548a5d6ceb7e436cb74e1d3ff0677331f2e92762fa63ddee"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": "scripts/generate-standardization-recommendations.mjs",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/scripts/generate-standardization-recommendations.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/scripts/generate-standardization-recommendations.mjs",
+    "sha256": "1a509d6e53f6b3d4dee1036d8be35e6918dbb9fee6dbe09151089d17439773f6"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": ".github/workflows/js.yml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/.github/workflows/js.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/js.yml",
+    "sha256": "9a9885d6606241824b43dcd2bc92d52d8e681048e44cb9dca5a28a5acc908d22"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": ".github/workflows/links.yml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/.github/workflows/links.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/links.yml",
+    "sha256": "75d3800416ec6948878d85d1f3e0bf98059788044c6dec5be4927baf25955a6c"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": ".github/workflows/rust.yml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/.github/workflows/rust.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/rust.yml",
+    "sha256": "d5cf446bfeadf23b686d33cfc54c0e0293863253f6d7efcc7a58ede89543873b"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": ".github/workflows/security.yml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/.github/workflows/security.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/security.yml",
+    "sha256": "d3563e36f37b8b6d4ec491af21e2e0a38cfa910df78b932f1933f5b1d8df780c"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": ".github/workflows/workflows.yml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/.github/workflows/workflows.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/workflows.yml",
+    "sha256": "38063f40120cf83267464ab496c43fbfe24afd63808cd2c3c1a663c42d7453f8"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "AGENTS.md",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/AGENTS.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/AGENTS.md",
+    "sha256": "15bace59d579e9bff15e4cc27471f987c56582cb25991fa11a6923d5e1b911ab"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "CLAUDE.md",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/CLAUDE.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/CLAUDE.md",
+    "sha256": "695575db6941e7c3d8ba3b970b6253b444a295ce01051594b16fe1e2c642df66"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "CONTRIBUTING.md",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/CONTRIBUTING.md",
+    "sha256": "4acf2a3c012a296afa8d7b6be3fb5099d1d25924673263df5a86c96a1cbfd5d5"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "js/package.json",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/js/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/js/package.json",
+    "sha256": "d45d153cd2fdca23fb8f3dccd850cc4098e53618d5ac27394a8243a01c60606d"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "parity/features.json",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/parity/features.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/parity/features.json",
+    "sha256": "334a2c6fb28173151f49f0007726f85d6157e73ec9ea9ef37f85f24d7e97e5a0"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "parity/fixtures/contracts.json",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/parity/fixtures/contracts.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/parity/fixtures/contracts.json",
+    "sha256": "f9517554848d87d2add793f3b9353ac9c73be3e7000f5533fe911e034d23fc66"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "rust/.cargo/config.toml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/rust/.cargo/config.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/rust/.cargo/config.toml",
+    "sha256": "31605c711f404e3ee3e09d48f299ed3e24c48da186c18c23062490691986324e"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "rust/Cargo.toml",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/rust/Cargo.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml",
+    "sha256": "96f4a0ddcf8b656d19899220cc6ced783a280547eaa21757b0d21b56b9f0ee42"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/check-feature-parity.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/check-feature-parity.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-feature-parity.mjs",
+    "sha256": "ea2037200ccee5f8bdb76cefded232a4a0ef06aed4bc42597aad41814de3762a"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/check-test-parity.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/check-test-parity.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-test-parity.mjs",
+    "sha256": "2595497da322ff928f5241240adb7b5d2d4776eeafab37aa2b6fc6112af2bd61"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/detect-code-changes.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/detect-code-changes.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/detect-code-changes.mjs",
+    "sha256": "29a6e7fdf4c3bebc03b2f34a8553ad53297b0cbbd53f595f875dabb3c8634545"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/generate-rust.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/generate-rust.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/generate-rust.mjs",
+    "sha256": "5d4971b0a4616eb67aa697f0c73739961bb17138d2fe0531ddf7e1c8d64843ff"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/parity-threshold.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/parity-threshold.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/parity-threshold.mjs",
+    "sha256": "d79a96822fedd9b7b4c1b6ada97378bf8bf02ddb3826fa2eec8e85ee2af3e33b"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/setup-translation.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/setup-translation.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/setup-translation.mjs",
+    "sha256": "6d1740ccf830503503466adf6d75adefcbae0be9962e75c9206431308674b56c"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": ".github/workflows/coverage-gap-report.yml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/.github/workflows/coverage-gap-report.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/coverage-gap-report.yml",
+    "sha256": "ad0cbf93da70f48473ed189211e858204dff0f6d65518141b02734ed10ac1ed8"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": ".github/workflows/refresh-competitor-corpus.yml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/.github/workflows/refresh-competitor-corpus.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/refresh-competitor-corpus.yml",
+    "sha256": "e76d35ccdf5b122bb67e2ab0cce25ac1bd982865605ecf6031cb8e007cc155c1"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": ".github/workflows/release.yml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/.github/workflows/release.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/release.yml",
+    "sha256": "d9c2faa597eb108f27bab536b2ee567d49e163c8a8e291feb506d6887bd10e0e"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": ".github/workflows/update-currency-rates.yml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/.github/workflows/update-currency-rates.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-currency-rates.yml",
+    "sha256": "65e6ce80dc7f4779d37a4cd09743a9567a3c7a0bfe9d22a298728dc33633ef0f"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": ".github/workflows/update-screenshots.yml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/.github/workflows/update-screenshots.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-screenshots.yml",
+    "sha256": "5eceffbaa7d84b96d41f5604140cfd4f9c72132ce3952e9195cf4ad39addeb53"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": "CONTRIBUTING.md",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/CONTRIBUTING.md",
+    "sha256": "60dedbbbe6dd229dd40f980827370fed04fb1cfc0fe24d550359ba3668f17b7a"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": "Cargo.toml",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/Cargo.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml",
+    "sha256": "3f4313c5c5e0ef27d207d917210d2f364fc90b2d288ec3226e6cb3d15aeda5b0"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": "scripts/detect-code-changes.mjs",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/scripts/detect-code-changes.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/scripts/detect-code-changes.mjs",
+    "sha256": "4f4283be4ef2d12c0c14291478728e91233eb3cccbe3700f2429d5a8068e9597"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": "web/package.json",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/web/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/package.json",
+    "sha256": "1a93870720a77f9986bfc86e40077ba0f41a4c1fd89954c2ea1e3c042adc588d"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "parity/translation.json",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/parity/translation.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/parity/translation.json",
+    "sha256": "6dbbc2e4094218be44aedf3657c7bbc9f9195c2b2f088398dfc1ea518d8d8472"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/check-javascript-first.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/check-javascript-first.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-javascript-first.mjs",
+    "sha256": "47667af76695e3ab0a4adc738978f56ab0ee56fa25bb305d1d98cc9c8abf3d7c"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/check-stage-status.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/check-stage-status.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-stage-status.mjs",
+    "sha256": "3dfbd66cf347039dfed9b4e71dbc4a8a87cb05a2c9fc6c2c51a3d59aa0487f68"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "scripts/bounded-cargo.mjs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/scripts/bounded-cargo.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/bounded-cargo.mjs",
+    "sha256": "c6e3d3102d9a731a5201349b7e1e2ba7f9b9c1536ac01d7eb6386bbbd58ff0ce"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "rust/src/lib/generated/parity_threshold.rs",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/rust/src/lib/generated/parity_threshold.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/rust/src/lib/generated/parity_threshold.rs",
+    "sha256": "0bf28248be7c8b5f9f09c58f166836f868fc5a865c74e0726265c1c799a756a5"
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "path": "js/src/lib/isolation.js",
+    "url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/js/src/lib/isolation.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/files/js/src/lib/isolation.js",
+    "sha256": "1f8e135aad5ec5542d719effe6126811e09a1f5fc67131a3339b3223da3f0f18"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "js/src/main.jsx",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/js/src/main.jsx",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/main.jsx",
+    "sha256": "c29fd321df36aaa88ca8cc8517bb64228a823fe445e69b0449d49e01577771ef"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "examples/archive/run-interop.sh",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/examples/archive/run-interop.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/archive/run-interop.sh",
+    "sha256": "d749ed1bfa6705fe1762b087c6f7841fdd8fe5127fcfdfad506520d74eb3bc68"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "examples/tcp/run-interop.sh",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/examples/tcp/run-interop.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/tcp/run-interop.sh",
+    "sha256": "805d700699be77c27242401e545f057a0d644a50c377235d9474d97b6d06d12a"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "rust/tests/query_processor_csharp_parity_tests.rs",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/rust/tests/query_processor_csharp_parity_tests.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/tests/query_processor_csharp_parity_tests.rs",
+    "sha256": "eba372fcf55a53e6322593c64e56f18e6834e8214e96217fd7c85974cf3799b0"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": "examples/binary/run-interop.sh",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/examples/binary/run-interop.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/examples/binary/run-interop.sh",
+    "sha256": "46fc4dedb57a8b2c6b259d186bb0deef25f271aba8ff29afed79bb7ad5b9e931"
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "path": "web/src/worker.ts",
+    "url": "https://github.com/link-assistant/calculator/blob/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2/web/src/worker.ts",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/src/worker.ts",
+    "sha256": "cbefb43ec6a1d825f463c0c560a5356a347e2c245a51c3b6ee83a57a9e6e3e95"
+  },
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "path": "js/src/App.jsx",
+    "url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/js/src/App.jsx",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/App.jsx",
+    "sha256": "843790b365827d8e2d87bbc8fe730a11433f864e1a09dd6d1af6fd63db5fbe63"
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "path": "js/src/Parser.js",
+    "url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/js/src/Parser.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/src/Parser.js",
+    "sha256": "44c548a6715bfa41586bbd301c51d075928c31d6be6cc1b9ed2fcb3ff7b46f29"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli",
+    "url": "https://api.github.com/repos/link-foundation/link-cli",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/repository.json",
+    "sha256": "2dddc6390962ebfd340b55b3e3b129b0ebffc5c38cb8946f1f75666d73c6ab14",
+    "captured_at": "2026-10-10T19:49:00.257709+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/commits/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/commits/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/head-commit.json",
+    "sha256": "2d307255422781de748031a49034d567c38e8fa41f73fb24f93a0a4394368155",
+    "captured_at": "2026-10-10T19:49:00.257945+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/git/trees/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580?recursive=1",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/git/trees/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580?recursive=1",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-tree.json.gz",
+    "sha256": "153ccd69d93c9b94f4b03e98e1b3aebf2805e9c56ef31fb145ed354d0e64fdd5",
+    "captured_at": "2026-10-10T19:49:00.258502+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/actions/runs?branch=main&per_page=25",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/actions/runs?branch=main&per_page=25",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-runs.json",
+    "sha256": "0ea4c7d82d3bda18fcd6c79d6cfc3b6770388e6806cbc492a6c5f5dcfb2edf15",
+    "captured_at": "2026-10-10T19:49:00.258751+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/pulls?state=open&per_page=100",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/pulls?state=open&per_page=100",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/open-pulls.json",
+    "sha256": "88a8dd08839b65e6c43773b5112a9b2476c82f5e8b650b61c0b286049c946b69",
+    "captured_at": "2026-10-10T19:49:00.258982+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/branches/main",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/branches/main",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/default-branch.json",
+    "sha256": "a5bc50de32875857ae365aedfbfbed89df7a84facddfe658f0835e65d0e1f1b7",
+    "captured_at": "2026-10-10T19:49:00.259215+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/link-cli/rulesets",
+    "url": "https://api.github.com/repos/link-foundation/link-cli/rulesets",
+    "repository": "link-foundation/link-cli",
+    "audit_commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "local_path": "docs/case-studies/issue-759/raw/sources/link-cli/rulesets.json",
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "captured_at": "2026-10-10T19:49:00.259274+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation",
+    "url": "https://api.github.com/repos/link-foundation/links-notation",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/repository.json",
+    "sha256": "de8a5b027456c65ac4ee082b5be06c4b8945bb2305d75b6a943850561b0c9933",
+    "captured_at": "2026-10-10T19:49:00.263331+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/commits/28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/commits/28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/head-commit.json",
+    "sha256": "67f980a0cf6aafdccd52f4ccebcc3d3aac9f634fb939f23462a7a07e7d502cb5",
+    "captured_at": "2026-10-10T19:49:00.263539+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/git/trees/28cd9d2f64e34529c71e4c6b73ca09300dc3d733?recursive=1",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/git/trees/28cd9d2f64e34529c71e4c6b73ca09300dc3d733?recursive=1",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-tree.json.gz",
+    "sha256": "6a89624cae750381ff9dbe4c8b12c1d60061e953d3c11fb82d3b89a94ab4fef2",
+    "captured_at": "2026-10-10T19:49:00.263827+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/actions/runs?branch=main&per_page=25",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/actions/runs?branch=main&per_page=25",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-runs.json",
+    "sha256": "579989cb387f72d4313d32c1579c6f851f8b35c08e1136c6142d635c9ad5ceac",
+    "captured_at": "2026-10-10T19:49:00.264093+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/pulls?state=open&per_page=100",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/pulls?state=open&per_page=100",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/open-pulls.json",
+    "sha256": "8d37f785e5266fe034dbd2dbb896d9f79cc49f52f8f6a9bebf5cda411d478691",
+    "captured_at": "2026-10-10T19:49:00.264245+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/branches/main",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/branches/main",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/default-branch.json",
+    "sha256": "2d667f69562db6bd6e323856b2d356e234c67d96e96d54a7ac2932422ca64853",
+    "captured_at": "2026-10-10T19:49:00.264274+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/links-notation/rulesets",
+    "url": "https://api.github.com/repos/link-foundation/links-notation/rulesets",
+    "repository": "link-foundation/links-notation",
+    "audit_commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "local_path": "docs/case-studies/issue-759/raw/sources/links-notation/rulesets.json",
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "captured_at": "2026-10-10T19:49:00.264294+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start",
+    "url": "https://api.github.com/repos/link-foundation/start",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/repository.json",
+    "sha256": "c7f2a6c299538f0b7927091c521f93fb54425099bd347e4ba152c433b8febaa6",
+    "captured_at": "2026-10-10T19:49:00.266528+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/commits/348ad41c2e6265611a53b55271d893f74960eff6",
+    "url": "https://api.github.com/repos/link-foundation/start/commits/348ad41c2e6265611a53b55271d893f74960eff6",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/head-commit.json",
+    "sha256": "12e1fa1a3a1dc3949e1464660fd3d5220a7d23551b6af77d3f4be772b832ec6d",
+    "captured_at": "2026-10-10T19:49:00.266968+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/git/trees/348ad41c2e6265611a53b55271d893f74960eff6?recursive=1",
+    "url": "https://api.github.com/repos/link-foundation/start/git/trees/348ad41c2e6265611a53b55271d893f74960eff6?recursive=1",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/default-head-tree.json.gz",
+    "sha256": "ffd02f70f839bd7b9d5a5563514e437de9e417d7453a1fcff3d0dc34de509c8f",
+    "captured_at": "2026-10-10T19:49:00.267829+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/actions/runs?branch=main&per_page=25",
+    "url": "https://api.github.com/repos/link-foundation/start/actions/runs?branch=main&per_page=25",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/default-head-runs.json",
+    "sha256": "bfd28b500a232405729d7c46d07597d8f2846896132ee8f7af37fe6bdec89b54",
+    "captured_at": "2026-10-10T19:49:00.268059+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/pulls?state=open&per_page=100",
+    "url": "https://api.github.com/repos/link-foundation/start/pulls?state=open&per_page=100",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/open-pulls.json",
+    "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "captured_at": "2026-10-10T19:49:00.268085+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/branches/main",
+    "url": "https://api.github.com/repos/link-foundation/start/branches/main",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/default-branch.json",
+    "sha256": "fc5dc711920785a055d3975e01d23f2e1ea1a9eadb5ced994f911d4296cbdf7b",
+    "captured_at": "2026-10-10T19:49:00.268109+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/rulesets",
+    "url": "https://api.github.com/repos/link-foundation/start/rulesets",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/rulesets.json",
+    "sha256": "a067f38ad8add39b47c4bd6067642f497a135f2bc84a1c6a8bc606a36a3cfe61",
+    "captured_at": "2026-10-10T19:49:00.268128+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-foundation/start/rulesets/24848039",
+    "url": "https://api.github.com/repos/link-foundation/start/rulesets/24848039",
+    "repository": "link-foundation/start",
+    "audit_commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "local_path": "docs/case-studies/issue-759/raw/sources/start/ruleset-24848039.json",
+    "sha256": "9a1970341e1f131b1f2e52f829a7071235e95648c3412376478efe99f66e0908",
+    "captured_at": "2026-10-10T19:49:00.268858+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator",
+    "url": "https://api.github.com/repos/link-assistant/calculator",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/repository.json",
+    "sha256": "c95296b049b99895967a4c97cdcb9b264b534f80244be0cf627f40a21013af09",
+    "captured_at": "2026-10-10T19:49:00.271054+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/commits/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "url": "https://api.github.com/repos/link-assistant/calculator/commits/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/head-commit.json",
+    "sha256": "8defe0854970450956bbf86637e09dc75593fe0f70543a39b4bb993cf199933e",
+    "captured_at": "2026-10-10T19:49:00.271240+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/git/trees/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2?recursive=1",
+    "url": "https://api.github.com/repos/link-assistant/calculator/git/trees/cc31f84b303141a40f91fcc0cdd2d53d9209b2a2?recursive=1",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-tree.json.gz",
+    "sha256": "bf6cf5bc47796abe79628726004b3e07152866b4274763c58db119341ab2b8cc",
+    "captured_at": "2026-10-10T19:49:00.272278+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/actions/runs?branch=main&per_page=25",
+    "url": "https://api.github.com/repos/link-assistant/calculator/actions/runs?branch=main&per_page=25",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-runs.json",
+    "sha256": "2cc157234712429a56dd95877ebaa28503c785f8f1a28d9450b41c01961df78a",
+    "captured_at": "2026-10-10T19:49:00.272500+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/pulls?state=open&per_page=100",
+    "url": "https://api.github.com/repos/link-assistant/calculator/pulls?state=open&per_page=100",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/open-pulls.json",
+    "sha256": "d706478cb2d892d6811411b6c71a2498807d6b7e29f84f76e5774ec6537f7a37",
+    "captured_at": "2026-10-10T19:49:00.272537+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/branches/main",
+    "url": "https://api.github.com/repos/link-assistant/calculator/branches/main",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/default-branch.json",
+    "sha256": "523e2c4718f5467bef184d1f334473e768c7e29280c9c5796fe38e3d8ca4b7df",
+    "captured_at": "2026-10-10T19:49:00.272561+00:00"
+  },
+  {
+    "kind": "github-repository-audit-snapshot",
+    "endpoint": "repos/link-assistant/calculator/rulesets",
+    "url": "https://api.github.com/repos/link-assistant/calculator/rulesets",
+    "repository": "link-assistant/calculator",
+    "audit_commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "local_path": "docs/case-studies/issue-759/raw/sources/calculator/rulesets.json",
+    "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "captured_at": "2026-10-10T19:49:00.272579+00:00"
   }
 ]

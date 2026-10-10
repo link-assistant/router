@@ -1,0 +1,38 @@
+[package]
+name = "link-cli"
+version = "0.1.0"
+edition = "2021"
+# `std::fs::File::lock` (used by the advisory locking in `storage::lock`)
+# was stabilised in Rust 1.89.
+rust-version = "1.89"
+description = "A CLI tool and reusable library for links manipulation backed by a LiNo-notation doublet storage engine."
+license = "Unlicense"
+repository = "https://github.com/link-foundation/link-cli"
+documentation = "https://docs.rs/link-cli"
+homepage = "https://github.com/link-foundation/link-cli"
+readme = "README.md"
+authors = ["link-foundation"]
+keywords = ["links", "doublets", "cli", "database"]
+categories = ["command-line-utilities", "database", "data-structures"]
+
+[lib]
+name = "link_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "clink"
+path = "src/main.rs"
+
+[dependencies]
+thiserror = "2.0.21"
+anyhow = "1.0.104"
+# Issue 67 Rust basis crates:
+# Source: http://github.com/linksplatform/doublets-rs
+doublets = "0.5.0"
+# Source: http://github.com/link-foundation/links-notation
+links-notation = "0.23.0"
+# Source: http://github.com/link-foundation/lino-arguments
+lino-arguments = "0.3.0"
+
+[dev-dependencies]
+tempfile = "3.27.0"

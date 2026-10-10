@@ -1,11 +1,96 @@
 {
-  "captured_at": "2026-10-10T19:41:05.764255+00:00",
-  "scope": "Pinned primary source files; PR/issue/search API response snapshots; compressed source trees; public draft proposal heads",
+  "captured_at": "2026-10-10T19:49:00.360384+00:00",
+  "scope": "Pinned primary sources; metadata snapshots; compressed complete source trees except formal-ai documented truncation; published proposals; four additional current repository audits",
   "files": [
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/additional-repository-audit-summary.json",
+      "bytes": 6204,
+      "sha256": "5bc5f31f108404317cbda55efbb276d604237588c7b8d660560344f6e871bd05"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/additional-repository-pins.json",
+      "bytes": 3457,
+      "sha256": "1b266ee155c36bf6f3cff50a464de0c2f85fa8c6ee1716442e3b8edd2bd52aae"
+    },
     {
       "path": "docs/case-studies/issue-759/raw/sources/all-pins.json",
       "bytes": 533,
       "sha256": "ac434dadcc8e45093835c1ee5b9f9b430c313b7de86705cce8d28e925022b4f2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-branch.json",
+      "bytes": 4293,
+      "sha256": "523e2c4718f5467bef184d1f334473e768c7e29280c9c5796fe38e3d8ca4b7df"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-paths.txt",
+      "bytes": 26518,
+      "sha256": "3aaac1ddaca60b229f2c0a03a2c7d3a5a50ad0eb337e4d728836bc3a9e0d32b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-runs.json",
+      "bytes": 378034,
+      "sha256": "2cc157234712429a56dd95877ebaa28503c785f8f1a28d9450b41c01961df78a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-tree.json.gz",
+      "bytes": 31581,
+      "sha256": "bf6cf5bc47796abe79628726004b3e07152866b4274763c58db119341ab2b8cc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/coverage-gap-report.yml",
+      "bytes": 1707,
+      "sha256": "ad0cbf93da70f48473ed189211e858204dff0f6d65518141b02734ed10ac1ed8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/refresh-competitor-corpus.yml",
+      "bytes": 3226,
+      "sha256": "e76d35ccdf5b122bb67e2ab0cce25ac1bd982865605ecf6031cb8e007cc155c1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/release.yml",
+      "bytes": 25954,
+      "sha256": "d9c2faa597eb108f27bab536b2ee567d49e163c8a8e291feb506d6887bd10e0e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-currency-rates.yml",
+      "bytes": 2281,
+      "sha256": "65e6ce80dc7f4779d37a4cd09743a9567a3c7a0bfe9d22a298728dc33633ef0f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-screenshots.yml",
+      "bytes": 3602,
+      "sha256": "5eceffbaa7d84b96d41f5604140cfd4f9c72132ce3952e9195cf4ad39addeb53"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/CONTRIBUTING.md",
+      "bytes": 9350,
+      "sha256": "60dedbbbe6dd229dd40f980827370fed04fb1cfc0fe24d550359ba3668f17b7a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml",
+      "bytes": 3159,
+      "sha256": "3f4313c5c5e0ef27d207d917210d2f364fc90b2d288ec3226e6cb3d15aeda5b0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/scripts/detect-code-changes.mjs",
+      "bytes": 6518,
+      "sha256": "4f4283be4ef2d12c0c14291478728e91233eb3cccbe3700f2429d5a8068e9597"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/package.json",
+      "bytes": 1337,
+      "sha256": "1a93870720a77f9986bfc86e40077ba0f41a4c1fd89954c2ea1e3c042adc588d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/src/worker.ts",
+      "bytes": 13708,
+      "sha256": "cbefb43ec6a1d825f463c0c560a5356a347e2c245a51c3b6ee83a57a9e6e3e95"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/head-commit.json",
+      "bytes": 42793,
+      "sha256": "8defe0854970450956bbf86637e09dc75593fe0f70543a39b4bb993cf199933e"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/calculator/issue-254-comments.json",
@@ -16,6 +101,21 @@
       "path": "docs/case-studies/issue-759/raw/sources/calculator/issue-254.json",
       "bytes": 9929,
       "sha256": "c05cc3e6b29571055cb8c4f387649801db93897e5ca0f554f2fb37645df2f3cf"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/open-pulls.json",
+      "bytes": 29845,
+      "sha256": "d706478cb2d892d6811411b6c71a2498807d6b7e29f84f76e5774ec6537f7a37"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/repository.json",
+      "bytes": 16562,
+      "sha256": "c95296b049b99895967a4c97cdcb9b264b534f80244be0cf627f40a21013af09"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/.github/workflows/layered-ci.yml",
@@ -333,6 +433,101 @@
       "sha256": "28bb24eac32054430221385e008235815b963eaef6412957347f7134b36ccf52"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-branch.json",
+      "bytes": 4100,
+      "sha256": "a5bc50de32875857ae365aedfbfbed89df7a84facddfe658f0835e65d0e1f1b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-paths.txt",
+      "bytes": 41852,
+      "sha256": "fdabebab813f65ba1e3027f07650e2cf01a3c03cecf33cc6ae8f0b018bca4891"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-runs.json",
+      "bytes": 379876,
+      "sha256": "0ea4c7d82d3bda18fcd6c79d6cfc3b6770388e6806cbc492a6c5f5dcfb2edf15"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-tree.json.gz",
+      "bytes": 35571,
+      "sha256": "153ccd69d93c9b94f4b03e98e1b3aebf2805e9c56ef31fb145ed354d0e64fdd5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/csharp.yml",
+      "bytes": 25031,
+      "sha256": "6b547c24831bc36c8086f2a7a4fb1ccd75823cd11c52afbf51499837ada82006"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/dependencies.yml",
+      "bytes": 1512,
+      "sha256": "6a1c0125a1c034585e081e6fbac8a06a5094683d8be80988c31b7144029541fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/docs.yml",
+      "bytes": 6687,
+      "sha256": "76a766b56b4fb5301d36522d69d64463754cb1bab766d9be1080f85efde8f0f6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/links.yml",
+      "bytes": 3723,
+      "sha256": "ee979ed02d7d0db79ac57c0e4a4b6a03b9321fd163c393dd741a123c73529f90"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/rust.yml",
+      "bytes": 18472,
+      "sha256": "5b9c411253af4c4dcd8129379bec58f8ff67e1bd2addabac757ebf3776b9bf25"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/security.yml",
+      "bytes": 4702,
+      "sha256": "4c24db14d362f90c423e8b656f64b2058c7bf9cb48c0865bec0ab248324d4189"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/wasm.yml",
+      "bytes": 2595,
+      "sha256": "23e2b561ddb453dc46d192496978e03b13299e85bd8f73738474ee9737d0b4a4"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/archive/run-interop.sh",
+      "bytes": 1635,
+      "sha256": "d749ed1bfa6705fe1762b087c6f7841fdd8fe5127fcfdfad506520d74eb3bc68"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/tcp/run-interop.sh",
+      "bytes": 1801,
+      "sha256": "805d700699be77c27242401e545f057a0d644a50c377235d9474d97b6d06d12a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/package.json",
+      "bytes": 1204,
+      "sha256": "06f105055c13816e8be5f001e71d9543f14a6aedf2ba268ce794d08dadbb5072"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/App.jsx",
+      "bytes": 12975,
+      "sha256": "843790b365827d8e2d87bbc8fe730a11433f864e1a09dd6d1af6fd63db5fbe63"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/main.jsx",
+      "bytes": 239,
+      "sha256": "c29fd321df36aaa88ca8cc8517bb64228a823fe445e69b0449d49e01577771ef"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml",
+      "bytes": 1124,
+      "sha256": "7f2a6ef4ba92cd8d6e96473d981168df8cb1b218caa13b10c23e4931737908ae"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/tests/query_processor_csharp_parity_tests.rs",
+      "bytes": 18523,
+      "sha256": "eba372fcf55a53e6322593c64e56f18e6834e8214e96217fd7c85974cf3799b0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/head-commit.json",
+      "bytes": 11000,
+      "sha256": "2d307255422781de748031a49034d567c38e8fa41f73fb24f93a0a4394368155"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/link-cli/issue-111-comments.json",
       "bytes": 2,
       "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
@@ -343,6 +538,161 @@
       "sha256": "b606dc0d0fd59d7bd113efe498f1d00a94fd7a65f2f61fa881fb1d32e8f888c0"
     },
     {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/open-pulls.json",
+      "bytes": 224658,
+      "sha256": "88a8dd08839b65e6c43773b5112a9b2476c82f5e8b650b61c0b286049c946b69"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/repository.json",
+      "bytes": 8163,
+      "sha256": "2dddc6390962ebfd340b55b3e3b129b0ebffc5c38cb8946f1f75666d73c6ab14"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-branch.json",
+      "bytes": 5682,
+      "sha256": "2d667f69562db6bd6e323856b2d356e234c67d96e96d54a7ac2932422ca64853"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-paths.txt",
+      "bytes": 61574,
+      "sha256": "2bdb0333f23b018697a5145cf22e4d5d9273264c7fe6138a368d148321c4b420"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-runs.json",
+      "bytes": 391221,
+      "sha256": "579989cb387f72d4313d32c1579c6f851f8b35c08e1136c6142d635c9ad5ceac"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-tree.json.gz",
+      "bytes": 61308,
+      "sha256": "6a89624cae750381ff9dbe4c8b12c1d60061e953d3c11fb82d3b89a94ab4fef2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/AutoMerge.yml",
+      "bytes": 1872,
+      "sha256": "9cc8db3c604b7e206a619fa5798faa16076a286aa547e7b43bb703d9a533ede1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/benchmarks.yml",
+      "bytes": 16936,
+      "sha256": "4210d1b4fbc6fa60ca6d6be13d87bd2f83aa74a550544f7d05459501a03cd71f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/binary-interop.yml",
+      "bytes": 1825,
+      "sha256": "48f99213f379da533002fdeecb0595c9b5607b4906d8b3c9f0044fd0a4533b53"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/bom-check.yml",
+      "bytes": 2394,
+      "sha256": "c31455f27d8c3125f6162e572f81d9b549f173c7a8b58b290e438d66ad27ab9c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/csharp.yml",
+      "bytes": 15132,
+      "sha256": "70a54da28d2caa40025f5037cf0f011117c8f3d02429835be6ecf15385feedb2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/dependencies.yml",
+      "bytes": 1409,
+      "sha256": "acfb70e824d8fc4af0f25fc8eeb4cc1ec80e14c8956b56ae82e5e90adabb4081"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/docs.yml",
+      "bytes": 4007,
+      "sha256": "f1f40472e6f8034e7792af2cef14cdf36a66478e905303a8463fb72cf0948051"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/go.yml",
+      "bytes": 8717,
+      "sha256": "df64bd1d25af35c3b2fbc291d60e6307511d36ced76a0214c4c7ebf71b637d12"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/java.yml",
+      "bytes": 11635,
+      "sha256": "9cdcb6d9a8df766c85b5aae2813cdf14686b328173d446302d295c5fe6cf0664"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/js.yml",
+      "bytes": 11731,
+      "sha256": "b57fa8eaa5654658ca241d81178adecaf4856ba76b97f1eaa313fa7cb2114a17"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/links.yml",
+      "bytes": 3330,
+      "sha256": "23c62adbedb28c5c4ae7088c89c3840f55783964b51c4f3da9d4e780220fa5a5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/pages.yml",
+      "bytes": 6189,
+      "sha256": "b3c5c531ef28bc89133b0c790c7660b094d1c16ef404fcdaa134c6beda69cd7b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/php.yml",
+      "bytes": 10594,
+      "sha256": "2f813c9b9998f021ab2d08b1c07e21b1d3f0a35b2ecb2cb9597bee9a0d57f51b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/python.yml",
+      "bytes": 9734,
+      "sha256": "4daa38117dd1e4b26ec1b53dcf8d1870f8c2448c9f15e628890042413b0857f3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/release-audit.yml",
+      "bytes": 4760,
+      "sha256": "74853b699dbe2d6ec35750609f3508558722dda89c3b2668876c5e2926ad3731"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/rust.yml",
+      "bytes": 13546,
+      "sha256": "6aaedc4c74f9b7099e3d23ea4121f588db885b2aef2c79982843a0d8bd95522e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/security.yml",
+      "bytes": 4824,
+      "sha256": "18b10f81ea8817d6b66521635438f6061c18fe71129f8f28fcf440c8b6fcab70"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/workflows.yml",
+      "bytes": 3678,
+      "sha256": "b77adc5414bd80782db8c3232fbcd530a5ea7504067b092274b232113b4c8d34"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/examples/binary/run-interop.sh",
+      "bytes": 1365,
+      "sha256": "46fc4dedb57a8b2c6b259d186bb0deef25f271aba8ff29afed79bb7ad5b9e931"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/package.json",
+      "bytes": 1147,
+      "sha256": "bec56bf47ceb0a8529a51afacd717bd8df990449200cae60ebe118e37d8963dc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/src/Parser.js",
+      "bytes": 9003,
+      "sha256": "44c548a6715bfa41586bbd301c51d075928c31d6be6cc1b9ed2fcb3ff7b46f29"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/rust/Cargo.toml",
+      "bytes": 123,
+      "sha256": "55a5a2d00e0ddbd2548a5d6ceb7e436cb74e1d3ff0677331f2e92762fa63ddee"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/scripts/generate-standardization-recommendations.mjs",
+      "bytes": 8409,
+      "sha256": "1a509d6e53f6b3d4dee1036d8be35e6918dbb9fee6dbe09151089d17439773f6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/head-commit.json",
+      "bytes": 7211,
+      "sha256": "67f980a0cf6aafdccd52f4ccebcc3d3aac9f634fb939f23462a7a07e7d502cb5"
+    },
+    {
       "path": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339-comments.json",
       "bytes": 2,
       "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
@@ -351,6 +701,21 @@
       "path": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339.json",
       "bytes": 10116,
       "sha256": "378d955e49383481457828c348985cc23ce08ae6651445fa863447bece12b6c1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/open-pulls.json",
+      "bytes": 152854,
+      "sha256": "8d37f785e5266fe034dbd2dbb896d9f79cc49f52f8f6a9bebf5cda411d478691"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/repository.json",
+      "bytes": 8480,
+      "sha256": "de8a5b027456c65ac4ee082b5be06c4b8945bb2305d75b6a943850561b0c9933"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/meta-language/comment-6101425254.json",
@@ -789,8 +1154,158 @@
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
-      "bytes": 73758,
-      "sha256": "127d6f6d80b07927a20f9574695e4773c8c4fc4c431bffac785169eec9f4191a"
+      "bytes": 124537,
+      "sha256": "4326ee9305c564073f72a86a169baeaae47065f485c0ccff2ebef4180c70ed89"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-branch.json",
+      "bytes": 4046,
+      "sha256": "fc5dc711920785a055d3975e01d23f2e1ea1a9eadb5ced994f911d4296cbdf7b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-paths.txt",
+      "bytes": 48528,
+      "sha256": "543ca74946d9663c7e0f2caaa47fa6209c7bd93d7666041fea70ee2797cdb08d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-runs.json",
+      "bytes": 369936,
+      "sha256": "bfd28b500a232405729d7c46d07597d8f2846896132ee8f7af37fe6bdec89b54"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-tree.json.gz",
+      "bytes": 49916,
+      "sha256": "ffd02f70f839bd7b9d5a5563514e437de9e417d7453a1fcff3d0dc34de509c8f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/js.yml",
+      "bytes": 29804,
+      "sha256": "9a9885d6606241824b43dcd2bc92d52d8e681048e44cb9dca5a28a5acc908d22"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/links.yml",
+      "bytes": 4252,
+      "sha256": "75d3800416ec6948878d85d1f3e0bf98059788044c6dec5be4927baf25955a6c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/rust.yml",
+      "bytes": 27936,
+      "sha256": "d5cf446bfeadf23b686d33cfc54c0e0293863253f6d7efcc7a58ede89543873b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/security.yml",
+      "bytes": 5761,
+      "sha256": "d3563e36f37b8b6d4ec491af21e2e0a38cfa910df78b932f1933f5b1d8df780c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/workflows.yml",
+      "bytes": 3782,
+      "sha256": "38063f40120cf83267464ab496c43fbfe24afd63808cd2c3c1a663c42d7453f8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/AGENTS.md",
+      "bytes": 2374,
+      "sha256": "15bace59d579e9bff15e4cc27471f987c56582cb25991fa11a6923d5e1b911ab"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/CLAUDE.md",
+      "bytes": 1079,
+      "sha256": "695575db6941e7c3d8ba3b970b6253b444a295ce01051594b16fe1e2c642df66"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/CONTRIBUTING.md",
+      "bytes": 4473,
+      "sha256": "4acf2a3c012a296afa8d7b6be3fb5099d1d25924673263df5a86c96a1cbfd5d5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/js/package.json",
+      "bytes": 2230,
+      "sha256": "d45d153cd2fdca23fb8f3dccd850cc4098e53618d5ac27394a8243a01c60606d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/js/src/lib/isolation.js",
+      "bytes": 30670,
+      "sha256": "1f8e135aad5ec5542d719effe6126811e09a1f5fc67131a3339b3223da3f0f18"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/features.json",
+      "bytes": 121588,
+      "sha256": "334a2c6fb28173151f49f0007726f85d6157e73ec9ea9ef37f85f24d7e97e5a0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/fixtures/contracts.json",
+      "bytes": 5549,
+      "sha256": "f9517554848d87d2add793f3b9353ac9c73be3e7000f5533fe911e034d23fc66"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/translation.json",
+      "bytes": 466,
+      "sha256": "6dbbc2e4094218be44aedf3657c7bbc9f9195c2b2f088398dfc1ea518d8d8472"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/.cargo/config.toml",
+      "bytes": 160,
+      "sha256": "31605c711f404e3ee3e09d48f299ed3e24c48da186c18c23062490691986324e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml",
+      "bytes": 1036,
+      "sha256": "96f4a0ddcf8b656d19899220cc6ced783a280547eaa21757b0d21b56b9f0ee42"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/src/lib/generated/parity_threshold.rs",
+      "bytes": 872,
+      "sha256": "0bf28248be7c8b5f9f09c58f166836f868fc5a865c74e0726265c1c799a756a5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/bounded-cargo.mjs",
+      "bytes": 2557,
+      "sha256": "c6e3d3102d9a731a5201349b7e1e2ba7f9b9c1536ac01d7eb6386bbbd58ff0ce"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-feature-parity.mjs",
+      "bytes": 4554,
+      "sha256": "ea2037200ccee5f8bdb76cefded232a4a0ef06aed4bc42597aad41814de3762a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-javascript-first.mjs",
+      "bytes": 6064,
+      "sha256": "47667af76695e3ab0a4adc738978f56ab0ee56fa25bb305d1d98cc9c8abf3d7c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-stage-status.mjs",
+      "bytes": 982,
+      "sha256": "3dfbd66cf347039dfed9b4e71dbc4a8a87cb05a2c9fc6c2c51a3d59aa0487f68"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-test-parity.mjs",
+      "bytes": 1458,
+      "sha256": "2595497da322ff928f5241240adb7b5d2d4776eeafab37aa2b6fc6112af2bd61"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/detect-code-changes.mjs",
+      "bytes": 7865,
+      "sha256": "29a6e7fdf4c3bebc03b2f34a8553ad53297b0cbbd53f595f875dabb3c8634545"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/generate-rust.mjs",
+      "bytes": 1922,
+      "sha256": "5d4971b0a4616eb67aa697f0c73739961bb17138d2fe0531ddf7e1c8d64843ff"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/parity-threshold.mjs",
+      "bytes": 147,
+      "sha256": "d79a96822fedd9b7b4c1b6ada97378bf8bf02ddb3826fa2eec8e85ee2af3e33b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/setup-translation.mjs",
+      "bytes": 1123,
+      "sha256": "6d1740ccf830503503466adf6d75adefcbae0be9962e75c9206431308674b56c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/head-commit.json",
+      "bytes": 8204,
+      "sha256": "12e1fa1a3a1dc3949e1464660fd3d5220a7d23551b6af77d3f4be772b832ec6d"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/start/issue-197-comments.json",
@@ -801,6 +1316,26 @@
       "path": "docs/case-studies/issue-759/raw/sources/start/issue-197.json",
       "bytes": 10827,
       "sha256": "9f0e317f1641286e953a2f845b6f5ad612421cb008c4c6a3d8dc63a555ee9778"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/open-pulls.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/repository.json",
+      "bytes": 8054,
+      "sha256": "c7f2a6c299538f0b7927091c521f93fb54425099bd347e4ba152c433b8febaa6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/ruleset-24848039.json",
+      "bytes": 991,
+      "sha256": "9a1970341e1f131b1f2e52f829a7071235e95648c3412376478efe99f66e0908"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/rulesets.json",
+      "bytes": 478,
+      "sha256": "a067f38ad8add39b47c4bd6067642f497a135f2bc84a1c6a8bc606a36a3cfe61"
     },
     {
       "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/download-errors.json",
