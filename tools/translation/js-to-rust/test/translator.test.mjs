@@ -57,6 +57,18 @@ test('both targets emit only after reparsing and checking the serialized meta-la
   assert.match(translation.rust, /fn js_min/u);
 });
 
+test('serialized meta rejects duplicate globals and definitions with missing returns', () => {
+  assert.throws(() => parseMeta(translation.meta + translation.meta), /duplicate meta-language definition/u);
+  assert.throws(() => parseMeta('(function incomplete (parameters) (returns number) (body))'), /path without a return/u);
+});
+
+test('the frontend refuses invalid numeric and string literal syntax', () => {
+  for (const literal of ['01', '0_1', '1__0']) {
+    assert.throws(() => translateJavaScript(`/** @returns {number} */ export function malformed() { return ${literal}; }`), TranslationError);
+  }
+  assert.throws(() => translateJavaScript('/** @returns {string} */ export function malformed() { return "line\nbreak"; }'), TranslationError);
+});
+
 test('generic source edits change the AST/IR and both emitted target programs', () => {
   const original = '/** @param {number} n @returns {number} */ export function unrelatedKernel(n) { const bias = 7; return n * 3 + bias; }';
   const altered = original.replace('n * 3', 'n * 5');

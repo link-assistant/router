@@ -455,7 +455,7 @@ function primary(at, language) {
  */
 function numberText(text, language) {
   const plain = language === 'Rust' ? text.replace(/_?f64$/u, '') : text;
-  if (!/^\d(?:_?\d)*(?:\.\d(?:_?\d)*)?$/u.test(plain) || language === 'JavaScript' && /^0\d/u.test(plain)) refuse('unsupported', `the literal ${text}`);
+  if (!/^\d(?:_?\d)*(?:\.\d(?:_?\d)*)?$/u.test(plain) || language === 'JavaScript' && /^0[\d_]/u.test(plain)) refuse('unsupported', `the literal ${text}`);
   const canonical = String(Number(plain.replace(/_/gu, '')));
   if (!Number.isFinite(Number(canonical))) refuse('unsupported', `the literal ${text}`);
   if (/e/u.test(canonical)) refuse('unsupported', `the literal ${text}`);

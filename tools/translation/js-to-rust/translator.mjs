@@ -98,6 +98,12 @@ export function translateJavaScript(source) {
 
 export function parseMeta(text) {
   const items = fromLino(text);
+  const names = new Set();
+  for (const item of items) {
+    if (names.has(item.name)) throw new Error(`duplicate meta-language definition ${item.name}`);
+    names.add(item.name);
+    if (item.kind === 'function' && !returns(item.body)) throw new Error(`meta-language function ${item.name} has a path without a return`);
+  }
   const table = signatures(items);
   return items.map((item) => check(item, table));
 }
