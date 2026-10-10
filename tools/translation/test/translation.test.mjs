@@ -59,6 +59,13 @@ test('vendored implementations match the pinned integrity inventory', () => {
   for (const [path, hash] of Object.entries(lock.files)) assert.equal(sha256(readFileSync(join(vendor, path))), hash, path);
 });
 
+test('TypeScript annotations never rewrite function-like source string data', async () => {
+  const result = translateSource('const TEXT: &str = "function misleading(value)"; pub fn echo(value: &str) -> String { value.to_string() }');
+  assert.ok(result.typescript.includes('"function misleading(value)"'));
+  assert.ok(result.typescript.includes('function echo(value: string)'));
+  assert.equal((await load(result.javascript)).translated.TEXT, 'function misleading(value)');
+});
+
 test('raw strings, nested comments, lifetimes, Unicode and char escapes retain exact boundaries', () => {
   const source = '/* outside /* inside */ tail */\nconst TEXT: &str = r###"} ; \\" raw"###;\nfn plain() -> bool { true }\nconst C: char = \'\\u{1f600}\';\n// café 😀\n';
   const result = translateSource(source);

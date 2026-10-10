@@ -4,6 +4,7 @@ import { parseRust } from './vendor/meta-language/translation/rust.js';
 import { checkProgram } from './vendor/meta-language/translation/check.js';
 import { emitJavaScript } from './vendor/meta-language/translation/emit-javascript.js';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
+import { tokenize } from './vendor/meta-language/translation/lexer.js';
 
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
@@ -124,11 +125,20 @@ export function translateSource(source, path = 'input.rs') {
   const runtime = `${header}${body}\n\nexport const translated = { ${runtimeEntries.join(', ')} };\nexport const provenance = ${JSON.stringify({ sourcePath: path, sourceSha256: ir.sourceSha256, ...ir.counts, runtimeParity: false })};\n`;
   const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.term === 'const' ? tsType(item.semantic.returns) : `(${item.semantic.params.map(param => `${param.name}: ${tsType(param.type)}`).join(', ')}) => ${tsType(item.semantic.returns)}`}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
-  const typedRuntime = runtime.replace(/function ([A-Za-z_$][A-Za-z0-9_$]*)\(([^)]*)\)/gu, (_, name, params) => {
-    const known = parameterTypes.get(name);
-    const annotated = params.split(',').filter(param => param.trim()).map((param, index) => `${param.trim()}: ${known?.[index] ? tsType(known[index].type) : 'any'}`);
-    return `function ${name}(${annotated.join(', ')})`;
-  });
+  const tokens = tokenize(runtime, 'JavaScript').tokens;
+  const annotations = [];
+  for (let at = 0; at < tokens.length; at++) {
+    if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function' || tokens[at + 2]?.value !== '(') continue;
+    const known = parameterTypes.get(tokens[at + 1].value);
+    let index = 0;
+    for (let parameter = at + 3; tokens[parameter]?.value !== ')'; parameter++) {
+      if (tokens[parameter].kind !== 'identifier') continue;
+      annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type) : 'any'}` });
+      index++;
+    }
+  }
+  let typedRuntime = runtime;
+  for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
   return { ir, javascript: runtime, typescript };
 }
