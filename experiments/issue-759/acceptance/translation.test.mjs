@@ -99,3 +99,14 @@ test('serialized meta rejects duplicate definitions and undeclared references be
   assert.throws(() => parseMeta(meta + meta), /duplicate/i);
   assert.throws(() => parseMeta(meta.replace('(variable value)', '(variable missing)')));
 });
+
+test('malformed serialized meta cannot silently become empty code, a coerced literal or an invalid target', () => {
+  for (const meta of [
+    '(native-write /tmp/not-authorized x)',
+    '(function f (parameters) (returns number) (body (return (number NaN))))',
+    '(function f (parameters) (returns boolean) (body (return (boolean banana))))',
+    '(function a.b (parameters) (returns number) (body (return (number 1))))',
+    '(function f (parameters) (returns string) (body (return (string %GG))))',
+    '(function f (parameters) (returns number) (returns boolean) (body (return (number 1))))',
+  ]) assert.throws(() => parseMeta(meta), `Malformed meta must be refused: ${meta}`);
+});

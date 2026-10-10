@@ -12,6 +12,8 @@ full parity gate and must fail while any declared feature remains partial or
 unsupported. Passing acceptance does **not** establish universal semantic parity
 or authorize Rust compilation. The strict tests deliberately feed superficially
 green fixture claims to the checker and require it to stay closed.
+They also simulate complete coverage of every CLI operation and require HTTP
+route gaps and carried translations to independently keep the gate closed.
 
 The tests use Node's built-in test runner, bounded temporary files, loopback HTTP
 mock servers and the package's existing AJV dependency. They never execute a
@@ -40,6 +42,8 @@ loops. They also reject executable source capabilities, unsupported syntax,
 duplicate meta definitions and undeclared references. A bounded regeneration
 fixture executes a source behavior change, detects stale output, and rejects a
 tampered artifact that substitutes a constant stub for the generated behavior.
+Malformed meta links, coerced boolean literals, invalid names/numbers, damaged
+percent encoding and repeated fields must fail before target emission.
 Generated Rust execution remains the separate fixture runner's responsibility
 on gated CI; the reverse tests here do not claim that the Rust target ran.
 
@@ -48,3 +52,7 @@ manager. A separate test combines the real core and server, so incompatible
 exports, client identity or pinning cannot be hidden behind fixture selection.
 Mock HTTP tests verify actual request counts and bytes, credential headers,
 admission before dispatch, failover, usage, SSE completion and truncated errors.
+Foreground Responses cases check exact response and input-item IDs, paging,
+cross-owner denial, deletion and `store:false`. Active cancellation must close
+the real upstream socket and release its token reservation while preserving a
+cancelled resource. Background/conversation chaining remains an explicit failure.
