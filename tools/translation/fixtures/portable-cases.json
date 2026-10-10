@@ -1,0 +1,110 @@
+[
+  {
+    "name": "checked arithmetic and branching",
+    "source": "pub fn quota(used: u64, limit: u64) -> u64 { if used > limit { 0 } else { limit - used } }",
+    "calls": [
+      {
+        "name": "quota",
+        "args": [
+          "12n",
+          "20n"
+        ],
+        "expected": "8n"
+      },
+      {
+        "name": "quota",
+        "args": [
+          "25n",
+          "20n"
+        ],
+        "expected": "0n"
+      }
+    ]
+  },
+  {
+    "name": "string operations and references",
+    "source": "pub fn is_secret(value: &str) -> bool { value.starts_with(\"sk-\") } pub fn clean(value: &str) -> String { value.to_lowercase() }",
+    "calls": [
+      {
+        "name": "is_secret",
+        "args": [
+          "sk-live"
+        ],
+        "expected": true
+      },
+      {
+        "name": "is_secret",
+        "args": [
+          "public"
+        ],
+        "expected": false
+      },
+      {
+        "name": "clean",
+        "args": [
+          "TOKEN"
+        ],
+        "expected": "token"
+      }
+    ]
+  },
+  {
+    "name": "machine integer overflow and division",
+    "source": "pub fn increment(value: u8) -> u8 { value + 1 } pub fn quotient(value: i64, divisor: i64) -> i64 { value / divisor }",
+    "calls": [
+      {
+        "name": "increment",
+        "args": [
+          "254n"
+        ],
+        "expected": "255n"
+      },
+      {
+        "name": "increment",
+        "args": [
+          "255n"
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "quotient",
+        "args": [
+          "-7n",
+          "2n"
+        ],
+        "expected": "-3n"
+      },
+      {
+        "name": "quotient",
+        "args": [
+          "1n",
+          "0n"
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "constant and sibling call",
+    "source": "const LIMIT: u64 = 9; fn extra(value: u64) -> u64 { value + 1 } pub fn accept(value: u64) -> bool { extra(value) <= LIMIT }",
+    "calls": [
+      {
+        "name": "accept",
+        "args": [
+          "8n"
+        ],
+        "expected": true
+      },
+      {
+        "name": "accept",
+        "args": [
+          "9n"
+        ],
+        "expected": false
+      }
+    ],
+    "constants": {
+      "LIMIT": "9n"
+    }
+  }
+]
