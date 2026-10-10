@@ -100,6 +100,8 @@ jobs:
       - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: npm run typecheck --prefix packages/javascript
       - run: npm run native:typecheck --prefix packages/javascript
+      - run: npm ci --prefix ui --ignore-scripts
+      - run: npm run build --prefix ui
   parity:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -120,6 +122,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: node --test experiments/issue-759/acceptance/*.test.mjs
       - run: node scripts/check-router-parity.mjs --strict
   translation:
     runs-on: ubuntu-24.04
