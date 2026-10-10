@@ -28,7 +28,8 @@
     "catalog.json",
     "schemas",
     "README.md",
-    "native"
+    "native",
+    "portable"
   ],
   "scripts": {
     "test": "node --test test/*.test.js",

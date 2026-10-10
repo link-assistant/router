@@ -247,8 +247,8 @@ async function dispatch(router, name, options, invocation) {
     const model = (await core.models()).find(model => model.id === options.id);
     const healthy = [...new Set(candidates.map(candidate => candidate.provider?.name ?? candidate.provider).filter(name => typeof name === 'string'))];
     const route = { protocols: ['openai-chat'], ...(model?.provider ? { provider: model.provider } : {}) };
-    return { contract_version: 1, requested_selector: options.id, selector_kind: 'exact',
-      model_descriptor: { selector_kind: 'exact', requested_selector: options.id, route, capabilities: {},
+    return { contract_version: 1, requested_selector: options.id, selector_kind: 'concrete',
+      model_descriptor: { selector_kind: 'concrete', requested_selector: options.id, route, capabilities: {},
         capability_provenance: { source: 'native-config', verified: false }, allow_substitution: false },
       client_representation: { client: options.client ?? 'generic', advertisements: [] }, route_scope: route,
       capability_provenance: { source: 'native-config', verified: false }, model_policy: { allow_substitution: false },
@@ -298,7 +298,7 @@ export class NativeRouter {
       const data = await dispatch(this, name, normalized, invocation);
       return operationResult(name, data);
     } catch (error) {
-      return operationResult(name, error.data ?? output(), [`${error.code ?? 'operation'}: ${error.message}`], error.exitCode ?? (error.code === 'options' || error.code === 'secret-argv' ? 2 : 1));
+      return operationResult(name, error.data ?? output(), [`${error.code ?? 'operation'}: ${error.message}`], (Number.isInteger(error.exitCode) && error.exitCode > 0 ? error.exitCode : null) ?? (error.code === 'options' || error.code === 'secret-argv' ? 2 : 1));
     }
   }
   async invoke(name, options = {}, invocation = {}) {
