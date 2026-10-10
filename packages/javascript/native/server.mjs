@@ -221,7 +221,7 @@ export function createNativeRouter(options = {}) {
         if (body.stream) {
           if (!response.headers.get('content-type')?.includes('text/event-stream') || !response.body) { cleanup(); await response.body?.cancel(); throw new ProtocolError('Upstream did not return an SSE stream', 502); }
           const callbacks = {
-            clock,
+            clock, model: body.model,
             onStart: async response => { if (retain) { responseStore.save(namespace, owner, response, responseInput, { abort: () => controller.abort(new Error('Response cancelled')) }); retainedId = response.id; } },
             onComplete: async state => {
               cleanup(); await settle(state.usage);

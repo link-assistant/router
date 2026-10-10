@@ -49,10 +49,11 @@ test('retention expiration, record eviction, byte caps and duplicate IDs are enf
 test('native Responses SSE completion retains its complete resource and usage', async () => {
   let used;
   const c = core(); c.tokens.settle = (_id, _reserve, total) => { used = total; };
-  const raw = frame({ type: 'response.created', response: { ...response, status: 'in_progress', output: [], usage: null } }) + frame({ type: 'response.completed', response });
+  c.tokens.validate = (value, { model }) => { if (model && model !== 'alias') throw Object.assign(new Error('Model outside token scope'), { status: 403 }); return { sub: value }; };
+  const raw = frame({ type: 'response.created', response: { ...response, model: 'upstream', status: 'in_progress', output: [], usage: null } }) + frame({ type: 'response.completed', response: { ...response, model: 'upstream' } });
   const router = createNativeRouter({ core: c, fetch: async () => new Response(raw, { headers: { 'content-type': 'text/event-stream' } }) });
   const output = await (await create(router, { stream: true })).text(); assert.match(output, /response.completed/); assert.equal(used, 3);
-  const stored = await (await router.fetch(make('/v1/responses/resp_one'))).json(); assert.equal(stored.status, 'completed'); assert.equal(stored.output[0].content[0].text, 'Hello');
+  const stored = await (await router.fetch(make('/v1/responses/resp_one'))).json(); assert.equal(stored.status, 'completed'); assert.equal(stored.model, 'alias'); assert.equal(stored.output[0].content[0].text, 'Hello');
 });
 test('bridge streaming completion is retrievable with announced response ID', async () => {
   const c = core(); c.candidates = () => [{ protocol: 'chat', model: 'upstream', account: 'a', baseUrl: 'http://localhost:1/v1' }];

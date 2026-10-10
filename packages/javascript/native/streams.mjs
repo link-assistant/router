@@ -166,7 +166,7 @@ export function translateStream(body, source, target, model, { clock = Date.now,
 }
 
 /** Preserve native event payloads while checking terminal events and usage. */
-export function monitorNativeStream(body, protocol, { onStart, onComplete, onError, onCancel } = {}) {
+export function monitorNativeStream(body, protocol, { model, onStart, onComplete, onError, onCancel } = {}) {
   const events = decodeSSE(body)[Symbol.asyncIterator](); let terminal = false, usage = normalizeUsage(), anthropicUsage = {}, response, started = false;
   return new ReadableStream({
     async pull(controller) {
@@ -176,10 +176,17 @@ export function monitorNativeStream(body, protocol, { onStart, onComplete, onErr
           if (!terminal) throw new ProtocolError('Upstream stream ended before its terminal event', 502);
           await onComplete?.({ usage, response }); controller.close(); return;
         }
+        let frameData = f.data;
         if (f.data === '[DONE]') terminal = true;
         else {
           let p; try { p = JSON.parse(f.data); } catch { throw new ProtocolError('Malformed upstream SSE JSON', 502); }
           if (p.error || p.type === 'error' || p.type === 'response.failed') throw new ProtocolError('Upstream stream reported failure', 502);
+          if (model) {
+            if (p.model) p.model = model;
+            if (p.message?.model) p.message.model = model;
+            if (p.response?.model) p.response.model = model;
+            frameData = JSON.stringify(p);
+          }
           if (p.usage) {
             if (protocol === 'anthropic') { anthropicUsage = { ...anthropicUsage, ...p.usage }; usage = normalizeUsage(anthropicUsage, protocol); }
             else usage = normalizeUsage(p.usage, protocol);
@@ -193,7 +200,7 @@ export function monitorNativeStream(body, protocol, { onStart, onComplete, onErr
           if (p.type === 'message_stop' || ['response.completed', 'response.incomplete'].includes(p.type)) terminal = true;
         }
         if (terminal) await onComplete?.({ usage, response });
-        controller.enqueue(encoder.encode(frame(f.data, f.event)));
+        controller.enqueue(encoder.encode(frame(frameData, f.event)));
         if (terminal) { controller.close(); await events.return?.(); }
       } catch (error) {
         await onError?.(error, { usage, response });
