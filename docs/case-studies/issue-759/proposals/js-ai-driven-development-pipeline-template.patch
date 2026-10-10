@@ -1,0 +1,375 @@
+--- a/docs/CONTRIBUTING.md
++++ b/docs/CONTRIBUTING.md
+@@ -1,216 +1,7 @@
+-# Contributing to js-ai-driven-development-pipeline-template
+-
+-## Development Workflow
+-
+-Use Node.js 24 with npm 10.9 or newer for development and release tooling.
+-Changesets 3 requires a supported Node.js 22.11, 24, or 26+ runtime.
+-
+-1. **Fork the repository** and clone your fork
+-2. **Create a feature branch**: `git checkout -b feature/my-feature`
+-3. **Install dependencies**: `bun install` (or `npm install`)
+-4. **Make your changes**
+-5. **Run local checks**: `bun run check`
+-6. **Create a changeset**: `bun run changeset`
+-7. **Commit and push** (pre-commit hooks will run automatically)
+-8. **Create a Pull Request**
+-
+-## Code Standards
+-
+-### File Size Limits
+-
+-**Maximum 1500 lines per file** (enforced via ESLint `max-lines` rule and CI `check-file-line-limits` job).
+-
+-This benefits both AI and human developers by ensuring files remain readable and maintainable.
+-
+-### Formatting and Linting
+-
+-All code must pass:
+-
+-```bash
+-# Check formatting
+-bun run format:check
+-
+-# Check linting
+-bun run lint
+-
+-# Run all checks
+-bun run check
+-```
+-
+-The pre-commit hook runs automatically, but you can also manually format and fix:
+-
+-```bash
+-# Auto-fix formatting
+-bun run format
+-
+-# Auto-fix lint issues
+-bun run lint:fix
+-```
+-
+-### Testing Requirements
+-
+-Tests should:
+-
+-- Cover critical paths
+-- Work across all runtimes (Node.js, Bun, Deno)
+-- Use the [test-anywhere](https://github.com/link-foundation/test-anywhere) framework
+-
+-```bash
+-# Run tests
+-bun test --timeout 30000
+-npm test
+-deno test -A --parallel
+-```
+-
+-## Version Management with Changesets
+-
+-This project uses [Changesets](https://github.com/changesets/changesets) to manage versions and changelogs. This eliminates merge conflicts that occur when multiple PRs bump the version in `package.json`.
+-
+-### Adding a Changeset
+-
+-When you make changes that affect users, add a changeset:
+-
+-```bash
+-bun run changeset
+-# or
+-npm run changeset
+-```
+-
+-This will prompt you to:
+-
+-1. Select the type of change (patch/minor/major)
+-2. Provide a summary of the changes
+-
+-The changeset will be saved as a markdown file in `.changeset/` and should be committed with your PR.
+-
+-### Changeset Guidelines
+-
+-| Type      | When to Use                          | Examples                                            |
+-| --------- | ------------------------------------ | --------------------------------------------------- |
+-| **Patch** | Bug fixes, internal changes          | Fix typo, update dependency, refactor internal code |
+-| **Minor** | New features, non-breaking additions | Add new function, new optional parameter            |
+-| **Major** | Breaking changes                     | Remove function, change API signature               |
+-
+-Example changeset summary:
+-
+-```markdown
+-Add support for custom configuration via config file
+-```
+-
+-### What Changes Need Changesets?
+-
+-**Required** for:
+-
+-- Bug fixes
+-- New features
+-- Breaking changes
+-- Public API changes
+-
+-**Not required** for:
+-
+-- Documentation-only changes (in `./docs` folder)
+-- Changes to markdown files
+-- CI/CD workflow updates (unless they affect users)
+-
+-### PR guard comparison and local validation
+-
+-Version and changeset guards compare the PR head with its merge base. CI passes
+-`GITHUB_BASE_SHA` and `GITHUB_HEAD_SHA`; local runs default to `origin/main` and
+-`HEAD`. Fetch the base before running the guards. Missing refs, Git failures,
+-and invalid package metadata fail validation.
+-
+-The changeset guard counts added fragments only. Exact file moves do not count
+-as new fragments; replacing a deleted fragment with different content does.
+-Both paths of a move are checked when deciding whether code requires a fragment.
+-Markdown, `docs/`, `examples/`,
+-`experiments/`, `dev/log/`, and changeset metadata are exempt. In multi-language
+-repositories, unrelated language roots are exempt; shared workflows still
+-require a fragment. For local directory validation without Git comparison, use
+-`ALLOW_LOCAL_CHANGESET_SCAN=true node scripts/validate-changeset.mjs`. This
+-explicit mode is forbidden in CI. Set `DEBUG=1` to print comparison details.
+-
+-Automated release PRs are exempt only when their author matches the release
+-actor, both repositories match `GITHUB_REPOSITORY`, and their branch uses a
+-release prefix. The default author is `github-actions[bot]`. When a dedicated
+-release token creates PRs as another account, configure repository variable
+-`RELEASE_PR_ACTOR` to that account's exact login. A branch name alone never
+-grants an exemption.
+-
+-## Release Process
+-
+-The release process is fully automated:
+-
+-1. **PR with changeset merged** - The changeset is added to `.changeset/`
+-2. **CI detects changesets** - On push to main, CI checks for pending changesets
+-3. **Version bump** - Package version is updated based on changeset type
+-4. **Changelog update** - `CHANGELOG.md` is updated automatically
+-5. **npm publish** - Package is published via OIDC trusted publishing
+-6. **GitHub Release** - A release is created with formatted notes
+-
+-Changesets explicitly uses Prettier in `.changeset/config.json`, matching
+-`format:check`. Keep that setting when adding runtime configs: auto-detection
+-selects Deno for any `deno.json`, independently of the npm package-manager
+-declaration. PR lint checks dry-run `npm run changeset:version` after the fresh
+-merge simulation and restore the generated metadata and consumed fragments.
+-This requires no publishing credentials and runs independently of release
+-credential preflight.
+-
+-### Multiple Changesets
+-
+-If multiple PRs are merged before a release:
+-
+-- All changesets are merged into one
+-- The highest version bump type wins (major > minor > patch)
+-- All descriptions are preserved in chronological order
+-
+-## Pull Request Guidelines
+-
+-### PR Title
+-
+-Use a clear, descriptive title that summarizes the change:
+-
+-```
+-feat: Add support for custom configuration
+-fix: Resolve race condition in async handler
+-docs: Update API documentation for v2
+-```
+-
+-### PR Description
+-
+-Include:
+-
+-- **What** - Describe the change
+-- **Why** - Explain the motivation
+-- **Testing** - How the change was tested
+-
+-### CI Checks
+-
+-All PRs must pass:
+-
+-- [ ] Test compilation (syntax check)
+-- [ ] Lint, format, and secrets scan
+-- [ ] File line limits check
+-- [ ] Changeset validation (for code changes)
+-- [ ] Documentation validation (when docs change)
+-- [ ] Tests on all platforms (Ubuntu, macOS, Windows)
+-- [ ] Tests on all runtimes (Node.js, Bun, Deno)
+-
+-### Fresh Merge Simulation
+-
+-The CI workflow automatically:
+-
+-1. Merges the latest `main` into your PR branch
+-2. Runs checks against the merged state
+-
+-If this fails with merge conflicts, you need to:
+-
+-```bash
+-git fetch origin main
+-git merge origin/main
+-# Resolve conflicts
+-git push
+-```
+-
+ ## Questions?
+ 
+ If you have questions about contributing, feel free to open an issue for discussion.
++
++## JavaScript-first mixed-language projects
++
++Follow [the JavaScript-first gate and single push workflow](javascript-first.md) before enabling production Rust jobs for a mixed-language project.
+--- /dev/null
++++ b/AGENTS.md
+@@ -0,0 +1,16 @@
++# Agent workflow
++
++Read CONTRIBUTING.md and docs/javascript-first.md before changing behavior or CI.
++
++Draft and validate native JavaScript behavior first. Record every incomplete port,
++unsupported translation and native adapter; a strict readiness gate must reject
++missing or carried behavior before Rust CI starts. Preserve acceptance assertions.
++
++Work in bulk. Workers may edit and test; exactly one coordinator owns git push.
++Run required checks for the exact candidate revision, review the whole diff and
++push once per batch. Collect every same-revision CI failure before the next batch.
++Never let two workers push the same branch. Merge, release and deployment require
++the authorization applicable to those separate actions.
++
++Use bounded builds and compatible shared caches. Do not delete user-owned target
++directories, dependencies or caches without explicit scope authorization.
+--- /dev/null
++++ b/docs/javascript-first.md
+@@ -0,0 +1,54 @@
++# JavaScript first and the single push gate
++
++For mixed Rust/JavaScript projects, implement and debug complete behavior in native
++JavaScript before compiling Rust. A browser UI, WASM wrapper, source envelope,
++matching filename set or equal test count does not establish behavioral parity.
++
++Maintain a feature inventory covering public APIs, CLI commands, errors, streams,
++persistence and deployment contracts. Record missing, partial and carried items;
++the production Rust gate must reject each. Use shared input/output fixtures and
++independent native execution, including refusal and boundary cases.
++
++Pin translation source and dependencies by immutable revision. Preserve typed meta IR (including Links
++Notation) intermediates, source hashes, target artifacts and refusal reasons.
++Regenerate into temporary output and compare tracked targets before Rust builds.
++A successful source round trip establishes preservation of source text; execution
++parity still requires observations from both native runtimes. Handwritten native
++adapters must be explicit inventory entries with their own tests.
++
++Use `.github/workflows/javascript-first-gate.yml` as a callable workflow. Supply
++real repository commands for the native JavaScript suite, strict readiness/parity
++inventory check and regenerate-and-diff check. The template deliberately supplies
++no default generator or placeholder successful command. Depend on its successful
++job with `needs:` before every Rust test/build/package/container/publish job;
++consume its `tested-sha` output as the checkout ref. A skipped gate is not success.
++For projects whose JavaScript port is unfinished, keep the readiness gate red and
++report the blockers rather than representing the rollout as complete. Adoption of
++this opt-in workflow does not by itself migrate this template's Rust-only sample.
++
++Avoid `workflow_run` when same-workflow `needs:` or reusable workflows suffice.
++If a separate workflow is required, check the source conclusion, repository/event
++trust, exact `head_sha` and artifact provenance; default `GITHUB_SHA` refers to the
++default branch rather than the initiating run. Keep untrusted PR execution read-only.
++
++Read-only CI checks may run in parallel after the JavaScript prerequisite. Give
++active releases, deploys, tag writes and generated-content pushes one shared
++repository writer group with `cancel-in-progress: false`; check cancellation must
++not interrupt publication. Reconcile current remote state before each write.
++
++Draft changes in bulk. Workers may inspect, edit and run bounded JavaScript checks,
++but exactly one coordinator owns git push. That coordinator stages a complete
++batch, verifies the exact candidate revision with required local checks, inspects
++the diff and pushes once. Wait for required same-revision CI before another push;
++combine all observed failures into the next batch. Push permission does not imply
++permission to merge, publish, deploy or clean user-owned caches.
++
++Bound expensive local work: avoid duplicate profile/target/feature configurations,
++share compatible build caches, limit compiler processes, measure wall time and disk,
++and stop when the agreed budget is exhausted. Never silently reduce production
++assertions, treat partial runs as green, or delete unrelated caches to regain space.
++
++References: [router issue 759](https://github.com/link-assistant/router/issues/759),
++[GitHub needs semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds),
++[GitHub workflow_run](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run),
++[Cargo build cache](https://doc.rust-lang.org/cargo/reference/build-cache.html).
+--- /dev/null
++++ b/.github/workflows/javascript-first-gate.yml
+@@ -0,0 +1,73 @@
++name: JavaScript-first gate
++
++on:
++  workflow_call:
++    inputs:
++      source-sha:
++        description: Immutable forty-character commit SHA to validate, including release candidates
++        required: true
++        type: string
++      javascript-command:
++        description: Install dependencies and run the complete native JavaScript checks
++        required: true
++        type: string
++      parity-command:
++        description: Run the strict complete-feature parity inventory check
++        required: true
++        type: string
++      translation-command:
++        description: Regenerate from pinned source and reject target drift or carried code
++        required: true
++        type: string
++    outputs:
++      tested-sha:
++        description: Exact revision that passed all three prerequisite stages
++        value: ${{ jobs.javascript-first.outputs.tested-sha }}
++
++permissions:
++  contents: read
++
++jobs:
++  javascript-first:
++    runs-on: ubuntu-24.04
++    timeout-minutes: 30
++    outputs:
++      tested-sha: ${{ steps.revision.outputs.sha }}
++    steps:
++      - name: Validate requested revision
++        env:
++          EXPECTED_SHA: ${{ inputs.source-sha }}
++        run: '[[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]'
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
++        with:
++          ref: ${{ inputs.source-sha }}
++          persist-credentials: false
++      - name: Check exact checkout revision
++        env:
++          EXPECTED_SHA: ${{ inputs.source-sha }}
++        run: 'test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"'
++      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
++        with:
++          node-version: '24'
++      - name: Native JavaScript checks
++        env:
++          CHECK_COMMAND: ${{ inputs.javascript-command }}
++        run: bash -e -o pipefail -c "$CHECK_COMMAND"
++      - name: Strict feature parity inventory
++        env:
++          CHECK_COMMAND: ${{ inputs.parity-command }}
++        run: bash -e -o pipefail -c "$CHECK_COMMAND"
++      - name: Deterministic regeneration check
++        env:
++          CHECK_COMMAND: ${{ inputs.translation-command }}
++        run: bash -e -o pipefail -c "$CHECK_COMMAND"
++      - name: Record successful revision
++        id: revision
++        env:
++          EXPECTED_SHA: ${{ inputs.source-sha }}
++        run: |
++          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
++          git diff --exit-code
++          git diff --cached --exit-code
++          test -z "$(git ls-files --others --exclude-standard)"
++          printf 'sha=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"

@@ -1,0 +1,826 @@
+[
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "docs/translation-rules.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/docs/translation-rules.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/translation-rules.md",
+    "sha256": "54f6b5f73e4b79d2ba325fafe18929ff592805a90cd1fe0b13977883b8e24444"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/package.json",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/package.json",
+    "sha256": "3ac0a9ea393b7b0f68f72c0bbb745bd40e3786d18ef407e5e319fd185c7febf6"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "AGENTS.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/AGENTS.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/AGENTS.md",
+    "sha256": "b815919482e8de28beb4abd938121ce4dd495b9c0e15c0c5679ac2612ca480be"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/translation/rust.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/translation/rust.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/rust.js",
+    "sha256": "46775f6787eea0e89faccaf1bbc55a21912410682fc7d93dce1583e690d7d332"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/tests/issue-195-translation-pairs.test.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/tests/issue-195-translation-pairs.test.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/issue-195-translation-pairs.test.js",
+    "sha256": "acc4a1b1d41df1e77abde8e717d0dfd715ed5bf9d24bde5233db2f694fc391dc"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "README.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/README.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/README.md",
+    "sha256": "9ee124aa0ae373225744c8e433a0d471002c782eeeb7f179af4ef91f3607cdcb"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "CONTRIBUTING.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/CONTRIBUTING.md",
+    "sha256": "dcb116d92371f3ad8aefe71d95dcae2f7a12b600e30c8b741cfe716970581f8b"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/experiments/issue-195-public-translate.mjs",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/experiments/issue-195-public-translate.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/experiments/issue-195-public-translate.mjs",
+    "sha256": "88d6bbab8ebf190485e2c40ccce1c184d79e036f05887a1df4639d13796de1a2"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/program-translation.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/program-translation.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/program-translation.js",
+    "sha256": "9917b100b0898b1bf22007d07893b1af437478899908e6285afc553ef49a8d60"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "docs/self-translation.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/docs/self-translation.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/self-translation.md",
+    "sha256": "c467d8eb0859944b2834425e0ba3437b2bca0bb23224035e730b4ff61e209463"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "docs/four-language-contracts.md",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/docs/four-language-contracts.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/four-language-contracts.md",
+    "sha256": "d49a8e215e869cbdc88c342ecd7a7071cddb5ffcddac48a108aa608696679fb8"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/self-translation.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/self-translation.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/self-translation.js",
+    "sha256": "cd3c5a93ea2d4cc431831310fb1029dfee449469615a00525e006235ce33b032"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/translation/emit-javascript.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/translation/emit-javascript.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/emit-javascript.js",
+    "sha256": "8af569ed4f08b81ddf38b1d3120fc55b41f67c2249cf226e52ef94ba52aed06a"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/index.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/index.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/index.js",
+    "sha256": "a64d168b383530161cba84f2cfad0460e8326976365313808ba7f19bf1b40ed8"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/tests/translation.test.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/tests/translation.test.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/translation.test.js",
+    "sha256": "8a86e3360c638a4b96de252c74fa2fa54a16edbfead2b9a42817d21559f298bc"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/translation.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/translation.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation.js",
+    "sha256": "2ccfb088942eea671b237fe22d76348aded126c88a7e5107ceffe7e6892a711e"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "data/meta/ci-gates/check-js-rust-translation.lino",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/data/meta/ci-gates/check-js-rust-translation.lino",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/ci-gates/check-js-rust-translation.lino",
+    "sha256": "5548ff09e3bbb4464cc7ba9c4a3113a9838d8f9a1ef6451cbcd3dd05a911de3f"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "README.md",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/README.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/README.md",
+    "sha256": "e0d0a00b9bccdf4570ac78cdf192aea91e39217408c9f175d621d9414bc30136"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "CONTRIBUTING.md",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/CONTRIBUTING.md",
+    "sha256": "926184d3e01534631d75458662afd7190eb46a48a8e5044c18130f9e987df26e"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "data/meta/js-rust-translation.lino",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/data/meta/js-rust-translation.lino",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/js-rust-translation.lino",
+    "sha256": "b3bca8514f9f5781cd69c6cbf88f16791e35dcf10c4ae276b65acb501e45d2a2"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "data/meta/requirement-status-ledger/doctrine-standing-doctrine-javascript-first-full-parity-then-translate-2026-10-06.lino",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/data/meta/requirement-status-ledger/doctrine-standing-doctrine-javascript-first-full-parity-then-translate-2026-10-06.lino",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/requirement-status-ledger/doctrine-standing-doctrine-javascript-first-full-parity-then-translate-2026-10-06.lino",
+    "sha256": "64c59cf7c4764fa44affd5f179d5511a7aad371a8f814a22bb28a6bedec781a2"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "scripts/initialize-meta-language.mjs",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/scripts/initialize-meta-language.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/scripts/initialize-meta-language.mjs",
+    "sha256": "c7933deb02cb0d2beb066b62e24e94eb1b50cb19dfe16e5f4b33f556ce3076c3"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "js/package.json",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/js/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/package.json",
+    "sha256": "bf6e1f192f723ea56af7d416756cee9df18331f6cc68e83c6aa36067d91168af"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "README.md",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/README.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/README.md",
+    "sha256": "4f2de62835c96bf23fbb9c15075ed897a3a2eeff0edf8ab76e831bfe46db48d5"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "docs/case-studies/issue-183/portable-natural-translation.md",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/docs/case-studies/issue-183/portable-natural-translation.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/case-studies/issue-183/portable-natural-translation.md",
+    "sha256": "c5c0e6361494aa87a205705e75f8e29f54308f39ea6f99055541ff2ad0dfe8b1"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "docs/UPSTREAM_LANGUAGE_SOURCE.md",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/docs/UPSTREAM_LANGUAGE_SOURCE.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/UPSTREAM_LANGUAGE_SOURCE.md",
+    "sha256": "6ff06bea7614a382364b4bb08e166972e7d483a98f5a3c09954f73768bbfb600"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "js/src/rml-meta-language.mjs",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/js/src/rml-meta-language.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/src/rml-meta-language.mjs",
+    "sha256": "3dc5ffc99e8abe276783c29b3194c2f6b648d63f6990113b7aea89f1c22df7af"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "docs/case-studies/issue-183/meta-language-integration.md",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/docs/case-studies/issue-183/meta-language-integration.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/case-studies/issue-183/meta-language-integration.md",
+    "sha256": "50f798ecf5abc7e323d7cf96186db883ae6bd91390b75658fc63ce80165006ab"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "js/src/rml-upstream-language.mjs",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/js/src/rml-upstream-language.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/src/rml-upstream-language.mjs",
+    "sha256": "830acc7ff5cd9321a725a076c99367d122dfd317860dbbaba593d204baf2e51e"
+  },
+  {
+    "repository": "link-foundation/relative-meta-logic",
+    "commit": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "path": "scripts/verify-meta-language-source.mjs",
+    "url": "https://github.com/link-foundation/relative-meta-logic/blob/9b509ec0f4f3554b234a275bbd21f4c540995243/scripts/verify-meta-language-source.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/scripts/verify-meta-language-source.mjs",
+    "sha256": "fdbc6015cad73a076564d1131d4b9f477f2ada7a2a0fa0d2edde21d72532c01d"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-web-archive.test.mjs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-web-archive.test.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-web-archive.test.mjs",
+    "sha256": "bcc8b6b9ab8ff2e29d86cecb21944509f4636d34c408b92579b155984bb286e1"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/recheck-broken-links.mjs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/recheck-broken-links.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.mjs",
+    "sha256": "0cceaed1b0bc75a47a35fdd153737e0c380df40da9af2014960d8f8fb7c93a35"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-crate-size.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-crate-size.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs",
+    "sha256": "7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "CONTRIBUTING.md",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/CONTRIBUTING.md",
+    "sha256": "b56178b977ebf86d02c4547bc18ec2efec611d95ab94e77433376871e3368d71"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": ".github/workflows/links.yml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/.github/workflows/links.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/links.yml",
+    "sha256": "7ec2b9b49df86231e917a17e9deaae9455616a5dfc231e615a936a639587b0ef"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-cargo-lock.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-cargo-lock.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-cargo-lock.rs",
+    "sha256": "a33e9cf60561bcc90f4e772cf8a094f8ef108a3d58cc1f3500c7ee4ea2154f7c"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/recheck-broken-links.test.mjs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/recheck-broken-links.test.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.test.mjs",
+    "sha256": "c4526183b05197f49e9ad2136a52124a7f1eb8aabac8d84ebbd8ea786b1a7df9"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-version-modification.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-version-modification.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-version-modification.rs",
+    "sha256": "3846bcc7b57e78c820a26af1511eceef8d9e995eea1f075373a41ef73a25c081"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-workflow-tools.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-workflow-tools.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-workflow-tools.rs",
+    "sha256": "c80413b95e36b3cd9d2c47f251e9cfb6894fd421fb836bbc384141da7afaa8e6"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-release-needed.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-release-needed.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-release-needed.rs",
+    "sha256": "e53ad7f8c6ecf68a94b73aac17bb7f6a5af18f9e21df20cbf796afa3032d148d"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "Cargo.toml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/Cargo.toml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml",
+    "sha256": "a8f5874b8e9a490c4bfb5f1a1a2c11074c6ff25aca5e16c2380e4645c6061560"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-changelog-fragment.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-changelog-fragment.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-changelog-fragment.rs",
+    "sha256": "6132c7f4712be0be1de7b6514d1546b80ae700378d8839ec6bafa6c6f58b8977"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": ".github/workflows/workflows.yml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/.github/workflows/workflows.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/workflows.yml",
+    "sha256": "26a68348806844845907aafff56dbc65c151743e01c3200891d8932839a219d9"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": ".github/workflows/security.yml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/.github/workflows/security.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/security.yml",
+    "sha256": "18b2e37747fa2167a49dd984d4150fa24a3e82b0674cb1b800897831f7cdc2ce"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": ".github/workflows/desktop-release.yml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/.github/workflows/desktop-release.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/desktop-release.yml",
+    "sha256": "c56f7fca2f799f18486208217ff4de547f903d9368ea27e6de9407b6248d8c9d"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-cargo-warnings.sh",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-cargo-warnings.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-cargo-warnings.sh",
+    "sha256": "e4b4de91c593933c5682cddf857e70656c4235b3722ee6be0164f479fd22da6b"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-web-archive.mjs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-web-archive.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-web-archive.mjs",
+    "sha256": "784da6c9b270e438a3d5594097b076b650631eea8f2aab73ff858560738fa041"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-file-size.rs",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-file-size.rs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs",
+    "sha256": "9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-pipeline-status.sh",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-pipeline-status.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-pipeline-status.sh",
+    "sha256": "dea61b6e6723135cf70537cf96a062f3819a2e9cbeed21465bc65e4120d7560c"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "README.md",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/README.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/README.md",
+    "sha256": "04cddb379c841b6f0f4e9528144dba876ae15a2828351c49a499d43f4cc5777e"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": "scripts/check-required-docs.sh",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/scripts/check-required-docs.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-required-docs.sh",
+    "sha256": "79228c52e93e753bdf68273e20fc9cbe5530165c1f4f4435b8a69dcaa77a22d4"
+  },
+  {
+    "repository": "link-foundation/rust-ai-driven-development-pipeline-template",
+    "commit": "265219d098ec1c6acbe6749562c2f3dc057f0df8",
+    "path": ".github/workflows/release.yml",
+    "url": "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/blob/265219d098ec1c6acbe6749562c2f3dc057f0df8/.github/workflows/release.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/release.yml",
+    "sha256": "38b93e0306e5d35b7789aa433347613e7931558b78d9230f9e7a543cf74bfe5a"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-status-gate-covers-all-jobs.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-status-gate-covers-all-jobs.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-status-gate-covers-all-jobs.mjs",
+    "sha256": "009ec76e2b4307563f17701e24ae8e59c630b54f8c855be53a9837851248a33a"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/recheck-broken-links.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/recheck-broken-links.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.mjs",
+    "sha256": "0b9f5f792b634a4f9a3f179d7ea477ff6dcdf50d84ee0c0bcb24ec9ad3bac5d1"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-changesets.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-changesets.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-changesets.mjs",
+    "sha256": "a110f3cdf37150379b221a6800843bd47f9870fc3ae69b5582c8ba582a9d9632"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-ci-workflows.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-ci-workflows.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-ci-workflows.mjs",
+    "sha256": "933caf26505cfc3e1072f1ccaf9008783a35f197360f33f4d2caabcc8a6e8c03"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-docker-publish.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-docker-publish.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-docker-publish.mjs",
+    "sha256": "783ba01634339f715611d00cf634ce67923754ee3d8d1a6d739431ffa52b83fc"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-docker-build.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-docker-build.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-docker-build.mjs",
+    "sha256": "3696f45a7a60fd2962b47f3d95a0f15d03c68f1b9e23f64da4b655b4e84c4e7e"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": ".github/workflows/links.yml",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/.github/workflows/links.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/links.yml",
+    "sha256": "10e8c5ec48ca4991d4afc64c23d3039f3e624adfae0cb42ce9d4e02ec28efbcd"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/bootstrap-dependencies.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/bootstrap-dependencies.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/bootstrap-dependencies.mjs",
+    "sha256": "7ed2621df5c632b2f7dd26b3d650984748f883644a50863cc37ac8e9fbaff48b"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-release-needed.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-release-needed.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-release-needed.mjs",
+    "sha256": "cdfb1fb0d6da14f496499646a95826c6065aa83744e37c78ac285c7819a17271"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "package.json",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/package.json",
+    "sha256": "b037f12dfab40ceb155b2b3b82abc0501ab22ee536c41b88c077dbdf0a860582"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-file-line-limits.sh",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-file-line-limits.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-file-line-limits.sh",
+    "sha256": "3099d8e460680307c3644d029cc46c25484169ae7ef9997200e07b005f300137"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-package-manager.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-package-manager.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-package-manager.mjs",
+    "sha256": "2f53ae57bad44ebe207a6b75ce488a90f577c4f23dfc655772854f23f844777a"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-mjs-syntax.sh",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-mjs-syntax.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-mjs-syntax.sh",
+    "sha256": "ff2bfe0f2eaeaf35116e3bf635aa71177dd2af74e625ca57db246ce9397d34db"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-version.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-version.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-version.mjs",
+    "sha256": "a57443425faa562b786413218bacfc8fac99071c79bd3a5ebc91f6de7d531e37"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": ".github/workflows/workflows.yml",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/.github/workflows/workflows.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/workflows.yml",
+    "sha256": "2b3b663e00d7acb449e8f7e42d35ad9f174170091978e5afdeeb1a59cf7a703c"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": ".github/workflows/security.yml",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/.github/workflows/security.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/security.yml",
+    "sha256": "832d32851f5d566b8a1bfac18b4556b81872d59a2bc15b7cbdb355af272b7fae"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-staged-formatting.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-staged-formatting.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-staged-formatting.mjs",
+    "sha256": "cf0fc42d63897c177165af6bc8376a087960d3f5f61774d509d793c964af3a47"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": ".github/workflows/example-app.yml",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/.github/workflows/example-app.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/example-app.yml",
+    "sha256": "f2d23981d123ea6893dc10625c066ca789ab056b82ea23ddafda7a37958d2600"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-web-archive.mjs",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-web-archive.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-web-archive.mjs",
+    "sha256": "784da6c9b270e438a3d5594097b076b650631eea8f2aab73ff858560738fa041"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-pipeline-status.sh",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-pipeline-status.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-pipeline-status.sh",
+    "sha256": "152ff831a13e34fa616eafcbbfa4e8a1063e6a834ee083419b58796e736b25fb"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "README.md",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/README.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/README.md",
+    "sha256": "e6ab529c1042d9e24b0e38f8b2c936dfe91efb90bdf82d048d13a16fb9a5d349"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "scripts/check-required-docs.sh",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/scripts/check-required-docs.sh",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-required-docs.sh",
+    "sha256": "dcf2f795291696aab6e55af7be826863f36f7bbd1607e321258ea393f8f9ef14"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": ".github/workflows/release.yml",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/.github/workflows/release.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/release.yml",
+    "sha256": "23eff85394e7150658dcc5d46cf8b430da8071b9b34f5c1492bc427c64731b60"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "docs/BEST-PRACTICES.md",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/docs/BEST-PRACTICES.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/docs/BEST-PRACTICES.md",
+    "sha256": "2e24cf6f39efa0d7fb1abccf41c4558d1ede689f455925588cf6e094832e47bd"
+  },
+  {
+    "repository": "link-foundation/js-ai-driven-development-pipeline-template",
+    "commit": "0a62b80544ad0a01e97feb800cf7494c190abc8d",
+    "path": "docs/CONTRIBUTING.md",
+    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template/blob/0a62b80544ad0a01e97feb800cf7494c190abc8d/docs/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/docs/CONTRIBUTING.md",
+    "sha256": "79c70c9014f698de635b995bf83e56b64977b21abc2b1e00c05cb6d5705a38f0"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "tests/cicd-best-practices-concurrency-2128.test.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/tests/cicd-best-practices-concurrency-2128.test.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-concurrency-2128.test.mjs",
+    "sha256": "8f9ad78583f589207262b792972ff2354a371b934695f8fa18d80ef78e654f85"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "docs/CI-CD-BEST-PRACTICES.md",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/docs/CI-CD-BEST-PRACTICES.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/CI-CD-BEST-PRACTICES.md",
+    "sha256": "ab97f2d136e8a0ed4b668d92561f7786730317f1cadc30cdd0dc12a9f50bbc6c"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "tests/cicd-best-practices-serialised-writers-2220.test.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/tests/cicd-best-practices-serialised-writers-2220.test.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-serialised-writers-2220.test.mjs",
+    "sha256": "b815a027b1bff38445ea788cac1caa44fa8d31a593c7737b18ea42e55ce5a25a"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "tests/cicd-best-practices-pipeline-gates-2198.test.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/tests/cicd-best-practices-pipeline-gates-2198.test.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-pipeline-gates-2198.test.mjs",
+    "sha256": "a19fc8d5096521b7d3d556ae90b02a52aa8b0075f1626f14900bdfd9e42a3fee"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/contributing-guidelines.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/contributing-guidelines.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/contributing-guidelines.lib.mjs",
+    "sha256": "1ab5a7fb6c913ae555f66b0e510e7f50b156f35aaa5e41aa633e539f0aeed889"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "src/agent.prompts.lib.mjs",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/src/agent.prompts.lib.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/agent.prompts.lib.mjs",
+    "sha256": "67de9b1a9be49080c27f9bb4385f2fa4911e67e4185aff8c2bc2f8486160f90e"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "docs/BEST-PRACTICES.md",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/docs/BEST-PRACTICES.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/BEST-PRACTICES.md",
+    "sha256": "f23f4d7ab20c69f04b44e5f6c6f61f67911df2e5d229d5fa1f8ef840eb6e48dc"
+  },
+  {
+    "repository": "link-assistant/hive-mind",
+    "commit": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+    "path": "docs/CONTRIBUTING.md",
+    "url": "https://github.com/link-assistant/hive-mind/blob/4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6/docs/CONTRIBUTING.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/CONTRIBUTING.md",
+    "sha256": "942f8eb016a26adf09e00318a6699ea2990676089f51db77f7aaf1cf647f5c3d"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/translate-js-rust.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/translate-js-rust.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/translate-js-rust.mjs",
+    "sha256": "4e4e6dbd25a84efbd476cb53ad3c666f376fa8f80e9a8bf96b0cd805a759a471"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/self-translate.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/self-translate.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translate.mjs",
+    "sha256": "6825ed421cc657ec2bb1b482d08bf77e1ca190dcfd41c66a6060fdcad2c6351c"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/self-translation/frontends.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/self-translation/frontends.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/frontends.mjs",
+    "sha256": "bdf326db20c3b7f617896aa4668b9847b8216558da9decabaa4854677434475f"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/self-translation/emitters.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/self-translation/emitters.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/emitters.mjs",
+    "sha256": "5b1568e12d279ac35ec2d1bab29f4f795ac35187ee1944c9955f0934212cf58c"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/lib/translation-workarounds.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/lib/translation-workarounds.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/lib/translation-workarounds.mjs",
+    "sha256": "5ed0e9f654b73b5fd1861631cdde4eea957cfc327a075a27b42740d39751d369"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/lib/translation-lowering.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/lib/translation-lowering.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/lib/translation-lowering.mjs",
+    "sha256": "5457890a02ca4d81d203ea9e984dcc2781a6606ec8f80d83371001f26384c11d"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "package.json",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/package.json",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/package.json",
+    "sha256": "34b52e0b96704edb1158237d3b098cbdf040b40dc0d3142d4955840ca3642fd9"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/translation/ir.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/translation/ir.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/ir.js",
+    "sha256": "a54f47fc4056bbff205051c366fe0a7b406f14c23d62164aa6fda3d1677ea77e"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/scripts/generate-frontend-rules.mjs",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/scripts/generate-frontend-rules.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/scripts/generate-frontend-rules.mjs",
+    "sha256": "74e08e54d579eb3396887693cfc18352c1ff94f0706f835a324008194fdce94f"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/tests/translation-string-predicates-parity.test.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/tests/translation-string-predicates-parity.test.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/translation-string-predicates-parity.test.js",
+    "sha256": "4242cbe618cfdbe92707fa5a9699d40e61a04a1fa823407b1029a39327d2ab97"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": ".github/workflows/layered-ci.yml",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/.github/workflows/layered-ci.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/.github/workflows/layered-ci.yml",
+    "sha256": "563f19237454583e35e6b467222189c1b3a74d87d8568841b656604fffbb3342"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/self-translation/envelope.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/self-translation/envelope.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/envelope.mjs",
+    "sha256": "5c02773fda7594a28783a5f971fab2742addb8cd91fd4aeba7cccb94d3714bd9"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "scripts/self-translation/ir.mjs",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/scripts/self-translation/ir.mjs",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/ir.mjs",
+    "sha256": "31360b91433928ef707ab035d42dd6b4a495b5923686930e95d6c926aa49506e"
+  },
+  {
+    "repository": "link-assistant/formal-ai",
+    "commit": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "path": "docs/case-studies/pull-request-1188/conversion-best-practices.md",
+    "url": "https://github.com/link-assistant/formal-ai/blob/e9f057c8300cab787f746afbcc0133cef80e2948/docs/case-studies/pull-request-1188/conversion-best-practices.md",
+    "local_path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/docs/case-studies/pull-request-1188/conversion-best-practices.md",
+    "sha256": "9dca83273591cf8c471a18895c808127006c90b8838077816b9adcd691304afa"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": ".github/workflows/ci.yml",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/.github/workflows/ci.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/ci.yml",
+    "sha256": "9b78d47f5d73a87dda7c519ba5773d7f076c19871293dacea51394bf6973f425"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": ".github/workflows/js.yml",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/.github/workflows/js.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/js.yml",
+    "sha256": "a5b987d974e0656d51c107b6191850103de3ee356df81b61879beba0aa6d2d97"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": ".github/workflows/rust.yml",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/.github/workflows/rust.yml",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/rust.yml",
+    "sha256": "523a2121a56bc3b0da4c87cd309357c1da13119da3da3ec3cdd90ec38d7bc5c9"
+  },
+  {
+    "repository": "link-foundation/meta-language",
+    "commit": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "path": "js/src/index.js",
+    "url": "https://github.com/link-foundation/meta-language/blob/e46e196db5ec34bf13a73b8645aa38d409737e60/js/src/index.js",
+    "local_path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/index.js",
+    "sha256": "a64d168b383530161cba84f2cfad0460e8326976365313808ba7f19bf1b40ed8"
+  }
+]
