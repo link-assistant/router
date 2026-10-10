@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=430b1bbf6a2a2db03795bc7eb943f5b6ebd367ebc6d5d60ae39c74c2d2601322; dynamic any annotations are explicit draft gaps.
+// Meta sha256=88358aaffb40d5a78f084fb95b5386a4feaa5461552785eed331af042c092387; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual } from 'node:crypto';
@@ -215,10 +215,20 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
         return state;
     }
     finally {
-        if (!committed && child.connected) {
-            child.send({ abort: true });
-            child.disconnect();
+        if (!committed) {
+            let timer: any;
+            const exited: any = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new (Promise as any)((done?: any): any => child.once('exit', done));
+            if (child.connected) {
+                child.send({ abort: true }, (): any => { });
+                child.disconnect();
+            }
             child.unref();
+            try {
+                await Promise.race([exited, new (Promise as any)((_?: any, reject?: any): any => { timer = setTimeout((): any => reject(fail('Aborted managed daemon did not exit within 4 seconds')), 4000); })]);
+            }
+            finally {
+                clearTimeout(timer);
+            }
         }
     }
 }
