@@ -232,3 +232,10 @@ test('rotation preserves authority and constraints while resetting Rust usage/cl
   assert.deepEqual(rotated.record.github_repos,['a/b']);
   await rejectsCode(manager.validate(issued.token),'revoked');
 });
+
+test('readable codec retains empty objects and trailing quote runs; single-line markers distinguish arrays',() => {
+  const value = {empty:{},array:[],trailing:'both "quotes" and \'apostrophe"',legacy:'single "quote'};
+  assert.deepEqual(JSON.parse(JSON.stringify(decodeLino(encodeLino(value)))),value);
+  assert.deepEqual(JSON.parse(JSON.stringify(decodeLino('(o: (type "RouterState") (value ("a" "b")))'))),{type:'RouterState',value:['a','b']});
+  assert.equal(decodeLino('"one ""quote"'), 'one "quote');
+});

@@ -113,9 +113,9 @@ export function decodeLino(text) {
     skip();
     if (text[i] === '(') {
       i++; skip();
-      const rows = []; let row = [];
+      const rows = []; let row = [], multiline = false;
       while (i < text.length && text[i] !== ')') {
-        if (text[i] === '\n') { if (row.length) rows.push(row); row = []; i++; skip(); continue; }
+        if (text[i] === '\n') { multiline = true; if (row.length) rows.push(row); row = []; i++; skip(); continue; }
         row.push(value()); skip();
       }
       if (text[i++] !== ')') throw new Error('Unclosed Links Notation container');
@@ -132,21 +132,29 @@ export function decodeLino(text) {
         }
         return object;
       }
-      if (rows.length && rows.every(r => r.length === 2 && typeof r[0] === 'string')) {
+      if (multiline && rows.every(r => r.length === 2 && typeof r[0] === 'string')) {
         const object = Object.create(null);
         for (const [key, v] of rows) { if (Object.hasOwn(object, key)) throw new Error('Duplicate Lino key'); object[key] = v; }
         return object;
       }
       return rows.flat();
     }
-    if (text[i] === '"' || text[i] === "'") {
+    if (text[i] === '"' || text[i] === "'" || text[i] === '`') {
       const delimiter = text[i]; let count = 0;
       while (text[i + count] === delimiter) count++;
       if (count === 2) { i += 2; return ''; }
-      const run = delimiter.repeat(count); i += count;
-      const end = text.indexOf(run, i);
-      if (end < 0) throw new Error('Unclosed Lino string');
-      const raw = text.slice(i, end); i = end + count; return scalar(raw, true);
+      i += count; let raw = '';
+      while (i < text.length) {
+        if (text[i] !== delimiter) { raw += text[i++]; continue; }
+        let run = 0; while (text[i+run] === delimiter) run++;
+        if (count === 1) {
+          if (run >= 2) { raw += delimiter; i += 2; continue; }
+          i++; return scalar(raw,true);
+        }
+        if (run >= count) { raw += delimiter.repeat(run-count); i += run; return scalar(raw,true); }
+        raw += delimiter.repeat(run); i += run;
+      }
+      throw new Error('Unclosed Lino string');
     }
     const start = i;
     while (i < text.length && !/[\s()]/.test(text[i])) i++;
