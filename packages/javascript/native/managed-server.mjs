@@ -135,7 +135,22 @@ async function start(p,state,config,keepRunning) {
     child.send({commit:true}); committed = true; children.set(child.pid,child);
     child.once('exit',()=>children.delete(child.pid)); child.disconnect(); child.unref();
     return state;
-  } finally { if (!committed && child.connected) {child.send({abort:true}); child.disconnect(); child.unref();} }
+  } finally {
+    if (!committed) {
+      // A failed readiness result is complete only after this owned child has
+      // exited. Otherwise test runners can kill a still-closing daemon and its
+      // delayed rejection can spill into the next fixture.
+      let timer;
+      const exited = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new Promise(done=>child.once('exit',done));
+      if (child.connected) {
+        child.send({abort:true},()=>{});
+        child.disconnect();
+      }
+      child.unref();
+      try {await Promise.race([exited,new Promise((_,reject)=> {timer = setTimeout(()=>reject(fail('Aborted managed daemon did not exit within 4 seconds')),4000);})]);}
+      finally {clearTimeout(timer);}
+    }
+  }
 }
 async function stop(p,state) {
   if (!state) throw fail('Managed router is absent; run server.start first');

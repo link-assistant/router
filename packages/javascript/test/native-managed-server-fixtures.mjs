@@ -144,6 +144,10 @@ fixture('managed-failed-readiness-cleans-registry','server.start',()=>temporary(
   await assert.rejects(operate(dir,'server.start',{}, {config:{data_dir:dir,providers:[{name:'invalid',base_url:'not-a-url',models:[]}],accounts:[]}}),/failed to start/);
   await assert.rejects(lstat(statePath(dir)),error=>error.code === 'ENOENT');
   assert.deepEqual(await readdir(join(dir,'native-managed')),[]);
+  // A failed startup has finished shutting down its owned process before a
+  // fresh attempt begins; it cannot poison a subsequent readiness result.
+  await operate(dir,'server.start');
+  assert.equal((await operate(dir,'server.status')).managed.state,'running');
 }));
 
 export async function runParityFixtures() {
