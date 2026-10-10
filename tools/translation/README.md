@@ -14,6 +14,7 @@ Each source produces one compact source-bearing structural meta JSON in
 `packages/typescript/generated/rust-draft`. Source text is stored only in the
 meta JSON. Source and item SHA-256 hashes, UTF-16 and UTF-8 spans, diagnostics,
 checked semantic IR, encodings and assumptions remain reviewable there.
+The inventory counts executable functions separately from constants.
 `parity/rust-source-inventory.json` exhaustively records source provenance,
 output paths, diagnostic frequencies, and executable/carried/preserved
 counts. Its name does **not** make draft artifacts runtime parity evidence:
@@ -25,14 +26,14 @@ strings, `let`, `if`, supported `match` forms, string predicates and case maps,
 formatting, and calls between supported declarations in the same file. The
 public draft module exports `translated` and `provenance`. Integer inputs and
 results use BigInt. Constants are values in `translated`; functions are
-callables. TypeScript exposes their primitive types and all generated
-functions have explicit parameter annotations.
+callables. TypeScript exposes checked primitive, readonly array and tagged union types;
+all generated functions have explicit parameter annotations.
 
 Carried constructs retain exact original source with a structured diagnostic;
 they create no callable stub or successful fake behavior. An unsupported
 dependency carries every caller. Duplicate declarations are ambiguous and
 carried. Async/Tokio, I/O, platform APIs, mutable data, traits/impls, external
-modules, generic Option/Result/Vec, closures, conditional compilation and
+modules, unbounded generics, closures, conditional compilation and
 test attributes remain boundaries. Nested declarations remain inside their
 carried enclosing source item. The structural scanner is not a full Rust
 syntax validator; a lexical failure carries the full file explicitly.
@@ -40,16 +41,25 @@ syntax validator; a lexical failure carries the full file explicitly.
 The integer contract assumes 64-bit usize/isize and checked arithmetic.
 Rust release-profile wrapping arithmetic is outside the executable contract;
 the artifacts are drafts even for successfully lowered declarations. String
-case mapping also depends on Unicode table versions. Rust trim and trim_start
-are carried because JavaScript trimming uses a different whitespace set.
-These boundaries must be resolved with shared behavior fixtures before any
-native Router parity claim.
+case mapping also depends on Unicode table versions. The local checked AST extension supports String::new, to_string/to_owned/as_str,
+Rust trim/trim_start/trim_end with explicit Unicode White_Space, ASCII case maps
+and comparison, string byte length, scalar count, immutable vec! literals,
+Vec::new, and slice/array measurements. Monomorphic Option/Result values
+support typed constructors, exhaustive match, predicates and eager unwrap_or.
+Generic inference beyond explicit expected types, mutable vectors, indexing,
+iterator closures and early returns remain carried. Arguments reject lone
+surrogates, wrong tags and out-of-range fixed integers. Raw literals and Rust
+ASCII line continuations normalize semantically while meta source remains exact.
+Pure const fn lowers runtime calls only. See [extensions/NOTICE.md](extensions/NOTICE.md)
+for the adaptations; original vendored bytes remain unchanged. These boundaries
+need broader behavior fixtures before any native Router parity claim.
 
 Validation:
 
 ```sh
 node --test tools/translation/test/*.test.mjs
 node scripts/translate-router.mjs --check
+node tools/translation/check-typescript-fixtures.mjs
 tsc -p tools/translation/tsconfig.json
 ```
 

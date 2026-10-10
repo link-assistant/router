@@ -14,4 +14,4 @@ function MAX_SSE_CARRY_BYTES() {
 }
 
 export const translated: { "INCOMPLETE_STREAM_MESSAGE": string; "MAX_SSE_CARRY_BYTES": bigint } = { "INCOMPLETE_STREAM_MESSAGE": INCOMPLETE_STREAM_MESSAGE(), "MAX_SSE_CARRY_BYTES": MAX_SSE_CARRY_BYTES() };
-export const provenance = {"sourcePath":"src/stream_termination.rs","sourceSha256":"96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a","executable":2,"carried":18,"preserved":21,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/stream_termination.rs","sourceSha256":"96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a","executable":2,"executableFunctions":0,"executableConstants":2,"carried":18,"preserved":21,"runtimeParity":false};

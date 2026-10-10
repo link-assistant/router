@@ -14,4 +14,4 @@ function STATE_FILE() {
 }
 
 export const translated = { "MAX_CLASSIFIED_BODY": MAX_CLASSIFIED_BODY(), "STATE_FILE": STATE_FILE() };
-export const provenance = {"sourcePath":"src/zai_upstream_error.rs","sourceSha256":"a4efc0de6d38d5bd7ba17a31d0d078145435ffe45f908f1ee7868337e9c0e023","executable":2,"carried":20,"preserved":23,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/zai_upstream_error.rs","sourceSha256":"a4efc0de6d38d5bd7ba17a31d0d078145435ffe45f908f1ee7868337e9c0e023","executable":2,"executableFunctions":0,"executableConstants":2,"carried":20,"preserved":23,"runtimeParity":false};

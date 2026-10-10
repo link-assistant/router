@@ -9,4 +9,4 @@ function CLAUDE_NATIVE_SERVICE_REQUEST_ERROR() {
 }
 
 export const translated = { "CLAUDE_NATIVE_SERVICES_LIMITATION": CLAUDE_NATIVE_SERVICES_LIMITATION(), "CLAUDE_NATIVE_SERVICE_REQUEST_ERROR": CLAUDE_NATIVE_SERVICE_REQUEST_ERROR() };
-export const provenance = {"sourcePath":"src/client_launch.rs","sourceSha256":"189a3a84e23c3860d58bf408dec77a1e73b69a15f9688755e7ba6b8d23652f00","executable":2,"carried":22,"preserved":25,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/client_launch.rs","sourceSha256":"189a3a84e23c3860d58bf408dec77a1e73b69a15f9688755e7ba6b8d23652f00","executable":2,"executableFunctions":0,"executableConstants":2,"carried":22,"preserved":25,"runtimeParity":false};

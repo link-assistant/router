@@ -18,4 +18,4 @@ function MAX_BUDGET_SECS() {
 }
 
 export const translated: { "DEFAULT_MAX_ATTEMPTS": bigint; "DEFAULT_BUDGET_SECS": bigint; "MAX_BUDGET_SECS": bigint } = { "DEFAULT_MAX_ATTEMPTS": DEFAULT_MAX_ATTEMPTS(), "DEFAULT_BUDGET_SECS": DEFAULT_BUDGET_SECS(), "MAX_BUDGET_SECS": MAX_BUDGET_SECS() };
-export const provenance = {"sourcePath":"src/pool_failover.rs","sourceSha256":"58c0977f22c4b44d1ec68723ea808d866de108cb6ed94a9e870cf8442c1865db","executable":3,"carried":20,"preserved":24,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/pool_failover.rs","sourceSha256":"58c0977f22c4b44d1ec68723ea808d866de108cb6ed94a9e870cf8442c1865db","executable":3,"executableFunctions":0,"executableConstants":3,"carried":20,"preserved":24,"runtimeParity":false};

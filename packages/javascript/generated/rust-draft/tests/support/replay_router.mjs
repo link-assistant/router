@@ -5,4 +5,4 @@ function BRIDGE_MODEL() {
 }
 
 export const translated = { "BRIDGE_MODEL": BRIDGE_MODEL() };
-export const provenance = {"sourcePath":"tests/support/replay_router.rs","sourceSha256":"24744847e28b7f55d6227843170379d3f83424b06bd98964b91b55567ffc4db3","executable":1,"carried":43,"preserved":45,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/support/replay_router.rs","sourceSha256":"24744847e28b7f55d6227843170379d3f83424b06bd98964b91b55567ffc4db3","executable":1,"executableFunctions":0,"executableConstants":1,"carried":43,"preserved":45,"runtimeParity":false};

@@ -3,4 +3,4 @@
 
 
 export const translated = {  };
-export const provenance = {"sourcePath":"tests/claude_auth_test.rs","sourceSha256":"082ea54592c7aee41e3ca60eeeadc7e17e7fa0d5f0baa15c726018dcaa7bfdbc","executable":0,"carried":15,"preserved":15,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/claude_auth_test.rs","sourceSha256":"082ea54592c7aee41e3ca60eeeadc7e17e7fa0d5f0baa15c726018dcaa7bfdbc","executable":0,"executableFunctions":0,"executableConstants":0,"carried":15,"preserved":15,"runtimeParity":false};

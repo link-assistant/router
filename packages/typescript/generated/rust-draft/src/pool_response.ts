@@ -10,4 +10,4 @@ function MAX_ERROR_BYTES() {
 }
 
 export const translated: { "MAX_ERROR_BYTES": bigint } = { "MAX_ERROR_BYTES": MAX_ERROR_BYTES() };
-export const provenance = {"sourcePath":"src/pool_response.rs","sourceSha256":"85526521da0b9dc965513ed08e79e05aef2e5b9ce48847404bacd313d4c12b14","executable":1,"carried":5,"preserved":7,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/pool_response.rs","sourceSha256":"85526521da0b9dc965513ed08e79e05aef2e5b9ce48847404bacd313d4c12b14","executable":1,"executableFunctions":0,"executableConstants":1,"carried":5,"preserved":7,"runtimeParity":false};

@@ -14,4 +14,4 @@ function MAX_BUFFERED_JSON_RESPONSE() {
 }
 
 export const translated: { "MAX_BUFFERED_ID_PREFIX": bigint; "MAX_BUFFERED_JSON_RESPONSE": bigint } = { "MAX_BUFFERED_ID_PREFIX": MAX_BUFFERED_ID_PREFIX(), "MAX_BUFFERED_JSON_RESPONSE": MAX_BUFFERED_JSON_RESPONSE() };
-export const provenance = {"sourcePath":"src/resource_capture.rs","sourceSha256":"897136aaa5c146ef01219581665b0fa88299ea66af865ed1fe368f0625399d35","executable":2,"carried":25,"preserved":28,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/resource_capture.rs","sourceSha256":"897136aaa5c146ef01219581665b0fa88299ea66af865ed1fe368f0625399d35","executable":2,"executableFunctions":0,"executableConstants":2,"carried":25,"preserved":28,"runtimeParity":false};

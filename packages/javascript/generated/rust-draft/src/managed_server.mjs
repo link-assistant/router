@@ -37,4 +37,4 @@ function MANAGED_LABEL() {
 }
 
 export const translated = { "DEFAULT_LOCAL_PORT": DEFAULT_LOCAL_PORT(), "CONFIG_DIRECTORY": CONFIG_DIRECTORY(), "SERVER_CONFIG": SERVER_CONFIG(), "MANAGED_STATE": MANAGED_STATE(), "MANAGED_LOCK": MANAGED_LOCK(), "CONTAINER": CONTAINER(), "VOLUME": VOLUME(), "IMAGE": IMAGE(), "MANAGED_LABEL": MANAGED_LABEL() };
-export const provenance = {"sourcePath":"src/managed_server.rs","sourceSha256":"761e3824977dd68506291bbe97aa5aea5ee26f6b5750dd381ac8926f051beb33","executable":9,"carried":76,"preserved":86,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/managed_server.rs","sourceSha256":"761e3824977dd68506291bbe97aa5aea5ee26f6b5750dd381ac8926f051beb33","executable":9,"executableFunctions":0,"executableConstants":9,"carried":76,"preserved":86,"runtimeParity":false};

@@ -22,4 +22,4 @@ function MAX_TTL_HOURS() {
 }
 
 export const translated: { "TOKEN_PREFIX": string; "CODEX_TOKEN_PREFIX": string; "ADMIN_SCOPE": string; "MAX_TTL_HOURS": bigint } = { "TOKEN_PREFIX": TOKEN_PREFIX(), "CODEX_TOKEN_PREFIX": CODEX_TOKEN_PREFIX(), "ADMIN_SCOPE": ADMIN_SCOPE(), "MAX_TTL_HOURS": MAX_TTL_HOURS() };
-export const provenance = {"sourcePath":"src/token.rs","sourceSha256":"7ca5ba2669621a395ddf9f9fbc3ce32c9c033be6fc8acea5b6ec264c233e53be","executable":4,"carried":25,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/token.rs","sourceSha256":"7ca5ba2669621a395ddf9f9fbc3ce32c9c033be6fc8acea5b6ec264c233e53be","executable":4,"executableFunctions":0,"executableConstants":4,"carried":25,"preserved":30,"runtimeParity":false};

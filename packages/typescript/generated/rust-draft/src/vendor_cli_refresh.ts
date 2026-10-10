@@ -5,4 +5,4 @@ function PROBE_ARGS_ENV() {
 }
 
 export const translated: { "PROBE_ARGS_ENV": string } = { "PROBE_ARGS_ENV": PROBE_ARGS_ENV() };
-export const provenance = {"sourcePath":"src/vendor_cli_refresh.rs","sourceSha256":"f654f57e03a27282db948828b20e54d4d93d33517ce174b3a7a18255046e1cd9","executable":1,"carried":14,"preserved":16,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/vendor_cli_refresh.rs","sourceSha256":"f654f57e03a27282db948828b20e54d4d93d33517ce174b3a7a18255046e1cd9","executable":1,"executableFunctions":0,"executableConstants":1,"carried":14,"preserved":16,"runtimeParity":false};

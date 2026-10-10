@@ -18,4 +18,4 @@ function ROTATION_GRACE_MS() {
 }
 
 export const translated = { "INITIAL_BACKOFF_MS": INITIAL_BACKOFF_MS(), "MAX_BACKOFF_MS": MAX_BACKOFF_MS(), "ROTATION_GRACE_MS": ROTATION_GRACE_MS() };
-export const provenance = {"sourcePath":"src/refresh_state.rs","sourceSha256":"19e80a6134db539df9d694302359cf150013e24cad3f552ba7f147cfff566495","executable":3,"carried":16,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/refresh_state.rs","sourceSha256":"19e80a6134db539df9d694302359cf150013e24cad3f552ba7f147cfff566495","executable":3,"executableFunctions":0,"executableConstants":3,"carried":16,"preserved":20,"runtimeParity":false};

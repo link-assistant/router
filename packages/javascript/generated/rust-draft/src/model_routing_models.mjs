@@ -3,4 +3,4 @@
 
 
 export const translated = {  };
-export const provenance = {"sourcePath":"src/model_routing_models.rs","sourceSha256":"8b30cce7c904fb380d57c87b08c3ead53d7247b70a94311a3e433e1ae9e3e0de","executable":0,"carried":7,"preserved":7,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/model_routing_models.rs","sourceSha256":"8b30cce7c904fb380d57c87b08c3ead53d7247b70a94311a3e433e1ae9e3e0de","executable":0,"executableFunctions":0,"executableConstants":0,"carried":7,"preserved":7,"runtimeParity":false};

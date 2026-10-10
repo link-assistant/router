@@ -30,4 +30,4 @@ function MAX_CATALOG_BODY() {
 }
 
 export const translated: { "ANTHROPIC_BASE_PATH": string; "CHAT_BASE_PATH": string; "RESPONSES_BASE_PATH": string; "HEALTH_PATH": string; "CATALOG_PATH": string; "MAX_CATALOG_BODY": bigint } = { "ANTHROPIC_BASE_PATH": ANTHROPIC_BASE_PATH(), "CHAT_BASE_PATH": CHAT_BASE_PATH(), "RESPONSES_BASE_PATH": RESPONSES_BASE_PATH(), "HEALTH_PATH": HEALTH_PATH(), "CATALOG_PATH": CATALOG_PATH(), "MAX_CATALOG_BODY": MAX_CATALOG_BODY() };
-export const provenance = {"sourcePath":"src/zai_coding_plan.rs","sourceSha256":"47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2","executable":6,"carried":42,"preserved":49,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/zai_coding_plan.rs","sourceSha256":"47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2","executable":6,"executableFunctions":0,"executableConstants":6,"carried":42,"preserved":49,"runtimeParity":false};

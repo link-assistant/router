@@ -14,4 +14,4 @@ function BOOTSTRAP_ADMIN_LABEL() {
 }
 
 export const translated: { "BOOTSTRAP_ADMIN_TTL_HOURS": bigint; "BOOTSTRAP_ADMIN_LABEL": string } = { "BOOTSTRAP_ADMIN_TTL_HOURS": BOOTSTRAP_ADMIN_TTL_HOURS(), "BOOTSTRAP_ADMIN_LABEL": BOOTSTRAP_ADMIN_LABEL() };
-export const provenance = {"sourcePath":"src/runtime.rs","sourceSha256":"fd15ba6130a241b55808aff7c3107c9e9687587715ea9ad7cf358f5362f1a52f","executable":2,"carried":30,"preserved":33,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/runtime.rs","sourceSha256":"fd15ba6130a241b55808aff7c3107c9e9687587715ea9ad7cf358f5362f1a52f","executable":2,"executableFunctions":0,"executableConstants":2,"carried":30,"preserved":33,"runtimeParity":false};

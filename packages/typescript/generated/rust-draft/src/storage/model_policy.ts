@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"src/storage/model_policy.rs","sourceSha256":"ee378f4678ae94645ecf61888cdb0e094bbefaebecb77eeb9d943ca1634ae315","executable":0,"carried":4,"preserved":4,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/storage/model_policy.rs","sourceSha256":"ee378f4678ae94645ecf61888cdb0e094bbefaebecb77eeb9d943ca1634ae315","executable":0,"executableFunctions":0,"executableConstants":0,"carried":4,"preserved":4,"runtimeParity":false};

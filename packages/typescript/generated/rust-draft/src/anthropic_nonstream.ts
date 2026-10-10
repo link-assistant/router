@@ -10,4 +10,4 @@ function MAX_BUFFERED_RESPONSE() {
 }
 
 export const translated: { "MAX_BUFFERED_RESPONSE": bigint } = { "MAX_BUFFERED_RESPONSE": MAX_BUFFERED_RESPONSE() };
-export const provenance = {"sourcePath":"src/anthropic_nonstream.rs","sourceSha256":"932f7546b64d336c3c0611dc369b985e9aca91825fc62cd556570baa89f578a5","executable":1,"carried":17,"preserved":19,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/anthropic_nonstream.rs","sourceSha256":"932f7546b64d336c3c0611dc369b985e9aca91825fc62cd556570baa89f578a5","executable":1,"executableFunctions":0,"executableConstants":1,"carried":17,"preserved":19,"runtimeParity":false};

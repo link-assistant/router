@@ -13,4 +13,4 @@ function DEFAULT_MODEL() {
 }
 
 export const translated = { "ACTIVITY_JSON": ACTIVITY_JSON(), "LINKED_DATA_JSON": LINKED_DATA_JSON(), "DEFAULT_MODEL": DEFAULT_MODEL() };
-export const provenance = {"sourcePath":"src/crater.rs","sourceSha256":"aa8cfe2f3416ff1615fa1f7d65d5c4cf67a24e8439aceca3ae81289b94a2b469","executable":3,"carried":39,"preserved":43,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/crater.rs","sourceSha256":"aa8cfe2f3416ff1615fa1f7d65d5c4cf67a24e8439aceca3ae81289b94a2b469","executable":3,"executableFunctions":0,"executableConstants":3,"carried":39,"preserved":43,"runtimeParity":false};

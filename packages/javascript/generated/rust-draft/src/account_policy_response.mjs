@@ -14,4 +14,4 @@ function MAX_EVENT_BYTES() {
 }
 
 export const translated = { "MAX_RESPONSE_BYTES": MAX_RESPONSE_BYTES(), "MAX_EVENT_BYTES": MAX_EVENT_BYTES() };
-export const provenance = {"sourcePath":"src/account_policy_response.rs","sourceSha256":"cba71c37802a28a1f9108efec2c1422c8c7bcd9e19022d909cec5a6e1219dc03","executable":2,"carried":9,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/account_policy_response.rs","sourceSha256":"cba71c37802a28a1f9108efec2c1422c8c7bcd9e19022d909cec5a6e1219dc03","executable":2,"executableFunctions":0,"executableConstants":2,"carried":9,"preserved":12,"runtimeParity":false};

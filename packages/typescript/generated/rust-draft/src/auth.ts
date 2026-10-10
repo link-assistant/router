@@ -17,4 +17,4 @@ function CODEX_DEVICE_CALLBACK_PATH() {
 }
 
 export const translated: { "CODEX_CLIENT_ID": string; "CODEX_ISSUER": string; "CODEX_CALLBACK_PATH": string; "CODEX_DEVICE_CALLBACK_PATH": string } = { "CODEX_CLIENT_ID": CODEX_CLIENT_ID(), "CODEX_ISSUER": CODEX_ISSUER(), "CODEX_CALLBACK_PATH": CODEX_CALLBACK_PATH(), "CODEX_DEVICE_CALLBACK_PATH": CODEX_DEVICE_CALLBACK_PATH() };
-export const provenance = {"sourcePath":"src/auth.rs","sourceSha256":"e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336","executable":4,"carried":39,"preserved":44,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/auth.rs","sourceSha256":"e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336","executable":4,"executableFunctions":0,"executableConstants":4,"carried":39,"preserved":44,"runtimeParity":false};

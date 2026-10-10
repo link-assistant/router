@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"scripts/check-github-releases.rs","sourceSha256":"9ad888c915ada1a78c24666c6dfe1d511e66f2b616f5de274bfe81414ef0e014","executable":0,"carried":11,"preserved":11,"runtimeParity":false};
+export const provenance = {"sourcePath":"scripts/check-github-releases.rs","sourceSha256":"9ad888c915ada1a78c24666c6dfe1d511e66f2b616f5de274bfe81414ef0e014","executable":0,"executableFunctions":0,"executableConstants":0,"carried":11,"preserved":11,"runtimeParity":false};

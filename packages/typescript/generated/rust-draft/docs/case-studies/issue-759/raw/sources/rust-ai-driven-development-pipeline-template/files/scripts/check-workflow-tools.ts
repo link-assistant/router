@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-workflow-tools.rs","sourceSha256":"c80413b95e36b3cd9d2c47f251e9cfb6894fd421fb836bbc384141da7afaa8e6","executable":0,"carried":12,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-workflow-tools.rs","sourceSha256":"c80413b95e36b3cd9d2c47f251e9cfb6894fd421fb836bbc384141da7afaa8e6","executable":0,"executableFunctions":0,"executableConstants":0,"carried":12,"preserved":12,"runtimeParity":false};

@@ -36,4 +36,4 @@ function CARGO_PACKAGE_MAX_ATTEMPTS() {
 }
 
 export const translated = { "MAX_CRATE_BYTES": MAX_CRATE_BYTES(), "WARN_CRATE_BYTES": WARN_CRATE_BYTES(), "CARGO_PACKAGE_MAX_ATTEMPTS": CARGO_PACKAGE_MAX_ATTEMPTS() };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":3,"carried":14,"preserved":17,"runtimeParity":false};
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":3,"executableFunctions":0,"executableConstants":3,"carried":14,"preserved":17,"runtimeParity":false};

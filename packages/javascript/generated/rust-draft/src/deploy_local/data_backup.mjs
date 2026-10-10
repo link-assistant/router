@@ -22,4 +22,4 @@ function SCHEMA() {
 }
 
 export const translated = { "LIMIT": LIMIT(), "FILES": FILES(), "DEPTH": DEPTH(), "SCHEMA": SCHEMA() };
-export const provenance = {"sourcePath":"src/deploy_local/data_backup.rs","sourceSha256":"346c71e03279c446d37df23dfc7d9b1651ef614eb69d53f61de617763d09138e","executable":4,"carried":28,"preserved":33,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/deploy_local/data_backup.rs","sourceSha256":"346c71e03279c446d37df23dfc7d9b1651ef614eb69d53f61de617763d09138e","executable":4,"executableFunctions":0,"executableConstants":4,"carried":28,"preserved":33,"runtimeParity":false};

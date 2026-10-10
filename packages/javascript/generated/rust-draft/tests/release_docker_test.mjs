@@ -3,4 +3,4 @@
 
 
 export const translated = {  };
-export const provenance = {"sourcePath":"tests/release_docker_test.rs","sourceSha256":"288cc66988505b50516eac84eeea0652652af56167cfbc7f2233578441f33256","executable":0,"carried":6,"preserved":7,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/release_docker_test.rs","sourceSha256":"288cc66988505b50516eac84eeea0652652af56167cfbc7f2233578441f33256","executable":0,"executableFunctions":0,"executableConstants":0,"carried":6,"preserved":7,"runtimeParity":false};

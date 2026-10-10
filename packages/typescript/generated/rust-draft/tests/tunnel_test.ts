@@ -5,4 +5,4 @@ function ENTRYPOINT() {
 }
 
 export const translated: { "ENTRYPOINT": string } = { "ENTRYPOINT": ENTRYPOINT() };
-export const provenance = {"sourcePath":"tests/tunnel_test.rs","sourceSha256":"f9fb83ca531c167dcdacfc5891cba43ed5ecf793061caabc0a9f53ec9ed46649","executable":1,"carried":7,"preserved":8,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/tunnel_test.rs","sourceSha256":"f9fb83ca531c167dcdacfc5891cba43ed5ecf793061caabc0a9f53ec9ed46649","executable":1,"executableFunctions":0,"executableConstants":1,"carried":7,"preserved":8,"runtimeParity":false};

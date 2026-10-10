@@ -21,4 +21,4 @@ function PROMOTION_RECEIPT_KEY() {
 }
 
 export const translated: { "ROUTER_METADATA_KEY": string; "REFRESH_OWNER_KEY": string; "EXTERNAL_REFRESH_OWNER": string; "CREDENTIAL_SOURCE_KEY": string; "PROMOTION_RECEIPT_KEY": string } = { "ROUTER_METADATA_KEY": ROUTER_METADATA_KEY(), "REFRESH_OWNER_KEY": REFRESH_OWNER_KEY(), "EXTERNAL_REFRESH_OWNER": EXTERNAL_REFRESH_OWNER(), "CREDENTIAL_SOURCE_KEY": CREDENTIAL_SOURCE_KEY(), "PROMOTION_RECEIPT_KEY": PROMOTION_RECEIPT_KEY() };
-export const provenance = {"sourcePath":"src/subscription/external.rs","sourceSha256":"e0e69e2b70f16471febc005d14ff58248b162d13dd9f2eb4aafd7c7fe7937129","executable":5,"carried":13,"preserved":19,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/subscription/external.rs","sourceSha256":"e0e69e2b70f16471febc005d14ff58248b162d13dd9f2eb4aafd7c7fe7937129","executable":5,"executableFunctions":0,"executableConstants":5,"carried":13,"preserved":19,"runtimeParity":false};

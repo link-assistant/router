@@ -18,4 +18,4 @@ function MAX_PARALLEL_ZSTD_DECODES() {
 }
 
 export const translated: { "MAX_DECOMPRESSION_RATIO": bigint; "ZSTD_DECODE_CHUNK_BYTES": bigint; "MAX_PARALLEL_ZSTD_DECODES": bigint } = { "MAX_DECOMPRESSION_RATIO": MAX_DECOMPRESSION_RATIO(), "ZSTD_DECODE_CHUNK_BYTES": ZSTD_DECODE_CHUNK_BYTES(), "MAX_PARALLEL_ZSTD_DECODES": MAX_PARALLEL_ZSTD_DECODES() };
-export const provenance = {"sourcePath":"src/encoded_request_body.rs","sourceSha256":"93719eb74b1053297dc429a2eba5f12d03f09d5fd5eb3cd9653caa7641b540ce","executable":3,"carried":25,"preserved":29,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/encoded_request_body.rs","sourceSha256":"93719eb74b1053297dc429a2eba5f12d03f09d5fd5eb3cd9653caa7641b540ce","executable":3,"executableFunctions":0,"executableConstants":3,"carried":25,"preserved":29,"runtimeParity":false};

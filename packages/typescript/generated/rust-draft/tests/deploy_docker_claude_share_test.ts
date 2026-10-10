@@ -13,4 +13,4 @@ function ROTATED() {
 }
 
 export const translated: { "ACCESS": string; "REFRESH": string; "ROTATED": string } = { "ACCESS": ACCESS(), "REFRESH": REFRESH(), "ROTATED": ROTATED() };
-export const provenance = {"sourcePath":"tests/deploy_docker_claude_share_test.rs","sourceSha256":"1516ab844c8d2c9a30ecd508552c83a779ca1f8f5711e9fed7d74d6029040927","executable":3,"carried":16,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/deploy_docker_claude_share_test.rs","sourceSha256":"1516ab844c8d2c9a30ecd508552c83a779ca1f8f5711e9fed7d74d6029040927","executable":3,"executableFunctions":0,"executableConstants":3,"carried":16,"preserved":20,"runtimeParity":false};

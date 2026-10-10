@@ -9,4 +9,4 @@ function PROMPT() {
 }
 
 export const translated: { "CLAUDE_MODEL": string; "PROMPT": string } = { "CLAUDE_MODEL": CLAUDE_MODEL(), "PROMPT": PROMPT() };
-export const provenance = {"sourcePath":"tests/vendor_fixture_replay_test.rs","sourceSha256":"8c728de44cb826a3b8b4f52e15a091bdc239e89fc32bb91234b300283eb3b425","executable":2,"carried":17,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/vendor_fixture_replay_test.rs","sourceSha256":"8c728de44cb826a3b8b4f52e15a091bdc239e89fc32bb91234b300283eb3b425","executable":2,"executableFunctions":0,"executableConstants":2,"carried":17,"preserved":20,"runtimeParity":false};

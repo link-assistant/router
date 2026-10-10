@@ -18,4 +18,4 @@ function MAX_DOCUMENT_BYTES() {
 }
 
 export const translated: { "DEFAULT_MAX_BYTES": bigint; "MAX_BODY_BYTES": bigint; "MAX_DOCUMENT_BYTES": bigint } = { "DEFAULT_MAX_BYTES": DEFAULT_MAX_BYTES(), "MAX_BODY_BYTES": MAX_BODY_BYTES(), "MAX_DOCUMENT_BYTES": MAX_DOCUMENT_BYTES() };
-export const provenance = {"sourcePath":"src/error_log.rs","sourceSha256":"254089f39473a56eb894ac8334c453e00f818449d1b65c9a598094047ef93ea4","executable":3,"carried":13,"preserved":17,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/error_log.rs","sourceSha256":"254089f39473a56eb894ac8334c453e00f818449d1b65c9a598094047ef93ea4","executable":3,"executableFunctions":0,"executableConstants":3,"carried":13,"preserved":17,"runtimeParity":false};

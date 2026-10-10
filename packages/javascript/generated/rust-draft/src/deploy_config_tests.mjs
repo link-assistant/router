@@ -1,6 +1,8 @@
 // Generated draft from src/deploy_config_tests.rs; sha256=d39cd552152831bba25f9c05d3482def41bf6f62425e06b3f6f78cf071393b42
 // Carried constructs are data, never runtime parity evidence.
+function FULL() {
+  return "\n[deploy]\ninstance = \"blue\"\nport = 18080\nimage = \"ghcr.io/link-assistant/router:1.2.3\"\n\n[remote]\nserver = \"deploy@example.test\"\npublic_port = 8443\n\n[local]\nport = 28080\nmode = \"host\"\n\n[env]\nOPENAI_ORG = \"env\"\nUPSTREAM_REGION = \"env:REGION_FOR_ROUTER\"\nEXTRA_CONFIG = \"file:extra.txt\"\n\n[ssh]\nport = 2222\nidentity_file = \"keys/id_ed25519\"\nknown_hosts = [\"example.test ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExample\"]\nkeepalive_secs = 15\ndeadline_secs = 900\n\n[tokens]\nttl_hours = 72\nmax_requests = 1000\nmax_tokens = 2000000\nrate_limit_per_minute = 30\nallowed_models = [\"claude-sonnet-4-5\"]\n\n[provider_keys.openrouter]\nsource = \"env:OPENROUTER_KEY\"\nmode = \"replace\"\n\n[provider_keys.zai]\nsource = \"file:zai.key\"\nkind = \"anthropic-compatible\"\nbase_url = \"https://api.z.ai/api/anthropic\"\nmodels = [\"glm-4.6\"]\n\n[verification]\nclients = [\"claude\", \"codex\"]\nproviders = [\"openrouter\"]\nrequire_client_launch = true\nquota_requires_upstream_evidence = true\ncheck_thinking_display = true\n\n[verification.models.openrouter]\nclaude = \"anthropic/claude-sonnet-4.5\"\ncodex = \"openai/gpt-5\"\n";
+}
 
-
-export const translated = {  };
-export const provenance = {"sourcePath":"src/deploy_config_tests.rs","sourceSha256":"d39cd552152831bba25f9c05d3482def41bf6f62425e06b3f6f78cf071393b42","executable":0,"carried":15,"preserved":16,"runtimeParity":false};
+export const translated = { "FULL": FULL() };
+export const provenance = {"sourcePath":"src/deploy_config_tests.rs","sourceSha256":"d39cd552152831bba25f9c05d3482def41bf6f62425e06b3f6f78cf071393b42","executable":1,"executableFunctions":0,"executableConstants":1,"carried":14,"preserved":16,"runtimeParity":false};

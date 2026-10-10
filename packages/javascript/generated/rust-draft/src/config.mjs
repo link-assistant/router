@@ -14,4 +14,4 @@ function default_activitypub_public_key_pem() {
 }
 
 export const translated = { "DEFAULT_MAX_PROXY_REQUEST_BYTES": DEFAULT_MAX_PROXY_REQUEST_BYTES(), default_activitypub_public_key_pem };
-export const provenance = {"sourcePath":"src/config.rs","sourceSha256":"9f5bb5c2d7060a8ab317889e401d3da2155a0574b5d4e2ed112f52d5e9468d8a","executable":2,"carried":31,"preserved":34,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/config.rs","sourceSha256":"9f5bb5c2d7060a8ab317889e401d3da2155a0574b5d4e2ed112f52d5e9468d8a","executable":2,"executableFunctions":1,"executableConstants":1,"carried":31,"preserved":34,"runtimeParity":false};

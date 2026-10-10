@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"src/managed_server/docker.rs","sourceSha256":"0fdd5a4caddc7b30de79ccf6248ff051adc4d718d2968ed506137d291c0996e2","executable":0,"carried":7,"preserved":8,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/managed_server/docker.rs","sourceSha256":"0fdd5a4caddc7b30de79ccf6248ff051adc4d718d2968ed506137d291c0996e2","executable":0,"executableFunctions":0,"executableConstants":0,"carried":7,"preserved":8,"runtimeParity":false};

@@ -5,4 +5,4 @@ function TOKEN() {
 }
 
 export const translated: { "TOKEN": string } = { "TOKEN": TOKEN() };
-export const provenance = {"sourcePath":"tests/tunnel_command_test.rs","sourceSha256":"57cf0f53f7e42d7ac130c933e4cd5e86c96523163e82c600f67389dc94102921","executable":1,"carried":14,"preserved":16,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/tunnel_command_test.rs","sourceSha256":"57cf0f53f7e42d7ac130c933e4cd5e86c96523163e82c600f67389dc94102921","executable":1,"executableFunctions":0,"executableConstants":1,"carried":14,"preserved":16,"runtimeParity":false};

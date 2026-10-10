@@ -9,8 +9,9 @@ function DEFAULT_CLIENT_VERSION() {
 }
 
 function is_oauth_credential(token) {
+  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
   return token.startsWith("sk-ant-oat");
 }
 
 export const translated = { "CLAUDE_CODE_SYSTEM_PROMPT": CLAUDE_CODE_SYSTEM_PROMPT(), "DEFAULT_CLIENT_VERSION": DEFAULT_CLIENT_VERSION(), is_oauth_credential };
-export const provenance = {"sourcePath":"src/claude_identity.rs","sourceSha256":"2b27501f2374251fb0f5a265ca80562734388d861db705cfcbbe37df257f02c6","executable":3,"carried":8,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/claude_identity.rs","sourceSha256":"2b27501f2374251fb0f5a265ca80562734388d861db705cfcbbe37df257f02c6","executable":3,"executableFunctions":1,"executableConstants":2,"carried":8,"preserved":12,"runtimeParity":false};

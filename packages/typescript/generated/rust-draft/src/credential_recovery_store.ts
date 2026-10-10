@@ -13,4 +13,4 @@ function PRIMARY_ACCOUNT() {
 }
 
 export const translated: { "RECOVERY_VERSION": bigint; "RECOVERY_DIRECTORY": string; "PRIMARY_ACCOUNT": string } = { "RECOVERY_VERSION": RECOVERY_VERSION(), "RECOVERY_DIRECTORY": RECOVERY_DIRECTORY(), "PRIMARY_ACCOUNT": PRIMARY_ACCOUNT() };
-export const provenance = {"sourcePath":"src/credential_recovery_store.rs","sourceSha256":"91af0053ff35f899efd181962f0492665e10bfab06b59e2c30b261dfabbc8f5e","executable":3,"carried":14,"preserved":18,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/credential_recovery_store.rs","sourceSha256":"91af0053ff35f899efd181962f0492665e10bfab06b59e2c30b261dfabbc8f5e","executable":3,"executableFunctions":0,"executableConstants":3,"carried":14,"preserved":18,"runtimeParity":false};

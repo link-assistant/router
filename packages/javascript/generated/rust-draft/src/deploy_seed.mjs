@@ -9,4 +9,4 @@ function HANDOVER_KEY() {
 }
 
 export const translated = { "METADATA_KEY": METADATA_KEY(), "HANDOVER_KEY": HANDOVER_KEY() };
-export const provenance = {"sourcePath":"src/deploy_seed.rs","sourceSha256":"f8262b8e6b73eeb61e4f67ab1bbde8678369585c50b1225a0790df6974379a84","executable":2,"carried":16,"preserved":19,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/deploy_seed.rs","sourceSha256":"f8262b8e6b73eeb61e4f67ab1bbde8678369585c50b1225a0790df6974379a84","executable":2,"executableFunctions":0,"executableConstants":2,"carried":16,"preserved":19,"runtimeParity":false};

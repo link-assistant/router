@@ -17,4 +17,4 @@ function CODEX_ALTERNATE_MODEL() {
 }
 
 export const translated = { "PROMPT": PROMPT(), "SUBAGENT_PROMPT": SUBAGENT_PROMPT(), "ANSWER": ANSWER(), "CODEX_ALTERNATE_MODEL": CODEX_ALTERNATE_MODEL() };
-export const provenance = {"sourcePath":"tests/real_clients_test.rs","sourceSha256":"fd2e46770b1877b0ef247986c5537a0a7ae3d121034ecc86416ce8cb1aca74d5","executable":4,"carried":55,"preserved":60,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/real_clients_test.rs","sourceSha256":"fd2e46770b1877b0ef247986c5537a0a7ae3d121034ecc86416ce8cb1aca74d5","executable":4,"executableFunctions":0,"executableConstants":4,"carried":55,"preserved":60,"runtimeParity":false};

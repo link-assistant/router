@@ -5,4 +5,4 @@ function LIMITS_SAVE_INTERVAL_SECS() {
 }
 
 export const translated = { "LIMITS_SAVE_INTERVAL_SECS": LIMITS_SAVE_INTERVAL_SECS() };
-export const provenance = {"sourcePath":"src/accounts_limits.rs","sourceSha256":"2b5bfdda60ce2ffb8ff3d52459b13b8b68a56977f18e3db9100f5ff516861a1f","executable":1,"carried":11,"preserved":13,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/accounts_limits.rs","sourceSha256":"2b5bfdda60ce2ffb8ff3d52459b13b8b68a56977f18e3db9100f5ff516861a1f","executable":1,"executableFunctions":0,"executableConstants":1,"carried":11,"preserved":13,"runtimeParity":false};

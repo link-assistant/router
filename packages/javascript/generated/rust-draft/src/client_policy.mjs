@@ -9,4 +9,4 @@ function PROXIED_CODEX_EVIDENCE_VALUE() {
 }
 
 export const translated = { "PROXIED_CLIENT_EVIDENCE_HEADER": PROXIED_CLIENT_EVIDENCE_HEADER(), "PROXIED_CODEX_EVIDENCE_VALUE": PROXIED_CODEX_EVIDENCE_VALUE() };
-export const provenance = {"sourcePath":"src/client_policy.rs","sourceSha256":"65fe77ca79296f5335a57ebc134c57b5b343a8762d9ca8faaef52d90a9b71bfb","executable":2,"carried":27,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/client_policy.rs","sourceSha256":"65fe77ca79296f5335a57ebc134c57b5b343a8762d9ca8faaef52d90a9b71bfb","executable":2,"executableFunctions":0,"executableConstants":2,"carried":27,"preserved":30,"runtimeParity":false};

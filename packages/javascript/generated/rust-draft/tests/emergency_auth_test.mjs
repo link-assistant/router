@@ -17,4 +17,4 @@ function CLAUDE_USER_AGENT() {
 }
 
 export const translated = { "SECRET": SECRET(), "ADMIN_KEY": ADMIN_KEY(), "CLIENT_ROUTE": CLIENT_ROUTE(), "CLAUDE_USER_AGENT": CLAUDE_USER_AGENT() };
-export const provenance = {"sourcePath":"tests/emergency_auth_test.rs","sourceSha256":"59e899de3de71eea5b9bee1967e244251c1219b8eebcdd30a0c8fef465e19a8a","executable":4,"carried":40,"preserved":45,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/emergency_auth_test.rs","sourceSha256":"59e899de3de71eea5b9bee1967e244251c1219b8eebcdd30a0c8fef465e19a8a","executable":4,"executableFunctions":0,"executableConstants":4,"carried":40,"preserved":45,"runtimeParity":false};

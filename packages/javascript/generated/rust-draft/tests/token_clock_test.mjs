@@ -9,4 +9,4 @@ function NOW() {
 }
 
 export const translated = { "ISSUED": ISSUED(), "NOW": NOW() };
-export const provenance = {"sourcePath":"tests/token_clock_test.rs","sourceSha256":"92cd75d2b1c8747759ec6d5a79302c37fb6bb686be0ef013651e0ee5b00e9ca7","executable":2,"carried":7,"preserved":10,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/token_clock_test.rs","sourceSha256":"92cd75d2b1c8747759ec6d5a79302c37fb6bb686be0ef013651e0ee5b00e9ca7","executable":2,"executableFunctions":0,"executableConstants":2,"carried":7,"preserved":10,"runtimeParity":false};

@@ -14,4 +14,4 @@ function MAX_USAGE_BODY() {
 }
 
 export const translated = { "SCHEMA_VERSION": SCHEMA_VERSION(), "MAX_USAGE_BODY": MAX_USAGE_BODY() };
-export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":2,"carried":56,"preserved":58,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":2,"executableFunctions":0,"executableConstants":2,"carried":56,"preserved":58,"runtimeParity":false};

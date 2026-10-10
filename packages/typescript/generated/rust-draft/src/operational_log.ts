@@ -14,4 +14,4 @@ function BACKUPS() {
 }
 
 export const translated: { "MAX_BYTES": bigint; "BACKUPS": bigint } = { "MAX_BYTES": MAX_BYTES(), "BACKUPS": BACKUPS() };
-export const provenance = {"sourcePath":"src/operational_log.rs","sourceSha256":"e9b30715348879f62de6b532a765850318885e177e19a0687f0cc4a59a12746f","executable":2,"carried":15,"preserved":18,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/operational_log.rs","sourceSha256":"e9b30715348879f62de6b532a765850318885e177e19a0687f0cc4a59a12746f","executable":2,"executableFunctions":0,"executableConstants":2,"carried":15,"preserved":18,"runtimeParity":false};

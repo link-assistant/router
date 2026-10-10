@@ -5,4 +5,4 @@ function ATTEMPTS() {
 }
 
 export const translated: { "ATTEMPTS": bigint } = { "ATTEMPTS": ATTEMPTS() };
-export const provenance = {"sourcePath":"tests/admin_endpoints_test.rs","sourceSha256":"b381e23399307cfb6a27db664c5b2977b2afb2ea4a21218c39eefdf9deacb8a5","executable":1,"carried":25,"preserved":27,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/admin_endpoints_test.rs","sourceSha256":"b381e23399307cfb6a27db664c5b2977b2afb2ea4a21218c39eefdf9deacb8a5","executable":1,"executableFunctions":0,"executableConstants":1,"carried":25,"preserved":27,"runtimeParity":false};

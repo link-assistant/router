@@ -5,4 +5,4 @@ function SENTINEL() {
 }
 
 export const translated = { "SENTINEL": SENTINEL() };
-export const provenance = {"sourcePath":"src/refresh_redaction_tests.rs","sourceSha256":"7675cdfd0265e959156856f46fd9322e650ed964ea2befe020800e68e2e9292b","executable":1,"carried":4,"preserved":6,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/refresh_redaction_tests.rs","sourceSha256":"7675cdfd0265e959156856f46fd9322e650ed964ea2befe020800e68e2e9292b","executable":1,"executableFunctions":0,"executableConstants":1,"carried":4,"preserved":6,"runtimeParity":false};

@@ -10,4 +10,4 @@ function STACK_BYTES() {
 }
 
 export const translated: { "STACK_BYTES": bigint } = { "STACK_BYTES": STACK_BYTES() };
-export const provenance = {"sourcePath":"src/entrypoint.rs","sourceSha256":"39268a95729f7c2f4004ce47761afb31369ddb600ff3c63b3fc890868f6aa85e","executable":1,"carried":4,"preserved":6,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/entrypoint.rs","sourceSha256":"39268a95729f7c2f4004ce47761afb31369ddb600ff3c63b3fc890868f6aa85e","executable":1,"executableFunctions":0,"executableConstants":1,"carried":4,"preserved":6,"runtimeParity":false};

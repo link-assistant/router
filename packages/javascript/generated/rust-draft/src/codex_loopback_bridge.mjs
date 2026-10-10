@@ -46,8 +46,9 @@ function DAEMON_LISTEN_ENV() {
 }
 
 function health_path(nonce) {
+  if (!(typeof nonce === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(nonce))) throw new TypeError('argument outside supported Rust value domain');
   return ("/__link_assistant_router/codex_bridge/" + nonce);
 }
 
 export const translated = { "BACKEND_PATH": BACKEND_PATH(), "MAX_HTTP_BODY_BYTES": MAX_HTTP_BODY_BYTES(), "MAX_WEBSOCKET_MESSAGE_BYTES": MAX_WEBSOCKET_MESSAGE_BYTES(), "STATE_VERSION": STATE_VERSION(), "HEALTH_HEADER": HEALTH_HEADER(), "DAEMON_MARKER_ENV": DAEMON_MARKER_ENV(), "DAEMON_UPSTREAM_ENV": DAEMON_UPSTREAM_ENV(), "DAEMON_STATE_ENV": DAEMON_STATE_ENV(), "DAEMON_NONCE_ENV": DAEMON_NONCE_ENV(), "DAEMON_LISTEN_ENV": DAEMON_LISTEN_ENV(), health_path };
-export const provenance = {"sourcePath":"src/codex_loopback_bridge.rs","sourceSha256":"6e93120f6cebbce644471086d38f2b1443eb2e0d8e7d25fdae23f7e9123c4b9e","executable":11,"carried":72,"preserved":84,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/codex_loopback_bridge.rs","sourceSha256":"6e93120f6cebbce644471086d38f2b1443eb2e0d8e7d25fdae23f7e9123c4b9e","executable":11,"executableFunctions":1,"executableConstants":10,"carried":72,"preserved":84,"runtimeParity":false};

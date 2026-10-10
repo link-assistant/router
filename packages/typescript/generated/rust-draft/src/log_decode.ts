@@ -5,4 +5,4 @@ function BROTLI_BUFFER() {
 }
 
 export const translated: { "BROTLI_BUFFER": bigint } = { "BROTLI_BUFFER": BROTLI_BUFFER() };
-export const provenance = {"sourcePath":"src/log_decode.rs","sourceSha256":"7dc190395c8ec6d786647c81b143c591337e18ddbdeeeae86038c38d3b945b8e","executable":1,"carried":5,"preserved":7,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/log_decode.rs","sourceSha256":"7dc190395c8ec6d786647c81b143c591337e18ddbdeeeae86038c38d3b945b8e","executable":1,"executableFunctions":0,"executableConstants":1,"carried":5,"preserved":7,"runtimeParity":false};

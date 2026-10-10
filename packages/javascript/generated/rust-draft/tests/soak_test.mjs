@@ -5,4 +5,4 @@ function CLAUDE_MODEL() {
 }
 
 export const translated = { "CLAUDE_MODEL": CLAUDE_MODEL() };
-export const provenance = {"sourcePath":"tests/soak_test.rs","sourceSha256":"f26abbb7fa8d8d9258c266d257ed6f469fa23505d7b0dc0a1e44709213dbe3c8","executable":1,"carried":27,"preserved":29,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/soak_test.rs","sourceSha256":"f26abbb7fa8d8d9258c266d257ed6f469fa23505d7b0dc0a1e44709213dbe3c8","executable":1,"executableFunctions":0,"executableConstants":1,"carried":27,"preserved":29,"runtimeParity":false};

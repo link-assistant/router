@@ -5,4 +5,4 @@ function SECRET() {
 }
 
 export const translated: { "SECRET": string } = { "SECRET": SECRET() };
-export const provenance = {"sourcePath":"tests/deploy_host_test.rs","sourceSha256":"041d9f2bccce9e0b6bd2f307b8b800ccd09b3fb3d7f80257733ef7743df1b7e3","executable":1,"carried":18,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/deploy_host_test.rs","sourceSha256":"041d9f2bccce9e0b6bd2f307b8b800ccd09b3fb3d7f80257733ef7743df1b7e3","executable":1,"executableFunctions":0,"executableConstants":1,"carried":18,"preserved":20,"runtimeParity":false};

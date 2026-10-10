@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"src/cli/auth_ops.rs","sourceSha256":"983ef6231c78031e31bc3b0ab0fe8e16042a4f9ad6ad506adfb0b368113ef719","executable":0,"carried":12,"preserved":13,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/cli/auth_ops.rs","sourceSha256":"983ef6231c78031e31bc3b0ab0fe8e16042a4f9ad6ad506adfb0b368113ef719","executable":0,"executableFunctions":0,"executableConstants":0,"carried":12,"preserved":13,"runtimeParity":false};

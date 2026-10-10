@@ -9,4 +9,4 @@ function SKIP_LOG() {
 }
 
 export const translated: { "SCHEMA": string; "SKIP_LOG": string } = { "SCHEMA": SCHEMA(), "SKIP_LOG": SKIP_LOG() };
-export const provenance = {"sourcePath":"src/verification.rs","sourceSha256":"839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4","executable":2,"carried":31,"preserved":34,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/verification.rs","sourceSha256":"839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4","executable":2,"executableFunctions":0,"executableConstants":2,"carried":31,"preserved":34,"runtimeParity":false};

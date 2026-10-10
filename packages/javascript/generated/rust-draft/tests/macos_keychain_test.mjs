@@ -13,4 +13,4 @@ function SCOPED_DIR() {
 }
 
 export const translated = { "SEEDED_ACCESS_TOKEN": SEEDED_ACCESS_TOKEN(), "STALE_FILE_TOKEN": STALE_FILE_TOKEN(), "SCOPED_DIR": SCOPED_DIR() };
-export const provenance = {"sourcePath":"tests/macos_keychain_test.rs","sourceSha256":"58e904f7a018c9f3fe556a2e7da756323c232f9d769bc257dcc67af3ee1b8433","executable":3,"carried":8,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/macos_keychain_test.rs","sourceSha256":"58e904f7a018c9f3fe556a2e7da756323c232f9d769bc257dcc67af3ee1b8433","executable":3,"executableFunctions":0,"executableConstants":3,"carried":8,"preserved":12,"runtimeParity":false};

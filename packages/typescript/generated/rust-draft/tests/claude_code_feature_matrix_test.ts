@@ -13,4 +13,4 @@ function PDF() {
 }
 
 export const translated: { "CLAUDE_MODEL": string; "PNG": string; "PDF": string } = { "CLAUDE_MODEL": CLAUDE_MODEL(), "PNG": PNG(), "PDF": PDF() };
-export const provenance = {"sourcePath":"tests/claude_code_feature_matrix_test.rs","sourceSha256":"f939acaab93a22968fbdca67c7b646e447c0abd31fa2452f40ae8162fae6242a","executable":3,"carried":18,"preserved":22,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/claude_code_feature_matrix_test.rs","sourceSha256":"f939acaab93a22968fbdca67c7b646e447c0abd31fa2452f40ae8162fae6242a","executable":3,"executableFunctions":0,"executableConstants":3,"carried":18,"preserved":22,"runtimeParity":false};

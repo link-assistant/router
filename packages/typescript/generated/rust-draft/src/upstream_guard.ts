@@ -5,4 +5,4 @@ function ALLOW_PRIVATE_NETWORKS_ENV() {
 }
 
 export const translated: { "ALLOW_PRIVATE_NETWORKS_ENV": string } = { "ALLOW_PRIVATE_NETWORKS_ENV": ALLOW_PRIVATE_NETWORKS_ENV() };
-export const provenance = {"sourcePath":"src/upstream_guard.rs","sourceSha256":"ffeb0d85c4c499fd6083b04f4920e190eabb1b85d8d2a0ce3dfed66490f57349","executable":1,"carried":21,"preserved":23,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/upstream_guard.rs","sourceSha256":"ffeb0d85c4c499fd6083b04f4920e190eabb1b85d8d2a0ce3dfed66490f57349","executable":1,"executableFunctions":0,"executableConstants":1,"carried":21,"preserved":23,"runtimeParity":false};

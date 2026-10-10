@@ -5,4 +5,4 @@ function MESSAGES() {
 }
 
 export const translated: { "MESSAGES": string } = { "MESSAGES": MESSAGES() };
-export const provenance = {"sourcePath":"tests/conversation_record_test.rs","sourceSha256":"33506af020f67ade9c35ef13d091b52fc579c6e6fb77bbb159937456ed05d646","executable":1,"carried":30,"preserved":32,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/conversation_record_test.rs","sourceSha256":"33506af020f67ade9c35ef13d091b52fc579c6e6fb77bbb159937456ed05d646","executable":1,"executableFunctions":0,"executableConstants":1,"carried":30,"preserved":32,"runtimeParity":false};

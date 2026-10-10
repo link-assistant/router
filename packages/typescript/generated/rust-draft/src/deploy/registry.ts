@@ -5,4 +5,4 @@ function FILE() {
 }
 
 export const translated: { "FILE": string } = { "FILE": FILE() };
-export const provenance = {"sourcePath":"src/deploy/registry.rs","sourceSha256":"a687bf64680aed855101b98d353c4d3942a1e0664b318be4a7078a087bfdc977","executable":1,"carried":13,"preserved":15,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/deploy/registry.rs","sourceSha256":"a687bf64680aed855101b98d353c4d3942a1e0664b318be4a7078a087bfdc977","executable":1,"executableFunctions":0,"executableConstants":1,"carried":13,"preserved":15,"runtimeParity":false};

@@ -3,4 +3,4 @@
 
 
 export const translated: {  } = {  };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/src/main.rs","sourceSha256":"fd576096ed4b316481bffa102ea18b068ba7b30d4fd78a1b41bfbbe0ee41845f","executable":0,"carried":12,"preserved":13,"runtimeParity":false};
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/ci/local-incident/experiments/issue-725/test-sharder/src/main.rs","sourceSha256":"fd576096ed4b316481bffa102ea18b068ba7b30d4fd78a1b41bfbbe0ee41845f","executable":0,"executableFunctions":0,"executableConstants":0,"carried":12,"preserved":13,"runtimeParity":false};

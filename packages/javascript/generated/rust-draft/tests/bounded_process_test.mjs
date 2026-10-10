@@ -3,4 +3,4 @@
 
 
 export const translated = {  };
-export const provenance = {"sourcePath":"tests/bounded_process_test.rs","sourceSha256":"c995bcc55069befabcfdc9fb209d46d689a64487534685155292c35c334aabed","executable":0,"carried":9,"preserved":10,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/bounded_process_test.rs","sourceSha256":"c995bcc55069befabcfdc9fb209d46d689a64487534685155292c35c334aabed","executable":0,"executableFunctions":0,"executableConstants":0,"carried":9,"preserved":10,"runtimeParity":false};

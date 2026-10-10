@@ -9,4 +9,4 @@ function VERSION_LABEL() {
 }
 
 export const translated: { "REVISION_LABEL": string; "VERSION_LABEL": string } = { "REVISION_LABEL": REVISION_LABEL(), "VERSION_LABEL": VERSION_LABEL() };
-export const provenance = {"sourcePath":"scripts/check-release-provenance.rs","sourceSha256":"590207c19dcd8516fa344b855459aa4250a34e7d314015908d7e383bfee9d2ba","executable":2,"carried":25,"preserved":27,"runtimeParity":false};
+export const provenance = {"sourcePath":"scripts/check-release-provenance.rs","sourceSha256":"590207c19dcd8516fa344b855459aa4250a34e7d314015908d7e383bfee9d2ba","executable":2,"executableFunctions":0,"executableConstants":2,"carried":25,"preserved":27,"runtimeParity":false};

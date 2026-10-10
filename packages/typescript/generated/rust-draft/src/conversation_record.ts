@@ -22,4 +22,4 @@ function MAX_RECORDED_BODY() {
 }
 
 export const translated: { "RECORD_ENV": string; "REPLAY_ENV": string; "REPLAY_TURN_HEADER": string; "MAX_RECORDED_BODY": bigint } = { "RECORD_ENV": RECORD_ENV(), "REPLAY_ENV": REPLAY_ENV(), "REPLAY_TURN_HEADER": REPLAY_TURN_HEADER(), "MAX_RECORDED_BODY": MAX_RECORDED_BODY() };
-export const provenance = {"sourcePath":"src/conversation_record.rs","sourceSha256":"26ed5ebc7c6884e578253a9c5f714c9c4cc1e96a15d3e50506ff0d162e64bd49","executable":4,"carried":30,"preserved":35,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/conversation_record.rs","sourceSha256":"26ed5ebc7c6884e578253a9c5f714c9c4cc1e96a15d3e50506ff0d162e64bd49","executable":4,"executableFunctions":0,"executableConstants":4,"carried":30,"preserved":35,"runtimeParity":false};

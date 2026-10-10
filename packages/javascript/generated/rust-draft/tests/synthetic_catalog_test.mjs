@@ -13,4 +13,4 @@ function BETA_ONLY() {
 }
 
 export const translated = { "ALPHA_SMALL": ALPHA_SMALL(), "ALPHA_LARGE": ALPHA_LARGE(), "BETA_ONLY": BETA_ONLY() };
-export const provenance = {"sourcePath":"tests/synthetic_catalog_test.rs","sourceSha256":"cfac0c98053699e8ed01aecfff70dd364d5b50a3d6f973daf7332029824fedec","executable":3,"carried":17,"preserved":21,"runtimeParity":false};
+export const provenance = {"sourcePath":"tests/synthetic_catalog_test.rs","sourceSha256":"cfac0c98053699e8ed01aecfff70dd364d5b50a3d6f973daf7332029824fedec","executable":3,"executableFunctions":0,"executableConstants":3,"carried":17,"preserved":21,"runtimeParity":false};

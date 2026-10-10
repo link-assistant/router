@@ -9,4 +9,4 @@ function COMMIT_SUFFIX() {
 }
 
 export const translated = { "ROLLBACK_SUFFIX": ROLLBACK_SUFFIX(), "COMMIT_SUFFIX": COMMIT_SUFFIX() };
-export const provenance = {"sourcePath":"src/durable_file.rs","sourceSha256":"970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0","executable":2,"carried":27,"preserved":30,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/durable_file.rs","sourceSha256":"970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0","executable":2,"executableFunctions":0,"executableConstants":2,"carried":27,"preserved":30,"runtimeParity":false};

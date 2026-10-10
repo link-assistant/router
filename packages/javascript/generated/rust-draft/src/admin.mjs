@@ -26,4 +26,4 @@ function CLAIM_TOKEN_LABEL() {
 }
 
 export const translated = { "ADMIN_TOKEN_PREFIX": ADMIN_TOKEN_PREFIX(), "CLAIM_FILE_NAME": CLAIM_FILE_NAME(), "DEFAULT_CANDIDATE_TTL_SECS": DEFAULT_CANDIDATE_TTL_SECS(), "DEFAULT_CLAIM_TTL_HOURS": DEFAULT_CLAIM_TTL_HOURS(), "CLAIM_TOKEN_LABEL": CLAIM_TOKEN_LABEL() };
-export const provenance = {"sourcePath":"src/admin.rs","sourceSha256":"6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e","executable":5,"carried":33,"preserved":39,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/admin.rs","sourceSha256":"6ff7905bacd552ef1da7cde41c172e824668ef8913087a670a04bdabe377bf1e","executable":5,"executableFunctions":0,"executableConstants":5,"carried":33,"preserved":39,"runtimeParity":false};

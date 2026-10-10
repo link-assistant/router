@@ -9,4 +9,4 @@ function ORIGINATOR() {
 }
 
 export const translated = { "DEFAULT_CLIENT_VERSION": DEFAULT_CLIENT_VERSION(), "ORIGINATOR": ORIGINATOR() };
-export const provenance = {"sourcePath":"src/codex_identity.rs","sourceSha256":"7c53538bbf40978613f8b97282d67db9beabcf2ad3b1fab02b0ffcc8906b951e","executable":2,"carried":14,"preserved":17,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/codex_identity.rs","sourceSha256":"7c53538bbf40978613f8b97282d67db9beabcf2ad3b1fab02b0ffcc8906b951e","executable":2,"executableFunctions":0,"executableConstants":2,"carried":14,"preserved":17,"runtimeParity":false};

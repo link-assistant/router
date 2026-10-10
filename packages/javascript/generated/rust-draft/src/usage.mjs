@@ -5,4 +5,4 @@ function ESTIMATED_CHARS_PER_TOKEN() {
 }
 
 export const translated = { "ESTIMATED_CHARS_PER_TOKEN": ESTIMATED_CHARS_PER_TOKEN() };
-export const provenance = {"sourcePath":"src/usage.rs","sourceSha256":"58cb4eb54cd5cc9358b24edb70095c02e74bcb895117f476ca9c344727a0cd2a","executable":1,"carried":16,"preserved":18,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/usage.rs","sourceSha256":"58cb4eb54cd5cc9358b24edb70095c02e74bcb895117f476ca9c344727a0cd2a","executable":1,"executableFunctions":0,"executableConstants":1,"carried":16,"preserved":18,"runtimeParity":false};

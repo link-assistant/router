@@ -10,7 +10,7 @@ import { regenerate } from '../bulk.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const cases = JSON.parse(readFileSync(new URL('../fixtures/portable-cases.json', import.meta.url)));
-const value = input => typeof input === 'string' && /^-?\d+n$/u.test(input) ? BigInt(input.slice(0, -1)) : input;
+const value = input => Array.isArray(input) ? input.map(value) : input && typeof input === 'object' ? Object.fromEntries(Object.entries(input).map(([key, item]) => [key, value(item)])) : typeof input === 'string' && /^-?\d+n$/u.test(input) ? BigInt(input.slice(0, -1)) : input;
 const load = async code => import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
 
 for (const fixture of cases) test(fixture.name, async () => {
@@ -47,10 +47,48 @@ test('calls of a carried function stay carried transitively', () => {
   assert.equal(result.ir.counts.carried, 3);
 });
 
-test('Rust trim is carried instead of acquiring JavaScript whitespace semantics', () => {
+test('bounded generic lowering rejects non-exhaustiveness, mutation, closures and missing inference', async () => {
+  const sources = [
+    'fn bad(v: Option<u64>) -> u64 { match v { Some(x) => x } }',
+    'fn bad() -> Vec<u64> { let mut v = Vec::new(); v.push(1); v }',
+    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| x + 1).collect() }',
+    'fn bad(v: u64) -> u64 { if v > 0 { return v; } 0 }',
+    'fn bad() -> u64 { None.unwrap_or(1) }',
+  ];
+  for (const source of sources) {
+    const result = translateSource(source);
+    assert.equal(result.ir.counts.executableFunctions, 0);
+    assert.deepEqual((await load(result.javascript)).translated, {});
+    assert.equal(result.ir.items.map(item => item.source).join(''), source);
+    assert.ok(result.ir.items.find(item => item.term === 'fn').diagnostic?.span);
+  }
+});
+
+test('raw and cooked CRLF and continuation literals preserve source while normalizing values', async () => {
+  const source = 'pub fn raw() -> String { r#"a\r\nb"#.to_string() } pub fn cooked() -> String { "a\r\nb".to_owned() } pub fn continuation() -> String { "a\\\r\n  \t b".to_string() }';
+  const result = translateSource(source);
+  assert.equal(result.ir.counts.executableFunctions, 3);
+  assert.equal(result.ir.items.map(item => item.source).join(''), source);
+  const { translated } = await load(result.javascript);
+  assert.equal(translated.raw(), 'a\nb');
+  assert.equal(translated.cooked(), 'a\nb');
+  assert.equal(translated.continuation(), 'ab');
+  const invalid = translateSource('fn invalid() -> String { r#"bare\rreturn"#.to_string() }');
+  assert.equal(invalid.ir.counts.executableFunctions, 0);
+  assert.match(invalid.ir.items.find(item => item.name === 'invalid').diagnostic.message, /bare carriage return/u);
+});
+
+test('Rust trim preserves NEL and BOM whitespace differences independently from JS trim', async () => {
   const result = translateSource('pub fn trim(value: &str) -> String { value.trim().to_string() }');
-  assert.equal(result.ir.counts.executable, 0);
-  assert.match(result.ir.items[0].diagnostic.message, /trim/u);
+  assert.equal(result.ir.counts.executable, 1);
+  const { translated } = await load(result.javascript);
+  assert.equal(translated.trim('\u0085x\u0085'), 'x');
+  assert.equal(translated.trim('\ufeffx\ufeff'), '\ufeffx\ufeff');
+  assert.equal(translated.trim('\u200bx\u200b'), '\u200bx\u200b');
+  const whitespace = '\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000';
+  assert.equal(translated.trim(whitespace + 'x' + whitespace), 'x');
+  assert.equal(translated.trim(whitespace), '');
+  assert.throws(() => translated.trim('\ud800'), { name: 'TypeError' });
 });
 
 test('vendored implementations match the pinned integrity inventory', () => {

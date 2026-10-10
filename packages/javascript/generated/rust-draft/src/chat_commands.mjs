@@ -8,5 +8,14 @@ function LIST_LIMIT() {
   return 30n;
 }
 
-export const translated = { "DEFAULT_ISSUE_TTL_HOURS": DEFAULT_ISSUE_TTL_HOURS(), "LIST_LIMIT": LIST_LIMIT() };
-export const provenance = {"sourcePath":"src/chat_commands.rs","sourceSha256":"7fb02cfdcd1f09b1bffe1ee45c1c56e29df84f1f59ea247b07b34e952da22325","executable":2,"carried":32,"preserved":35,"runtimeParity":false};
+function yes_no(value) {
+  if (!(typeof value === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (value) {
+    return "yes";
+  } else {
+    return "no";
+  }
+}
+
+export const translated = { "DEFAULT_ISSUE_TTL_HOURS": DEFAULT_ISSUE_TTL_HOURS(), "LIST_LIMIT": LIST_LIMIT(), yes_no };
+export const provenance = {"sourcePath":"src/chat_commands.rs","sourceSha256":"7fb02cfdcd1f09b1bffe1ee45c1c56e29df84f1f59ea247b07b34e952da22325","executable":3,"executableFunctions":1,"executableConstants":2,"carried":31,"preserved":35,"runtimeParity":false};

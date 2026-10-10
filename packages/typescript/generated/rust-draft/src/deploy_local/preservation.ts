@@ -9,4 +9,4 @@ function CATALOG_SCRIPT() {
 }
 
 export const translated: { "CATALOG_ENV": string; "CATALOG_SCRIPT": string } = { "CATALOG_ENV": CATALOG_ENV(), "CATALOG_SCRIPT": CATALOG_SCRIPT() };
-export const provenance = {"sourcePath":"src/deploy_local/preservation.rs","sourceSha256":"3a3d9bb7de27c70d877b3aac0582987f7d5ba0beb85312b6f1ec7dda76de62b4","executable":2,"carried":9,"preserved":12,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/deploy_local/preservation.rs","sourceSha256":"3a3d9bb7de27c70d877b3aac0582987f7d5ba0beb85312b6f1ec7dda76de62b4","executable":2,"executableFunctions":0,"executableConstants":2,"carried":9,"preserved":12,"runtimeParity":false};

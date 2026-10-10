@@ -3,4 +3,4 @@
 
 
 export const translated = {  };
-export const provenance = {"sourcePath":"src/thinking/catalog.rs","sourceSha256":"2fa265f207208bb5f81ac41b4dd1736ef27e35550536e35872475cd2ed06d347","executable":0,"carried":6,"preserved":7,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/thinking/catalog.rs","sourceSha256":"2fa265f207208bb5f81ac41b4dd1736ef27e35550536e35872475cd2ed06d347","executable":0,"executableFunctions":0,"executableConstants":0,"carried":6,"preserved":7,"runtimeParity":false};

@@ -5,4 +5,4 @@ function BACKUP_DIRECTORY() {
 }
 
 export const translated = { "BACKUP_DIRECTORY": BACKUP_DIRECTORY() };
-export const provenance = {"sourcePath":"src/token_import.rs","sourceSha256":"cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8","executable":1,"carried":25,"preserved":27,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/token_import.rs","sourceSha256":"cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8","executable":1,"executableFunctions":0,"executableConstants":1,"carried":25,"preserved":27,"runtimeParity":false};

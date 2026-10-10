@@ -5,4 +5,4 @@ function SPEC_VERSION() {
 }
 
 export const translated = { "SPEC_VERSION": SPEC_VERSION() };
-export const provenance = {"sourcePath":"src/deploy_local.rs","sourceSha256":"053dd0e574c521528e5d75aa603f7a3ee57cd16f79e005bff8934d1da92c5227","executable":1,"carried":46,"preserved":48,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/deploy_local.rs","sourceSha256":"053dd0e574c521528e5d75aa603f7a3ee57cd16f79e005bff8934d1da92c5227","executable":1,"executableFunctions":0,"executableConstants":1,"carried":46,"preserved":48,"runtimeParity":false};

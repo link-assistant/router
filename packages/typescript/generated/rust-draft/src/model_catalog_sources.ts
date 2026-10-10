@@ -14,4 +14,4 @@ function MAX_MODELS() {
 }
 
 export const translated: { "MAX_DOCUMENT_BYTES": bigint; "MAX_MODELS": bigint } = { "MAX_DOCUMENT_BYTES": MAX_DOCUMENT_BYTES(), "MAX_MODELS": MAX_MODELS() };
-export const provenance = {"sourcePath":"src/model_catalog_sources.rs","sourceSha256":"8737b379eadfcecd2cae09e3c2036d5ef89ff25aed5ae12d3d14d6ad3061c83a","executable":2,"carried":24,"preserved":27,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/model_catalog_sources.rs","sourceSha256":"8737b379eadfcecd2cae09e3c2036d5ef89ff25aed5ae12d3d14d6ad3061c83a","executable":2,"executableFunctions":0,"executableConstants":2,"carried":24,"preserved":27,"runtimeParity":false};

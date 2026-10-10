@@ -9,4 +9,4 @@ function TURN_PHASE() {
 }
 
 export const translated: { "HEADER_PHASE": string; "TURN_PHASE": string } = { "HEADER_PHASE": HEADER_PHASE(), "TURN_PHASE": TURN_PHASE() };
-export const provenance = {"sourcePath":"src/conversation_record/store.rs","sourceSha256":"95231afb1d4fd503bd9f5c394d058c2468d4bbd5d17c0f8635fbdb5b11b2553a","executable":2,"carried":17,"preserved":20,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/conversation_record/store.rs","sourceSha256":"95231afb1d4fd503bd9f5c394d058c2468d4bbd5d17c0f8635fbdb5b11b2553a","executable":2,"executableFunctions":0,"executableConstants":2,"carried":17,"preserved":20,"runtimeParity":false};

@@ -5,4 +5,4 @@ function LAST_WORKING_MODEL() {
 }
 
 export const translated = { "LAST_WORKING_MODEL": LAST_WORKING_MODEL() };
-export const provenance = {"sourcePath":"src/with_command_claude_settings.rs","sourceSha256":"a4319f22c0031d6a8c4fb17c90d161ae815f7a8f4b733cbb56e5863711bcbdaf","executable":1,"carried":17,"preserved":19,"runtimeParity":false};
+export const provenance = {"sourcePath":"src/with_command_claude_settings.rs","sourceSha256":"a4319f22c0031d6a8c4fb17c90d161ae815f7a8f4b733cbb56e5863711bcbdaf","executable":1,"executableFunctions":0,"executableConstants":1,"carried":17,"preserved":19,"runtimeParity":false};
