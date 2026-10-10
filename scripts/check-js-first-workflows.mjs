@@ -52,7 +52,7 @@ export function auditWorkflows(sources) {
       typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
       translation: ['node scripts/translate-router.mjs --check', 'node --test tools/translation/test/*.test.mjs'],
-      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test tools/translation/js-to-rust/test/*.test.mjs'],
+      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test tools/translation/js-to-rust/test/translator.test.mjs'],
     };
     for (const id of STAGES) {
       const job = gate.jobs?.[id];

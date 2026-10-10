@@ -173,7 +173,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix packages/javascript --ignore-scripts
-      - run: node --test tools/translation/js-to-rust/test/*.test.mjs
+      - run: node --test tools/translation/js-to-rust/test/translator.test.mjs
       - run: node scripts/regenerate-js-first.mjs --check
   complete:
     name: JavaScript fully green
