@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -7,7 +7,7 @@ import { createServer } from 'node:http';
 export const repository = resolve(process.env.ROUTER_ACCEPTANCE_ROOT ?? fileURLToPath(new URL('../../../', import.meta.url)));
 export const load = path => import(pathToFileURL(join(repository, path)).href);
 export async function temporary(t) {
-  const directory = await mkdtemp(join(tmpdir(), 'router-759-acceptance-'));
+  const directory = await realpath(await mkdtemp(join(tmpdir(), 'router-759-acceptance-')));
   t.after(() => rm(directory, { recursive: true, force: true }));
   return directory;
 }

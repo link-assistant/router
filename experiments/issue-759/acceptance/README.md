@@ -56,3 +56,17 @@ Foreground Responses cases check exact response and input-item IDs, paging,
 cross-owner denial, deletion and `store:false`. Active cancellation must close
 the real upstream socket and release its token reservation while preserving a
 cancelled resource. Background/conversation chaining remains an explicit failure.
+
+OAuth fixtures exercise a rotating grant against a real HTTP mock: concurrent
+refresh spends it once, durable recovery repairs a failed owning-file write,
+and ambiguous or unpersistable successors forbid another spend. Validated imports
+refresh the single owning file; snapshots cannot spend its grant. Failed catalog
+validation preserves the destination, and malformed recovery refuses any exchange.
+These expectations follow `src/auth.rs` and `src/auth/` credential recovery and
+promotion behavior; the native implementation remains a bounded file-store subset.
+
+Managed daemon fixtures use the public operation envelopes and actual management
+HTTP endpoint. Claimed authority survives restart, counterfeit control credentials
+cannot stop/claim/remove the live process, and removal preserves unrelated files.
+Persisted remote selection must block local token mutations unless `local` is
+explicit. They cover native Node ownership rather than claiming Docker parity.

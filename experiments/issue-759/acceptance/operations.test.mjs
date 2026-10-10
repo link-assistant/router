@@ -51,11 +51,11 @@ test('native unsupported operations/options and malformed contract responses fai
 
 test('schema-invalid core output cannot be transformed into a successful fallback envelope', async () => {
   const router = new NativeRouter({ core: { tokens: { list: async () => [{ id: 7, label: 'invalid record' }] } } });
-  const result = await router.execute('tokens.list');
+  const result = await router.execute('tokens.list', { local: true });
   assert.equal(result.success, false);
   assert.ok(result.exit_code > 0);
   assert.ok(result.diagnostics.some(diagnostic => diagnostic.startsWith('schema:')));
-  await assert.rejects(router.tokens.list(), error => error.code === 'schema' && error.exitCode > 0);
+  await assert.rejects(router.tokens.list({ local: true }), error => error.code === 'schema' && error.exitCode > 0);
 });
 
 test('model explanation returns an actual requested selector and candidate observations', async t => {
