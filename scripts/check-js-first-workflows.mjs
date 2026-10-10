@@ -10,6 +10,22 @@ const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
 export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'reverse-translation'];
 const success = (id) => `needs.${id}.result == 'success'`;
+// Compare executable reviewed programs, rather than finding reassuring words
+// in comments or strings that a no-op verifier could carry.
+const normalizeProgram = program => String(program ?? '').trim().split('\n').map(line => line.trim()).join('\n');
+const shaVerifier = normalizeProgram(`node --input-type=module -e "
+  import {execFileSync} from 'node:child_process';
+  const expected = process.env.EXPECTED_SHA;
+  if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+"`);
+const aggregateVerifier = normalizeProgram(`node --input-type=module -e "
+  const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
+  if (stages.length !== 7 || stages.some(stage => stage.result !== 'success')) {
+    console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
+    process.exit(1);
+  }
+"`);
+
 export function guarded(condition, id) {
   const value = String(condition ?? '').trim().replace(/^\$\{\{\s*|\s*\}\}$/g, '');
   if (value === success(id)) return true;
@@ -59,7 +75,7 @@ export function auditWorkflows(sources) {
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
-      if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && step.run?.includes('rev-parse') && step.run?.includes('process.exit(1)'))) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
+      if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
         if (step['continue-on-error'] || Object.hasOwn(step, 'if')) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
@@ -70,8 +86,9 @@ export function auditWorkflows(sources) {
     }
     const aggregate = gate.jobs?.complete;
     if (!aggregate || JSON.stringify([...dependencies(aggregate)].sort()) !== JSON.stringify([...STAGES].sort()) || aggregate.if !== '${{ always() }}' || aggregate['continue-on-error']) errors.push(`${gateName}/complete: must depend on every JavaScript stage`);
-    const assertion = (aggregate?.steps ?? []).map(step => step.run ?? '').join('\n');
-    if (!assertion.includes('Object.values') || !assertion.includes("!== 'success'") || !assertion.includes('process.exit(1)')) errors.push(`${gateName}/complete: must reject skipped, cancelled or failed stages`);
+    const aggregateSteps = aggregate?.steps ?? [];
+    const assertion = aggregateSteps[0];
+    if (aggregateSteps.length !== 1 || assertion?.env?.STAGE_RESULTS !== '${{ toJSON(needs) }}' || Object.hasOwn(assertion ?? {}, 'if') || assertion?.['continue-on-error'] || normalizeProgram(assertion?.run) !== aggregateVerifier) errors.push(`${gateName}/complete: must reject skipped, cancelled or failed stages with the unconditional reviewed program`);
     if (Object.keys(gate.jobs ?? {}).some(id => ![...STAGES, 'complete'].includes(id))) errors.push(`${gateName}: unreviewed gate job`);
   }
   for (const [name, workflow] of documents) {

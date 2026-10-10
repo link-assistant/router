@@ -79,3 +79,11 @@ test('Bun runtime is required for both native JavaScript and compiled TypeScript
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).with['bun-version'] = 'latest'; }, 'pinned Bun runtime');
   }
 });
+
+test('verifier comments, substituted result data and conditional aggregation cannot spoof executable assertions', () => {
+  fails('javascript-first.yml', workflow => { workflow.jobs.lint.steps.find(step => step.env?.EXPECTED_SHA).run = '# rev-parse process.exit(1)\necho success'; }, 'SHA verification missing');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = '# Object.values stages.result !== \'success\' process.exit(1)\necho success'; }, 'unconditional reviewed program');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].env.STAGE_RESULTS = '{"fake":{"result":"success"}}'; }, 'unconditional reviewed program');
+  for (const condition of [false, 'false', null, 0, '']) fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].if = condition; }, 'unconditional reviewed program');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0]['continue-on-error'] = true; }, 'unconditional reviewed program');
+});
