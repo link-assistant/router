@@ -1,0 +1,571 @@
+[
+  {
+    "name": "checked arithmetic and branching",
+    "source": "pub fn quota(used: u64, limit: u64) -> u64 { if used > limit { 0 } else { limit - used } }",
+    "calls": [
+      {
+        "name": "quota",
+        "args": [
+          "12n",
+          "20n"
+        ],
+        "expected": "8n"
+      },
+      {
+        "name": "quota",
+        "args": [
+          "25n",
+          "20n"
+        ],
+        "expected": "0n"
+      }
+    ]
+  },
+  {
+    "name": "string operations and references",
+    "source": "pub fn is_secret(value: &str) -> bool { value.starts_with(\"sk-\") } pub fn clean(value: &str) -> String { value.to_lowercase() }",
+    "calls": [
+      {
+        "name": "is_secret",
+        "args": [
+          "sk-live"
+        ],
+        "expected": true
+      },
+      {
+        "name": "is_secret",
+        "args": [
+          "public"
+        ],
+        "expected": false
+      },
+      {
+        "name": "clean",
+        "args": [
+          "TOKEN"
+        ],
+        "expected": "token"
+      }
+    ]
+  },
+  {
+    "name": "machine integer overflow and division",
+    "source": "pub fn increment(value: u8) -> u8 { value + 1 } pub fn quotient(value: i64, divisor: i64) -> i64 { value / divisor }",
+    "calls": [
+      {
+        "name": "increment",
+        "args": [
+          "254n"
+        ],
+        "expected": "255n"
+      },
+      {
+        "name": "increment",
+        "args": [
+          "255n"
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "quotient",
+        "args": [
+          "-7n",
+          "2n"
+        ],
+        "expected": "-3n"
+      },
+      {
+        "name": "quotient",
+        "args": [
+          "1n",
+          "0n"
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "constant and sibling call",
+    "source": "const LIMIT: u64 = 9; fn extra(value: u64) -> u64 { value + 1 } pub fn accept(value: u64) -> bool { extra(value) <= LIMIT }",
+    "calls": [
+      {
+        "name": "accept",
+        "args": [
+          "8n"
+        ],
+        "expected": true
+      },
+      {
+        "name": "accept",
+        "args": [
+          "9n"
+        ],
+        "expected": false
+      }
+    ],
+    "constants": {
+      "LIMIT": "9n"
+    }
+  },
+  {
+    "name": "Rust ASCII folding preserves non-ASCII Unicode",
+    "source": "pub fn lower(s: &str) -> String { s.to_ascii_lowercase() } pub fn upper(s: &str) -> String { s.to_ascii_uppercase() } pub fn same(a: &str, b: &str) -> bool { a.eq_ignore_ascii_case(b) }",
+    "calls": [
+      {
+        "name": "lower",
+        "args": [
+          "RUST\u212a\u00c9\u00df"
+        ],
+        "expected": "rust\u212a\u00c9\u00df"
+      },
+      {
+        "name": "upper",
+        "args": [
+          "Rust\u00e9\u00df"
+        ],
+        "expected": "RUST\u00e9\u00df"
+      },
+      {
+        "name": "same",
+        "args": [
+          "RuSt",
+          "rUsT"
+        ],
+        "expected": true
+      },
+      {
+        "name": "same",
+        "args": [
+          "\u00c9",
+          "\u00e9"
+        ],
+        "expected": false
+      },
+      {
+        "name": "same",
+        "args": [
+          "\u212a",
+          "k"
+        ],
+        "expected": false
+      }
+    ]
+  },
+  {
+    "name": "UTF-8 bytes and Unicode scalars differ from UTF-16 units",
+    "source": "pub fn bytes(s: &str) -> usize { s.len() } pub fn borrowed_bytes(s: &str) -> usize { s.as_bytes().len() } pub fn scalars(s: &str) -> usize { s.chars().count() } pub fn ascii(s: &str) -> bool { s.is_ascii() }",
+    "calls": [
+      {
+        "name": "bytes",
+        "args": [
+          "a\u00e9\ud83d\ude00"
+        ],
+        "expected": "7n"
+      },
+      {
+        "name": "borrowed_bytes",
+        "args": [
+          "a\u00e9\ud83d\ude00"
+        ],
+        "expected": "7n"
+      },
+      {
+        "name": "scalars",
+        "args": [
+          "a\u00e9\ud83d\ude00"
+        ],
+        "expected": "3n"
+      },
+      {
+        "name": "bytes",
+        "args": [
+          "e\u0301"
+        ],
+        "expected": "3n"
+      },
+      {
+        "name": "scalars",
+        "args": [
+          "e\u0301"
+        ],
+        "expected": "2n"
+      },
+      {
+        "name": "bytes",
+        "args": [
+          ""
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "ascii",
+        "args": [
+          "\u0000\u007f"
+        ],
+        "expected": true
+      },
+      {
+        "name": "ascii",
+        "args": [
+          "\u00e9"
+        ],
+        "expected": false
+      },
+      {
+        "name": "bytes",
+        "args": [
+          "\ud800"
+        ],
+        "throws": "TypeError"
+      }
+    ]
+  },
+  {
+    "name": "Rust trim directions and string creation",
+    "source": "pub fn blank() -> String { String::new() } pub fn leading(s: &str) -> String { s.trim_start().to_string() } pub fn trailing(s: &str) -> String { s.trim_end().to_owned() } pub fn owned(s: &String) -> String { s.as_str().to_owned() }",
+    "calls": [
+      {
+        "name": "blank",
+        "args": [],
+        "expected": ""
+      },
+      {
+        "name": "leading",
+        "args": [
+          "\u0085 x \u0085"
+        ],
+        "expected": "x \u0085"
+      },
+      {
+        "name": "trailing",
+        "args": [
+          "\u0085 x \u0085"
+        ],
+        "expected": "\u0085 x"
+      },
+      {
+        "name": "owned",
+        "args": [
+          "\ud83d\ude00"
+        ],
+        "expected": "\ud83d\ude00"
+      }
+    ]
+  },
+  {
+    "name": "string literal match plus tail return",
+    "source": "pub fn role(s: &str) -> String { match s { \"human\" => \"user\".to_string(), \"model\" => \"assistant\".to_string(), _ => s.to_owned() } } pub fn terminal(n: u8) -> u8 { return n + 1; }",
+    "calls": [
+      {
+        "name": "role",
+        "args": [
+          "human"
+        ],
+        "expected": "user"
+      },
+      {
+        "name": "role",
+        "args": [
+          "model"
+        ],
+        "expected": "assistant"
+      },
+      {
+        "name": "role",
+        "args": [
+          "tool"
+        ],
+        "expected": "tool"
+      },
+      {
+        "name": "terminal",
+        "args": [
+          "254n"
+        ],
+        "expected": "255n"
+      },
+      {
+        "name": "terminal",
+        "args": [
+          "255n"
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "monomorphic Option constructors and match retain presence",
+    "source": "pub fn present(v: Option<u64>) -> bool { v.is_some() } pub fn missing(v: Option<u64>) -> bool { v.is_none() } pub fn select(v: Option<u64>) -> u64 { match v { Some(n) => n, None => 7 } } pub fn wrap(v: u64) -> Option<u64> { Some(v) } pub fn absent() -> Option<u64> { None }",
+    "calls": [
+      {
+        "name": "present",
+        "args": [
+          {
+            "$": "Some",
+            "field0": "0n"
+          }
+        ],
+        "expected": true
+      },
+      {
+        "name": "missing",
+        "args": [
+          {
+            "$": "None"
+          }
+        ],
+        "expected": true
+      },
+      {
+        "name": "select",
+        "args": [
+          {
+            "$": "None"
+          }
+        ],
+        "expected": "7n"
+      },
+      {
+        "name": "select",
+        "args": [
+          {
+            "$": "Some",
+            "field0": "0n"
+          }
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "wrap",
+        "args": [
+          "9n"
+        ],
+        "expected": {
+          "$": "Some",
+          "field0": "9n"
+        }
+      },
+      {
+        "name": "absent",
+        "args": [],
+        "expected": {
+          "$": "None"
+        }
+      },
+      {
+        "name": "present",
+        "args": [
+          {
+            "$": "Unrecognized"
+          }
+        ],
+        "throws": "TypeError"
+      },
+      {
+        "name": "select",
+        "args": [
+          {
+            "$": "Some",
+            "field0": "18446744073709551616n"
+          }
+        ],
+        "throws": "TypeError"
+      }
+    ]
+  },
+  {
+    "name": "Result constructors and error match",
+    "source": "pub fn create(ok: bool) -> Result<u64, String> { if ok { Ok(5) } else { Err(\"no\".to_string()) } } pub fn valid(v: Result<u64, String>) -> bool { v.is_ok() } pub fn choose(v: Result<u64, String>) -> u64 { match v { Ok(n) => n, Err(_) => 0 } }",
+    "calls": [
+      {
+        "name": "create",
+        "args": [
+          true
+        ],
+        "expected": {
+          "$": "Ok",
+          "field0": "5n"
+        }
+      },
+      {
+        "name": "create",
+        "args": [
+          false
+        ],
+        "expected": {
+          "$": "Err",
+          "field0": "no"
+        }
+      },
+      {
+        "name": "valid",
+        "args": [
+          {
+            "$": "Err",
+            "field0": "failure"
+          }
+        ],
+        "expected": false
+      },
+      {
+        "name": "choose",
+        "args": [
+          {
+            "$": "Ok",
+            "field0": "8n"
+          }
+        ],
+        "expected": "8n"
+      },
+      {
+        "name": "choose",
+        "args": [
+          {
+            "$": "Err",
+            "field0": "failure"
+          }
+        ],
+        "expected": "0n"
+      }
+    ]
+  },
+  {
+    "name": "Unicode prefix and suffix Option values",
+    "source": "pub fn prefix(s: &str, pattern: &str) -> Option<&str> { s.strip_prefix(pattern) } pub fn suffix(s: &str, pattern: &str) -> Option<&str> { s.strip_suffix(pattern) } pub fn fallback(s: &str) -> String { s.strip_prefix(\"pre-\").unwrap_or(\"missing\").to_string() }",
+    "calls": [
+      {
+        "name": "prefix",
+        "args": [
+          "\ud83d\ude00\u00e9",
+          "\ud83d\ude00"
+        ],
+        "expected": {
+          "$": "Some",
+          "field0": "\u00e9"
+        }
+      },
+      {
+        "name": "suffix",
+        "args": [
+          "\u00e9\ud83d\ude00",
+          "\ud83d\ude00"
+        ],
+        "expected": {
+          "$": "Some",
+          "field0": "\u00e9"
+        }
+      },
+      {
+        "name": "suffix",
+        "args": [
+          "\u00e9\ud83d\ude00",
+          ""
+        ],
+        "expected": {
+          "$": "Some",
+          "field0": "\u00e9\ud83d\ude00"
+        }
+      },
+      {
+        "name": "prefix",
+        "args": [
+          "abc",
+          "z"
+        ],
+        "expected": {
+          "$": "None"
+        }
+      },
+      {
+        "name": "fallback",
+        "args": [
+          "pre-value"
+        ],
+        "expected": "value"
+      },
+      {
+        "name": "fallback",
+        "args": [
+          "value"
+        ],
+        "expected": "missing"
+      }
+    ]
+  },
+  {
+    "name": "Vec values and borrowed immutable slice measurements",
+    "source": "pub fn list() -> Vec<u8> { vec![1, 2, 3] } pub fn blank() -> Vec<u8> { Vec::new() } pub fn size(v: &[u64]) -> usize { v.len() } pub fn empty(v: &Vec<u64>) -> bool { v.is_empty() }",
+    "calls": [
+      {
+        "name": "list",
+        "args": [],
+        "expected": [
+          "1n",
+          "2n",
+          "3n"
+        ]
+      },
+      {
+        "name": "blank",
+        "args": [],
+        "expected": []
+      },
+      {
+        "name": "size",
+        "args": [
+          [
+            "1n",
+            "2n"
+          ]
+        ],
+        "expected": "2n"
+      },
+      {
+        "name": "empty",
+        "args": [
+          []
+        ],
+        "expected": true
+      },
+      {
+        "name": "size",
+        "args": [
+          [
+            1
+          ]
+        ],
+        "throws": "TypeError"
+      }
+    ]
+  },
+  {
+    "name": "const function and raw string literals retain exact value",
+    "source": "const TEXT: &str = r##\"raw \\n } \" text\"##; pub const fn enabled() -> bool { true }",
+    "calls": [
+      {
+        "name": "enabled",
+        "args": [],
+        "expected": true
+      }
+    ],
+    "constants": {
+      "TEXT": "raw \\n } \" text"
+    }
+  },
+  {
+    "name": "unwrap_or evaluates its fallback eagerly even for Some",
+    "source": "pub fn eager(v: Option<u64>) -> u64 { v.unwrap_or(panic!(\"eager default\")) }",
+    "calls": [
+      {
+        "name": "eager",
+        "args": [
+          {
+            "$": "Some",
+            "field0": "7n"
+          }
+        ],
+        "throws": "Error"
+      }
+    ]
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/3_js tier (node --check over js, suites 1_4).txt.gz",
+    "sha256": "697b7b6d7c53ffdd450ca71d4401afe356321a90d12a620f022fe99dd3d517d3",
+    "bytes": 46262,
+    "uncompressed_bytes": 234939,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/js tier (node --check over js, suites 1_4)/system.txt.gz",
+    "sha256": "4786f2509c6fa5221d42eed40787858b2acbb5bdfa44e577b69717f7d1fe76b9",
+    "bytes": 438,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/4_js tier (node --check over js, suites 2_4).txt.xz",
+    "sha256": "be5a82576900c1b1e3a2c4b8c5059c85b50f0fe2e9045ab27981cd838a1f9c2a",
+    "bytes": 39856,
+    "uncompressed_bytes": 270986,
+    "redacted": false,
+    "original_gzip_sha256": "2eb9d40c9a23f1778f7f5744325dd78ff5add1affce8f8dba6d21b4e350da416",
+    "compression": "xz",
+    "decoded_sha256": "78c36ea23c81fd5ca50808884a75ca77cee4db102dddb20c8318b58fe414f4a0"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/js tier (node --check over js, suites 2_4)/system.txt.gz",
+    "sha256": "a0d040529bfbeaf7f7c36682d5f0a9e9c998ef74b05495a42cc3b09ea2027c89",
+    "bytes": 438,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/5_Detect tier changes.txt.xz",
+    "sha256": "3469165980af0b61b8b57e2c6c65e88ce709d8bfe791a48400152c3bec9c7d25",
+    "bytes": 83084,
+    "uncompressed_bytes": 1032203,
+    "redacted": false,
+    "original_gzip_sha256": "d6caadfbedae1d7369a641750f07d5269846aa46e230fbb6847183c2b70da29b",
+    "compression": "xz",
+    "decoded_sha256": "32f149ecf2ac55fae069de3f244a50f74caddfb4ba9025b68e9e84afb62e0d6c"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37839396358/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "180ceec9141d88b2a08a05a29d379f0ac95b041100a6e1c9dc3ea1b2af5acdd0",
+    "bytes": 391,
+    "uncompressed_bytes": 743,
+    "redacted": false
+  }
+]

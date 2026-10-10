@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37798967364/attempt-1/logs/0_Write-Effect Ladder (issue #916 rungs).txt.gz",
+    "sha256": "01471e9e7805406a31ef0a0f3f2a556a2a51e5144234c9b49527321f62b9d74e",
+    "bytes": 21504,
+    "uncompressed_bytes": 97998,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "3ab9bd002874095dc280399ff3ac23cae2c5e89f44ffa70c56100bae03c70bb8"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37798967364/attempt-1/logs/Write-Effect Ladder (issue #916 rungs)/system.txt.gz",
+    "sha256": "02780c4cd774d809649a46519d54166492f3c8bb6e7e95e0066bc67a01926db4",
+    "bytes": 392,
+    "uncompressed_bytes": 764,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d3e6e98b5f5da1a20d1fca8aa598b3687b15a3e4360c27dfd32094d975c0a427"
+  }
+]

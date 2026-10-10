@@ -1,0 +1,32 @@
+[
+  {
+    "path": "text-objects/2d/2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef.gz",
+    "artifact_member_name": "browser-lcov.info",
+    "scrubbed_content_sha256": "2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef",
+    "sha256": "cd17c38c01adab04c6a1ef481fe637bf6febcc6d7320bb6d35504eab37ebe9c9",
+    "compressed_bytes": 152057,
+    "original_bytes": 626241,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/c0/c020e040ab02ebbdf946ba802b9a8f28cbae996032be8d7406ecf3f1136647fd.gz",
+    "artifact_member_name": "summary-browser.md",
+    "scrubbed_content_sha256": "c020e040ab02ebbdf946ba802b9a8f28cbae996032be8d7406ecf3f1136647fd",
+    "sha256": "6bcb23d40dc0f3410002e21ef1b256ba8820934ac350c663b7b25ecd05542357",
+    "compressed_bytes": 473,
+    "original_bytes": 1055,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/9f/9f2bb8a40af417eedd540c95962add63b3148adbbaee5c53d0513544ec864f67.gz",
+    "artifact_member_name": "summary-browser.json",
+    "scrubbed_content_sha256": "9f2bb8a40af417eedd540c95962add63b3148adbbaee5c53d0513544ec864f67",
+    "sha256": "c8687004c8078724be4179ce515a6430cfe4d652a7e3e04383f0545330a957bc",
+    "compressed_bytes": 1723,
+    "original_bytes": 10124,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

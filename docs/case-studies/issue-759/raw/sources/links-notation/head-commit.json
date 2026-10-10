@@ -1,0 +1,106 @@
+{
+  "sha": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+  "node_id": "C_kwDODRLdSNoAKDI4Y2Q5ZDJmNjRlMzQ1MjljNzFlNGM2YjczY2EwOTMwMGRjM2Q3MzM",
+  "commit": {
+    "author": {
+      "name": "github-actions[bot]",
+      "email": "41898282+github-actions[bot]@users.noreply.github.com",
+      "date": "2026-10-09T23:27:15Z"
+    },
+    "committer": {
+      "name": "GitHub",
+      "email": "noreply@github.com",
+      "date": "2026-10-09T23:27:15Z"
+    },
+    "message": "Merge pull request #338 from link-foundation/dependabot/nuget/csharp/Link.Foundation.Links.Notation.Tests/xunit.v3-4.0.2\n\nchore(deps): Bump xunit.v3 from 4.0.1 to 4.0.2",
+    "tree": {
+      "sha": "16aaeef1e913088d4e077dfd44afef5effeaec64",
+      "url": "https://api.github.com/repos/link-foundation/links-notation/git/trees/16aaeef1e913088d4e077dfd44afef5effeaec64"
+    },
+    "url": "https://api.github.com/repos/link-foundation/links-notation/git/commits/28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "comment_count": 0,
+    "verification": {
+      "verified": true,
+      "reason": "valid",
+      "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqyXhTCRC1aQ7uu5UhlAAAPgYQAIKnAj2jBc502vu9ULB6/Os0\nNWgD0+SxYVr7z1MUobbwksfAQemKe6xRxDeERgzL3jSuAYeMTyLURzsr4NGn+ggi\nHZtsMN/q5C24jQVWlVkxIKm/qh9JnGfZ8Iv2XZQBA9YXSueAjFu/kqRVqG8D8b2b\nfXwRGISVfobYJ1AfcAbyZGsc/L+zNcNzbR5R0w5gfgD6rrYYkVoC7TARJCqafvlC\nJtiIi5y3GyfjyT8wHrDF037daK6jyXuGLis2mht0zIKeV2NtokVEGo+W4BfhR1yj\n2muLquN8N3JiSdnCQ6tVNgq5PE/ewWpCK7fBDF/l+fcJ+bjo3LXW+etaiRHbdZzK\nZGQxeshZeg9Onpd06jEXrQy78MtW8hTL7tvcVHDMyybPiXO6K8mubmSeKnxj4yjt\n/Oh4EE1WUpFUSREUf/OYjoTQGoWOdvdNtmALh6UKcdHJkQj2VVs7S4Nn+iCMnfrg\nJIcXEwYojuRiTkDdWV7M4kKDZ0gP0POB/BeFWfTavfWn93cLOAPoYenpBwkFBljW\nBLm+ZcqONFh8DTVQIyeBTgUmBRBGjV7bGSvXrGmYqkpowyGryQnk0vXQXL4tIUCb\nVjQXlXOH2Lr8RgZyTR6DhMcFddszgJO8KghSHD6jaO3d47kSB6zBDHNttWTjDkQa\nrbFZegDkfb5pzP0LK/pO\n=QSZL\n-----END PGP SIGNATURE-----\n",
+      "payload": "tree 16aaeef1e913088d4e077dfd44afef5effeaec64\nparent 9e476ce86bb26b690974607eccfaabb77f649ac1\nparent 645cd03ffa8d3560637d1f1b85db77e7ba45f0a0\nauthor github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com> 1791588435 +0000\ncommitter GitHub <noreply@github.com> 1791588435 +0000\n\nMerge pull request #338 from link-foundation/dependabot/nuget/csharp/Link.Foundation.Links.Notation.Tests/xunit.v3-4.0.2\n\nchore(deps): Bump xunit.v3 from 4.0.1 to 4.0.2",
+      "verified_at": "2026-10-09T23:27:16Z"
+    }
+  },
+  "url": "https://api.github.com/repos/link-foundation/links-notation/commits/28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+  "html_url": "https://github.com/link-foundation/links-notation/commit/28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+  "comments_url": "https://api.github.com/repos/link-foundation/links-notation/commits/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/comments",
+  "author": {
+    "login": "github-actions[bot]",
+    "id": 41898282,
+    "node_id": "MDM6Qm90NDE4OTgyODI=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+    "html_url": "https://github.com/apps/github-actions",
+    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "web-flow",
+    "id": 19864447,
+    "node_id": "MDQ6VXNlcjE5ODY0NDQ3",
+    "avatar_url": "https://avatars.githubusercontent.com/u/19864447?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/web-flow",
+    "html_url": "https://github.com/web-flow",
+    "followers_url": "https://api.github.com/users/web-flow/followers",
+    "following_url": "https://api.github.com/users/web-flow/following{/other_user}",
+    "gists_url": "https://api.github.com/users/web-flow/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/web-flow/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/web-flow/subscriptions",
+    "organizations_url": "https://api.github.com/users/web-flow/orgs",
+    "repos_url": "https://api.github.com/users/web-flow/repos",
+    "events_url": "https://api.github.com/users/web-flow/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/web-flow/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "9e476ce86bb26b690974607eccfaabb77f649ac1",
+      "url": "https://api.github.com/repos/link-foundation/links-notation/commits/9e476ce86bb26b690974607eccfaabb77f649ac1",
+      "html_url": "https://github.com/link-foundation/links-notation/commit/9e476ce86bb26b690974607eccfaabb77f649ac1"
+    },
+    {
+      "sha": "645cd03ffa8d3560637d1f1b85db77e7ba45f0a0",
+      "url": "https://api.github.com/repos/link-foundation/links-notation/commits/645cd03ffa8d3560637d1f1b85db77e7ba45f0a0",
+      "html_url": "https://github.com/link-foundation/links-notation/commit/645cd03ffa8d3560637d1f1b85db77e7ba45f0a0"
+    }
+  ],
+  "stats": {
+    "total": 2,
+    "additions": 1,
+    "deletions": 1
+  },
+  "files": [
+    {
+      "sha": "be42fad4fbb97e3e1f2a5da697622c9181b3e547",
+      "filename": "csharp/Link.Foundation.Links.Notation.Tests/Link.Foundation.Links.Notation.Tests.csproj",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "blob_url": "https://github.com/link-foundation/links-notation/blob/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/csharp%2FLink.Foundation.Links.Notation.Tests%2FLink.Foundation.Links.Notation.Tests.csproj",
+      "raw_url": "https://github.com/link-foundation/links-notation/raw/28cd9d2f64e34529c71e4c6b73ca09300dc3d733/csharp%2FLink.Foundation.Links.Notation.Tests%2FLink.Foundation.Links.Notation.Tests.csproj",
+      "contents_url": "https://api.github.com/repos/link-foundation/links-notation/contents/csharp%2FLink.Foundation.Links.Notation.Tests%2FLink.Foundation.Links.Notation.Tests.csproj?ref=28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+      "patch": "@@ -20,7 +20,7 @@\n     <!-- Microsoft.NET.Test.Sdk, xunit.runner.visualstudio and coverlet.collector\n          are all VSTest components; under Microsoft.Testing.Platform xunit.v3\n          provides the runner and none of them are used. -->\n-    <PackageReference Include=\"xunit.v3\" Version=\"4.0.1\" />\n+    <PackageReference Include=\"xunit.v3\" Version=\"4.0.2\" />\n   </ItemGroup>\n \n   <ItemGroup>"
+    }
+  ]
+}

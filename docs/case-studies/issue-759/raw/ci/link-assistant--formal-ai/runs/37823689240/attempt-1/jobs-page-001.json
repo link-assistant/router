@@ -1,0 +1,124 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 113470909026,
+      "run_id": 37823689240,
+      "workflow_name": "Workflows",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37823689240",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaa2SqYg",
+      "head_sha": "cf272d45802f82d1973333d4dde300bf95821f7c",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113470909026",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37823689240/job/113470909026",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T18:21:50Z",
+      "started_at": "2026-10-08T18:21:50Z",
+      "completed_at": "2026-10-08T18:27:06Z",
+      "name": "Actionlint",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113470909026",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 113470909515,
+      "run_id": 37823689240,
+      "workflow_name": "Workflows",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37823689240",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaa2SsSw",
+      "head_sha": "cf272d45802f82d1973333d4dde300bf95821f7c",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113470909515",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37823689240/job/113470909515",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T18:21:50Z",
+      "started_at": "2026-10-08T18:26:45Z",
+      "completed_at": "2026-10-08T18:27:33Z",
+      "name": "Zizmor",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T18:26:46Z",
+          "completed_at": "2026-10-08T18:26:48Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T18:26:48Z",
+          "completed_at": "2026-10-08T18:27:06Z"
+        },
+        {
+          "name": "Run zizmorcore/zizmor-action@v0.6.4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T18:27:06Z",
+          "completed_at": "2026-10-08T18:27:23Z"
+        },
+        {
+          "name": "Enforce the hash-pin policy on container images",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-08T18:27:23Z",
+          "completed_at": "2026-10-08T18:27:30Z"
+        },
+        {
+          "name": "Post Enforce the hash-pin policy on container images",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-08T18:27:30Z",
+          "completed_at": "2026-10-08T18:27:30Z"
+        },
+        {
+          "name": "Post Run zizmorcore/zizmor-action@v0.6.4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-08T18:27:30Z",
+          "completed_at": "2026-10-08T18:27:30Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-08T18:27:30Z",
+          "completed_at": "2026-10-08T18:27:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-08T18:27:31Z",
+          "completed_at": "2026-10-08T18:27:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113470909515",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000154459,
+      "runner_name": "GitHub Actions 1000154459",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/1_Claude Code 2.1.284 (capture 1).txt.gz",
+    "sha256": "170c581af6bbae8dafd7d24d6acd057d277a240fb2bb6491ba0996fc17ee43cd",
+    "bytes": 9513,
+    "uncompressed_bytes": 42822,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/Claude Code 2.1.284 (capture 1)/system.txt.gz",
+    "sha256": "a67a87936f8335da62f1d12fbf7faf17179fc6ff6f59b9e4efbffbfd2b01e785",
+    "bytes": 409,
+    "uncompressed_bytes": 752,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/2_Claude Code 2.1.291 (capture 1).txt.gz",
+    "sha256": "b46b51e92d30217ec744d62f8f06389e236625e5f7182b4c2de39dc2fa61cd3d",
+    "bytes": 10539,
+    "uncompressed_bytes": 46431,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/Claude Code 2.1.291 (capture 1)/system.txt.gz",
+    "sha256": "77bc09b380e170b676f500410900f24a60b326173a1658a1e15c453acce9783a",
+    "bytes": 408,
+    "uncompressed_bytes": 752,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/3_Claude Code 2.1.291 (capture 2).txt.gz",
+    "sha256": "dbf966b3cd5da8c7b07000f76ecd10496f2cafdb5d9802b4be1aa15f203d8403",
+    "bytes": 10968,
+    "uncompressed_bytes": 47988,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/Claude Code 2.1.291 (capture 2)/system.txt.gz",
+    "sha256": "3fe0dd0df1b9ec3c481fd057f47acf2ac0a816450ae26c5dd6afb5285ee1fd6b",
+    "bytes": 414,
+    "uncompressed_bytes": 752,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/4_Claude Code, Codex, Gemini, Qwen, and OpenCode.txt.gz",
+    "sha256": "f82df4c8e9ef3c3052d0091048fd0fe20227f8bd8399c26bda4a68ad8be4663e",
+    "bytes": 11298,
+    "uncompressed_bytes": 48973,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37869397646/attempt-1/logs/Claude Code, Codex, Gemini, Qwen, and OpenCode/system.txt.gz",
+    "sha256": "2e35b2c4c110709044b6ed394c6059179d405037012f76a3f7bdf62c30e8d5a8",
+    "bytes": 405,
+    "uncompressed_bytes": 751,
+    "redacted": false
+  }
+]

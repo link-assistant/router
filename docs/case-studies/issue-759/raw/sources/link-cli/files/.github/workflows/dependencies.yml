@@ -1,0 +1,49 @@
+name: Dependencies
+
+# Every dependency stays on its latest release (PR #106 review): Cargo crates
+# and their lock files, NuGet packages, npm packages, GitHub Actions, and the
+# Node.js and .NET versions the workflows set up. Dependabot
+# (.github/dependabot.yml) opens the pull requests that bump them; this check
+# fails while anything is still behind, on every pull request and daily on
+# main, so a new upstream release is noticed within a day. A dependency that
+# cannot be updated yet carries a comment linking the open issue that blocks
+# it (issue #104); see the header of check-latest-dependencies.mjs.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # A dependency held back by a manifest comment links an issue; the check
+  # reads that issue to make sure it is still open.
+  issues: read
+
+concurrency:
+  group: dependencies-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  latest:
+    name: Dependencies are on their latest versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compare every dependency with its registry
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/check-latest-dependencies.mjs

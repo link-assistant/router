@@ -1,0 +1,33 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35880098005/attempt-1/logs/0_JS (node --test).txt.xz",
+    "sha256": "19998d35b1b791a418ad2f90f75be358ed39191a63db69ff1245aba4bcedde68",
+    "bytes": 70764,
+    "uncompressed_bytes": 538741,
+    "redacted": false,
+    "original_gzip_sha256": "045e81ea57d81465be9b2d5a8e5bac18ecf75e14ef9a25d4f37adbe660061ad5",
+    "compression": "xz",
+    "decoded_sha256": "0c7daf28aaa026a4e0153c15a36f2ac5474c1b6f283a42cbcd8bad75ecf54090"
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35880098005/attempt-1/logs/JS (node --test)/system.txt.gz",
+    "sha256": "af10f1a951869753f945b9f28b55bb8b10549908d50773c747558af2389d920a",
+    "bytes": 305,
+    "uncompressed_bytes": 588,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35880098005/attempt-1/logs/1_Rust (cargo test).txt.gz",
+    "sha256": "4c5651a2f2f03140dcb61bceb85c0e81d518df0cbf093cd9b803db54400af3b6",
+    "bytes": 28934,
+    "uncompressed_bytes": 125520,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35880098005/attempt-1/logs/Rust (cargo test)/system.txt.gz",
+    "sha256": "24627b2ed46b061de72237b5b9badfe4f8a49dae6ba7a957af3f73c0674d0d22",
+    "bytes": 309,
+    "uncompressed_bytes": 590,
+    "redacted": false
+  }
+]

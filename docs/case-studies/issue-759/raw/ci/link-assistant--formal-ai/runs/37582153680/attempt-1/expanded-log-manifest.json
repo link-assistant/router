@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37582153680/attempt-1/logs/0_Formal AI authors a change and opens the pull request.txt.gz",
+    "sha256": "69ad5b2e526c7fa989255fdf5607dfb7be112790bbe3af323309df496b45e61e",
+    "bytes": 19405,
+    "uncompressed_bytes": 112546,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "99333831fab7f85e2c1dc50bb0b6f6dff3dec89d212479baf0c7abfeaa56ddc5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37582153680/attempt-1/logs/Formal AI authors a change and opens the pull request/system.txt.gz",
+    "sha256": "b4fedfa97e20dc69f89a2bb8a728e49473737b302d2c9ffce0dcd635e78e140f",
+    "bytes": 398,
+    "uncompressed_bytes": 824,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d42b6d0883e83673667a26d87afa22ff7e6b564775f330839163b522ac96a507"
+  }
+]

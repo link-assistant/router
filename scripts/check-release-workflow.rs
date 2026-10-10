@@ -26,7 +26,7 @@ fn main() {
         "--override-filename link-assistant-router.cdx",
         "artifact-metadata: write",
         "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
-        "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
+        "cancel-in-progress: false",
         "npm run build 2>&1 | tee /tmp/admin-ui-build.log",
         "git diff --exit-code -- ui/dist",
         "toolchain: ",
@@ -70,10 +70,11 @@ fn main() {
         "${{ env.DOCKERHUB_IMAGE }}",
         "labels: ${{ steps.image-labels.outputs.labels }}",
         "grep -v '^org.opencontainers.image.revision='",
-        "needs: [create-github-release]",
-        "ref: refs/tags/v${{ env.RELEASE_VERSION }}",
+        "needs: [javascript, release-javascript, resolve-release-source, create-github-release]",
+        "release-javascript:",
+        "sha: ${{ needs.resolve-release-source.outputs.sha }}",
         "release-commit: ${{ steps.tag-commit.outputs.commit }}",
-        "ref: ${{ needs.create-github-release.outputs.release-commit }}",
+        "ref: ${{ needs.resolve-release-source.outputs.sha }}",
         "org.opencontainers.image.revision=${RELEASE_COMMIT}",
         "rust-script scripts/check-release-provenance.rs",
         "verify-release-provenance:",
@@ -115,6 +116,14 @@ fn main() {
         .chain(reconciliation.lines())
         .filter(|line| line.trim_start().starts_with("uses:"))
     {
+        // Local reusable workflow code is part of the checked-out commit and
+        // is audited by the JavaScript-first structural workflow checker.
+        if let Some(local) = line.trim().strip_prefix("uses: ./.github/workflows/") {
+            if !std::path::Path::new(".github/workflows").join(local).is_file() {
+                failures.push(format!("local reusable workflow is missing: {local}"));
+            }
+            continue;
+        }
         let revision = line
             .split_once('@')
             .map(|(_, revision)| revision.split_whitespace().next().unwrap_or_default())
@@ -153,9 +162,9 @@ fn main() {
         failures.push("every Rust action must select the reviewed numeric toolchain".to_string());
     }
 
-    // Only the job that creates the release may resolve the mutable tag ref; every
-    // packaging job must check out the commit that ref resolved to (issue #191).
-    if count_occurrences(&workflow, "ref: refs/tags/v${{ env.RELEASE_VERSION }}") != 1 {
+    // Resolve the mutable tag using a shell-only job, gate its immutable SHA,
+    // then use that exact SHA for preparation and packaging (issues #191, #759).
+    if count_occurrences(&workflow, "ref: refs/tags/v${{ env.RELEASE_VERSION }}") != 0 {
         failures.push(
             "packaging jobs must check out the resolved release commit, not the tag ref"
                 .to_string(),
@@ -164,8 +173,8 @@ fn main() {
 
     if count_occurrences(
         &workflow,
-        "ref: ${{ needs.create-github-release.outputs.release-commit }}",
-    ) < 4
+        "ref: ${{ needs.resolve-release-source.outputs.sha }}",
+    ) < 6
     {
         failures.push(
             "every image, binary, and verification job must check out the release tag commit"
@@ -220,7 +229,7 @@ fn main() {
             .push("release publication must not wait for a disposable Docker build".to_string());
     }
 
-    if !workflow.contains("create-github-release:\n    name: Prepare GitHub Prerelease\n    needs: [auto-release, manual-release]") {
+    if !workflow.contains("create-github-release:\n    name: Prepare GitHub Prerelease\n    needs: [javascript, release-javascript, resolve-release-source, auto-release, manual-release]") {
         failures.push("GitHub prereleases must be prepared from the immutable release tag".to_string());
     }
 

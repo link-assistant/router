@@ -1,0 +1,30 @@
+[
+  {
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/0_Soak (ubuntu-24.04).txt.gz",
+    "sha256": "582b37534b613f3ccd08ff43f03c8e279bcf476d6656d0907bb20cb1e1aa7a23",
+    "bytes": 20058,
+    "uncompressed_bytes": 93071,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/Soak (ubuntu-24.04)/system.txt.gz",
+    "sha256": "db3652c06234abee482dd70d1bcb85727912d2ff24135b2ad8bd81c0111dcb60",
+    "bytes": 392,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/1_Soak (macos-15).txt.gz",
+    "sha256": "a4106134c9102dc6ebaad04dbd2c74b97c081373a423210a025cc8854e5266d9",
+    "bytes": 18619,
+    "uncompressed_bytes": 91714,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/Soak (macos-15)/system.txt.gz",
+    "sha256": "4d089290f40ee626e33136837c4890d9df5e26831657f438f896c05aeb562069",
+    "bytes": 387,
+    "uncompressed_bytes": 720,
+    "redacted": false
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/0_Fuzz sse_stream_translators.txt.gz",
+    "sha256": "e6a29fec6d7bc439392ca3d7cd66b09371cbd7b12296f0eebdd9c4b46740debf",
+    "bytes": 21209,
+    "uncompressed_bytes": 110822,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/Fuzz sse_stream_translators/system.txt.gz",
+    "sha256": "6d4ecf5b83c8c8e76498e4905a352064ac6095bb1120ea7dd16c17394e36647c",
+    "bytes": 395,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/1_Fuzz request_translators.txt.xz",
+    "sha256": "574a726b9c1f45e3c5493d12ac53d3c2798859b9ba2806762b80ebf737409bd2",
+    "bytes": 142920,
+    "uncompressed_bytes": 1433096,
+    "redacted": false,
+    "original_gzip_sha256": "ca8d10b012187a2937ff382af52fc98459f964dce10f62d51400bbf3599f47cd",
+    "compression": "xz",
+    "decoded_sha256": "d252b7b421a955e1ff34a3331fd9803411806ac7de8085df19864aa22e17797c"
+  },
+  {
+    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/Fuzz request_translators/system.txt.gz",
+    "sha256": "58718d905cee6b18fc1d4044242b48648da3e2fb5278c532bdf9945916a78b35",
+    "bytes": 391,
+    "uncompressed_bytes": 728,
+    "redacted": false
+  }
+]

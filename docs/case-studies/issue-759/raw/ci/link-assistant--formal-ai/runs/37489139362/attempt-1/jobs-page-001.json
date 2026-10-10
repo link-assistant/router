@@ -1,0 +1,32 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112356917592,
+      "run_id": 37489139362,
+      "workflow_name": "Broken Link Checker",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37489139362",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaKP6BWA",
+      "head_sha": "b34abf915a0605ba56a79d2670d6ab1f64d9ab21",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112356917592",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37489139362/job/112356917592",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T15:37:55Z",
+      "started_at": "2026-10-06T15:37:55Z",
+      "completed_at": "2026-10-06T15:43:45Z",
+      "name": "Check Links",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112356917592",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    }
+  ]
+}

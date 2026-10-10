@@ -30,13 +30,23 @@ permissions:
 
 concurrency:
   group: macos-keychain-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   keychain:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Keychain lookups on macOS
     runs-on: macos-26
     timeout-minutes: 45

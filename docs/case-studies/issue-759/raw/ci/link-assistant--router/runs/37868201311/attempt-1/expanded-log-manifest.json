@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--router/runs/37868201311/attempt-1/logs/20_Version Modification Check.txt.gz",
+    "sha256": "ee48d5280529d360c9744942203b4a10f11f2191ae333350b59be67e2c07d646",
+    "bytes": 16404,
+    "uncompressed_bytes": 90000,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201311/attempt-1/logs/Version Modification Check/system.txt.gz",
+    "sha256": "1079acc7d33eed2600c0a50bffab010a71ee83cf46497c0b972ecc7e40343608",
+    "bytes": 456,
+    "uncompressed_bytes": 869,
+    "redacted": false
+  }
+]

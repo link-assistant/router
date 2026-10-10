@@ -1,0 +1,29 @@
+[
+  {
+    "id": 113416426904,
+    "run_id": 37807765698,
+    "workflow_name": "Proactive failure report Agent CLI E2E",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37807765698",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaaCVVmA",
+    "head_sha": "229de59e4a1583c57502615d665ca82d038cc29f",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113416426904",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37807765698/job/113416426904",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T16:18:36Z",
+    "started_at": "2026-10-08T16:18:36Z",
+    "completed_at": "2026-10-08T16:19:40Z",
+    "name": "agent-cli-failure-report",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113416426904",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

@@ -1,0 +1,12 @@
+import { NativeRouter, NativeRouterError, createNativeRouter } from '../index.js';
+const router = new NativeRouter({ config: { token_secret: 'native-secret', storage_policy: 'memory' } });
+router.tokens.list();
+router.tokens.issue({ ttlHours: 1, label: 'native' });
+router.providers.add({ name: 'fixture', baseUrl: 'https://example.invalid/v1', models: ['fixture-model'] });
+router.fetch(new Request('http://localhost/health'));
+router.listen({ host: '127.0.0.1', port: 0 });
+router.execute('version');
+createNativeRouter({ env: { TOKEN_SECRET: 'secret' } }).close();
+let error: NativeRouterError;
+error = new NativeRouterError('fixture');
+void error;

@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37582735622/attempt-1/logs/1_Zizmor.txt.gz",
+    "sha256": "ad845744806133e842b73298e036ac8f180998461f723419603c39e5442648ed",
+    "bytes": 8160,
+    "uncompressed_bytes": 43412,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "370c343d6802aba94684055ba345a461e7f4033dbadfc068e98f9a80cb7a0b42"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37582735622/attempt-1/logs/Zizmor/system.txt.gz",
+    "sha256": "57f6ca24be85427f27496f87386026f3a5f87af7178b96eb52b0309e3ef5c8c2",
+    "bytes": 387,
+    "uncompressed_bytes": 741,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "febad154519a920b6db310a05be73fc975ede44c210605c00fb20f2a5a5c75cb"
+  }
+]

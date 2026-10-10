@@ -1,0 +1,22 @@
+[
+  {
+    "path": "text-objects/6a/6a9343032309325627303585f3e77cb19877e9260842c519d5589aca56faab41.gz",
+    "artifact_member_name": "agent-out-8896.log",
+    "scrubbed_content_sha256": "6a9343032309325627303585f3e77cb19877e9260842c519d5589aca56faab41",
+    "sha256": "3446601d8266790ac1710d0bb2314930a628518b652b6921331a37c95dd09ecc",
+    "compressed_bytes": 4741,
+    "original_bytes": 42718,
+    "redacted": false,
+    "compression": "gzip"
+  },
+  {
+    "path": "text-objects/0c/0cf7104e0a481e013af9f9b812d75982f5f93842908337a120bbb422b21dd4c4.gz",
+    "artifact_member_name": "formal-ai-serve-8896.log",
+    "scrubbed_content_sha256": "0cf7104e0a481e013af9f9b812d75982f5f93842908337a120bbb422b21dd4c4",
+    "sha256": "3d520822f4d4a5b544ccd00a5f8770550dcff4206ad6b65a8f5267aec7521c41",
+    "compressed_bytes": 45837,
+    "original_bytes": 169415,
+    "redacted": false,
+    "compression": "gzip"
+  }
+]

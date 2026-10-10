@@ -1,0 +1,58 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/0_Isabelle exact-reference compiler controls.txt.gz",
+    "sha256": "d1a3db6c4e3895c8d992fcf2ef269a9647b668303dfa26ecfd9b7a7402e12e9d",
+    "bytes": 7567,
+    "uncompressed_bytes": 33141,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/Isabelle exact-reference compiler controls/system.txt.gz",
+    "sha256": "a78091b3023da071b9d22cc2e27ac88efc8a6f7d188e2b47fe056b04782ea487",
+    "bytes": 416,
+    "uncompressed_bytes": 775,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/1_Rocq build.txt.gz",
+    "sha256": "bdc59d7ba1e011015620b38d3e623791dbec5c5d8ae014868f938a20f4010008",
+    "bytes": 22654,
+    "uncompressed_bytes": 118849,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/Rocq build/system.txt.gz",
+    "sha256": "d58c5b7aa2d50197dfcd5beaef976c0af502200cb8539463d490c511a3146444",
+    "bytes": 408,
+    "uncompressed_bytes": 753,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/2_Lean build.txt.gz",
+    "sha256": "b45d30025e423e4eee905b51ad2be0489f24cd69516a4ed6643eaf5f0e9f78f1",
+    "bytes": 18612,
+    "uncompressed_bytes": 95710,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/Lean build/system.txt.gz",
+    "sha256": "3c4e91cbdd6e56534d036f79b9ac17d2b246a71e53acf97b7b95b44eb6116a78",
+    "bytes": 328,
+    "uncompressed_bytes": 598,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/3_Linked semantic-source parity.txt.gz",
+    "sha256": "8fe01e8e15522e0f782147990e35d02b58f0af8a93139e97c97b606ca12202e4",
+    "bytes": 8065,
+    "uncompressed_bytes": 44648,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634223/attempt-1/logs/Linked semantic-source parity/system.txt.gz",
+    "sha256": "8d822c2636b408b4019c10616884e84f93789fccdb1b6717a5fa47e88d911b1e",
+    "bytes": 334,
+    "uncompressed_bytes": 609,
+    "redacted": false
+  }
+]

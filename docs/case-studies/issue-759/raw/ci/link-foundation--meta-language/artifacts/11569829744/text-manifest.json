@@ -1,0 +1,79 @@
+[
+  {
+    "path": "text-objects/ac/ac4d51b946623bdf52abef107d7cc808f5bd5b4fd72b09f38b115829e6edb600.gz",
+    "sha256": "488376b4d95d812e991d08217fdff93f5d8737610ad88c000ae4f74364d75ed4",
+    "compressed_bytes": 121,
+    "original_bytes": 113,
+    "redacted": false,
+    "original_compressed_sha256": "4978099294555d3dbab0e35132c858a5da3cda2f5b433d2e2743e6fadf0acdfa",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/crate-build.log.gz",
+    "artifact_member_name": "crate-build.log",
+    "scrubbed_content_sha256": "ac4d51b946623bdf52abef107d7cc808f5bd5b4fd72b09f38b115829e6edb600"
+  },
+  {
+    "path": "text-objects/b6/b63b7b3b0032495dab0b3f6ed84749a0010570353344a46dce4632e4fa727748.gz",
+    "sha256": "9e7744b361b895b1f40d1ce881b230e2d5fbbd17a6acb2def137ef88c851cd95",
+    "compressed_bytes": 168,
+    "original_bytes": 332,
+    "redacted": false,
+    "original_compressed_sha256": "c624a4082199f9622acc6557ea3cd31bc3bd5bd093b9b00047cd8e51782724b1",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/crate-consumer.log.gz",
+    "artifact_member_name": "crate-consumer.log",
+    "scrubbed_content_sha256": "b63b7b3b0032495dab0b3f6ed84749a0010570353344a46dce4632e4fa727748"
+  },
+  {
+    "path": "text-objects/42/42c4851374860013638aaca5aa58cac4436e0ff4bae5d638f104e3c1d5b14e41.gz",
+    "sha256": "042ad6d922d90f6c0a915786ba2795af2e3dc0452b2c9191ab83a21ac2115f7f",
+    "compressed_bytes": 1602,
+    "original_bytes": 7006,
+    "redacted": false,
+    "original_compressed_sha256": "ab936785f4e8073742f61ca69d3e95393a35f924753565a3f5843cfb289b8536",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/crate-fetch.log.gz",
+    "artifact_member_name": "crate-fetch.log",
+    "scrubbed_content_sha256": "42c4851374860013638aaca5aa58cac4436e0ff4bae5d638f104e3c1d5b14e41"
+  },
+  {
+    "path": "text-objects/6b/6bfc64559284f3ccde730cad8e5ab5fbe578ede0efc5fa91a5aebf2954ac86cc.gz",
+    "sha256": "e01e902350e1611c2294b0b83792908f27635cf208954b835c011458e0bef3b7",
+    "compressed_bytes": 431,
+    "original_bytes": 923,
+    "redacted": false,
+    "original_compressed_sha256": "cf2a61d154a1671ac79c71988f8aec9804317ccc759819379048800ba78aa619",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/crate-private-path.log.gz",
+    "artifact_member_name": "crate-private-path.log",
+    "scrubbed_content_sha256": "6bfc64559284f3ccde730cad8e5ab5fbe578ede0efc5fa91a5aebf2954ac86cc"
+  },
+  {
+    "path": "text-objects/43/439a66de2889e7d05311d168da6985d2cab3e75d8dfbbc97fb6cec312904b871.gz",
+    "sha256": "b31bd79f629a43c1c3205e2ae36da5c74ca80dbd501083706de236a0b335953e",
+    "compressed_bytes": 1251,
+    "original_bytes": 4801,
+    "redacted": false,
+    "original_compressed_sha256": "7e25628c3a59e260f92a40798086c9f625cdfffdecb67464bffe75e12a8c5e51",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/crate-tree.log.gz",
+    "artifact_member_name": "crate-tree.log",
+    "scrubbed_content_sha256": "439a66de2889e7d05311d168da6985d2cab3e75d8dfbbc97fb6cec312904b871"
+  },
+  {
+    "path": "text-objects/0f/0f5aca8460981039b6f97c08fca8eb6c9cb530a6f4b57d2c0d9ab696944c3bd1.gz",
+    "sha256": "678ab76cda1c83a23a91e280eded9f767dd9aced22f3f5b4014fb82ab866fa3a",
+    "compressed_bytes": 203,
+    "original_bytes": 329,
+    "redacted": false,
+    "original_compressed_sha256": "21a7546fcf1bf0c359fd41dde5d37437f5b033b538f550d3ce5140005f1a82a6",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/npm-consumer.log.gz",
+    "artifact_member_name": "npm-consumer.log",
+    "scrubbed_content_sha256": "0f5aca8460981039b6f97c08fca8eb6c9cb530a6f4b57d2c0d9ab696944c3bd1"
+  },
+  {
+    "path": "text-objects/a9/a97afd5e4799fedde7a1f1ad822fe61814f16a933ae88b984250083113072e71.gz",
+    "sha256": "3690b9ce3e46095c92ebbd1b161589691c6ca2a1ef326ca0a0001d665c320d14",
+    "compressed_bytes": 180,
+    "original_bytes": 252,
+    "redacted": false,
+    "original_compressed_sha256": "4f401bde2b59c219ce65b820d9124ae60e70d7373ad37db2252fd51e4dfacb7d",
+    "original_storage_path": "link-foundation--meta-language/artifacts/11569829744/text/npm-install.log.gz",
+    "artifact_member_name": "npm-install.log",
+    "scrubbed_content_sha256": "a97afd5e4799fedde7a1f1ad822fe61814f16a933ae88b984250083113072e71"
+  }
+]

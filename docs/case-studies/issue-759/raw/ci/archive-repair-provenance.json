@@ -1,0 +1,32 @@
+{
+  "repaired_at": "2026-10-10T20:10:28.048347+00:00",
+  "run_id": 37984660603,
+  "repository": "link-foundation/meta-language",
+  "prior_manifest_sha256": "13d04ce800e996e8fd0d6a159ee0b3487aad54fa86caed72b8e0504a1fbe2aec",
+  "initial_integrity_result": "archive-integrity-initial.json",
+  "reason": "33 stored gzip SHA mismatches detected against older34-member manifest; original decoded hashes were not recorded. New complete API ZIP receipt independently recaptured members and stored/decoded hashes; older manifest retained as prior capture, not current completeness proof.",
+  "successful_zip_receipts": [
+    {
+      "retrieved_at": "2026-10-10T19:30:08.842713+00:00",
+      "download_sha256": "9018ad2d863c8d9d0ae736f842e835fb3d5b1301686c194fc24fe57d678f772c",
+      "download_bytes": 217804
+    },
+    {
+      "retrieved_at": "2026-10-10T19:31:53.173174+00:00",
+      "download_sha256": "9018ad2d863c8d9d0ae736f842e835fb3d5b1301686c194fc24fe57d678f772c",
+      "download_bytes": 217804
+    },
+    {
+      "retrieved_at": "2026-10-10T20:10:25.033427+00:00",
+      "download_sha256": "9018ad2d863c8d9d0ae736f842e835fb3d5b1301686c194fc24fe57d678f772c",
+      "download_bytes": 217804
+    },
+    {
+      "retrieved_at": "2026-10-10T20:10:27.286078+00:00",
+      "download_sha256": "9018ad2d863c8d9d0ae736f842e835fb3d5b1301686c194fc24fe57d678f772c",
+      "download_bytes": 217804
+    }
+  ],
+  "all_successful_zip_download_hashes_equal": true,
+  "note": "Matching original ZIP hashes establish identical downloaded archive bytes across these successful receipts. Container gzip hashes differ; fresh member manifests contain both stored and decoded SHA256."
+}

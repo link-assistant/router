@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37488472377/attempt-1/logs/1_Zizmor.txt.gz",
+    "sha256": "31ee9991c37c17bb0f001f9f76be10fc75035cceaa48bc87a29091cf29ad9959",
+    "bytes": 7186,
+    "uncompressed_bytes": 33572,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37488472377/attempt-1/logs/Zizmor/system.txt.gz",
+    "sha256": "851a30d6cebbec9347d6ee49f496431fdc43a453de923be5f0dd9f30dd80975b",
+    "bytes": 381,
+    "uncompressed_bytes": 741,
+    "redacted": false
+  }
+]

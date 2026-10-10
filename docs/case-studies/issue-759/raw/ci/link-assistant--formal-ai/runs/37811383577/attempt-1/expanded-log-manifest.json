@@ -1,0 +1,47 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/0_Pipeline Status.txt.gz",
+    "sha256": "45eb02692db962245847a5f7aa9d76e01b7737866cc8037067bd9001afb162a2",
+    "bytes": 5189,
+    "uncompressed_bytes": 23339,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/Pipeline Status/system.txt.gz",
+    "sha256": "755b2ef606b18a5ceca6d929e1ce9e7b51fe63d1ff29538f18e552adf2b32b3e",
+    "bytes": 403,
+    "uncompressed_bytes": 747,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/18_base _ Pin base commit.txt.gz",
+    "sha256": "5a24a5819090fa6cf9d996ca4513df740489eff0460509d8c1e884604691b18d",
+    "bytes": 4772,
+    "uncompressed_bytes": 20681,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/base _ Pin base commit/system.txt.gz",
+    "sha256": "c79ac7e79be5a55a058d1757aedde3698ab7ce5638b9236264e00f3f2120a401",
+    "bytes": 527,
+    "uncompressed_bytes": 1380,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/21_Detect Changes.txt.xz",
+    "sha256": "360594bb49a7abffa4ecb94883964e423b694871ce20448d9cd8b493599a6cdf",
+    "bytes": 81668,
+    "uncompressed_bytes": 1024476,
+    "redacted": false,
+    "original_gzip_sha256": "ffd6839e8ab533495438fe3d707d7273eeed8c85078b67764fd67458ec9cd699",
+    "compression": "xz",
+    "decoded_sha256": "6c54243707891e02b0b4666ff13918dfd424e1a5db05d9865b18a6e47d3b24d3"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811383577/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "b09ecb97dc36cd3a38286068b56079834417761e02c7e029585a9fa609cf4990",
+    "bytes": 469,
+    "uncompressed_bytes": 943,
+    "redacted": false
+  }
+]

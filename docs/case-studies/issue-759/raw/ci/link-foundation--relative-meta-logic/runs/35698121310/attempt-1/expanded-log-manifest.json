@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs/0_build-images.txt.gz",
+    "sha256": "4bea1518b749ae61573b31e35d72295b857b24e4bf55c732aed3e760c90d7b45",
+    "bytes": 29975,
+    "uncompressed_bytes": 149449,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "fd8505e7ee5247bd8867fc15e6bae3a5df543af1862ecf5710fce537d0dc7ffe"
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs/build-images/system.txt.gz",
+    "sha256": "2739e8c9ecae00d5314211a5f9b4e1a601fb8448dbd9a3bc235da1fafe688b14",
+    "bytes": 313,
+    "uncompressed_bytes": 599,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "040f73646517f662d7361fe4f7f7cbf577cbf9234220748e97d23e06dae057c6"
+  }
+]

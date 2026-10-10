@@ -1,0 +1,214 @@
+{
+  "$defs": {
+    "AccountRoutingPolicy": {
+      "additionalProperties": false,
+      "description": "Backward-compatible per-credential traffic policy.",
+      "properties": {
+        "disable_cooling": {
+          "default": false,
+          "type": "boolean"
+        },
+        "excluded_models": {
+          "description": "Case-sensitive glob patterns: `*` matches any sequence, `?` one character.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Static values, or `$Header-Name` copies from the reviewed allow-list.",
+          "type": "object"
+        },
+        "model_aliases": {
+          "items": {
+            "$ref": "#/$defs/AccountRoutingPolicy_ModelAlias"
+          },
+          "type": "array"
+        },
+        "prefix": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "request_retry": {
+          "default": null,
+          "description": "Number of retries after the first attempt. Zero disables retries.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "request_scoped_errors": {
+          "items": {
+            "$ref": "#/$defs/AccountRoutingPolicy_RequestScopedError"
+          },
+          "type": "array"
+        },
+        "weight": {
+          "default": 1,
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "title": "AccountRoutingPolicy",
+      "type": "object"
+    },
+    "AccountRoutingPolicy_ErrorAction": {
+      "description": "Action of the first matching request-scoped error rule.",
+      "oneOf": [
+        {
+          "const": "cooldown",
+          "description": "Cool this account and relay the response.",
+          "type": "string"
+        },
+        {
+          "const": "retry-next",
+          "description": "Try another eligible account before returning any response bytes.",
+          "type": "string"
+        },
+        {
+          "const": "relay",
+          "description": "Relay unchanged, suppressing automatic cooldown and retry.",
+          "type": "string"
+        }
+      ]
+    },
+    "AccountRoutingPolicy_ModelAlias": {
+      "additionalProperties": false,
+      "description": "One explicitly configured account model alias.",
+      "properties": {
+        "alias": {
+          "description": "Client-facing name.",
+          "type": "string"
+        },
+        "fork": {
+          "default": false,
+          "description": "Keep the upstream name visible as well as the alias.",
+          "type": "boolean"
+        },
+        "model": {
+          "description": "Exact upstream model, which must appear in the account's live catalog.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "model",
+        "alias"
+      ],
+      "type": "object"
+    },
+    "AccountRoutingPolicy_RequestScopedError": {
+      "additionalProperties": false,
+      "description": "Upstream status and a literal body substring, evaluated in declaration order.",
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/AccountRoutingPolicy_ErrorAction"
+        },
+        "match": {
+          "type": "string"
+        },
+        "status": {
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "match",
+        "action"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "link-assistant-router/accounts-policy/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AccountRoutingPolicy"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "accounts.policy"
+    },
+    "schema": {
+      "const": "link-assistant-router/accounts-policy/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

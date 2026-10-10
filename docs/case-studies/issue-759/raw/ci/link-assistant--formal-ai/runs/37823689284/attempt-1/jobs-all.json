@@ -1,0 +1,29 @@
+[
+  {
+    "id": 113470977713,
+    "run_id": 37823689284,
+    "workflow_name": "Self-development status",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37823689284",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaa2W2sQ",
+    "head_sha": "cf272d45802f82d1973333d4dde300bf95821f7c",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113470977713",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37823689284/job/113470977713",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T18:21:59Z",
+    "started_at": "2026-10-08T18:21:59Z",
+    "completed_at": "2026-10-08T18:27:24Z",
+    "name": "Self-development floor and debt ratchet since the last tag",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113470977713",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

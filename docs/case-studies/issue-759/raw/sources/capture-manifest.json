@@ -1,0 +1,1571 @@
+{
+  "captured_at": "2026-10-10T20:31:34.793353+00:00",
+  "scope": "Pinned primary sources, metadata snapshots, compressed source trees with formal-ai truncation disclosed, published proposals, four additional current repository audits, immutable implementation snapshot and local verification receipts. sha256 in this capture manifest always hashes stored file bytes.",
+  "files": [
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/additional-repository-audit-summary.json",
+      "bytes": 6204,
+      "sha256": "5bc5f31f108404317cbda55efbb276d604237588c7b8d660560344f6e871bd05"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/additional-repository-pins.json",
+      "bytes": 3457,
+      "sha256": "1b266ee155c36bf6f3cff50a464de0c2f85fa8c6ee1716442e3b8edd2bd52aae"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/all-pins.json",
+      "bytes": 533,
+      "sha256": "ac434dadcc8e45093835c1ee5b9f9b430c313b7de86705cce8d28e925022b4f2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-branch.json",
+      "bytes": 4293,
+      "sha256": "523e2c4718f5467bef184d1f334473e768c7e29280c9c5796fe38e3d8ca4b7df"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-paths.txt",
+      "bytes": 26518,
+      "sha256": "3aaac1ddaca60b229f2c0a03a2c7d3a5a50ad0eb337e4d728836bc3a9e0d32b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-runs.json",
+      "bytes": 378034,
+      "sha256": "2cc157234712429a56dd95877ebaa28503c785f8f1a28d9450b41c01961df78a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/default-head-tree.json.gz",
+      "bytes": 31581,
+      "sha256": "bf6cf5bc47796abe79628726004b3e07152866b4274763c58db119341ab2b8cc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/coverage-gap-report.yml",
+      "bytes": 1707,
+      "sha256": "ad0cbf93da70f48473ed189211e858204dff0f6d65518141b02734ed10ac1ed8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/refresh-competitor-corpus.yml",
+      "bytes": 3226,
+      "sha256": "e76d35ccdf5b122bb67e2ab0cce25ac1bd982865605ecf6031cb8e007cc155c1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/release.yml",
+      "bytes": 25954,
+      "sha256": "d9c2faa597eb108f27bab536b2ee567d49e163c8a8e291feb506d6887bd10e0e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-currency-rates.yml",
+      "bytes": 2281,
+      "sha256": "65e6ce80dc7f4779d37a4cd09743a9567a3c7a0bfe9d22a298728dc33633ef0f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/.github/workflows/update-screenshots.yml",
+      "bytes": 3602,
+      "sha256": "5eceffbaa7d84b96d41f5604140cfd4f9c72132ce3952e9195cf4ad39addeb53"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/CONTRIBUTING.md",
+      "bytes": 9350,
+      "sha256": "60dedbbbe6dd229dd40f980827370fed04fb1cfc0fe24d550359ba3668f17b7a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/Cargo.toml",
+      "bytes": 3159,
+      "sha256": "3f4313c5c5e0ef27d207d917210d2f364fc90b2d288ec3226e6cb3d15aeda5b0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/scripts/detect-code-changes.mjs",
+      "bytes": 6518,
+      "sha256": "4f4283be4ef2d12c0c14291478728e91233eb3cccbe3700f2429d5a8068e9597"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/package.json",
+      "bytes": 1337,
+      "sha256": "1a93870720a77f9986bfc86e40077ba0f41a4c1fd89954c2ea1e3c042adc588d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/files/web/src/worker.ts",
+      "bytes": 13708,
+      "sha256": "cbefb43ec6a1d825f463c0c560a5356a347e2c245a51c3b6ee83a57a9e6e3e95"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/head-commit.json",
+      "bytes": 42793,
+      "sha256": "8defe0854970450956bbf86637e09dc75593fe0f70543a39b4bb993cf199933e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/issue-254-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/issue-254.json",
+      "bytes": 9929,
+      "sha256": "c05cc3e6b29571055cb8c4f387649801db93897e5ca0f554f2fb37645df2f3cf"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/open-pulls.json",
+      "bytes": 29845,
+      "sha256": "d706478cb2d892d6811411b6c71a2498807d6b7e29f84f76e5774ec6537f7a37"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/repository.json",
+      "bytes": 16562,
+      "sha256": "c95296b049b99895967a4c97cdcb9b264b534f80244be0cf627f40a21013af09"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/calculator/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/.github/workflows/layered-ci.yml",
+      "bytes": 23041,
+      "sha256": "563f19237454583e35e6b467222189c1b3a74d87d8568841b656604fffbb3342"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/CONTRIBUTING.md",
+      "bytes": 77787,
+      "sha256": "926184d3e01534631d75458662afd7190eb46a48a8e5044c18130f9e987df26e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/README.md",
+      "bytes": 69722,
+      "sha256": "e0d0a00b9bccdf4570ac78cdf192aea91e39217408c9f175d621d9414bc30136"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/ci-gates/check-js-rust-translation.lino",
+      "bytes": 1088,
+      "sha256": "5548ff09e3bbb4464cc7ba9c4a3113a9838d8f9a1ef6451cbcd3dd05a911de3f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/js-rust-translation.lino",
+      "bytes": 19741,
+      "sha256": "b3bca8514f9f5781cd69c6cbf88f16791e35dcf10c4ae276b65acb501e45d2a2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/data/meta/requirement-status-ledger/doctrine-standing-doctrine-javascript-first-full-parity-then-translate-2026-10-06.lino",
+      "bytes": 1086,
+      "sha256": "64c59cf7c4764fa44affd5f179d5511a7aad371a8f814a22bb28a6bedec781a2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/docs/case-studies/pull-request-1188/conversion-best-practices.md",
+      "bytes": 17077,
+      "sha256": "9dca83273591cf8c471a18895c808127006c90b8838077816b9adcd691304afa"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/package.json",
+      "bytes": 1992,
+      "sha256": "34b52e0b96704edb1158237d3b098cbdf040b40dc0d3142d4955840ca3642fd9"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/lib/translation-lowering.mjs",
+      "bytes": 24820,
+      "sha256": "5457890a02ca4d81d203ea9e984dcc2781a6606ec8f80d83371001f26384c11d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/lib/translation-workarounds.mjs",
+      "bytes": 10494,
+      "sha256": "5ed0e9f654b73b5fd1861631cdde4eea957cfc327a075a27b42740d39751d369"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translate.mjs",
+      "bytes": 12134,
+      "sha256": "6825ed421cc657ec2bb1b482d08bf77e1ca190dcfd41c66a6060fdcad2c6351c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/emitters.mjs",
+      "bytes": 12557,
+      "sha256": "5b1568e12d279ac35ec2d1bab29f4f795ac35187ee1944c9955f0934212cf58c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/envelope.mjs",
+      "bytes": 13525,
+      "sha256": "5c02773fda7594a28783a5f971fab2742addb8cd91fd4aeba7cccb94d3714bd9"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/frontends.mjs",
+      "bytes": 17423,
+      "sha256": "bdf326db20c3b7f617896aa4668b9847b8216558da9decabaa4854677434475f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/self-translation/ir.mjs",
+      "bytes": 15642,
+      "sha256": "31360b91433928ef707ab035d42dd6b4a495b5923686930e95d6c926aa49506e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/files/scripts/translate-js-rust.mjs",
+      "bytes": 52362,
+      "sha256": "4e4e6dbd25a84efbd476cb53ad3c666f376fa8f80e9a8bf96b0cd805a759a471"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/issue-1191-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/issue-1191.json",
+      "bytes": 10812,
+      "sha256": "9c8d1b39db93b3e48c7f225d3d3a74a7a97fd1e16cc4008202d9d71ed4fa4316"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/paths.txt",
+      "bytes": 4550996,
+      "sha256": "7d68759aa2cfcd1563d5549b7111ffbfeea5923d1f1374daf278d2e6bd17a0eb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188-files.json",
+      "bytes": 863963,
+      "sha256": "edab8979c11c14fe622a77f12b95b924d19240dcb9bda95fe55381555790784a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188.json",
+      "bytes": 61726,
+      "sha256": "e52b084aa2ab87265abdb43cf60aafed27855197aca5912ea6f929c29389246e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/formal-ai/tree.json.gz",
+      "bytes": 2316172,
+      "sha256": "8ddc45097822f859ac95d6831f3dd8763924a852148e8fcf2a080c4421d14cea"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/BEST-PRACTICES.md",
+      "bytes": 10386,
+      "sha256": "f23f4d7ab20c69f04b44e5f6c6f61f67911df2e5d229d5fa1f8ef840eb6e48dc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/CI-CD-BEST-PRACTICES.md",
+      "bytes": 36383,
+      "sha256": "ab97f2d136e8a0ed4b668d92561f7786730317f1cadc30cdd0dc12a9f50bbc6c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/docs/CONTRIBUTING.md",
+      "bytes": 5848,
+      "sha256": "942f8eb016a26adf09e00318a6699ea2990676089f51db77f7aaf1cf647f5c3d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/agent.prompts.lib.mjs",
+      "bytes": 18623,
+      "sha256": "67de9b1a9be49080c27f9bb4385f2fa4911e67e4185aff8c2bc2f8486160f90e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/contributing-guidelines.lib.mjs",
+      "bytes": 9122,
+      "sha256": "1ab5a7fb6c913ae555f66b0e510e7f50b156f35aaa5e41aa633e539f0aeed889"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/git-push-guard.lib.mjs",
+      "bytes": 10030,
+      "sha256": "129ded2d5e19079a81aa90b36b78f99fbca72a6cfd5f5644fef0f60fbdca5f82"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge-ci-wait.lib.mjs",
+      "bytes": 8406,
+      "sha256": "9b356a0a1d017d51366fe9466dd5be383240028d8a8b6d4edabaf49a241560fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/github-merge.lib.mjs.gz",
+      "bytes": 13170,
+      "sha256": "d266c375a636f426cbd111baf17c638984a90b740c28a3e55b59da0c0ed6843b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.auto-pr-push-sync.lib.mjs",
+      "bytes": 7560,
+      "sha256": "9bb35d6e2304e1a782011ea842c5d972fe4607bf3c64e09c1b6a4f77e470e630"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.config.lib.mjs.gz",
+      "bytes": 21102,
+      "sha256": "58a93813388393117ba8c67031c53d551c2876c34cf1f5e1b0f27e49680705ad"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/src/solve.feedback.lib.mjs",
+      "bytes": 23922,
+      "sha256": "fb99a675b92fb8b95afd200b90d9a6a1852db96118075fca00b2682256838529"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-concurrency-2128.test.mjs",
+      "bytes": 2100,
+      "sha256": "8f9ad78583f589207262b792972ff2354a371b934695f8fa18d80ef78e654f85"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-pipeline-gates-2198.test.mjs",
+      "bytes": 4279,
+      "sha256": "a19fc8d5096521b7d3d556ae90b02a52aa8b0075f1626f14900bdfd9e42a3fee"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/files/tests/cicd-best-practices-serialised-writers-2220.test.mjs",
+      "bytes": 6767,
+      "sha256": "b815a027b1bff38445ea788cac1caa44fa8d31a593c7737b18ea42e55ce5a25a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/paths.txt",
+      "bytes": 488800,
+      "sha256": "1b8da1623ecdb026007ef4b7be8171e0e378971f9fdfbf2333228e800b4cca60"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/hive-mind/tree.json.gz",
+      "bytes": 402165,
+      "sha256": "ff29dc5b58e06316589bc6e508288174d52aa4dbf47a9a12f9e85ced6bbbd5f3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/issue-searches/hive-mind-0.json",
+      "bytes": 7702,
+      "sha256": "609c90fad6db6b48518c19aab5ef64424a83fabb4b113b67baa16601fa02954c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/issue-searches/hive-mind-1.json",
+      "bytes": 79,
+      "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/issue-searches/js-ai-driven-development-pipeline-template-3.json",
+      "bytes": 79,
+      "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/issue-searches/rust-ai-driven-development-pipeline-template-2.json",
+      "bytes": 79,
+      "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/example-app.yml",
+      "bytes": 13302,
+      "sha256": "f2d23981d123ea6893dc10625c066ca789ab056b82ea23ddafda7a37958d2600"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/links.yml",
+      "bytes": 6479,
+      "sha256": "10e8c5ec48ca4991d4afc64c23d3039f3e624adfae0cb42ce9d4e02ec28efbcd"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/release.yml",
+      "bytes": 42286,
+      "sha256": "23eff85394e7150658dcc5d46cf8b430da8071b9b34f5c1492bc427c64731b60"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/security.yml",
+      "bytes": 3910,
+      "sha256": "832d32851f5d566b8a1bfac18b4556b81872d59a2bc15b7cbdb355af272b7fae"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/.github/workflows/workflows.yml",
+      "bytes": 6941,
+      "sha256": "2b3b663e00d7acb449e8f7e42d35ad9f174170091978e5afdeeb1a59cf7a703c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/README.md",
+      "bytes": 17931,
+      "sha256": "e6ab529c1042d9e24b0e38f8b2c936dfe91efb90bdf82d048d13a16fb9a5d349"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/docs/BEST-PRACTICES.md",
+      "bytes": 13975,
+      "sha256": "2e24cf6f39efa0d7fb1abccf41c4558d1ede689f455925588cf6e094832e47bd"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/docs/CONTRIBUTING.md",
+      "bytes": 6709,
+      "sha256": "79c70c9014f698de635b995bf83e56b64977b21abc2b1e00c05cb6d5705a38f0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/package.json",
+      "bytes": 2673,
+      "sha256": "b037f12dfab40ceb155b2b3b82abc0501ab22ee536c41b88c077dbdf0a860582"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/bootstrap-dependencies.mjs",
+      "bytes": 3239,
+      "sha256": "7ed2621df5c632b2f7dd26b3d650984748f883644a50863cc37ac8e9fbaff48b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-changesets.mjs",
+      "bytes": 3693,
+      "sha256": "a110f3cdf37150379b221a6800843bd47f9870fc3ae69b5582c8ba582a9d9632"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-ci-workflows.mjs",
+      "bytes": 2568,
+      "sha256": "933caf26505cfc3e1072f1ccaf9008783a35f197360f33f4d2caabcc8a6e8c03"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-docker-build.mjs",
+      "bytes": 2694,
+      "sha256": "3696f45a7a60fd2962b47f3d95a0f15d03c68f1b9e23f64da4b655b4e84c4e7e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-docker-publish.mjs",
+      "bytes": 3528,
+      "sha256": "783ba01634339f715611d00cf634ce67923754ee3d8d1a6d739431ffa52b83fc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-file-line-limits.sh",
+      "bytes": 4113,
+      "sha256": "3099d8e460680307c3644d029cc46c25484169ae7ef9997200e07b005f300137"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-mjs-syntax.sh",
+      "bytes": 634,
+      "sha256": "ff2bfe0f2eaeaf35116e3bf635aa71177dd2af74e625ca57db246ce9397d34db"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-package-manager.mjs",
+      "bytes": 4515,
+      "sha256": "2f53ae57bad44ebe207a6b75ce488a90f577c4f23dfc655772854f23f844777a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-pipeline-status.sh",
+      "bytes": 5704,
+      "sha256": "152ff831a13e34fa616eafcbbfa4e8a1063e6a834ee083419b58796e736b25fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-release-needed.mjs",
+      "bytes": 4134,
+      "sha256": "cdfb1fb0d6da14f496499646a95826c6065aa83744e37c78ac285c7819a17271"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-required-docs.sh",
+      "bytes": 3390,
+      "sha256": "dcf2f795291696aab6e55af7be826863f36f7bbd1607e321258ea393f8f9ef14"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-staged-formatting.mjs",
+      "bytes": 801,
+      "sha256": "cf0fc42d63897c177165af6bc8376a087960d3f5f61774d509d793c964af3a47"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-status-gate-covers-all-jobs.mjs",
+      "bytes": 4827,
+      "sha256": "009ec76e2b4307563f17701e24ae8e59c630b54f8c855be53a9837851248a33a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-version.mjs",
+      "bytes": 1361,
+      "sha256": "a57443425faa562b786413218bacfc8fac99071c79bd3a5ebc91f6de7d531e37"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/check-web-archive.mjs",
+      "bytes": 13412,
+      "sha256": "784da6c9b270e438a3d5594097b076b650631eea8f2aab73ff858560738fa041"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.mjs",
+      "bytes": 13101,
+      "sha256": "0b9f5f792b634a4f9a3f179d7ea477ff6dcdf50d84ee0c0bcb24ec9ad3bac5d1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/paths.txt",
+      "bytes": 19949,
+      "sha256": "5fed4811c105481fa7a70fef6545d44a60db3df1ab2aa5dfa6bd9d195b1a17b4"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/js-ai-driven-development-pipeline-template/tree.json.gz",
+      "bytes": 21593,
+      "sha256": "28bb24eac32054430221385e008235815b963eaef6412957347f7134b36ccf52"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-branch.json",
+      "bytes": 4100,
+      "sha256": "a5bc50de32875857ae365aedfbfbed89df7a84facddfe658f0835e65d0e1f1b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-paths.txt",
+      "bytes": 41852,
+      "sha256": "fdabebab813f65ba1e3027f07650e2cf01a3c03cecf33cc6ae8f0b018bca4891"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-runs.json",
+      "bytes": 379876,
+      "sha256": "0ea4c7d82d3bda18fcd6c79d6cfc3b6770388e6806cbc492a6c5f5dcfb2edf15"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-tree.json.gz",
+      "bytes": 35571,
+      "sha256": "153ccd69d93c9b94f4b03e98e1b3aebf2805e9c56ef31fb145ed354d0e64fdd5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/csharp.yml",
+      "bytes": 25031,
+      "sha256": "6b547c24831bc36c8086f2a7a4fb1ccd75823cd11c52afbf51499837ada82006"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/dependencies.yml",
+      "bytes": 1512,
+      "sha256": "6a1c0125a1c034585e081e6fbac8a06a5094683d8be80988c31b7144029541fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/docs.yml",
+      "bytes": 6687,
+      "sha256": "76a766b56b4fb5301d36522d69d64463754cb1bab766d9be1080f85efde8f0f6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/links.yml",
+      "bytes": 3723,
+      "sha256": "ee979ed02d7d0db79ac57c0e4a4b6a03b9321fd163c393dd741a123c73529f90"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/rust.yml",
+      "bytes": 18472,
+      "sha256": "5b9c411253af4c4dcd8129379bec58f8ff67e1bd2addabac757ebf3776b9bf25"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/security.yml",
+      "bytes": 4702,
+      "sha256": "4c24db14d362f90c423e8b656f64b2058c7bf9cb48c0865bec0ab248324d4189"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/.github/workflows/wasm.yml",
+      "bytes": 2595,
+      "sha256": "23e2b561ddb453dc46d192496978e03b13299e85bd8f73738474ee9737d0b4a4"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/archive/run-interop.sh",
+      "bytes": 1635,
+      "sha256": "d749ed1bfa6705fe1762b087c6f7841fdd8fe5127fcfdfad506520d74eb3bc68"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/examples/tcp/run-interop.sh",
+      "bytes": 1801,
+      "sha256": "805d700699be77c27242401e545f057a0d644a50c377235d9474d97b6d06d12a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/package.json",
+      "bytes": 1204,
+      "sha256": "06f105055c13816e8be5f001e71d9543f14a6aedf2ba268ce794d08dadbb5072"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/App.jsx",
+      "bytes": 12975,
+      "sha256": "843790b365827d8e2d87bbc8fe730a11433f864e1a09dd6d1af6fd63db5fbe63"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/js/src/main.jsx",
+      "bytes": 239,
+      "sha256": "c29fd321df36aaa88ca8cc8517bb64228a823fe445e69b0449d49e01577771ef"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/Cargo.toml",
+      "bytes": 1124,
+      "sha256": "7f2a6ef4ba92cd8d6e96473d981168df8cb1b218caa13b10c23e4931737908ae"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/files/rust/tests/query_processor_csharp_parity_tests.rs",
+      "bytes": 18523,
+      "sha256": "eba372fcf55a53e6322593c64e56f18e6834e8214e96217fd7c85974cf3799b0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/head-commit.json",
+      "bytes": 11000,
+      "sha256": "2d307255422781de748031a49034d567c38e8fa41f73fb24f93a0a4394368155"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/issue-111-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/issue-111.json",
+      "bytes": 10426,
+      "sha256": "b606dc0d0fd59d7bd113efe498f1d00a94fd7a65f2f61fa881fb1d32e8f888c0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/open-pulls.json",
+      "bytes": 224658,
+      "sha256": "88a8dd08839b65e6c43773b5112a9b2476c82f5e8b650b61c0b286049c946b69"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/repository.json",
+      "bytes": 8163,
+      "sha256": "2dddc6390962ebfd340b55b3e3b129b0ebffc5c38cb8946f1f75666d73c6ab14"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/link-cli/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-branch.json",
+      "bytes": 5682,
+      "sha256": "2d667f69562db6bd6e323856b2d356e234c67d96e96d54a7ac2932422ca64853"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-paths.txt",
+      "bytes": 61574,
+      "sha256": "2bdb0333f23b018697a5145cf22e4d5d9273264c7fe6138a368d148321c4b420"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-runs.json",
+      "bytes": 391221,
+      "sha256": "579989cb387f72d4313d32c1579c6f851f8b35c08e1136c6142d635c9ad5ceac"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-tree.json.gz",
+      "bytes": 61308,
+      "sha256": "6a89624cae750381ff9dbe4c8b12c1d60061e953d3c11fb82d3b89a94ab4fef2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/AutoMerge.yml",
+      "bytes": 1872,
+      "sha256": "9cc8db3c604b7e206a619fa5798faa16076a286aa547e7b43bb703d9a533ede1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/benchmarks.yml",
+      "bytes": 16936,
+      "sha256": "4210d1b4fbc6fa60ca6d6be13d87bd2f83aa74a550544f7d05459501a03cd71f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/binary-interop.yml",
+      "bytes": 1825,
+      "sha256": "48f99213f379da533002fdeecb0595c9b5607b4906d8b3c9f0044fd0a4533b53"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/bom-check.yml",
+      "bytes": 2394,
+      "sha256": "c31455f27d8c3125f6162e572f81d9b549f173c7a8b58b290e438d66ad27ab9c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/csharp.yml",
+      "bytes": 15132,
+      "sha256": "70a54da28d2caa40025f5037cf0f011117c8f3d02429835be6ecf15385feedb2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/dependencies.yml",
+      "bytes": 1409,
+      "sha256": "acfb70e824d8fc4af0f25fc8eeb4cc1ec80e14c8956b56ae82e5e90adabb4081"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/docs.yml",
+      "bytes": 4007,
+      "sha256": "f1f40472e6f8034e7792af2cef14cdf36a66478e905303a8463fb72cf0948051"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/go.yml",
+      "bytes": 8717,
+      "sha256": "df64bd1d25af35c3b2fbc291d60e6307511d36ced76a0214c4c7ebf71b637d12"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/java.yml",
+      "bytes": 11635,
+      "sha256": "9cdcb6d9a8df766c85b5aae2813cdf14686b328173d446302d295c5fe6cf0664"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/js.yml",
+      "bytes": 11731,
+      "sha256": "b57fa8eaa5654658ca241d81178adecaf4856ba76b97f1eaa313fa7cb2114a17"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/links.yml",
+      "bytes": 3330,
+      "sha256": "23c62adbedb28c5c4ae7088c89c3840f55783964b51c4f3da9d4e780220fa5a5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/pages.yml",
+      "bytes": 6189,
+      "sha256": "b3c5c531ef28bc89133b0c790c7660b094d1c16ef404fcdaa134c6beda69cd7b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/php.yml",
+      "bytes": 10594,
+      "sha256": "2f813c9b9998f021ab2d08b1c07e21b1d3f0a35b2ecb2cb9597bee9a0d57f51b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/python.yml",
+      "bytes": 9734,
+      "sha256": "4daa38117dd1e4b26ec1b53dcf8d1870f8c2448c9f15e628890042413b0857f3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/release-audit.yml",
+      "bytes": 4760,
+      "sha256": "74853b699dbe2d6ec35750609f3508558722dda89c3b2668876c5e2926ad3731"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/rust.yml",
+      "bytes": 13546,
+      "sha256": "6aaedc4c74f9b7099e3d23ea4121f588db885b2aef2c79982843a0d8bd95522e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/security.yml",
+      "bytes": 4824,
+      "sha256": "18b10f81ea8817d6b66521635438f6061c18fe71129f8f28fcf440c8b6fcab70"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/.github/workflows/workflows.yml",
+      "bytes": 3678,
+      "sha256": "b77adc5414bd80782db8c3232fbcd530a5ea7504067b092274b232113b4c8d34"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/examples/binary/run-interop.sh",
+      "bytes": 1365,
+      "sha256": "46fc4dedb57a8b2c6b259d186bb0deef25f271aba8ff29afed79bb7ad5b9e931"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/package.json",
+      "bytes": 1147,
+      "sha256": "bec56bf47ceb0a8529a51afacd717bd8df990449200cae60ebe118e37d8963dc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/js/src/Parser.js",
+      "bytes": 9003,
+      "sha256": "44c548a6715bfa41586bbd301c51d075928c31d6be6cc1b9ed2fcb3ff7b46f29"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/rust/Cargo.toml",
+      "bytes": 123,
+      "sha256": "55a5a2d00e0ddbd2548a5d6ceb7e436cb74e1d3ff0677331f2e92762fa63ddee"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/files/scripts/generate-standardization-recommendations.mjs",
+      "bytes": 8409,
+      "sha256": "1a509d6e53f6b3d4dee1036d8be35e6918dbb9fee6dbe09151089d17439773f6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/head-commit.json",
+      "bytes": 7211,
+      "sha256": "67f980a0cf6aafdccd52f4ccebcc3d3aac9f634fb939f23462a7a07e7d502cb5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/issue-339.json",
+      "bytes": 10116,
+      "sha256": "378d955e49383481457828c348985cc23ce08ae6651445fa863447bece12b6c1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/open-pulls.json",
+      "bytes": 152854,
+      "sha256": "8d37f785e5266fe034dbd2dbb896d9f79cc49f52f8f6a9bebf5cda411d478691"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/repository.json",
+      "bytes": 8480,
+      "sha256": "de8a5b027456c65ac4ee082b5be06c4b8945bb2305d75b6a943850561b0c9933"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/links-notation/rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/provenance.json",
+      "bytes": 20443,
+      "sha256": "ea3af87875d6e7ecda0c939ed70aee8b49c9eceef77beaa370b557ffa6b1d14b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-auditor-03dce509-receipt.json.gz",
+      "bytes": 538,
+      "sha256": "4003103eb3196b264c2d84c466fa185e20fd5b4670837fae70e9ff6fda46574d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-68982814.log.gz",
+      "bytes": 11520,
+      "sha256": "d681945f60ab3e8c1327ccb451d40721b5d4a5f535aa4041ed4dcf400748ad14"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-ae950a30.log.gz",
+      "bytes": 10813,
+      "sha256": "c7390108ac01edcd20bce2f69de75948311832273d049e5cfa5e1ec0075b48bd"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/local-verification/summary.json",
+      "bytes": 9858,
+      "sha256": "30b719a2b47e899c682fd0babc6b5f2e3fce91e3d0ca27fe28e12043ddf20e16"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/comment-6101425254.json",
+      "bytes": 4108,
+      "sha256": "c183e3466e482441895c23d5f993215511ffd99b43cfccc414bedc8dfc391ee1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/ci.yml",
+      "bytes": 52156,
+      "sha256": "9b78d47f5d73a87dda7c519ba5773d7f076c19871293dacea51394bf6973f425"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/js.yml",
+      "bytes": 16373,
+      "sha256": "a5b987d974e0656d51c107b6191850103de3ee356df81b61879beba0aa6d2d97"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/.github/workflows/rust.yml",
+      "bytes": 49926,
+      "sha256": "523a2121a56bc3b0da4c87cd309357c1da13119da3da3ec3cdd90ec38d7bc5c9"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/AGENTS.md",
+      "bytes": 6278,
+      "sha256": "b815919482e8de28beb4abd938121ce4dd495b9c0e15c0c5679ac2612ca480be"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/CONTRIBUTING.md",
+      "bytes": 7001,
+      "sha256": "dcb116d92371f3ad8aefe71d95dcae2f7a12b600e30c8b741cfe716970581f8b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/README.md",
+      "bytes": 5794,
+      "sha256": "9ee124aa0ae373225744c8e433a0d471002c782eeeb7f179af4ef91f3607cdcb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/four-language-contracts.md",
+      "bytes": 7612,
+      "sha256": "d49a8e215e869cbdc88c342ecd7a7071cddb5ffcddac48a108aa608696679fb8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/self-translation.md",
+      "bytes": 16399,
+      "sha256": "c467d8eb0859944b2834425e0ba3437b2bca0bb23224035e730b4ff61e209463"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/docs/translation-rules.md",
+      "bytes": 3073,
+      "sha256": "54f6b5f73e4b79d2ba325fafe18929ff592805a90cd1fe0b13977883b8e24444"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/experiments/issue-195-public-translate.mjs",
+      "bytes": 834,
+      "sha256": "88d6bbab8ebf190485e2c40ccce1c184d79e036f05887a1df4639d13796de1a2"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/package.json",
+      "bytes": 4318,
+      "sha256": "3ac0a9ea393b7b0f68f72c0bbb745bd40e3786d18ef407e5e319fd185c7febf6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/scripts/generate-frontend-rules.mjs",
+      "bytes": 3680,
+      "sha256": "74e08e54d579eb3396887693cfc18352c1ff94f0706f835a324008194fdce94f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/index.js",
+      "bytes": 1501,
+      "sha256": "a64d168b383530161cba84f2cfad0460e8326976365313808ba7f19bf1b40ed8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/program-translation.js",
+      "bytes": 13539,
+      "sha256": "9917b100b0898b1bf22007d07893b1af437478899908e6285afc553ef49a8d60"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/self-translation.js",
+      "bytes": 27212,
+      "sha256": "cd3c5a93ea2d4cc431831310fb1029dfee449469615a00525e006235ce33b032"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/emit-javascript.js",
+      "bytes": 24298,
+      "sha256": "8af569ed4f08b81ddf38b1d3120fc55b41f67c2249cf226e52ef94ba52aed06a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/ir.js",
+      "bytes": 8054,
+      "sha256": "a54f47fc4056bbff205051c366fe0a7b406f14c23d62164aa6fda3d1677ea77e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation/rust.js",
+      "bytes": 37095,
+      "sha256": "46775f6787eea0e89faccaf1bbc55a21912410682fc7d93dce1583e690d7d332"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/src/translation.js",
+      "bytes": 17152,
+      "sha256": "2ccfb088942eea671b237fe22d76348aded126c88a7e5107ceffe7e6892a711e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/issue-195-translation-pairs.test.js",
+      "bytes": 16632,
+      "sha256": "acc4a1b1d41df1e77abde8e717d0dfd715ed5bf9d24bde5233db2f694fc391dc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/translation-string-predicates-parity.test.js",
+      "bytes": 1926,
+      "sha256": "4242cbe618cfdbe92707fa5a9699d40e61a04a1fa823407b1029a39327d2ab97"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/files/js/tests/translation.test.js",
+      "bytes": 5311,
+      "sha256": "8a86e3360c638a4b96de252c74fa2fa54a16edbfead2b9a42817d21559f298bc"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/issue-221-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/issue-221.json",
+      "bytes": 11872,
+      "sha256": "5d8bb6a924f14868e4c6912edd18e7f201e21731e8ea7a5fac54e267e73c8d6a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-195-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-195.json",
+      "bytes": 13676,
+      "sha256": "866d667155b03de56fc9ef451fedc58ec4b7fca9361d48c70b42bc4931f75d15"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199-comments.json",
+      "bytes": 7932,
+      "sha256": "de83841f8fc19bcf78744aaa08c47ce7788374b7de348f4ab0418242a1c03ae3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-199.json",
+      "bytes": 17194,
+      "sha256": "3f01160dbdbb5aa40127f78ab9e301f9b3b7280e93646ed50f0b7677ace1a753"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-204-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-204.json",
+      "bytes": 5542,
+      "sha256": "0d19ffcb6b55da5731df2907e758349ca5d03a4c4d6e950e9435c107521bb823"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-205-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-205.json",
+      "bytes": 6056,
+      "sha256": "d054ab5bbccc26317d8e0e1bae305d8b16122f1fc3e509138d9f4cb6cee834f0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-209-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-209.json",
+      "bytes": 6483,
+      "sha256": "443008a817491cd1e24eff81c65fe9ded4e90acc8a231aba7b5538b91b7b74db"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-222-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-222.json",
+      "bytes": 4729,
+      "sha256": "c80e05c691f0e582f80391ddae3a8740b11d577897e1bdb6b3959cdf92289424"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-223-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/meta-language-223.json",
+      "bytes": 4223,
+      "sha256": "a2740655c5fe3dda807c6997378194f4d76a29e5f936a35b9f5582b63278978f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/open-issues-gap-dedup.json",
+      "bytes": 128449,
+      "sha256": "7a35702a813ed87dcae0ff2f49a76a3b9e741d322b28dc96e5982c8ae1d0b878"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/paths.txt",
+      "bytes": 135698,
+      "sha256": "cb78186eea14791bb5c4d006a2c15f0824f04b32ec81b8ef4f952e8d003fc6f8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201-files.json",
+      "bytes": 341905,
+      "sha256": "4ea2e6f8be057bcc9b290cad842c381a53fdcbab9d33c30e5bfb5128ec8b5d68"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201.json",
+      "bytes": 20147,
+      "sha256": "cbce90539dc476563406674b633ed8c5f246a251c8ebc72139e912d5438c381c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/meta-language/tree.json.gz",
+      "bytes": 136375,
+      "sha256": "795788f32281ca6997fd92edfe263f0301ad09951c5eae9bf8cddf29add2c190"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/official-action-pins.json",
+      "bytes": 2672,
+      "sha256": "fba9f0db64c67ce5811bc82cb1fa07c9f815d034f657aad321b3e74566b0f590"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/official-docs-findings.md",
+      "bytes": 3285,
+      "sha256": "8b9363553ebd4d7b2d1b86a13db5ffefd17af1880726695093aa05813d351787"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/pr-pins.json",
+      "bytes": 241,
+      "sha256": "77297052f8c1debd8b3783e58a2c4040fc5c5a672e86c97075317d7a344ace47"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/published-heads/hive-mind-scheduler/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+      "bytes": 10423,
+      "sha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/README.md",
+      "bytes": 55895,
+      "sha256": "4f2de62835c96bf23fbb9c15075ed897a3a2eeff0edf8ab76e831bfe46db48d5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/UPSTREAM_LANGUAGE_SOURCE.md",
+      "bytes": 7954,
+      "sha256": "6ff06bea7614a382364b4bb08e166972e7d483a98f5a3c09954f73768bbfb600"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/case-studies/issue-183/meta-language-integration.md",
+      "bytes": 10841,
+      "sha256": "50f798ecf5abc7e323d7cf96186db883ae6bd91390b75658fc63ce80165006ab"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/docs/case-studies/issue-183/portable-natural-translation.md",
+      "bytes": 10179,
+      "sha256": "c5c0e6361494aa87a205705e75f8e29f54308f39ea6f99055541ff2ad0dfe8b1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/package.json",
+      "bytes": 2967,
+      "sha256": "bf6e1f192f723ea56af7d416756cee9df18331f6cc68e83c6aa36067d91168af"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/src/rml-meta-language.mjs",
+      "bytes": 5584,
+      "sha256": "3dc5ffc99e8abe276783c29b3194c2f6b648d63f6990113b7aea89f1c22df7af"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/js/src/rml-upstream-language.mjs",
+      "bytes": 755,
+      "sha256": "830acc7ff5cd9321a725a076c99367d122dfd317860dbbaba593d204baf2e51e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/scripts/initialize-meta-language.mjs",
+      "bytes": 3692,
+      "sha256": "c7933deb02cb0d2beb066b62e24e94eb1b50cb19dfe16e5f4b33f556ce3076c3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/files/scripts/verify-meta-language-source.mjs",
+      "bytes": 5154,
+      "sha256": "fdbc6015cad73a076564d1131d4b9f477f2ada7a2a0fa0d2edde21d72532c01d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/issue-187-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/issue-187.json",
+      "bytes": 12200,
+      "sha256": "e5292c747c721281f3cf48f69bf62a7c3f0792c8c5b425d5d378ba2475fa6c36"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/paths.txt",
+      "bytes": 37736,
+      "sha256": "dc025b89b687142999ab721b72fd10880d9161e5bed86f205bd6436e5d3652fb"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184-files.json",
+      "bytes": 858038,
+      "sha256": "84b7303804b178405423869fa2400d01f86c15b7d4db2f95ab24cfa30568ea62"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184.json",
+      "bytes": 32221,
+      "sha256": "a0e37ef7504c6b5176062f3056dfda5291ee33f7d44d2057cf6bb16fb6a1975f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/tree.json.gz",
+      "bytes": 47008,
+      "sha256": "c794315ca0f93ee389f45a84720b8452e8754e52697a4548b8863dfac52e0639"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router/issue-760-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router/issue-760.json",
+      "bytes": 9963,
+      "sha256": "e234e4f6077d0c6e3e64864a9c2b5526f13775be38fdd8dfec205553757f6791"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__js-first-translation.json.gz",
+      "bytes": 18741,
+      "sha256": "1b2cf33ec291db1ccacf01b6050be918eb484ff5b0bb1812497ee8bbd959581f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__router-features.json.gz",
+      "bytes": 9446,
+      "sha256": "aab718e618fa141577d1ccc3fca98b8e9f674870cf4ddebd46f590117ec4fe39"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/parity__rust-source-inventory.json.gz",
+      "bytes": 64281,
+      "sha256": "4b4d2c3b7e22e926035d39545643dacddec1261473f09817907006ec7bdc8472"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/provenance.json",
+      "bytes": 4328,
+      "sha256": "960b90765f76e6d8fc52ab4cebaf379c9b1b3b2d0a1756f5cf7cb6eab6afb8b3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/scripts__check-router-parity.mjs.gz",
+      "bytes": 3586,
+      "sha256": "0d6bc118d61589264acfd6f1ae127a53b2692b39e9255822e8b2b786a96829f7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/summary.json",
+      "bytes": 5043,
+      "sha256": "850f00f81294646b8bc4af5a4666295422201f409cee669fa2b2f521343c3a52"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/router-implementation-snapshot/tools__translation__js-to-rust__generated__native-typescript__manifest.json.gz",
+      "bytes": 8550,
+      "sha256": "74b5da4f7fd94805036e6659f491a4ca3423b555a5502d0981a61ca2df2d8e8d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/desktop-release.yml",
+      "bytes": 8400,
+      "sha256": "c56f7fca2f799f18486208217ff4de547f903d9368ea27e6de9407b6248d8c9d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/links.yml",
+      "bytes": 6260,
+      "sha256": "7ec2b9b49df86231e917a17e9deaae9455616a5dfc231e615a936a639587b0ef"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/release.yml",
+      "bytes": 51869,
+      "sha256": "38b93e0306e5d35b7789aa433347613e7931558b78d9230f9e7a543cf74bfe5a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/security.yml",
+      "bytes": 3342,
+      "sha256": "18b2e37747fa2167a49dd984d4150fa24a3e82b0674cb1b800897831f7cdc2ce"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/.github/workflows/workflows.yml",
+      "bytes": 5890,
+      "sha256": "26a68348806844845907aafff56dbc65c151743e01c3200891d8932839a219d9"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/CONTRIBUTING.md",
+      "bytes": 10018,
+      "sha256": "b56178b977ebf86d02c4547bc18ec2efec611d95ab94e77433376871e3368d71"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/Cargo.toml",
+      "bytes": 1674,
+      "sha256": "a8f5874b8e9a490c4bfb5f1a1a2c11074c6ff25aca5e16c2380e4645c6061560"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/README.md",
+      "bytes": 18707,
+      "sha256": "04cddb379c841b6f0f4e9528144dba876ae15a2828351c49a499d43f4cc5777e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-cargo-lock.rs",
+      "bytes": 12441,
+      "sha256": "a33e9cf60561bcc90f4e772cf8a094f8ef108a3d58cc1f3500c7ee4ea2154f7c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-cargo-warnings.sh",
+      "bytes": 506,
+      "sha256": "e4b4de91c593933c5682cddf857e70656c4235b3722ee6be0164f479fd22da6b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-changelog-fragment.rs",
+      "bytes": 7669,
+      "sha256": "6132c7f4712be0be1de7b6514d1546b80ae700378d8839ec6bafa6c6f58b8977"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs",
+      "bytes": 11143,
+      "sha256": "7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs",
+      "bytes": 16114,
+      "sha256": "9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-pipeline-status.sh",
+      "bytes": 5155,
+      "sha256": "dea61b6e6723135cf70537cf96a062f3819a2e9cbeed21465bc65e4120d7560c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-release-needed.rs",
+      "bytes": 13355,
+      "sha256": "e53ad7f8c6ecf68a94b73aac17bb7f6a5af18f9e21df20cbf796afa3032d148d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-required-docs.sh",
+      "bytes": 3064,
+      "sha256": "79228c52e93e753bdf68273e20fc9cbe5530165c1f4f4435b8a69dcaa77a22d4"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-version-modification.rs",
+      "bytes": 4883,
+      "sha256": "3846bcc7b57e78c820a26af1511eceef8d9e995eea1f075373a41ef73a25c081"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-web-archive.mjs",
+      "bytes": 13412,
+      "sha256": "784da6c9b270e438a3d5594097b076b650631eea8f2aab73ff858560738fa041"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-web-archive.test.mjs",
+      "bytes": 3374,
+      "sha256": "bcc8b6b9ab8ff2e29d86cecb21944509f4636d34c408b92579b155984bb286e1"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-workflow-tools.rs",
+      "bytes": 12881,
+      "sha256": "c80413b95e36b3cd9d2c47f251e9cfb6894fd421fb836bbc384141da7afaa8e6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.mjs",
+      "bytes": 10848,
+      "sha256": "0cceaed1b0bc75a47a35fdd153737e0c380df40da9af2014960d8f8fb7c93a35"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/recheck-broken-links.test.mjs",
+      "bytes": 16548,
+      "sha256": "c4526183b05197f49e9ad2136a52124a7f1eb8aabac8d84ebbd8ea786b1a7df9"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/paths.txt",
+      "bytes": 7050,
+      "sha256": "c99461e4f32b9e1b18b23708f39f6d6126a79ccbdc1b6483875106d5a36230a8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/tree.json.gz",
+      "bytes": 9462,
+      "sha256": "334e3b7681c542b5360e13a5fd3a73519182bb0e96f9b57e1701f7a8f4d36486"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/source-integrity.json",
+      "bytes": 428,
+      "sha256": "97a0a7eae024365ec94c2b8ffa772ee6ffb6f3bed2942dcd68e26b7e9ee1eee6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
+      "bytes": 137437,
+      "sha256": "43a90d95bf617107a8909fd6afbb9610e3cc699b0786ff4837544cc61aa6e094"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-branch.json",
+      "bytes": 4046,
+      "sha256": "fc5dc711920785a055d3975e01d23f2e1ea1a9eadb5ced994f911d4296cbdf7b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-paths.txt",
+      "bytes": 48528,
+      "sha256": "543ca74946d9663c7e0f2caaa47fa6209c7bd93d7666041fea70ee2797cdb08d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-runs.json",
+      "bytes": 369936,
+      "sha256": "bfd28b500a232405729d7c46d07597d8f2846896132ee8f7af37fe6bdec89b54"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/default-head-tree.json.gz",
+      "bytes": 49916,
+      "sha256": "ffd02f70f839bd7b9d5a5563514e437de9e417d7453a1fcff3d0dc34de509c8f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/js.yml",
+      "bytes": 29804,
+      "sha256": "9a9885d6606241824b43dcd2bc92d52d8e681048e44cb9dca5a28a5acc908d22"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/links.yml",
+      "bytes": 4252,
+      "sha256": "75d3800416ec6948878d85d1f3e0bf98059788044c6dec5be4927baf25955a6c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/rust.yml",
+      "bytes": 27936,
+      "sha256": "d5cf446bfeadf23b686d33cfc54c0e0293863253f6d7efcc7a58ede89543873b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/security.yml",
+      "bytes": 5761,
+      "sha256": "d3563e36f37b8b6d4ec491af21e2e0a38cfa910df78b932f1933f5b1d8df780c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/.github/workflows/workflows.yml",
+      "bytes": 3782,
+      "sha256": "38063f40120cf83267464ab496c43fbfe24afd63808cd2c3c1a663c42d7453f8"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/AGENTS.md",
+      "bytes": 2374,
+      "sha256": "15bace59d579e9bff15e4cc27471f987c56582cb25991fa11a6923d5e1b911ab"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/CLAUDE.md",
+      "bytes": 1079,
+      "sha256": "695575db6941e7c3d8ba3b970b6253b444a295ce01051594b16fe1e2c642df66"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/CONTRIBUTING.md",
+      "bytes": 4473,
+      "sha256": "4acf2a3c012a296afa8d7b6be3fb5099d1d25924673263df5a86c96a1cbfd5d5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/js/package.json",
+      "bytes": 2230,
+      "sha256": "d45d153cd2fdca23fb8f3dccd850cc4098e53618d5ac27394a8243a01c60606d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/js/src/lib/isolation.js",
+      "bytes": 30670,
+      "sha256": "1f8e135aad5ec5542d719effe6126811e09a1f5fc67131a3339b3223da3f0f18"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/features.json",
+      "bytes": 121588,
+      "sha256": "334a2c6fb28173151f49f0007726f85d6157e73ec9ea9ef37f85f24d7e97e5a0"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/fixtures/contracts.json",
+      "bytes": 5549,
+      "sha256": "f9517554848d87d2add793f3b9353ac9c73be3e7000f5533fe911e034d23fc66"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/parity/translation.json",
+      "bytes": 466,
+      "sha256": "6dbbc2e4094218be44aedf3657c7bbc9f9195c2b2f088398dfc1ea518d8d8472"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/.cargo/config.toml",
+      "bytes": 160,
+      "sha256": "31605c711f404e3ee3e09d48f299ed3e24c48da186c18c23062490691986324e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/Cargo.toml",
+      "bytes": 1036,
+      "sha256": "96f4a0ddcf8b656d19899220cc6ced783a280547eaa21757b0d21b56b9f0ee42"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/rust/src/lib/generated/parity_threshold.rs",
+      "bytes": 872,
+      "sha256": "0bf28248be7c8b5f9f09c58f166836f868fc5a865c74e0726265c1c799a756a5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/bounded-cargo.mjs",
+      "bytes": 2557,
+      "sha256": "c6e3d3102d9a731a5201349b7e1e2ba7f9b9c1536ac01d7eb6386bbbd58ff0ce"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-feature-parity.mjs",
+      "bytes": 4554,
+      "sha256": "ea2037200ccee5f8bdb76cefded232a4a0ef06aed4bc42597aad41814de3762a"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-javascript-first.mjs",
+      "bytes": 6064,
+      "sha256": "47667af76695e3ab0a4adc738978f56ab0ee56fa25bb305d1d98cc9c8abf3d7c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-stage-status.mjs",
+      "bytes": 982,
+      "sha256": "3dfbd66cf347039dfed9b4e71dbc4a8a87cb05a2c9fc6c2c51a3d59aa0487f68"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/check-test-parity.mjs",
+      "bytes": 1458,
+      "sha256": "2595497da322ff928f5241240adb7b5d2d4776eeafab37aa2b6fc6112af2bd61"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/detect-code-changes.mjs",
+      "bytes": 7865,
+      "sha256": "29a6e7fdf4c3bebc03b2f34a8553ad53297b0cbbd53f595f875dabb3c8634545"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/generate-rust.mjs",
+      "bytes": 1922,
+      "sha256": "5d4971b0a4616eb67aa697f0c73739961bb17138d2fe0531ddf7e1c8d64843ff"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/parity-threshold.mjs",
+      "bytes": 147,
+      "sha256": "d79a96822fedd9b7b4c1b6ada97378bf8bf02ddb3826fa2eec8e85ee2af3e33b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/files/scripts/setup-translation.mjs",
+      "bytes": 1123,
+      "sha256": "6d1740ccf830503503466adf6d75adefcbae0be9962e75c9206431308674b56c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/head-commit.json",
+      "bytes": 8204,
+      "sha256": "12e1fa1a3a1dc3949e1464660fd3d5220a7d23551b6af77d3f4be772b832ec6d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/issue-197-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/issue-197.json",
+      "bytes": 10827,
+      "sha256": "9f0e317f1641286e953a2f845b6f5ad612421cb008c4c6a3d8dc63a555ee9778"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/open-pulls.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/repository.json",
+      "bytes": 8054,
+      "sha256": "c7f2a6c299538f0b7927091c521f93fb54425099bd347e4ba152c433b8febaa6"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/ruleset-24848039.json",
+      "bytes": 991,
+      "sha256": "9a1970341e1f131b1f2e52f829a7071235e95648c3412376478efe99f66e0908"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/start/rulesets.json",
+      "bytes": 478,
+      "sha256": "a067f38ad8add39b47c4bd6067642f497a135f2bc84a1c6a8bc606a36a3cfe61"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/download-errors.json",
+      "bytes": 142,
+      "sha256": "0e5dfdc3cc2e45acaea809ed72e618dc5bdf7a68cb624a25167b41a0dfb8449f"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-3043-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-3043.json",
+      "bytes": 4585,
+      "sha256": "8667de43be86dbd4a848a9ff1e531fd0abcaaba69fdb79bfd1fcc9b4c65ebefa"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-files.json",
+      "bytes": 4774,
+      "sha256": "e738c57e19fcb6463413246bf2b5dc13fdad74549d220f1e21c76aba37536717"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-metadata.json",
+      "bytes": 17620,
+      "sha256": "b2ac67877b07cc8b7290e80f3bc6bc834fb5fda1515147b8fbe2d8933aef27b7"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json",
+      "bytes": 16044,
+      "sha256": "92180db228819d62b8fdbddbe8cb1534c9a6142b49f841ea6c1af0d3e437988d"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-head-runs.json",
+      "bytes": 36,
+      "sha256": "a2790a384d7d281e7395679000c35d27768d89dbd7052f725b8f4688beb59915"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json",
+      "bytes": 18226,
+      "sha256": "38b672beca2d07dfddc0c12823a5dac6132ccdd86f38a6d464c5e55da45bbdde"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-230-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-230.json",
+      "bytes": 6947,
+      "sha256": "1cfaa200f6c76beeb6105951f5c4c774b809b2e0795444b32a1d8a9dac2a42d5"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-files.json",
+      "bytes": 10528,
+      "sha256": "4e828c202b8a4e38830d2c0889bbc3d350695f79c03e7cf9562ed68d0feb8f89"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/js-ai-driven-development-pipeline-template-pr-231-metadata.json",
+      "bytes": 21259,
+      "sha256": "c2d821b8281e0b4c5ac6a6227e29fb86a451f8013e5808b7e5ca0c57dface675"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/hive-mind/docs/CI-CD-BEST-PRACTICES.md",
+      "bytes": 40109,
+      "sha256": "c65321b3fb23a11eae01ec16b4fe2608ea22277c322333985de70a923b833a1b"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/.github/workflows/javascript-first-gate.yml",
+      "bytes": 2553,
+      "sha256": "5df6481d8fd5b06d0cc5bb9869578aa861b9bd3c3dcf667cbb7d82add5d16750"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/AGENTS.md",
+      "bytes": 885,
+      "sha256": "fecb095857b6d94d31c6e4d3b0efd2c4060929511b9a8b5cff54e82bfe95ab07"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/docs/CONTRIBUTING.md",
+      "bytes": 6903,
+      "sha256": "c32b5b871816ff577e7ceba248c32afd046ad5f82951702c92c5afd9b1534d9c"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/js-ai-driven-development-pipeline-template/docs/javascript-first.md",
+      "bytes": 3711,
+      "sha256": "2bc2d21e51eeb41b292566cdfdaefc8fb0389ccbb1a1a39ad4553b0db18539b3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/.github/workflows/javascript-first-gate.yml",
+      "bytes": 2553,
+      "sha256": "5df6481d8fd5b06d0cc5bb9869578aa861b9bd3c3dcf667cbb7d82add5d16750"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/AGENTS.md",
+      "bytes": 885,
+      "sha256": "fecb095857b6d94d31c6e4d3b0efd2c4060929511b9a8b5cff54e82bfe95ab07"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/CONTRIBUTING.md",
+      "bytes": 10217,
+      "sha256": "d3be2187a5ce27159ae29882baa4248bb838e76d2bde41f239256b6a97c45ece"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/published-heads/rust-ai-driven-development-pipeline-template/docs/javascript-first.md",
+      "bytes": 3711,
+      "sha256": "2bc2d21e51eeb41b292566cdfdaefc8fb0389ccbb1a1a39ad4553b0db18539b3"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-196-comments.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-196.json",
+      "bytes": 6969,
+      "sha256": "7513649d8ad8842c04f7115e7efc74e39296eb543b7ee84412aaf70763bf0a1e"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-files.json",
+      "bytes": 10579,
+      "sha256": "e4833a985cb1737acf0db72b33be3ee5b30cf8ce2005d401975283d67d007311"
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/rust-ai-driven-development-pipeline-template-pr-197-metadata.json",
+      "bytes": 21427,
+      "sha256": "9e60d0d459920332c14a8973e02ece72ef5e02e16247cd8a4e30ed64339d73f5"
+    }
+  ]
+}

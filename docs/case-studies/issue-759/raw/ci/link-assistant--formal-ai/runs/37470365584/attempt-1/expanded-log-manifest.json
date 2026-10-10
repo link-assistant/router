@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37470365584/attempt-1/logs/0_agent-cli-failure-report.txt.gz",
+    "sha256": "4780da2af50d4db0045ce56acb645334ead67843ae70570417069cd2a3f3d870",
+    "bytes": 26343,
+    "uncompressed_bytes": 115161,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37470365584/attempt-1/logs/agent-cli-failure-report/system.txt.gz",
+    "sha256": "dcdd34b6e1b93f6bb910c3163e29b6fa14da03ca13fee2b4cef19559d9071c10",
+    "bytes": 321,
+    "uncompressed_bytes": 623,
+    "redacted": false
+  }
+]

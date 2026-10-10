@@ -4,153 +4,69 @@ Thank you for your interest in contributing! This document provides guidelines a
 
 ## Development Setup
 
-1. **Fork and clone the repository**
+Clone `https://github.com/link-assistant/router.git`, then install Node 20 or newer and Bun for the JavaScript development gate. Install package dependencies with:
 
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/rust-ai-driven-development-pipeline-template.git
-   cd rust-ai-driven-development-pipeline-template
-   ```
+```bash
+npm ci --prefix packages/javascript
+```
 
-2. **Install Rust**
-
-   Install Rust using rustup (if not already installed):
-
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
-3. **Install development tools**
-
-   ```bash
-   rustup component add rustfmt clippy
-   cargo install rust-script
-   ```
-
-4. **Install pre-commit hooks** (optional but recommended)
-
-   ```bash
-   pip install pre-commit
-   pre-commit install
-   ```
-
-5. **Build the project**
-
-   ```bash
-   cargo build
-   ```
+Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation and its CI checks. Install them when working on that surface, rather than compiling the project as the first setup step. Optional pre-commit hooks use `pip install pre-commit` and `pre-commit install`; their required checks must follow the JavaScript-first gate and avoid full local Cargo builds.
 
 ## Development Workflow
 
-1. **Create a feature branch**
+Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
 
-   ```bash
-   git checkout -b feature/my-feature
-   ```
+Run the complete local gate:
 
-2. **Make your changes**
+```bash
+node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json
+```
 
-   - Write code following the project's style guidelines
-   - Add tests for any new functionality
-   - Update documentation as needed
+It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics such as `npm test --prefix packages/javascript`, `npm run typecheck --prefix packages/javascript`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs` help locate failures but do not replace the complete gate.
 
-3. **Run quality checks**
+Use CI for broader Rust verification after the JavaScript gate. Do not run full local Cargo builds, test suites or Clippy. Only an explicitly necessary targeted exception can use the bounded shared build wrapper after a green stamp for the current SHA and file contents:
 
-   ```bash
-   # Format code
-   cargo fmt
+```bash
+# Preview only: this does not invoke Cargo.
+bash scripts/bounded-rust-build.sh -- check --lib
+# Explicit exception after the complete gate is green.
+bash scripts/bounded-rust-build.sh --execute --gate-stamp /tmp/router-js-first-gate.json -- check --lib
+```
 
-   # Run Clippy lints
-   cargo clippy --all-targets --all-features
+The Rust suite continues to define tiers 1-3, which require no credential. The live credentialed tier (tier 4) is a no-op without a subscription and says so rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md) for what each tier proves. CI runs the relevant Rust checks; the tier documentation also describes targeted diagnostic commands, which must obey the bounded local exception policy.
 
-   # Check file sizes (requires rust-script)
-   rust-script scripts/check-file-size.rs
+Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`benches/`), a one-minute soak (`tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. Preserve these checks and require the JavaScript gate before Rust compilation.
 
-   # Run all checks together
-   cargo fmt --check && cargo clippy --all-targets --all-features && rust-script scripts/check-file-size.rs
-   ```
+For user-facing changes, add a changelog fragment in `changelog.d/` named `YYYYMMDD_HHMMSS_description.md`:
 
-4. **Run tests**
+```bash
+touch changelog.d/$(date +%Y%m%d_%H%M%S)_my_change.md
+```
 
-   ```bash
-   # Run all tests
-   cargo test
+Use the existing categories, for example:
 
-   # Run tests with verbose output
-   cargo test --verbose
+```markdown
+### Added
+- Description of new feature
 
-   # Run doc tests
-   cargo test --doc
+### Fixed
+- Description of bug fix
+```
 
-   # Run a specific test
-   cargo test test_name
-   ```
-
-   `cargo test` runs tiers 1-3 and passes without any credential. The live,
-   credentialed tier (tier 4) is a no-op without a subscription and says so
-   rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md)
-   for what each tier proves and how to run the live one against your own
-   subscription.
-
-   Changes to the stream or request translators, token and credential code,
-   the proxy, storage or keychain lookup also trigger slower, path-filtered
-   workflows: benchmarks against the pull request's base (`benches/`), a
-   one-minute soak (`tests/soak_test.rs`), mutation testing of the touched
-   lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade
-   matrix over the last three releases. The same document says how to run
-   each one locally. If you change a translator, a recorded cassette in
-   `tests/fixtures/vendor/` may need updating with
-   `rust-script scripts/record-vendor-fixtures.rs`.
-
-5. **Add a changelog fragment**
-
-   For any user-facing changes, create a changelog fragment:
-
-   ```bash
-   # Create a new file in changelog.d/
-   # Format: YYYYMMDD_HHMMSS_description.md
-   touch changelog.d/$(date +%Y%m%d_%H%M%S)_my_change.md
-   ```
-
-   Edit the file to document your changes:
-
-   ```markdown
-   ### Added
-   - Description of new feature
-
-   ### Fixed
-   - Description of bug fix
-   ```
-
-   **Why fragments?** This prevents merge conflicts in CHANGELOG.md when multiple PRs are open simultaneously.
-
-6. **Commit your changes**
-
-   ```bash
-   git add .
-   git commit -m "feat: add new feature"
-   ```
-
-   Pre-commit hooks will automatically run and check your code.
-
-7. **Push and create a Pull Request**
-
-   ```bash
-   git push origin feature/my-feature
-   ```
-
-   Then create a Pull Request on GitHub.
+Fragments prevent merge conflicts in CHANGELOG.md when multiple PRs are open. Commit focused changes with descriptive messages. In a coordinated agent task, workers draft commits in their own worktrees and one designated push gate owner integrates and publishes the combined change. The owner reviews the full diff, runs the complete gate, pushes one tested head and waits for all CI jobs to complete. Never cancel the current CI run or push speculative fixes; collect the full failure set and repair it in one coordinated batch before the next push.
 
 ## Code Style Guidelines
 
 This project uses:
 
-- **rustfmt** for code formatting
-- **Clippy** for linting with pedantic and nursery lints enabled
-- **cargo test** for testing
+- Native JavaScript tests and TypeScript checks for fast development feedback
+- Deterministic translation and regeneration checks for covered generated code
+- **rustfmt** for Rust formatting, and CI **Clippy** with pedantic and nursery lints
+- The existing Rust test tiers in CI after the complete JavaScript gate
 
 ### Code Standards
 
-- Follow Rust idioms and best practices
+- Follow JavaScript idioms for development sources and Rust idioms for native or translated Rust
 - Use documentation comments (`///`) for all public APIs
 - Write tests for all new functionality
 - Keep functions focused and reasonably sized
@@ -271,12 +187,12 @@ mod tests {
 
 ## Pull Request Process
 
-1. Ensure all tests pass locally
+1. Run the complete JavaScript gate and review parity and generated diffs
 2. Update documentation if needed
 3. Add a changelog fragment (see step 5 in Development Workflow)
 4. Ensure the PR description clearly describes the changes
 5. Link any related issues in the PR description
-6. Wait for CI checks to pass
+6. Leave the current CI run intact and wait for every required check to finish
 7. Address any review feedback
 
 ## Changelog Management
@@ -320,15 +236,16 @@ Fragments are automatically collected into CHANGELOG.md during the release proce
 │   ├── README.md         # Fragment instructions
 │   └── *.md              # Individual changelog fragments
 ├── examples/             # Usage examples
-├── scripts/              # Rust scripts (via rust-script)
+├── scripts/              # JavaScript gate/generation tools and existing Rust/Python helpers
 ├── src/
 │   ├── lib.rs            # Library entry point
 │   └── main.rs           # Binary entry point
-├── tests/                # Integration tests
+├── tests/                # Rust integration tests; JS tests live under packages/ and scripts/
 ├── .gitignore            # Git ignore patterns
 ├── .pre-commit-config.yaml  # Pre-commit hooks
 ├── Cargo.toml            # Project configuration
 ├── CHANGELOG.md          # Project changelog
+├── AGENTS.md             # JavaScript-first and coordination instructions
 ├── CONTRIBUTING.md       # This file
 ├── LICENSE               # Unlicense (public domain)
 └── README.md             # Project README

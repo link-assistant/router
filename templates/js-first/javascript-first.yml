@@ -1,0 +1,195 @@
+name: JavaScript First
+on:
+  workflow_call:
+    inputs:
+      sha:
+        description: Immutable source commit tested before any Rust job
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix scripts/ci --ignore-scripts
+      - run: node scripts/lint-js-first.mjs
+      - run: node --test scripts/test/check-js-first-workflows.test.mjs
+      - run: node --test scripts/test/check-js-first-local.test.mjs
+      - run: node scripts/check-js-first-workflows.mjs
+  node-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: npm run native:test --prefix packages/javascript
+  bun-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.3'
+      - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: npm run native:test:bun --prefix packages/javascript
+  typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.3'
+      - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: npm run typecheck --prefix packages/javascript
+      - run: npm run native:typecheck --prefix packages/javascript
+      - run: node scripts/regenerate-native-typescript.mjs --check
+      - run: node scripts/check-native-typescript.mjs
+      - run: node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
+      - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
+      - run: node tools/translation/check-typescript-fixtures.mjs
+      - run: npm ci --prefix ui --ignore-scripts
+      - run: node scripts/build-js-first-ui.mjs
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: node --test experiments/issue-759/acceptance/*.test.mjs
+      - run: node scripts/check-router-parity.mjs --strict
+  translation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: node --test tools/translation/test/*.test.mjs
+      - run: node scripts/translate-router.mjs --check
+  reverse-translation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: node --test tools/translation/js-to-rust/test/translator.test.mjs
+      - run: node scripts/regenerate-js-first.mjs --check
+  complete:
+    name: JavaScript fully green
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: [lint, node-tests, bun-tests, typescript, parity, translation, reverse-translation]
+    if: ${{ always() }}
+    steps:
+      - name: Require every stage to succeed
+        env:
+          STAGE_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module -e "
+            const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
+            if (stages.length !== 7 || stages.some(stage => stage.result !== 'success')) {
+              console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
+              process.exit(1);
+            }
+          "

@@ -1,0 +1,8 @@
+{
+  "verified_at": "2026-10-10T20:28:35.599214+00:00",
+  "source_records": 259,
+  "capture_files": 313,
+  "source_record_hash_errors": [],
+  "hash_scopes": "source-manifest sha256 hashes decoded bytes and optional stored_sha256 container; capture-manifest sha256 hashes stored file bytes.",
+  "verification_method": "Read each pinned source record and verify decoded and optional stored SHA-256 without network or execution."
+}

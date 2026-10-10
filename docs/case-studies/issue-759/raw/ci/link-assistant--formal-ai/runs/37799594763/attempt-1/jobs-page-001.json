@@ -1,0 +1,32 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 113387964455,
+      "run_id": 37799594763,
+      "workflow_name": "Question necessity ratchet",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37799594763",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaZnMIJw",
+      "head_sha": "475baa9838d1eb15f9b6d28cc0452760d706a75f",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113387964455",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37799594763/job/113387964455",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T15:18:08Z",
+      "started_at": "2026-10-08T15:18:08Z",
+      "completed_at": "2026-10-08T15:22:45Z",
+      "name": "Question necessity ratchet (issue #920)",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113387964455",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    }
+  ]
+}

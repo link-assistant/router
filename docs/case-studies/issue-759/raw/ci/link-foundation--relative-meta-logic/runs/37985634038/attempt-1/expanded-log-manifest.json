@@ -1,0 +1,44 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/0_Cache lifecycle (windows-latest).txt.gz",
+    "sha256": "fb9700cc7f496d477b242710293ea273cf7aa9116563a4067862f97af7566000",
+    "bytes": 27653,
+    "uncompressed_bytes": 227931,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/Cache lifecycle (windows-latest)/system.txt.gz",
+    "sha256": "f5deffd5209c76977804696178d946ef9feb8895a85fd00833d5222394ea676d",
+    "bytes": 415,
+    "uncompressed_bytes": 770,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/1_Cache lifecycle (ubuntu-latest).txt.gz",
+    "sha256": "d2d42dbc20b6acad1aaf8e7039509a0c25c59f8b4bea931bbbc11dd7c60e5f9d",
+    "bytes": 18374,
+    "uncompressed_bytes": 93071,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/Cache lifecycle (ubuntu-latest)/system.txt.gz",
+    "sha256": "d9f32f30167e28bb32d9b960fea6d0c0b85fe03357a4ff2a04df864a506d6440",
+    "bytes": 330,
+    "uncompressed_bytes": 613,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/2_Cache lifecycle (macos-latest).txt.gz",
+    "sha256": "c275e68fdef8f57828bc2f624b6a325d100960c9f71abbccf407314d7262fd92",
+    "bytes": 17317,
+    "uncompressed_bytes": 92809,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37985634038/attempt-1/logs/Cache lifecycle (macos-latest)/system.txt.gz",
+    "sha256": "3846db60155b28837ea2fd172603e30fcfb80900afbfa84e3e2bc8088a3d63ca",
+    "bytes": 414,
+    "uncompressed_bytes": 766,
+    "redacted": false
+  }
+]

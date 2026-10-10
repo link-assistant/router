@@ -1,0 +1,56 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/1_Dependency Review.txt.gz",
+    "sha256": "b50ae03e6e55625b7bf8dc253bd212f6e32e7020900de8883260b73bac3b16e6",
+    "bytes": 9876,
+    "uncompressed_bytes": 47026,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "84fa322e5805f85eb0b1a260f223f1dd898202588d7d1d0efd4d0a3c526b2967"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/Dependency Review/system.txt.gz",
+    "sha256": "3521a0d7180c18c0265feb501d838c3b4a0a33c17acb61a35fada5460f822f58",
+    "bytes": 451,
+    "uncompressed_bytes": 880,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "8c84e8912857dd382dfd815a88c23714b62348fcd1545d9aa970cfb4e3133d5d"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/2_CodeQL (actions).txt.gz",
+    "sha256": "63269b10841074bab33f93852608f32b75e903c82fd10f65e585e80b4b7585c5",
+    "bytes": 26456,
+    "uncompressed_bytes": 161529,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f32e0d6f3e9f140e28ffa0d5ec9a654fd09d2a01a8901607ea0c0c36985fc083"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/CodeQL (actions)/system.txt.gz",
+    "sha256": "af4337d868a46a91edda9e1c8a9c098c6362e92a7bc4d8e9be1c082c605068ac",
+    "bytes": 395,
+    "uncompressed_bytes": 740,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "ab3048cc93949062dec302317fdac2d7ab82900117723d1990733a7a340c17ee"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/3_Cargo audit.txt.gz",
+    "sha256": "b0d3a1a432a804025c86cca9ae62dd53c45c933201b9790d1596237858490866",
+    "bytes": 9469,
+    "uncompressed_bytes": 40367,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "e9c0fd0fb2a844d5f4026c70f94b84245b16882e8cdfe17b929db949231acb4d"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/Cargo audit/system.txt.gz",
+    "sha256": "3e7d9d3aa4302f09c1fec07e178f1e8cdb3fafaa54be9f162274ed1c7d23c1e7",
+    "bytes": 393,
+    "uncompressed_bytes": 745,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "1f9f4b1e9fcf5a7d0894c6d776e2a13268ba22f0247c688c715c9e8e8b9dad47"
+  }
+]

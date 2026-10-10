@@ -1,0 +1,101 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/10_Build CLI cli-linux-arm64.txt.gz",
+    "sha256": "d616c6ce807b163ecb1dba6c97f138ba8fcdcbb012ad2061d38992cc8cde1061",
+    "bytes": 37565,
+    "uncompressed_bytes": 200193,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f3099875d94adbdceda4a4b0da9303a33f9aa331967399a9da90efc51bb9e441"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/system.txt.gz",
+    "sha256": "a3fe605d6e5f625d4db0ee262c35672dd00b825cc39974acdac3fc9958b71497",
+    "bytes": 485,
+    "uncompressed_bytes": 988,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "093deaba7bbe178ef4c51acdb71316dc54029a8ba6853e11782bdc0de44d908e"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/1_Set up job.txt.gz",
+    "sha256": "3e7d7aec696dd44a1d9071fc58e1424fbfb4c83d103ef0774a219bbcfcb861d6",
+    "bytes": 1092,
+    "uncompressed_bytes": 2665,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "ce366f6b9b0062725e81317b326f33bc8007f6a46070b237547cd292447059f3"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/2_Run actions_checkout@v7.txt.gz",
+    "sha256": "3c173e54b3f3b3ee95499e9f38e67aeca7c13b1cc8ed5dd33ecdfc7f440fb4d3",
+    "bytes": 18290,
+    "uncompressed_bytes": 107242,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "e46ac37e4cb1bf808670dfbe0e2276629a3489970163c8cb7819346d115894ed"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/3_Simulate fresh merge with base branch (PR only).txt.gz",
+    "sha256": "4158b930a42d2adc15327d7fb6e8644749010e5509f941e7c363c12a8092e045",
+    "bytes": 726,
+    "uncompressed_bytes": 1526,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "101a89942c3dcea4ce25891b98d70c84ba1be5d62fbd4dc826b34e946ad3619a"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/4_Install Rust toolchain.txt.gz",
+    "sha256": "1b0b6b8872a32fbba69f7da06d5669f8d4c727c9e5f4ca765a9b34681325b8c9",
+    "bytes": 4108,
+    "uncompressed_bytes": 19608,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "e175248265c587b4bbb55604be15666b0a1bf4c6a923b2079b274a3ff83c2f22"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/5_Set up the musl cross toolchain.txt.gz",
+    "sha256": "227858e4a8e22ae583cc549b905399e4d3764146196f060bd048bf2ab2d4c1c4",
+    "bytes": 1210,
+    "uncompressed_bytes": 3717,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "4af5aea515f85f6ddfac10e456490afc24833decdb2cff7c8b073324dbf38d80"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/6_Cache Rust compiler outputs.txt.gz",
+    "sha256": "a29e31f03178837ab718e6a561bb81f5d06d6dc3f3bd31d632b4f16fe6550295",
+    "bytes": 970,
+    "uncompressed_bytes": 2471,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d460cab5225b2da02bdd763c3ddade0a8b26bf2a6ffe6a66ae7b3641e088f83a"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/7_Enable Rust compiler cache.txt.gz",
+    "sha256": "ad437916431b5ef4a0f4da630f0d5e961b8ef24ff886ef542b92703280010cef",
+    "bytes": 822,
+    "uncompressed_bytes": 2111,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "60dfbcef81e591a2acb5cc3c8d507290e965a6986d51d8e7504a8f701f7fa951"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/8_Build formal-ai CLI binary (release, pinned lock).txt.gz",
+    "sha256": "4f8f151f1fcf9228061eae41cc66f89deb320b59e9fbd6f7352a6ef247a6126a",
+    "bytes": 12501,
+    "uncompressed_bytes": 60641,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "0605f3514b3128b4135ce9bd7da696464ef12a066d671833cbcfa8ca40ec32d1"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37840425973/attempt-1/logs/Build CLI cli-linux-arm64/29_Complete job.txt.gz",
+    "sha256": "0b5804b85349d5f86bad81f4136fce06ede81cf68a0c2ab1df529b103c732efe",
+    "bytes": 87,
+    "uncompressed_bytes": 61,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "5ce41e5bf2d7ffa4a58712a84677865a942d5296614d4c7f1ad86e1ecbfab1e1"
+  }
+]

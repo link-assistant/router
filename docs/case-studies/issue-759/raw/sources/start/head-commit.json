@@ -1,0 +1,137 @@
+{
+  "sha": "348ad41c2e6265611a53b55271d893f74960eff6",
+  "node_id": "C_kwDOP85RQNoAKDM0OGFkNDFjMmU2MjY1NjExYTUzYjU1MjcxZDg5M2Y3NDk2MGVmZjY",
+  "commit": {
+    "author": {
+      "name": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "date": "2026-10-10T18:53:37Z"
+    },
+    "committer": {
+      "name": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "date": "2026-10-10T18:53:37Z"
+    },
+    "message": "0.37.0",
+    "tree": {
+      "sha": "3ba42afce3b3cdc6adfc6a063238f68083a20ffe",
+      "url": "https://api.github.com/repos/link-foundation/start/git/trees/3ba42afce3b3cdc6adfc6a063238f68083a20ffe"
+    },
+    "url": "https://api.github.com/repos/link-foundation/start/git/commits/348ad41c2e6265611a53b55271d893f74960eff6",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    }
+  },
+  "url": "https://api.github.com/repos/link-foundation/start/commits/348ad41c2e6265611a53b55271d893f74960eff6",
+  "html_url": "https://github.com/link-foundation/start/commit/348ad41c2e6265611a53b55271d893f74960eff6",
+  "comments_url": "https://api.github.com/repos/link-foundation/start/commits/348ad41c2e6265611a53b55271d893f74960eff6/comments",
+  "author": {
+    "login": "github-actions[bot]",
+    "id": 41898282,
+    "node_id": "MDM6Qm90NDE4OTgyODI=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+    "html_url": "https://github.com/apps/github-actions",
+    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "github-actions[bot]",
+    "id": 41898282,
+    "node_id": "MDM6Qm90NDE4OTgyODI=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+    "html_url": "https://github.com/apps/github-actions",
+    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "da9901f424ca6c9d576fc7debc8dce0409eaa68d",
+      "url": "https://api.github.com/repos/link-foundation/start/commits/da9901f424ca6c9d576fc7debc8dce0409eaa68d",
+      "html_url": "https://github.com/link-foundation/start/commit/da9901f424ca6c9d576fc7debc8dce0409eaa68d"
+    }
+  ],
+  "stats": {
+    "total": 21,
+    "additions": 11,
+    "deletions": 10
+  },
+  "files": [
+    {
+      "sha": "7b3c74474a4bad2614792b069d8ed0a9d475606e",
+      "filename": "js/.changeset/docker-safety-and-cli-parity.md",
+      "status": "removed",
+      "additions": 0,
+      "deletions": 7,
+      "changes": 7,
+      "blob_url": "https://github.com/link-foundation/start/blob/da9901f424ca6c9d576fc7debc8dce0409eaa68d/js%2F.changeset%2Fdocker-safety-and-cli-parity.md",
+      "raw_url": "https://github.com/link-foundation/start/raw/da9901f424ca6c9d576fc7debc8dce0409eaa68d/js%2F.changeset%2Fdocker-safety-and-cli-parity.md",
+      "contents_url": "https://api.github.com/repos/link-foundation/start/contents/js%2F.changeset%2Fdocker-safety-and-cli-parity.md?ref=da9901f424ca6c9d576fc7debc8dce0409eaa68d",
+      "patch": "@@ -1,7 +0,0 @@\n----\n-'start-command': minor\n----\n-\n-Add copy-free Docker command resumes with guarded legacy snapshots, persistent\n-task labels, wrapper help flags, private sanitized log uploads, and faithful shell\n-argument and exit-code handling. Enforce JavaScript-first CI and shared Rust parity."
+    },
+    {
+      "sha": "5e0cfb863e9ba682592a065238e5757465c911ae",
+      "filename": "js/CHANGELOG.md",
+      "status": "modified",
+      "additions": 8,
+      "deletions": 0,
+      "changes": 8,
+      "blob_url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/js%2FCHANGELOG.md",
+      "raw_url": "https://github.com/link-foundation/start/raw/348ad41c2e6265611a53b55271d893f74960eff6/js%2FCHANGELOG.md",
+      "contents_url": "https://api.github.com/repos/link-foundation/start/contents/js%2FCHANGELOG.md?ref=348ad41c2e6265611a53b55271d893f74960eff6",
+      "patch": "@@ -1,5 +1,13 @@\n # start-command\n \n+## 0.37.0\n+\n+### Minor Changes\n+\n+- 94db203: Add copy-free Docker command resumes with guarded legacy snapshots, persistent\n+  task labels, wrapper help flags, private sanitized log uploads, and faithful shell\n+  argument and exit-code handling. Enforce JavaScript-first CI and shared Rust parity.\n+\n ## 0.36.0\n \n ### Minor Changes"
+    },
+    {
+      "sha": "021bfac3da9fe8e1fa6fbb55f725c7cb4e5124a8",
+      "filename": "js/package-lock.json",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 2,
+      "changes": 4,
+      "blob_url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/js%2Fpackage-lock.json",
+      "raw_url": "https://github.com/link-foundation/start/raw/348ad41c2e6265611a53b55271d893f74960eff6/js%2Fpackage-lock.json",
+      "contents_url": "https://api.github.com/repos/link-foundation/start/contents/js%2Fpackage-lock.json?ref=348ad41c2e6265611a53b55271d893f74960eff6",
+      "patch": "@@ -1,12 +1,12 @@\n {\n   \"name\": \"start-command\",\n-  \"version\": \"0.36.0\",\n+  \"version\": \"0.37.0\",\n   \"lockfileVersion\": 3,\n   \"requires\": true,\n   \"packages\": {\n     \"\": {\n       \"name\": \"start-command\",\n-      \"version\": \"0.36.0\",\n+      \"version\": \"0.37.0\",\n       \"license\": \"Unlicense\",\n       \"dependencies\": {\n         \"command-stream\": \"^0.9.4\","
+    },
+    {
+      "sha": "1be2e963d1edfb5e3179866c24c260caa57c1d64",
+      "filename": "js/package.json",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "blob_url": "https://github.com/link-foundation/start/blob/348ad41c2e6265611a53b55271d893f74960eff6/js%2Fpackage.json",
+      "raw_url": "https://github.com/link-foundation/start/raw/348ad41c2e6265611a53b55271d893f74960eff6/js%2Fpackage.json",
+      "contents_url": "https://api.github.com/repos/link-foundation/start/contents/js%2Fpackage.json?ref=348ad41c2e6265611a53b55271d893f74960eff6",
+      "patch": "@@ -1,6 +1,6 @@\n {\n   \"name\": \"start-command\",\n-  \"version\": \"0.36.0\",\n+  \"version\": \"0.37.0\",\n   \"description\": \"Gamification of coding, execute any command with ability to auto-report issues on GitHub\",\n   \"main\": \"src/bin/cli.js\",\n   \"exports\": {"
+    }
+  ]
+}

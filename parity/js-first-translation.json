@@ -1,0 +1,3264 @@
+{
+  "schemaVersion": 1,
+  "translator": "tools/translation/js-to-rust/translator.mjs",
+  "provenance": "tools/translation/js-to-rust/provenance.json",
+  "fragment": "portable-router-v1",
+  "contract": {
+    "status": "bounded-executable-translation",
+    "wholeNativeImplementationTranslated": false,
+    "numbers": "JavaScript Number and Rust f64, IEEE-754 binary64; NaN and signed zero preserved by min/max encodings",
+    "strings": "Unicode scalar strings; length counts UTF-16 code units; Rust String cannot represent unpaired UTF-16 surrogate input",
+    "runtime": "Node >=20; TypeScript strict; generated Rust uses only std",
+    "arguments": "Callers supply the JSDoc annotated primitive types; JavaScript implicit coercion is not part of this fragment",
+    "unsupportedPolicy": "strict portable regeneration fails; native source census reports refusals without source envelopes"
+  },
+  "sources": [
+    {
+      "path": "packages/javascript/portable/policy.mjs",
+      "sha256": "61d6a2b90f4a8c495700eea32eef4e84855df7c631d1b8507c4e132e2c54d448",
+      "bytes": 4193,
+      "functions": [
+        {
+          "javascript": "tokenBudgetPermits",
+          "rust": "token_budget_permits",
+          "parameters": [
+            {
+              "name": "used",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "reserve",
+              "type": "number"
+            },
+            {
+              "name": "max",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "cooldownActive",
+          "rust": "cooldown_active",
+          "parameters": [
+            {
+              "name": "until",
+              "type": "number"
+            },
+            {
+              "name": "now",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "providerModelId",
+          "rust": "provider_model_id",
+          "parameters": [
+            {
+              "name": "provider",
+              "type": "string"
+            },
+            {
+              "name": "model",
+              "type": "string"
+            }
+          ],
+          "returns": "string"
+        },
+        {
+          "javascript": "clamp",
+          "rust": "clamp",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "number"
+            },
+            {
+              "name": "minimum",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "longestCooldown",
+          "rust": "longest_cooldown",
+          "parameters": [
+            {
+              "name": "previous",
+              "type": "number"
+            },
+            {
+              "name": "next",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryAfterDeadline",
+          "rust": "retry_after_deadline",
+          "parameters": [
+            {
+              "name": "seconds",
+              "type": "number"
+            },
+            {
+              "name": "now",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "tokenCost",
+          "rust": "token_cost",
+          "parameters": [
+            {
+              "name": "input",
+              "type": "number"
+            },
+            {
+              "name": "output",
+              "type": "number"
+            },
+            {
+              "name": "input_per_million",
+              "type": "number"
+            },
+            {
+              "name": "output_per_million",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "validTokenCount",
+          "rust": "valid_token_count",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "settledTokenUsage",
+          "rust": "settled_token_usage",
+          "parameters": [
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "actual",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "remainingTokenBudget",
+          "rust": "remaining_token_budget",
+          "parameters": [
+            {
+              "name": "used",
+              "type": "number"
+            },
+            {
+              "name": "reserved",
+              "type": "number"
+            },
+            {
+              "name": "max",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "completionTokenLimit",
+          "rust": "completion_token_limit",
+          "parameters": [
+            {
+              "name": "requested",
+              "type": "number"
+            },
+            {
+              "name": "available",
+              "type": "number"
+            },
+            {
+              "name": "limit",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryBackoff",
+          "rust": "retry_backoff",
+          "parameters": [
+            {
+              "name": "failures",
+              "type": "number"
+            },
+            {
+              "name": "base",
+              "type": "number"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "retryableStatus",
+          "rust": "retryable_status",
+          "parameters": [
+            {
+              "name": "status",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "successStatus",
+          "rust": "success_status",
+          "parameters": [
+            {
+              "name": "status",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "weightedCapacity",
+          "rust": "weighted_capacity",
+          "parameters": [
+            {
+              "name": "weight",
+              "type": "number"
+            },
+            {
+              "name": "load",
+              "type": "number"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "tokenExpired",
+          "rust": "token_expired",
+          "parameters": [
+            {
+              "name": "now",
+              "type": "number"
+            },
+            {
+              "name": "expires",
+              "type": "number"
+            },
+            {
+              "name": "skew",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "isQualifiedModel",
+          "rust": "is_qualified_model",
+          "parameters": [
+            {
+              "name": "model",
+              "type": "string"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "credentialPrefixMatches",
+          "rust": "credential_prefix_matches",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "prefix",
+              "type": "string"
+            }
+          ],
+          "returns": "boolean"
+        },
+        {
+          "javascript": "utf16Length",
+          "rust": "utf16_length",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            }
+          ],
+          "returns": "number"
+        },
+        {
+          "javascript": "modelNameLengthPermits",
+          "rust": "model_name_length_permits",
+          "parameters": [
+            {
+              "name": "value",
+              "type": "string"
+            },
+            {
+              "name": "maximum",
+              "type": "number"
+            }
+          ],
+          "returns": "boolean"
+        }
+      ]
+    }
+  ],
+  "fixtures": {
+    "path": "parity/fixtures/js-first/policy.json",
+    "sha256": "82d1a2fdd476cc805903a926d25d3bacfdb9df896acc547e351fd63987ceccf8",
+    "cases": 58,
+    "expectedResults": "independently authored JSON, not generated from the JavaScript implementation"
+  },
+  "nativeCoverage": [
+    {
+      "path": "packages/javascript/native/accounts.mjs",
+      "sha256": "96ab2deb3da7d52ba0fee7e2e247e9fc470372417a0ff803875c44ab2b4fdf81",
+      "sourceItems": 8,
+      "translatedItems": 0,
+      "unsupportedItems": 8,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 56,
+            "encoding": "utf16"
+          },
+          "example": "import { cooldownActive } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 57,
+            "end": 127,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, readOptional, serialized } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 128,
+            "end": 171,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 173,
+            "end": 437,
+            "encoding": "utf16"
+          },
+          "example": "const strategyAliases = new Map([ ['rr','round-robin'],['roundrobin','round-robin'],['weighted_round_robin','weighted-round-robin'], ['prio','priority'],['fill-first','priority'],["
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 438,
+            "end": 663,
+            "encoding": "utf16"
+          },
+          "example": "export function wildcardMatch(pattern, value) { const regex = pattern.split('').map(c => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\\\^$.[\\]{}()+|]/g,'\\\\$&')).join(''); retur"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 664,
+            "end": 3421,
+            "encoding": "utf16"
+          },
+          "example": "export function validateAccountPolicy(policy = {}) { const p = { weight:1, prefix:null, disable_cooling:false, request_retry:null, request_scoped_errors:[], headers:{}, model_alias"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3422,
+            "end": 4124,
+            "encoding": "utf16"
+          },
+          "example": "export function accountVisibleModels(account, upstream) { const p = account.policy; const excluded = model => p.excluded_models.some(pattern => wildcardMatch(pattern,model)); if (e"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 4125,
+            "end": 16372,
+            "encoding": "utf16"
+          },
+          "example": "export class AccountRouter { constructor({ config, clock = () => Math.floor(Date.now()/1000) }) { this.config = config; this.clock = clock; this.cursor = 0; this.failoverCursor = 0"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/cli.mjs",
+      "sha256": "11b27e2ca3e9efc5a879ee8b8ea50cda147df3ef26d497cd1a8ee7409d3833aa",
+      "sourceItems": 6,
+      "translatedItems": 0,
+      "unsupportedItems": 6,
+      "diagnostics": [
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 0,
+            "end": 122,
+            "encoding": "utf16"
+          },
+          "example": "#!/usr/bin/env node /** Standalone native CLI: structured contracts, never falls back to Rust. */ import { pathToFileURL }"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 123,
+            "end": 139,
+            "encoding": "utf16"
+          },
+          "example": "from 'node:url';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 140,
+            "end": 214,
+            "encoding": "utf16"
+          },
+          "example": "import { NativeRouter, catalog, operationResult } from './operations.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 216,
+            "end": 2731,
+            "encoding": "utf16"
+          },
+          "example": "export function parseNativeArguments(argv) { const remaining = [...argv], global = {}; for (let index = 0; index < remaining.length; index++) { if (remaining[index] === '--json') {"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2732,
+            "end": 3513,
+            "encoding": "utf16"
+          },
+          "example": "export async function runNativeCli(argv, { stdout = process.stdout, stdin = process.stdin, env = process.env, router } = {}) { let result; try { const parsed = parseNativeArguments"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 3514,
+            "end": 3661,
+            "encoding": "utf16"
+          },
+          "example": "if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) { process.exitCode = await runNativeCli(process.argv.slice(2)); }"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/config.mjs",
+      "sha256": "4f4eb6ccd17135aa3e7bbe85b9bee13d306c478c62057a59a589106042624dc0",
+      "sourceItems": 14,
+      "translatedItems": 0,
+      "unsupportedItems": 14,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 44,
+            "encoding": "utf16"
+          },
+          "example": "import { readFile } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 45,
+            "end": 133,
+            "encoding": "utf16"
+          },
+          "example": "import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 134,
+            "end": 170,
+            "encoding": "utf16"
+          },
+          "example": "import { resolve } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 171,
+            "end": 261,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, readOptional, serialized, withNativeFileLock } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 262,
+            "end": 323,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError, ensureRealSecret } from './tokens.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 325,
+            "end": 911,
+            "encoding": "utf16"
+          },
+          "example": "export function parseLenv(text) { const values = Object.create(null); for (const raw of text.split(/\\r?\\n/)) { const line = raw.trim(); if (!line || line.startsWith('#')) continue;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 912,
+            "end": 986,
+            "encoding": "utf16"
+          },
+          "example": "const bool = value => value === true || value === 'true' || value === '1';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 987,
+            "end": 2622,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeProvider(record, env = process.env) { const name = record.name ?? record.provider_name ?? record.provider; if (typeof name !== 'string' || !/^[A-Za-z0-9._-"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 2623,
+            "end": 4934,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeConfig(input = {}, env = process.env) { const config = { ...input }; config.token_secret = input.token_secret ?? input.tokenSecret ?? env.TOKEN_SECRET; con"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4935,
+            "end": 5641,
+            "encoding": "utf16"
+          },
+          "example": "export async function loadConfig({ config = {}, configPath, env = process.env } = {}) { let fromFile = {}; if (configPath) { const text = await readFile(configPath,'utf8'); if (con"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5642,
+            "end": 6049,
+            "encoding": "utf16"
+          },
+          "example": "export function encryptProviderSecret(secret, tokenSecret) { const key = createHash('sha256').update(ensureRealSecret(tokenSecret)).digest(), nonce = randomBytes(12); const cipher "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6050,
+            "end": 6819,
+            "encoding": "utf16"
+          },
+          "example": "export function decryptProviderSecret(secret, tokenSecret) { if (!secret.startsWith('aes256gcm:')) throw new RouterError('invalid_provider','Unsupported provider secret format'); c"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 6820,
+            "end": 6958,
+            "encoding": "utf16"
+          },
+          "example": "const redact = r => { const { api_key, encrypted_api_key, ...safe } = r; return { ...safe, has_encrypted_api_key:!!encrypted_api_key }; };"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 6959,
+            "end": 9773,
+            "encoding": "utf16"
+          },
+          "example": "export class ProviderStore { constructor({ dataDir, secret, env = process.env, records = [], persistent = true }) { this.path = `${dataDir}/providers.lenv`; this.secret = secret; t"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/core.mjs",
+      "sha256": "2f310a5f93ed3de81a0a35bb7f494f983f2456a7d2c97e31ac3abf75b45c5d7e",
+      "sourceItems": 13,
+      "translatedItems": 0,
+      "unsupportedItems": 13,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 57,
+            "encoding": "utf16"
+          },
+          "example": "import { loadConfig, ProviderStore } from './config.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 58,
+            "end": 107,
+            "encoding": "utf16"
+          },
+          "example": "import { createTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 108,
+            "end": 165,
+            "encoding": "utf16"
+          },
+          "example": "import { TokenManager, RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 166,
+            "end": 213,
+            "encoding": "utf16"
+          },
+          "example": "import { AccountRouter } from './accounts.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 214,
+            "end": 300,
+            "encoding": "utf16"
+          },
+          "example": "import { OAuthManager, CredentialFileStore, subscriptionProvider } from './oauth.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 301,
+            "end": 364,
+            "encoding": "utf16"
+          },
+          "example": "import { modelCandidates, catalogModels } from './routing.mjs';"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 366,
+            "end": 5626,
+            "encoding": "utf16"
+          },
+          "example": "export class RouterCore { constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {} }) { this.config = confi"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 5627,
+            "end": 6041,
+            "encoding": "utf16"
+          },
+          "example": "export async function createRouterCore(options = {}) { const config = await loadConfig(options); const core = new RouterCore({...options,config}); // Resolve persisted provider cat"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 6042,
+            "end": 6116,
+            "encoding": "utf16"
+          },
+          "example": "export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 6117,
+            "end": 6191,
+            "encoding": "utf16"
+          },
+          "example": "export { loadConfig, normalizeConfig, ProviderStore } from './config.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 6192,
+            "end": 6275,
+            "encoding": "utf16"
+          },
+          "example": "export { MemoryTokenStore, TextTokenStore, createTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 6276,
+            "end": 6323,
+            "encoding": "utf16"
+          },
+          "example": "export { AccountRouter } from './accounts.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 6325,
+            "end": 6442,
+            "encoding": "utf16"
+          },
+          "example": "export { OAuthManager, CredentialFileStore, ClaudeLogin, importCredential, executeAuthOperation } from './oauth.mjs';"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/index.mjs",
+      "sha256": "8ee28031aa331d311bf7feb12fbf8e1a10778130fa5dda0ad42b41e22065b4d1",
+      "sourceItems": 4,
+      "translatedItems": 0,
+      "unsupportedItems": 4,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 184,
+            "encoding": "utf16"
+          },
+          "example": "export { NativeRouter, NativeRouterError, createNativeRouter, catalog, version, operationNames, nativeOperationSupport, operationResult, validateNativeResult } from './operations.m"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 185,
+            "end": 243,
+            "encoding": "utf16"
+          },
+          "example": "export { createRouterCore, RouterCore } from './core.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 244,
+            "end": 341,
+            "encoding": "utf16"
+          },
+          "example": "export { createNativeRouter as createNativeServerRouter, startNativeServer } from './server.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 342,
+            "end": 430,
+            "encoding": "utf16"
+          },
+          "example": "export { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/managed-server.mjs",
+      "sha256": "64425e2a845208fe34ab6b1a962cc3f37ebdee81153ec9decf2d8549d5be088d",
+      "sourceItems": 43,
+      "translatedItems": 0,
+      "unsupportedItems": 43,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 153,
+            "end": 196,
+            "encoding": "utf16"
+          },
+          "example": "import { spawn } from 'node:child_process';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 197,
+            "end": 262,
+            "encoding": "utf16"
+          },
+          "example": "import { createServer, request as httpRequest } from 'node:http';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 263,
+            "end": 358,
+            "encoding": "utf16"
+          },
+          "example": "import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 359,
+            "end": 433,
+            "encoding": "utf16"
+          },
+          "example": "import { lstat, mkdir, chmod, open, readdir, rm } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 434,
+            "end": 492,
+            "encoding": "utf16"
+          },
+          "example": "import { resolve, join, dirname, parse } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 493,
+            "end": 534,
+            "encoding": "utf16"
+          },
+          "example": "import { fileURLToPath } from 'node:url';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 535,
+            "end": 611,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, serialized, withNativeFileLock } from './storage.mjs';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ,",
+          "span": {
+            "start": 613,
+            "end": 709,
+            "encoding": "utf16"
+          },
+          "example": "const ENGINE = 'link-assistant-router/native-managed/v1', SELF = fileURLToPath(import.meta.url);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ,",
+          "span": {
+            "start": 710,
+            "end": 789,
+            "encoding": "utf16"
+          },
+          "example": "const MAX_STATE = 1024 * 1024, children = new Map(), OWNER_BOOT = randomUUID();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 790,
+            "end": 872,
+            "encoding": "utf16"
+          },
+          "example": "const fail = message => Object.assign(new Error(message),{code:'managed_server'});"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 873,
+            "end": 959,
+            "encoding": "utf16"
+          },
+          "example": "const unsupported = message => Object.assign(new Error(message),{code:'unsupported'});"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 960,
+            "end": 1019,
+            "encoding": "utf16"
+          },
+          "example": "const sleep = ms => new Promise(done=>setTimeout(done,ms));"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ...",
+          "span": {
+            "start": 1020,
+            "end": 1063,
+            "encoding": "utf16"
+          },
+          "example": "const out = (...lines) => ({output:lines});"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: )",
+          "span": {
+            "start": 1064,
+            "end": 1116,
+            "encoding": "utf16"
+          },
+          "example": "const nonce = () => randomBytes(32).toString('hex');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 1117,
+            "end": 1198,
+            "encoding": "utf16"
+          },
+          "example": "const digest = (key,text) => createHmac('sha256',key).update(text).digest('hex');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1199,
+            "end": 1277,
+            "encoding": "utf16"
+          },
+          "example": "const fingerprint = value => createHash('sha256').update(value).digest('hex');"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1278,
+            "end": 1431,
+            "encoding": "utf16"
+          },
+          "example": "function equal(a,b) { return typeof a === 'string' && typeof b === 'string' && a.length === b.length && timingSafeEqual(Buffer.from(a),Buffer.from(b)); }"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 1432,
+            "end": 1883,
+            "encoding": "utf16"
+          },
+          "example": "export const supportedManagedOperations = Object.freeze(Object.fromEntries(['start','stop','status','use','claim','reap','remove'].map(op=>[`server.${op}`,{ status:'partial', limit"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 1885,
+            "end": 2021,
+            "encoding": "utf16"
+          },
+          "example": "async function info(path) { try { return await lstat(path); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } }"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2022,
+            "end": 2279,
+            "encoding": "utf16"
+          },
+          "example": "async function noLinks(path) { for (let current = resolve(path);;) { if ((await info(current))?.isSymbolicLink()) throw fail('Native managed state contains a symlink'); if (current"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2280,
+            "end": 2983,
+            "encoding": "utf16"
+          },
+          "example": "async function readJSON(path) { await noLinks(path); let file; try { file = await open(path,'r'); const stat = await file.stat(); if (!stat.isFile() || stat.size > MAX_STATE) throw"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2984,
+            "end": 3289,
+            "encoding": "utf16"
+          },
+          "example": "function paths(dataDir) { if (typeof dataDir !== 'string' || !dataDir) throw fail('Managed operation requires a resolved data directory'); const root = join(resolve(dataDir),'nativ"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 3290,
+            "end": 3542,
+            "encoding": "utf16"
+          },
+          "example": "async function writeJSON(path,value) { const text = JSON.stringify(value); if (Buffer.byteLength(text) > MAX_STATE) throw fail('Native managed state exceeds 1 MiB'); await noLinks("
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 3543,
+            "end": 3760,
+            "encoding": "utf16"
+          },
+          "example": "async function locked(p,operation) { await noLinks(p.root); await mkdir(p.root,{recursive:true,mode:0o700}); await chmod(p.root,0o700); return serialized(p.state,()=>withNativeFile"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3761,
+            "end": 4693,
+            "encoding": "utf16"
+          },
+          "example": "function validateState(state) { if (!state) return null; if (state.schema !== ENGINE || state.engine !== 'node' || !/^[a-f0-9]{64}$/.test(state.control_key) || !/^[a-f0-9]{64}$/.te"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: async",
+          "span": {
+            "start": 4694,
+            "end": 4762,
+            "encoding": "utf16"
+          },
+          "example": "const loadState = async p => validateState(await readJSON(p.state));"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4763,
+            "end": 5004,
+            "encoding": "utf16"
+          },
+          "example": "function alive(pid) { if (!Number.isSafeInteger(pid) || pid <= 0) return false; try { process.kill(pid,0); return true; } catch (error) { if (error.code === 'ESRCH') return false; "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5005,
+            "end": 5511,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeManagedOrigin(value) { let url; try { url = new URL(String(value).trim()); } catch { throw fail('Server URL must be an absolute http:// or https:// origin "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5512,
+            "end": 6213,
+            "encoding": "utf16"
+          },
+          "example": "function request(url,{method = 'GET',headers = {},body,limit = 65536,timeout = 1200} = {}) { return new Promise((done,reject)=> { const call = httpRequest(url,{method,headers,agent"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 6214,
+            "end": 7117,
+            "encoding": "utf16"
+          },
+          "example": "async function proof(state,action = 'health') { const challenge = nonce(), body = JSON.stringify({challenge,boot_id:state.boot_id}); const result = await request(`http://127.0.0.1:"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 7118,
+            "end": 7515,
+            "encoding": "utf16"
+          },
+          "example": "async function verified(state) { if (!state.pid || !alive(state.pid)) throw fail('Managed daemon is stopped or its recorded process has exited'); const result = await proof(state);"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7516,
+            "end": 8079,
+            "encoding": "utf16"
+          },
+          "example": "function daemonConfig(config,state,p) { // Parent-owned live Router data and credentials are never adopted. The // managed daemon has its own volume and signing authority. return {"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 8080,
+            "end": 11094,
+            "encoding": "utf16"
+          },
+          "example": "async function start(p,state,config,keepRunning) { if (state?.pid) { if (alive(state.pid)) { await verified(state); if (keepRunning) {state.keep_running = true; await writeJSON(p.s"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 11095,
+            "end": 11639,
+            "encoding": "utf16"
+          },
+          "example": "async function stop(p,state) { if (!state) throw fail('Managed router is absent; run server.start first'); if (state.pid && alive(state.pid)) { await verified(state); await proof(s"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 11640,
+            "end": 12158,
+            "encoding": "utf16"
+          },
+          "example": "async function validateTree(path) { let files = 0; const visit = async (path,depth) => { if (++files > 10000 || depth > 32) throw unsupported('Native managed volume exceeds its 100"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 12159,
+            "end": 12740,
+            "encoding": "utf16"
+          },
+          "example": "async function selection(p,env,state) { const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL; if (configured !== undefined) return {source:'environment',url:normalize"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 12973,
+            "end": 13387,
+            "encoding": "utf16"
+          },
+          "example": "export async function selectedManagedServer({core,config = {},env = {}} = {}) { config = core?.config ?? config; const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 13388,
+            "end": 14259,
+            "encoding": "utf16"
+          },
+          "example": "async function status(p,state,env) { let lifecycle = state ? 'stopped' : 'absent', detail = null; if (state?.pid && alive(state.pid)) { try { await verified(state); lifecycle = 'ru"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 14260,
+            "end": 15217,
+            "encoding": "utf16"
+          },
+          "example": "function validateOptions(name,options,config) { const allowed = new Set(['data_dir',...(name === 'server.use' ? ['server','management_server','token','token_stdin','clear','run_max"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 15218,
+            "end": 19074,
+            "encoding": "utf16"
+          },
+          "example": "export async function executeManagedOperation({name,options = {},invocation = {},core,config = {},env = {}}) { if (!supportedManagedOperations[name]) throw unsupported(`Native ${na"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 19155,
+            "end": 19698,
+            "encoding": "utf16"
+          },
+          "example": "export async function acquireManagedReference({core,config = {}}) { config = core?.config ?? config; validateOptions('server.start',{},config); const p = paths(config.data_dir ?? c"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 19700,
+            "end": 22478,
+            "encoding": "utf16"
+          },
+          "example": "async function daemon() { let runtime, control, committed = false, started = false; const exit = async()=> {const timer = setTimeout(()=>process.exit(0),3000); timer.unref(); await"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 22479,
+            "end": 22552,
+            "encoding": "utf16"
+          },
+          "example": "if (process.argv[1] === SELF && process.argv[2] === '--daemon') daemon();"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/oauth.mjs",
+      "sha256": "2c9329453a53fedbf432ce889417f5291829661400d578ce8df55d63cdbc92be",
+      "sourceItems": 45,
+      "translatedItems": 10,
+      "unsupportedItems": 35,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 66,
+            "encoding": "utf16"
+          },
+          "example": "import { createHash, randomBytes, randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 67,
+            "end": 152,
+            "encoding": "utf16"
+          },
+          "example": "import { access, mkdir, open, realpath, rename, rm, unlink } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 153,
+            "end": 216,
+            "encoding": "utf16"
+          },
+          "example": "import { dirname, isAbsolute, join, resolve } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 217,
+            "end": 253,
+            "encoding": "utf16"
+          },
+          "example": "import { constants } from 'node:fs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 254,
+            "end": 308,
+            "encoding": "utf16"
+          },
+          "example": "import { tokenExpired } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 309,
+            "end": 409,
+            "encoding": "utf16"
+          },
+          "example": "import { atomicWrite, decodeLino, encodeLino, serialized, withNativeFileLock } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 410,
+            "end": 453,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 1255,
+            "end": 1378,
+            "encoding": "utf16"
+          },
+          "example": "const files = {claude:['.credentials.json','credentials.json','auth.json','oauth.json','config.json'],codex:['auth.json']};"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 1379,
+            "end": 1405,
+            "encoding": "utf16"
+          },
+          "example": "const flights = new Map();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 1406,
+            "end": 1434,
+            "encoding": "utf16"
+          },
+          "example": "const uncertain = new Map();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1435,
+            "end": 1518,
+            "encoding": "utf16"
+          },
+          "example": "const nonempty = value => typeof value === 'string' && value.length ? value : null;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 1519,
+            "end": 1625,
+            "encoding": "utf16"
+          },
+          "example": "const field = (object,...names) => names.map(name => object?.[name]).find(value => value != null) ?? null;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 1626,
+            "end": 1707,
+            "encoding": "utf16"
+          },
+          "example": "const fail = (code,message,status = 400) => new RouterError(code,message,status);"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 1708,
+            "end": 1750,
+            "encoding": "utf16"
+          },
+          "example": "const CREDENTIAL_FILE_LIMIT = 4*1024*1024;"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 1751,
+            "end": 1786,
+            "encoding": "utf16"
+          },
+          "example": "const PENDING_FILE_LIMIT = 16*1024;"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 1951,
+            "end": 3486,
+            "encoding": "utf16"
+          },
+          "example": "async function boundedOAuthFile(path,{maxBytes = CREDENTIAL_FILE_LIMIT,optional = false,code = 'credential_read_failed',status = 401} = {}) { let handle; try { handle = await open("
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3488,
+            "end": 3842,
+            "encoding": "utf16"
+          },
+          "example": "export function subscriptionProvider(value) { const name = String(value).trim().toLowerCase(); if (['claude','anthropic','claude-code'].includes(name)) return 'claude'; if (['codex"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3843,
+            "end": 4028,
+            "encoding": "utf16"
+          },
+          "example": "function integer(value,name) { if (value == null) return null; if (!Number.isSafeInteger(value)) throw fail('credential_invalid',`${name} must be a safe integer`); return value; }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4029,
+            "end": 4330,
+            "encoding": "utf16"
+          },
+          "example": "function jwtHint(token) { try { const payload = token.split('.')[1]; if (!payload || !/^[A-Za-z0-9_-]+$/.test(payload)) return null; const parsed = JSON.parse(Buffer.from(payload,'"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4331,
+            "end": 4773,
+            "encoding": "utf16"
+          },
+          "example": "function scopesFrom(block) { const scopes = block?.scopes ?? []; if (!Array.isArray(scopes) || scopes.some(value => typeof value !== 'string')) throw fail('credential_invalid','Cre"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4935,
+            "end": 7337,
+            "encoding": "utf16"
+          },
+          "example": "export function parseCredentialDocument(provider, input) { provider = subscriptionProvider(provider); let document; try { document = typeof input === 'string' ? JSON.parse(input) :"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7338,
+            "end": 8377,
+            "encoding": "utf16"
+          },
+          "example": "export function mergeCredentialDocument(provider, document, token, nowMs) { provider = subscriptionProvider(provider); document = structuredClone(document); if (provider === 'claud"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8378,
+            "end": 9105,
+            "encoding": "utf16"
+          },
+          "example": "export function credentialFingerprint(token) { const hash = createHash('sha256'); const string = value => { if (value == null) { hash.update(Buffer.from([0])); return; } const byte"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 9106,
+            "end": 9925,
+            "encoding": "utf16"
+          },
+          "example": "export function validateOAuthEndpoint(value,{allowLoopback = false,expected} = {}) { let url; try { url = new URL(value); } catch { throw fail('invalid_oauth_endpoint','OAuth endpo"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 9926,
+            "end": 10429,
+            "encoding": "utf16"
+          },
+          "example": "export function oauthHeaders(provider, token, {codexVersion = '0.154.0'} = {}) { provider = subscriptionProvider(provider); if (provider === 'claude') return {'anthropic-version':'"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 10430,
+            "end": 16345,
+            "encoding": "utf16"
+          },
+          "example": "export class CredentialFileStore { constructor({provider,home,path,dataDir,account = 'primary',origin = 'file',write = atomicWrite,clock = () => Math.floor(Date.now()/1000)}) { thi"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 16347,
+            "end": 17210,
+            "encoding": "utf16"
+          },
+          "example": "async function boundedJSON(response,code,maxBytes = 1024*1024) { const declared = Number(response.headers.get('content-length')); if (Number.isFinite(declared) && declared > maxByt"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 17211,
+            "end": 21999,
+            "encoding": "utf16"
+          },
+          "example": "export class OAuthManager { constructor({fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1000),endpoints = {},allowLoopback = false,timeoutMs = 20000} = {}) { if (type"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 22001,
+            "end": 24041,
+            "encoding": "utf16"
+          },
+          "example": "export async function validateCredentialCatalog({provider,token,fetch = globalThis.fetch,baseURL,allowLoopback = false,timeoutMs = 20000}) { provider = subscriptionProvider(provide"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 24043,
+            "end": 24394,
+            "encoding": "utf16"
+          },
+          "example": "function loginMode(value = 'full') { const normalized = String(value).trim().toLowerCase(); if (['','full','login','default'].includes(normalized)) return 'full'; if (['setup-token"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 24395,
+            "end": 24669,
+            "encoding": "utf16"
+          },
+          "example": "function acceptedModels(value) { if (!Array.isArray(value) || !value.length || value.some(model => typeof model !== 'string' || !model)) throw fail('catalog_unverified','Credential"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 24670,
+            "end": 25925,
+            "encoding": "utf16"
+          },
+          "example": "async function installAcceptedDocument({provider,document,sourcePath,destinationHome,dataDir,ifAbsent = false,follow = false,snapshot = false}) { const store = new CredentialFileSt"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 26092,
+            "end": 29137,
+            "encoding": "utf16"
+          },
+          "example": "export async function importCredential({provider,sourceHome,destinationHome,dataDir,ifAbsent = false,snapshot = false,fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 29139,
+            "end": 35155,
+            "encoding": "utf16"
+          },
+          "example": "export class ClaudeLogin { #pending; constructor({home,mode = 'full',manager = new OAuthManager(),authorizeURL = CLAUDE_AUTHORIZE_URL,allowLoopback = false,clock = () => Math.floor"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 35157,
+            "end": 37628,
+            "encoding": "utf16"
+          },
+          "example": "export async function executeAuthOperation({name,options = {},core,config = core?.config ?? {},env = {},fetch = globalThis.fetch,clockSeconds = core?.clock ?? (() => Math.floor(Dat"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/operations.mjs",
+      "sha256": "0ab2c5c689f1d07ca065803f77e15ea3b5429d986b2428963d3dc94a2463aac4",
+      "sourceItems": 28,
+      "translatedItems": 0,
+      "unsupportedItems": 28,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 92,
+            "end": 131,
+            "encoding": "utf16"
+          },
+          "example": "import { readFileSync } from 'node:fs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 132,
+            "end": 176,
+            "encoding": "utf16"
+          },
+          "example": "import { readFile } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 177,
+            "end": 265,
+            "encoding": "utf16"
+          },
+          "example": "import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 266,
+            "end": 317,
+            "encoding": "utf16"
+          },
+          "example": "import { executeAuthOperation } from './oauth.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 318,
+            "end": 432,
+            "encoding": "utf16"
+          },
+          "example": "import { executeManagedOperation, supportedManagedOperations, selectedManagedServer } from './managed-server.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 433,
+            "end": 472,
+            "encoding": "utf16"
+          },
+          "example": "import Ajv2020 from 'ajv/dist/2020.js';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method parse",
+          "span": {
+            "start": 474,
+            "end": 575,
+            "encoding": "utf16"
+          },
+          "example": "export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property version",
+          "span": {
+            "start": 576,
+            "end": 615,
+            "encoding": "utf16"
+          },
+          "example": "export const version = catalog.version;"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 616,
+            "end": 713,
+            "encoding": "utf16"
+          },
+          "example": "export const operationNames = Object.freeze(catalog.operations.map(operation => operation.name));"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 714,
+            "end": 804,
+            "encoding": "utf16"
+          },
+          "example": "const camel = value => value.replace(/[-_]([a-z])/g, (_, letter) => letter.toUpperCase());"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 805,
+            "end": 911,
+            "encoding": "utf16"
+          },
+          "example": "const snake = value => value.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase()).replaceAll('-', '_');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 912,
+            "end": 941,
+            "encoding": "utf16"
+          },
+          "example": "const validators = new Map();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 942,
+            "end": 1031,
+            "encoding": "utf16"
+          },
+          "example": "const ajv = new Ajv2020({ strict: true, allowUnionTypes: true, validateFormats: false });"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 1033,
+            "end": 1368,
+            "encoding": "utf16"
+          },
+          "example": "export class NativeRouterError extends Error { constructor(message, { code = 'operation', result = null, cause } = {}) { super(message, { cause }); this.name = 'NativeRouterError';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1369,
+            "end": 1822,
+            "encoding": "utf16"
+          },
+          "example": "export function validateNativeResult(name, result) { if (!validators.has(name)) { const schema = JSON.parse(readFileSync(new URL(`../schemas/${name.replaceAll('.', '-')}.v1.json`, "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1823,
+            "end": 2101,
+            "encoding": "utf16"
+          },
+          "example": "export function operationResult(name, data, diagnostics = [], exitCode = 0) { return validateNativeResult(name, { schema: `link-assistant-router/${name.replaceAll('.', '-')}/v1`, o"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ...",
+          "span": {
+            "start": 2102,
+            "end": 2151,
+            "encoding": "utf16"
+          },
+          "example": "const output = (...lines) => ({ output: lines });"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 2152,
+            "end": 2250,
+            "encoding": "utf16"
+          },
+          "example": "const unsupported = message => { throw new NativeRouterError(message, { code: 'unsupported' }); };"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 2251,
+            "end": 3248,
+            "encoding": "utf16"
+          },
+          "example": "export const nativeOperationSupport = Object.freeze({ ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])), ...Object"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3249,
+            "end": 4222,
+            "encoding": "utf16"
+          },
+          "example": "function normalizeOptions(operation, options) { const allowed = new Map(operation.options.map(option => [snake(option.name), option])); const normalized = {}; for (const [key, valu"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4223,
+            "end": 4575,
+            "encoding": "utf16"
+          },
+          "example": "function localOnly(options, accepted = []) { const consumed = new Set(['local', ...accepted]); for (const [name, value] of Object.entries(options)) { if (value === false) continue;"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4576,
+            "end": 5243,
+            "encoding": "utf16"
+          },
+          "example": "function redactedProvider(provider) { return { name: provider.name, kind: provider.kind ?? 'openai-compatible', base_url: provider.base_url, models: provider.models ?? [], supporte"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5244,
+            "end": 6175,
+            "encoding": "utf16"
+          },
+          "example": "function tokenOptions(options) { const result = {}; for (const key of ['ttl_hours', 'max_requests', 'max_tokens', 'rate_limit_per_minute']) { if (options[key] === undefined) contin"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 6176,
+            "end": 6394,
+            "encoding": "utf16"
+          },
+          "example": "const find = (records, key, value) => { const record = records.find(record => record[key] === value); if (!record) throw new NativeRouterError(`Unknown ${key}: ${value}`, { code: '"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 6395,
+            "end": 6638,
+            "encoding": "utf16"
+          },
+          "example": "async function runtimeFor(router) { router.corePromise ??= router.options.core ? Promise.resolve(router.options.core) : import('./core.mjs').then(({ createRouterCore }) => createRo"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 6639,
+            "end": 20315,
+            "encoding": "utf16"
+          },
+          "example": "async function dispatch(router, name, options, invocation) { if (name === 'version') { localOnly(options); return { version, source_commit: 'unknown' }; } if (name === 'contracts')"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 20410,
+            "end": 23204,
+            "encoding": "utf16"
+          },
+          "example": "export class NativeRouter { constructor(options = {}) { this.options = options; this.corePromise = null; this.serverPromise = null; for (const operation of catalog.operations) { le"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 23205,
+            "end": 23276,
+            "encoding": "utf16"
+          },
+          "example": "export const createNativeRouter = options => new NativeRouter(options);"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/protocols.mjs",
+      "sha256": "a8e8bf498dd8fadce656cf07851f051ade507cbcf0745f47cadad823a2e9f5a5",
+      "sourceItems": 13,
+      "translatedItems": 0,
+      "unsupportedItems": 13,
+      "diagnostics": [
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 78,
+            "end": 240,
+            "encoding": "utf16"
+          },
+          "example": "export class ProtocolError extends Error { constructor(message, status = 400) { super(message); this.status = status; this.code = 'unsupported_translation'; } }"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 241,
+            "end": 286,
+            "encoding": "utf16"
+          },
+          "example": "const copy = value => structuredClone(value);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 287,
+            "end": 399,
+            "encoding": "utf16"
+          },
+          "example": "const text = content => typeof content === 'string' ? content : (content ?? []).map(p => p.text ?? '').join('');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 400,
+            "end": 589,
+            "encoding": "utf16"
+          },
+          "example": "const parseArguments = raw => { try { return typeof raw === 'string' ? JSON.parse(raw) : raw ?? {}; } catch { throw new ProtocolError('Function arguments must contain valid JSON');"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 590,
+            "end": 1279,
+            "encoding": "utf16"
+          },
+          "example": "function chatParts(content) { if (content == null || typeof content === 'string') return content ?? ''; if (!Array.isArray(content)) throw new ProtocolError('Message content must b"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1280,
+            "end": 1877,
+            "encoding": "utf16"
+          },
+          "example": "function anthropicParts(content) { if (typeof content === 'string') return content; return (content ?? []).map(p => { if (p.cache_control || p.citations?.length) throw new Protocol"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1878,
+            "end": 6285,
+            "encoding": "utf16"
+          },
+          "example": "export function requestToChat(body, source) { if (source === 'chat') return copy(body); const out = { model: body.model, messages: [], stream: body.stream ?? false }; for (const ke"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6286,
+            "end": 10732,
+            "encoding": "utf16"
+          },
+          "example": "export function translateRequest(body, source, target, model = body.model) { if (source === target) return { ...copy(body), model }; const chat = requestToChat(body, source); chat."
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 10733,
+            "end": 11499,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeUsage(usage = {}, protocol = 'chat') { const rawInput = usage.input_tokens ?? usage.prompt_tokens ?? 0; const output = usage.output_tokens ?? usage.complet"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 11500,
+            "end": 14551,
+            "encoding": "utf16"
+          },
+          "example": "export function responseToCanonical(body, protocol) { const result = { id: body.id, model: body.model, text: '', tools: [], usage: normalizeUsage(body.usage, protocol), finish: 'st"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 14552,
+            "end": 16550,
+            "encoding": "utf16"
+          },
+          "example": "export function canonicalResponse(r, protocol, model = r.model, now = Date.now()) { const created = Math.floor(now / 1000), id = r.id ?? `native_${created}`; const u = r.usage; if "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 16551,
+            "end": 16849,
+            "encoding": "utf16"
+          },
+          "example": "export function translateResponse(body, source, target, model, now) { try { return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 16851,
+            "end": 19002,
+            "encoding": "utf16"
+          },
+          "example": "export function projectModels(entries, protocol = 'chat', query = new URLSearchParams()) { const data = entries.map(model => protocol === 'anthropic' ? Object.fromEntries(Object.en"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/resources.mjs",
+      "sha256": "c38410f2c56497a590fd6b78237f06082da3e0dd6afe253c4fe13c29f763c79a",
+      "sourceItems": 33,
+      "translatedItems": 0,
+      "unsupportedItems": 33,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 82,
+            "end": 173,
+            "encoding": "utf16"
+          },
+          "example": "import { open, lstat, readdir, mkdir, mkdtemp, rename, chmod, rm } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 174,
+            "end": 210,
+            "encoding": "utf16"
+          },
+          "example": "import { constants } from 'node:fs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 211,
+            "end": 269,
+            "encoding": "utf16"
+          },
+          "example": "import { resolve, join, dirname, parse } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 270,
+            "end": 304,
+            "encoding": "utf16"
+          },
+          "example": "import * as zlib from 'node:zlib';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 305,
+            "end": 343,
+            "encoding": "utf16"
+          },
+          "example": "import { promisify } from 'node:util';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 344,
+            "end": 390,
+            "encoding": "utf16"
+          },
+          "example": "import { execFile } from 'node:child_process';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 391,
+            "end": 423,
+            "encoding": "utf16"
+          },
+          "example": "import { isIP } from 'node:net';"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 425,
+            "end": 458,
+            "encoding": "utf16"
+          },
+          "example": "const exec = promisify(execFile);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 459,
+            "end": 486,
+            "encoding": "utf16"
+          },
+          "example": "const tlsTasks = new Map();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ,",
+          "span": {
+            "start": 487,
+            "end": 559,
+            "encoding": "utf16"
+          },
+          "example": "const MAX_BYTES = 256 * 1024 * 1024, MAX_FILES = 10000, MAX_DEPTH = 128;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 560,
+            "end": 649,
+            "encoding": "utf16"
+          },
+          "example": "const unsupported = message => Object.assign(new Error(message), { code:'unsupported' });"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 650,
+            "end": 736,
+            "encoding": "utf16"
+          },
+          "example": "const bad = message => Object.assign(new Error(message), { code:'invalid_resource' });"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
+          "span": {
+            "start": 737,
+            "end": 1620,
+            "encoding": "utf16"
+          },
+          "example": "export const supportedResourceOperations = Object.freeze({ 'logs.show': { status:'partial', limitations:['Local logs only; 256 MiB / 10000-file read budget; symlinks refused; zstd "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1700,
+            "end": 4346,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeLogLine(source) { const text = source.trim(); if (!text) return undefined; if (/^[\\[{]/.test(text)) { try { return JSON.parse(text); } catch { return undefine"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4348,
+            "end": 4492,
+            "encoding": "utf16"
+          },
+          "example": "async function statOptional(path) { try { return await lstat(path); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } }"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4493,
+            "end": 4858,
+            "encoding": "utf16"
+          },
+          "example": "async function noLinks(path) { let current = resolve(path), hops = 0; while (true) { const stat = await statOptional(current); if (stat?.isSymbolicLink()) throw bad(`Resource path "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4859,
+            "end": 5768,
+            "encoding": "utf16"
+          },
+          "example": "async function boundedFile(path, budget) { await noLinks(path); const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0)); try { const stat = await handle.s"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5769,
+            "end": 5931,
+            "encoding": "utf16"
+          },
+          "example": "function utf8(bytes,path) { try { return new TextDecoder('utf-8',{fatal:true}).decode(bytes); } catch { throw bad(`Resource is not valid UTF-8: ${path}`); } }"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 5932,
+            "end": 7483,
+            "encoding": "utf16"
+          },
+          "example": "async function readLogs(root, token) { await noLinks(root); const rootStat = await statOptional(root); if (!rootStat?.isDirectory()) return { files:[], bytes:0, unparsable:0 }; con"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 7484,
+            "end": 7611,
+            "encoding": "utf16"
+          },
+          "example": "const terminates = text => ['message_stop','[DONE]','response.completed','finishReason'].some(marker => text.includes(marker));"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7612,
+            "end": 7752,
+            "encoding": "utf16"
+          },
+          "example": "function encoding(header) { return (header ?? 'identity').split(',').map(s=>s.trim()).filter(Boolean).at(-1)?.toLowerCase() ?? 'identity'; }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7753,
+            "end": 7933,
+            "encoding": "utf16"
+          },
+          "example": "function base64Bytes(text) { return typeof text === 'string' && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text) ? Buffer.from(text,'base64') : null; }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7934,
+            "end": 8692,
+            "encoding": "utf16"
+          },
+          "example": "function decompress(bytes, kind) { if (kind === 'identity' || !bytes.length) return null; const decoders = {gzip:zlib.gunzipSync,'x-gzip':zlib.gunzipSync,deflate:zlib.inflateRawSyn"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8693,
+            "end": 11699,
+            "encoding": "utf16"
+          },
+          "example": "function exchanges(log) { const map = new Map(); for (const record of log.files.flat()) { if (!record || typeof record.correlation_id !== 'string') continue; const id = record.corr"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 11700,
+            "end": 11776,
+            "encoding": "utf16"
+          },
+          "example": "const incomplete = x => x.streamed && x.inspectable && x.complete === false;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 11777,
+            "end": 11875,
+            "encoding": "utf16"
+          },
+          "example": "const unterminated = x => x.streamed && x.inspectable && x.outcome === undefined && !x.terminated;"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 11876,
+            "end": 11931,
+            "encoding": "utf16"
+          },
+          "example": "const unverifiable = x => x.streamed && !x.inspectable;"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 11932,
+            "end": 12661,
+            "encoding": "utf16"
+          },
+          "example": "function summary(log, all) { const result = {exchanges:all.length,records:0,bytes:log.bytes,statuses:{},streamed:0,non_streamed:0,incomplete_streams:0,unterminated_streams:0,unveri"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 12662,
+            "end": 14081,
+            "encoding": "utf16"
+          },
+          "example": "function anomalies(all) { const result = [], add = (kind, detail, test, minimum = 1) => { const ids = all.filter(test).map(x=>x.id); if (ids.length >= minimum) result.push({kind,de"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 14082,
+            "end": 15047,
+            "encoding": "utf16"
+          },
+          "example": "function show(log,id) { const records = []; for (const file of log.files) { const selected = file.filter(record=>record?.correlation_id === id); const header = selected.find(record"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 15049,
+            "end": 16922,
+            "encoding": "utf16"
+          },
+          "example": "async function tlsGenerate(dataDir,dns) { const directory = join(dataDir,'tls'), cert = join(directory,'cert.pem'), key = join(directory,'key.pem'); await noLinks(directory); await"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 16924,
+            "end": 17243,
+            "encoding": "utf16"
+          },
+          "example": "async function serializedTlsGenerate(dataDir,dns) { const before = tlsTasks.get(dataDir) ?? Promise.resolve(); const task = before.catch(()=>{}).then(()=>tlsGenerate(dataDir,dns));"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 17245,
+            "end": 19317,
+            "encoding": "utf16"
+          },
+          "example": "export async function executeResourceOperation({name,options = {},config = {},core}) { if (!supportedResourceOperations[name]) throw unsupported(`Native resource operation ${name} "
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/responses.mjs",
+      "sha256": "9fca0b3b9f93dbc34bdd8aa5f28b952ffed27f8135ac7d032953d23be5ce0f13",
+      "sourceItems": 6,
+      "translatedItems": 1,
+      "unsupportedItems": 5,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 53,
+            "encoding": "utf16"
+          },
+          "example": "import { createHash, randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 54,
+            "end": 102,
+            "encoding": "utf16"
+          },
+          "example": "import { ProtocolError } from './protocols.mjs';"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 379,
+            "end": 5907,
+            "encoding": "utf16"
+          },
+          "example": "export class ResponsesStore { constructor({ clock = Date.now, ttlMs = 3_600_000, maxRecords = 1000, maxBytes = 16 * 1024 * 1024, maxRecordBytes = 1024 * 1024 } = {}) { for (const ["
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5909,
+            "end": 6375,
+            "encoding": "utf16"
+          },
+          "example": "export function responseOwner(claims, credential) { const value = claims.client_kind && claims.principal_id ? ['principal', claims.client_kind, claims.principal_id] : claims.sub ??"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6376,
+            "end": 7518,
+            "encoding": "utf16"
+          },
+          "example": "export function normalizeResponseInput(body) { if (!body || typeof body.input !== 'string' && !Array.isArray(body.input)) throw new ProtocolError('input must be a string or array')"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/routing.mjs",
+      "sha256": "7487f7ef8f91aa9768aac38c6bea0f5aa63d86b3f59f6b1bcefdddee620455f3",
+      "sourceItems": 5,
+      "translatedItems": 0,
+      "unsupportedItems": 5,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 57,
+            "encoding": "utf16"
+          },
+          "example": "import { providerModelId } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 58,
+            "end": 112,
+            "encoding": "utf16"
+          },
+          "example": "import { accountVisibleModels } from './accounts.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 113,
+            "end": 156,
+            "encoding": "utf16"
+          },
+          "example": "import { RouterError } from './tokens.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 158,
+            "end": 1866,
+            "encoding": "utf16"
+          },
+          "example": "export function modelCandidates(providers, accounts, context = {}) { const requested = context.model; if (typeof requested !== 'string' || !requested) throw new RouterError('model_"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1867,
+            "end": 2577,
+            "encoding": "utf16"
+          },
+          "example": "export function catalogModels(providers, accounts) { const result = new Map(); for (const provider of providers) if (provider.enabled !== false) for (const account of accounts.valu"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/server.mjs",
+      "sha256": "1b5dea6e5aa55c19570988ecb4f2829966bd50c5bf96bc5950d1f5be70b84142",
+      "sourceItems": 22,
+      "translatedItems": 0,
+      "unsupportedItems": 22,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 41,
+            "encoding": "utf16"
+          },
+          "example": "import { createServer } from 'node:http';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 42,
+            "end": 81,
+            "encoding": "utf16"
+          },
+          "example": "import { Readable } from 'node:stream';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 82,
+            "end": 128,
+            "encoding": "utf16"
+          },
+          "example": "import { timingSafeEqual } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 129,
+            "end": 245,
+            "encoding": "utf16"
+          },
+          "example": "import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 246,
+            "end": 315,
+            "encoding": "utf16"
+          },
+          "example": "import { translateStream, monitorNativeStream } from './streams.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 316,
+            "end": 404,
+            "encoding": "utf16"
+          },
+          "example": "import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 406,
+            "end": 481,
+            "encoding": "utf16"
+          },
+          "example": "const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 482,
+            "end": 622,
+            "encoding": "utf16"
+          },
+          "example": "const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /(?:api[_-]?key|token|password|secret|authorization|credential|cookie)/i",
+          "span": {
+            "start": 623,
+            "end": 717,
+            "encoding": "utf16"
+          },
+          "example": "const redactedKeys = /(?:api[_-]?key|token|password|secret|authorization|credential|cookie)/i;"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 718,
+            "end": 990,
+            "encoding": "utf16"
+          },
+          "example": "export function redact(value) { if (Array.isArray(value)) return value.map(redact); if (!value || typeof value !== 'object') return value; return Object.fromEntries(Object.entries("
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 991,
+            "end": 1162,
+            "encoding": "utf16"
+          },
+          "example": "const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1163,
+            "end": 1303,
+            "encoding": "utf16"
+          },
+          "example": "const bearer = headers => { const a = headers.get('authorization'); return a?.match(/^Bearer\\s+(.+)$/i)?.[1] ?? headers.get('x-api-key'); };"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1304,
+            "end": 1826,
+            "encoding": "utf16"
+          },
+          "example": "const protocolOf = candidate => { const value = candidate.protocol ?? candidate.provider?.protocol ?? candidate.provider?.type ?? candidate.provider; if (['anthropic', 'messages']."
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 1827,
+            "end": 1917,
+            "encoding": "utf16"
+          },
+          "example": "const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 1918,
+            "end": 2011,
+            "encoding": "utf16"
+          },
+          "example": "const serviceOf = path => /^\\/api\\/services\\/(openai|anthropic)\\/v1(?:\\/|$)/.exec(path)?.[1];"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2012,
+            "end": 2826,
+            "encoding": "utf16"
+          },
+          "example": "function upstreamURL(base, protocol, endpointPath) { let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); } if (!['http:', 'https"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2827,
+            "end": 4386,
+            "encoding": "utf16"
+          },
+          "example": "function upstreamHeaders(candidate, protocol, request) { const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' }); // Only"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4387,
+            "end": 4637,
+            "encoding": "utf16"
+          },
+          "example": "function relayHeaders(upstream) { const result = {}; for (const [key, value] of upstream.headers) if (/^(?:x-request-id|request-id|retry-after|x-ratelimit-[a-z_-]+|anthropic-rateli"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4638,
+            "end": 5594,
+            "encoding": "utf16"
+          },
+          "example": "async function boundedJSON(request, maxBytes) { if (!request.body) throw new ProtocolError('Request body is required'); const length = Number(request.headers.get('content-length'))"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 5595,
+            "end": 5672,
+            "encoding": "utf16"
+          },
+          "example": "const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 5757,
+            "end": 28374,
+            "encoding": "utf16"
+          },
+          "example": "export function createNativeRouter(options = {}) { const { core, authenticate, fetch: upstreamFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxRespons"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 28375,
+            "end": 28652,
+            "encoding": "utf16"
+          },
+          "example": "export async function startNativeServer(options = {}) { const core = options.core ?? await (await import('./core.mjs')).createRouterCore(options); const router = createNativeRouter"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/storage.mjs",
+      "sha256": "6b272cdbbde8ed734db9b9eb33fd50458f1d1dcbe0dc0343d06b99bda2fd0e5d",
+      "sourceItems": 17,
+      "translatedItems": 0,
+      "unsupportedItems": 17,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 83,
+            "encoding": "utf16"
+          },
+          "example": "import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 84,
+            "end": 120,
+            "encoding": "utf16"
+          },
+          "example": "import { dirname } from 'node:path';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 121,
+            "end": 162,
+            "encoding": "utf16"
+          },
+          "example": "import { randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 164,
+            "end": 189,
+            "encoding": "utf16"
+          },
+          "example": "const queues = new Map();"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 190,
+            "end": 605,
+            "encoding": "utf16"
+          },
+          "example": "export async function serialized(key, operation) { const previous = queues.get(key) ?? Promise.resolve(); let release; const held = new Promise(resolve => { release = resolve; }); "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 606,
+            "end": 1203,
+            "encoding": "utf16"
+          },
+          "example": "export async function atomicWrite(path, text) { await mkdir(dirname(path), { recursive: true, mode: 0o700 }); const temporary = `${path}.${randomUUID()}.tmp`; let file; try { file "
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 1362,
+            "end": 3466,
+            "encoding": "utf16"
+          },
+          "example": "export async function withNativeFileLock(path, operation, timeout = 30000) { const lock = `${path}.native-lock`; await mkdir(dirname(path), {recursive:true,mode:0o700}); const star"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 3467,
+            "end": 3650,
+            "encoding": "utf16"
+          },
+          "example": "export async function readOptional(path, fallback = '') { try { return await readFile(path, 'utf8'); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3652,
+            "end": 4023,
+            "encoding": "utf16"
+          },
+          "example": "function quote(text) { if (!text.includes('\"')) return `\"${text}\"`; if (!text.includes(\"'\")) return `'${text}'`; const delimiter = text.startsWith('\"') ? \"'\" : '\"'; const runs = te"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4111,
+            "end": 5075,
+            "encoding": "utf16"
+          },
+          "example": "export function encodeLino(value, level = 0) { if (typeof value === 'string') { if (/[\\x00-\\x08\\x0b-\\x1f\\x7f]/.test(value)) { const escaped = value.replace(/[%\\x00-\\x08\\x0b-\\x1f\\x7"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5076,
+            "end": 8169,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeLino(text) { let i = 0; const skip = () => { while (text[i] === ' ' || text[i] === '\\t' || text[i] === '\\r') i++; }; function scalar(raw, quoted = false) { if"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 8171,
+            "end": 8394,
+            "encoding": "utf16"
+          },
+          "example": "const strings = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'slidin"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8395,
+            "end": 8943,
+            "encoding": "utf16"
+          },
+          "example": "export function encodeTokenRecords(records) { const values = records.slice().sort((a,b) => a.id.localeCompare(b.id)).map(record => { const value = { ...record }; for (const field o"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8944,
+            "end": 10220,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeTokenRecords(text) { if (!text.trim()) return []; const root = decodeLino(text); if (root.type !== 'RouterState' || root.subtype !== 'TokenStore' || !Array.is"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 10221,
+            "end": 11000,
+            "encoding": "utf16"
+          },
+          "example": "export class MemoryTokenStore { constructor(records = []) { this.records = new Map(records.map(r => [r.id, structuredClone(r)])); this.key = {}; } async transaction(operation) { re"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 11001,
+            "end": 11829,
+            "encoding": "utf16"
+          },
+          "example": "export class TextTokenStore extends MemoryTokenStore { constructor(path) { super(); this.path = path; } // Refresh under the native process lock before every mutation; read access "
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
+          "span": {
+            "start": 11830,
+            "end": 12295,
+            "encoding": "utf16"
+          },
+          "example": "export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage } = {}) { if (storage) return storage; if (['memory','mem','none'].includes(storage_policy)) r"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/streams.mjs",
+      "sha256": "2e46d1575dfbcf847698a313a4ac1d597d12f8db67139ec371db0e540cedfbdc",
+      "sourceItems": 7,
+      "translatedItems": 0,
+      "unsupportedItems": 7,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 83,
+            "encoding": "utf16"
+          },
+          "example": "import { canonicalResponse, normalizeUsage, ProtocolError } from './protocols.mjs';"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 84,
+            "end": 118,
+            "encoding": "utf16"
+          },
+          "example": "const encoder = new TextEncoder();"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 119,
+            "end": 255,
+            "encoding": "utf16"
+          },
+          "example": "const frame = (data, event) => `${event ? `event: ${event}\\n` : ''}data: ${typeof data === 'string' ? data : JSON.stringify(data)}\\n\\n`;"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 337,
+            "end": 2069,
+            "encoding": "utf16"
+          },
+          "example": "export async function* decodeSSE(body, { maxFrameBytes = 1024 * 1024 } = {}) { const reader = body.getReader(), decoder = new TextDecoder(); let buffer = '', data = [], event = '';"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 2071,
+            "end": 7028,
+            "encoding": "utf16"
+          },
+          "example": "async function* normalizedEvents(body, protocol) { const tools = new Map(); let ended = false, finish = 'stop', usage = normalizeUsage(), id, started = false; for await (const f of"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7110,
+            "end": 15716,
+            "encoding": "utf16"
+          },
+          "example": "export function translateStream(body, source, target, model, { clock = Date.now, onStart, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 } = {}) { const events = n"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 15798,
+            "end": 18490,
+            "encoding": "utf16"
+          },
+          "example": "export function monitorNativeStream(body, protocol, { model, onStart, onComplete, onError, onCancel } = {}) { const events = decodeSSE(body)[Symbol.asyncIterator](); let terminal ="
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/tokens.mjs",
+      "sha256": "6773a25b780d6c27b2ff648a9fdf3509d0ea8d70c9622fca711170348142e23f",
+      "sourceItems": 13,
+      "translatedItems": 0,
+      "unsupportedItems": 13,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 70,
+            "encoding": "utf16"
+          },
+          "example": "import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 71,
+            "end": 131,
+            "encoding": "utf16"
+          },
+          "example": "import { tokenBudgetPermits } from '../portable/policy.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 132,
+            "end": 181,
+            "encoding": "utf16"
+          },
+          "example": "import { MemoryTokenStore } from './storage.mjs';"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 183,
+            "end": 355,
+            "encoding": "utf16"
+          },
+          "example": "export class RouterError extends Error { constructor(code, message, status = 400) { super(message); this.name = 'RouterError'; this.code = code; this.status = status; } }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 356,
+            "end": 636,
+            "encoding": "utf16"
+          },
+          "example": "export function ensureRealSecret(secret) { if (!secret || secret.startsWith('\\0') || ['unused-by-remote-command','unused-by-auth','unused-by-this-client-command'].includes(secret))"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 637,
+            "end": 720,
+            "encoding": "utf16"
+          },
+          "example": "const encode = object => Buffer.from(JSON.stringify(object)).toString('base64url');"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 721,
+            "end": 816,
+            "encoding": "utf16"
+          },
+          "example": "const clients = new Set(['claude','codex','cursor','opencode','gemini','grok','qwen','agent']);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 817,
+            "end": 966,
+            "encoding": "utf16"
+          },
+          "example": "const clientAliases = new Map([['claude-code','claude'],['cursor-agent','cursor'],['gemini-cli','gemini'],['grok-cli','grok'],['qwen-code','qwen']]);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 967,
+            "end": 1221,
+            "encoding": "utf16"
+          },
+          "example": "const number = (value, name, positive = false) => { if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) throw new RouterError('invalid_argument', `${name} must be a ${p"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 1222,
+            "end": 1601,
+            "encoding": "utf16"
+          },
+          "example": "const defaults = { ephemeral: false, run_lease_expires_at: null, sliding_window_seconds: null, account: null, max_requests: null, used_requests: 0, max_tokens: null, used_tokens: 0"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 1602,
+            "end": 2157,
+            "encoding": "utf16"
+          },
+          "example": "export function validateModelPolicy(policy = {}) { const models = policy.allowed_models ?? []; if (!Array.isArray(models) || models.some(model => typeof model !== 'string' || !mode"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 2158,
+            "end": 12027,
+            "encoding": "utf16"
+          },
+          "example": "export class TokenManager { constructor({ secret, store = new MemoryTokenStore(), clock = () => Math.floor(Date.now()/1000), leeway = 60 } = {}) { this.secret = secret; this.store "
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 12028,
+            "end": 12127,
+            "encoding": "utf16"
+          },
+          "example": "export const codexTokenAlias = token => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;"
+        }
+      ]
+    }
+  ],
+  "unsupportedExamples": [
+    {
+      "kind": "async",
+      "source": "/** @returns {number} */ export async function delayed() { return 1; }",
+      "message": "async functions and await are outside portable-pure-v1"
+    },
+    {
+      "kind": "template",
+      "source": "/** @param {string} name @returns {string} */ export function greeting(name) { return `hi ${name}`; }",
+      "message": "template literals are outside portable-pure-v1"
+    },
+    {
+      "kind": "collection",
+      "source": "/** @returns {number} */ export function collection() { return [1, 2].length; }",
+      "message": "arrays and objects are outside portable-pure-v1"
+    },
+    {
+      "kind": "class",
+      "source": "export class Router {}",
+      "message": "a class is outside portable-pure-v1"
+    },
+    {
+      "kind": "no-definition",
+      "source": "import { readFile } from 'node:fs';",
+      "message": "no definition"
+    },
+    {
+      "kind": "untyped",
+      "source": "export function untyped(value) { return value; }",
+      "message": "a parameter or result without a JSDoc number, boolean or string type: none"
+    },
+    {
+      "kind": "unknown-call",
+      "source": "/** @returns {number} */ export function missing() { return absent(); }",
+      "message": "a call to a function the module does not define: absent"
+    },
+    {
+      "kind": "mutable",
+      "source": "/** @returns {number} */ export function immutable() { const x = 1; x = 2; return x; }",
+      "message": "assignment to an immutable or unbound local: x"
+    },
+    {
+      "kind": "concatenation",
+      "source": "/** @param {number} n @returns {string} */ export function coercion(n) { return 'x' + n; }",
+      "message": "mixed type string concatenation requires JavaScript coercion: add of string and number"
+    },
+    {
+      "kind": "loop",
+      "source": "/** @returns {number} */ export function forbiddenLoop() { for (;;) {} return 1; }",
+      "message": "for, do and generator loops are outside portable-router-v1"
+    },
+    {
+      "kind": "type",
+      "source": "/** @param {number} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }",
+      "message": "operand types the construct map does not accept: a condition that is not boolean"
+    },
+    {
+      "kind": "rounding",
+      "source": "/** @param {number} n @returns {number} */ export function rounding(n) { return Math.round(n); }",
+      "message": "Math.round rounds halves up, f64::round away from zero"
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @param {number} n @returns {boolean} */ export function loose(n) { return n == 0; }",
+      "message": "a construct outside portable-pure-v1: the operator =="
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @returns {number} */ export function throwing() { throw new Error('x'); }",
+      "message": "a construct outside portable-pure-v1: the statement throw"
+    },
+    {
+      "kind": "unsupported",
+      "source": "/** @param {number} n @returns {number} */ export function defaults(n = 1) { return n; }",
+      "message": "a construct outside portable-pure-v1: a default parameter"
+    },
+    {
+      "kind": "missing-return",
+      "source": "/** @param {boolean} yes @returns {number} */ export function missingReturn(yes) { if (yes) { return 1; } }",
+      "message": "a path ends without a return"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "tools/translation/js-to-rust/generated/policy.lino",
+      "bytes": 5515,
+      "sha256": "6c87b857fcadce2fd1d4306c119cb3adc9107fa588fd8afd7a7dadde0d077f3a"
+    },
+    {
+      "path": "src/generated_js_first/policy.rs",
+      "bytes": 11813,
+      "sha256": "c5d5cec07bf54be29de7beed707263256afa6ba1ee87c89695b237d5626f5673"
+    },
+    {
+      "path": "src/generated_js_first/mod.rs",
+      "bytes": 75,
+      "sha256": "4399269fb36024388acb626aa3ef3c66bfca0c3a2b4e80e09c35837f0ee321fe"
+    },
+    {
+      "path": "packages/typescript/native/js-first-policy.ts",
+      "bytes": 3371,
+      "sha256": "8a029f8a5ca9a78317bc3ab8182c7b607690e3cd564af47ccf47dffd1c0538d3"
+    }
+  ]
+}

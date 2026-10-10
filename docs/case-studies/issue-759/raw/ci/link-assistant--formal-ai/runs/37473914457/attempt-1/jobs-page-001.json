@@ -1,0 +1,116 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 112304237773,
+      "run_id": 37473914457,
+      "workflow_name": "External Benchmarks",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37473914457",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJdqszQ",
+      "head_sha": "f08263a310456d751dc79dc44aa66794de6dca9c",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112304237773",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37473914457/job/112304237773",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T13:49:51Z",
+      "started_at": "2026-10-06T13:53:59Z",
+      "completed_at": "2026-10-06T13:56:22Z",
+      "name": "Verify monotonic ledger",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T13:53:59Z",
+          "completed_at": "2026-10-06T13:54:00Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T13:54:00Z",
+          "completed_at": "2026-10-06T13:54:17Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T13:54:17Z",
+          "completed_at": "2026-10-06T13:54:28Z"
+        },
+        {
+          "name": "Compare with pull-request base",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 4,
+          "started_at": "2026-10-06T13:54:28Z",
+          "completed_at": "2026-10-06T13:56:20Z"
+        },
+        {
+          "name": "Verify scheduled branch ledger",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-06T13:56:20Z",
+          "completed_at": "2026-10-06T13:56:20Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-06T13:56:20Z",
+          "completed_at": "2026-10-06T13:56:20Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-06T13:56:20Z",
+          "completed_at": "2026-10-06T13:56:20Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112304237773",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000144456,
+      "runner_name": "GitHub Actions 1000144456",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 112304240036,
+      "run_id": 37473914457,
+      "workflow_name": "External Benchmarks",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37473914457",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJdq1pA",
+      "head_sha": "f08263a310456d751dc79dc44aa66794de6dca9c",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112304240036",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37473914457/job/112304240036",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-10-06T13:49:52Z",
+      "started_at": "2026-10-06T13:49:52Z",
+      "completed_at": "2026-10-06T13:49:51Z",
+      "name": "Run upstream suites",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112304240036",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}

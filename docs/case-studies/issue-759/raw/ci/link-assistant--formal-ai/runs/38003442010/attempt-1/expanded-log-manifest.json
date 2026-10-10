@@ -1,0 +1,50 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/2_Build instrumented test executables.txt.gz",
+    "sha256": "2bf5af2926ad55b99dc1d013b6e29031ee6b2c1a49d8ab24103eb8a41987f8d3",
+    "bytes": 24865,
+    "uncompressed_bytes": 107195,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/Build instrumented test executables/system.txt.gz",
+    "sha256": "d16f4421c2a9bc7656c460867e3b737d2251bd299ac3244439467bda6f77da81",
+    "bytes": 497,
+    "uncompressed_bytes": 1087,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/3_Browser Code Coverage.txt.xz",
+    "sha256": "520cc191d6a87713774ea4cdd9d075e68581bf374943de50aeec43de03943754",
+    "bytes": 98176,
+    "uncompressed_bytes": 416004,
+    "redacted": false,
+    "original_gzip_sha256": "bc029f9dd1a542cfa7356a9e8dc3b9c63447b294a344e8ba86680987b54c8752",
+    "compression": "xz",
+    "decoded_sha256": "95d30e866ba64fd4dab2d85bf957dedcf1f7d20628978bcbce021355b160a112"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/Browser Code Coverage/system.txt.gz",
+    "sha256": "4fa233371ad15e5d1afa875ef947f7a910561551ad2487dae6a2f9fb94fcc557",
+    "bytes": 501,
+    "uncompressed_bytes": 1103,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/4_Detect Changes.txt.xz",
+    "sha256": "83a4a43dcb3a1290f5ac1f4cff74b3318cb8164945cdc477fd02b45b50224f17",
+    "bytes": 281832,
+    "uncompressed_bytes": 3377434,
+    "redacted": false,
+    "original_gzip_sha256": "83ce1d3f8051e63f08cfa4ecf21f7cd0f6427cffdb1386cdd0cba285a2506159",
+    "compression": "xz",
+    "decoded_sha256": "b912a2052f82da5c2d3524677b7a5887375859d4226a6417f52e58d4a8933ef5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/38003442010/attempt-1/logs/Detect Changes/system.txt.gz",
+    "sha256": "5ba9c11534a5065c871fd32f698ac2a14feba2846b8811debd46de3b933d3846",
+    "bytes": 454,
+    "uncompressed_bytes": 887,
+    "redacted": false
+  }
+]

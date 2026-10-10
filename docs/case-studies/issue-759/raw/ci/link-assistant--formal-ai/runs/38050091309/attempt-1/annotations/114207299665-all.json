@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 49,
+    "start_column": null,
+    "end_line": 49,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - agent-cli-failure-report",
+    "message": "35% - 357 hits, 654 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 23,
+    "start_column": null,
+    "end_line": 23,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "No files were found with the provided path: /tmp/formal-ai-issue-864-evidence. No artifacts will be uploaded.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 976,
+    "start_column": null,
+    "end_line": 976,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

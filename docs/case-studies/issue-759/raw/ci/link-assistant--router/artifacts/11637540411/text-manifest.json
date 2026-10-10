@@ -1,0 +1,27 @@
+[
+  {
+    "path": "text-objects/fe/fe7dd4e108eefc5f18033d98c2be9614e8bd6e5b8e5969602a511404af78101d.xz",
+    "sha256": "9146d3dc5ed17f0441f86d392796815ce2dfeb782c29c88622bc2de0555f8772",
+    "compressed_bytes": 357516,
+    "original_bytes": 5209180,
+    "redacted": false,
+    "original_compressed_sha256": "4ed7e639d70a7c091cd731d7ab79359b087219fdba862213e5fa505e52d318d6",
+    "original_storage_path": "link-assistant--router/artifacts/11637540411/text/lcov.info.gz",
+    "artifact_member_name": "lcov.info",
+    "scrubbed_content_sha256": "fe7dd4e108eefc5f18033d98c2be9614e8bd6e5b8e5969602a511404af78101d",
+    "prior_gzip_storage_path": "text-objects/fe/fe7dd4e108eefc5f18033d98c2be9614e8bd6e5b8e5969602a511404af78101d.gz",
+    "prior_gzip_storage_sha256": "6fe11ccdb0c8bcfccc4e1967c5abe4593e8c8dd61cd8f32607be7150b63b0d92",
+    "compression": "xz"
+  },
+  {
+    "path": "text-objects/16/160fa489ec183bc9d26fdabc7b330669ffab9843015949e3e7ac197c71f354a0.gz",
+    "sha256": "cad7d313ce6b2cb215bc45c18a864aa3184b7ccc2840d51834f21c952ac6f6ae",
+    "compressed_bytes": 21284,
+    "original_bytes": 176724,
+    "redacted": false,
+    "original_compressed_sha256": "838fbd455aead17b9f8dfc61487c28559abf91d1e5dd9aed7be7576c6bbbcb42",
+    "original_storage_path": "link-assistant--router/artifacts/11637540411/text/coverage-summary.json.gz",
+    "artifact_member_name": "coverage-summary.json",
+    "scrubbed_content_sha256": "160fa489ec183bc9d26fdabc7b330669ffab9843015949e3e7ac197c71f354a0"
+  }
+]

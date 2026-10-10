@@ -1,0 +1,5 @@
+{
+  "reason": "evidence_allocated_disk_budget_exhausted",
+  "endpoint": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37798907094/attempts/1/logs",
+  "note": "Metadata collection continues; full log bytes were not fetched after the hard cap."
+}

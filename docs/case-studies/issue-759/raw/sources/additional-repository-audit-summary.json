@@ -1,0 +1,179 @@
+[
+  {
+    "repository": "link-foundation/link-cli",
+    "commit": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "default_branch": "main",
+    "source_file_count": 14,
+    "captured_runs": 25,
+    "run_conclusions": {
+      "failure": 4,
+      "success": 21
+    },
+    "runs_at_exact_head": 16,
+    "open_pr_count": 9,
+    "open_prs": [
+      {
+        "number": 109,
+        "updated_at": "2026-10-09T03:49:32Z",
+        "base_sha": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+        "head_sha": "11c2df59b7466d8d04efc148617b279c12afcd8a",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/109"
+      },
+      {
+        "number": 57,
+        "updated_at": "2025-09-15T15:03:42Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "1c14831c62050dd271af50e0f640832ea6e2dad1",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/57"
+      },
+      {
+        "number": 49,
+        "updated_at": "2025-09-10T14:21:18Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "93f22cf2c163b13d8553f67587fb86849fc9d83d",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/49"
+      },
+      {
+        "number": 41,
+        "updated_at": "2025-09-10T13:17:52Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "5500d18aed7925d01a7b129ba8187a895093f719",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/41"
+      },
+      {
+        "number": 40,
+        "updated_at": "2025-09-10T13:01:38Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "8b45c821e7c573695a179e0099257c90b36ad354",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/40"
+      },
+      {
+        "number": 39,
+        "updated_at": "2025-09-10T12:42:01Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "0160d525976618b4d10218395c49e891e57e824e",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/39"
+      },
+      {
+        "number": 38,
+        "updated_at": "2025-09-10T12:35:29Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "bcf72679abbb70f9a936f12d6ecff4620ce409a6",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/38"
+      },
+      {
+        "number": 37,
+        "updated_at": "2025-09-10T12:18:34Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "80858df572905a510c14372c251ae71449066c54",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/37"
+      },
+      {
+        "number": 36,
+        "updated_at": "2025-09-10T12:23:04Z",
+        "base_sha": "53e50e582c0dfc95a7783fc364202a54eb468cf3",
+        "head_sha": "2497dbae2410a0bf78b51f31a5978d016acd4f86",
+        "html_url": "https://github.com/link-foundation/link-cli/pull/36"
+      }
+    ],
+    "branch_protected": false,
+    "ruleset_count": 0
+  },
+  {
+    "repository": "link-foundation/links-notation",
+    "commit": "28cd9d2f64e34529c71e4c6b73ca09300dc3d733",
+    "default_branch": "main",
+    "source_file_count": 23,
+    "captured_runs": 25,
+    "run_conclusions": {
+      "failure": 1,
+      "success": 24
+    },
+    "runs_at_exact_head": 1,
+    "open_pr_count": 6,
+    "open_prs": [
+      {
+        "number": 204,
+        "updated_at": "2026-01-13T12:12:12Z",
+        "base_sha": "0377c9e2cb9528588d15c83614a71ab6f07ee006",
+        "head_sha": "d69d427b51a91037d764509899ca1629c8460495",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/204"
+      },
+      {
+        "number": 185,
+        "updated_at": "2025-12-27T15:23:13Z",
+        "base_sha": "afb661d2f070e7761e546171a6505381e7328f8e",
+        "head_sha": "deed344bf1f7b7cbad61f7478a191268b2f5ff53",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/185"
+      },
+      {
+        "number": 170,
+        "updated_at": "2025-11-30T20:44:10Z",
+        "base_sha": "6501dcb5102a1a2f2c5fedf51a063bc3c9936262",
+        "head_sha": "f2bcb2a0ebe3af9b7753ed2302b0210f6aa8f6bc",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/170"
+      },
+      {
+        "number": 167,
+        "updated_at": "2025-11-30T20:20:56Z",
+        "base_sha": "6501dcb5102a1a2f2c5fedf51a063bc3c9936262",
+        "head_sha": "b730ed6d912afeb878050d703911687baa3a1f9c",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/167"
+      },
+      {
+        "number": 80,
+        "updated_at": "2025-09-10T10:24:47Z",
+        "base_sha": "37f31013b897cda9ce10cf9565af890ee7fb8c6f",
+        "head_sha": "5ac938cc65203490d0041aac4f4c33a49467489b",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/80"
+      },
+      {
+        "number": 76,
+        "updated_at": "2025-09-10T08:18:31Z",
+        "base_sha": "37f31013b897cda9ce10cf9565af890ee7fb8c6f",
+        "head_sha": "6f4d3e72a8dfee386ca326324206bf5a66572967",
+        "html_url": "https://github.com/link-foundation/links-notation/pull/76"
+      }
+    ],
+    "branch_protected": false,
+    "ruleset_count": 0
+  },
+  {
+    "repository": "link-foundation/start",
+    "commit": "348ad41c2e6265611a53b55271d893f74960eff6",
+    "default_branch": "main",
+    "source_file_count": 25,
+    "captured_runs": 25,
+    "run_conclusions": {
+      "success": 25
+    },
+    "runs_at_exact_head": 3,
+    "open_pr_count": 0,
+    "open_prs": [],
+    "branch_protected": true,
+    "ruleset_count": 1
+  },
+  {
+    "repository": "link-assistant/calculator",
+    "commit": "cc31f84b303141a40f91fcc0cdd2d53d9209b2a2",
+    "default_branch": "main",
+    "source_file_count": 10,
+    "captured_runs": 25,
+    "run_conclusions": {
+      "success": 25
+    },
+    "runs_at_exact_head": 0,
+    "open_pr_count": 1,
+    "open_prs": [
+      {
+        "number": 228,
+        "updated_at": "2026-10-07T10:48:37Z",
+        "base_sha": "2ddbe544317a078411bd07f48d211055ceae83d6",
+        "head_sha": "24a6c94da7c0200bb52960cea7d0edb93da0dd05",
+        "html_url": "https://github.com/link-assistant/calculator/pull/228"
+      }
+    ],
+    "branch_protected": false,
+    "ruleset_count": 0
+  }
+]

@@ -1,0 +1,140 @@
+[
+  {
+    "id": 112530144165,
+    "run_id": 37539923581,
+    "workflow_name": "Coverage",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37539923581",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaM1G7pQ",
+    "head_sha": "b12577c102217d4ca7797ae0dde91bfaf9b1b298",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112530144165",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37539923581/job/112530144165",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-06T22:20:14Z",
+    "started_at": "2026-10-06T22:21:30Z",
+    "completed_at": "2026-10-06T22:22:48Z",
+    "name": "Detect Changes",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-06T22:21:31Z",
+        "completed_at": "2026-10-06T22:21:32Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-06T22:21:32Z",
+        "completed_at": "2026-10-06T22:21:54Z"
+      },
+      {
+        "name": "Setup Rust",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-06T22:21:54Z",
+        "completed_at": "2026-10-06T22:22:04Z"
+      },
+      {
+        "name": "Install rust-script",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-06T22:22:04Z",
+        "completed_at": "2026-10-06T22:22:37Z"
+      },
+      {
+        "name": "Detect changes",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-06T22:22:37Z",
+        "completed_at": "2026-10-06T22:22:46Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10,
+        "started_at": "2026-10-06T22:22:46Z",
+        "completed_at": "2026-10-06T22:22:46Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11,
+        "started_at": "2026-10-06T22:22:46Z",
+        "completed_at": "2026-10-06T22:22:46Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112530144165",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000146279,
+    "runner_name": "GitHub Actions 1000146279",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  },
+  {
+    "id": 112531063079,
+    "run_id": 37539923581,
+    "workflow_name": "Coverage",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37539923581",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaM1_BJw",
+    "head_sha": "b12577c102217d4ca7797ae0dde91bfaf9b1b298",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112531063079",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37539923581/job/112531063079",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T22:22:48Z",
+    "started_at": "2026-10-06T22:22:48Z",
+    "completed_at": "2026-10-06T22:28:05Z",
+    "name": "Browser Code Coverage",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112531063079",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  },
+  {
+    "id": 112531063185,
+    "run_id": 37539923581,
+    "workflow_name": "Coverage",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37539923581",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaM1_BkQ",
+    "head_sha": "b12577c102217d4ca7797ae0dde91bfaf9b1b298",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112531063185",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37539923581/job/112531063185",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T22:22:48Z",
+    "started_at": "2026-10-06T22:22:48Z",
+    "completed_at": "2026-10-06T22:28:05Z",
+    "name": "Code Coverage",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112531063185",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

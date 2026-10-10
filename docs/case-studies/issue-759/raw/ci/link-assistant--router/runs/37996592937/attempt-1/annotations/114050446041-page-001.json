@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/router/blob/d2a7145378b01c1a5cce5556eaefee29d1eb1a27/.github",
+    "start_line": 34,
+    "start_column": null,
+    "end_line": 34,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - test",
+    "message": "0% - 0 hits, 0 misses, 0 errors",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/router/blob/d2a7145378b01c1a5cce5556eaefee29d1eb1a27/.github",
+    "start_line": 31822,
+    "start_column": null,
+    "end_line": 31822,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 1.",
+    "raw_details": ""
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/0_Rocq build.txt.gz",
+    "sha256": "e1b9350a54b4adc8e1b53cdad7d95ba91d0220aaa0369bb8e9ab475ebe64f8fe",
+    "bytes": 22756,
+    "uncompressed_bytes": 118965,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/Rocq build/system.txt.gz",
+    "sha256": "fa6fa5d88eb880a0844a02f785253cf45d12438d8d051975c00dfd7a28e51af4",
+    "bytes": 409,
+    "uncompressed_bytes": 753,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/1_Linked semantic-source parity.txt.gz",
+    "sha256": "7099c6acfb318505a9d7af6dac58ed42f4d125da97331e90eca6744989bef8c1",
+    "bytes": 8067,
+    "uncompressed_bytes": 44267,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/Linked semantic-source parity/system.txt.gz",
+    "sha256": "9ff4016c32d42a9426f105fccd38d8a24cf0d2a75670aec8acc45911b90e6094",
+    "bytes": 323,
+    "uncompressed_bytes": 609,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/2_Isabelle exact-reference compiler controls.txt.gz",
+    "sha256": "08daa509db5216bd76748e84e4149b9ad497608db0f67ae8e21fffbb8f6679a9",
+    "bytes": 7528,
+    "uncompressed_bytes": 33203,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/Isabelle exact-reference compiler controls/system.txt.gz",
+    "sha256": "e6d2eec0d3b80319bdbdb0a6e8fd6ff4a33c0964cf12ddeecb26c0648cf759b5",
+    "bytes": 336,
+    "uncompressed_bytes": 620,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/3_Lean build.txt.gz",
+    "sha256": "beaf2df35ff98709df7097690e30efbe9d2de9f00eb83c33cd87975aaac5ee75",
+    "bytes": 18748,
+    "uncompressed_bytes": 95716,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37982698832/attempt-1/logs/Lean build/system.txt.gz",
+    "sha256": "0311df20cdb585cbc351ff6c1ef800611b259b7410b89bf9f27917fdc4e2e675",
+    "bytes": 326,
+    "uncompressed_bytes": 598,
+    "redacted": false
+  }
+]

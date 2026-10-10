@@ -1,0 +1,29 @@
+[
+  {
+    "id": 113528692055,
+    "run_id": 37840593376,
+    "workflow_name": "Regenerate self-AST census",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37840593376",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAabtZdVw",
+    "head_sha": "a3d7435370bef71197063733d2076ce13a052621",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113528692055",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840593376/job/113528692055",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T20:35:38Z",
+    "started_at": "2026-10-08T20:35:38Z",
+    "completed_at": "2026-10-08T20:37:17Z",
+    "name": "Build the census and upload it",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113528692055",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  }
+]

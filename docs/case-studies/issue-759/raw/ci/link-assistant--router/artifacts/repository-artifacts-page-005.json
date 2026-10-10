@@ -1,0 +1,2005 @@
+{
+  "total_count": 2286,
+  "artifacts": [
+    {
+      "id": 11604688706,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDY4ODcwNg==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5623,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604688706",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604688706/zip",
+      "expired": false,
+      "digest": "sha256:30a736f30baab302e4a663f90b8343972bee9cd69cf07333a25227a6f6b39fc3",
+      "created_at": "2026-10-09T08:46:22Z",
+      "updated_at": "2026-10-09T08:46:22Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695722,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11604652537,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDY1MjUzNw==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6393,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604652537",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604652537/zip",
+      "expired": false,
+      "digest": "sha256:edc21bf301a14896252e3644edc21e4891bf87e71c170bd0a5d680a94a71f412",
+      "created_at": "2026-10-09T08:41:26Z",
+      "updated_at": "2026-10-09T08:41:26Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695724,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11604522834,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDUyMjgzNA==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6358,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604522834",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604522834/zip",
+      "expired": false,
+      "digest": "sha256:320bcfd019040aacb6fb51858d4e864371a3c3300ade8145df51c38063c9536c",
+      "created_at": "2026-10-09T08:40:03Z",
+      "updated_at": "2026-10-09T08:40:03Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695722,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11604508045,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDUwODA0NQ==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5606,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604508045",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604508045/zip",
+      "expired": false,
+      "digest": "sha256:2c5e54ef2413fb97f58d25b47f2d917ff8d4e0fcac01e8598280f171ae56b6fb",
+      "created_at": "2026-10-09T08:40:44Z",
+      "updated_at": "2026-10-09T08:40:44Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695722,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11604449673,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDQ0OTY3Mw==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5534,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604449673",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604449673/zip",
+      "expired": false,
+      "digest": "sha256:ba51313ccec095f82a2d8471ad8ce80a1f161c66b3d843e17bc3efca928eb6dc",
+      "created_at": "2026-10-09T08:48:26Z",
+      "updated_at": "2026-10-09T08:48:26Z",
+      "expires_at": "2027-01-07T07:56:39Z",
+      "workflow_run": {
+        "id": 37901940194,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11604303224,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDMwMzIyNA==",
+      "name": "criterion",
+      "size_in_bytes": 61058,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604303224",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604303224/zip",
+      "expired": false,
+      "digest": "sha256:7620ff6b7a6ff050d333cbf087e24ab40ac4aec122534d5bad66ccac794c6e30",
+      "created_at": "2026-10-09T08:39:46Z",
+      "updated_at": "2026-10-09T08:39:46Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695743,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11604261403,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwNDI2MTQwMw==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5562,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604261403",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11604261403/zip",
+      "expired": false,
+      "digest": "sha256:1567020578e8cef9f2c774f2e08d8307d4cb4d23175a566884733a44d5ba9ad3",
+      "created_at": "2026-10-09T08:28:46Z",
+      "updated_at": "2026-10-09T08:28:46Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494162,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11603894467,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzg5NDQ2Nw==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5603,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603894467",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603894467/zip",
+      "expired": false,
+      "digest": "sha256:a4ca90d7c36dbf3a1b6c687a0ef5e658282e06478384279d8a4443ba0721202c",
+      "created_at": "2026-10-09T08:30:59Z",
+      "updated_at": "2026-10-09T08:30:59Z",
+      "expires_at": "2027-01-07T07:56:39Z",
+      "workflow_run": {
+        "id": 37901940194,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11603683952,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzY4Mzk1Mg==",
+      "name": "criterion",
+      "size_in_bytes": 59872,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603683952",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603683952/zip",
+      "expired": false,
+      "digest": "sha256:cec898bda0d1f743aeaa2878757e4c71009ae536ac0333cf7ec1a8fbd548414e",
+      "created_at": "2026-10-09T08:23:55Z",
+      "updated_at": "2026-10-09T08:23:55Z",
+      "expires_at": "2027-01-07T08:04:30Z",
+      "workflow_run": {
+        "id": 37902729094,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa"
+      }
+    },
+    {
+      "id": 11603657637,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzY1NzYzNw==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6316,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603657637",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603657637/zip",
+      "expired": false,
+      "digest": "sha256:4d37e4432f389c1f8272780eb4e923c791b0ba3ef6ac93e662f644591ce491ed",
+      "created_at": "2026-10-09T08:18:02Z",
+      "updated_at": "2026-10-09T08:18:02Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695724,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11603602703,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzYwMjcwMw==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6285,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603602703",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603602703/zip",
+      "expired": false,
+      "digest": "sha256:a55baf2dd34f8e9a30137a5f82c8c3f6f1f11b4b88a78a7c73b009aae86cd52a",
+      "created_at": "2026-10-09T08:17:26Z",
+      "updated_at": "2026-10-09T08:17:26Z",
+      "expires_at": "2027-01-07T08:04:30Z",
+      "workflow_run": {
+        "id": 37902729102,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa"
+      }
+    },
+    {
+      "id": 11603545948,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzU0NTk0OA==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5619,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603545948",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603545948/zip",
+      "expired": false,
+      "digest": "sha256:467d21f8cb88a8f9d92dfa45e6afb5514cfb339b7f79e0bf42bdb87fc05ff1fa",
+      "created_at": "2026-10-09T08:07:57Z",
+      "updated_at": "2026-10-09T08:07:57Z",
+      "expires_at": "2027-01-07T07:56:39Z",
+      "workflow_run": {
+        "id": 37901940194,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11603528222,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzUyODIyMg==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5605,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603528222",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603528222/zip",
+      "expired": false,
+      "digest": "sha256:14be59d5792e3de811d5e8683fd4d33ac9003e09c0a608e8562846e2eca113cc",
+      "created_at": "2026-10-09T08:19:14Z",
+      "updated_at": "2026-10-09T08:19:14Z",
+      "expires_at": "2027-01-07T08:04:30Z",
+      "workflow_run": {
+        "id": 37902729056,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa"
+      }
+    },
+    {
+      "id": 11603484524,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzQ4NDUyNA==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6359,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603484524",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603484524/zip",
+      "expired": false,
+      "digest": "sha256:7559b47185a511910120aaa992b95bdb3db33ad9bc3ae752d8336cd4a6bc2b83",
+      "created_at": "2026-10-09T08:24:49Z",
+      "updated_at": "2026-10-09T08:24:49Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494162,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11603420692,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzQyMDY5Mg==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6322,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603420692",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603420692/zip",
+      "expired": false,
+      "digest": "sha256:69b2ca1d1bd9942fe17020d4be47362ce85c4705a0cecff5376fcb3fd52627d3",
+      "created_at": "2026-10-09T08:08:51Z",
+      "updated_at": "2026-10-09T08:08:51Z",
+      "expires_at": "2027-01-07T07:56:39Z",
+      "workflow_run": {
+        "id": 37901940294,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11603420552,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzQyMDU1Mg==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6404,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603420552",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603420552/zip",
+      "expired": false,
+      "digest": "sha256:86ed0973b794531b66bf242610f05d09536298f83b6137260eae5ef5e46816f9",
+      "created_at": "2026-10-09T08:07:57Z",
+      "updated_at": "2026-10-09T08:07:57Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494013,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11603391125,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzM5MTEyNQ==",
+      "name": "link-assistant~router~QEV6AZ.dockerbuild",
+      "size_in_bytes": 86879,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603391125",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603391125/zip",
+      "expired": false,
+      "digest": "sha256:c4f150bfde0090818db9d054f33d190584a4e2025c24872c6bd89dd1a80a4605",
+      "created_at": "2026-10-09T08:07:01Z",
+      "updated_at": "2026-10-09T08:07:01Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695723,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11603367465,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzM2NzQ2NQ==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5612,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603367465",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603367465/zip",
+      "expired": false,
+      "digest": "sha256:d66077ead10f19566956bf68009859bcfb869fb2a750124bbf16b4a3efeaca0e",
+      "created_at": "2026-10-09T08:13:33Z",
+      "updated_at": "2026-10-09T08:13:33Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494162,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11603351136,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzM1MTEzNg==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5567,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603351136",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603351136/zip",
+      "expired": false,
+      "digest": "sha256:8c17e617db1671e0f806125fce508bf1a58fa9e8f29695840c7fda7f88f69265",
+      "created_at": "2026-10-09T08:11:20Z",
+      "updated_at": "2026-10-09T08:11:20Z",
+      "expires_at": "2027-01-07T07:54:11Z",
+      "workflow_run": {
+        "id": 37901695722,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "4f8c6c85f524b52b911eab71fc2729da60c19ca6"
+      }
+    },
+    {
+      "id": 11603269472,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzI2OTQ3Mg==",
+      "name": "link-assistant~router~LY694Q.dockerbuild",
+      "size_in_bytes": 88632,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603269472",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603269472/zip",
+      "expired": false,
+      "digest": "sha256:829a5f8de4329bacdae11a7a7a4451902bc6194623927de44c9468645ada689a",
+      "created_at": "2026-10-09T08:34:11Z",
+      "updated_at": "2026-10-09T08:34:11Z",
+      "expires_at": "2027-01-07T08:04:30Z",
+      "workflow_run": {
+        "id": 37902729089,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa"
+      }
+    },
+    {
+      "id": 11603173338,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzE3MzMzOA==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5610,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603173338",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603173338/zip",
+      "expired": false,
+      "digest": "sha256:3e4b383a0e5a6645925be66c30280ba0bd96254bc671ea5d3ad049a21cfefff9",
+      "created_at": "2026-10-09T08:15:33Z",
+      "updated_at": "2026-10-09T08:15:33Z",
+      "expires_at": "2027-01-07T07:56:39Z",
+      "workflow_run": {
+        "id": 37901940194,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11603114326,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzExNDMyNg==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6346,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603114326",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603114326/zip",
+      "expired": false,
+      "digest": "sha256:50c034035f84bbc7b08265a2daa5c558c153f225a4fd2167aba5fd8fd8cd253b",
+      "created_at": "2026-10-09T08:18:58Z",
+      "updated_at": "2026-10-09T08:18:58Z",
+      "expires_at": "2027-01-07T08:04:30Z",
+      "workflow_run": {
+        "id": 37902729056,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "8e477cf7a75feb192441104b54cc71e424eb3daa"
+      }
+    },
+    {
+      "id": 11603108688,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMzEwODY4OA==",
+      "name": "criterion",
+      "size_in_bytes": 61034,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603108688",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11603108688/zip",
+      "expired": false,
+      "digest": "sha256:d8083c7095497610c37e3f22d7daaafcc4212fef4113f23d1c72f79976cb5cb2",
+      "created_at": "2026-10-09T08:16:09Z",
+      "updated_at": "2026-10-09T08:16:09Z",
+      "expires_at": "2027-01-07T07:56:40Z",
+      "workflow_run": {
+        "id": 37901940290,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11602954684,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjk1NDY4NA==",
+      "name": "link-assistant~router~I4A3BM.dockerbuild",
+      "size_in_bytes": 87574,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602954684",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602954684/zip",
+      "expired": false,
+      "digest": "sha256:0894ae4694c91d2d8b8d0a9563dc990f916a132867fc80be66617ba552c48082",
+      "created_at": "2026-10-09T08:20:10Z",
+      "updated_at": "2026-10-09T08:20:10Z",
+      "expires_at": "2027-01-07T07:56:40Z",
+      "workflow_run": {
+        "id": 37901940275,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "62b92c724b669afb949a892d527fb5f79bd413a9"
+      }
+    },
+    {
+      "id": 11602612314,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjYxMjMxNA==",
+      "name": "link-assistant~router~IAOMQC.dockerbuild",
+      "size_in_bytes": 87148,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602612314",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602612314/zip",
+      "expired": false,
+      "digest": "sha256:9090bdafd07abb2c4e1756c02c5d5acce1cb732facc857940dff543e72ab71c1",
+      "created_at": "2026-10-09T07:55:09Z",
+      "updated_at": "2026-10-09T07:55:09Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494212,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11602364428,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjM2NDQyOA==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5623,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602364428",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602364428/zip",
+      "expired": false,
+      "digest": "sha256:d005cfaa0fbf8b64512b93869fa4401974931fddd3a88df330e1cbb86eb9448d",
+      "created_at": "2026-10-09T07:57:22Z",
+      "updated_at": "2026-10-09T07:57:22Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494162,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11602247218,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjI0NzIxOA==",
+      "name": "rust-lcov",
+      "size_in_bytes": 545771,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602247218",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602247218/zip",
+      "expired": false,
+      "digest": "sha256:fb7823ec868f7210339c0c252d3a73b06ba16eaa4a13b85d01b8d04628b4316b",
+      "created_at": "2026-10-09T07:44:27Z",
+      "updated_at": "2026-10-09T07:44:27Z",
+      "expires_at": "2027-01-07T07:37:20Z",
+      "workflow_run": {
+        "id": 37900073249,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "v1.20.0",
+        "head_sha": "dc9a6e3417b055f117b0706dd0551043d447a32a"
+      }
+    },
+    {
+      "id": 11602230743,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjIzMDc0Mw==",
+      "name": "rust-lcov",
+      "size_in_bytes": 549702,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602230743",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602230743/zip",
+      "expired": false,
+      "digest": "sha256:9ce8a0039756a5710883e63437edf1637c3c8f8b0ff96ea1d7b21abc9439c16b",
+      "created_at": "2026-10-09T07:35:24Z",
+      "updated_at": "2026-10-09T07:35:24Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272689,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11602214042,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjIxNDA0Mg==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6323,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602214042",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602214042/zip",
+      "expired": false,
+      "digest": "sha256:54d3bdb68800ce64c5a249eb8cf06dda6bb7c3acaa8355d070cf21616d04de42",
+      "created_at": "2026-10-09T07:53:09Z",
+      "updated_at": "2026-10-09T07:53:09Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494013,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11602068596,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjA2ODU5Ng==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5633,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602068596",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602068596/zip",
+      "expired": false,
+      "digest": "sha256:54b5d7041dfbfda6a1bcfe3d09916182cbd9060b18dfb557b724ffb19386d1c1",
+      "created_at": "2026-10-09T07:58:10Z",
+      "updated_at": "2026-10-09T07:58:10Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900494162,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11602041009,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjA0MTAwOQ==",
+      "name": "rust-lcov",
+      "size_in_bytes": 557164,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602041009",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602041009/zip",
+      "expired": false,
+      "digest": "sha256:397b78acca1ffe6d02eadd4f68e79fe147557f2ef65404bc378f7907180033ae",
+      "created_at": "2026-10-09T07:35:09Z",
+      "updated_at": "2026-10-09T07:35:09Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508778,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11602032089,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMjAzMjA4OQ==",
+      "name": "rust-lcov",
+      "size_in_bytes": 553214,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602032089",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11602032089/zip",
+      "expired": false,
+      "digest": "sha256:f142e36693c6138514d573af0422b89417a35770536207ea366a8dbe590902c1",
+      "created_at": "2026-10-09T07:40:25Z",
+      "updated_at": "2026-10-09T07:40:25Z",
+      "expires_at": "2027-01-07T07:06:24Z",
+      "workflow_run": {
+        "id": 37897142179,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601926367,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTkyNjM2Nw==",
+      "name": "rust-lcov",
+      "size_in_bytes": 550795,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601926367",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601926367/zip",
+      "expired": false,
+      "digest": "sha256:83c7e8e6e0a47c39dfab2eb46f9ebd531c754ed29cc5bf59604488a8b095e809",
+      "created_at": "2026-10-09T07:38:32Z",
+      "updated_at": "2026-10-09T07:38:32Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529084,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11601878386,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTg3ODM4Ng==",
+      "name": "criterion",
+      "size_in_bytes": 59727,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601878386",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601878386/zip",
+      "expired": false,
+      "digest": "sha256:8ebd2a0e32b4ee3da67f3516e39ebec3a290bef84f183335b94a8b068833295e",
+      "created_at": "2026-10-09T07:51:56Z",
+      "updated_at": "2026-10-09T07:51:56Z",
+      "expires_at": "2027-01-07T07:41:45Z",
+      "workflow_run": {
+        "id": 37900493982,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "281a67cd8f1ec0fd492fe06e21491e99f9a31e89"
+      }
+    },
+    {
+      "id": 11601816252,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTgxNjI1Mg==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5618,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601816252",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601816252/zip",
+      "expired": false,
+      "digest": "sha256:85c2ed0be9adb396ec1e72140d192b12907c63f0d5fff40dade394da613b4b89",
+      "created_at": "2026-10-09T07:32:23Z",
+      "updated_at": "2026-10-09T07:32:23Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272644,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601577887,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTU3Nzg4Nw==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6372,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601577887",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601577887/zip",
+      "expired": false,
+      "digest": "sha256:37f3d832e6b594e6cf9f39d9cfe941690b1cff9b01fc8c214acd5a6ba30841b5",
+      "created_at": "2026-10-09T07:26:49Z",
+      "updated_at": "2026-10-09T07:26:49Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272545,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601532950,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTUzMjk1MA==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5561,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601532950",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601532950/zip",
+      "expired": false,
+      "digest": "sha256:21a1067fb45e027f9714f521258e789b78fb31c9a1d6e6c439efd0bf49e95770",
+      "created_at": "2026-10-09T07:26:00Z",
+      "updated_at": "2026-10-09T07:26:00Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272644,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601496991,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQ5Njk5MQ==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5628,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601496991",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601496991/zip",
+      "expired": false,
+      "digest": "sha256:56e7f566da52d2c9330f3c8c1a657ed51b750792f2b6c7d619eb26f1d03d1838",
+      "created_at": "2026-10-09T07:19:46Z",
+      "updated_at": "2026-10-09T07:19:46Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529063,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11601492428,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQ5MjQyOA==",
+      "name": "criterion",
+      "size_in_bytes": 61012,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601492428",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601492428/zip",
+      "expired": false,
+      "digest": "sha256:f8a3ce66551bdd9a2942d4480844a59fce4943bec6cc4a32c4d6493dfcf60140",
+      "created_at": "2026-10-09T07:21:49Z",
+      "updated_at": "2026-10-09T07:21:49Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142167,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601488624,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQ4ODYyNA==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6382,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601488624",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601488624/zip",
+      "expired": false,
+      "digest": "sha256:d2c25a5709c939844e1c45ca1a2b0b468fbc58f5910fd79e163b278a0c62401c",
+      "created_at": "2026-10-09T07:28:14Z",
+      "updated_at": "2026-10-09T07:28:14Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272644,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601440058,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQ0MDA1OA==",
+      "name": "rust-lcov",
+      "size_in_bytes": 545826,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601440058",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601440058/zip",
+      "expired": false,
+      "digest": "sha256:305dd889cf461ebc2fc9f73271b81e88a9b8eddc9a9cea13e9605f10822d4baa",
+      "created_at": "2026-10-09T07:08:43Z",
+      "updated_at": "2026-10-09T07:08:43Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248556,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11601439572,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQzOTU3Mg==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5621,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601439572",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601439572/zip",
+      "expired": false,
+      "digest": "sha256:ef59bc4932e172c1b00c04e56fb4875546476022571047b74f44c4a82dc9d78e",
+      "created_at": "2026-10-09T07:33:02Z",
+      "updated_at": "2026-10-09T07:33:02Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142175,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601438019,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTQzODAxOQ==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6319,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601438019",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601438019/zip",
+      "expired": false,
+      "digest": "sha256:2179be663276a6ef1cc1925aa1713a9f490fb3f63e5fab7e8c934c6bd54f2f81",
+      "created_at": "2026-10-09T07:25:07Z",
+      "updated_at": "2026-10-09T07:25:07Z",
+      "expires_at": "2027-01-07T07:06:24Z",
+      "workflow_run": {
+        "id": 37897142273,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601364684,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTM2NDY4NA==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5600,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601364684",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601364684/zip",
+      "expired": false,
+      "digest": "sha256:4faec7b0a39a8d80fdf3ae9fc86e4bec6d6205aae0a2d6cb64b1895dbb3c22c3",
+      "created_at": "2026-10-09T07:32:06Z",
+      "updated_at": "2026-10-09T07:32:06Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272644,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601314577,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTMxNDU3Nw==",
+      "name": "link-assistant~router~EWZD82.dockerbuild",
+      "size_in_bytes": 86561,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601314577",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601314577/zip",
+      "expired": false,
+      "digest": "sha256:e1afeeb783ccd66395e6fdc535ae47013210b64dbaa8cda9d3fc54a935864fa7",
+      "created_at": "2026-10-09T07:31:19Z",
+      "updated_at": "2026-10-09T07:31:19Z",
+      "expires_at": "2027-01-07T07:06:24Z",
+      "workflow_run": {
+        "id": 37897142209,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601305285,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTMwNTI4NQ==",
+      "name": "criterion",
+      "size_in_bytes": 59842,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601305285",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601305285/zip",
+      "expired": false,
+      "digest": "sha256:7c877bd5dcaa2d2c080ee03c398ffb071c72d65e872cb58e251a899bb12bd7d7",
+      "created_at": "2026-10-09T07:07:27Z",
+      "updated_at": "2026-10-09T07:07:27Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272681,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601299174,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTI5OTE3NA==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6448,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601299174",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601299174/zip",
+      "expired": false,
+      "digest": "sha256:e962372606756eda7e3867dbad8248d43e0d845dc26cc9dbbbb00bf4b0434363",
+      "created_at": "2026-10-09T07:29:28Z",
+      "updated_at": "2026-10-09T07:29:28Z",
+      "expires_at": "2027-01-07T07:06:24Z",
+      "workflow_run": {
+        "id": 37897142273,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601274838,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTI3NDgzOA==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5615,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601274838",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601274838/zip",
+      "expired": false,
+      "digest": "sha256:c7353c745bae611c42c336aef83c2f9efbf23304597c47224d79e53a74f372f1",
+      "created_at": "2026-10-09T07:32:45Z",
+      "updated_at": "2026-10-09T07:32:45Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272644,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601236560,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTIzNjU2MA==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6343,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601236560",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601236560/zip",
+      "expired": false,
+      "digest": "sha256:d14105d80a8f05605e4496ac9012500f7c90ea3d4042397ae88b35db5f4792ef",
+      "created_at": "2026-10-09T07:14:23Z",
+      "updated_at": "2026-10-09T07:14:23Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508842,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11601227952,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTIyNzk1Mg==",
+      "name": "link-assistant~router~JV02RL.dockerbuild",
+      "size_in_bytes": 88021,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601227952",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601227952/zip",
+      "expired": false,
+      "digest": "sha256:761b5e3b5067e19d06ad60bf75e7f6dc256bf8992abaa16ba0a7db34441eefd4",
+      "created_at": "2026-10-09T07:21:18Z",
+      "updated_at": "2026-10-09T07:21:18Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272582,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601218901,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTIxODkwMQ==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6360,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601218901",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601218901/zip",
+      "expired": false,
+      "digest": "sha256:9a12e78f5714efa5fd7d9ecc289bf6a29a74a136b7702c0c227f1ae1806bd710",
+      "created_at": "2026-10-09T07:26:17Z",
+      "updated_at": "2026-10-09T07:26:17Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142175,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11601205092,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTIwNTA5Mg==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5556,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601205092",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601205092/zip",
+      "expired": false,
+      "digest": "sha256:2483f96eef98f1172f01e050a30b770a5b9e1e39215241a18db2e4881f846a76",
+      "created_at": "2026-10-09T07:04:49Z",
+      "updated_at": "2026-10-09T07:04:49Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529063,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11601197472,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTE5NzQ3Mg==",
+      "name": "link-assistant~router~TIAZ18.dockerbuild",
+      "size_in_bytes": 89392,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601197472",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601197472/zip",
+      "expired": false,
+      "digest": "sha256:15531f7f9171c1d9ec3428bebfbfb8de0e57ee8751fb5db3ad7ca51e3fff8663",
+      "created_at": "2026-10-09T07:17:57Z",
+      "updated_at": "2026-10-09T07:17:57Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529087,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11601161822,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTE2MTgyMg==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5591,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601161822",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601161822/zip",
+      "expired": false,
+      "digest": "sha256:4ca83070f05bef1fd53709d5d5d5d0c454eeb88a6c70c9e5f729903a40b7b895",
+      "created_at": "2026-10-09T07:14:19Z",
+      "updated_at": "2026-10-09T07:14:19Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508842,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11601125926,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTEyNTkyNg==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6344,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601125926",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601125926/zip",
+      "expired": false,
+      "digest": "sha256:8a5060452bfa3596bd4db726f35bdb323b7e638fcfa1bbb13e6d909bb9bd6733",
+      "created_at": "2026-10-09T07:08:12Z",
+      "updated_at": "2026-10-09T07:08:12Z",
+      "expires_at": "2027-01-07T06:57:14Z",
+      "workflow_run": {
+        "id": 37896272545,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "528966bcfed2d5d06ddba330d638382e885f51d5"
+      }
+    },
+    {
+      "id": 11601103852,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMTEwMzg1Mg==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5608,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601103852",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11601103852/zip",
+      "expired": false,
+      "digest": "sha256:e8246599c46c3b177985576929dfda4ee03048e735edea5ce601a4b6d240f4c1",
+      "created_at": "2026-10-09T07:23:49Z",
+      "updated_at": "2026-10-09T07:23:49Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142175,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11600976421,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDk3NjQyMQ==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 800,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600976421",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600976421/zip",
+      "expired": false,
+      "digest": "sha256:e346d039c00a79b06872de5185b305d5b43a061a1000df46dce302904143ec72",
+      "created_at": "2026-10-09T07:11:38Z",
+      "updated_at": "2026-10-09T07:11:38Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529067,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600975433,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDk3NTQzMw==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6398,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600975433",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600975433/zip",
+      "expired": false,
+      "digest": "sha256:c4ebcfed3d90b7d00b5212a21085922b068335b1ab8206682ffb7e9ad72f5bdd",
+      "created_at": "2026-10-09T07:04:20Z",
+      "updated_at": "2026-10-09T07:04:20Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508813,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600947186,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDk0NzE4Ng==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5553,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600947186",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600947186/zip",
+      "expired": false,
+      "digest": "sha256:6950b677962e7e54cc3434fcefc0c5b842dc859c20569ed110347034b0bfd80f",
+      "created_at": "2026-10-09T07:16:46Z",
+      "updated_at": "2026-10-09T07:16:46Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142175,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11600920000,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDkyMDAwMA==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5549,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600920000",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600920000/zip",
+      "expired": false,
+      "digest": "sha256:de11b6c37b568e70033b20dc278bebbc11391c6766351d95622893bfb1cd0636",
+      "created_at": "2026-10-09T06:58:21Z",
+      "updated_at": "2026-10-09T06:58:21Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11600832453,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDgzMjQ1Mw==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 757,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600832453",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600832453/zip",
+      "expired": false,
+      "digest": "sha256:f044f822f4b93d9aa7effdf51320c93d96fa2873763c316355c063f1576126b9",
+      "created_at": "2026-10-09T07:13:40Z",
+      "updated_at": "2026-10-09T07:13:40Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529067,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600760871,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDc2MDg3MQ==",
+      "name": "criterion",
+      "size_in_bytes": 59633,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600760871",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600760871/zip",
+      "expired": false,
+      "digest": "sha256:d23f98b4702a1b3702f90d174ce443916fd2a7edf0573dbdbc4eb99075095ee8",
+      "created_at": "2026-10-09T06:54:26Z",
+      "updated_at": "2026-10-09T06:54:26Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508815,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600718244,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDcxODI0NA==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5601,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600718244",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600718244/zip",
+      "expired": false,
+      "digest": "sha256:b5bb459a8dc3151c1ce062a0f932fd7b3b6702bba4cab529d5b070bc115e3b11",
+      "created_at": "2026-10-09T07:17:00Z",
+      "updated_at": "2026-10-09T07:17:00Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529063,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600582123,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDU4MjEyMw==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5598,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600582123",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600582123/zip",
+      "expired": false,
+      "digest": "sha256:b9f200c54a8a9c3e478d859934010f6157fae5deaea8ebe998769022d936f06a",
+      "created_at": "2026-10-09T06:58:04Z",
+      "updated_at": "2026-10-09T06:58:04Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508842,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600554782,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDU1NDc4Mg==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6376,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600554782",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600554782/zip",
+      "expired": false,
+      "digest": "sha256:8c4db108199ccea0316f5bbfdf06a7b4729f92c4bbfcda24c8bf499342d9d14e",
+      "created_at": "2026-10-09T07:12:49Z",
+      "updated_at": "2026-10-09T07:12:49Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529063,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600548678,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDU0ODY3OA==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5614,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600548678",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600548678/zip",
+      "expired": false,
+      "digest": "sha256:8d41a6a0a65fa4ca9108db6b06b0dcd457ca11a4a5a4aa13e003e995fc0dc4a1",
+      "created_at": "2026-10-09T07:17:24Z",
+      "updated_at": "2026-10-09T07:17:24Z",
+      "expires_at": "2027-01-07T07:06:23Z",
+      "workflow_run": {
+        "id": 37897142175,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "a849b0defe329b9128512f00efdade5e3d0d69c6"
+      }
+    },
+    {
+      "id": 11600506756,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDUwNjc1Ng==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5618,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600506756",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600506756/zip",
+      "expired": false,
+      "digest": "sha256:0b0010ed954138469a4ab41d8fb7b22992b5fff9747ae67b28d46921adc3922c",
+      "created_at": "2026-10-09T06:54:51Z",
+      "updated_at": "2026-10-09T06:54:51Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508842,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600477637,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDQ3NzYzNw==",
+      "name": "criterion",
+      "size_in_bytes": 59720,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600477637",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600477637/zip",
+      "expired": false,
+      "digest": "sha256:c2801a9fd62e3b3690e9a5d492f84959c697a9588abc30a6902c42af182373c0",
+      "created_at": "2026-10-09T07:07:40Z",
+      "updated_at": "2026-10-09T07:07:40Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529071,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600286030,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDI4NjAzMA==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 757,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600286030",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600286030/zip",
+      "expired": false,
+      "digest": "sha256:67978b8191951c8ce0dc616ec8525ffe6f11d6a83f59d39c2deabbbfe240cf59",
+      "created_at": "2026-10-09T06:46:02Z",
+      "updated_at": "2026-10-09T06:46:02Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508813,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600252712,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDI1MjcxMg==",
+      "name": "link-assistant~router~YOFN79.dockerbuild",
+      "size_in_bytes": 50546,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600252712",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600252712/zip",
+      "expired": false,
+      "digest": "sha256:14bff5477d1d9de5a37cdedbb5be83ba964ecfa2147e20b196cd2b2b0e763ea3",
+      "created_at": "2026-10-09T06:55:22Z",
+      "updated_at": "2026-10-09T06:55:22Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508849,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11600228508,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDIyODUwOA==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5613,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600228508",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600228508/zip",
+      "expired": false,
+      "digest": "sha256:c1b60c33de581f923482ca0ad03c0e994021f605f3e011d925bdf4046b14fbd6",
+      "created_at": "2026-10-09T07:09:21Z",
+      "updated_at": "2026-10-09T07:09:21Z",
+      "expires_at": "2027-01-07T06:49:06Z",
+      "workflow_run": {
+        "id": 37895529063,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "df6940282cd45558d356081681cf250d41f8d81e"
+      }
+    },
+    {
+      "id": 11600161632,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDE2MTYzMg==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6440,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600161632",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600161632/zip",
+      "expired": false,
+      "digest": "sha256:dfe1010bb02e0a34735aeddacd3a622eda93b15488c0ef5c27edabafadadcb60",
+      "created_at": "2026-10-09T06:47:35Z",
+      "updated_at": "2026-10-09T06:47:35Z",
+      "expires_at": "2027-01-07T06:15:25Z",
+      "workflow_run": {
+        "id": 37892592333,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "5a472a4d58267d79392a3a0a5b58eea956ed5694"
+      }
+    },
+    {
+      "id": 11600136553,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDEzNjU1Mw==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5618,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600136553",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600136553/zip",
+      "expired": false,
+      "digest": "sha256:d7f4f09410d570bcb35e8415a81cd2e7e4e180894b22dcc28a01a2700411cbfa",
+      "created_at": "2026-10-09T06:46:01Z",
+      "updated_at": "2026-10-09T06:46:01Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11600126947,
+      "node_id": "MDg6QXJ0aWZhY3QxMTYwMDEyNjk0Nw==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6369,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600126947",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11600126947/zip",
+      "expired": false,
+      "digest": "sha256:a3f395c47f8539ebd7a6ef6f7cf9eac28d806916f4a03790c4e18f737743693d",
+      "created_at": "2026-10-09T06:48:56Z",
+      "updated_at": "2026-10-09T06:48:56Z",
+      "expires_at": "2027-01-07T06:15:25Z",
+      "workflow_run": {
+        "id": 37892592218,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "5a472a4d58267d79392a3a0a5b58eea956ed5694"
+      }
+    },
+    {
+      "id": 11599984720,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTk4NDcyMA==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5553,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599984720",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599984720/zip",
+      "expired": false,
+      "digest": "sha256:7a485e8e0fc2271809a1b41e9a72b7232cc7753327f5388f97e63210b79af33c",
+      "created_at": "2026-10-09T07:02:10Z",
+      "updated_at": "2026-10-09T07:02:10Z",
+      "expires_at": "2027-01-07T06:37:35Z",
+      "workflow_run": {
+        "id": 37894508842,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "16b1087eb595e8b428036ab3267e6106d574dabd"
+      }
+    },
+    {
+      "id": 11599925770,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTkyNTc3MA==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 294,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599925770",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599925770/zip",
+      "expired": false,
+      "digest": "sha256:17b9853d239f892083de2845f3c435fe2cbd46018aa425c21456b0cb12d0cc2c",
+      "created_at": "2026-10-09T06:37:49Z",
+      "updated_at": "2026-10-09T06:37:49Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389822,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599845340,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTg0NTM0MA==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5614,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599845340",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599845340/zip",
+      "expired": false,
+      "digest": "sha256:f5d2facc1e279c05243ffe856e13b402ac2cf2714094e3f5d05fc147aeba338a",
+      "created_at": "2026-10-09T06:28:04Z",
+      "updated_at": "2026-10-09T06:28:04Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389822,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599791863,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTc5MTg2Mw==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6392,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599791863",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599791863/zip",
+      "expired": false,
+      "digest": "sha256:ca6a5d9a4c066317c71764cdf2a5d2b22e57bbb7a770ff86d73a167a19364d2b",
+      "created_at": "2026-10-09T06:37:26Z",
+      "updated_at": "2026-10-09T06:37:26Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389761,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599632301,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTYzMjMwMQ==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6285,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599632301",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599632301/zip",
+      "expired": false,
+      "digest": "sha256:1a2e57b24a296a8b971ad84173a6072a6219a9596ad0d95392310ce73f84a093",
+      "created_at": "2026-10-09T06:36:36Z",
+      "updated_at": "2026-10-09T06:36:36Z",
+      "expires_at": "2027-01-07T06:15:25Z",
+      "workflow_run": {
+        "id": 37892592333,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "5a472a4d58267d79392a3a0a5b58eea956ed5694"
+      }
+    },
+    {
+      "id": 11599628452,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTYyODQ1Mg==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5619,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599628452",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599628452/zip",
+      "expired": false,
+      "digest": "sha256:7bac42171157e4529c81e1a44336a9339fa3f83fdced388f0b947e27af498334",
+      "created_at": "2026-10-09T06:46:13Z",
+      "updated_at": "2026-10-09T06:46:13Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11599567380,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTU2NzM4MA==",
+      "name": "link-assistant~router~V0UARH.dockerbuild",
+      "size_in_bytes": 88996,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599567380",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599567380/zip",
+      "expired": false,
+      "digest": "sha256:108219c790ebeb479454880e7af64be7a45b03850b8a8f13417d5fadbe4c571e",
+      "created_at": "2026-10-09T06:29:24Z",
+      "updated_at": "2026-10-09T06:29:24Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389701,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599537308,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTUzNzMwOA==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5602,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599537308",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599537308/zip",
+      "expired": false,
+      "digest": "sha256:1a2b75bc21fa651ec51c8ee0b7ae4bfa9f5f249304c03332928af06d75cb800c",
+      "created_at": "2026-10-09T06:35:20Z",
+      "updated_at": "2026-10-09T06:35:20Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11599429169,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTQyOTE2OQ==",
+      "name": "verification-codex-newer-release-0",
+      "size_in_bytes": 5566,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599429169",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599429169/zip",
+      "expired": false,
+      "digest": "sha256:4711f206a7d1a9be5b29838792169366e14e76e724d278cd068243feb31bf1eb",
+      "created_at": "2026-10-09T06:48:26Z",
+      "updated_at": "2026-10-09T06:48:26Z",
+      "expires_at": "2027-01-07T06:15:25Z",
+      "workflow_run": {
+        "id": 37892592218,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "5a472a4d58267d79392a3a0a5b58eea956ed5694"
+      }
+    },
+    {
+      "id": 11599427851,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTQyNzg1MQ==",
+      "name": "verification-codex-newer-release-1",
+      "size_in_bytes": 5557,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599427851",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599427851/zip",
+      "expired": false,
+      "digest": "sha256:b998da528ce87f1aaef7b6453b33cbfd047d5725a3b564db2b2110e0248ba3f4",
+      "created_at": "2026-10-09T06:36:59Z",
+      "updated_at": "2026-10-09T06:36:59Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11599391145,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTM5MTE0NQ==",
+      "name": "soak-macos-15",
+      "size_in_bytes": 6412,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599391145",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599391145/zip",
+      "expired": false,
+      "digest": "sha256:f1ed7de02690a8da2ec242c99de321f47d79ad96cd6d167058cabd043b4bdcdf",
+      "created_at": "2026-10-09T06:17:14Z",
+      "updated_at": "2026-10-09T06:17:14Z",
+      "expires_at": "2027-01-07T05:50:31Z",
+      "workflow_run": {
+        "id": 37890500551,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "f815e279b71780a0d8fff6bf762ef875b7b6a8e8"
+      }
+    },
+    {
+      "id": 11599363487,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTM2MzQ4Nw==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5613,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599363487",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599363487/zip",
+      "expired": false,
+      "digest": "sha256:8478ba6f7aa880f90b0b726a3ec9318dce698e2295871725bfdccbf2794f55cb",
+      "created_at": "2026-10-09T06:31:31Z",
+      "updated_at": "2026-10-09T06:31:31Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389822,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599323526,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTMyMzUyNg==",
+      "name": "verification-claude-newer-release-3",
+      "size_in_bytes": 5627,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599323526",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599323526/zip",
+      "expired": false,
+      "digest": "sha256:4c0b16927fcab0e72c253726714b2c9808f1330ecc2d671f9126ce2e0c0765b9",
+      "created_at": "2026-10-09T06:30:37Z",
+      "updated_at": "2026-10-09T06:30:37Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11599312815,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTMxMjgxNQ==",
+      "name": "criterion",
+      "size_in_bytes": 59795,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599312815",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599312815/zip",
+      "expired": false,
+      "digest": "sha256:b7c2bd6a18e11b3889f3b428652ea8076c129a73ea536682333f81605b982897",
+      "created_at": "2026-10-09T06:26:23Z",
+      "updated_at": "2026-10-09T06:26:23Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389748,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599299349,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTI5OTM0OQ==",
+      "name": "rust-lcov",
+      "size_in_bytes": 551979,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599299349",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599299349/zip",
+      "expired": false,
+      "digest": "sha256:b137adfbb3eff7e6c59d3b8c687bcd9e5a3350a9a459363ae840ec787bafc5d0",
+      "created_at": "2026-10-09T06:35:53Z",
+      "updated_at": "2026-10-09T06:35:53Z",
+      "expires_at": "2027-01-07T05:50:31Z",
+      "workflow_run": {
+        "id": 37890500554,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "f815e279b71780a0d8fff6bf762ef875b7b6a8e8"
+      }
+    },
+    {
+      "id": 11599278443,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTI3ODQ0Mw==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5608,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599278443",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599278443/zip",
+      "expired": false,
+      "digest": "sha256:fbe9e446ac5851393d7cbc1d160ec8bf4dbf10dc509250706e04b56e6d6991d5",
+      "created_at": "2026-10-09T06:30:21Z",
+      "updated_at": "2026-10-09T06:30:21Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389822,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599258476,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTI1ODQ3Ng==",
+      "name": "criterion",
+      "size_in_bytes": 61047,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599258476",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599258476/zip",
+      "expired": false,
+      "digest": "sha256:5bc1c0aa894e88553a8ea8dc8290fba87da38ef06fdf619cf7736772bd79431c",
+      "created_at": "2026-10-09T06:40:24Z",
+      "updated_at": "2026-10-09T06:40:24Z",
+      "expires_at": "2027-01-07T06:15:25Z",
+      "workflow_run": {
+        "id": 37892592016,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-724-878028a21e67",
+        "head_sha": "5a472a4d58267d79392a3a0a5b58eea956ed5694"
+      }
+    },
+    {
+      "id": 11599253871,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTI1Mzg3MQ==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6355,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599253871",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599253871/zip",
+      "expired": false,
+      "digest": "sha256:2c8349a1df1c62a7ca4f8555d71104bfccc21e21fc777e65f8aad6696db8e0a7",
+      "created_at": "2026-10-09T06:32:59Z",
+      "updated_at": "2026-10-09T06:32:59Z",
+      "expires_at": "2027-01-07T06:23:10Z",
+      "workflow_run": {
+        "id": 37893248713,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "main",
+        "head_sha": "ccc9d8d0500df6d3bf942173befc9bd5cb6393af"
+      }
+    },
+    {
+      "id": 11599240747,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTI0MDc0Nw==",
+      "name": "verification-claude-newer-release-0",
+      "size_in_bytes": 5600,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599240747",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599240747/zip",
+      "expired": false,
+      "digest": "sha256:c9c9fe4c926f4d45cd6e4a7b286304c840c56be863d7e2db20d9d883e3e4eb34",
+      "created_at": "2026-10-09T06:13:23Z",
+      "updated_at": "2026-10-09T06:13:23Z",
+      "expires_at": "2027-01-07T05:50:31Z",
+      "workflow_run": {
+        "id": 37890500563,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "f815e279b71780a0d8fff6bf762ef875b7b6a8e8"
+      }
+    },
+    {
+      "id": 11599231101,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTIzMTEwMQ==",
+      "name": "rust-lcov",
+      "size_in_bytes": 548452,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599231101",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599231101/zip",
+      "expired": false,
+      "digest": "sha256:2d39495e156e071d53e1847d9110cf872dec692384ac42b061c5fa27081d7359",
+      "created_at": "2026-10-09T06:14:25Z",
+      "updated_at": "2026-10-09T06:14:25Z",
+      "expires_at": "2027-01-07T05:39:12Z",
+      "workflow_run": {
+        "id": 37889597968,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "e3415fa8a675b26c550495317a932d17eb6b0416"
+      }
+    },
+    {
+      "id": 11599200239,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTIwMDIzOQ==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5626,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599200239",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599200239/zip",
+      "expired": false,
+      "digest": "sha256:0a745c528842044dad8ca72f6382fbabaa52c0f52d3c75865737045da694e62d",
+      "created_at": "2026-10-09T06:11:33Z",
+      "updated_at": "2026-10-09T06:11:33Z",
+      "expires_at": "2027-01-07T05:50:31Z",
+      "workflow_run": {
+        "id": 37890500563,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "f815e279b71780a0d8fff6bf762ef875b7b6a8e8"
+      }
+    },
+    {
+      "id": 11599112847,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTExMjg0Nw==",
+      "name": "soak-ubuntu-24.04",
+      "size_in_bytes": 6351,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599112847",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599112847/zip",
+      "expired": false,
+      "digest": "sha256:2b4b682f1b8ab6561debbf7b8efdce3eff83e595b45de54e9bc64db2b5fc05fa",
+      "created_at": "2026-10-09T06:23:41Z",
+      "updated_at": "2026-10-09T06:23:41Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389761,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599029006,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTAyOTAwNg==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6352,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599029006",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599029006/zip",
+      "expired": false,
+      "digest": "sha256:5f2b3dc215c4c86fb4665fcec8f6af3aa6a2fc0193cec9f8f1e65a8846640789",
+      "created_at": "2026-10-09T06:29:50Z",
+      "updated_at": "2026-10-09T06:29:50Z",
+      "expires_at": "2027-01-07T06:13:04Z",
+      "workflow_run": {
+        "id": 37892389822,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-723-f90ba58d394a",
+        "head_sha": "c1974401475abe5c74a93abf169f3de4f0dcc3c5"
+      }
+    },
+    {
+      "id": 11599000711,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5OTAwMDcxMQ==",
+      "name": "verification-claude-newer-release-1",
+      "size_in_bytes": 5602,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599000711",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11599000711/zip",
+      "expired": false,
+      "digest": "sha256:d21e5949a200c3727fcae5cf6cb10bb97003874f1f74589e2f26c169e5584724",
+      "created_at": "2026-10-09T06:09:21Z",
+      "updated_at": "2026-10-09T06:09:21Z",
+      "expires_at": "2027-01-07T05:39:12Z",
+      "workflow_run": {
+        "id": 37889597957,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "e3415fa8a675b26c550495317a932d17eb6b0416"
+      }
+    },
+    {
+      "id": 11598910021,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5ODkxMDAyMQ==",
+      "name": "verification-claude-newer-release-2",
+      "size_in_bytes": 5594,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11598910021",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11598910021/zip",
+      "expired": false,
+      "digest": "sha256:82c3b370657e8d641fd64940cac48523071e5951b3e8e073c6e761694ca37ce1",
+      "created_at": "2026-10-09T06:06:05Z",
+      "updated_at": "2026-10-09T06:06:05Z",
+      "expires_at": "2027-01-07T05:39:12Z",
+      "workflow_run": {
+        "id": 37889597957,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-727-61ea612f008e",
+        "head_sha": "e3415fa8a675b26c550495317a932d17eb6b0416"
+      }
+    },
+    {
+      "id": 11598726269,
+      "node_id": "MDg6QXJ0aWZhY3QxMTU5ODcyNjI2OQ==",
+      "name": "verification-real-client-capture-0",
+      "size_in_bytes": 6373,
+      "url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11598726269",
+      "archive_download_url": "https://api.github.com/repos/link-assistant/router/actions/artifacts/11598726269/zip",
+      "expired": false,
+      "digest": "sha256:fd66a5fe20cfd4b7bac714eb9b321fafa4a5b2a3999fa1356ed731c0dec19163",
+      "created_at": "2026-10-09T06:14:15Z",
+      "updated_at": "2026-10-09T06:14:15Z",
+      "expires_at": "2027-01-07T05:50:31Z",
+      "workflow_run": {
+        "id": 37890500563,
+        "repository_id": 1185907113,
+        "head_repository_id": 1185907113,
+        "head_branch": "issue-725-052105988e50",
+        "head_sha": "f815e279b71780a0d8fff6bf762ef875b7b6a8e8"
+      }
+    }
+  ]
+}

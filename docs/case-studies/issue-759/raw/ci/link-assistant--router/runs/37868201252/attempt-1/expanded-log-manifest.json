@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--router/runs/37868201252/attempt-1/logs/5_generated-http.txt.gz",
+    "sha256": "6b76dfa86d0bc532e7d66c968f7ddb9d8e7892adde0b3c50bb6b9f68b9277213",
+    "bytes": 45487,
+    "uncompressed_bytes": 430874,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--router/runs/37868201252/attempt-1/logs/generated-http/system.txt.gz",
+    "sha256": "e49fe648c5fba05d144c43164ba7d134576284362035a891aaae558cfd7a90e4",
+    "bytes": 403,
+    "uncompressed_bytes": 742,
+    "redacted": false
+  }
+]

@@ -1,0 +1,18 @@
+[
+  { "kind": "async", "source": "/** @returns {number} */ export async function delayed() { return 1; }" },
+  { "kind": "template", "source": "/** @param {string} name @returns {string} */ export function greeting(name) { return `hi ${name}`; }" },
+  { "kind": "collection", "source": "/** @returns {number} */ export function collection() { return [1, 2].length; }" },
+  { "kind": "class", "source": "export class Router {}" },
+  { "kind": "no-definition", "source": "import { readFile } from 'node:fs';" },
+  { "kind": "untyped", "source": "export function untyped(value) { return value; }" },
+  { "kind": "unknown-call", "source": "/** @returns {number} */ export function missing() { return absent(); }" },
+  { "kind": "mutable", "source": "/** @returns {number} */ export function immutable() { const x = 1; x = 2; return x; }" },
+  { "kind": "concatenation", "source": "/** @param {number} n @returns {string} */ export function coercion(n) { return 'x' + n; }" },
+  { "kind": "loop", "source": "/** @returns {number} */ export function forbiddenLoop() { for (;;) {} return 1; }" },
+  { "kind": "type", "source": "/** @param {number} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }" },
+  { "kind": "rounding", "source": "/** @param {number} n @returns {number} */ export function rounding(n) { return Math.round(n); }" },
+  { "kind": "unsupported", "source": "/** @param {number} n @returns {boolean} */ export function loose(n) { return n == 0; }" },
+  { "kind": "unsupported", "source": "/** @returns {number} */ export function throwing() { throw new Error('x'); }" },
+  { "kind": "unsupported", "source": "/** @param {number} n @returns {number} */ export function defaults(n = 1) { return n; }" },
+  { "kind": "missing-return", "source": "/** @param {boolean} yes @returns {number} */ export function missingReturn(yes) { if (yes) { return 1; } }" }
+]

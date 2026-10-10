@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "publication": {
+    "repo": "link-assistant/hive-mind",
+    "pr": "https://github.com/link-assistant/hive-mind/pull/3044",
+    "parentSha": "0f497abc289aad95f62fd2ac34724c972b703520",
+    "headSha": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+    "path": "docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+    "contentSha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a",
+    "patchSha256": "cec6251ca134033636cd330022928237c9216b8c34a0f382df1e541817386731",
+    "additions": 70,
+    "deletions": 0,
+    "ciSkipped": true
+  },
+  "publisher_metadata_provenance": {
+    "path": "/tmp/router-759-hive-scheduler-publication.json",
+    "sha256": "398c307f2e83023aa52e00e0f6f73cd04c3b803a304945e280da8aa22a375d81"
+  },
+  "captured_at": "2026-10-10T20:08:06.918389+00:00",
+  "captures": [
+    {
+      "kind": "pr-metadata",
+      "endpoint": "repos/link-assistant/hive-mind/pulls/3044",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-metadata.json",
+      "sha256": "38b672beca2d07dfddc0c12823a5dac6132ccdd86f38a6d464c5e55da45bbdde",
+      "bytes": 18226,
+      "captured_at": "2026-10-10T20:08:06.918389+00:00"
+    },
+    {
+      "kind": "pr-files",
+      "endpoint": "repos/link-assistant/hive-mind/pulls/3044/files?per_page=100",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-files.json",
+      "sha256": "92180db228819d62b8fdbddbe8cb1534c9a6142b49f841ea6c1af0d3e437988d",
+      "bytes": 16044,
+      "captured_at": "2026-10-10T20:08:06.918389+00:00"
+    },
+    {
+      "kind": "scheduler-document",
+      "endpoint": "repos/link-assistant/hive-mind/contents/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md?ref=aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+      "local_path": "docs/case-studies/issue-759/raw/sources/published-heads/hive-mind-scheduler/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+      "sha256": "d60235e98500b85a4766cd21016d374808d3617da72a1d4a96999bb18c5cdb2a",
+      "bytes": 10423,
+      "captured_at": "2026-10-10T20:08:06.918389+00:00"
+    },
+    {
+      "kind": "head-runs",
+      "endpoint": "repos/link-assistant/hive-mind/actions/runs?head_sha=aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08&per_page=100",
+      "local_path": "docs/case-studies/issue-759/raw/sources/upstream-proposals/hive-mind-pr-3044-scheduler-head-runs.json",
+      "sha256": "a2790a384d7d281e7395679000c35d27768d89dbd7052f725b8f4688beb59915",
+      "bytes": 36,
+      "captured_at": "2026-10-10T20:08:06.918389+00:00"
+    }
+  ],
+  "document_url": "https://github.com/link-assistant/hive-mind/blob/aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08/docs/SOLVE-CI-PUSH-SCHEDULER-PROPOSAL.md",
+  "current_pr_base_sha": "4b32bc12ceb8c0810bce57cc66160b4d60f8f4a6",
+  "current_pr_head_sha": "aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08",
+  "current_pr_head_branch": "issue-759-js-first-standard",
+  "branch_run_observation": {
+    "endpoint": "repos/link-assistant/hive-mind/actions/runs?head_sha=aeb41d56dac72dcb2b1ca21f9de7b71e7d068b08&per_page=100",
+    "total_count": 0,
+    "observed_runs": [],
+    "scope": "API snapshot at captured_at filtered to immutable head; empty list is no observed runs, not proof successful CI."
+  },
+  "status": "Published additive documentation design only. Commit used [skip ci]; scheduler runtime enforcement and complete project generation remain unimplemented; no green remote CI claim."
+}

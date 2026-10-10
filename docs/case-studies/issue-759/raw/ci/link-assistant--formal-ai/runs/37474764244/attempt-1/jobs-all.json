@@ -1,0 +1,56 @@
+[
+  {
+    "id": 112307177003,
+    "run_id": 37474764244,
+    "workflow_name": "External Benchmarks",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37474764244",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaJgeGKw",
+    "head_sha": "dfef87e143433154e510ffb6d82815ce01225f81",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112307177003",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37474764244/job/112307177003",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T13:56:08Z",
+    "started_at": "2026-10-06T13:56:08Z",
+    "completed_at": "2026-10-06T13:59:10Z",
+    "name": "Verify monotonic ledger",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112307177003",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  },
+  {
+    "id": 112307179649,
+    "run_id": 37474764244,
+    "workflow_name": "External Benchmarks",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37474764244",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaJgeQgQ",
+    "head_sha": "dfef87e143433154e510ffb6d82815ce01225f81",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112307179649",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37474764244/job/112307179649",
+    "status": "completed",
+    "conclusion": "skipped",
+    "created_at": "2026-10-06T13:56:08Z",
+    "started_at": "2026-10-06T13:56:08Z",
+    "completed_at": "2026-10-06T13:56:07Z",
+    "name": "Run upstream suites",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112307179649",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": null,
+    "runner_name": null,
+    "runner_group_id": null,
+    "runner_group_name": null
+  }
+]

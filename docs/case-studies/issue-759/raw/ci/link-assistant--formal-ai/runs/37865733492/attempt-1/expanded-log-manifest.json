@@ -1,0 +1,56 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/0_Matrix summary.txt.gz",
+    "sha256": "76e2bc2b526a6bba2ad8a98556a41da8f0d35d69cd50f719c6b1175d99bc718e",
+    "bytes": 1415,
+    "uncompressed_bytes": 4162,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "920907ae31b9cb26b692285cc84acb50786134469182582d409d08447e879494"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/Matrix summary/system.txt.gz",
+    "sha256": "7b8765256b3ab620fa0b33cfc7a6e06d22cce398b99bace18061bc4fb336ddc7",
+    "bytes": 399,
+    "uncompressed_bytes": 750,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "23a20e6fa1a955010723da58033ad2fbbf9b45d730ed7345bd741a36d85a84ba"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/3_Build formal-ai.txt.gz",
+    "sha256": "0297f7dce7e3b3d9ac8dea5a0256c45fc0d917fd17914168ddd9308ec6268b34",
+    "bytes": 25283,
+    "uncompressed_bytes": 110550,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "65f74b955c58086e66e52102aa3e5745e4a8f1559a527ac2091453cfdddf6a93"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/Build formal-ai/system.txt.gz",
+    "sha256": "a7a3a9e7615d6d143879594b26463e7d983675196ec88771cc199b736dc97cd1",
+    "bytes": 394,
+    "uncompressed_bytes": 749,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a3182b46a4b8b0ac3c5e3b690fd9e8034d00bcea1f6a82e408a3dbf6b40839b5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/4_Replay recorded sessions.txt.gz",
+    "sha256": "db785549bdd9230362c3e17baaae09a3e39efda1bddeba009c72ae351c091c0d",
+    "bytes": 5344,
+    "uncompressed_bytes": 23639,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b985aed78e3fc5827d8e60d5a9a96a71b8b6b0cbf25e6a8c7430a0500f4fe7b5"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37865733492/attempt-1/logs/Replay recorded sessions/system.txt.gz",
+    "sha256": "85eb9550650e80713c6e4f0084b6194cd74edf3b64051b444d43d4edd4082ff3",
+    "bytes": 392,
+    "uncompressed_bytes": 750,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a5309eed8e6dcbbce8cfc1fcc91fdc5387192e1c4d5072919535f9cc00bd7425"
+  }
+]

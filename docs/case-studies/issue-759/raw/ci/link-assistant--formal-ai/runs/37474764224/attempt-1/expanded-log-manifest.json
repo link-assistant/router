@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37474764224/attempt-1/logs/1_Actionlint.txt.gz",
+    "sha256": "ed79ea9a6bfe5c03c1bdf0564b0edb960b4c47c368b927b3823ef74f2e36257e",
+    "bytes": 8132,
+    "uncompressed_bytes": 40277,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37474764224/attempt-1/logs/Actionlint/system.txt.gz",
+    "sha256": "13418eec37e5f4ce82429bf5fe081e6f8a2e53f2740e672ddb58de74a6ad2218",
+    "bytes": 388,
+    "uncompressed_bytes": 745,
+    "redacted": false
+  }
+]

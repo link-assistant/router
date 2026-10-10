@@ -1,0 +1,105 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112295751524,
+      "run_id": 37471466089,
+      "workflow_name": "Stock Rust Install",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37471466089",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaJVkvZA",
+      "head_sha": "bce408f960516eebd909aabb3e5a9bbf3063c18f",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112295751524",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37471466089/job/112295751524",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T13:31:24Z",
+      "started_at": "2026-10-06T13:31:38Z",
+      "completed_at": "2026-10-06T13:37:32Z",
+      "name": "stock-rust-install",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T13:31:39Z",
+          "completed_at": "2026-10-06T13:31:39Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T13:31:39Z",
+          "completed_at": "2026-10-06T13:31:48Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T13:31:48Z",
+          "completed_at": "2026-10-06T13:32:21Z"
+        },
+        {
+          "name": "Reject a system OpenSSL dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T13:32:21Z",
+          "completed_at": "2026-10-06T13:32:26Z"
+        },
+        {
+          "name": "Install on the unmodified stock image",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 5,
+          "started_at": "2026-10-06T13:32:26Z",
+          "completed_at": "2026-10-06T13:37:27Z"
+        },
+        {
+          "name": "Verify the installed binary has no OpenSSL runtime link",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-06T13:37:27Z",
+          "completed_at": "2026-10-06T13:37:27Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-06T13:37:27Z",
+          "completed_at": "2026-10-06T13:37:27Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-06T13:37:27Z",
+          "completed_at": "2026-10-06T13:37:30Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-06T13:37:30Z",
+          "completed_at": "2026-10-06T13:37:31Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112295751524",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000144328,
+      "runner_name": "GitHub Actions 1000144328",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

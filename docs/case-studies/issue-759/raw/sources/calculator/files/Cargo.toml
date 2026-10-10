@@ -1,0 +1,117 @@
+[package]
+name = "link-calculator"
+version = "0.23.4"
+edition = "2021"
+description = "A Rust WebAssembly calculator with grammar-based expression parsing using links-notation"
+readme = "README.md"
+license = "Unlicense"
+keywords = ["calculator", "wasm", "grammar", "links-notation", "expression-parser"]
+categories = ["wasm", "parsing", "mathematics"]
+repository = "https://github.com/link-assistant/calculator"
+documentation = "https://github.com/link-assistant/calculator"
+rust-version = "1.70"
+# Keep the published crate small: crates.io rejects uploads over 10 MiB, and
+# packaging docs/, web/, screenshots/ etc. made v0.20.4..v0.21.0 fail with
+# "413 Payload Too Large" (see issue #223).
+include = [
+    "/src/**",
+    "/tests/**",
+    "/examples/**",
+    "/data/currency/*.lino",
+    "/data/words/*.lino",
+    "/build.rs",
+    "/Cargo.toml",
+    "/Cargo.lock",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+]
+
+[lib]
+name = "link_calculator"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "link-calculator"
+path = "src/main.rs"
+
+[[example]]
+name = "library_consumer"
+path = "examples/library_consumer.rs"
+
+[[example]]
+name = "issue_222_probe"
+path = "experiments/issue_222_probe.rs"
+
+[[example]]
+name = "test_advanced_math"
+path = "experiments/test_advanced_math.rs"
+
+[[example]]
+name = "test_issue84_lino"
+path = "experiments/test_issue84_lino.rs"
+
+[dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["Window", "WorkerGlobalScope", "Request", "RequestInit", "RequestMode", "Response", "Headers"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+console_error_panic_hook = "0.1"
+chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "serde", "clock", "wasmbind"] }
+rust_decimal = { version = "1.33", features = ["serde"] }
+thiserror = "2.0"
+lazy_static = "1.4"
+regex = "1.10"
+# `num-bigint` feature disabled: it pins num-bigint 0.4, while `Ratio<T>` is
+# generic and works with the num-bigint 0.5 `BigInt` declared below.
+num-rational = { version = "0.4", default-features = false, features = ["std"] }
+num-bigint = "0.5"
+num-integer = "0.1"
+num-traits = "0.2"
+serde-wasm-bindgen = "0.6"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time"] }
+tokio-test = "0.4"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+
+# Allow some common patterns
+module_name_repetitions = "allow"
+too_many_lines = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "s"
+
+[profile.release.package."*"]
+opt-level = "s"
+
+[[example]]
+name = "test_issue23"
+path = "experiments/test_issue23.rs"
+
+[[example]]
+name = "test_issue104_ton_ambiguity"
+path = "experiments/test_issue104_ton_ambiguity.rs"
+
+[[example]]
+name = "test_issue128_year"
+path = "experiments/test_issue128_year.rs"

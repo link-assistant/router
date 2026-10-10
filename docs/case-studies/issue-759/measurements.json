@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "measurementScope": "Issue 759 archive compression and filesystem observations only",
+  "archiveCompressionProbe": {
+    "reportedBy": "root agent; decoded hashes independently matched by root",
+    "sourceArchivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.xz",
+    "rawDecodedBytes": 37901923,
+    "gzipBytes": 9535246,
+    "xzBytes": 457960,
+    "xzPreset": 6,
+    "compressionSeconds": 9.619,
+    "decodedSha256": "1653ae218d7845db0985ab627e9c1e6f55a6b56cb6428a675710b39f2de035ef",
+    "originalGzipArchivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.gz",
+    "provenance": "Canonical retained XZ archive; original gzip alias was recompressed. Raw decoded size and SHA-256 were independently verified by root."
+  },
+  "filesystemObservations": [
+    {
+      "observedDateUtc": "2026-10-10",
+      "observedAtUtc": null,
+      "source": "Initial user disk warning",
+      "approximateFreeGiB": 18,
+      "reportedUsedPercent": 96
+    },
+    {
+      "observedAtUtc": "2026-10-10T19:58:46Z",
+      "source": "Research agent df observation",
+      "approximateFreeGiB": 29,
+      "reportedUsedPercent": 94
+    },
+    {
+      "observedAtUtc": "2026-10-10T20:38:53.589399+00:00",
+      "source": "Research agent statvfs/df after completed archive commit",
+      "approximateFreeGiB": 28,
+      "reportedUsedPercent": 94
+    }
+  ],
+  "caseDirectoryObservations": {
+    "path": "docs/case-studies/issue-759",
+    "approximateEarlierMiB": 421,
+    "approximateLatestMiB": 330,
+    "collectionStatus": "Collection complete; finalStorageObservation contains the dated final corpus and Git observations.",
+    "exactObservationTimesUtc": null
+  },
+  "caseEvidenceBudgetBytes": 500000000,
+  "typicalFeaturePeakRssBytes": null,
+  "typicalFeaturePeakTargetDiskBytes": null,
+  "limitations": [
+    "These observations measure archive storage and filesystem free space, not typical feature development peak RSS, build target disk, CI cost or feedback latency.",
+    "The increase in reported free space cannot be attributed solely to task compression: root temporary-file cleanup and other filesystem activity were not isolated.",
+    "The collector's final per-file compression ledger will provide richer provenance and final archive totals.",
+    "The 500 MB hard evidence budget and restrictions on full clones, local Rust builds and cleanup of existing user caches remain in force."
+  ],
+  "finalStorageObservation": {
+    "observedAtUtc": "2026-10-10T20:38:53.589399+00:00",
+    "observedResearchCommit": "0622cd24e03536ba1f72636bd51e666b8f4c45e2",
+    "baseCommit": "50170b6ae591f9d3518d242ad35a6248aed6b35a",
+    "method": "Read-only regular-file stat sizes/allocation, git rev-list objects relative to base plus git cat-file objectsize/objectsize:disk, git count-objects, du -sk common git directory, statvfs/df. No archive copies or build execution.",
+    "case": {
+      "path": "docs/case-studies/issue-759",
+      "regularFiles": 28934,
+      "logicalBytes": 384865778,
+      "allocatedBytes": 465068032,
+      "capBytes": 500000000,
+      "largestStoredFile": {
+        "path": "docs/case-studies/issue-759/raw/sources/formal-ai/paths.txt",
+        "bytes": 4550996,
+        "allocatedBytes": 4554752
+      },
+      "windowsInvalidPaths": [],
+      "longestRepositoryRelativePathCharacters": 208
+    },
+    "researchReachableObjectDeltaToBase": {
+      "objects": 41729,
+      "byType": {
+        "tree": {
+          "count": 14078,
+          "uncompressedBytes": 2277619,
+          "gitStoredObjectBytes": 1752022
+        },
+        "blob": {
+          "count": 27641,
+          "uncompressedBytes": 383165282,
+          "gitStoredObjectBytes": 353893407
+        },
+        "commit": {
+          "count": 10,
+          "uncompressedBytes": 2731,
+          "gitStoredObjectBytes": 1901
+        }
+      },
+      "storedObjectBytes": 355647330
+    },
+    "sharedGitDirectory": {
+      "path": "/Users/konard/Code/Archive/link-assistant/router/.git",
+      "allocatedBytes": 428187648,
+      "countObjectsOutput": "count: 53\nsize: 884\nin-pack: 64721\npacks: 10\nsize-pack: 389798\nprune-packable: 0\ngarbage: 1\nsize-garbage: 0"
+    },
+    "filesystem": {
+      "availableBytes": 30146203648,
+      "totalBytes": 494384795648,
+      "dfPkOutput": "Filesystem   1024-blocks      Used Available Capacity  Mounted on\n/dev/disk3s5   482797652 421423480  29439652    94%    /System/Volumes/Data"
+    },
+    "limitations": [
+      "Sizes are observations at the CI-archive commit before this small final report/source receipt commit, not peak resource consumption.",
+      "Reachable object delta reports Git encoded object sizes relative to the baseline. These objects may be shared with other task branches; this is not exclusive physical attribution.",
+      "The common Git directory includes all repository/task history and worktree metadata. Its allocation must not be attributed solely to this research branch.",
+      "Case counts include existing local collector bookkeeping; decoded corpus bytes and integrity coverage are separately specified by the final integrity receipt."
+    ]
+  }
+}

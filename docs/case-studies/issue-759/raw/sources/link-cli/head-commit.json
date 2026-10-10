@@ -1,0 +1,137 @@
+{
+  "sha": "ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+  "node_id": "C_kwDONXCAbtoAKGNhMmI4NGEyZThkZWIyOWUzMDE1MmRmNWU5ZWIyNWIwNWM3Y2U1ODA",
+  "commit": {
+    "author": {
+      "name": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "date": "2026-10-07T01:00:41Z"
+    },
+    "committer": {
+      "name": "github-actions[bot]",
+      "email": "github-actions[bot]@users.noreply.github.com",
+      "date": "2026-10-07T01:00:41Z"
+    },
+    "message": "chore(csharp): release v4.0.0",
+    "tree": {
+      "sha": "441384c3b6eb70fed4ab7d4178bd8561ee7df180",
+      "url": "https://api.github.com/repos/link-foundation/link-cli/git/trees/441384c3b6eb70fed4ab7d4178bd8561ee7df180"
+    },
+    "url": "https://api.github.com/repos/link-foundation/link-cli/git/commits/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    }
+  },
+  "url": "https://api.github.com/repos/link-foundation/link-cli/commits/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+  "html_url": "https://github.com/link-foundation/link-cli/commit/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+  "comments_url": "https://api.github.com/repos/link-foundation/link-cli/commits/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/comments",
+  "author": {
+    "login": "github-actions[bot]",
+    "id": 41898282,
+    "node_id": "MDM6Qm90NDE4OTgyODI=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+    "html_url": "https://github.com/apps/github-actions",
+    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "github-actions[bot]",
+    "id": 41898282,
+    "node_id": "MDM6Qm90NDE4OTgyODI=",
+    "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+    "html_url": "https://github.com/apps/github-actions",
+    "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+    "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+    "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+    "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+    "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+    "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+    "type": "Bot",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "458c22396178f0007a0901888035b1df50e96b72",
+      "url": "https://api.github.com/repos/link-foundation/link-cli/commits/458c22396178f0007a0901888035b1df50e96b72",
+      "html_url": "https://github.com/link-foundation/link-cli/commit/458c22396178f0007a0901888035b1df50e96b72"
+    }
+  ],
+  "stats": {
+    "total": 22,
+    "additions": 11,
+    "deletions": 11
+  },
+  "files": [
+    {
+      "sha": "80bf367e1f5d2033447d0fc7441dcc733dbbc8c3",
+      "filename": "csharp/.changeset/issue-104-links-notation-binary.md",
+      "status": "removed",
+      "additions": 0,
+      "deletions": 9,
+      "changes": 9,
+      "blob_url": "https://github.com/link-foundation/link-cli/blob/458c22396178f0007a0901888035b1df50e96b72/csharp%2F.changeset%2Fissue-104-links-notation-binary.md",
+      "raw_url": "https://github.com/link-foundation/link-cli/raw/458c22396178f0007a0901888035b1df50e96b72/csharp%2F.changeset%2Fissue-104-links-notation-binary.md",
+      "contents_url": "https://api.github.com/repos/link-foundation/link-cli/contents/csharp%2F.changeset%2Fissue-104-links-notation-binary.md?ref=458c22396178f0007a0901888035b1df50e96b72",
+      "patch": "@@ -1,9 +0,0 @@\n----\n-'Foundation.Data.Doublets.Cli': major\n----\n-\n-The binary links notation codec now comes from `Link.Foundation.Links.Notation.Binary` (links-notation 0.23.0) instead of a local copy. `ArityRange`, `LinksPacket`, `Section`, `PacketReference`, `DecodeLimits`, `LinoMapping` and `LinoFormat` are removed from `Foundation.Data.Doublets.Cli.Protocol`; import them from `Link.Foundation.Links.Notation.Binary`. `LinoStreamReader` is replaced by `PacketReader`.\n-\n-- `DecodeLimits.MaxTextBytes` moves to `TextLinoProtocol.MaxTextBytes`. The new `ProtocolLimits` record (`Binary`, `MaxTextBytes`, `Default`, `Unlimited`) is now the type taken by `LinksServerOptions.Limits`, `MessageFormat.Protocol` and `LinoProtocols.ReadAnyDocument`.\n-- `BinaryLinoProtocol` now enforces `Limits` when it encodes too. The upstream defaults apply, so the default `MaxDepth` is 64 and there is a new `MaxStringBytes` limit.\n-- The protocols still raise only `LinoProtocolException`. A codec `BinaryNotationException` is converted with the same kind and detail and is kept as `InnerException`, and `LinoProtocolException.From` exposes this conversion."
+    },
+    {
+      "sha": "f8f310ab04403c5c185f2412d84a26760b7c7571",
+      "filename": "csharp/CHANGELOG.md",
+      "status": "modified",
+      "additions": 9,
+      "deletions": 0,
+      "changes": 9,
+      "blob_url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FCHANGELOG.md",
+      "raw_url": "https://github.com/link-foundation/link-cli/raw/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FCHANGELOG.md",
+      "contents_url": "https://api.github.com/repos/link-foundation/link-cli/contents/csharp%2FCHANGELOG.md?ref=ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+      "patch": "@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0\n \n \n \n+\n+## [4.0.0] - 2026-10-07\n+\n+The binary links notation codec now comes from `Link.Foundation.Links.Notation.Binary` (links-notation 0.23.0) instead of a local copy. `ArityRange`, `LinksPacket`, `Section`, `PacketReference`, `DecodeLimits`, `LinoMapping` and `LinoFormat` are removed from `Foundation.Data.Doublets.Cli.Protocol`; import them from `Link.Foundation.Links.Notation.Binary`. `LinoStreamReader` is replaced by `PacketReader`.\n+\n+- `DecodeLimits.MaxTextBytes` moves to `TextLinoProtocol.MaxTextBytes`. The new `ProtocolLimits` record (`Binary`, `MaxTextBytes`, `Default`, `Unlimited`) is now the type taken by `LinksServerOptions.Limits`, `MessageFormat.Protocol` and `LinoProtocols.ReadAnyDocument`.\n+- `BinaryLinoProtocol` now enforces `Limits` when it encodes too. The upstream defaults apply, so the default `MaxDepth` is 64 and there is a new `MaxStringBytes` limit.\n+- The protocols still raise only `LinoProtocolException`. A codec `BinaryNotationException` is converted with the same kind and detail and is kept as `InnerException`, and `LinoProtocolException.From` exposes this conversion.\n+\n ## [3.2.0] - 2026-10-05\n \n Fixed the `--changes` report of creations:"
+    },
+    {
+      "sha": "0dd6a1f834debfb068d92d459540702b115fe9aa",
+      "filename": "csharp/Foundation.Data.Doublets.Cli.Library/Foundation.Data.Doublets.Cli.Library.csproj",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "blob_url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FFoundation.Data.Doublets.Cli.Library%2FFoundation.Data.Doublets.Cli.Library.csproj",
+      "raw_url": "https://github.com/link-foundation/link-cli/raw/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FFoundation.Data.Doublets.Cli.Library%2FFoundation.Data.Doublets.Cli.Library.csproj",
+      "contents_url": "https://api.github.com/repos/link-foundation/link-cli/contents/csharp%2FFoundation.Data.Doublets.Cli.Library%2FFoundation.Data.Doublets.Cli.Library.csproj?ref=ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+      "patch": "@@ -12,7 +12,7 @@\n     <Authors>link-foundation</Authors>\n     <Description>Public library exposing the parser, query processors, decorators, named/pinned types, persistent transformation triggers, and LiNo I/O used by the clink CLI.</Description>\n     <PackageId>Foundation.Data.Doublets.Cli</PackageId>\n-    <Version>3.2.0</Version>\n+    <Version>4.0.0</Version>\n     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>\n     <PackageReadmeFile>README.md</PackageReadmeFile>\n     <RepositoryUrl>https://github.com/link-foundation/link-cli</RepositoryUrl>"
+    },
+    {
+      "sha": "bd2500c1f9499dff94191bd81c0c6213862af8c7",
+      "filename": "csharp/Foundation.Data.Doublets.Cli/Foundation.Data.Doublets.Cli.csproj",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "blob_url": "https://github.com/link-foundation/link-cli/blob/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FFoundation.Data.Doublets.Cli%2FFoundation.Data.Doublets.Cli.csproj",
+      "raw_url": "https://github.com/link-foundation/link-cli/raw/ca2b84a2e8deb29e30152df5e9eb25b05c7ce580/csharp%2FFoundation.Data.Doublets.Cli%2FFoundation.Data.Doublets.Cli.csproj",
+      "contents_url": "https://api.github.com/repos/link-foundation/link-cli/contents/csharp%2FFoundation.Data.Doublets.Cli%2FFoundation.Data.Doublets.Cli.csproj?ref=ca2b84a2e8deb29e30152df5e9eb25b05c7ce580",
+      "patch": "@@ -16,7 +16,7 @@\n     <Authors>link-foundation</Authors>\n     <Description>A CLI tool for links manipulation. The reusable library API ships separately as the Foundation.Data.Doublets.Cli NuGet package.</Description>\n     <PackageId>clink</PackageId>\n-    <Version>3.2.0</Version>\n+    <Version>4.0.0</Version>\n     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>\n     <RepositoryUrl>https://github.com/link-foundation/link-cli</RepositoryUrl>\n     <RepositoryType>git</RepositoryType>"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37474764166/attempt-1/logs/0_Evidence Check Status.txt.gz",
+    "sha256": "db0221bf756fb5f8c79bb030d09e67db1f156568fce0c0a08b475948ef43af88",
+    "bytes": 4919,
+    "uncompressed_bytes": 20769,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37474764166/attempt-1/logs/Evidence Check Status/system.txt.gz",
+    "sha256": "e27dec0c18c6d6bdc8a69ce7361cc4efba644c3382bcde47b2835a87247aa7e1",
+    "bytes": 398,
+    "uncompressed_bytes": 754,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37474764166/attempt-1/logs/1_Self-Hosting Evidence Check.txt.gz",
+    "sha256": "445f500fe1ed40781a8ff33f62b73bb2f095dfd4d1245bc19cfa1e100230a8fc",
+    "bytes": 26500,
+    "uncompressed_bytes": 141637,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37474764166/attempt-1/logs/Self-Hosting Evidence Check/system.txt.gz",
+    "sha256": "575002f409a33d79b3c31eb0619b12c98e09faa6b666e8a3bdf2a5919a02d7cd",
+    "bytes": 390,
+    "uncompressed_bytes": 754,
+    "redacted": false
+  }
+]

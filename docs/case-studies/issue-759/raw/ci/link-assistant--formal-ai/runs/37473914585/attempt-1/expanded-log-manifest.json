@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37473914585/attempt-1/logs/0_no benchmark prompt reaches the unknown opener.txt.gz",
+    "sha256": "adbb5e2850906160a3cf4f9c7f5bc08c0bb220743f618eb19b7c00ae30b3d064",
+    "bytes": 21052,
+    "uncompressed_bytes": 92013,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37473914585/attempt-1/logs/no benchmark prompt reaches the unknown opener/system.txt.gz",
+    "sha256": "231a0e1e2446144cd8f5c5089ab9c7c44cca8c30d5b2b956fc80016331471e41",
+    "bytes": 398,
+    "uncompressed_bytes": 758,
+    "redacted": false
+  }
+]

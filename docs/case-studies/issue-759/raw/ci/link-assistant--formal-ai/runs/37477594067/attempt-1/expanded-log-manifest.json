@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37477594067/attempt-1/logs/3_Cargo audit.txt.gz",
+    "sha256": "1158716c6d1d141bb41ec86a451031237847362015cb8861e69138827a34f95b",
+    "bytes": 9619,
+    "uncompressed_bytes": 40946,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37477594067/attempt-1/logs/Cargo audit/system.txt.gz",
+    "sha256": "377222c296c20cab48999761228cf99ef53c72e34b8c4208f7c913bd23e31a83",
+    "bytes": 394,
+    "uncompressed_bytes": 745,
+    "redacted": false
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37811382666/attempt-1/logs/0_Task Ladder (issue #840 dataset).txt.gz",
+    "sha256": "81764ab67bed8bce0fb6d88492648cdac47877585c911ac98c1236140ea6cc83",
+    "bytes": 10279,
+    "uncompressed_bytes": 40917,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a147dbd9c4e7832091664818e82a2310e6f48db74750aa3945fd5cb88cab4fe0"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37811382666/attempt-1/logs/Task Ladder (issue #840 dataset)/system.txt.gz",
+    "sha256": "c737cdfc12793cfdce7691b039f670aabe521e78a22b8a44f42ca88c8c008832",
+    "bytes": 383,
+    "uncompressed_bytes": 748,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f4c64ba8c9d2cb107a75f6a2a0eb7198f37aa00b7e2141ee16944a9509b8b693"
+  }
+]

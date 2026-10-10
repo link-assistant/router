@@ -1,0 +1,50 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/020be4ac016b14d293a2b22e7f4db69479919c96/.github",
+    "start_line": 98,
+    "start_column": null,
+    "end_line": 98,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 14.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github/workflows/release-staged.yml",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/020be4ac016b14d293a2b22e7f4db69479919c96/.github/workflows/release-staged.yml",
+    "start_line": 17,
+    "start_column": null,
+    "end_line": 17,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "excessive-permissions",
+    "message": "release-staged.yml:17: overly broad permissions: packages: write is overly broad at the workflow level",
+    "raw_details": ""
+  },
+  {
+    "path": ".github/workflows/release-staged.yml",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/020be4ac016b14d293a2b22e7f4db69479919c96/.github/workflows/release-staged.yml",
+    "start_line": 16,
+    "start_column": null,
+    "end_line": 16,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "excessive-permissions",
+    "message": "release-staged.yml:16: overly broad permissions: contents: write is overly broad at the workflow level",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/020be4ac016b14d293a2b22e7f4db69479919c96/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

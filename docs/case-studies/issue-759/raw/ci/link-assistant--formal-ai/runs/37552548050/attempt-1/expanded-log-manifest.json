@@ -1,0 +1,56 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/0_Matrix summary.txt.gz",
+    "sha256": "bf2e4666ffa1a98c06931701754a682a0db943ea10d250220c8ece0936365277",
+    "bytes": 1410,
+    "uncompressed_bytes": 4124,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "6a3eeff6250d493dd2e2a6e346db1fd38fdd4120a02913a502db56006de49503"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/Matrix summary/system.txt.gz",
+    "sha256": "2ca0e144de113168f5ab503f1ca88ec470743e992fbeffbfcb46188bc031bf38",
+    "bytes": 395,
+    "uncompressed_bytes": 750,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b8cb06945c2618750640c4c954d336a34dda313ab1c3d806f7ad72dab5b2c916"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/3_Replay recorded sessions.txt.gz",
+    "sha256": "b286b7211c71a448010caa27cd658da2ddc54034729ea414660541379947acd9",
+    "bytes": 5385,
+    "uncompressed_bytes": 23632,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "49834ce7412ba49bb29b17c395523951681bed0f62623005538ef8f0b89c9a45"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/Replay recorded sessions/system.txt.gz",
+    "sha256": "f64204f009716909b24e8357315c0f435e3f986f55192250879f55cf7c9d0fe1",
+    "bytes": 317,
+    "uncompressed_bytes": 595,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "12f79b9ef71ed559663df365cb506559b0f75eccd7f48d71953a2936d343285e"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/4_Build formal-ai.txt.gz",
+    "sha256": "0f08ae7a23a941a7a75daa9f2d8ab6f4c3b839042816fa0d02afd0e9a94db826",
+    "bytes": 24730,
+    "uncompressed_bytes": 108146,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "cd2e35deaa8d17d573d7c32b69456600ce46265fb5e57166914dca049f703855"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37552548050/attempt-1/logs/Build formal-ai/system.txt.gz",
+    "sha256": "c8a59a0a75277bfed6fcd79991ce45c0d2f639ba38adb3cbbda2c79953213b73",
+    "bytes": 308,
+    "uncompressed_bytes": 594,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "55bcb7929d5e029f9529bb3d91f064174f677490bf1cddb051db63029613e699"
+  }
+]

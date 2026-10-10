@@ -1,0 +1,96 @@
+name: WebAssembly CI
+
+on:
+  # Only main on push: PR branches are covered by the pull_request trigger, and
+  # listing them here made every push to an issue-* branch run this workflow
+  # twice (issue #96).
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/wasm.yml'
+      - 'js/**'
+      - 'rust/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/wasm.yml'
+      - 'js/**'
+      - 'rust/**'
+  workflow_dispatch:
+
+concurrency:
+  group: wasm-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.14.0 --locked
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Cache cargo registry
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+            rust/wasm/target
+          key: ${{ runner.os }}-wasm-cargo-${{ hashFiles('rust/wasm/Cargo.lock', 'rust/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-wasm-cargo-
+
+      - name: Install npm dependencies
+        working-directory: js
+        run: npm ci
+
+      - name: Test Rust CLI core
+        run: cargo test --manifest-path rust/Cargo.toml --all-features
+
+      - name: Test WebAssembly wrapper
+        working-directory: js
+        run: npm run test:wasm
+
+      # js/test/*.test.mjs existed but no workflow ever ran it, so repository
+      # layout regressions passed CI unnoticed (issue #96).
+      - name: Test JavaScript
+        working-directory: js
+        run: npm run test:js
+
+      - name: Build React WebAssembly app
+        working-directory: js
+        run: npm run build
+
+      - name: Upload built app
+        uses: actions/upload-artifact@v7
+        with:
+          name: link-cli-web
+          path: dist/
+
+  # GitHub Pages is published by docs.yml alone: it assembles this workbench
+  # together with the C# and Rust API references into a single artifact. This
+  # workflow used to deploy the workbench on its own, which replaced the docs
+  # already published at /csharp/ and /rust/ (issue #96).

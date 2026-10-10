@@ -1,0 +1,30 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37489139301/attempt-1/logs/1_Cargo audit.txt.gz",
+    "sha256": "fa2f463abc0d00f005ba2b0da312881630920e315d21fb1043ae1886132da6ba",
+    "bytes": 9574,
+    "uncompressed_bytes": 40810,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139301/attempt-1/logs/Cargo audit/system.txt.gz",
+    "sha256": "ee51f45a2013e80db8c484623bbd77265b25aeefffc3b8eedc1d9f6b019c1e7e",
+    "bytes": 396,
+    "uncompressed_bytes": 745,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139301/attempt-1/logs/3_Dependency Review.txt.gz",
+    "sha256": "84508cb2ec48155c6696d9ffe2c589e4bbbe4ac2270708169aaf867925bc392b",
+    "bytes": 9841,
+    "uncompressed_bytes": 48087,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37489139301/attempt-1/logs/Dependency Review/system.txt.gz",
+    "sha256": "49a44a1520095a259c446359d291605b0e36cee1408b54b4a1b9130bed1408b2",
+    "bytes": 447,
+    "uncompressed_bytes": 880,
+    "redacted": false
+  }
+]

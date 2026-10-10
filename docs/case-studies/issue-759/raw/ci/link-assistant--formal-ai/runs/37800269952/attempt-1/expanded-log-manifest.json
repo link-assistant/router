@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37800269952/attempt-1/logs/4_Coding ladder shard 3.txt.gz",
+    "sha256": "f53c6cb28b2a50cc1e9ae2b5e9e1d8d956230e3dd7008e0d75ce7fb4aa27ae40",
+    "bytes": 7873,
+    "uncompressed_bytes": 31017,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d2ca0b49b36de71d1deebf30aa6834b2de14dc5165dcfe032bcb7f7c1092d5fb"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37800269952/attempt-1/logs/6_Coding ladder binary.txt.gz",
+    "sha256": "52ca6d5dc38d69c28deba5ff9e63ae8cd1221712ef17774909956944af7683c4",
+    "bytes": 29713,
+    "uncompressed_bytes": 136768,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "47e179e4b3d10d2b6df4c828ae2ded38efb5fc52cbedfac5ab114098b0abaa45"
+  }
+]

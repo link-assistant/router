@@ -1,0 +1,129 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 114022701002,
+      "run_id": 37990162700,
+      "workflow_name": "Docker Runtime Build",
+      "head_branch": "issue-724-878028a21e67",
+      "run_url": "https://api.github.com/repos/link-assistant/router/actions/runs/37990162700",
+      "run_attempt": 2,
+      "node_id": "CR_kwDORq-Bqc8AAAAajEhXyg",
+      "head_sha": "0f79a7d87e08d23e271ecf02527aed3d3a5b0b80",
+      "url": "https://api.github.com/repos/link-assistant/router/actions/jobs/114022701002",
+      "html_url": "https://github.com/link-assistant/router/actions/runs/37990162700/job/114022701002",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-09T20:57:07Z",
+      "started_at": "2026-10-09T21:06:10Z",
+      "completed_at": "2026-10-09T21:06:43Z",
+      "name": "Build amd64 runtime (no push)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-09T21:06:11Z",
+          "completed_at": "2026-10-09T21:06:13Z"
+        },
+        {
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-09T21:06:13Z",
+          "completed_at": "2026-10-09T21:06:15Z"
+        },
+        {
+          "name": "Setup Rust for manifest regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-09T21:06:15Z",
+          "completed_at": "2026-10-09T21:06:23Z"
+        },
+        {
+          "name": "Test dependency-cache target generation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-09T21:06:23Z",
+          "completed_at": "2026-10-09T21:06:24Z"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-09T21:06:24Z",
+          "completed_at": "2026-10-09T21:06:36Z"
+        },
+        {
+          "name": "Build the complete runtime",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 6,
+          "started_at": "2026-10-09T21:06:36Z",
+          "completed_at": "2026-10-09T21:06:37Z"
+        },
+        {
+          "name": "Check all shipped commands",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-09T21:06:37Z",
+          "completed_at": "2026-10-09T21:06:37Z"
+        },
+        {
+          "name": "Verify long named instances through real Docker DNS and relay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-09T21:06:37Z",
+          "completed_at": "2026-10-09T21:06:37Z"
+        },
+        {
+          "name": "Post Build the complete runtime",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-09T21:06:37Z",
+          "completed_at": "2026-10-09T21:06:39Z"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-09T21:06:39Z",
+          "completed_at": "2026-10-09T21:06:40Z"
+        },
+        {
+          "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-09T21:06:40Z",
+          "completed_at": "2026-10-09T21:06:40Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-09T21:06:40Z",
+          "completed_at": "2026-10-09T21:06:40Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/router/check-runs/114022701002",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "runner_id": 1000159433,
+      "runner_name": "GitHub Actions 1000159433",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

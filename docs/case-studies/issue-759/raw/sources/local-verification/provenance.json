@@ -1,0 +1,469 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-10T20:14:47.618574+00:00",
+  "capture_method": "Read completed local files, screen for credential/private-key patterns, deterministic lossless gzip, preserve source and retained hashes separately. No test rerun.",
+  "records": [
+    {
+      "kind": "completed-local-preflight-log",
+      "tested_commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "tested_commit_evidence": "Exact immutable commit supplied by gate owner; filenames use its short SHA. Log itself does not print HEAD.",
+      "command": "node scripts/check-js-first-local.mjs",
+      "command_line_scope": "Exact argv and shell redirection confirmed by gate owner from retained command transcript; no optional flags.",
+      "workdir": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate",
+      "source_path": "/tmp/router-759-preflight-ae950a30.log",
+      "source_bytes": 51951,
+      "source_sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd",
+      "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-ae950a30.log.gz",
+      "retained_decoded_bytes": 51951,
+      "retained_decoded_sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd",
+      "stored_sha256": "c7390108ac01edcd20bce2f69de75948311832273d049e5cfa5e1ec0075b48bd",
+      "stored_bytes": 10813,
+      "scrub": {
+        "patterns": {
+          "github_token": "\\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\\b",
+          "aws_access_key": "\\b(?:AKIA|ASIA)[A-Z0-9]{16}\\b",
+          "private_key_block": "-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\\s\\S]+?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
+          "credential_assignment": "(?im)\\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret)\\s*[:=]\\s*[\\\"\\']([A-Za-z0-9_+/.=-]{32,})[\\\"\\']",
+          "bearer_value": "(?i)\\bBearer\\s+[A-Za-z0-9_+/.=-]{32,}"
+        },
+        "hits": {
+          "github_token": 0,
+          "aws_access_key": 0,
+          "private_key_block": 0,
+          "credential_assignment": 0,
+          "bearer_value": 0
+        },
+        "total_hits": 0,
+        "changed": false,
+        "scope": "Pattern-based credential/private-key screening; no claim of universally exhaustive secret detection."
+      },
+      "preflight_status": "No green stamp written; strict parity blocks readiness",
+      "failed_command_summary": [
+        "parity: node scripts/check-router-parity.mjs --strict"
+      ],
+      "stages": [
+        {
+          "stage": "lint",
+          "configured_commands_at_tested_commit": [
+            "node scripts/lint-js-first.mjs",
+            "node --test scripts/test/check-js-first-workflows.test.mjs",
+            "node --test scripts/test/check-js-first-local.test.mjs",
+            "node scripts/check-js-first-workflows.mjs"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 3158.140792
+            },
+            {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 1238.681333
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Syntax checked 87 JavaScript source files."
+          ]
+        },
+        {
+          "stage": "node-tests",
+          "configured_commands_at_tested_commit": [
+            "npm run native:test --prefix packages/javascript"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 86,
+              "pass": 86,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 3228.747375
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "bun-tests",
+          "configured_commands_at_tested_commit": [
+            "npm run native:test:bun --prefix packages/javascript"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [],
+          "bun_summary": {
+            "pass": 86,
+            "fail": 0
+          },
+          "selected_output_lines": []
+        },
+        {
+          "stage": "typescript",
+          "configured_commands_at_tested_commit": [
+            "npm run typecheck --prefix packages/javascript",
+            "npm run native:typecheck --prefix packages/javascript",
+            "node scripts/regenerate-native-typescript.mjs --check",
+            "node scripts/check-native-typescript.mjs",
+            "node --test tools/translation/js-to-rust/test/native-typescript.test.mjs",
+            "node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json",
+            "node tools/translation/check-typescript-fixtures.mjs",
+            "node scripts/build-js-first-ui.mjs"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 5,
+              "pass": 5,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 14071.187292
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Strict native TypeScript compilation passed: 20 files; TypeScript 5.9.3."
+          ]
+        },
+        {
+          "stage": "parity",
+          "configured_commands_at_tested_commit": [
+            "node --test experiments/issue-759/acceptance/*.test.mjs",
+            "node scripts/check-router-parity.mjs --strict"
+          ],
+          "outcome": "blocked",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 43,
+              "pass": 43,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 16504.401875
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Native parity inventory: 443 features; 62/62 operations; 368/368 OpenAPI routes; 442 draft gaps; 0 validation errors.",
+            "Rust translation inventory: 804 sources; 12140 carried items; runtimeParity=false."
+          ]
+        },
+        {
+          "stage": "translation",
+          "configured_commands_at_tested_commit": [
+            "node --test tools/translation/test/*.test.mjs",
+            "node scripts/translate-router.mjs --check"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 26,
+              "pass": 26,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 367.397458
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "reverse-translation",
+          "configured_commands_at_tested_commit": [
+            "node --test tools/translation/js-to-rust/test/translator.test.mjs",
+            "node scripts/regenerate-js-first.mjs --check"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 441.505542
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "JavaScript-first regeneration verified: 142307 bytes; 0 changed artifacts."
+          ]
+        }
+      ],
+      "limitations": "Node/Bun/TypeScript/translation local observations only. No local Rust execution, remote CI success, complete runtime parity or production readiness claim.",
+      "argv": [
+        "node",
+        "scripts/check-js-first-local.mjs"
+      ],
+      "shell_command": "node scripts/check-js-first-local.mjs > /tmp/router-759-preflight-ae950a30.log 2>&1",
+      "default_stamp_path": "/tmp/router-js-first-gate.json",
+      "stamp_evidence": "Gate owner confirms default preflight removed any prior stamp, complete output says no green stamp written, and subsequent test -e returned exit 1. No local Rust or Docker invoked."
+    },
+    {
+      "kind": "completed-local-preflight-log",
+      "tested_commit": "68982814ea98c3800451a1a565eeae71b8def86f",
+      "tested_commit_evidence": "Exact immutable commit supplied by gate owner; filenames use its short SHA. Log itself does not print HEAD.",
+      "command": "node scripts/check-js-first-local.mjs",
+      "command_line_scope": "Entrypoint known from gate owner/script; optional stamp arguments not retained in raw log and are not invented.",
+      "workdir": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate",
+      "source_path": "/tmp/router-759-preflight-68982814.log",
+      "source_bytes": 55002,
+      "source_sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8",
+      "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-68982814.log.gz",
+      "retained_decoded_bytes": 55002,
+      "retained_decoded_sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8",
+      "stored_sha256": "d681945f60ab3e8c1327ccb451d40721b5d4a5f535aa4041ed4dcf400748ad14",
+      "stored_bytes": 11520,
+      "scrub": {
+        "patterns": {
+          "github_token": "\\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\\b",
+          "aws_access_key": "\\b(?:AKIA|ASIA)[A-Z0-9]{16}\\b",
+          "private_key_block": "-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\\s\\S]+?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----",
+          "credential_assignment": "(?im)\\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret)\\s*[:=]\\s*[\\\"\\']([A-Za-z0-9_+/.=-]{32,})[\\\"\\']",
+          "bearer_value": "(?i)\\bBearer\\s+[A-Za-z0-9_+/.=-]{32,}"
+        },
+        "hits": {
+          "github_token": 0,
+          "aws_access_key": 0,
+          "private_key_block": 0,
+          "credential_assignment": 0,
+          "bearer_value": 0
+        },
+        "total_hits": 0,
+        "changed": false,
+        "scope": "Pattern-based credential/private-key screening; no claim of universally exhaustive secret detection."
+      },
+      "preflight_status": "No green stamp written; strict parity blocks readiness",
+      "failed_command_summary": [
+        "bun-tests: npm run native:test:bun --prefix packages/javascript",
+        "parity: node scripts/check-router-parity.mjs --strict"
+      ],
+      "stages": [
+        {
+          "stage": "lint",
+          "configured_commands_at_tested_commit": [
+            "node scripts/lint-js-first.mjs",
+            "node --test scripts/test/check-js-first-workflows.test.mjs",
+            "node --test scripts/test/check-js-first-local.test.mjs",
+            "node scripts/check-js-first-workflows.mjs"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 4730.25725
+            },
+            {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 4205.957542
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Syntax checked 87 JavaScript source files."
+          ]
+        },
+        {
+          "stage": "node-tests",
+          "configured_commands_at_tested_commit": [
+            "npm run native:test --prefix packages/javascript"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 86,
+              "pass": 86,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 8421.547666
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "bun-tests",
+          "configured_commands_at_tested_commit": [
+            "npm run native:test:bun --prefix packages/javascript"
+          ],
+          "outcome": "failure",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [],
+          "bun_summary": {
+            "pass": 84,
+            "fail": 2
+          },
+          "selected_output_lines": []
+        },
+        {
+          "stage": "typescript",
+          "configured_commands_at_tested_commit": [
+            "npm run typecheck --prefix packages/javascript",
+            "npm run native:typecheck --prefix packages/javascript",
+            "node scripts/regenerate-native-typescript.mjs --check",
+            "node scripts/check-native-typescript.mjs",
+            "node --test tools/translation/js-to-rust/test/native-typescript.test.mjs",
+            "node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json",
+            "node tools/translation/check-typescript-fixtures.mjs",
+            "node scripts/build-js-first-ui.mjs"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 5,
+              "pass": 5,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 29293.951417
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Strict native TypeScript compilation passed: 20 files; TypeScript 5.9.3."
+          ]
+        },
+        {
+          "stage": "parity",
+          "configured_commands_at_tested_commit": [
+            "node --test experiments/issue-759/acceptance/*.test.mjs",
+            "node scripts/check-router-parity.mjs --strict"
+          ],
+          "outcome": "blocked",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 43,
+              "pass": 43,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 33755.62975
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Native parity inventory: 443 features; 62/62 operations; 368/368 OpenAPI routes; 442 draft gaps; 0 validation errors.",
+            "Rust translation inventory: 804 sources; 12140 carried items; runtimeParity=false."
+          ]
+        },
+        {
+          "stage": "translation",
+          "configured_commands_at_tested_commit": [
+            "node --test tools/translation/test/*.test.mjs",
+            "node scripts/translate-router.mjs --check"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 26,
+              "pass": 26,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 554.20475
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "reverse-translation",
+          "configured_commands_at_tested_commit": [
+            "node --test tools/translation/js-to-rust/test/*.test.mjs",
+            "node scripts/regenerate-js-first.mjs --check"
+          ],
+          "outcome": "passed",
+          "outcome_evidence": "Stage listed in final failed-command summary, or absent after complete sequential preflight log; not a new test run.",
+          "node_tap_summaries": [
+            {
+              "tests": 17,
+              "pass": 17,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 29102.109208
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "JavaScript-first regeneration verified: 142307 bytes; 0 changed artifacts."
+          ]
+        }
+      ],
+      "limitations": "Node/Bun/TypeScript/translation local observations only. No local Rust execution, remote CI success, complete runtime parity or production readiness claim."
+    },
+    {
+      "kind": "observed-local-verification-receipt",
+      "source_path": "/tmp/router-759-auditor-03dce509-receipt.json",
+      "source_sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed",
+      "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-auditor-03dce509-receipt.json.gz",
+      "retained_decoded_sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed",
+      "stored_sha256": "4003103eb3196b264c2d84c466fa185e20fd5b4670837fae70e9ff6fda46574d",
+      "stored_bytes": 538,
+      "receipt": {
+        "schema": "local-verification-receipt-v1",
+        "commit": "03dce5099804fbf6215e5c6db8285bddd8f90e38",
+        "command": "node --test scripts/test/check-js-first-workflows.test.mjs scripts/test/check-js-first-local.test.mjs",
+        "workdir": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-gate",
+        "exitCode": 0,
+        "tests": 14,
+        "passed": 14,
+        "failed": 0,
+        "skipped": 0,
+        "durationMs": 3393.205375,
+        "evidenceSource": "Executed command output retained in the tool transcript; test stdout was not redirected to a local raw log. This receipt records that observed output, not a new test run.",
+        "executionTiming": "Tested the auditor hardening working tree, then committed identical source as 03dce509.",
+        "rawStdoutLogPath": null,
+        "additionalChecks": [
+          "node scripts/lint-js-first.mjs: 87 JavaScript source files passed",
+          "node scripts/check-js-first-workflows.mjs: 14 workflows verified",
+          "git diff --check: passed"
+        ]
+      },
+      "limitations": "Raw test stdout exists only in prior tool transcript, not a locally redirected raw file. Receipt is archived as observed; no synthetic stdout or rerun supplied.",
+      "scrub": {
+        "hits": {
+          "github_token": 0,
+          "aws_access_key": 0,
+          "private_key_block": 0,
+          "credential_assignment": 0,
+          "bearer_value": 0
+        },
+        "total_hits": 0,
+        "changed": false,
+        "scope": "Same pattern-based credential/private-key screening as local logs; source/retained bytes unchanged."
+      }
+    }
+  ]
+}

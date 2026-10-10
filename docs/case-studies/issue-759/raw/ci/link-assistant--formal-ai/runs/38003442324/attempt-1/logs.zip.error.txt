@@ -1,0 +1,1 @@
+gh: API rate limit exceeded for user ID 1431904. If you reach out to GitHub Support for help, please include the request ID D250:5A7B:28648E:4436ED:6ACA9AD7 and timestamp 2026-10-10 20:06:47 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)

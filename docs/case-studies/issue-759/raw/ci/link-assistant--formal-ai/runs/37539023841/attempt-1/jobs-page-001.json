@@ -1,0 +1,113 @@
+{
+  "total_count": 1,
+  "jobs": [
+    {
+      "id": 112527177032,
+      "run_id": 37539023841,
+      "workflow_name": "Broken Link Checker",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37539023841",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaMyR1SA",
+      "head_sha": "d9f971c6cd9caff0b06dc99ddc8fd4d93bb60773",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112527177032",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37539023841/job/112527177032",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-06T22:11:56Z",
+      "started_at": "2026-10-06T22:14:00Z",
+      "completed_at": "2026-10-06T22:20:29Z",
+      "name": "Check Links",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-06T22:14:01Z",
+          "completed_at": "2026-10-06T22:14:01Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-06T22:14:02Z",
+          "completed_at": "2026-10-06T22:14:17Z"
+        },
+        {
+          "name": "Test Web Archive report parser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-06T22:14:17Z",
+          "completed_at": "2026-10-06T22:14:17Z"
+        },
+        {
+          "name": "Prepare reconstructable release history for link checking",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-06T22:14:17Z",
+          "completed_at": "2026-10-06T22:14:17Z"
+        },
+        {
+          "name": "Check links with lychee",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-06T22:14:17Z",
+          "completed_at": "2026-10-06T22:19:54Z"
+        },
+        {
+          "name": "Re-check links that never got an answer",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 6,
+          "started_at": "2026-10-06T22:19:54Z",
+          "completed_at": "2026-10-06T22:20:28Z"
+        },
+        {
+          "name": "Check broken links against Web Archive",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-06T22:20:28Z",
+          "completed_at": "2026-10-06T22:20:28Z"
+        },
+        {
+          "name": "Fail if broken links were found",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-06T22:20:28Z",
+          "completed_at": "2026-10-06T22:20:28Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-06T22:20:28Z",
+          "completed_at": "2026-10-06T22:20:28Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-06T22:20:28Z",
+          "completed_at": "2026-10-06T22:20:28Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112527177032",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000146232,
+      "runner_name": "GitHub Actions 1000146232",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

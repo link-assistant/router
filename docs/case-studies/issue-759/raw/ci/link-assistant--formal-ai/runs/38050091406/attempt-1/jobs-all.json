@@ -1,0 +1,134 @@
+[
+  {
+    "id": 114207300202,
+    "run_id": 38050091406,
+    "workflow_name": "Regenerate self-AST census",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/38050091406",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAal0kaag",
+    "head_sha": "aabf6d4ea012d9b67843ee7bb4e33b7e0730ecc6",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/114207300202",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/38050091406/job/114207300202",
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-10-10T11:55:04Z",
+    "started_at": "2026-10-10T11:55:47Z",
+    "completed_at": "2026-10-10T11:59:33Z",
+    "name": "Build the census and upload it",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-10T11:55:48Z",
+        "completed_at": "2026-10-10T11:55:49Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-10T11:55:49Z",
+        "completed_at": "2026-10-10T11:56:16Z"
+      },
+      {
+        "name": "Setup Rust",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-10T11:56:16Z",
+        "completed_at": "2026-10-10T11:56:17Z"
+      },
+      {
+        "name": "Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-10T11:56:17Z",
+        "completed_at": "2026-10-10T11:56:19Z"
+      },
+      {
+        "name": "Run ./.github/actions/cache-cargo-registry",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-10T11:56:19Z",
+        "completed_at": "2026-10-10T11:56:30Z"
+      },
+      {
+        "name": "Regenerate the census",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 6,
+        "started_at": "2026-10-10T11:56:30Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Regenerate the planner-derived documents",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 7,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Show what changed",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 8,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Upload the census",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 9,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/cache-cargo-registry",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 19,
+        "started_at": "2026-10-10T11:59:31Z",
+        "completed_at": "2026-10-10T11:59:31Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/114207300202",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000162336,
+    "runner_name": "GitHub Actions 1000162336",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

@@ -1,0 +1,306 @@
+{
+  "capture_method": "Parsed completed local logs and observed auditor receipt; no rerun or stdout reconstruction.",
+  "preflight": [
+    {
+      "commit": "ae950a3025945b32b6744848e81d4c6ae2ab4048",
+      "entrypoint": "node scripts/check-js-first-local.mjs",
+      "argv_and_stamp_path": {
+        "argv": [
+          "node",
+          "scripts/check-js-first-local.mjs"
+        ],
+        "default_stamp_path": "/tmp/router-js-first-gate.json",
+        "stamp_written": false,
+        "provenance": "Exact argv confirmed by gate owner; output reports no green stamp written and test -e exits 1."
+      },
+      "aggregate": "blocked; no green stamp written",
+      "stages": [
+        {
+          "stage": "lint",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 3158.140792
+            },
+            {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 1238.681333
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Syntax checked 87 JavaScript source files."
+          ]
+        },
+        {
+          "stage": "node-tests",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 86,
+              "pass": 86,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 3228.747375
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "bun-tests",
+          "outcome": "passed",
+          "node_tap_summaries": [],
+          "bun_summary": {
+            "pass": 86,
+            "fail": 0
+          },
+          "selected_output_lines": []
+        },
+        {
+          "stage": "typescript",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 5,
+              "pass": 5,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 14071.187292
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Strict native TypeScript compilation passed: 20 files; TypeScript 5.9.3."
+          ]
+        },
+        {
+          "stage": "parity",
+          "outcome": "blocked",
+          "node_tap_summaries": [
+            {
+              "tests": 43,
+              "pass": 43,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 16504.401875
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Native parity inventory: 443 features; 62/62 operations; 368/368 OpenAPI routes; 442 draft gaps; 0 validation errors.",
+            "Rust translation inventory: 804 sources; 12140 carried items; runtimeParity=false."
+          ]
+        },
+        {
+          "stage": "translation",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 26,
+              "pass": 26,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 367.397458
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "reverse-translation",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 441.505542
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "JavaScript-first regeneration verified: 142307 bytes; 0 changed artifacts."
+          ]
+        }
+      ],
+      "failed_commands": [
+        "parity: node scripts/check-router-parity.mjs --strict"
+      ],
+      "source_sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd",
+      "retained_decoded_sha256": "bd6d521f57f7fabd11e6e950a648b2e6b954e3631c212d5078d6b4609866e2dd",
+      "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-ae950a30.log.gz",
+      "scrub_hits": 0
+    },
+    {
+      "commit": "68982814ea98c3800451a1a565eeae71b8def86f",
+      "entrypoint": "node scripts/check-js-first-local.mjs",
+      "argv_and_stamp_path": "Unretained; optional arguments not invented.",
+      "aggregate": "blocked; no green stamp written",
+      "stages": [
+        {
+          "stage": "lint",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 12,
+              "pass": 12,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 4730.25725
+            },
+            {
+              "tests": 1,
+              "pass": 1,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 4205.957542
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Syntax checked 87 JavaScript source files."
+          ]
+        },
+        {
+          "stage": "node-tests",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 86,
+              "pass": 86,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 8421.547666
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "bun-tests",
+          "outcome": "failure",
+          "node_tap_summaries": [],
+          "bun_summary": {
+            "pass": 84,
+            "fail": 2
+          },
+          "selected_output_lines": []
+        },
+        {
+          "stage": "typescript",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 5,
+              "pass": 5,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 29293.951417
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Strict native TypeScript compilation passed: 20 files; TypeScript 5.9.3."
+          ]
+        },
+        {
+          "stage": "parity",
+          "outcome": "blocked",
+          "node_tap_summaries": [
+            {
+              "tests": 43,
+              "pass": 43,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 33755.62975
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "Native parity inventory: 443 features; 62/62 operations; 368/368 OpenAPI routes; 442 draft gaps; 0 validation errors.",
+            "Rust translation inventory: 804 sources; 12140 carried items; runtimeParity=false."
+          ]
+        },
+        {
+          "stage": "translation",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 26,
+              "pass": 26,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 554.20475
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": []
+        },
+        {
+          "stage": "reverse-translation",
+          "outcome": "passed",
+          "node_tap_summaries": [
+            {
+              "tests": 17,
+              "pass": 17,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0,
+              "duration_ms": 29102.109208
+            }
+          ],
+          "bun_summary": {},
+          "selected_output_lines": [
+            "JavaScript-first regeneration verified: 142307 bytes; 0 changed artifacts."
+          ]
+        }
+      ],
+      "failed_commands": [
+        "bun-tests: npm run native:test:bun --prefix packages/javascript",
+        "parity: node scripts/check-router-parity.mjs --strict"
+      ],
+      "source_sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8",
+      "retained_decoded_sha256": "8ea446007d01d941f1feb83bcfbe628a66ac9e4e04d2cca6a4319f106e13b0d8",
+      "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-preflight-68982814.log.gz",
+      "scrub_hits": 0
+    }
+  ],
+  "auditor": {
+    "commit": "03dce5099804fbf6215e5c6db8285bddd8f90e38",
+    "command": "node --test scripts/test/check-js-first-workflows.test.mjs scripts/test/check-js-first-local.test.mjs",
+    "exitCode": 0,
+    "tests": 14,
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 3393.205375,
+    "rawStdoutLogPath": null,
+    "evidenceSource": "Executed command output retained in the tool transcript; test stdout was not redirected to a local raw log. This receipt records that observed output, not a new test run.",
+    "executionTiming": "Tested the auditor hardening working tree, then committed identical source as 03dce509.",
+    "source_sha256": "94609438ece9fa6c40379f08b46e253b911a1a33f360c12d634771032e5a63ed",
+    "retained_path": "docs/case-studies/issue-759/raw/sources/local-verification/router-759-auditor-03dce509-receipt.json.gz"
+  },
+  "limitations": "Six executable stages at ae950a30 pass, while strict parity reports 442 gaps and zero validation errors, so aggregate readiness remains blocked. Earlier 68982814 also has 84 Bun passes and two failures. No local Rust build, remote CI success or production parity claim."
+}
