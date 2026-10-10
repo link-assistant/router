@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: real-client-capture-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,7 +25,17 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   real-client-capture:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Claude Code, Codex, Gemini, Qwen, and OpenCode
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -87,6 +97,8 @@ jobs:
   # selector -- against newer releases so client drift fails here, at the
   # operation that changed, rather than being hidden behind a version gate.
   claude-newer-release:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Claude Code ${{ matrix.claude }} (capture ${{ matrix.capture }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -146,6 +158,8 @@ jobs:
   # calls. Run the Codex capture, history/notes, and TUI model selector against
   # a newer release so bootstrap drift fails at the operation that changed.
   codex-newer-release:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Codex ${{ matrix.codex }} (newer than baseline)
     runs-on: ubuntu-24.04
     timeout-minutes: 30

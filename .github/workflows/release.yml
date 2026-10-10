@@ -42,9 +42,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # PR checks are disposable; release-capable main/manual runs must finish once
-  # they start or cancellation can leave tags, crates, and releases out of sync.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # Complete the Rust stage; the push gate waits for every run before pushing.
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -62,12 +61,21 @@ env:
   DOCKERHUB_IMAGE: konard/link-assistant-router
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
+    needs: [javascript]
     name: Detect Changes
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    if: github.event_name != 'workflow_dispatch'
+    if: needs.javascript.result == 'success' && (github.event_name != 'workflow_dispatch')
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
       toml-changed: ${{ steps.changes.outputs.toml-changed }}
@@ -101,8 +109,8 @@ jobs:
     name: Changelog Fragment Check
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    needs: [detect-changes]
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    needs: [javascript, detect-changes]
+    if: needs.javascript.result == 'success' && (github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,10 +132,11 @@ jobs:
   # === VERSION CHECK - prevents manual version modification in PRs ===
   # This ensures versions are only modified by the automated release pipeline
   version-check:
+    needs: [javascript]
     name: Version Modification Check
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    if: github.event_name == 'pull_request'
+    if: needs.javascript.result == 'success' && (github.event_name == 'pull_request')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -152,6 +161,8 @@ jobs:
   # transport verifies entrypoint validation and the final autossh argv without
   # opening an external SSH connection.
   tunnel-image-smoke:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Tunnel Image Smoke Test
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -190,18 +201,11 @@ jobs:
     name: Lint and Format Check
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: [detect-changes]
+    needs: [javascript, detect-changes]
     # Note: always() is required because detect-changes is skipped on workflow_dispatch,
     # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
     # See: https://github.com/actions/runner/issues/491
-    if: |
-      always() && !cancelled() && (
-        github.event_name == 'push' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.any-code-changed == 'true' ||
-        needs.detect-changes.outputs.docs-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
-      )
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ( github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.any-code-changed == 'true' || needs.detect-changes.outputs.docs-changed == 'true' || needs.detect-changes.outputs.workflow-changed == 'true' ))
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -347,15 +351,9 @@ jobs:
     name: Dependency Audit
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: [detect-changes]
+    needs: [javascript, detect-changes]
     # Note: always() is required because detect-changes is skipped on workflow_dispatch.
-    if: |
-      always() && !cancelled() && (
-        github.event_name == 'push' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.any-code-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
-      )
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ( github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.any-code-changed == 'true' || needs.detect-changes.outputs.workflow-changed == 'true' ))
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -412,9 +410,9 @@ jobs:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
-    needs: [detect-changes, changelog]
+    needs: [javascript, detect-changes, changelog]
     # Run if: push event, OR changelog succeeded, OR changelog was skipped (docs-only PR)
-    if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped'))
     strategy:
       fail-fast: false
       matrix:
@@ -547,8 +545,8 @@ jobs:
     name: Test Coverage
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    needs: [detect-changes, changelog]
-    if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    needs: [javascript, detect-changes, changelog]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped'))
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -642,8 +640,8 @@ jobs:
     name: Build Package
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    needs: [lint, test, coverage]
-    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' && needs.coverage.result == 'success'
+    needs: [javascript, lint, test, coverage]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' && needs.coverage.result == 'success')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -690,16 +688,12 @@ jobs:
   # This job automatically bumps version based on fragments in changelog.d/
   auto-release:
     name: Auto Release
-    needs: [lint, test, build]
+    needs: [javascript, lint, test, build]
     outputs:
       should-release: ${{ steps.check.outputs.should_release }}
       release-version: ${{ steps.current_version.outputs.version }}
     # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
-    if: |
-      always() && !cancelled() &&
-      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'recover')) &&
-      github.ref == 'refs/heads/main' &&
-      needs.build.result == 'success'
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'recover')) && github.ref == 'refs/heads/main' && needs.build.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -742,27 +736,26 @@ jobs:
       - name: Get current version
         id: current_version
         if: steps.check.outputs.should_release == 'true'
-        run: rust-script scripts/get-version.rs
-
-      - name: Build release
-        if: steps.check.outputs.should_release == 'true'
-        run: cargo build --locked --release
+        # Version creation changes HEAD. No Rust executes again until the new
+        # immutable tag commit has passed release-javascript below.
+        run: |
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            const version = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*\"([^\"]+)\"/m)[1];
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'version=' + version + '\n');
+          "
 
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Instant Release
-    needs: [lint, test, build]
+    needs: [javascript, lint, test, build]
     outputs:
       should-release: ${{ steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true' }}
       release-version: ${{ steps.version.outputs.new_version }}
     # Note: always() is required to evaluate the condition when dependencies use always().
     # The build job ensures lint and test passed before this job runs.
-    if: |
-      always() && !cancelled() &&
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.release_mode == 'instant' &&
-      needs.build.result == 'success'
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant' && needs.build.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -794,16 +787,15 @@ jobs:
           DESCRIPTION: ${{ github.event.inputs.description }}
         run: rust-script scripts/version-and-commit.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
-      - name: Build release
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: cargo build --locked --release
+      # Tagged source is built only after release-javascript, never immediately
+      # after a version commit that has not passed the JavaScript checks.
 
   # Build every image variant and architecture on a native runner. Each matrix
   # leg pushes a digest; the following job gives those digests their tags.
   publish-docker-images:
     name: Build Docker Image (${{ matrix.variant }} / ${{ matrix.arch }})
-    needs: [create-github-release]
-    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
+    needs: [javascript, release-javascript, resolve-release-source, create-github-release]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)))
     strategy:
       fail-fast: false
       matrix:
@@ -832,7 +824,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
 
       - name: Verify the workspace is the release tag commit
         shell: bash
@@ -940,8 +932,8 @@ jobs:
 
   publish-docker-manifests:
     name: Publish Multi-Platform Docker Manifests
-    needs: [create-github-release, publish-docker-images]
-    if: always() && !cancelled() && needs.publish-docker-images.result == 'success'
+    needs: [javascript, release-javascript, resolve-release-source, create-github-release, publish-docker-images]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.publish-docker-images.result == 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -953,7 +945,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
           fetch-depth: 0
 
       - name: Verify the workspace is the release tag commit
@@ -1061,15 +1053,47 @@ jobs:
             --image "${{ env.DOCKERHUB_IMAGE }}:${RELEASE_VERSION}" \
             --image "${{ env.DOCKERHUB_IMAGE }}:latest"
 
+  resolve-release-source:
+    name: Resolve immutable release source (no Rust)
+    needs: [javascript, auto-release, manual-release]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ((needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') || (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true') || (github.event_name == 'workflow_dispatch' && inputs.release_mode == 'publish' && startsWith(github.ref, 'refs/tags/v'))))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+      version: ${{ steps.source.outputs.version }}
+    env:
+      RELEASE_VERSION: ${{ needs.auto-release.outputs.release-version || needs.manual-release.outputs.release-version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - id: source
+        shell: bash
+        run: |
+          if [ "${{ inputs.release_mode }}" = publish ]; then
+            RELEASE_VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          git fetch --force --tags --quiet
+          sha="$(git rev-parse --verify "refs/tags/v${RELEASE_VERSION}^{commit}")"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+  release-javascript:
+    name: JavaScript first (immutable release commit)
+    needs: [javascript, resolve-release-source]
+    if: needs.javascript.result == 'success' && (always() && needs.resolve-release-source.result == 'success')
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ needs.resolve-release-source.outputs.sha }}
+    permissions:
+      contents: read
+
   create-github-release:
     name: Prepare GitHub Prerelease
-    needs: [auto-release, manual-release]
-    if: |
-      always() && !cancelled() && (
-        (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') ||
-        (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true') ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'publish' && startsWith(github.ref, 'refs/tags/v'))
-      )
+    needs: [javascript, release-javascript, resolve-release-source, auto-release, manual-release]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && ( (needs.auto-release.result == 'success' && needs.auto-release.outputs.should-release == 'true') || (needs.manual-release.result == 'success' && needs.manual-release.outputs.should-release == 'true') || (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'publish' && startsWith(github.ref, 'refs/tags/v')) )))
     outputs:
       release-version: ${{ steps.tag-commit.outputs.version }}
       release-commit: ${{ steps.tag-commit.outputs.commit }}
@@ -1087,7 +1111,7 @@ jobs:
         run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/tags/v${{ env.RELEASE_VERSION }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
           fetch-depth: 0
 
       # Every packaging job must build the immutable tag commit, not the commit that
@@ -1145,8 +1169,8 @@ jobs:
 
   publish-release-artifacts:
     name: Publish attested binaries (${{ matrix.os }}-${{ matrix.arch }})
-    needs: [create-github-release]
-    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
+    needs: [javascript, release-javascript, resolve-release-source, create-github-release]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)))
     strategy:
       fail-fast: false
       matrix:
@@ -1182,7 +1206,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
           fetch-depth: 0
 
       - name: Setup Rust
@@ -1291,8 +1315,8 @@ jobs:
   # It also runs the consumer's own `sha256sum -c` in the download directory.
   publish-integration-artifacts:
     name: Build and attest official integrations
-    needs: [create-github-release]
-    if: always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)
+    needs: [javascript, release-javascript, resolve-release-source, create-github-release]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.create-github-release.result == 'success' && github.ref == format('refs/tags/v{0}', needs.create-github-release.outputs.release-version)))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -1306,7 +1330,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: 1.98.1
@@ -1341,12 +1365,8 @@ jobs:
 
   verify-release-provenance:
     name: Verify published release provenance
-    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, publish-integration-artifacts]
-    if: |
-      always() && !cancelled() &&
-      needs.publish-docker-manifests.result == 'success' &&
-      needs.publish-release-artifacts.result == 'success' &&
-      needs.publish-integration-artifacts.result == 'success'
+    needs: [javascript, create-github-release, publish-docker-manifests, publish-release-artifacts, publish-integration-artifacts]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && needs.publish-docker-manifests.result == 'success' && needs.publish-release-artifacts.result == 'success' && needs.publish-integration-artifacts.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1447,8 +1467,8 @@ jobs:
   # === MACOS HOST CLI LIFECYCLE ===
   verify-macos-client-lifecycle:
     name: Verify macOS client lifecycle
-    needs: [create-github-release, publish-release-artifacts]
-    if: always() && !cancelled() && needs.publish-release-artifacts.result == 'success'
+    needs: [javascript, release-javascript, resolve-release-source, create-github-release, publish-release-artifacts]
+    if: needs.javascript.result == 'success' && (needs.release-javascript.result == 'success' && (always() && !cancelled() && needs.publish-release-artifacts.result == 'success'))
     runs-on: macos-26
     timeout-minutes: 30
     permissions:
@@ -1459,7 +1479,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit }}
+          ref: ${{ needs.resolve-release-source.outputs.sha }}
 
       - name: Verify the workspace is the release tag commit
         shell: bash
@@ -1522,8 +1542,9 @@ jobs:
   # Retry existing, attested distributions using current release logic. Never
   # rebuild assets or rewrite the old tag to repair publisher configuration.
   prepare-registry-retry:
+    needs: [javascript]
     name: Verify existing release for registry retry
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'retry-registries' && github.ref == 'refs/heads/main'
+    if: needs.javascript.result == 'success' && (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'retry-registries' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1570,8 +1591,8 @@ jobs:
   # === STABLE PUBLICATION ===
   publish-npm:
     name: Publish verified npm package
-    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
-    if: always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success')
+    needs: [javascript, create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -1606,8 +1627,8 @@ jobs:
 
   publish-python:
     name: Publish verified Python package
-    needs: [create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
-    if: always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success')
+    needs: [javascript, create-github-release, verify-release-provenance, verify-macos-client-lifecycle, prepare-registry-retry]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ((needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -1642,17 +1663,8 @@ jobs:
 
   finalize-release:
     name: Publish complete stable release
-    needs: [create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle, publish-npm, publish-python, prepare-registry-retry]
-    if: |
-      always() && !cancelled() &&
-      ((needs.create-github-release.result == 'success' &&
-      needs.publish-docker-manifests.result == 'success' &&
-      needs.publish-release-artifacts.result == 'success' &&
-      needs.verify-release-provenance.result == 'success' &&
-      needs.verify-macos-client-lifecycle.result == 'success') ||
-      needs.prepare-registry-retry.result == 'success') &&
-      needs.publish-npm.result == 'success' &&
-      needs.publish-python.result == 'success'
+    needs: [javascript, create-github-release, publish-docker-manifests, publish-release-artifacts, verify-release-provenance, verify-macos-client-lifecycle, publish-npm, publish-python, prepare-registry-retry]
+    if: needs.javascript.result == 'success' && (always() && !cancelled() && ((needs.create-github-release.result == 'success' && needs.publish-docker-manifests.result == 'success' && needs.publish-release-artifacts.result == 'success' && needs.verify-release-provenance.result == 'success' && needs.verify-macos-client-lifecycle.result == 'success') || needs.prepare-registry-retry.result == 'success') && needs.publish-npm.result == 'success' && needs.publish-python.result == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1662,7 +1674,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.create-github-release.outputs.release-commit || needs.prepare-registry-retry.outputs.release-commit }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
@@ -1687,8 +1699,9 @@ jobs:
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
+    needs: [javascript]
     name: Create Changelog PR
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
+    if: needs.javascript.result == 'success' && (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
