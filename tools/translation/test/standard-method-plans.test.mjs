@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HostChecker,parseRust} from '../extensions/host-contracts.mjs';
 import {planStandardMethod,completeStandardMethod,STANDARD_METHOD_PROFILE} from '../extensions/standard-method-plans.mjs';
-const U8={kind:'fixed',bits:8,signed:false},U16={kind:'fixed',bits:16,signed:false},span={start:21,end:89};
+const U8={kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'},U16={kind:'fixed',bits:16,signed:false,rustPrimitiveName:'u16'},span={start:21,end:89};
 function context() {
   const checker=new HostChecker('Rust',[]);
   const checked=checker.program(parseRust('fn input(value: Option<u8>) -> Option<u16> { None } fn result(value: Result<u8, String>) -> Option<u8> { None } enum Fake { None, Some(u8) } fn main() {}'));
