@@ -34,6 +34,22 @@ test('inline super reexports resolve original parent values and child external-f
   await verifyTypedTargets(result,api=>{assert.equal(api['outer.LOCAL'],undefined);assert.equal(api['outer.own'](),7n);assert.equal(api['outer.child.value'](),7n);assert.equal(api.result(),7n);});
 });
 
+test('qualified module aliases and parent value reexports retain their original source owners',{timeout:30_000},async()=>{
+  const source='pub const ROOT:u8=7;pub mod outer {pub use super::ROOT as LOCAL;pub mod facade {pub use super::LOCAL as EXPORTED;}pub mod child {pub fn read()->u8{super::LOCAL+super::super::ROOT}}}pub use outer as API;pub fn result()->u8{API::facade::EXPORTED+crate::outer::child::read()}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.equal(api['outer.child.read'](),14n);assert.equal(api.result(),21n);});
+});
+
+test('qualified sibling access retains private and restricted source visibility',()=>{
+  for(const visibility of ['', 'pub(self) ', 'pub(in crate::left) ']){
+    const source=`mod left {${visibility}const SECRET:u8=7;pub fn own()->u8{SECRET}}pub fn invalid()->u8{crate::left::SECRET}`;
+    const result=project(source);
+    assert.equal(result.meta.executable.some(item=>item.name==='invalid'),false,visibility);
+    assert.ok(result.meta.refused.some(item=>item.name==='invalid'&&item.message.includes('ml_inaccessible_source_binding')),visibility);
+    assert.equal(result.meta.executable.some(item=>item.name==='left.own'),true,visibility);
+  }
+});
+
 test('original inline impl extraction does not retag parent or sibling implementations',()=>{
   const source='struct Root;impl Root {pub fn root()->u8{1}}mod child {pub struct Child;impl Child {pub fn child()->u8{2}}}';
   const graph=resolveModuleGraph(options({'src/lib.rs':source}));

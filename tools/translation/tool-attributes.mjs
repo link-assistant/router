@@ -65,6 +65,7 @@ function sourceModules(modules,profile){
 export function createToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,compilationProfile:input=null}={}){
   if(!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Tool attributes require tracked modules and external namespace tables');
   const profile=compilationProfile(input),originals=sourceModules(modules,profile),candidates=new Map();
+  const byScope=new Map(originals.map(module=>[moduleScopeKey(module),{source:module.source,sourceView:module.sourceView}]));
   for(const module of originals)for(const item of module.items){
     const condition=itemConfiguration(item.tokens.filter(token=>token.type!=='comment'),profile);
     if(condition.status!=='active'||!originalHeader(item,condition))continue;
@@ -77,7 +78,7 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
   if(candidates.size){
     // This provisional context never escapes this function. Project only the
     // candidate attributes, then independently resolve every actual binding.
-    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,provisional:true});
+    const projection=Object.freeze({});contexts.set(projection,{byId:candidates,byScope,provisional:true});
     let baseline;
     try{baseline=resolveModuleBindings({modules:originals,externalModules,deriveContext,toolContext:projection,compilationProfile:profile});}
     finally{contexts.delete(projection);}
@@ -92,12 +93,15 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
     }
   }
   const evidence={schema:'original-tool-context-v1',compilationProfile:profile,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,provisional:false});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,byScope,provisional:false});return context;
 }
 export const isToolAttributeContext=context=>!!context&&contexts.has(context);
 export const isToolAttributeCertificate=certificate=>!!certificate&&certificates.has(certificate);
 export function toolAttributeAt(context,module,item,attribute){
   const state=contexts.get(context);if(!state)throw new TypeError('Unsealed tool attribute context');
+  const owner=state.byScope.get(moduleScopeKey(module));
+  if(!owner||owner.source!==module.source||owner.sourceView!==module.sourceView)throw new TypeError('Tool attribute original source mismatch');
+  originalSourceModuleItems(module);
   const proof=state.byId.get(id(module,item,attribute));if(!proof)return null;
   if(proof.sourceSha256!==hash(module.source)||proof.itemSha256!==hash(module.source.slice(item.start,item.end))||JSON.stringify(proof.module)!==JSON.stringify(module.path))throw new TypeError('Tool attribute original source mismatch');
   return proof;

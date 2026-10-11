@@ -11,6 +11,7 @@ import {tokenizeRust} from '../extensions/lexical.mjs';
 import {createToolAttributeContext,isToolAttributeCertificate,isToolAttributeContext,toolAttributeAt,inertInnerLintItem} from '../tool-attributes.mjs';
 import {configureToolAttributes} from '../tool-attribute-layout.mjs';
 import {deriveDependencyProfile} from '../derive-dependencies.mjs';
+import {resolveModuleGraph} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const module=source=>({file:'src/lib.rs',path:[],source,items:sourceItems(source)});
@@ -28,6 +29,18 @@ test('original tool-prelude ownership narrows only source-sealed outer attribute
   assert.throws(()=>resolveModuleBindings({modules:[original],toolContext:structuredClone(proof)}),/Unsealed/);
   assert.throws(()=>toolAttributeAt(proof,{...original,source:source+' '},item,proof.certificates[0].attribute),/source mismatch/);
   assert.throws(()=>toolAttributeAt(proof,{...original,path:['forged']},item,proof.certificates[0].attribute),/source mismatch/);
+});
+
+test('tool certificates retain the exact private source module view across sibling scopes',()=>{
+  const source='mod first {#[rustfmt::skip]pub fn value()->u8{1}}mod second {#[rustfmt::skip]pub fn value()->u8{2}}';
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
+  const proof=createToolAttributeContext({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});
+  assert.equal(proof.certificates.length,2);
+  for(const original of graph.modules.filter(module=>module.path.length)){
+    const item=original.items.find(item=>item.term==='fn'),certificate=proof.certificates.find(candidate=>candidate.module.join('.')===original.path.join('.'));
+    assert.equal(toolAttributeAt(proof,original,item,certificate.attribute),certificate);
+    for(const changed of [{...original,sourceView:structuredClone(original.sourceView)},{...original,sourceView:undefined},{...original,path:['forged']},{...original,source:source+' '}])assert.throws(()=>toolAttributeAt(proof,changed,item,certificate.attribute),/source mismatch/);
+  }
 });
 
 test('unchanged tool and inner lint tokens accompany typed execution',{timeout:30_000},async()=>{

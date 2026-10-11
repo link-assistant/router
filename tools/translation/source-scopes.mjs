@@ -23,9 +23,23 @@ export function parserSourceScope(scope,scopes=[scope]){
 }
 export function configureParserSourceScope(parser,scope,scopes=[scope],path=scope.path){
   const evidence=parserSourceScope(scope,scopes);
+  const ownedScopes=new Map();
+  for(const candidate of scopes){
+    const key=candidate.path.join('.');
+    if(ownedScopes.has(key))throw new TypeError('Source namespace scopes have duplicate module paths');
+    ownedScopes.set(key,parserSourceScope(candidate,scopes));
+  }
   parser.compilationProfile=evidence.compilationProfile;
-  parser.aliases=new Map([[path.join('.'),new Map(evidence.aliases)]]);
-  parser.sourceNamespaceAliases=Object.fromEntries(Object.entries(evidence.namespaceAliases).map(([namespace,aliases])=>[namespace,new Map([[path.join('.'),new Map(aliases)]])]));
+  parser.sourceNamespaceAliases=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...ownedScopes].map(([key,owned])=>[key,new Map(owned.namespaceAliases[namespace])]))]));
+  // A qualified path still checks visibility from the consuming module. Keep
+  // inaccessible bindings explicit so a later declaration lookup cannot grant
+  // them merely because their canonical source name exists.
+  for(const candidate of scopes)for(const binding of candidate.bindings){
+    const visibility=binding.visibility;
+    if(visibility&&visibility.kind!=='public'&&!visibility.path.every((name,index)=>path[index]===name))parser.sourceNamespaceAliases[binding.namespace].get(candidate.path.join('.')).set(binding.name,['crate','ml_inaccessible_source_binding',...candidate.path,binding.name]);
+  }
+  parser.aliases=parser.sourceNamespaceAliases.type;
+  parser.sourceNamespaceBindingEvidence=new Map(scopes.map(candidate=>[candidate.path.join('.'),candidate.bindings]));
   parser.sourceNamespaceShadows=evidence.namespaceShadows;
   parser.sourceNamespaceEvidence={source:scope.file,module:[...scope.path],bindings:scope.bindings.map(binding=>({name:binding.name,namespace:binding.namespace,kind:binding.kind,status:binding.status,target:binding.target?[...binding.target]:null,source:binding.source,sourceSpan:binding.span?{...binding.span}:null}))};
   parser.shadowedPreludeTypes=evidence.shadowedPreludeTypes;parser.shadowedImportedBindings=evidence.shadowedBindings;

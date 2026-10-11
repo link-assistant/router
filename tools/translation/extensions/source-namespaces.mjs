@@ -83,12 +83,37 @@ export function withSourceNamespaceParser(Base) {
       if(namespace==='value'&&segments.length===1&&this.sourceLexicalValues?.has(segments[0]))return [...segments];
       const ownerNamespace=namespace==='value'&&segments.length>1?'type':namespace;
       const aliases=this.sourceNamespaceAliases[ownerNamespace]?.get(path.join('.'));
-      if(aliases?.has(segments[0])) {
+      const record=(name,ownerPath,ownerNamespace)=>{
         this.sourceNamespaceResolvedBindings??=new Map();
-        const binding=this.sourceNamespaceEvidence?.bindings.find(binding=>binding.namespace===ownerNamespace&&binding.name===segments[0]);
-        if(binding)this.sourceNamespaceResolvedBindings.set(`${ownerNamespace}:${segments[0]}`,structuredClone(binding));
+        const bindings=this.sourceNamespaceBindingEvidence?.get(ownerPath.join('.'))??this.sourceNamespaceEvidence?.bindings;
+        const binding=bindings?.find(binding=>binding.namespace===ownerNamespace&&binding.name===name);
+        if(binding)this.sourceNamespaceResolvedBindings.set(`${ownerPath.join('.')}:${ownerNamespace}:${name}`,structuredClone(binding));
+      };
+      if(aliases?.has(segments[0]))record(segments[0],path,ownerNamespace);
+      let resolved=aliases?.has(segments[0])?[...aliases.get(segments[0]),...segments.slice(1)]:[...segments];
+      if(['self','super'].includes(resolved[0])){
+        const owner=[...path];let at=resolved[0]==='self'?1:0;
+        while(resolved[at]==='super'){if(!owner.length)return resolved;owner.pop();at++;}
+        resolved=['crate',...owner,...resolved.slice(at)];
       }
-      return aliases?.has(segments[0])?[...aliases.get(segments[0]),...segments.slice(1)]:[...segments];
+      if(resolved[0]!=='crate')return resolved;
+      // Walk the actual module scopes, including reexports at the value leaf.
+      // Nominal associated items and external owners keep their checked paths.
+      const seen=new Set();let prefix=[],remaining=resolved.slice(1);
+      for(let step=0;remaining.length&&step<128;step++){
+        const key=JSON.stringify([prefix,remaining]);
+        if(seen.has(key))throw unsupported('source qualified path','cyclic source namespace alias',this.cursor.peek?.());
+        seen.add(key);
+        const ownerNamespace=remaining.length===1?namespace:'type',map=this.sourceNamespaceAliases[ownerNamespace]?.get(prefix.join('.'));
+        if(!map?.has(remaining[0]))return ['crate',...prefix,...remaining];
+        const target=map.get(remaining[0]);record(remaining[0],prefix,ownerNamespace);
+        const tail=remaining.slice(1),ordinary=['crate',...prefix,remaining[0]];
+        if(target.length===ordinary.length&&target.every((part,index)=>part===ordinary[index])){prefix.push(remaining[0]);remaining=tail;continue;}
+        if(target[0]!=='crate')return [...target,...tail];
+        prefix=[];remaining=[...target.slice(1),...tail];
+      }
+      if(remaining.length)throw unsupported('source qualified path','source namespace alias walk exceeds its bound',this.cursor.peek?.());
+      return ['crate',...prefix];
     }
     resolve(segments,path) {
       const namespace=this.sourcePatternResolution&&this.cursor.is('{')?'type':this.sourceResolutionNamespace??'value';
