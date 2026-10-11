@@ -13,10 +13,10 @@ export async function managementOperation(core,request,path,body) {
   if(path === '/api/management/admin/rotate' && method === 'POST')return invoke(core.admin,'rotate',request.headers.get('authorization')?.replace(/^Bearer /,''),body?.ttl_hours);
   if(path === '/api/management/admin/summary' && method === 'GET')return invoke(core.admin,'summary');
   if(path === '/api/management/auth/status' && method === 'GET')return invoke(core,'credentialStatus');
-  if(path === '/api/management/auth/diagnostics' && method === 'GET')return invoke(core,'authDiagnostics');
+  if(path === '/api/management/auth/diagnostics' && method === 'GET')return core.diagnostics && core.emergency ? {diagnostics:core.diagnostics.snapshot(),emergency_auth:core.emergency.status()}:invoke(core,'authDiagnostics');
   if(path === '/api/management/health/subscriptions' && method === 'GET')return invoke(core,'subscriptionHealth');
-  if(path === '/api/management/emergency-auth' && method === 'GET')return invoke(core.emergencyAuth,'status');
-  if(path === '/api/management/emergency-auth/disable' && method === 'POST')return invoke(core.emergencyAuth,'disable');
+  if(path === '/api/management/emergency-auth' && method === 'GET')return invoke(core.emergency ?? core.emergencyAuth,'status');
+  if(path === '/api/management/emergency-auth/disable' && method === 'POST'){const emergency=core.emergency ?? core.emergencyAuth,was_active=await invoke(emergency,'disable');return {disabled:true,was_active,status:await invoke(emergency,'status')};}
   if(path === '/api/management/login' && method === 'POST') {
     const provider=(body?.provider ?? 'claude').trim().toLowerCase();if(!['claude','codex'].includes(provider))throw new ProtocolError('provider must be claude or codex');
     if(body?.mode && !['full','setup-token'].includes(body.mode))throw new ProtocolError('mode must be full or setup-token');

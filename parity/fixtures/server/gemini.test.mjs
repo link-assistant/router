@@ -20,6 +20,21 @@ test('Gemini bridge rejects loss and ambiguous/unmatched calls',()=>{
   assert.throws(()=>translateResponse({...native,candidates:[{content:{parts:[{text:'hidden',thought:true}]},finishReason:'STOP'}]},'gemini','chat','m'),/thought/);
   assert.throws(()=>translateRequest({...chat,parallel_tool_calls:false},'chat','gemini'),/parallel/);
 });
+test('Gemini media and generation controls follow Rust bridge contracts without inventing HTTP MIME facts',()=>{
+  const body={model:'m',messages:[{role:'user',content:[{type:'image_url',image_url:{url:'https://images.test/a.webp'}},{type:'image_url',image_url:{url:'data:image/png;base64,QUJD'}}]}],seed:42,frequency_penalty:0.5,presence_penalty:-0.5,logit_bias:{},top_logprobs:0,logprobs:false,response_format:{type:'json_object'}};
+  const converted=translateRequest(body,'chat','gemini');assert.deepEqual(converted.contents[0].parts,[{fileData:{fileUri:'https://images.test/a.webp'}},{inlineData:{mimeType:'image/png',data:'QUJD'}}]);assert.deepEqual(converted.generationConfig,{frequencyPenalty:0.5,presencePenalty:-0.5,seed:42,responseMimeType:'application/json',responseJsonSchema:{type:'object',additionalProperties:true}});
+  for(const suffix of ['Q','QQ=','QR=='])assert.throws(()=>translateRequest({...body,messages:[{role:'user',content:[{type:'image_url',image_url:{url:`data:image/png;base64,${suffix}`}}]}]},'chat','gemini'),/base64/);
+  assert.throws(()=>translateRequest({...body,tools:[{type:'function',function:{name:'f',strict:true}}]},'chat','gemini'),/strict/);
+  const native={model:'m',contents:[{role:'user',parts:[{text:'one'}]}],generationConfig:{topK:64},tools:[{functionDeclarations:[{name:'f',parametersJsonSchema:{type:'object'}}]}]};const reversed=translateRequest(native,'gemini','chat');assert.equal(reversed.messages[0].content,'one');assert.equal(reversed.top_k,undefined);assert.deepEqual(reversed.tools[0].function.parameters,{type:'object'});
+  assert.throws(()=>translateRequest({...native,generationConfig:{topK:10}},'gemini','chat'),/exact cross-provider/);assert.throws(()=>translateRequest({...body,user:'tracking'},'chat','gemini'),/user cannot/);
+});
+test('Gemini thinking uses source effort precedence, exact budget thresholds and separate summary visibility',()=>{
+  for(const [effort,budget] of [['none',0],['auto',-1],['minimal',512],['low',1024],['medium',8192],['high',24576],['xhigh',32768],['max',128000]]){const value=translateRequest({...chat,reasoning_effort:effort},'chat','gemini');assert.equal(value.generationConfig.thinkingConfig.thinkingBudget,budget);assert.equal(value.generationConfig.thinkingConfig.includeThoughts,effort!=='none');}
+  let value=translateRequest({...chat,reasoning_effort:'high',reasoning:{effort:'LOW',summary:'none'}},'chat','gemini');assert.deepEqual(value.generationConfig.thinkingConfig,{thinkingBudget:1024,includeThoughts:false});
+  for(const [budget,effort] of [[0,'none'],[-1,'auto'],[512,'minimal'],[513,'low'],[1025,'medium'],[8193,'high'],[24577,'xhigh']]){value=translateRequest({model:'m',contents:[],generationConfig:{thinkingConfig:{thinkingBudget:budget,includeThoughts:true}}},'gemini','chat');assert.equal(value.reasoning_effort,effort);}
+  value=translateRequest({model:'m',contents:[],generationConfig:{thinkingConfig:{thinkingLevel:'HIGH',thinkingBudget:-2}}},'gemini','chat');assert.equal(value.reasoning_effort,'high');
+  assert.throws(()=>translateRequest({model:'m',contents:[],generationConfig:{thinkingConfig:{thinkingBudget:4294967296}}},'gemini','chat'),/u32/);assert.throws(()=>translateRequest({...chat,reasoning_effort:'unsupported'},'chat','gemini'),/unsupported thinking effort/);
+});
 test('Gemini streams unwrap Code Assist, preserve UTF8/tools/usage and fail premature ending',async()=>{
   const raw=frame({response:{responseId:'g',candidates:[{content:{role:'model',parts:[{text:'Xin chào'}]}}]}})+frame({response:{candidates:[{content:{role:'model',parts:[{functionCall:{id:'c',name:'f',args:{x:1}}}]},finishReason:'STOP'}],usageMetadata:{promptTokenCount:2,candidatesTokenCount:1,totalTokenCount:3}}});
   let usage;
@@ -40,6 +55,6 @@ test('Gemini service translates to native Chat and keeps error dialect on reject
   let payload;
   const core={config:{},tokens:{validate:()=>({client_kind:'gemini',principal_id:'primary'})},candidates:()=>[{protocol:'openai',model:'actual',base_url:'http://localhost/v1'}]};
   const router=createNativeRouter({core,fetch:async(_url,options)=>{payload=JSON.parse(options.body);return Response.json({id:'c',choices:[{message:{role:'assistant',content:'hello'},finish_reason:'stop'}],usage:{prompt_tokens:1,completion_tokens:2,total_tokens:3}});}});
-  const response=await router.fetch(request('/api/services/gemini/v1beta/models/alias:generateContent',{contents:[{role:'user',parts:[{text:'Hi'}]}]}));assert.equal(response.status,200);assert.equal(payload.model,'actual');assert.equal(payload.messages[0].content[0].text,'Hi');assert.equal((await response.json()).usageMetadata.totalTokenCount,3);
+  const response=await router.fetch(request('/api/services/gemini/v1beta/models/alias:generateContent',{contents:[{role:'user',parts:[{text:'Hi'}]}]}));assert.equal(response.status,200);assert.equal(payload.model,'actual');assert.equal(payload.messages[0].content,'Hi');assert.equal((await response.json()).usageMetadata.totalTokenCount,3);
   const rejected=await router.fetch(request('/api/services/gemini/v1beta/models/alias:delete',{}));assert.equal(rejected.status,404);assert.equal((await rejected.json()).error.status,'NOT_FOUND');
 });

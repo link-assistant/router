@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,realpath} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createServer} from 'node:http';
@@ -9,22 +9,32 @@ const {createRouterCore}=await import(process.env.ROUTER_NATIVE_CORE_MODULE ?? '
 const secret='native-integration-independent-signing-key-759';
 const req=(path,method='GET',body,token)=>new Request('http://router'+path,{method,headers:token?{authorization:`Bearer ${token}`}:{},...(body===undefined?{}:{body:JSON.stringify(body)})});
 test('real core native resources retain Rust stored-provider identity and client ownership through durable restart',async t=>{
-  const dir=await mkdtemp(join(tmpdir(),'router-real-http-'));t.after(()=>rm(dir,{recursive:true,force:true}));let calls=0;
+  const dir=await realpath(await mkdtemp(join(tmpdir(),'router-real-http-')));t.after(()=>rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:50}));let calls=0;
   const upstream=createServer(async(request,response)=>{calls++;for await(const _chunk of request){}response.writeHead(200,{'content-type':'application/json'});response.end(JSON.stringify({id:'resp_real',object:'response',model:'m',status:'completed',output:[],usage:{input_tokens:2,output_tokens:1,total_tokens:3}}));});await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>upstream.close(resolve)));
   const config={token_secret:secret,storage_policy:'text',data_dir:dir,providers:[{name:'fixture-service',kind:'openai-compatible',base_url:`http://127.0.0.1:${upstream.address().port}/v1`,api_key:'upstream-operator',models:['m'],supported_clients:['codex']}],accounts:[{name:'primary',provider:'fixture-service'}]};
   let core=await createRouterCore({config,env:{}});const credential=await core.tokens.issue({client_kind:'codex',principal_id:'primary',account:'primary',ttl_hours:1}),router=createNativeRouter({core});
   let response=await router.fetch(req('/api/services/openai/v1/responses','POST',{model:'m',input:'hello',background:true},credential.token));assert.equal(response.status,200);assert.equal((await response.json()).id,'resp_real');
   const record=await core.affinities.get('/api/services/openai/v1/responses',{client_kind:'codex',principal_id:'primary'},'resp_real');assert.equal(record.destination.account,'fixture-service');assert.equal(record.destination.provider_kind,'openai-compatible');assert.equal((await core.tokens.get(credential.id)).used_tokens,3);
   core=await createRouterCore({config,env:{}});const restarted=createNativeRouter({core});response=await restarted.fetch(req('/api/services/openai/v1/responses/resp_real','GET',undefined,credential.token));assert.equal(response.status,200);await response.text();assert.equal(calls,2);
-  const another=await core.tokens.issue({client_kind:'claude',principal_id:'primary',account:'primary',ttl_hours:1});response=await restarted.fetch(req('/api/services/openai/v1/responses/resp_real','GET',undefined,another.token));assert.equal(response.status,404);assert.equal(calls,2);
+  const another=await core.tokens.issue({client_kind:'claude',principal_id:'primary',account:'primary',ttl_hours:1});response=await restarted.fetch(req('/api/services/openai/v1/responses/resp_real','GET',undefined,another.token));assert.equal(response.status,404);await response.text();assert.equal(calls,2);
   const snapshot=await readFile(join(dir,'response-affinities.lino'),'utf8');assert.match(snapshot,/stored_provider/);assert.ok(!snapshot.includes('upstream-operator'));
+  assert.equal(restarted.requestLog.lastError,null);assert.ok((await restarted.requestLog.files()).length>0);
+});
+test('real emergency authority is bounded client-only, counts one outcome and exposes exact health management diagnostics',async t=>{
+  const dir=await realpath(await mkdtemp(join(tmpdir(),'router-real-emergency-')));t.after(()=>rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:50}));
+  const core=await createRouterCore({config:{token_secret:secret,storage_policy:'text',data_dir:dir,token_admin_key:'strict-operator',host:'127.0.0.1',emergency_accept_any_token:true,emergency_duration_minutes:1,providers:[{name:'fixture',kind:'openai-compatible',base_url:'http://127.0.0.1:1',models:['m'],supported_clients:['codex']}],accounts:[{name:'primary',provider:'fixture'}]},env:{}}),router=createNativeRouter({core,peer:'127.0.0.1'});
+  let response=await router.fetch(req('/api/health'));assert.equal(response.status,200);assert.match(response.headers.get('x-link-assistant-emergency-auth'),/^active; expires_at=\d+$/);await response.text();
+  response=await router.fetch(new Request('http://router/v1/models',{headers:{authorization:'Bearer arbitrary-broken-token','user-agent':'codex-fixture'}}));assert.equal(response.status,200);assert.ok((await response.json()).data.some(model=>model.id==='m'));assert.equal(core.emergency.status().bypassed_requests,1);assert.equal((await core.tokens.list()).length,0);
+  response=await router.fetch(req('/api/management/emergency-auth','GET',undefined,'arbitrary-broken-token'));assert.equal(response.status,401);await response.text();assert.equal(core.emergency.status().bypassed_requests,1);
+  response=await router.fetch(req('/api/management/auth/diagnostics','GET',undefined,'strict-operator'));assert.equal(response.status,200);const diagnostics=await response.json();assert.equal(diagnostics.emergency_auth.bypassed_requests,1);assert.deepEqual(diagnostics.diagnostics.failures_by_reason,{});
+  response=await router.fetch(req('/api/management/emergency-auth/disable','POST',{},'strict-operator'));assert.equal(response.status,200);assert.deepEqual(await response.json(),{disabled:true,was_active:true,status:{active:false,bypassed_requests:1,bypassed_by_reason:core.emergency.status().bypassed_by_reason}});response=await router.fetch(req('/api/health'));assert.equal(response.headers.get('x-link-assistant-emergency-auth'),null);await response.text();response=await router.fetch(req('/v1/models','GET',undefined,'arbitrary-broken-token'));assert.equal(response.status,401);await response.text();assert.equal((await core.tokens.list()).length,0);assert.equal(Object.values(core.diagnostics.snapshot().failures_by_reason).reduce((sum,value)=>sum+value,0),1);
 });
 test('real core admin two-phase claim and monotonic lockout use HTTP credential verification and actual normalized peer',async t=>{
-  const dir=await mkdtemp(join(tmpdir(),'router-real-admin-'));t.after(()=>rm(dir,{recursive:true,force:true}));let monotonic=0;
+  const dir=await realpath(await mkdtemp(join(tmpdir(),'router-real-admin-')));t.after(()=>rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:50}));let monotonic=0;
   const core=await createRouterCore({config:{token_secret:secret,storage_policy:'text',data_dir:dir,management:{allow_remote:true,lockout_failures:2,lockout_secs:30,exempt_loopback:false}},env:{},management:{monotonic:()=>monotonic}}),router=createNativeRouter({core,peer:'::ffff:203.0.113.9'});
-  let response=await router.fetch(req('/api/management/admin/bootstrap','POST',{ttl_hours:1}));assert.equal(response.status,200);const candidate=await response.json();assert.equal((await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token))).status,401);
-  response=await router.fetch(req('/api/management/admin/bootstrap/confirm','POST',{claim_id:candidate.claim_id},candidate.token));assert.equal(response.status,200);
+  let response=await router.fetch(req('/api/management/admin/bootstrap','POST',{ttl_hours:1}));assert.equal(response.status,200);const candidate=await response.json();response=await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token));assert.equal(response.status,401);await response.text();
+  response=await router.fetch(req('/api/management/admin/bootstrap/confirm','POST',{claim_id:candidate.claim_id},candidate.token));assert.equal(response.status,200);await response.text();
   response=await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token));assert.equal(response.status,200);assert.ok(Array.isArray((await response.json()).data));
-  assert.equal((await router.fetch(req('/api/management/tokens','GET',undefined,'invalid'))).status,401);response=await router.fetch(req('/api/management/tokens','GET',undefined,'invalid'));assert.equal(response.status,429);assert.equal(response.headers.get('retry-after'),'30');assert.equal((await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token))).status,429);
-  monotonic=31;response=await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token));assert.equal(response.status,200);
+  response=await router.fetch(req('/api/management/tokens','GET',undefined,'invalid'));assert.equal(response.status,401);await response.text();response=await router.fetch(req('/api/management/tokens','GET',undefined,'invalid'));assert.equal(response.status,429);assert.equal(response.headers.get('retry-after'),'30');await response.text();response=await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token));assert.equal(response.status,429);await response.text();
+  monotonic=31;response=await router.fetch(req('/api/management/tokens','GET',undefined,candidate.token));assert.equal(response.status,200);await response.text();
 });

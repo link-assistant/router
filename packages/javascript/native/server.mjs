@@ -17,6 +17,7 @@ import {relayGit} from './git-proxy.mjs';
 import {serveAdminAsset,hardenAdmin} from './admin-assets.mjs';
 import {matchHTTPRoute,HTTP_ROUTES} from './http-route-contract.mjs';
 import {isIP} from 'node:net';
+import {NativeRequestLog} from './request-log.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -94,13 +95,16 @@ const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);
 
 /** A native Web Request/Response router. All selection and state live in core. */
 export function createNativeRouter(options = {}) {
-  const { core, authenticate, fetch: upstreamFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxResponseBytes = 32 * 1024 * 1024, timeoutMs = 120_000, maxAttempts = 3 } = options;
+  const { core, authenticate, fetch: suppliedFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxResponseBytes = 32 * 1024 * 1024, timeoutMs = 120_000, maxAttempts = 3 } = options;
   if (!core) throw new TypeError('createNativeRouter requires core; use startNativeServer to create one from configuration');
   const tlsConfig = { ...core.config, ...options };
   const useTLS=Boolean(tlsConfig.tls_self_signed || tlsConfig.tlsSelfSigned || tlsConfig.tls_cert || tlsConfig.tlsCert || tlsConfig.tls_key || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener=>listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:')));
   const responseStore = options.responseStore ?? new ResponsesStore({ clock, ...options.responseStoreOptions });
   const logs = []; const counters = { requests: 0, failures: 0, upstream_attempts: 0, input_tokens: 0, output_tokens: 0 };
   const peers=new WeakMap();
+  const requestLog=options.requestLog ?? core.requestLog ?? (core.config?.data_dir ? new NativeRequestLog({config:core.config,env:options.env ?? core.env ?? {},clock}):null);
+  if(requestLog && !core.requestLog)core.requestLog=requestLog;
+  const upstreamFetch=requestLog ? requestLog.fetch(suppliedFetch):suppliedFetch;
   const listenerKind=options.listenerKind ?? (core.config?.inference_only ? 'inference-only':'combined');
   let githubConfig;
   let server;
@@ -118,7 +122,7 @@ export function createNativeRouter(options = {}) {
       return claims;
     }
     const token = bearer(request.headers), config = configuration();
-    if(core.authenticate)return core.authenticate(token,{admin,model,repository:request.headers.get('x-router-repository') ?? undefined});
+    if(core.authenticate)return core.authenticate(token,{admin,model,headers:request.headers,listener:listenerKind,repository:request.headers.get('x-router-repository') ?? undefined});
     const adminKey = config.admin_token ?? config.adminToken ?? config.api?.admin_token;
     if (adminKey && equal(token, adminKey)) return { admin: true };
     const clientKey = config.api_key ?? config.apiKey ?? config.client_token;
@@ -136,7 +140,7 @@ export function createNativeRouter(options = {}) {
   }
   const nativeService = createNativeService({core,authorize,routingContext,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs,affinities:options.affinities ?? core.affinities});
   async function models(request, claims) {
-    if ((claims.sub ?? claims.id) && !claims.record) throw new ProtocolError('Durable model authority is unavailable', 403);
+    if ((claims.sub ?? claims.id) && !claims.record && !(claims.label==='emergency-bypass' && claims.sub?.startsWith('emergency-bypass-'))) throw new ProtocolError('Durable model authority is unavailable', 403);
     const context = routingContext(request, claims);
     const value = core.catalogFor ? await core.catalogFor(context) : core.models ? await core.models() : configuration().models ?? [];
     const list = Array.isArray(value) ? value : value?.data ?? Object.keys(value ?? {});
@@ -154,6 +158,14 @@ export function createNativeRouter(options = {}) {
     try {adminClaims = await authorize(request, true);}catch(error){error.managementAuthenticationFailure=true;throw error;}
     core.managementAccess?.success(socketPeer(peers.get(request) ?? options.peer));
     const method = request.method, body = ['POST', 'PATCH'].includes(method) ? request.body ? await boundedJSON(request, maxBodyBytes) : {} : undefined;
+    if(path === '/api/management/logs/errors' && method === 'GET')return json({enabled:Boolean(requestLog?.errorRoot),files:await requestLog?.errorFiles() ?? []});
+    const requestId=/^\/api\/management\/logs\/requests\/([^/]+)$/.exec(path);
+    if(requestId && method === 'GET'){const id=decodeURIComponent(requestId[1]),records=await requestLog?.lookup(id) ?? [];if(!records.length)throw new ProtocolError('request id is not retained',404);return json({id,records});}
+    const errorFile=/^\/api\/management\/logs\/errors\/([^/]+)$/.exec(path);
+    if(errorFile && method === 'GET'){if(!requestLog?.errorRoot)throw new ProtocolError('error capture is disabled',404);return new Response(await requestLog.readError(decodeURIComponent(errorFile[1])),{headers:{'content-type':'application/json','content-disposition':'attachment','cache-control':'no-store'}});}
+    if(path === '/api/management/logs' && method === 'DELETE'){if(!requestLog)throw new ProtocolError('Request log storage is unavailable',503);await requestLog.clear();return json({cleared:true});}
+    if(path === '/api/management/usage/queue' && method === 'GET'){if(!requestLog)throw new ProtocolError('Request tracking is unavailable',503);return json(requestLog.queueSnapshot([...core.accounts?.records?.keys() ?? ['primary']]));}
+    if(path === '/api/management/logging' && method === 'PATCH'){if(typeof body.debug!=='boolean' || Object.keys(body).some(key=>key!=='debug'))throw new ProtocolError('debug must be a boolean and unknown logging fields are not accepted');if(!core.logging?.set)throw new ProtocolError('runtime logging control is not installed',503);const specified=Number((options.env ?? core.env)?.LOG_DEBUG_TTL_SECS),ttl=Number.isSafeInteger(specified) && specified>=1 && specified<=86400 ? specified:300;await core.logging.set(body.debug,ttl);return json({debug:body.debug,ttl_secs:body.debug?ttl:0});}
     const delegated=await managementOperation(core,request,path,body);if(delegated !== undefined)return json(delegated);
     if (path === '/api/management/tokens' && method === 'GET') return json({ data: redact(await core.tokens.list()) });
     if (['/api/management/tokens', '/api/management/tokens/client'].includes(path) && method === 'POST') {
@@ -216,7 +228,6 @@ export function createNativeRouter(options = {}) {
       return json(result);
     }
     if (path === '/api/management/usage' && method === 'GET') return json({ ...counters });
-    if (path === '/api/management/logs/errors' && method === 'GET') return json({ errors: logs.filter(l => l.status >= 400) });
     throw new ProtocolError('Route not found', 404);
   }
   async function inference(request, source, body) {
@@ -264,6 +275,7 @@ export function createNativeRouter(options = {}) {
         catch (error) { if (!(error instanceof ProtocolError)) throw error; finalError = error; continue; }
         const controller = new AbortController(), abort = () => controller.abort(request.signal.reason);
         core.accounts?.recordUse?.(candidate, context);
+        requestLog?.select(candidate.account);
         request.signal.addEventListener('abort', abort, { once: true });
         const timer = setTimeout(() => controller.abort(new Error('Upstream timeout')), timeoutMs); timer.unref?.();
         let response;
@@ -358,7 +370,7 @@ export function createNativeRouter(options = {}) {
         if(remaining) {const error=new ProtocolError('management authentication temporarily locked for this client IP',429);error.retryAfter=remaining;throw error;}
         if(!matchHTTPRoute(request.method,path) && HTTP_ROUTES.some(route=>matchHTTPRoute(route.method,path)))throw new ProtocolError('Method not allowed',405);
       }
-      if (['/health', '/api/health'].includes(path) && request.method === 'GET') response = new Response('ok', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+      if (['/health', '/api/health'].includes(path) && request.method === 'GET'){response=new Response('ok',{headers:{'content-type':'text/plain; charset=utf-8'}});const until=core.emergency?.activeUntil();if(until)response.headers.set('x-link-assistant-emergency-auth',`active; expires_at=${until}`);}
       else if(path === '/api/run-lease' && request.method === 'POST') {
         const claims=await authorize(request,false);if(!core.tokens?.renewRunLease)throw new ProtocolError('This credential has no renewable live run lease',409);
         response=json({run_lease_expires_at:await core.tokens.renewRunLease(claims.sub ?? claims.id)});
@@ -434,9 +446,10 @@ export function createNativeRouter(options = {}) {
     return response;
   }
   const router = {
-    core, responseStore, fetch: handle, get address() { return server?.address(); },
+    core, responseStore, requestLog, fetch: dispatch, get address() { return server?.address(); },
     async listen({ host = configuration().host ?? '127.0.0.1', port = configuration().port ?? 3000 } = {}) {
       if (server) throw new Error('Router is already listening');
+      core.emergency?.checkListeners([host]);
       let secureOptions;
       if (useTLS) {
         const certPath=tlsConfig.tls_cert ?? tlsConfig.tlsCert,keyPath=tlsConfig.tls_key ?? tlsConfig.tlsKey;
@@ -457,7 +470,7 @@ export function createNativeRouter(options = {}) {
           const headers = new Headers(); for (const [key, value] of Object.entries(incoming.headers)) if (value !== undefined) headers.set(key, Array.isArray(value) ? value.join(', ') : value);
           const request = new Request(`${useTLS ? 'https':'http'}://${host.includes(':') ? `[${host}]` : host}:${server.address().port}${incoming.url}`, { method: incoming.method, headers, signal: controller.signal, ...(['GET', 'HEAD'].includes(incoming.method) ? {} : { body: Readable.toWeb(incoming), duplex: 'half' }) });
           peers.set(request,incoming.socket.remoteAddress);
-          const result = await handle(request); outgoing.writeHead(result.status, Object.fromEntries(result.headers));
+          const result = await dispatch(request); outgoing.writeHead(result.status, Object.fromEntries(result.headers));
           if (!result.body) outgoing.end(); else Readable.fromWeb(result.body).on('error', () => outgoing.destroy()).pipe(outgoing);
         } catch { if (!outgoing.headersSent) outgoing.writeHead(500, JSON_HEADERS); outgoing.end(JSON.stringify({ error: { message: 'Router request failed' } })); }
       };
@@ -474,6 +487,7 @@ export function createNativeRouter(options = {}) {
     },
     async close() { responseStore.close?.(); if (!server) return; const current = server; server = undefined; if (!current.listening) return; await new Promise((resolve, reject) => { current.close(error => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
   };
+  async function dispatch(request) {const run=()=>requestLog ? requestLog.exchange(request,logged=>{if(peers.has(request))peers.set(logged,peers.get(request));return handle(logged);},{core}):handle(request);return core.withAuthenticationScope ? core.withAuthenticationScope(run):run();}
   return router;
 }
 export async function startNativeServer(options = {}) {

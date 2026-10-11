@@ -119,6 +119,7 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
     const raw = candidates.find(c => !exact || ['provider','account','base_url'].every(key => exact[key] === destination(c)[key]));
     if (!raw) throw new ProtocolError(exact ? 'The native resource exact account is unavailable' : 'Native service provider is unavailable',503);
     const candidate = core.prepareCandidate ? await core.prepareCandidate(raw) : raw;
+    core.requestLog?.select(candidate.account);
     if (exact && !sameDestination(exact,destination(candidate))) throw new ProtocolError('Native resource account changed',503);
     return candidate;
   }

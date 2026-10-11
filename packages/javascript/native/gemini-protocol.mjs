@@ -5,6 +5,25 @@ const fields = (value,allowed,path) => {object(value,path);for (const key of Obj
 const string = (value,path) => {if (typeof value !== 'string') throw new ProtocolError(`${path} must be a string`);return value;};
 const parseObject = (value,path) => {let parsed;try {parsed = typeof value === 'string' ? JSON.parse(value) : value;} catch {throw new ProtocolError(`${path} must encode a JSON object`);}return object(parsed,path);};
 const alias = (value,a,b) => value[a] ?? value[b];
+const levels={minimal:512,low:1024,medium:8192,high:24576,xhigh:32768,max:128000};
+function effort(value) {if(value==null)return;if(typeof value!=='string')throw new ProtocolError('thinking effort must be a string');const normalized=value.toLowerCase();if(normalized==='-1')return 'auto';if(!['none','auto',...Object.keys(levels)].includes(normalized))throw new ProtocolError(`unsupported thinking effort: ${value}`);return normalized;}
+function chatThinking(body) {
+  if(body.reasoning!=null)object(body.reasoning,'reasoning');
+  const value=effort(body.reasoning?.effort ?? body.reasoning_effort);if(value===undefined)return;
+  const visible=typeof body.reasoning?.summary==='string' ? body.reasoning.summary!=='none' : typeof body.reasoning_effort==='string' ? body.reasoning_effort!=='none':undefined;
+  return {thinkingBudget:value==='none'?0:value==='auto'?-1:levels[value],...(visible===undefined?{}:{includeThoughts:visible})};
+}
+function geminiThinking(config) {
+  if(!config)return;fields(config,['includeThoughts','include_thoughts','thinkingBudget','thinking_budget','thinkingLevel','thinking_level'],'thinkingConfig');
+  for(const key of ['includeThoughts','include_thoughts'])if(config[key]!==undefined && typeof config[key]!=='boolean')throw new ProtocolError(`thinkingConfig.${key} must be a boolean`);
+  const level=effort(alias(config,'thinkingLevel','thinking_level'));if(level!==undefined)return level;
+  const budget=alias(config,'thinkingBudget','thinking_budget');if(budget==null)return;
+  if(!Number.isSafeInteger(budget) || budget< -1 || budget>4294967295)throw new ProtocolError('thinking budget must be -1 or a nonnegative u32 integer');
+  return budget===-1?'auto':budget===0?'none':budget<=512?'minimal':budget<=1024?'low':budget<=8192?'medium':budget<=24576?'high':'xhigh';
+}
+function imageMedia(value) {if(!['image/jpeg','image/png','image/gif','image/webp'].includes(value))throw new ProtocolError('Image media type is unsupported');return value;}
+function imageBase64(value) {if(typeof value!=='string' || !value || !/^[A-Za-z0-9+/]+={0,2}$/.test(value) || value.replace(/=+$/,'').length%4===1 || value.includes('=') && value.length%4!==0 || Buffer.from(value,'base64').toString('base64').replace(/=+$/,'')!==value.replace(/=+$/,''))throw new ProtocolError('Image data must be valid base64');return value;}
+const chatContent=parts=>parts.length===1 && parts[0].type==='text' ? parts[0].text:parts;
 function chatParts(content) {
   if (content == null) return [];
   if (typeof content === 'string') return content ? [{text:content}] : [];
@@ -15,10 +34,10 @@ function chatParts(content) {
       fields(part,['type','image_url'],'content');fields(part.image_url,['url','detail'],'image_url');
       if (part.image_url.detail != null && part.image_url.detail !== 'auto') throw new ProtocolError('image detail cannot be represented by Gemini');
       const url=string(part.image_url.url,'image_url.url'), match=/^data:(image\/(?:jpeg|png|gif|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(url);
-      if (match) return {inlineData:{mimeType:match[1],data:match[2]}};
+      if (match) return {inlineData:{mimeType:match[1],data:imageBase64(match[2])}};
       let parsed;try {parsed=new URL(url);} catch {throw new ProtocolError('Image URI must be an absolute HTTP(S) URI');}
       if (!['http:','https:'].includes(parsed.protocol))throw new ProtocolError('Image URI must use HTTP(S)');
-      return {fileData:{mimeType:'image/jpeg',fileUri:url}};
+      return {fileData:{fileUri:url}};
     }
     throw new ProtocolError(`Cannot translate content part ${part.type} to Gemini`);
   });
@@ -28,7 +47,13 @@ export function chatToGemini(body) {
   if (!Array.isArray(body.messages))throw new ProtocolError('messages must be an array');
   if (body.max_tokens != null && body.max_completion_tokens != null)throw new ProtocolError('max_completion_tokens and max_tokens cannot both be set');
   if (body.n != null && body.n !== 1)throw new ProtocolError('Gemini bridge supports only n=1');
-  for (const field of ['audio','logprobs','top_logprobs','seed','frequency_penalty','presence_penalty','logit_bias','reasoning','reasoning_effort']) if(body[field] != null && body[field] !== false)throw new ProtocolError(`${field} cannot be represented by Gemini`);
+  for (const field of ['audio','user','safety_identifier','stream_options'])if(body[field]!=null)throw new ProtocolError(`${field} cannot be represented by Gemini`);
+  if(body.logprobs!=null && body.logprobs!==false || body.top_logprobs!=null && body.top_logprobs!==0)throw new ProtocolError('Log probabilities cannot be represented by Gemini');
+  if(body.logit_bias!=null && (typeof body.logit_bias!=='object' || Array.isArray(body.logit_bias) || Object.keys(body.logit_bias).length))throw new ProtocolError('logit_bias cannot be represented by Gemini');
+  for(const field of ['frequency_penalty','presence_penalty'])if(body[field]!=null && (typeof body[field]!=='number' || !Number.isFinite(body[field]) || body[field]<-2 || body[field]>2))throw new ProtocolError(`${field} must be between -2 and 2`);
+  if(body.seed!=null && !Number.isSafeInteger(body.seed))throw new ProtocolError('seed must be an integer');
+  if(body.top_k!=null && (!Number.isSafeInteger(body.top_k) || body.top_k<0))throw new ProtocolError('top_k must be a non-negative integer');
+  if(body.parallel_tool_calls!=null && typeof body.parallel_tool_calls!=='boolean')throw new ProtocolError('parallel_tool_calls must be a boolean');
   if(body.parallel_tool_calls === false)throw new ProtocolError('Disabling parallel calls cannot be represented by Gemini');
   if(body.modalities && JSON.stringify(body.modalities) !== '["text"]')throw new ProtocolError('Non-text modalities cannot be represented by Gemini');
   const out={contents:[]},system=[],pending=new Map();
@@ -52,16 +77,17 @@ export function chatToGemini(body) {
   }
   if(system.length)out.systemInstruction={parts:system};
   const generation={};
-  for(const [from,to] of [['temperature','temperature'],['top_p','topP'],['top_k','topK']])if(body[from] !== undefined)generation[to]=body[from];
+  for(const [from,to] of [['temperature','temperature'],['top_p','topP'],['top_k','topK'],['frequency_penalty','frequencyPenalty'],['presence_penalty','presencePenalty'],['seed','seed']])if(body[from] !== undefined)generation[to]=body[from];
   if(body.max_completion_tokens ?? body.max_tokens)generation.maxOutputTokens=body.max_completion_tokens ?? body.max_tokens;
   if(body.stop)generation.stopSequences=Array.isArray(body.stop)?copy(body.stop):[body.stop];
   if(body.response_format) {
-    if(body.response_format.type === 'json_object')generation.responseMimeType='application/json';
-    else if(body.response_format.type === 'json_schema'){generation.responseMimeType='application/json';generation.responseJsonSchema=copy(body.response_format.json_schema.schema);}
+    if(body.response_format.type === 'json_object'){generation.responseMimeType='application/json';generation.responseJsonSchema={type:'object',additionalProperties:true};}
+    else if(body.response_format.type === 'json_schema'){const definition=object(body.response_format.json_schema,'response_format.json_schema');if(typeof definition.name!=='string' || !definition.name || definition.strict!==undefined && typeof definition.strict!=='boolean')throw new ProtocolError('JSON schema requires a nonempty name and boolean strict');generation.responseMimeType='application/json';generation.responseJsonSchema=copy(object(definition.schema,'schema'));}
     else if(body.response_format.type !== 'text')throw new ProtocolError('Unsupported response_format');
   }
+  const thinking=chatThinking(body);if(thinking)generation.thinkingConfig=thinking;
   if(Object.keys(generation).length)out.generationConfig=generation;
-  if(body.tools)out.tools=[{functionDeclarations:body.tools.map(tool => {if(tool.type !== 'function')throw new ProtocolError('Gemini only supports function tools');return {name:tool.function.name,...(tool.function.description ? {description:tool.function.description}:{}),parameters:copy(tool.function.parameters ?? {type:'object',properties:{}})};})}];
+  if(body.tools)out.tools=[{functionDeclarations:body.tools.map(tool => {fields(tool,['type','function'],'tool');if(tool.type !== 'function')throw new ProtocolError('Gemini only supports function tools');fields(tool.function,['name','description','parameters','strict'],'function');if(tool.function.strict!=null && tool.function.strict!==false)throw new ProtocolError('Function strict cannot be represented by Gemini');if(typeof tool.function.name!=='string' || !tool.function.name)throw new ProtocolError('Function name must not be empty');return {name:tool.function.name,...(tool.function.description ? {description:tool.function.description}:{}),parameters:copy(object(tool.function.parameters ?? {type:'object',properties:{}},'parameters'))};})}];
   if(body.tool_choice) {
     const mode=typeof body.tool_choice === 'string'?{auto:'AUTO',none:'NONE',required:'ANY'}[body.tool_choice]:'ANY';if(!mode)throw new ProtocolError('Unsupported tool_choice');
     out.toolConfig={functionCallingConfig:{mode,...(typeof body.tool_choice === 'object'?{allowedFunctionNames:[body.tool_choice.function.name]}:{})}};
@@ -74,11 +100,11 @@ export function geminiToChat(body) {
   const out={model:body.model,messages:[],stream:body.stream ?? false},pending=[];let sequence=0;
   const convert = part => {
     if(Object.hasOwn(part,'text')) {fields(part,['text'],'part');return {type:'text',text:string(part.text,'part.text')};}
-    const inline=alias(part,'inlineData','inline_data');if(inline){fields(part,['inlineData','inline_data'],'part');const mime=alias(inline,'mimeType','mime_type');if(!/^image\/(?:jpeg|png|gif|webp)$/.test(mime) || !/^[A-Za-z0-9+/]+={0,2}$/.test(inline.data))throw new ProtocolError('Inline image must contain supported image media and base64');return {type:'image_url',image_url:{url:`data:${mime};base64,${inline.data}`}};}
-    const file=alias(part,'fileData','file_data');if(file){fields(part,['fileData','file_data'],'part');const uri=alias(file,'fileUri','file_uri');let url;try{url=new URL(uri);}catch{throw new ProtocolError('Image URI is invalid');}if(!['http:','https:'].includes(url.protocol))throw new ProtocolError('Image URI must use HTTP(S)');return {type:'image_url',image_url:{url:uri}};}
+    const inline=alias(part,'inlineData','inline_data');if(inline){fields(part,['inlineData','inline_data'],'part');fields(inline,['mimeType','mime_type','data'],'inlineData');const mime=imageMedia(alias(inline,'mimeType','mime_type'));imageBase64(inline.data);return {type:'image_url',image_url:{url:`data:${mime};base64,${inline.data}`}};}
+    const file=alias(part,'fileData','file_data');if(file){fields(part,['fileData','file_data'],'part');fields(file,['mimeType','mime_type','fileUri','file_uri'],'fileData');const media=alias(file,'mimeType','mime_type');if(media!=null)imageMedia(media);const uri=alias(file,'fileUri','file_uri');let url;try{url=new URL(uri);}catch{throw new ProtocolError('Image URI is invalid');}if(!['http:','https:'].includes(url.protocol))throw new ProtocolError('Image URI must use HTTP(S)');return {type:'image_url',image_url:{url:uri}};}
     throw new ProtocolError('Gemini part cannot be represented by this bridge');
   };
-  const system=alias(body,'systemInstruction','system_instruction');if(system){fields(system,['role','parts'],'systemInstruction');out.messages.push({role:'system',content:system.parts.map(convert)});}
+  const system=alias(body,'systemInstruction','system_instruction');if(system){fields(system,['role','parts'],'systemInstruction');out.messages.push({role:'system',content:chatContent(system.parts.map(convert))});}
   for(const content of body.contents) {
     fields(content,['role','parts'],'content');const role=content.role ?? 'user';if(!['user','model'].includes(role) || !Array.isArray(content.parts))throw new ProtocolError('Gemini content role/parts is invalid');
     const ordinary=[],calls=[],results=[];
@@ -88,11 +114,11 @@ export function geminiToChat(body) {
       else if(result){fields(part,['functionResponse','function_response'],'part');fields(result,['id','name','response'],'functionResponse');if(role !== 'user')throw new ProtocolError('Function response must be in a user turn');const matches=pending.filter(c => c.name === result.name && (!result.id || c.id === result.id));if(matches.length !== 1)throw new ProtocolError('Function response is missing or ambiguous; include call id');const matched=matches[0];pending.splice(pending.indexOf(matched),1);results.push({role:'tool',tool_call_id:matched.id,content:JSON.stringify(object(result.response,'response'))});}
       else ordinary.push(convert(part));
     }
-    if(ordinary.length || calls.length)out.messages.push({role:role === 'model'?'assistant':'user',content:ordinary,...(calls.length?{tool_calls:calls}:{})});
     out.messages.push(...results);
+    if(ordinary.length || calls.length)out.messages.push({role:role === 'model'?'assistant':'user',content:chatContent(ordinary),...(calls.length?{tool_calls:calls}:{})});
   }
-  const generation=alias(body,'generationConfig','generation_config');if(generation){fields(generation,['temperature','topP','top_p','topK','top_k','maxOutputTokens','max_output_tokens','stopSequences','stop_sequences','candidateCount','candidate_count','responseMimeType','response_mime_type','responseJsonSchema','response_json_schema'],'generationConfig');for(const [a,b,to] of [['temperature','temperature','temperature'],['topP','top_p','top_p'],['topK','top_k','top_k'],['maxOutputTokens','max_output_tokens','max_tokens'],['stopSequences','stop_sequences','stop']]){const value=alias(generation,a,b);if(value !== undefined)out[to]=copy(value);}if((alias(generation,'candidateCount','candidate_count') ?? 1) !== 1)throw new ProtocolError('Only one Gemini candidate can be bridged');const mime=alias(generation,'responseMimeType','response_mime_type');if(mime === 'application/json')out.response_format={type:'json_object'};else if(mime && mime !== 'text/plain')throw new ProtocolError('Response MIME type cannot be represented');const schema=alias(generation,'responseJsonSchema','response_json_schema');if(schema)out.response_format={type:'json_schema',json_schema:{name:'response',schema:copy(schema)}};}
-  if(body.tools)out.tools=body.tools.flatMap(tool => {fields(tool,['functionDeclarations','function_declarations'],'tools');return alias(tool,'functionDeclarations','function_declarations').map(fn => ({type:'function',function:copy(fn)}));});
+  const generation=alias(body,'generationConfig','generation_config');if(generation){fields(generation,['temperature','topP','topK','maxOutputTokens','stopSequences','thinkingConfig'],'generationConfig');for(const [from,to] of [['temperature','temperature'],['topP','top_p'],['maxOutputTokens','max_tokens'],['stopSequences','stop']])if(generation[from]!==undefined)out[to]=copy(generation[from]);if(generation.topK!==undefined && generation.topK!==64)throw new ProtocolError('generationConfig.topK has no exact cross-provider representation');const thinking=geminiThinking(generation.thinkingConfig);if(thinking!==undefined)out.reasoning_effort=thinking;}
+  if(body.tools)out.tools=body.tools.flatMap(tool => {fields(tool,['functionDeclarations','function_declarations'],'tools');const declarations=alias(tool,'functionDeclarations','function_declarations');if(!Array.isArray(declarations))throw new ProtocolError('Function declarations must be an array');return declarations.map(fn => {fields(fn,['name','description','parameters','parametersJsonSchema'],'declaration');return {type:'function',function:{...copy(fn),...(fn.parametersJsonSchema===undefined?{}:{parameters:copy(fn.parametersJsonSchema)})}};}).map(tool=>{delete tool.function.parametersJsonSchema;return tool;});});
   const config=alias(body,'toolConfig','tool_config');if(config){const calling=alias(config,'functionCallingConfig','function_calling_config');fields(calling,['mode','allowedFunctionNames','allowed_function_names'],'functionCallingConfig');const allowed=alias(calling,'allowedFunctionNames','allowed_function_names'),mode=calling.mode?.toUpperCase();if(allowed){if(mode !== 'ANY' || allowed.length !== 1)throw new ProtocolError('Function policy cannot be represented exactly');out.tool_choice={type:'function',function:{name:allowed[0]}};}else {out.tool_choice={AUTO:'auto',NONE:'none',ANY:'required'}[mode];if(!out.tool_choice)throw new ProtocolError('Function policy mode is invalid');}}
   return out;
 }
