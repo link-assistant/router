@@ -431,7 +431,7 @@
   },
   {
     "name": "Unicode prefix and suffix Option values",
-    "source": "pub fn prefix(s: &str, pattern: &str) -> Option<&str> { s.strip_prefix(pattern) } pub fn suffix(s: &str, pattern: &str) -> Option<&str> { s.strip_suffix(pattern) } pub fn fallback(s: &str) -> String { s.strip_prefix(\"pre-\").unwrap_or(\"missing\").to_string() }",
+    "source": "pub fn prefix(s: &'static str, pattern: &str) -> Option<&'static str> { s.strip_prefix(pattern) } pub fn suffix(s: &'static str, pattern: &str) -> Option<&'static str> { s.strip_suffix(pattern) } pub fn fallback(s: &str) -> String { s.strip_prefix(\"pre-\").unwrap_or(\"missing\").to_string() }",
     "calls": [
       {
         "name": "prefix",
@@ -878,7 +878,7 @@
   },
   {
     "name": "scalar closure captures and filter map composition",
-    "source": "pub fn selected(v: &[u64], bias: u64) -> Vec<u64> { v.iter().filter(|x| x % 2 == 1).map(|x| x + bias).collect() }",
+    "source": "pub fn selected(v: &[u64], bias: u64) -> Vec<u64> { v.iter().filter(|x| **x % 2 == 1).map(|x| x + bias).collect() }",
     "calls": [
       {
         "name": "selected",
@@ -956,7 +956,7 @@
   },
   {
     "name": "checked iterator sum fold and empty identity",
-    "source": "pub fn total(v: &[u8]) -> u8 { v.iter().copied().sum::<u8>() } pub fn folded(v: &[u64]) -> u64 { v.iter().fold(0, |acc, x| acc + x) } pub fn count(v: &[u64]) -> usize { v.iter().filter(|x| x > 2).count() }",
+    "source": "pub fn total(v: &[u8]) -> u8 { v.iter().copied().sum::<u8>() } pub fn folded(v: &[u64]) -> u64 { v.iter().fold(0, |acc, x| acc + x) } pub fn count(v: &[u64]) -> usize { v.iter().filter(|x| **x > 2).count() }",
     "calls": [
       {
         "name": "total",
@@ -1010,7 +1010,7 @@
   },
   {
     "name": "for scalar slices preserve loop controls and enclosing returns",
-    "source": "pub fn total(v: &[u64]) -> u64 { let mut total: u64 = 0; for x in v { if x == 0 { continue; } if x > 5 { break; } total += x; } total } pub fn find(v: &[u64]) -> u64 { for x in v.iter().filter(|x| x > 2) { return x; } 0 }",
+    "source": "pub fn total(v: &[u64]) -> u64 { let mut total: u64 = 0; for x in v.iter().copied() { if x == 0 { continue; } if x > 5 { break; } total += x; } total } pub fn find(v: &[u64]) -> u64 { for x in v.iter().copied().filter(|x| *x > 2) { return x; } 0 }",
     "calls": [
       {
         "name": "total",
@@ -1054,7 +1054,7 @@
   },
   {
     "name": "for mutable scalar binding and callback lexical shadowing",
-    "source": "pub fn total(v: &[u8]) -> u8 { let mut total: u8 = 0; for mut x in v { x += 1; total += x; } total } pub fn shadow(v: &[u64]) -> Vec<u64> { let mut x: u64 = 8; x += 1; v.iter().map(|x| x + 1).collect() }",
+    "source": "pub fn total(v: &[u8]) -> u8 { let mut total: u8 = 0; for mut x in v.iter().copied() { x += 1; total += x; } total } pub fn shadow(v: &[u64]) -> Vec<u64> { let mut x: u64 = 8; x += 1; v.iter().map(|x| x + 1).collect() }",
     "calls": [
       {
         "name": "total",

@@ -3,14 +3,33 @@
 import { DataRustParser, DataChecker, DataEmitter } from './data.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { BOOL, UNIT, array, fixed, isNumeric, sameType } from '../vendor/meta-language/translation/types.js';
+import { BOOL, UNIT, array, fixed, isNumeric, sameType, rustFixedType } from '../vendor/meta-language/translation/types.js';
 import { coerce } from '../vendor/meta-language/translation/check.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
 // Iterator::count and size-taking adapters use the actual Rust usize type,
 // even on a profile whose portable integer width also represents u64.
 const USIZE = {...fixed(64, false),rustPrimitiveName:'usize'};
+export const STANDARD_ITERATOR_ITEM_PROFILE=Object.freeze({id:'rust-1.89-scalar-iterator-items',rust:'1.89.0',sources:Object.freeze([
+  Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/slice/iter.rs',sha256:'4a12a3f67f0bdc1370e5c5627aeef2a070503cedcd9127d8748ada4d8d3585e9',lines:Object.freeze([22,142])}),
+  Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs',sha256:'d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab',lines:Object.freeze([892,895,3417,3465])}),
+  Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/accum.rs',sha256:'5d04c4da341f5a96aa9605ab1624a4e9bc745bd14b3b870fd683544b03291566',lines:Object.freeze([70,149])}),
+])});
 const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned']);
+function sharedItem(type,span,source) {
+  const result={...type,rustSourceType:true,patternOwnershipRefusal:'shared iterator item',rustReference:{kind:'shared',pointee:structuredClone(type),source,span:{...span}}};
+  if(type.rustOwnership?.kind==='owned')result.rustOwnership={kind:'borrowed',source:type.rustOwnership.source};
+  delete result.rustBorrowLifetime;
+  return result;
+}
+function copyItem(type,span) {
+  const reference=type.rustReference,pointee=reference?.pointee;
+  if(reference?.kind!=='shared'||!pointee)throw typeError('copied/cloned requires actual shared reference iterator items',span);
+  const primitive=pointee.kind==='fixed'?rustFixedType(pointee.rustPrimitiveName):null;
+  const scalar=primitive&&primitive.bits===pointee.bits&&primitive.signed===pointee.signed||pointee.kind==='bool'||pointee.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str';
+  if(!pointee.rustReference&&(!scalar||pointee.rustGenericIdentityUnresolved))throw unsupported('iterator scalar Copy/Clone','requires an actual checked standard primitive or shared-reference Copy item',span);
+  return structuredClone(pointee);
+}
 const span = (start, end) => ({ start: start.start, end: end.end });
 const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue', 'routerTry', 'routerAwait'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
 
@@ -140,7 +159,7 @@ export class IteratorChecker extends DataChecker {
     }
     if (node.k === 'routerFor') {
       let object = this.expr(node.object, env, path);
-      if (object.type.kind === 'array') object = this.expr({ k: 'routerIteratorOperation', op: 'iter', object: node.object, args: [], span: node.span }, env, path);
+      if (object.type.kind === 'array') object = this.expr({ k: 'routerIteratorOperation', op: 'into_iter', object: node.object, args: [], span: node.span }, env, path);
       if (object.type.kind !== 'routerIterator') throw typeError('for needs a supported scalar iterator', node.span);
       const inner = this.bindingEnvironment(this.loopEnvironment(env), node.name, object.type.element, node.mutable);
       const loopBody = this.expr(node.loopBody, inner, path, UNIT);
@@ -160,13 +179,15 @@ export class IteratorChecker extends DataChecker {
     if (op === 'iter' || op === 'into_iter') {
       if (object.type.kind !== 'array') throw unsupported('iterator receiver', 'only immutable typed scalar arrays have an iterator adapter', node.span);
       if (!['fixed', 'bool', 'string'].includes(object.type.element.kind)) throw unsupported('iterator element', 'aggregate borrowing and ownership need separate adapters', node.span);
-      return { k: 'routerIteratorOperation', op: 'iter', object, args: [], type: { kind: 'routerIterator', element: object.type.element }, span: node.span };
+      const borrowed=op==='iter'||object.type.rustReference||object.type.rustOwnership?.kind==='borrowed';
+      const element=borrowed?sharedItem(object.type.element,node.span,op==='iter'?'slice::iter':'borrowed-IntoIterator'):object.type.element;
+      return { k: 'routerIteratorOperation', op: 'iter', object, args: [], type: { kind: 'routerIterator', element }, sourceIteratorProof:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,borrowed:Boolean(borrowed),receiverType:structuredClone(object.type),span:{...node.span}},span: node.span };
     }
     if (object.type.kind !== 'routerIterator') throw typeError(`${op} requires a supported iterator`, node.span);
     const element = object.type.element;
-    if (['copied', 'cloned'].includes(op)) return object;
+    if (['copied', 'cloned'].includes(op))return {...object,type:{kind:'routerIterator',element:copyItem(element,node.span)},sourceIteratorCopy:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,itemType:structuredClone(element),span:{...node.span}}};
     if (op === 'map' || op === 'filter') {
-      const callback = this.lambda(node.args[0], [element], env, path, op === 'filter' ? BOOL : itemExpected?.element,{source:'iterator'});
+      const callback = this.lambda(node.args[0], [op==='filter'?sharedItem(element,node.span,'Iterator::filter'):element], env, path, op === 'filter' ? BOOL : itemExpected?.element,{source:'iterator'});
       const result = op === 'map' ? callback.type.result : element;
       if (!['fixed', 'bool', 'string'].includes(result.kind)) throw unsupported('mapped iterator result', 'only scalar iterator values have a checked contract', node.span);
       return { k: 'routerIteratorOperation', op, object, args: [callback], type: { kind: 'routerIterator', element: result }, span: node.span };
@@ -193,8 +214,9 @@ export class IteratorChecker extends DataChecker {
       return { k: 'routerIteratorOperation', op, object, args: [initial, callback], type: initial.type, span: node.span };
     }
     if (op === 'sum') {
-      if (!isNumeric(element) || wanted && !sameType(element, wanted)) throw typeError('sum requires a matching checked integer element type', node.span);
-      return { k: 'routerIteratorOperation', op, object, args: [], type: element, span: node.span };
+      const result=element.rustReference?copyItem(element,node.span):element;
+      if (!isNumeric(result) || wanted && !sameType(result, wanted)) throw typeError('sum requires a matching checked integer element type', node.span);
+      return { k: 'routerIteratorOperation', op, object, args: [], type: result,...(element.rustReference?{sourceIteratorSum:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,itemType:structuredClone(element),span:{...node.span}}}:{}),span: node.span };
     }
     throw unsupported(`iterator ${op}`, 'no checked operation', node.span);
   }
