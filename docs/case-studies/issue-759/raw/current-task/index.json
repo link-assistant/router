@@ -46130,8 +46130,60 @@
       "headSha": "d23fb8e045e7424b9699f22b685aa4e297227bfd",
       "status": "Combined-source68/68Node+Bun passed; canonicalproducer failed74.470s before anywrite; missinglayout namespace scope TypeError; profilegeneration/check/TS/fullgate notstarted.",
       "archivedAtUtc": "2026-10-11T21:46:48.459469+00:00"
+    },
+    {
+      "label": "canonical-generation-5eb88d472-validation-pending",
+      "cycle": 16,
+      "pack": "6f4e28f872db33ca05dd64221827281cf3078760e2b2e8c41a73632affce9336.tar.gz",
+      "sha256": "6f4e28f872db33ca05dd64221827281cf3078760e2b2e8c41a73632affce9336",
+      "storedBytes": 2982158,
+      "members": [
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-canonical-5eb-output-paths.json",
+          "bytes": 24914,
+          "sha256": "174b99fe8008d49cdbbd27d95742ae1704c173bdecdf4673e0c15c606cfd54c1"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-census-5eb88d472.json",
+          "bytes": 50140,
+          "sha256": "bcfa57f1fd4899d210a95f9283c6eebd73c914834ede9442628c3905bd038051"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-complete-gaps-5eb88d472.json.gz",
+          "bytes": 2968159,
+          "sha256": "67f4adfe0cd4b7fdab62ec0299a709ccd90c4f4923466d0701ee00b58a33edb3"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-generated-5eb88d472-integrity.json",
+          "bytes": 4312,
+          "sha256": "1d9574e910ab79b51c13d98771d502ed1a2f35655be57b1bbf1975ad0354e066"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-generation-5eb88d472-resource-samples.jsonl",
+          "bytes": 789,
+          "sha256": "32b4ef4d1265b29094334f22ff147eed3cfc7c7d4088827b5812e1024fcfd6ba"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-generation-5eb88d472-time.log",
+          "bytes": 777,
+          "sha256": "5c5be92a4f34651e21bf112b2af6ec62cced4b785ccb5929fd09f654eead21b9"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-generation-5eb88d472.json",
+          "bytes": 775,
+          "sha256": "66478377735ef5ce52506420d472c63bd822d1f6d9e01130411a2c887e62339e"
+        },
+        {
+          "path": "canonical-generation-5eb88d472-validation-pending/router-759-generation-5eb88d472.log",
+          "bytes": 1072,
+          "sha256": "1b66da169984aa7c3098b0b52bbea8a3d5e5ada20bf665f47be18dffd36771d0"
+        }
+      ],
+      "headSha": "b83f7993bff4df6261519484d4e582753e2a2aff",
+      "status": "producer and hash integrity pass; JSON capability soundness repair and profile/full-seven verification pending; unpublished",
+      "archivedAtUtc": "2026-10-11T22:03:53.298310+00:00"
     }
   ],
-  "totalStoredPackBytes": 21766729,
-  "totalMembers": 8388
+  "totalStoredPackBytes": 24748887,
+  "totalMembers": 8396
 }
