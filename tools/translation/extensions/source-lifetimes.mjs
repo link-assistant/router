@@ -18,7 +18,7 @@ const staticOrigin=()=>leafOrigins(new Map([['[]',new Set(['static'])]]));
 const at=(origins,path)=>origins.leaves?.get(key(path))??origins;
 function prefix(origins,path) {
   if(!origins.leaves)return origins;
-  return leafOrigins(new Map([...origins.leaves].map(([leaf,values])=>[key([...path,...JSON.parse(leaf)]),values])));
+  return Object.assign(leafOrigins(new Map([...origins.leaves].map(([leaf,values])=>[key([...path,...JSON.parse(leaf)]),values]))),origins.emptyBorrow?{emptyBorrow:true}:{});
 }
 function project(origins,path) {
   if(!origins.leaves)return origins;
@@ -90,6 +90,7 @@ export function functionLifetimeSignature(entry,context={}) {
 function hasBorrow(type,context) {return sourceBorrowRegions(type,context).length>0;}
 function checkStaticArguments(signature,args,range) {
   for(let index=0;index<signature.params.length;index++)for(const region of signature.params[index])if(region.kind==='static') {
+    if(args[index]?.emptyBorrow)continue;
     const origins=args[index]?at(args[index],region.path):new Set();
     if(!origins.size||[...origins].some(origin=>origin!=='static'))throw typeError('A static source parameter requires a proven static borrow origin at its written leaf',range);
   }
@@ -104,6 +105,22 @@ function origins(node,env,context,returns,depth=0) {
   const borrowed=hasBorrow(node.type,context);
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
+  if(node.k==='routerSharedArrayLiteral') {
+    if(!node.arrayBorrowProof?.verified)throw unsupported('shared array lifetime origin','requires the checked source promotion or constant-extension proof',node.span);
+    return uniformOrigins(node.type,new Set(['static']),context);
+  }
+  if(node.k==='routerSharedMethodReceiver') {
+    const proof=node.receiverProof;
+    const existing=proof?.kind==='existing-shared-receiver'&&proof.source?.kind==='shared'&&proof.source.tokens?.[0]?.value==='&'&&node.object.type?.rustReference?.kind==='shared';
+    return existing?read(node.object):borrowed?new Set([UNKNOWN]):new Set();
+  }
+  if(node.k==='routerTry') {
+    const value=read(node.value);
+    // Option's None residual contains no borrow; Some passes its actual leaf
+    // origins. Result residual lifetimes need separate error-origin lowering.
+    if(!node.option&&(borrowed||hasBorrow(node.value.type,context)))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
+    return borrowed?project(value,['argument',0]):new Set();
+  }
   if(node.k==='lit'&&typeof node.value==='string'&&node.type?.rustBorrowLifetime?.source==='string-literal'&&node.type.rustBorrowLifetime.kind==='static')return staticOrigin();
   if(node.k==='let') {
     if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
@@ -157,9 +174,9 @@ function origins(node,env,context,returns,depth=0) {
     const values=node.args.map(value=>read(value));
     const declaration=context.declarations.get(node.data),ctor=declaration?.ctors.find(ctor=>ctor.name===node.ctor);
     if(ctor)checkStaticArguments({params:ctor.fields.map((field,index)=>sourceBorrowRegions(node.type?.rustTupleLifetimeFields?.[index]??context.resolveType(field.type,declaration.modulePath,node.span),context))},values,node.span??context.entry.span);
-    if(declaration?.tuple)return union(...values.map((value,index)=>prefix(value,['tuple',index])));
-    if(declaration?.standardGeneric)return union(...values.map(value=>prefix(value,['argument',node.ctor==='Err'?1:0])));
-    return union(...values);
+    const result=declaration?.tuple?union(...values.map((value,index)=>prefix(value,['tuple',index]))):declaration?.standardGeneric?union(...values.map(value=>prefix(value,['argument',node.ctor==='Err'?1:0]))):union(...values);
+    if(ctor&&ctor.fields.every((field,index)=>!hasBorrow(context.resolveType(field.type,declaration.modulePath,node.span),context)||values[index]?.emptyBorrow))result.emptyBorrow=true;
+    return result;
   }
   if(node.k==='routerDiscard') {read(node.value);return read(node.body);}
   if(node.k==='routerControlInitializer')return read(node.value);

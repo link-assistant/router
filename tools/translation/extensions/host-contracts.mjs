@@ -6,6 +6,7 @@ import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
+import {withSharedArrayBorrowChecker} from './array-borrows.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
@@ -142,6 +143,10 @@ export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwne
     return this.instantiatedMethod(object,name,args,null,range);
   }
   unary(path,options) {
+    if(this.cursor.is('&')&&this.cursor.is('[',1)) {
+      const c=this.cursor,start=c.index,first=c.next(),value=this.unary(path,{}),tokens=c.tokens.slice(start,c.index);
+      return {k:'routerSharedArrayLiteral',value,span:{start:first.start,end:tokens.at(-1).end},sourceArrayBorrow:{tokens:tokens.map(token=>({kind:token.kind,value:token.value,span:{start:token.start,end:token.end}}))}};
+    }
     const first=this.cursor.peek();if(!this.cursor.eat('*'))return super.unary(path,options);
     const value=this.unary(path,{});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
   }
@@ -234,7 +239,7 @@ export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwne
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withSourceLifetimeChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker))) {
+export class HostChecker extends withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker)))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -289,6 +294,7 @@ export class HostChecker extends withSourceLifetimeChecker(withNestedMatchPatter
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='routerSharedArrayLiteral')return this.sharedArrayBorrow(node,env,path,expected);
     if(node.k==='routerPrimitiveDereference') {
       if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);
       const value=this.expr(node.value,env,path),type=sharedFixedPointee(value.type,node.span);
@@ -402,6 +408,7 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='routerSharedArrayLiteral'){if(!node.arrayBorrowProof?.verified)throw new Error('missing checked shared array origin proof');return `Object.freeze(${this.expr(node.value)})`;}
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);
     if(node.k==='routerStandardMethod'){this.standardMethods=true;return `ml_host_${node.operation}(${this.expr(node.value)}${node.defaultValue?', '+this.expr(node.defaultValue):''}${node.callback?', '+this.expr(node.callback):''})`;}
