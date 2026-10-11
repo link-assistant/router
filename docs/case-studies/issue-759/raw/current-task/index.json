@@ -46182,8 +46182,175 @@
       "headSha": "b83f7993bff4df6261519484d4e582753e2a2aff",
       "status": "producer and hash integrity pass; JSON capability soundness repair and profile/full-seven verification pending; unpublished",
       "archivedAtUtc": "2026-10-11T22:03:53.298310+00:00"
+    },
+    {
+      "label": "measured-neutral-and-three-profiles-ea1",
+      "cycle": 9,
+      "pack": "4c438a8dd04367dd4146aba4f4fc6b928dc02c006fef4ca33e44149c87b3025f.tar.gz",
+      "sha256": "4c438a8dd04367dd4146aba4f4fc6b928dc02c006fef4ca33e44149c87b3025f",
+      "storedBytes": 328651,
+      "members": [
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-census-ea1ff7d98.json",
+          "bytes": 51664,
+          "sha256": "96de1df8c65bbced1d9ed3ff26d8a97877348a97d60a7b88d446456370aa49b0"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-census-vs-intermediate-ea1ff7d98.json",
+          "bytes": 19296,
+          "sha256": "84edaae5b349c6d1dede86f9b264a4b2c7e20365d74204af33945153930ed12c"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-complete-gaps-ea1ff7d98-receipt.json",
+          "bytes": 1210,
+          "sha256": "84ca49630f268b0d6b682765e2aafb1e343709c07c79e6a75b4eb5ae88d02e72"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-complete-gaps-ea1ff7d98-reconstructed-receipt.json",
+          "bytes": 1224,
+          "sha256": "cbe7c59ea17f82d218d8cb9fdba67c7529d5cd38f65efc4b67b0c3fc34d455de"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-current-complete-gaps.py",
+          "bytes": 3000,
+          "sha256": "e1cce0304a4478ec8e0b416b90de2c4ac6eb358d04b07862393377c6ef93fa85"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-frontier-priorities-ea1ff7d98.json",
+          "bytes": 134986,
+          "sha256": "088c406ec8adf67314ef1de2b6f5bdb25c0c2f224de6b1df65fb18740b623ab6"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-gap-artifact-reference-ea1.json",
+          "bytes": 95936,
+          "sha256": "8d7080de0f2a61f9aa629c7f7deda1a07bb833e5fb0340d8661876bb965fd4f1"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-generated-ea1ff7d98-integrity.json",
+          "bytes": 4312,
+          "sha256": "ec1b7ed2cac37c59237c4c84ed64c05246f892d5dd8758878f0707a4cd514f69"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-generation-ea1ff7d98-resource-samples.jsonl",
+          "bytes": 408,
+          "sha256": "b9ac4ba233b1efd5b4ca6c4ed47780b6283c69d96caa50d78aa4d354ee24f7ac"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-generation-ea1ff7d98-time.log",
+          "bytes": 777,
+          "sha256": "00196bacf73669f8787aca8eb0c2799678a84a260483d08a20f98b42a01c4ddc"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-generation-ea1ff7d98.json",
+          "bytes": 775,
+          "sha256": "6f3302b30d57576843f87413070c90d47aa44be65661e4eca19795504e85488c"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-generation-ea1ff7d98.log",
+          "bytes": 1072,
+          "sha256": "1b96f2f203a29ee34d6f74378c02b16ad84dc9a81e59e8e722f3a23d44de83f4"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-canonical-before-ea1ff7d98.json.gz",
+          "bytes": 120851,
+          "sha256": "bddf045273445c73ff029ed554999e575417e0e58031a4bac20d95141b857757"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-check-ea1ff7d98-resource-samples.jsonl",
+          "bytes": 9402,
+          "sha256": "a2c7989c8a3580a0e6bb05f0a22f71271966f2e7a743f06dc085c971869d7a86"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-check-ea1ff7d98-time.log",
+          "bytes": 777,
+          "sha256": "daf733babc6e85ed97528882af54bf040a3d4825d26131f10d0a1231254faad1"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-check-ea1ff7d98.json",
+          "bytes": 105199,
+          "sha256": "d316c8d2b161423e348e739e107753e1dabe0c3032e1a37b675d1d0e9b26ea4f"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-check-ea1ff7d98.log",
+          "bytes": 5319,
+          "sha256": "94963f4610025ac108a41a38f3d443f3eaeb26877bfa2c271ad76def909d7baa"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-functions-against-neutral-ea1ff7d98.json",
+          "bytes": 1627,
+          "sha256": "3666febe425ff98edd039ecf424374d6df63e44a895cf81ac0385f07b5998e6e"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-integrity-ea1ff7d98-stdout.json",
+          "bytes": 7427,
+          "sha256": "e3591514c786b8ffa8e3bd56256c954546e35556e62149562a4b40cd0de33613"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-integrity-ea1ff7d98.json",
+          "bytes": 9427,
+          "sha256": "76ba3801f7dcd53c374512055348444da07c3a8fe4489216f25f80f61d7dbf43"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-item-diff.py",
+          "bytes": 3460,
+          "sha256": "7e5af3a934c33804d45ca341d877e7c18b9d2dbbb6e465e0c8a2cb2f19a616f5"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-items-against-neutral-ea1ff7d98.json",
+          "bytes": 710355,
+          "sha256": "61d1b357b140f1dfdae363f278896c73671270bccd8aad49ba405d76e90eb5aa"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-policy-focused.log",
+          "bytes": 3971,
+          "sha256": "49574c6834d918c582639ed4be7e1b516a3dd4631506facba88143a00501b1a3"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-typescript-ea1ff7d98-time.log",
+          "bytes": 777,
+          "sha256": "eb9da52a07b41db330da5c98fc752b192192f9f4a2910cc2c36b6a871c4f74be"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-typescript-ea1ff7d98.json",
+          "bytes": 2251,
+          "sha256": "490b4afff1d11f4973fd46a8930405714469425c3e5fec92689c37f334e40a03"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-typescript-ea1ff7d98.log",
+          "bytes": 976,
+          "sha256": "6b1aa53bc25c52a428cdf067927ec5349b34662791d5e0905a6d3ea893e31eb1"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-workflow-budget-prior-ci.json",
+          "bytes": 3692,
+          "sha256": "7256894014e99f880cba14444c626f41d64566845630ebb756d5d255c8989210"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-write-ea1ff7d98-resource-samples.jsonl",
+          "bytes": 7362,
+          "sha256": "5f98a575b400a814350525bb3e386fddbafea07fa3159e3576e17acb1ca3f400"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-write-ea1ff7d98-time.log",
+          "bytes": 777,
+          "sha256": "312db6f9e62856dc4b3a4cdf0674e4c8800b86ec6f29642b0b0b844575885731"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-write-ea1ff7d98.json",
+          "bytes": 105170,
+          "sha256": "58a496106916ed8ae6d83d2904f9e2fe8c9a0131325d5856d6609a02bd2179c1"
+        },
+        {
+          "path": "measured-neutral-and-three-profiles-ea1/router-759-profile-write-ea1ff7d98.log",
+          "bytes": 5319,
+          "sha256": "bf15e94b2b82214b3de65125ef2095adce40cb112f3771c6d96731235fd7ca0b"
+        }
+      ],
+      "headSha": "03b4e53822adfebae30076b0303c3dc2ab874399",
+      "status": "canonical producer, real full804 three-profile producer, profile freshness and three independent strict TypeScript checks passed; complete seven-stage gate pending",
+      "archivedAtUtc": "2026-10-11T23:31:09.725578+00:00"
     }
   ],
-  "totalStoredPackBytes": 24748887,
-  "totalMembers": 8396
+  "totalStoredPackBytes": 25077538,
+  "totalMembers": 8427
 }
