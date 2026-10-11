@@ -1,0 +1,255 @@
+{
+  "schema": "original-copy-module-context-focused-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "scope": "5 new regression cases and complete 12-file affected scope, 99 cases per engine",
+  "finalSourceHead": "e3502f58835d385da30bee5d9d301303072d32a6",
+  "inputSha256": "77bfdd136b1c8960f02b59f72f4ef037776b749d2c454cb8ff74d8f6d8bc9d2a",
+  "inputFiles": 1296,
+  "attempts": [
+    {
+      "phase": "initial",
+      "engine": "node",
+      "sourceHead": "492c19866a29f93d440d00aa13178c82f7372b47",
+      "inputSha256": "bb7450eda86fd3ad25624529c9b1244c75747cb453834b1b90e3f5c159c5e59b",
+      "counts": {
+        "tests": 5,
+        "pass": 1,
+        "fail": 4,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 0.754,
+      "exitCode": 1,
+      "timedOut": false,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/244ff178d865b36857c3b63c455d464c8e7c1d09405360fc6461495b33b690b5.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/5054868b769c5dd62dfb7a02ee7e21af3f8ca3017d3b72da1c7fdd0792a162ea.gz",
+      "inputs": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/75cbafbac4d3ce5dc5493db6c4fcfd72415213342ccb1cdb20fb5467289fb7e0.gz"
+    },
+    {
+      "phase": "initial",
+      "engine": "bun",
+      "sourceHead": "492c19866a29f93d440d00aa13178c82f7372b47",
+      "inputSha256": "bb7450eda86fd3ad25624529c9b1244c75747cb453834b1b90e3f5c159c5e59b",
+      "counts": {
+        "tests": 5,
+        "pass": 1,
+        "fail": 4,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 0.53,
+      "exitCode": 1,
+      "timedOut": false,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/5cb93ea2124273306d86457b1ff9d9a6bc0da4f038ad09237dc1fe171c412448.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/ce26d373acbd536e4f17d6918a0c2078f6c79b823288407287e3c8d324e05028.gz",
+      "inputs": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/75cbafbac4d3ce5dc5493db6c4fcfd72415213342ccb1cdb20fb5467289fb7e0.gz"
+    },
+    {
+      "phase": "repaired",
+      "engine": "node",
+      "sourceHead": "e3502f58835d385da30bee5d9d301303072d32a6",
+      "inputSha256": "77bfdd136b1c8960f02b59f72f4ef037776b749d2c454cb8ff74d8f6d8bc9d2a",
+      "counts": {
+        "tests": 99,
+        "pass": 99,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 26.646,
+      "exitCode": 0,
+      "timedOut": false,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/b7933364a9c817fa2afbccc3eaa63d75d5b3154a6e08d6afa25a46faa854ef5b.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/db0547d333ed0df96fd1fd689596f1b5857fd055f6af133b72c4b3b61ac6c0bd.gz",
+      "inputs": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/aef76253319da4e2456eb12a7aa4e646af602e81d50442c8ad9444dac3d108b2.gz"
+    },
+    {
+      "phase": "repaired",
+      "engine": "bun",
+      "sourceHead": "e3502f58835d385da30bee5d9d301303072d32a6",
+      "inputSha256": "77bfdd136b1c8960f02b59f72f4ef037776b749d2c454cb8ff74d8f6d8bc9d2a",
+      "counts": {
+        "tests": 99,
+        "pass": 99,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 17.935,
+      "exitCode": 0,
+      "timedOut": false,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/436b1455544f52de2acb056aa883278d2e399916d06c93d91cf83deb553b04f7.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/1555679c3e15a75b1e808f5394d53f5e97d897a6454bd3a6c8799fe62d173818.gz",
+      "inputs": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/aef76253319da4e2456eb12a7aa4e646af602e81d50442c8ad9444dac3d108b2.gz"
+    }
+  ],
+  "objects": [
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/244ff178d865b36857c3b63c455d464c8e7c1d09405360fc6461495b33b690b5.gz",
+      "rawBytes": 1839,
+      "rawSha256": "244ff178d865b36857c3b63c455d464c8e7c1d09405360fc6461495b33b690b5",
+      "storedBytes": 908,
+      "storedSha256": "4379b6388eb7dc31663354265283c65f51939186c41f788bc9d5ce2003bbddde",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/5054868b769c5dd62dfb7a02ee7e21af3f8ca3017d3b72da1c7fdd0792a162ea.gz",
+      "rawBytes": 1219052,
+      "rawSha256": "5054868b769c5dd62dfb7a02ee7e21af3f8ca3017d3b72da1c7fdd0792a162ea",
+      "storedBytes": 331294,
+      "storedSha256": "660941493668ae1d2bb1114023363d67e6ac30235eaf3d972c6ea5bb8f0b22fa",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/75cbafbac4d3ce5dc5493db6c4fcfd72415213342ccb1cdb20fb5467289fb7e0.gz",
+      "rawBytes": 227359,
+      "rawSha256": "75cbafbac4d3ce5dc5493db6c4fcfd72415213342ccb1cdb20fb5467289fb7e0",
+      "storedBytes": 68034,
+      "storedSha256": "73996695c94e25ea7afad193225c8504c29709eaaefc47ddc6dff9e5e95dbb14",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-node.inputs.json",
+        "/tmp/router-759-core-copy-context-initial-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/5cb93ea2124273306d86457b1ff9d9a6bc0da4f038ad09237dc1fe171c412448.gz",
+      "rawBytes": 1838,
+      "rawSha256": "5cb93ea2124273306d86457b1ff9d9a6bc0da4f038ad09237dc1fe171c412448",
+      "storedBytes": 907,
+      "storedSha256": "b076a705f1ba886d35489a09d50e748c859fdc2198dd61c98c6514f4e7137c41",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/ce26d373acbd536e4f17d6918a0c2078f6c79b823288407287e3c8d324e05028.gz",
+      "rawBytes": 1218666,
+      "rawSha256": "ce26d373acbd536e4f17d6918a0c2078f6c79b823288407287e3c8d324e05028",
+      "storedBytes": 331354,
+      "storedSha256": "057db0fcda140f78b004d489d00b941bf1e68672f51dfa86521e4e1dd93df976",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/b7933364a9c817fa2afbccc3eaa63d75d5b3154a6e08d6afa25a46faa854ef5b.gz",
+      "rawBytes": 2463,
+      "rawSha256": "b7933364a9c817fa2afbccc3eaa63d75d5b3154a6e08d6afa25a46faa854ef5b",
+      "storedBytes": 1010,
+      "storedSha256": "45b2e871563d13b09dc72392294295bfeae22e66d8c15469eeedde539ecffa7f",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repaired-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/db0547d333ed0df96fd1fd689596f1b5857fd055f6af133b72c4b3b61ac6c0bd.gz",
+      "rawBytes": 22463,
+      "rawSha256": "db0547d333ed0df96fd1fd689596f1b5857fd055f6af133b72c4b3b61ac6c0bd",
+      "storedBytes": 5063,
+      "storedSha256": "d0f34aad0157a2650e228afd99c784872cd248913c6d8e70f6c4333fe101aa67",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repaired-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/aef76253319da4e2456eb12a7aa4e646af602e81d50442c8ad9444dac3d108b2.gz",
+      "rawBytes": 227359,
+      "rawSha256": "aef76253319da4e2456eb12a7aa4e646af602e81d50442c8ad9444dac3d108b2",
+      "storedBytes": 68034,
+      "storedSha256": "9ca82e6329471d6f14fcb48ebed6270633d4127d4d3a52d75257dac055775159",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repaired-node.inputs.json",
+        "/tmp/router-759-core-copy-context-repaired-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/436b1455544f52de2acb056aa883278d2e399916d06c93d91cf83deb553b04f7.gz",
+      "rawBytes": 2463,
+      "rawSha256": "436b1455544f52de2acb056aa883278d2e399916d06c93d91cf83deb553b04f7",
+      "storedBytes": 1015,
+      "storedSha256": "13368666c6e0fa3afd1e6b1abfc9f6951a6792f585438c814d322be303ed2dfb",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repaired-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/1555679c3e15a75b1e808f5394d53f5e97d897a6454bd3a6c8799fe62d173818.gz",
+      "rawBytes": 10808,
+      "rawSha256": "1555679c3e15a75b1e808f5394d53f5e97d897a6454bd3a6c8799fe62d173818",
+      "storedBytes": 3980,
+      "storedSha256": "9fd72110c0c05733ae89a41a9471877c9cba5285d63a3d6edbb13f66d79be98b",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repaired-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/d001758ac9bee241d9af01f2046cbde787ccb5496cc9905b6b6f5b589c2ab3c2.gz",
+      "rawBytes": 6359,
+      "rawSha256": "d001758ac9bee241d9af01f2046cbde787ccb5496cc9905b6b6f5b589c2ab3c2",
+      "storedBytes": 2590,
+      "storedSha256": "91b17296c93243dfffc31ef8a6bc9ae59ce95e65a955bdd3c7e863362a5cee3a",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-focused.py"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/230dfb8f53f55c0deb0170bfcae37eaaab49efa6b205293e9c56f1ccca3b8180.gz",
+      "rawBytes": 2285,
+      "rawSha256": "230dfb8f53f55c0deb0170bfcae37eaaab49efa6b205293e9c56f1ccca3b8180",
+      "storedBytes": 987,
+      "storedSha256": "152201354f9454067782fab743cf7c1942914c70176ce96d47a8c75062d095e7",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-repair.patch"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/2efd8da95ecb26b8f52f0c7fd0ddbc362b96665db7e00c53e7a4aca237aea82a.gz",
+      "rawBytes": 7256,
+      "rawSha256": "2efd8da95ecb26b8f52f0c7fd0ddbc362b96665db7e00c53e7a4aca237aea82a",
+      "storedBytes": 916,
+      "storedSha256": "aea3d3084016d81aa85632914ae8985ff781f3bb7b93f5ae91434c22fca9284d",
+      "originalPaths": [
+        "/tmp/router-759-core-copy-context-initial-node-diagnostic.txt"
+      ]
+    }
+  ],
+  "extraEvidence": [
+    {
+      "original": "/tmp/router-759-core-copy-context-focused.py",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/d001758ac9bee241d9af01f2046cbde787ccb5496cc9905b6b6f5b589c2ab3c2.gz"
+    },
+    {
+      "original": "/tmp/router-759-core-copy-context-repair.patch",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/230dfb8f53f55c0deb0170bfcae37eaaab49efa6b205293e9c56f1ccca3b8180.gz"
+    },
+    {
+      "original": "/tmp/router-759-core-copy-context-initial-node-diagnostic.txt",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-15-copy-contexts/2efd8da95ecb26b8f52f0c7fd0ddbc362b96665db7e00c53e7a4aca237aea82a.gz"
+    }
+  ],
+  "storedObjectBytes": 816092,
+  "objectsReopened": 13,
+  "hashErrors": 0,
+  "assertions": [
+    "Every original noninactive module path remains present in layout-only lookup even without surviving layouts.",
+    "Empty lexical contexts supply no data declarations, executable bodies, or Copy certificates.",
+    "Unknown scopes retain possible namespace shadows and Drop obligations; inactive scopes contribute none.",
+    "Missing target layouts retain source-bearing carried implementation evidence.",
+    "Unrelated checked Copy source bodies execute unchanged in JavaScript and strict TypeScript.",
+    "Full data-URL failure stacks are preserved without truncation in both initial logs."
+  ],
+  "producerRuns": 0,
+  "fullGateRuns": 0,
+  "rustBuilds": 0,
+  "strictGapsCleared": 0,
+  "nativeParity": false,
+  "limitations": [
+    "The actual canonical804 producer failed in Gate before this repair; its separate full evidence is retained by the push owner.",
+    "Actual complete canonical and three-profile producer/check execution remains required after integration.",
+    "Focused checks do not certify full platform, Cargo feature or native route parity."
+  ]
+}
