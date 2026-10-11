@@ -13,7 +13,7 @@ export class MethodRustParser extends EffectRustParser {
 export class MethodChecker extends EffectChecker {
   resolvedMethod(type,name,receiver) {
     if(type.kind !== 'data')return null;
-    const candidates=[...this.items.values()].filter(entry=>entry.k === 'fn' && entry.impl?.method === name && entry.impl.receiver === receiver && this.resolveType(entry.impl.type,entry.modulePath,entry.span).name === type.name);
+    const candidates=[...this.items.values()].filter(entry=>entry.k === 'fn' && entry.impl?.method === name && (entry.impl.receiver === receiver || receiver==='shared' && entry.impl.receiver==='value' && entry.impl.copyCertificate?.verified) && this.resolveType(entry.impl.type,entry.modulePath,entry.span).name === type.name);
     if(candidates.length > 1)throw typeError(`ambiguous inherent method ${type.name}::${name}`,candidates[0].span);
     return candidates[0] ?? null;
   }

@@ -188,6 +188,7 @@ export class HostChecker extends MethodChecker {
   program(surface) {
     const program=super.program(surface);
     program.items.push(...this.instantiations.items);
+    for(const entry of program.declarations.values())if(entry.impl?.receiver==='value'&&entry.impl.copyCertificate?.verified){const param=entry.params.find(param=>param.name===entry.impl.receiverName);if(!param)throw typeError('missing checked Copy receiver',entry.span);param.copyReceiver=true;}
     const forbidden=(node,seen=new Set())=>{
       if(!node||typeof node!=='object')return false;
       if(node.k==='routerAlgebraicOperation'&&node.op==='unwrap_or'||node.k==='routerStringOperation')return true;
@@ -201,13 +202,13 @@ export class HostChecker extends MethodChecker {
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&hasData(type.element);
     if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
     // A helper's guard must depend only on its actual reachable parameter
     // layout, not on unrelated callers in another checked dependency closure.
-    return [this.valueGuard(param.name,param.type)+';'];
+    return [...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
   }
   valueGuard(value,type) {
     const all=valueSchema(this.program.declarations),types={};
@@ -240,6 +241,7 @@ export class HostEmitter extends EffectEmitter {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
+    if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);

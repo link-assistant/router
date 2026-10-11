@@ -4,7 +4,8 @@ import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
-import { extractImplDeclarations, lowerSharedMethodTokens } from './impl-resolver.mjs';
+import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
+import {projectCopyEvidence} from './project-copy.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
@@ -63,7 +64,7 @@ function flatten(program) {
   const visit = node => {
     if (Array.isArray(node)) return node.map(visit);
     if (!node || typeof node !== 'object') return node;
-    const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, visit(value)]));
+    const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key === 'copyCertificate' ? value : visit(value)]));
     if (node.kind === 'data' && names.has(node.name)) result.name = names.get(node.name);
     if (['call', 'routerFutureCall'].includes(node.k)) result.fn = names.get(node.fn) ?? node.fn;
     if (node.k === 'ctor') result.data = names.get(node.data) ?? node.data;
@@ -82,7 +83,7 @@ function declarationProgram(program, root) {
     if (!node || typeof node !== 'object') return;
     const names = ['call', 'routerFutureCall'].includes(node.k) ? [node.fn] : node.k === 'ctor' ? [node.data] : node.kind === 'data' ? [node.name] : [];
     for (const name of names) include(name);
-    for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(visit); else visit(value);
+    for (const [key,value] of Object.entries(node)) if(key!=='copyCertificate'){if (Array.isArray(value)) value.forEach(visit); else visit(value);}
   };
   const include = name => {
     if (needed.has(name)) return;
@@ -154,6 +155,7 @@ export function translateProject(options) {
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
     }
   }
+  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases);
   for (const module of graph.modules) {
     const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path});
     for (const implementation of extracted.implementations) {
@@ -162,9 +164,10 @@ export function translateProject(options) {
         const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
         const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
         const display = [...qualifiedType.slice(1),method.name].join('.');
-        if (!method.loweringReady) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; ')});continue;}
+        const certificate=method.receiver==='value'?copyEvidence(qualifiedType,module,method.span):null;
+        if (!method.loweringReady && !certificate) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; ')});continue;}
         try {
-          const lowered = lowerSharedMethodTokens(method,qualifiedType);
+          const lowered = certificate ? lowerCopyMethodTokens(method,certificate.type,certificate) : lowerSharedMethodTokens(method,qualifiedType);
           const parser = new MethodRustParser(lowered.tokens);
           parser.modulePath = module.path;
           configureSourceScope(parser,module);
@@ -177,9 +180,9 @@ export function translateProject(options) {
           if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
           surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
           surface.generated = 'router-checked-inherent-method';
-          surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,rewrites:lowered.rewrites,assumptions:lowered.assumptions};
+          surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,receiverName:lowered.receiverName,...(certificate?{copyCertificate:certificate}:{}),rewrites:lowered.rewrites,assumptions:lowered.assumptions};
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
-          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:relocate(surface,module.offset)});
+          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:(()=>{const value=relocate(surface,module.offset);if(certificate)value.impl.copyCertificate=certificate;return value;})()});
           for (const type of parser.genericTypes.values()) if (!declarations.some(candidate=>candidate.name === type.name && candidate.path.length === 0)) declarations.push({file:module.file,path:[],name:type.name,term:'generated-type',globalSpan,surface:relocate(type,module.offset)});
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
       }

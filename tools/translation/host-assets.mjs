@@ -5,7 +5,8 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
-  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  files.set('copy-runtime.d.mts','export declare function assertImmutableCopy(value: unknown): true;\n');
   files.set('vector-runtime.d.mts',`type RustOption<T> = Readonly<{ $: 'None' }> | Readonly<{ $: 'Some'; field0: T }>;
 export declare function createVectorRuntime(validate: (value: unknown) => true): Readonly<{
   rust_vec_get<T>(value: readonly T[], index: bigint): RustOption<T>;
