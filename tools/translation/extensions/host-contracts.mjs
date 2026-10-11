@@ -22,6 +22,7 @@ import {checkStringIteratorOperation,requireBorrowedString} from './string-itera
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
+import {checkedReverseSplitFind,requireReverseStringProof} from './reverse-string-iterators.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -158,6 +159,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
     if(name.value==='split')return {k:'routerStringIteratorOperation',operation:'split',object,args,span:range};
     if(name.value==='encode_utf16')return {k:'routerUtf16Encode',object,args,span:range};
     if(['lines','split_whitespace','next','join'].includes(name.value))return {k:'routerStringIteratorOperation',operation:name.value,object,args,span:range};
@@ -389,6 +391,11 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerReverseStringFind'){
+      const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'rfind','shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      return checkedReverseSplitFind(this,node,object,env,path);
+    }
     env=this.contextEnvironment(node,env,expected);
     if(node.k==='num'&&node.sourceFloatLiteral) {
       const source=node.sourceFloatLiteral,decoded=decodeRustFloat(source.raw,node.span);
@@ -537,7 +544,7 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -567,6 +574,7 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
     if(node.k==='routerOptionAsDeref'){requireOptionDerefProof(node);this.optionDeref=true;return `ml_option_string_as_deref(${this.expr(node.object)})`;}
     if(['routerResultCollect','routerResultMapErr'].includes(node.k)){
       requireResultIteratorProof(node);this.resultIterators=true;
@@ -620,6 +628,7 @@ export class HostEmitter extends EffectEmitter {
     if(this.csvStrings)preludes.unshift(`import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'csv-string-runtime.mjs'))};`);
     if(this.resultIterators)preludes.unshift(`import { collectResult as ml_result_collect, mapResultError as ml_result_map_err } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'result-iterator-runtime.mjs'))};`);
     if(this.optionDeref)preludes.unshift(`import { optionStringAsDeref as ml_option_string_as_deref } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'option-deref-runtime.mjs'))};`);
+    if(this.reverseStrings)preludes.unshift(`import { reverseFindCharacterSplit as ml_reverse_split_find } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'reverse-string-runtime.mjs'))};`);
     if(this.utf16Runtime||this.fixedF64Runtime)preludes.unshift(`import { ${[...(this.utf16Runtime?['encodeUtf16 as ml_encode_utf16']:[]),...(this.fixedF64Runtime?['fixedToF64 as ml_fixed_to_f64']:[])].join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'utf16-fixed-f64-runtime.mjs'))};`);
     if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);

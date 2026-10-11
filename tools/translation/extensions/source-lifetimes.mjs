@@ -116,6 +116,11 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
+  if(node.k==='routerReverseSplitFind'){
+    if(node.reverseStringProof?.profile!=='rust-1.89-reverse-scalar-character-split'||node.reverseStringProof.verified!==true)throw unsupported('reverse Split borrow origin','requires its actual checked double-ended profile',node.span);
+    const values=read(node.object);origins(node.predicate.binding,env,{...context,lambdaInputs:[values]},returns,depth+1);
+    return borrowed?prefix(values,['argument',0]):new Set();
+  }
   if(node.k==='routerOptionAsDeref'){
     if(node.optionDerefProof?.profile!=='rust-1.89-shared-option-string-as-deref'||node.optionDerefProof.verified!==true||node.optionDerefProof.receiver!=='existing-shared-place'||node.object.type?.rustReference?.kind!=='shared')throw unsupported('Option String Deref borrow origin','requires its existing checked shared source receiver',node.span);
     return borrowed?uniformOrigins(node.type,at(read(node.object),[]),context):new Set();

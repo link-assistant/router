@@ -22,7 +22,10 @@ const pins=[
 for(const [file,fileHash,name,start,end,sliceHash]of pins)test(`pending complete original ${file} ${name} retains source and checked frontier`,{timeout:900_000},async()=>{
   const source=originalCsvContext().source(file);assert.equal(hash(source),fileHash);assert.equal(hash(source.slice(start,end)),sliceHash);assert.ok(source.slice(start,end).startsWith('fn '+name+'('));
   const result=originalCsvContext().result;assert.equal(result.meta.runtimeParity,false);
-  if(name==='parse'){const encoded='ml_impl_'+Buffer.from('crate.log_decode.Encoding').toString('hex')+'_'+Buffer.from(name).toString('hex');assert.ok(result.meta.refused.some(item=>item.file===file&&(item.name?.endsWith('Encoding.parse')||item.name?.endsWith(encoded))));assert.equal(result.meta.checkedMethods.some(item=>item.name?.endsWith('Encoding.parse')),false);return;}
+  if(name==='parse'){
+    const method=result.checkedMethodDeclarations.find(entry=>entry.source===file&&entry.displayName.endsWith('Encoding.parse'));assert.ok(method,JSON.stringify(result.meta.refused.filter(entry=>entry.file===file)));assert.equal(method.sourceSha256,fileHash);assert.equal(method.term,'method');
+    await verifyTypedTargets(checkedDeclarationTargets(method),api=>{for(const [value,expected]of [['','Identity'],[', ,','Identity'],['identity','Identity'],['gzip','Gzip'],['x-gzip','Gzip'],['gzip, deflate','Deflate'],['gzip, , br, ','Brotli'],['zstd','Zstd'],['GZIP','Gzip'],['other',null],['gzip, unknown',null],['gzip,\u0085', 'Gzip'],['gzip,\uFEFF',null]])assert.deepEqual(api.parse(value),expected===null?none:some({$:expected}));},{childTimeoutMs:30_000});return;
+  }
   if(name==='parse_usize_csv'){assert.ok(result.meta.refused.some(item=>item.name==='config.parse_usize_csv'&&/destruction|no-Drop/.test(item.message)));assert.equal(result.meta.executable.some(item=>item.name==='config.parse_usize_csv'),false);return;}
   if(name==='from_path'){
     const method=extractImplDeclarations(source).implementations.flatMap(item=>item.methods).find(item=>item.name===name),checked=result.meta.checkedMethods.find(item=>item.source===file&&item.name.endsWith('StreamDialect.from_path'));
