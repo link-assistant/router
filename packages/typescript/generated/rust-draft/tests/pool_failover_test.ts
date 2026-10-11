@@ -37,8 +37,10 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from tests/pool_failover_test.rs; sha256=df74056a7701c52917aa9d4d54c1e582091c2e9dcf3ce0f09f3746157e06755d
 // Carried constructs are data, never runtime parity evidence.
-function MESSAGES(): string {
-  return "/api/services/anthropic/v1/messages";
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+
+function ACCOUNTS(): ReadonlyArray<string> & { readonly length: 3 } {
+  return ml_copy_fixed_array(["primary", "account-1", "account-2"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
 }
 
 const std = {
@@ -65,6 +67,10 @@ const serde_json = {
   },
 };
 
+function MESSAGES(): string {
+  return "/api/services/anthropic/v1/messages";
+}
+
 function COUNT_TOKENS(): string {
   return "/api/services/anthropic/v1/messages/count_tokens";
 }
@@ -81,5 +87,5 @@ function CUT_TEXT_CHARS(): bigint {
   return 400n;
 }
 
-export const translated: { "MESSAGES": string; "COUNT_TOKENS": string; "CODEX_RESPONSES": string; "ADMIN_KEY": string; "CUT_TEXT_CHARS": bigint } = { ["MESSAGES"]: MESSAGES(), ["COUNT_TOKENS"]: COUNT_TOKENS(), ["CODEX_RESPONSES"]: CODEX_RESPONSES(), ["ADMIN_KEY"]: ADMIN_KEY(), ["CUT_TEXT_CHARS"]: CUT_TEXT_CHARS() };
-export const provenance = {"sourcePath":"tests/pool_failover_test.rs","sourceSha256":"df74056a7701c52917aa9d4d54c1e582091c2e9dcf3ce0f09f3746157e06755d","executable":5,"executableFunctions":0,"executableConstants":5,"executableTypes":0,"executableConstructors":0,"carried":56,"preserved":62,"runtimeParity":false};
+export const translated: { "ACCOUNTS": ReadonlyArray<string> & { readonly length: 3 }; "MESSAGES": string; "COUNT_TOKENS": string; "CODEX_RESPONSES": string; "ADMIN_KEY": string; "CUT_TEXT_CHARS": bigint } = { ["ACCOUNTS"]: ACCOUNTS(), ["MESSAGES"]: MESSAGES(), ["COUNT_TOKENS"]: COUNT_TOKENS(), ["CODEX_RESPONSES"]: CODEX_RESPONSES(), ["ADMIN_KEY"]: ADMIN_KEY(), ["CUT_TEXT_CHARS"]: CUT_TEXT_CHARS() };
+export const provenance = {"sourcePath":"tests/pool_failover_test.rs","sourceSha256":"df74056a7701c52917aa9d4d54c1e582091c2e9dcf3ce0f09f3746157e06755d","executable":6,"executableFunctions":0,"executableConstants":6,"executableTypes":0,"executableConstructors":0,"carried":55,"preserved":62,"runtimeParity":false};

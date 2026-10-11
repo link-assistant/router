@@ -5,7 +5,12 @@ export function assertImmutableCopy(value){
   const active=new Set(),done=new Set();
   function visit(value){
     if(value===null||typeof value!=='object')return;
-    if(types.isProxy(value)||Array.isArray(value)||!Object.isFrozen(value))throw new TypeError('Copy receiver requires immutable checked records');
+    if(types.isProxy(value)||!Object.isFrozen(value))throw new TypeError('Copy receiver requires immutable checked records and sized arrays');
+    if(Array.isArray(value)) {
+      if(Object.getPrototypeOf(value)!==Array.prototype)throw new TypeError('Copy array has an unsupported prototype');
+      const length=Object.getOwnPropertyDescriptor(value,'length')?.value,keys=Reflect.ownKeys(value);
+      if(!Number.isSafeInteger(length)||length>4096||keys.length!==length+1||keys.some(key=>key!=='length'&&(typeof key!=='string'||!/^(?:0|[1-9][0-9]*)$/u.test(key)||Number(key)>=length)))throw new TypeError('Copy array requires a dense checked layout');
+    }
     if(active.has(value))throw new TypeError('Copy receiver cannot contain a cycle');
     if(done.has(value))return;
     active.add(value);

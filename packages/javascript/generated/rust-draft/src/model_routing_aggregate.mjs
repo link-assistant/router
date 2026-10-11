@@ -1,6 +1,34 @@
 // Generated draft from src/model_routing_aggregate.rs; sha256=604c585ebb13e6430fbe4a70e6ae084ed9ddb16a4f322d15ab548709987a5980
 // Carried constructs are data, never runtime parity evidence.
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
 
+function CAPABILITY_FIELDS() {
+  return ml_copy_fixed_array(["context_window", "max_output_tokens", "modalities", "pricing", "deprecation_date", "default_reasoning_level", "supported_reasoning_levels", "client_capabilities", "thinking"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":9}});
+}
 
-export const translated = {  };
-export const provenance = {"sourcePath":"src/model_routing_aggregate.rs","sourceSha256":"604c585ebb13e6430fbe4a70e6ae084ed9ddb16a4f322d15ab548709987a5980","executable":0,"executableFunctions":0,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":17,"preserved":18,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["CAPABILITY_FIELDS"]: CAPABILITY_FIELDS() };
+export const provenance = {"sourcePath":"src/model_routing_aggregate.rs","sourceSha256":"604c585ebb13e6430fbe4a70e6ae084ed9ddb16a4f322d15ab548709987a5980","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":16,"preserved":18,"runtimeParity":false};

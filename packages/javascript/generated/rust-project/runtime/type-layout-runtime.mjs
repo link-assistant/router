@@ -1,7 +1,8 @@
 // Pure schema validation for the generated immutable Rust value domain.
 // This file has no compiler, vendor, filesystem or process dependencies.
+import {types} from 'node:util';
 const scalar=value=>typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value);
-const typeKey=type=>type.kind === 'data'?`data:${type.name}`:type.kind === 'array'?`array:${typeKey(type.element)}`:type.kind === 'fixed'?`${type.signed?'i':'u'}${type.bits}`:type.kind;
+const typeKey=type=>type.kind === 'data'?`data:${type.name}`:type.kind === 'array'?`array:${type.rustFixedArray?.length??'slice'}:${typeKey(type.element)}`:type.kind === 'fixed'?`${type.signed?'i':'u'}${type.bits}`:type.kind;
 const failure=(path,message)=>{throw new TypeError(`Rust value domain ${path}: ${message}`);};
 const own=(value,key,path)=>{
   const descriptor=Object.getOwnPropertyDescriptor(value,key);
@@ -32,6 +33,7 @@ export function validateRustValue(value,type,schema,{refinements=new Map()}={}) 
       default:failure(path,'unsupported checked type');
     }
     if(!current || typeof current !== 'object')failure(path,'expected algebraic object or array');
+    if(types.isProxy(current))failure(path,'proxy value is outside the checked Rust domain');
     if(active.has(current))failure(path,'cyclic value');
     const key=typeKey(expected),previous=completed.get(current);if(previous?.has(key))return;
     active.add(current);
@@ -40,6 +42,7 @@ export function validateRustValue(value,type,schema,{refinements=new Map()}={}) 
       if(expected.kind === 'array') {
         if(!Array.isArray(current))failure(path,'expected immutable array layout');
         const length=own(current,'length',path);
+        if(expected.rustFixedArray&&(!Number.isSafeInteger(expected.rustFixedArray.length)||expected.rustFixedArray.length<0||expected.rustFixedArray.length>4096||length!==expected.rustFixedArray.length))failure(path,'fixed-array length differs from the checked source type');
         if(keys.length !== length+1)failure(path,'array holes or extra properties');
         for(const name of keys)if(name !== 'length' && (typeof name !== 'string' || !/^(?:0|[1-9][0-9]*)$/u.test(name) || Number(name) >= length))failure(path,'array holes or extra properties');
         for(let index=0;index<length;index++)visit(own(current,String(index),`${path}[${index}]`),expected.element,`${path}[${index}]`);

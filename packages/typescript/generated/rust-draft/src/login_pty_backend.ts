@@ -47,7 +47,9 @@ function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => b
   return true;
 }
 
-function ml_router_iter<T>(values: ReadonlyArray<T>): ArrayIterator<T> { return Array.prototype.values.call(values); }
+import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
+
+function ml_router_iter<T>(values: ReadonlyArray<T>, immutable: boolean): ArrayIterator<T> { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
 
 function ml_router_any<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) return true; return false; }
 
@@ -94,7 +96,7 @@ const serde_json = {
 function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(compact: string, markers: ReadonlyArray<string>): boolean {
   if (!(typeof compact === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(compact))) throw new TypeError('argument outside supported Rust value domain');
   if (!ml_router_array(markers, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_any(ml_router_iter(markers), (marker) => { const ml_text_1 = compact;
+  return ml_router_any(ml_router_iter(markers, false), (marker) => { const ml_text_1 = compact;
   const ml_text_2 = marker;
   return ml_text_1.includes(ml_text_2); });
 }

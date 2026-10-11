@@ -56,6 +56,8 @@ import { serde_json_value_get_string as ml_host_serde_json_value_get_string, ser
 
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
+import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
+
 function ml_router_unexpected(value: any): never {
   throw new TypeError(`unexpected constructor ${value.$}`);
 }
@@ -64,6 +66,9 @@ const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5
 
 const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
 
+function ml_host_option_bind<T,U>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>, mode:'and_then'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>;
+function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: ()=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, mode:'or_else'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
+function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>boolean, mode:'is_some_and'): boolean;
 function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
 function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
@@ -75,7 +80,7 @@ function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => b
   return true;
 }
 
-function ml_router_iter<T>(values: ReadonlyArray<T>): ArrayIterator<T> { return Array.prototype.values.call(values); }
+function ml_router_iter<T>(values: ReadonlyArray<T>, immutable: boolean): ArrayIterator<T> { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
 
 function ml_router_any<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) return true; return false; }
 
@@ -154,7 +159,7 @@ function ml_make_Ancestry_Unknown(): Readonly<{ readonly "$": "FastForward" }> |
 }
 
 function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(payload: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }> {
-  ml_pattern_immutable(payload);
+  ml_pattern_immutable_view(payload);
   ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const ml_s4 = (() => {
     const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
@@ -194,7 +199,7 @@ function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(paylo
 function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories: ReadonlyArray<string>, repository: string): boolean {
   if (!ml_router_array(allowed_repositories, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof repository === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(repository))) throw new TypeError('argument outside supported Rust value domain');
-  return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
+  return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories, false), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
 }
 
 function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path: string): string {

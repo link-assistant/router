@@ -37,8 +37,10 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from scripts/check-docker-platforms.rs; sha256=092d9626b067f1f3ccf51b524e1fdd0a12930428ef1340c9a801e19425439e4c
 // Carried constructs are data, never runtime parity evidence.
-function ATTESTATION_PLATFORM(): string {
-  return "unknown/unknown";
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+
+function REQUIRED_PLATFORMS(): ReadonlyArray<string> & { readonly length: 2 } {
+  return ml_copy_fixed_array(["linux/amd64", "linux/arm64"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}});
 }
 
 const std = {
@@ -65,5 +67,9 @@ const serde_json = {
   },
 };
 
-export const translated: { "ATTESTATION_PLATFORM": string } = { ["ATTESTATION_PLATFORM"]: ATTESTATION_PLATFORM() };
-export const provenance = {"sourcePath":"scripts/check-docker-platforms.rs","sourceSha256":"092d9626b067f1f3ccf51b524e1fdd0a12930428ef1340c9a801e19425439e4c","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":10,"preserved":11,"runtimeParity":false};
+function ATTESTATION_PLATFORM(): string {
+  return "unknown/unknown";
+}
+
+export const translated: { "REQUIRED_PLATFORMS": ReadonlyArray<string> & { readonly length: 2 }; "ATTESTATION_PLATFORM": string } = { ["REQUIRED_PLATFORMS"]: REQUIRED_PLATFORMS(), ["ATTESTATION_PLATFORM"]: ATTESTATION_PLATFORM() };
+export const provenance = {"sourcePath":"scripts/check-docker-platforms.rs","sourceSha256":"092d9626b067f1f3ccf51b524e1fdd0a12930428ef1340c9a801e19425439e4c","executable":2,"executableFunctions":0,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":11,"runtimeParity":false};

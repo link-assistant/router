@@ -8,6 +8,8 @@ import { serde_json_value_get_string as ml_host_serde_json_value_get_string, ser
 
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
+import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
+
 function ml_router_unexpected(value) {
   throw new TypeError(`unexpected constructor ${value.$}`);
 }
@@ -27,7 +29,7 @@ function ml_router_array(values, validate) {
   return true;
 }
 
-function ml_router_iter(values) { return Array.prototype.values.call(values); }
+function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
 
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
 
@@ -106,7 +108,7 @@ function ml_make_Ancestry_Unknown() {
 }
 
 function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(payload) {
-  ml_pattern_immutable(payload);
+  ml_pattern_immutable_view(payload);
   ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const ml_s4 = (() => {
     const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
@@ -146,7 +148,7 @@ function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(paylo
 function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, repository) {
   if (!ml_router_array(allowed_repositories, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof repository === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(repository))) throw new TypeError('argument outside supported Rust value domain');
-  return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
+  return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories, false), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
 }
 
 function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {

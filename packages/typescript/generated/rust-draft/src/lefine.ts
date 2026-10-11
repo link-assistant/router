@@ -40,6 +40,8 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/lefine.rs; sha256=bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093
 // Carried constructs are data, never runtime parity evidence.
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
@@ -53,6 +55,10 @@ const ml_host_value_refinements_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e2
 
 function rp_6c6566696e652e424153455f55524c(): string {
   return "https://lefine.pro/v1";
+}
+
+function rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(): ReadonlyArray<string> & { readonly length: 3 } {
+  return ml_copy_fixed_array(["grok", "opencode", "qwen"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
 }
 
 function rp_6c6566696e652e4d41585f434154414c4f475f424f4459(): bigint {
@@ -108,5 +114,5 @@ function rp_6c6566696e652e6d6c5f696d706c5f36333732363137343635326536633635363636
   return Object.freeze({ $: "CatalogFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
 }
 
-export const translated: { "BASE_URL": string; "MAX_CATALOG_BODY": bigint; "CatalogFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "Unavailable": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }> }>; "unavailable": (message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> } = { ["BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["CatalogFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_CatalogFailureKind_CredentialRejected, ["RateLimited"]: ml_make_CatalogFailureKind_RateLimited, ["Unavailable"]: ml_make_CatalogFailureKind_Unavailable }), ["unavailable"]: rp_6c6566696e652e756e617661696c61626c65 };
-export const provenance = {"sourcePath":"src/lefine.rs","sourceSha256":"bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093","executable":4,"executableFunctions":1,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":13,"preserved":18,"runtimeParity":false};
+export const translated: { "BASE_URL": string; "COMPATIBLE_CLIENTS": ReadonlyArray<string> & { readonly length: 3 }; "MAX_CATALOG_BODY": bigint; "CatalogFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; "Unavailable": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }> }>; "unavailable": (message: string) => Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> } = { ["BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["CatalogFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_CatalogFailureKind_CredentialRejected, ["RateLimited"]: ml_make_CatalogFailureKind_RateLimited, ["Unavailable"]: ml_make_CatalogFailureKind_Unavailable }), ["unavailable"]: rp_6c6566696e652e756e617661696c61626c65 };
+export const provenance = {"sourcePath":"src/lefine.rs","sourceSha256":"bb07ea2db551cc85bc19403bfd2c160f439d6c48fe7ffc49a1e0cad249dc2093","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":12,"preserved":18,"runtimeParity":false};
