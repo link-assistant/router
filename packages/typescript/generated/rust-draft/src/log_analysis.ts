@@ -87,14 +87,14 @@ function ml_make_Exchange_Exchange(correlation_id: string, status: Readonly<{ re
   if (!(typeof correlation_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(correlation_id))) throw new TypeError('argument outside supported Rust value domain');
   ml_validate_rust_value(status, {"kind":"data","name":"RouterOption_3_u64"}, ml_host_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3, { refinements: ml_host_value_refinements_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 });
   ml_validate_rust_value(upstream_status, {"kind":"data","name":"RouterOption_3_u64"}, ml_host_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3, { refinements: ml_host_value_refinements_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 });
-  ml_validate_rust_value(uri, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(uri, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   if (!(typeof streamed === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof stream_evidence === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(response_media_type, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(response_media_type, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   if (!(typeof stream_requested === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof body_terminated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof inspectable === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(stream_outcome, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(stream_outcome, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   ml_validate_rust_value(stream_complete, {"kind":"data","name":"RouterOption_4_bool"}, ml_host_value_schema_2ef90fdf8e74c81463fa719948a2a6c8c1e7dd05cb373659ce28ee92a64ea821, { refinements: ml_host_value_refinements_2ef90fdf8e74c81463fa719948a2a6c8c1e7dd05cb373659ce28ee92a64ea821 });
   ml_fixed(frames, 0n, 18446744073709551615n, "u64 argument frames out of range");
   if (!(typeof frames === 'bigint' && frames >= 0n && frames <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
@@ -104,7 +104,7 @@ function ml_make_Exchange_Exchange(correlation_id: string, status: Readonly<{ re
   if (!(typeof records === 'bigint' && records >= 0n && records <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof stream_error === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!ml_router_array(encoded_frames, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(content_encoding, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(content_encoding, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   return Object.freeze({ $: "Exchange", ["correlation_id"]: correlation_id, ["status"]: status, ["upstream_status"]: upstream_status, ["uri"]: uri, ["streamed"]: streamed, ["stream_evidence"]: stream_evidence, ["response_media_type"]: response_media_type, ["stream_requested"]: stream_requested, ["body_terminated"]: body_terminated, ["inspectable"]: inspectable, ["stream_outcome"]: stream_outcome, ["stream_complete"]: stream_complete, ["frames"]: frames, ["undecodable_bodies"]: undecodable_bodies, ["records"]: records, ["stream_error"]: stream_error, ["encoded_frames"]: encoded_frames, ["content_encoding"]: content_encoding });
 }
 
@@ -140,7 +140,7 @@ function ml_make_Anomaly_Anomaly(kind: string, detail: string, correlation_ids: 
 }
 
 function rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d(record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): boolean {
-  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_router_unwrap(ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(record, "body"), (body) => { return ml_host_serde_json_value_get_string(body, "json"); }, "and_then"), (body_2) => { return ml_host_serde_json_value_get_string(body_2, "stream"); }, "and_then"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_bool(ml_host_callback_2_0); }, "and_then"), false, true);
 }
 

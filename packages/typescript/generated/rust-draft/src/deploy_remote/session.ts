@@ -61,7 +61,7 @@ function rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958
 }
 
 function ml_make_Collected_Collected(events: ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565>, output: ReadonlyArray<string>): Readonly<{ readonly "$": "Collected"; readonly "events": ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565>; readonly "output": ReadonlyArray<string> }> {
-  ml_validate_rust_value(events, {"kind":"array","element":{"kind":"data","name":"serde_json.Value"}}, ml_host_value_schema_849f9f53312dcc68578ad585986adeb2f7427fc6c0e1c353ec161a80e66a40d5, { refinements: ml_host_value_refinements_849f9f53312dcc68578ad585986adeb2f7427fc6c0e1c353ec161a80e66a40d5 });
+  ml_validate_rust_value(events, {"kind":"array","element":{"kind":"data","name":"serde_json.Value"},"patternOwnershipRefusal":"ownership-bearing Vec type"}, ml_host_value_schema_849f9f53312dcc68578ad585986adeb2f7427fc6c0e1c353ec161a80e66a40d5, { refinements: ml_host_value_refinements_849f9f53312dcc68578ad585986adeb2f7427fc6c0e1c353ec161a80e66a40d5 });
   if (!ml_router_array(output, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Collected", ["events"]: events, ["output"]: output });
 }

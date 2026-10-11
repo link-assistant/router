@@ -11,7 +11,7 @@ const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec2
 const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
 
 function ml_make_Launch_Launch(arguments_, one_shot, note) {
-  ml_validate_rust_value(arguments_, {"kind":"array","element":{"kind":"data","name":"std.ffi.OsString"}}, ml_host_value_schema_8aa15f1c11a05eb164357bfb2d96eecad4203f3201153e283a7ae3177cbd9023, { refinements: ml_host_value_refinements_8aa15f1c11a05eb164357bfb2d96eecad4203f3201153e283a7ae3177cbd9023 });
+  ml_validate_rust_value(arguments_, {"kind":"array","element":{"kind":"data","name":"std.ffi.OsString"},"patternOwnershipRefusal":"ownership-bearing Vec type"}, ml_host_value_schema_8aa15f1c11a05eb164357bfb2d96eecad4203f3201153e283a7ae3177cbd9023, { refinements: ml_host_value_refinements_8aa15f1c11a05eb164357bfb2d96eecad4203f3201153e283a7ae3177cbd9023 });
   if (!(typeof one_shot === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   ml_validate_rust_value(note, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   return Object.freeze({ $: "Launch", ["arguments"]: arguments_, ["one_shot"]: one_shot, ["note"]: note });

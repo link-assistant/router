@@ -1,3 +1,4 @@
+type MLData_436170747572656452657175657374 = Readonly<{ readonly "$": "CapturedRequest"; readonly "method": string; readonly "path": string; readonly "headers": ReadonlyArray<MLData_526f757465725475706c655f365f737472696e675f365f737472696e67>; readonly "body": ReadonlyArray<bigint> }>;
 type MLData_436c69656e7443617365 = Readonly<{ readonly "$": "ClientCase"; readonly "client": string; readonly "executable": string; readonly "version": string; readonly "model": string; readonly "owner": string; readonly "catalog_path": string; readonly "inference_path": string; readonly "user_agent_prefix": string; readonly "credential_header": string }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
@@ -18,6 +19,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_526f757465725475706c655f365f737472696e675f365f737472696e67 = Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -34,6 +36,21 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from tests/real_clients_test.rs; sha256=fd2e46770b1877b0ef247986c5537a0a7ae3d121034ecc86416ce8cb1aca74d5
 // Carried constructs are data, never runtime parity evidence.
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+const ml_host_value_schema_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 = {"schemaVersion":1,"types":{"RouterTuple_6_string_6_string":{"kind":"data","name":"RouterTuple_6_string_6_string","ctors":[{"name":"Tuple","fields":[{"name":"field0","type":{"kind":"string"}},{"name":"field1","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 = new Map([]);
+
 function PROMPT(): string {
   return "Reply with exactly ROUTER_CAPTURE_OK";
 }
@@ -87,5 +104,13 @@ function ml_make_ClientCase_ClientCase(client: string, executable: string, versi
   return Object.freeze({ $: "ClientCase", ["client"]: client, ["executable"]: executable, ["version"]: version, ["model"]: model, ["owner"]: owner, ["catalog_path"]: catalog_path, ["inference_path"]: inference_path, ["user_agent_prefix"]: user_agent_prefix, ["credential_header"]: credential_header });
 }
 
-export const translated: { "PROMPT": string; "SUBAGENT_PROMPT": string; "ANSWER": string; "CODEX_ALTERNATE_MODEL": string; "ClientCase": (client: string, executable: string, version: string, model: string, owner: string, catalog_path: string, inference_path: string, user_agent_prefix: string, credential_header: string) => Readonly<{ readonly "$": "ClientCase"; readonly "client": string; readonly "executable": string; readonly "version": string; readonly "model": string; readonly "owner": string; readonly "catalog_path": string; readonly "inference_path": string; readonly "user_agent_prefix": string; readonly "credential_header": string }> } = { ["PROMPT"]: PROMPT(), ["SUBAGENT_PROMPT"]: SUBAGENT_PROMPT(), ["ANSWER"]: ANSWER(), ["CODEX_ALTERNATE_MODEL"]: CODEX_ALTERNATE_MODEL(), ["ClientCase"]: ml_make_ClientCase_ClientCase };
-export const provenance = {"sourcePath":"tests/real_clients_test.rs","sourceSha256":"fd2e46770b1877b0ef247986c5537a0a7ae3d121034ecc86416ce8cb1aca74d5","executable":5,"executableFunctions":0,"executableConstants":4,"executableTypes":1,"executableConstructors":1,"carried":54,"preserved":60,"runtimeParity":false};
+function ml_make_CapturedRequest_CapturedRequest(method: string, path: string, headers: ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>>, body: ReadonlyArray<bigint>): Readonly<{ readonly "$": "CapturedRequest"; readonly "method": string; readonly "path": string; readonly "headers": ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>>; readonly "body": ReadonlyArray<bigint> }> {
+  if (!(typeof method === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(method))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(headers, {"kind":"array","element":{"kind":"data","name":"RouterTuple_6_string_6_string"},"patternOwnershipRefusal":"ownership-bearing Vec type"}, ml_host_value_schema_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2, { refinements: ml_host_value_refinements_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 });
+  if (!ml_router_array(body, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "CapturedRequest", ["method"]: method, ["path"]: path, ["headers"]: headers, ["body"]: body });
+}
+
+export const translated: { "PROMPT": string; "SUBAGENT_PROMPT": string; "ANSWER": string; "CODEX_ALTERNATE_MODEL": string; "ClientCase": (client: string, executable: string, version: string, model: string, owner: string, catalog_path: string, inference_path: string, user_agent_prefix: string, credential_header: string) => Readonly<{ readonly "$": "ClientCase"; readonly "client": string; readonly "executable": string; readonly "version": string; readonly "model": string; readonly "owner": string; readonly "catalog_path": string; readonly "inference_path": string; readonly "user_agent_prefix": string; readonly "credential_header": string }>; "CapturedRequest": (method: string, path: string, headers: ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>>, body: ReadonlyArray<bigint>) => Readonly<{ readonly "$": "CapturedRequest"; readonly "method": string; readonly "path": string; readonly "headers": ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>>; readonly "body": ReadonlyArray<bigint> }> } = { ["PROMPT"]: PROMPT(), ["SUBAGENT_PROMPT"]: SUBAGENT_PROMPT(), ["ANSWER"]: ANSWER(), ["CODEX_ALTERNATE_MODEL"]: CODEX_ALTERNATE_MODEL(), ["ClientCase"]: ml_make_ClientCase_ClientCase, ["CapturedRequest"]: ml_make_CapturedRequest_CapturedRequest };
+export const provenance = {"sourcePath":"tests/real_clients_test.rs","sourceSha256":"fd2e46770b1877b0ef247986c5537a0a7ae3d121034ecc86416ce8cb1aca74d5","executable":6,"executableFunctions":0,"executableConstants":4,"executableTypes":2,"executableConstructors":2,"carried":53,"preserved":60,"runtimeParity":false};

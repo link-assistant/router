@@ -17,6 +17,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_526f757465725475706c655f365f737472696e675f365f737472696e67 = Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -73,5 +74,13 @@ function CLAUDE_USER_AGENT(): string {
   return "claude-cli/2.0.0 (external, cli)";
 }
 
-export const translated: { "SECRET": string; "ADMIN_KEY": string; "CLIENT_ROUTE": string; "CLAUDE_USER_AGENT": string } = { ["SECRET"]: SECRET(), ["ADMIN_KEY"]: ADMIN_KEY(), ["CLIENT_ROUTE"]: CLIENT_ROUTE(), ["CLAUDE_USER_AGENT"]: CLAUDE_USER_AGENT() };
-export const provenance = {"sourcePath":"tests/emergency_auth_test.rs","sourceSha256":"59e899de3de71eea5b9bee1967e244251c1219b8eebcdd30a0c8fef465e19a8a","executable":4,"executableFunctions":0,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":40,"preserved":45,"runtimeParity":false};
+function carriers(token: string): ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>> {
+  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze([Object.freeze({ $: 'Tuple', field0: "authorization", field1: (() => {
+    const ml_fmt_1 = token;
+    return ("Bearer " + ml_fmt_1);
+  })() }), Object.freeze({ $: 'Tuple', field0: "x-api-key", field1: token }), Object.freeze({ $: 'Tuple', field0: "x-goog-api-key", field1: token })]);
+}
+
+export const translated: { "SECRET": string; "ADMIN_KEY": string; "CLIENT_ROUTE": string; "CLAUDE_USER_AGENT": string; "carriers": (token: string) => ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>> } = { ["SECRET"]: SECRET(), ["ADMIN_KEY"]: ADMIN_KEY(), ["CLIENT_ROUTE"]: CLIENT_ROUTE(), ["CLAUDE_USER_AGENT"]: CLAUDE_USER_AGENT(), ["carriers"]: carriers };
+export const provenance = {"sourcePath":"tests/emergency_auth_test.rs","sourceSha256":"59e899de3de71eea5b9bee1967e244251c1219b8eebcdd30a0c8fef465e19a8a","executable":5,"executableFunctions":1,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":39,"preserved":45,"runtimeParity":false};

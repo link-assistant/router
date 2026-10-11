@@ -48,7 +48,7 @@ const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722
 function ml_make_SocketAccess_SocketAccess(mode: bigint, group: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "SocketAccess"; readonly "mode": bigint; readonly "group": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> {
   ml_fixed(mode, 0n, 4294967295n, "u32 argument mode out of range");
   if (!(typeof mode === 'bigint' && mode >= 0n && mode <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(group, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(group, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   return Object.freeze({ $: "SocketAccess", ["mode"]: mode, ["group"]: group });
 }
 

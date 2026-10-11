@@ -76,7 +76,7 @@ const serde_json = {
 
 function ml_make_ObservedLimits_ObservedLimits(credential_cooldown: boolean, model_cooldown: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, paused: boolean): Readonly<{ readonly "$": "ObservedLimits"; readonly "credential_cooldown": boolean; readonly "model_cooldown": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "paused": boolean }> {
   if (!(typeof credential_cooldown === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(model_cooldown, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(model_cooldown, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   if (!(typeof paused === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "ObservedLimits", ["credential_cooldown"]: credential_cooldown, ["model_cooldown"]: model_cooldown, ["paused"]: paused });
 }

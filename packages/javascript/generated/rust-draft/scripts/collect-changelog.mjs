@@ -33,7 +33,10 @@ function get_cargo_toml_path(rust_root) {
   if ((rust_root === ".")) {
     return "./Cargo.toml";
   } else {
-    return (rust_root + "/Cargo.toml");
+    return (() => {
+    const ml_fmt_1 = rust_root;
+    return (ml_fmt_1 + "/Cargo.toml");
+  })();
   }
 }
 
@@ -42,7 +45,10 @@ function get_changelog_dir(rust_root) {
   if ((rust_root === ".")) {
     return "./changelog.d";
   } else {
-    return (rust_root + "/changelog.d");
+    return (() => {
+    const ml_fmt_1 = rust_root;
+    return (ml_fmt_1 + "/changelog.d");
+  })();
   }
 }
 
@@ -51,7 +57,10 @@ function get_changelog_path(rust_root) {
   if ((rust_root === ".")) {
     return "./CHANGELOG.md";
   } else {
-    return (rust_root + "/CHANGELOG.md");
+    return (() => {
+    const ml_fmt_1 = rust_root;
+    return (ml_fmt_1 + "/CHANGELOG.md");
+  })();
   }
 }
 

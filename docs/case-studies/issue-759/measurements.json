@@ -144,6 +144,29 @@
         "instrumentExitCode": 1,
         "limitation": "Default sandbox denied time sysctl kern.clockrate after translator completed; no RSS recorded. Required deterministic check measured separately under approved escalation."
       }
+    },
+    {
+      "observedAtUtc": "2026-10-11T08:13:49.835795+00:00",
+      "sourceCommit": "baa270b574438e4480c057e81b20dca299e6f299",
+      "sourceCommitMeaning": "Assembled cycle 4 compiler source cohort before committing regenerated outputs and the evidence-only guard-count correction",
+      "argv": [
+        "/usr/bin/time",
+        "-l",
+        "node",
+        "scripts/translate-router.mjs"
+      ],
+      "nodeVersion": "v20.19.4",
+      "platform": "macOS",
+      "exitCode": 0,
+      "elapsedSeconds": 31.32,
+      "userSeconds": 32.55,
+      "systemSeconds": 1.59,
+      "maximumResidentSetSizeBytes": 505184256,
+      "peakMemoryFootprintBytes": 579900864,
+      "inventorySha256": "2d23cabdcbb4146363c922a82155738db6b647831560f53ac8ef231608d35b8f",
+      "measurementLogSha256": "91ec55e9d9ba778f2d272f2661bd79b06a3842eecb689df0bbcc335a6039e9e0",
+      "stdoutSha256": "83c9a4391cb0c6035900dfd7f40ccf5132c635d4a07b6b0a586fb51958d86988",
+      "scope": "One required full 804-source translator write; not whole-task/process-tree peak, typical feature development memory, CI billing, or Rust build usage"
     }
   ]
 }

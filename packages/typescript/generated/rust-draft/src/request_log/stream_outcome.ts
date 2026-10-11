@@ -55,7 +55,7 @@ function ml_make_StreamOutcome_StreamOutcome(streamed: boolean, terminated: bool
   if (!(typeof streamed === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof terminated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof inspectable === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(detail, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(detail, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   ml_fixed(frames, 0n, 18446744073709551615n, "u64 argument frames out of range");
   if (!(typeof frames === 'bigint' && frames >= 0n && frames <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   ml_fixed(bytes, 0n, 18446744073709551615n, "u64 argument bytes out of range");
@@ -94,7 +94,7 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67(outcome: Readonly<{ readonly "$": "StreamOutcome"; readonly "streamed": boolean; readonly "terminated": boolean; readonly "inspectable": boolean; readonly "detail": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "frames": bigint; readonly "bytes": bigint; readonly "duration_ms": bigint }>): boolean {
-  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
   return rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(outcome);
 }
 

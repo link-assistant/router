@@ -5,7 +5,10 @@ function get_changelog_dir(rust_root) {
   if ((rust_root === ".")) {
     return "./changelog.d";
   } else {
-    return (rust_root + "/changelog.d");
+    return (() => {
+    const ml_fmt_1 = rust_root;
+    return (ml_fmt_1 + "/changelog.d");
+  })();
   }
 }
 

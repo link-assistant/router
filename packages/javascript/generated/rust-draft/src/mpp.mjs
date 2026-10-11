@@ -11,7 +11,7 @@ function ml_make_MppConfig_MppConfig(enabled, amount, currency, recipient, metho
   if (!(typeof amount === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(amount))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof currency === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(currency))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof recipient === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(recipient))) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(method, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(method, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   return Object.freeze({ $: "MppConfig", ["enabled"]: enabled, ["amount"]: amount, ["currency"]: currency, ["recipient"]: recipient, ["method"]: method });
 }
 
