@@ -5,7 +5,9 @@ before proving an unshadowed `rustfmt::skip` owner in active ancestor scopes.
 Bounded builtin inner lint lists retain their original syntax. Unknown expansion,
 tool imports/shadows, disabled preludes and macro-bearing input stay refused.
 This profile preserves attribute metadata and does not implement formatting or
-procedural behavior; its focused verification is pending.
+procedural behavior. Focused Node and Bun verification passed, including
+strict TypeScript execution and unchanged reverse-generated Router predicates.
+The full combined repository gate remains required before publication.
 
 Run `node scripts/translate-router.mjs` to regenerate every tracked `.rs` file,
 including production sources, tests, benchmarks, scripts and archived examples.
@@ -155,8 +157,10 @@ before lexical adaptation. Its bounded decimal-to-binary converter uses exact
 integer ratios and one ties-to-even rounding, retaining the written token and
 result bits. It supports binary64 literals only; binary32, overflowing literal
 lint profiles and floating constant evaluation remain unsupported. The two
-original compressed Rust 1.89 source inputs total about 15 KB. This draft awaits
-compiler and behavioral verification and supplies no additional runtime claim.
+original compressed Rust 1.89 source inputs total about 15 KB. Independent
+rounding boundaries, syntax and refusal cases passed in Node and Bun, together
+with strict TypeScript execution. These checks do not establish complete Router
+parity or floating constant evaluation.
 
 With Node, Bun and the repository’s TypeScript tooling available:
 
