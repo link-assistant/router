@@ -164,3 +164,13 @@ test('binding evidence is serializable and does not mutate or freeze tracked gra
   assert.equal(JSON.stringify(input),before);assert.equal(Object.isFrozen(input[0]),false);assert.ok(Object.isFrozen(result.scopes));
   assert.deepEqual(JSON.parse(JSON.stringify(result)),result);
 });
+
+test('built-in path on a conditional module preserves named uncertainty without poisoning other type owners',()=>{
+  const result=resolve({'':'#[derive(Clone,Copy)] pub struct RefUpdate { value:u8 } #[cfg(test)] #[path="git_proxy_tests.rs"] mod tests;'});
+  assert.equal(scope(result).unresolvedTypeScope,false);assert.equal(scope(result).unresolvedMacroScope,true);
+  assert.equal(binding(result,'RefUpdate').status,'resolved');assert.equal(binding(result,'tests').status,'unresolved');
+  assert.ok(result.diagnostics.some(diagnostic=>/compilation-condition/u.test(diagnostic.message)));
+  const tracked=resolve({'':'#[path="actual.rs"] mod model; use model::*;',model:'pub struct Actual;'});
+  assert.equal(scope(tracked).unresolvedTypeScope,false);assert.deepEqual(binding(tracked,'Actual').target,['crate','model','Actual']);
+  for(const source of ['#[path="other.rs"] struct Bad;','#[path=other] mod bad;','#[path("other.rs")] mod bad;','#[cfg_attr(test,path="other.rs")] mod bad;'])assert.equal(scope(resolve({'':source})).unresolvedTypeScope,true,source);
+});

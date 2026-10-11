@@ -46,7 +46,7 @@ function header(tokens,owner) {
     const begin=at++;if(tokens[at]?.text==='!')at++;
     if(tokens[at]?.text!=='[')throw new Error('unresolved binding attribute');
     const end=close(tokens,at),body=tokens.slice(at+1,end);
-    attributes.push({name:body[0]?.text,tokens:body.map(token=>token.text),span:{start:tokens[begin].start,end:tokens[end].end}});at=end+1;
+    attributes.push({name:body[0]?.text,tokens:body.map(token=>token.text),...(body[0]?.text==='path'?{pathLiteral:body.length===3 && body[1]?.text==='=' && body[2]?.type==='string'}:{}),span:{start:tokens[begin].start,end:tokens[end].end}});at=end+1;
   }
   let visibility={kind:'restricted',path:[...owner]};
   if(tokens[at]?.text==='pub') {
@@ -83,8 +83,10 @@ function leaves(tokens,start) {
 }
 const harmless=new Set(['allow','warn','deny','forbid','doc','must_use','inline','cold','deprecated','non_exhaustive','track_caller','repr']);
 const standardDerives=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
-function uncertainty(attributes) {
-  const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
+function uncertainty(attributes,{moduleAttribute=false}={}) {
+  // Built-in #[path = "..."] selects a module file, never arbitrary item
+  // expansion. The tracked graph still owns that file and cfg resolution.
+  const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
   return {type:unknown,macro:unknown || attributes.some(attribute=>attribute.name==='macro_use'),conditional:attributes.some(attribute=>['cfg','cfg_attr'].includes(attribute.name))};
 }
 function parts(tokens) {
@@ -130,7 +132,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
     for(const item of items.filter(item=>!item.comment)) {
       const span={start:item.start,end:item.end};
       try {
-        const tokens=tokensOf(item),head=header(tokens,scope.path),uncertain=uncertainty(head.attributes);
+        const tokens=tokensOf(item),head=header(tokens,scope.path),uncertain=uncertainty(head.attributes,{moduleAttribute:tokens[head.at]?.text==='mod'});
         for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;
         if(uncertain.type || uncertain.macro || uncertain.conditional)diagnostic(scope,'attribute scope requires compilation-condition or procedural expansion evidence',span);

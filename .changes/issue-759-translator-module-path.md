@@ -1,0 +1,1 @@
+Recognized the built-in Rust module path attribute as file-selection evidence while retaining tracked-file and compilation-condition obligations. A conditional named test module no longer invalidates unrelated type bindings; malformed, misplaced or conditional attribute expansion remains unresolved.
