@@ -28745,8 +28745,54 @@
       "status": "Complete unpublished d1105ae1 seven-stage failure collection retained: four forward failures and one cached managed-control timeout affecting62 operation validations. Repair receipts remain separately identified; no successful replacement producer or publication claimed.",
       "reviewedSourceHead": "d1105ae12c968d415652e35c77c2a9c448275ca9",
       "archivedAtUtc": "2026-10-11T14:49:05.818732+00:00"
+    },
+    {
+      "label": "cycle-6-repaired-producer",
+      "pack": "5d38fdb826d902360240c3a9566750e88323ab8e656faf4d4f0be6de7769a6a0.tar.gz",
+      "sha256": "5d38fdb826d902360240c3a9566750e88323ab8e656faf4d4f0be6de7769a6a0",
+      "storedBytes": 4417,
+      "members": [
+        {
+          "path": "router-759-generation-21a382bed.log",
+          "bytes": 1071,
+          "sha256": "db693d981ef881c3b6f7d256b3974db297c1ebfcde65903e2a03a9d14d68df70"
+        },
+        {
+          "path": "router-759-generation-21a382bed-time.log",
+          "bytes": 777,
+          "sha256": "6f5c72c43afcd69e22471cffa37380bddf5081674ed2a61d0fbf4f13d480b5f0"
+        },
+        {
+          "path": "router-759-generation-21a382bed.json",
+          "bytes": 773,
+          "sha256": "0b2f4995073a828e0ab2d96060f2b94644b93847c9d79ceebef5b746b181f216"
+        },
+        {
+          "path": "router-759-generated-21a382bed-integrity.json",
+          "bytes": 4312,
+          "sha256": "489e69feccf80af229c41973191674571276218bf180e0587f7b4a8dba13b23a"
+        },
+        {
+          "path": "router-759-cycle-6-repaired-corpus-census.json",
+          "bytes": 13365,
+          "sha256": "0994175b1d53d7662b6214df5045d5af1f5c7d0b40683b858134c5b304b786fb"
+        },
+        {
+          "path": "router-759-cycle-6-repaired-corpus-census-stdout.log",
+          "bytes": 13365,
+          "sha256": "0994175b1d53d7662b6214df5045d5af1f5c7d0b40683b858134c5b304b786fb"
+        },
+        {
+          "path": "router-759-cycle-6-native-refresh.log",
+          "bytes": 80,
+          "sha256": "f3e3753bbfe4b598a8f0c2e0eee7fa90033e2c156ba1d11d41d7f3b1bd6e440f"
+        }
+      ],
+      "status": "One successful replacement producer after the complete failure/repair cohort; source and implementation integrity passed. Full seven-stage verification and remote CI remain pending.",
+      "reviewedSourceHead": "21a382bed7dfc3b3d54a2436f22aa7f6e658661f",
+      "archivedAtUtc": "2026-10-11T14:53:38.577198+00:00"
     }
   ],
-  "totalStoredPackBytes": 11328235,
-  "totalMembers": 5175
+  "totalStoredPackBytes": 11332652,
+  "totalMembers": 5182
 }
