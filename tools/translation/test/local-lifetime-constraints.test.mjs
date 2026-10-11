@@ -10,7 +10,7 @@ test('local static annotations constrain initializers even when returned values 
     "pub fn bad(value:&str)->u8{let held:[&'static str;1]=[value];0}",
     "pub fn bad(value:[&str;0])->u8{let held:[&'static str;0]=value;0}",
     "pub fn bad(value:&u64)->u8{let held:&'static u64=value;0}",
-    "pub fn bad(value:&str)->u8{let held:Option<&'static str>=Some(value);0}",
+    "pub fn bad(value:&str)->u8{let held:Option<&'static str> = Some(value);0}",
     "pub fn bad(value:&str)->u8{let held:(&'static str,u8)=(value,0);0}",
   ]){
     const result=project(source);
