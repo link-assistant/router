@@ -59,6 +59,12 @@ export class IteratorRustParser extends DataRustParser {
     return { k: 'routerLambda', params, body: this.expr(path), span: span(start, c.peek()) };
   }
 
+  methodInstantiation(name) {
+    const c=this.cursor;
+    if(!['collect','sum'].includes(name.value))throw unsupported('method turbofish','only checked generic operation instantiations are supported',name);
+    c.expect('<','method type');const type=this.type();c.expect('>','method type');return type;
+  }
+  instantiatedMethod(object,name,args,explicit,range) {throw unsupported(`generic method ${name.value}`,'requires a checked monomorphic operation',range);}
   postfix(path, options) {
     const c = this.cursor;
     let value = this.primary(path, options);
@@ -70,8 +76,7 @@ export class IteratorRustParser extends DataRustParser {
         if (name.value === 'await' && !c.is('(')) { value = this.awaitExpression(value, span(start, c.peek())); continue; }
         let explicit = null;
         if (c.eat('::')) {
-          if (!['collect', 'sum'].includes(name.value)) throw unsupported('method turbofish', 'only collect/sum result annotations are checked', span(start, c.peek()));
-          c.expect('<', 'method type'); explicit = this.type(); c.expect('>', 'method type');
+          explicit=this.methodInstantiation(name);
         }
         if (!c.eat('(')) {
           if (explicit) throw typeError('type annotation on field', span(start, name));
@@ -80,7 +85,7 @@ export class IteratorRustParser extends DataRustParser {
         const args = [];
         while (!c.is(')')) { args.push(this.expr(path)); if (!c.eat(',')) break; }
         c.expect(')', 'method');
-        value = operations.has(name.value) && !(name.value === 'count' && (value.k === 'routerStringView' || value.k === 'routerDispatchMethod' && value.fallback?.k === 'routerStringView')) ? { k: 'routerIteratorOperation', op: name.value, object: value, args, explicit, span: span(start, c.peek()) } : this.method(value, name, args, span(start, c.peek()));
+        value = operations.has(name.value) && !(name.value === 'count' && (value.k === 'routerStringView' || value.k === 'routerDispatchMethod' && value.fallback?.k === 'routerStringView')) ? { k: 'routerIteratorOperation', op: name.value, object: value, args, explicit, span: span(start, c.peek()) } : explicit?this.instantiatedMethod(value,name,args,explicit,span(start,c.peek())):this.method(value, name, args, span(start, c.peek()));
         continue;
       }
       if (c.eat('?')) { value = this.tryExpression(value, span(start, c.peek())); continue; }

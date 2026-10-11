@@ -4,11 +4,14 @@ import {createHash} from 'node:crypto';
 import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
+import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
+import {planStandardMethod,completeStandardMethod} from './standard-method-plans.mjs';
+import {rustFixedType} from '../vendor/meta-language/translation/types.js';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
 import {tokenizeRust} from './lexical.mjs';
-import {sameType} from '../vendor/meta-language/translation/types.js';
+import {sameType,fixedBounds} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {valueSchema} from '../type-layout.mjs';
@@ -16,7 +19,7 @@ import {BOOL,FLOAT} from '../vendor/meta-language/translation/types.js';
 import {HostInstantiations} from './host-instantiations.mjs';
 import {macroProvenance} from '../macro-provenance.mjs';
 
-export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'}))];
+export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 export function hostData() {
@@ -28,9 +31,9 @@ export function hostData() {
       merge(module.items,item.items,[...path,item.name]);
     } else if(!existing)target.push({...item,hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
   }};
-  merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);return result;
+  merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
-const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json']));
+const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr']));
 export class HostRustParser extends MethodRustParser {
   resolve(segments,path) {
     const resolved=super.resolve(segments,path);
@@ -39,12 +42,26 @@ export class HostRustParser extends MethodRustParser {
   }
   expressionMacro(token,path) {
     if(this.unresolvedMacroScope || this.unresolvedImportScope || this.shadowedBuiltinMacros?.has(token.value))throw unsupported(`macro ${token.value}!`,'requires actual source macro expansion and binding resolution',token);
-    return super.expressionMacro(token,path);
+    const value=super.expressionMacro(token,path);return ['format','vec'].includes(token.value)?{k:'routerConstObligation',value,constEligible:false,sourceFeature:token.value+'!',span:value.span}:value;
+  }
+  methodInstantiation(name) {
+    if(name.value!=='parse')return super.methodInstantiation(name);
+    const c=this.cursor;c.expect('<','integer parse type');const type=this.type();c.expect('>','integer parse type');return type;
+  }
+  instantiatedMethod(object,name,args,instantiation,range) {
+    if(name.value!=='parse')return super.instantiatedMethod(object,name,args,instantiation,range);
+    if(this.shadowedEffectRoots?.has('std'))throw unsupported('shadowed integer error namespace','requires distinct checked standard type provenance',range);
+    return {k:'routerIntegerParse',object,args,instantiation,span:range};
+  }
+  method(object,name,args,range) {
+    if(name.value!=='parse')return super.method(object,name,args,range);
+    return this.instantiatedMethod(object,name,args,null,range);
   }
   type(){
+    const primitive=rustFixedType(this.cursor.peek().value);if(primitive&&!this.builtinShadow(this.cursor.peek().value)){const token=this.cursor.next();return {...primitive,rustPrimitiveName:token.value};}
     if(this.cursor.is('f64')&&!this.builtinShadow('f64')){this.cursor.next();return FLOAT;}
     const start=this.cursor.peek(),type=super.type();
-    const visit=type=>{if(type.kind==='array')return visit(type.element);if(type.kind==='named'&&this.shadowedEffectRoots?.has(type.path[0]))throw unsupported('shadowed host type namespace','requires actual crate type resolution',span(start,this.cursor.peek()));};visit(type);return type;
+    const visit=type=>{if(type.kind==='array')return visit(type.element);if(type.kind==='named'&&(this.shadowedEffectRoots?.has(type.path[0]==='crate'?type.path[1]:type.path[0])||type.path[0]==='crate'&&['std','tokio','serde_json'].includes(type.path[1])))throw unsupported('shadowed host type namespace','requires actual crate type resolution',span(start,this.cursor.peek()));};visit(type);return type;
   }
   file() {
     const surface=super.file(),support=hostData();
@@ -68,10 +85,21 @@ export class HostRustParser extends MethodRustParser {
   primary(path,options) {
     const c=this.cursor,first=c.peek();if(first.kind!=='identifier')return super.primary(path,options);
     let offset=1;const segments=[first.value];while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
-    const resolved=this.resolve(segments,path),contracts=HOST_CONTRACTS.filter(contract=>pathKey(contract.rustPath)===pathKey(resolved));
+    const resolved=this.resolve(segments,path),owner=segments.slice(0,-1),operation=segments.at(-1),fixed=rustFixedType(owner.at(-1));
+    if(fixed&&['from_str','from_str_radix'].includes(operation)&&c.is('(',offset)&&((owner.length===1&&!this.builtinShadow(owner[0],path))||(owner.length===3&&owner[0]==='std'&&owner[1]==='primitive'&&!this.builtinShadow('std',path)))) {
+      if(this.shadowedEffectRoots?.has('std'))throw unsupported('shadowed integer error namespace','requires distinct checked standard type provenance',first);
+      if(operation==='from_str'&&this.resolve(['FromStr'],path).join('::')!=='std::str::FromStr')throw unsupported('FromStr trait call','requires the actual standard FromStr import',first);
+      for(let index=0;index<offset;index++)c.next();c.expect('(','integer operation');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','integer operation');
+      return {k:'routerIntegerAssociated',operation,args,instantiation:fixed,span:span(first,c.peek())};
+    }
+    if(segments.length===2&&!this.builtinShadow(segments[0],path)&&c.is('(',offset)&&((segments[0]==='Box'&&operation==='new')||(segments[0]==='String'&&operation==='from')||(rustFixedType(segments[0])&&operation==='from'))) {
+      for(let index=0;index<offset;index++)c.next();c.expect('(','standard conversion');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','standard conversion');
+      if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:rustFixedType(segments[0])??null,targetName:segments[0],constEligible:false,span:span(first,c.peek())};
+    }
+    const contracts=HOST_CONTRACTS.filter(contract=>pathKey(contract.rustPath)===pathKey(resolved));
     if(!contracts.length)return super.primary(path,options);
     if(!c.is('(',offset)&&!(c.is('::',offset)&&c.is('<',offset+1)))return super.primary(path,options);
-    if(this.shadowedEffectRoots?.has(resolved[0]))throw unsupported('shadowed host namespace','requires actual crate resolution',span(first,c.peek()));
+    if(resolved[0]==='crate'||this.shadowedEffectRoots?.has(resolved[0]))throw unsupported('shadowed host namespace','requires actual crate resolution',span(first,c.peek()));
     for(let index=0;index<offset;index++)c.next();let instantiation;
     if(c.eat('::')){c.expect('<','host type instantiation');instantiation=this.type();c.expect('>','host type instantiation');}
     c.expect('(','host operation');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','host operation');
@@ -98,7 +126,7 @@ export class HostChecker extends MethodChecker {
         if(instantiation && (!contract.instantiation||!sameType(this.hostType(contract.instantiation,path,range),this.resolveType(instantiation,path,range))))throw typeError('unsupported host generic instantiation',range);
         const values=args.map((arg,index)=>{const type=this.hostType(contract.params[index],path,range);return coerce(this.expr(arg,env,path,type),type,this.language,range);});
         const type=this.hostType(contract.ret,path,range);if(expected && !sameType(type,expected))throw typeError('host operation return type mismatch',range);
-        const resolved=this.instantiations.contracts.has(contract.id)?{...contract,params:contract.params.map(type=>this.hostType(type,path,range)),ret:type,runtimeInstantiation:{...contract.runtimeInstantiation,...(contract.runtimeInstantiation.validatorType?{validatorType:this.hostType(contract.runtimeInstantiation.validatorType,path,range)}:{})}}:null;
+        const resolved=this.instantiations.contracts.has(contract.id)?{...contract,params:contract.params.map(type=>this.hostType(type,path,range)),ret:type,runtimeInstantiation:{...contract.runtimeInstantiation,...(contract.runtimeInstantiation?.validatorType?{validatorType:this.hostType(contract.runtimeInstantiation.validatorType,path,range)}:{})}}:null;
         checked.push({k:'routerHostCall',id:contract.id,args:values,type,span:range,...(resolved?{contract:resolved}:{})});
       }catch(error){if(!(error instanceof TranslationError))throw error;errors.push(error);}
     }
@@ -112,6 +140,21 @@ export class HostChecker extends MethodChecker {
   }
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(['routerConstObligation','routerBuiltinConversion'].includes(node.k)) {
+      const value=this.expr(node.value,env,path,node.k==='routerConstObligation'?expected:undefined);
+      if(node.operation==='String::from'&&value.type.kind!=='string')throw typeError('String::from requires the actual checked standard string conversion',node.span);
+      if(node.target){if(value.type.kind!=='fixed')throw unsupported('primitive From conversion','requires a checked infallible fixed integer source',node.span);const inputName=value.type.rustPrimitiveName; if(value.type.bits===64&&!inputName)throw unsupported('primitive From source identity','64-bit aliases need actual source type evidence',node.span);if(['usize','isize'].includes(inputName)&&node.targetName!==inputName||['usize','isize'].includes(node.targetName)&&node.targetName!==inputName&&value.type.bits>16)throw unsupported('primitive From pointer conversion','the actual standard conversion trait is not established by equal bit widths',node.span);const input=fixedBounds(value.type),output=fixedBounds(node.target);if(input.min<output.min||input.max>output.max)throw typeError('primitive From conversion is not infallible for the checked source type',node.span);}
+      const type=node.target??value.type;if(expected&&!sameType(type,expected))throw typeError('standard conversion return type mismatch',node.span);return {...node,value,type};
+    }
+    if(['routerIntegerParse','routerIntegerAssociated'].includes(node.k)) {
+      if(node.object){const receiver=this.expr(node.object,env,path);const inherent=this.resolvedMethod(receiver.type,'parse','shared');if(inherent&&!node.instantiation)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);if(receiver.type.kind!=='string')throw typeError('integer parse requires an actual checked str receiver',node.span);}
+      const expectedEntry=expected?.kind==='data'?this.items.get(expected.name):null;
+      const inferred=expectedEntry?.standardGeneric?.kind==='Result'?this.resolveType(expectedEntry.standardGeneric.arguments[0],expectedEntry.modulePath,node.span):null;
+      const type=node.instantiation?this.resolveType(node.instantiation,path,node.span):inferred;
+      if(type?.kind!=='fixed')throw unsupported('integer parse target','requires an actual resolved fixed-integer instantiation',node.span);
+      const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
+      return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
+    }
     if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path)),node.args,env,path,expected,node.span,node.instantiation);
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
@@ -119,6 +162,9 @@ export class HostChecker extends MethodChecker {
       const inherent=this.resolvedMethod(receiver.type,method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       const contracts=HOST_CONTRACTS.filter(contract=>contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
       if(contracts.length)return this.hostCall(contracts,[node.object,...node.args],env,path,expected,node.span);
+      if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){const instance=this.instantiations.fixed(receiver.type,node.span);return this.hostCall(instance.contracts.filter(contract=>contract.rustPath.at(-1)===method),[node.object,...node.args],env,path,expected,node.span);}
+      const plan=['bool','data'].includes(receiver.type.kind)?planStandardMethod(receiver.type,method,{declarations:this.items,resolveType:(type,range)=>this.resolveType(type,path,range),expected,span:node.span,argumentCount:node.args.length}):null;
+      if(plan){const callback=plan.operation==='result_ok'?null:this.hostLambda(node.args[0],plan.callbackParameters,env,path,plan.callbackExpected??undefined);const type=completeStandardMethod(plan,callback?.type.result??null,{optionType:(element,range)=>this.instantiations.option(element,range),span:node.span});return {k:'routerStandardMethod',operation:plan.operation,value:receiver,callback,type,constEligible:false,span:node.span};}
       if(receiver.type.kind==='array'&&['get','first','last'].includes(method)) {
         const instance=this.instantiations.vector(receiver.type.element,node.span);
         return this.hostCall(instance.contracts.filter(contract=>contract.rustPath.at(-1)===method),[node.object,...node.args],env,path,expected,node.span);
@@ -144,6 +190,8 @@ export class HostChecker extends MethodChecker {
     program.items.push(...this.instantiations.items);
     const forbidden=(node,seen=new Set())=>{
       if(!node||typeof node!=='object')return false;
+      if(node.k==='routerAlgebraicOperation'&&node.op==='unwrap_or'||node.k==='routerStringOperation')return true;
+      if(node.constEligible===false||['routerEffectCall','routerFutureCall','routerAwait','routerOptionCallback','routerFor','routerIteratorOperation'].includes(node.k))return true;
       if(node.k==='routerHostCall'&&!(node.contract??HOST_CONTRACTS.find(contract=>contract.id===node.id))?.constEligible)return true;
       if(['call','routerFutureCall'].includes(node.k)&&!seen.has(node.fn)){seen.add(node.fn);const entry=program.declarations.get(node.fn);if(!entry||!entry.constant&&!entry.constFunction||forbidden(entry.body,seen))return true;}
       return Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(item=>forbidden(item,seen)):forbidden(value,seen)));
@@ -153,7 +201,7 @@ export class HostChecker extends MethodChecker {
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&hasData(type.element);
     if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
@@ -176,6 +224,8 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(type)}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);
+    if(node.k==='routerStandardMethod'){this.standardMethods=true;return `ml_host_${node.operation}(${this.expr(node.value)}${node.callback?', '+this.expr(node.callback):''})`;}
     if(node.k==='routerOptionCallback'){this.optionCallbacks=true;return `ml_host_option_bind(${this.expr(node.value)}, ${this.expr(node.callback)}, ${JSON.stringify(node.op)})`;}
     if(node.k!=='routerHostCall')return super.expr(node);
     const contract=node.contract??HOST_CONTRACTS.find(contract=>contract.id===node.id);if(!contract)throw new Error('missing checked host contract');
@@ -183,13 +233,17 @@ export class HostEmitter extends EffectEmitter {
       const guard=this.valueGuard('values',contract.runtimeInstantiation.validatorType);
       this.instantiations.set(contract.id,`const ml_host_${contract.id} = ml_create_vector_runtime(values => ${guard}).${contract.jsExport};`);
     }
+    if(contract.family==='fixed')this.instantiations.set(contract.id,`const ml_host_${contract.id} = ml_create_fixed_integer_runtime(${JSON.stringify(contract.runtimeInstantiation.type)}).${contract.jsExport};`);
+    if(contract.family==='integer'&&contract.runtimeInstantiation) this.instantiations.set(contract.id,`const ml_host_${contract.id} = ml_create_integer_runtime(${JSON.stringify(contract.runtimeInstantiation.type)}).${contract.jsExport};`);
     this.hosts.add(contract.id);this.state.encode('host-contract-'+contract.id,contract.assumptions.join(' '));
     return `ml_host_${contract.id}(${node.args.map(arg=>this.expr(arg)).join(', ')})`;
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
-    if(this.instantiations.size)preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
-    for(const family of ['json','time']) {
+    if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
+    if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
+    if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
+    for(const family of ['json','time','integer']) {
       const used=HOST_CONTRACTS.filter(contract=>contract.family===family&&this.hosts.has(contract.id));
       if(used.length)preludes.unshift(`import { ${used.map(contract=>`${contract.jsExport} as ml_host_${contract.id}`).join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,`${family}-runtime.mjs`))};`);
     }
@@ -211,6 +265,7 @@ export class HostEmitter extends EffectEmitter {
       if(json)preludes.unshift(`import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'json-values.mjs'))};`);
       if(time){preludes.unshift(`import { std_time_duration_as_secs as ml_host_duration_as_secs } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'time-runtime.mjs'))};`);preludes.push('function ml_validate_duration(value) { ml_host_duration_as_secs(value); return true; }');}
     }
+    if(this.standardMethods)preludes.push(`function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }`, `function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }`, `function ml_host_option_map(value, callback) { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }`);
     if(this.optionCallbacks)preludes.push(`function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }`);
     preludes.push(...this.instantiations.values());
     return {...result,preludes,text:[...preludes,...result.definitions].join('\n\n')};
