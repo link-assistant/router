@@ -20,9 +20,11 @@ const KINDS = Object.freeze({
   ETIMEDOUT:'TimedOut',ENOSPC:'StorageFull',ESPIPE:'NotSeekable',EDQUOT:'QuotaExceeded',EFBIG:'FileTooLarge',
   EBUSY:'ResourceBusy',ETXTBSY:'ExecutableFileBusy',EDEADLK:'Deadlock',EXDEV:'CrossesDevices',EMLINK:'TooManyLinks',
   ENAMETOOLONG:'InvalidFilename',E2BIG:'ArgumentListTooLong',EINTR:'Interrupted',ENOSYS:'Unsupported',
-  ENOTSUP:'Unsupported',EOPNOTSUPP:'Unsupported',ENOMEM:'OutOfMemory',EINPROGRESS:'InProgress',
-  EMFILE:'TooManyOpenFiles',ENFILE:'TooManyOpenFiles',EIO:'InputOutputError',
+  EOPNOTSUPP:'Unsupported',ENOMEM:'OutOfMemory',EINPROGRESS:'InProgress',
 });
+// Rust classifies actual Unix errno numbers. libuv's symbolic name can differ
+// when aliases share a number, and ENOTSUP is distinct on some Unix targets.
+const UNIX_KINDS=new Map(Object.entries(KINDS).filter(([code])=>Number.isInteger(osConstants.errno?.[code]) && (code !== 'ENOTEMPTY' || process.platform !== 'aix')).map(([code,kind])=>[osConstants.errno[code],kind]));
 export const withEffectCapabilities = (capabilities,operation) => scopedCapabilities.run(capabilities,operation);
 function capabilities(explicit) {return explicit ?? scopedCapabilities.getStore() ?? {};}
 function ioError(kind,message,raw = NONE) {return Object.freeze({$:'IoError',kind,message,raw_os_error:raw});}
@@ -33,7 +35,8 @@ function systemError(error) {
   // rather than presenting that translated value as Rust raw_os_error().
   const errno=process.platform === 'win32' ? null : osConstants.errno?.[error.code] ?? (Number.isInteger(error.errno) ? Math.abs(error.errno) : null);
   const raw=Number.isInteger(errno) && errno >= 0 && errno <= 2147483647 ? some(BigInt(errno)) : NONE;
-  return ioError(KINDS[error.code] ?? 'Other',String(error.message ?? error.code),raw);
+  const kind=process.platform === 'win32'?KINDS[error.code] ?? 'Uncategorized':UNIX_KINDS.get(errno) ?? 'Uncategorized';
+  return ioError(kind,String(error.message ?? error.code),raw);
 }
 function checkPath(path) {
   requireString(path);

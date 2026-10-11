@@ -8,9 +8,20 @@
     {"url":"https://doc.rust-lang.org/std/io/enum.ErrorKind.html","contracts":["OS error categories","non-exhaustive unknown-error handling"]},
     {"url":"https://docs.rs/tokio/latest/tokio/fs/fn.read_to_string.html","contracts":["async filesystem future resolves to std::io::Result<String>"]}
   ],
+  "errorKindProfile": {
+    "rustVersion": "1.89.0",
+    "source": "https://github.com/rust-lang/rust/blob/1.89.0/library/std/src/sys/pal/unix/mod.rs",
+    "sourceGitBlobSha": "ba9e14b8009cd918cd9681dabe518ebf3c3a0a3a",
+    "scope": "decode_error_kind for Unix targets, with the AIX ENOTEMPTY conditional preserved",
+    "unknownOsKind": "Uncategorized",
+    "knownUncategorizedCodes": ["EIO", "EMFILE", "ENFILE", "EBADF"],
+    "aliasRule": "Classify actual numeric errno; ENOTSUP need not share EOPNOTSUPP on all Unix systems."
+  },
   "validationLimits": [
     "No Rust executable or Cargo build was run before the complete JavaScript gate passes.",
     "Windows native OS error-code parity and opaque non-Unicode filesystem paths remain unverified.",
+    "Windows libuv error-kind names remain a coarse adapter classification without a verified underlying Win32 code.",
+    "IoError.message is a host adapter diagnostic, not a proven source-specific Rust Error Display string; lowering dependent on exact display must remain refused.",
     "Adapters cover declared monomorphic overloads; they do not promote complete Router runtime parity."
   ]
 }
