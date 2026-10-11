@@ -203,3 +203,5 @@ See [extensions/NOTICE.md](extensions/NOTICE.md) for local adaptations and
 [vendor/NOTICE.md](vendor/NOTICE.md) for upstream references and licensing.
 
 The source-only `declarative-closure.mjs` layer records privately checked expansion lineage, original definition provenance, nested calls and generated attributes. Its conditional partition receipts keep unknown cfg atoms symbolic and select no platform. Neither such a receipt nor supplying a pinned transcriber resolves a macro call owner: all namespace and runtime authority remains false until independent ownership, hygiene, attribute and confinement obligations are closed.
+
+`derive-success-frontier.mjs` inventories written quote templates from the original locked Serde generator sources for a narrower nonempty unit-enum candidate. Its sealed evidence records splices, generated attributes and the fixed empty macro expansion without choosing generator branches or resolving call owners. This module is not consumed by the binder; every namespace dimension and generated-trait authority remains false.

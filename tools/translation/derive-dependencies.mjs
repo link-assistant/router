@@ -6,6 +6,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const profileBytes=readFileSync(new URL('./source-profiles/derive/manifest.json',import.meta.url));
 export const DERIVE_SOURCE_PROFILE=Object.freeze(JSON.parse(profileBytes));
 const proofs=new WeakSet();
+const proofSources=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 freeze(DERIVE_SOURCE_PROFILE);
 
@@ -37,7 +38,7 @@ export function createDeriveDependencyProof({manifest,lock,archives,standardCore
   if(typeof manifest!=='string'||typeof lock!=='string'||!(archives instanceof Map))throw new TypeError('Derive proof requires actual manifest, lock and archive bytes');
   const profile=DERIVE_SOURCE_PROFILE;
   if(hash(manifest)!==profile.manifestSha256||hash(lock)!==profile.lockSha256)throw new TypeError('Derive dependency manifest or lock does not match the audited source profile');
-  const packages=[];
+  const packages=[],sources=new Map();
   for(const entry of profile.packages) {
     const sections=lock.split('[[package]]').filter(section=>new RegExp('^\\s*name = "'+entry.name+'"\\nversion = "'+entry.version.replaceAll('.','\\.')+'"','m').test(section));
     if(sections.length!==1||!sections[0].includes('checksum = "'+entry.sha256+'"')||!sections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"'))throw new TypeError('Derive archive lacks exact locked registry identity');
@@ -48,6 +49,7 @@ export function createDeriveDependencyProof({manifest,lock,archives,standardCore
       const contents=files.get(entry.name+'-'+entry.version+'/'+path);
       if(!contents||hash(contents)!==digest)throw new TypeError('Derive source member checksum mismatch: '+entry.name+'/'+path);
       checked.push({path,sha256:digest});
+      sources.set(entry.name+'/'+path,freeze({package:entry.name,version:entry.version,path,archiveSha256:entry.sha256,sha256:digest,source:contents.toString('utf8')}));
     }
     packages.push({name:entry.name,version:entry.version,archiveSha256:entry.sha256,members:checked});
   }
@@ -55,10 +57,15 @@ export function createDeriveDependencyProof({manifest,lock,archives,standardCore
   const core=gunzipSync(standardCore,{maxOutputLength:300000});
   if(core.length!==profile.standardCore.bytes||hash(core)!==profile.standardCore.sha256)throw new TypeError('Unproved standard compile_error owner source');
   const evidence={schema:'locked-derive-dependencies-v1',manifestSha256:hash(manifest),lockSha256:hash(lock),sourceProfileSha256:hash(profileBytes),edition:profile.rustEdition,rustVersion:profile.rustVersion,features:profile.dependencies,packages,standardCore:{url:profile.standardCore.url,sha256:hash(core)}};
-  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);return proof;
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);proofSources.set(proof,sources);return proof;
 }
 
 export function isDeriveDependencyProof(proof){return !!proof&&proofs.has(proof);}
+export function deriveDependencySource(proof,packageName,path) {
+  const sources=proofSources.get(proof);if(!sources)throw new TypeError('Unsealed derive dependency source proof');
+  const source=sources.get(packageName+'/'+path);if(!source)throw new TypeError('Derive source was not an audited archive member');
+  return source;
+}
 export function loadDeriveDependencyProof({manifest,lock}) {
   const root=new URL('./source-profiles/derive/',import.meta.url);
   return createDeriveDependencyProof({manifest,lock,archives:new Map(DERIVE_SOURCE_PROFILE.packages.map(entry=>[entry.name+'@'+entry.version,readFileSync(new URL(entry.archive,root))])),standardCore:readFileSync(new URL(DERIVE_SOURCE_PROFILE.standardCore.archive,root))});
