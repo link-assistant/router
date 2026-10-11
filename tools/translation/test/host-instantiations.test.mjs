@@ -14,7 +14,8 @@ test('factory data is declared and checked once per actual monomorphic receiver'
   assert.notEqual(wide.option.path[0], small.option.path[0]);
   assert.equal(registry.contracts.size, 6);
   const type = checker.resolveType(small.option,[],span), entry = checker.items.get(type.name);
-  assert.deepEqual(entry.standardGeneric,{kind:'Option',arguments:[fixed(8,false)]});
+  assert.deepEqual(entry.standardGeneric,{kind:'Option',arguments:[small.borrowedElement]});
+  assert.deepEqual(entry.standardGeneric.arguments[0].rustReference.pointee,fixed(8,false));
   assert.equal(entry.ctors[1].fields[0].type.bits,8);
   assert.equal(registry.items.filter(item=>item.k==='data').length,2);
   assert.throws(()=>registry.vector({kind:'named',path:['Unknown']},span),error=>error.kind==='unsupported'&&error.span.start===7);

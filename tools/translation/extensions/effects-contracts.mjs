@@ -2,13 +2,14 @@
 // These declarations describe value/error layouts, never repository functions.
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {STRING,UNIT,fixed,array} from '../vendor/meta-language/translation/types.js';
+import {SOURCE_STRING} from './source-contract-types.mjs';
 const named = (...path) => ({kind:'named',path});
 const span = {start:0,end:0};
 const I32={...fixed(32,true),rustPrimitiveName:'i32'};
 const OPTION_I32=monomorphicTypeName('Option',[I32]);
-const RESULT_STRING_IO=monomorphicTypeName('Result',[STRING,named('std','io','Error')]);
+const RESULT_STRING_IO=monomorphicTypeName('Result',[SOURCE_STRING,named('std','io','Error')]);
 const RESULT_UNIT_IO=monomorphicTypeName('Result',[UNIT,named('std','io','Error')]);
-const RESULT_STRING_ENV=monomorphicTypeName('Result',[STRING,named('std','env','VarError')]);
+const RESULT_STRING_ENV=monomorphicTypeName('Result',[SOURCE_STRING,named('std','env','VarError')]);
 function freeze(value) {if (value && typeof value === 'object') {for (const item of Object.values(value)) freeze(item);Object.freeze(value);}return value;}
 const declaration = (name,ctors,standardGeneric) => ({k:'data',name,ctors,span,generated:'router-standard-effect-contract',...(standardGeneric?{standardGeneric}:{})});
 const constructor = (name,fields = []) => ({name,fields});
@@ -26,9 +27,9 @@ export const EFFECT_DATA = freeze([
       constructor('NotPresent'),constructor('NotUnicode',[field(named('crate','std','ffi','OsString'))]),
     ])]},
   ]},
-  result(RESULT_STRING_IO,STRING,named('crate','std','io','Error')),
+  result(RESULT_STRING_IO,SOURCE_STRING,named('crate','std','io','Error')),
   result(RESULT_UNIT_IO,UNIT,named('crate','std','io','Error')),
-  result(RESULT_STRING_ENV,STRING,named('crate','std','env','VarError')),
+  result(RESULT_STRING_ENV,SOURCE_STRING,named('crate','std','env','VarError')),
 ]);
 const filesystemAssumptions = [
   'Rust string paths are Unicode scalar strings; opaque/non-Unicode OsStr paths need a separate checked capability.',

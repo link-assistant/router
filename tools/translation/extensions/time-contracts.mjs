@@ -1,6 +1,7 @@
 // Checked pure std::time::Duration ABI from Rust 1.89 core/time.rs.
-import {BOOL,STRING,FLOAT,fixed} from '../vendor/meta-language/translation/types.js';
+import {BOOL,FLOAT,fixed} from '../vendor/meta-language/translation/types.js';
 import {monomorphicTypeName} from '../monomorphic.mjs';
+import {SOURCE_STRING} from './source-contract-types.mjs';
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};
 function freeze(value){if(value && typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-time-contract',...(standardGeneric?{standardGeneric}:{})}),field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
@@ -37,7 +38,7 @@ export const TIME_CONTRACTS=freeze([
   ...['min','max'].map(name=>method(name,[DURATION],DURATION,{constEligible:false,trait:['std','cmp','Ord'],ownership:'checked immutable Copy values; selected operand identity retained',tieOperand:name==='min'?'self':'other'})),
   method('as_secs_f64',[],FLOAT),method('div_duration_f64',[DURATION],FLOAT),
   contract('try_from_secs_f64',[FLOAT],result,{constEligible:false}),contract('from_secs_f64',[FLOAT],DURATION,{constEligible:false}),...['mul_f64','div_f64'].map(name=>method(name,[FLOAT],DURATION,{constEligible:false})),
-  contract('to_string',[FLOAT_ERROR],STRING,{kind:'method',owner:'TryFromFloatSecsError',constEligible:false,trait:['std','string','ToString']}),
+  contract('to_string',[FLOAT_ERROR],SOURCE_STRING,{kind:'method',owner:'TryFromFloatSecsError',constEligible:false,trait:['std','string','ToString']}),
 ]);
 export const TIME_CONSTANTS=freeze([
   {id:'std_time_duration_ZERO',jsExport:'std_time_duration_ZERO',rustPath:['std','time','Duration','ZERO'],type:DURATION,pure:true,constEligible:true,value:{$:'Duration',secs:0n,nanos:0n}},

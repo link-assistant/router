@@ -1,6 +1,7 @@
 // Checked fixed-integer parsing instantiations, independent of Router bodies.
 import {valueSchema} from '../type-layout.mjs';
 import {encodeMonomorphicType,monomorphicTypeName} from '../monomorphic.mjs';
+import {SOURCE_STRING,sourceShared} from './source-contract-types.mjs';
 const span={start:0,end:0},named=(...path)=>({kind:'named',path});
 const freeze=value=>{if(value && typeof value === 'object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;};
 export const INTEGER_TYPES=freeze({error:named('std','num','ParseIntError'),kind:named('std','num','IntErrorKind')});
@@ -9,8 +10,8 @@ const errorCtors=[{name:'ParseIntError',fields:[{name:'kind',type:INTEGER_TYPES.
 const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-integer-contract',...(standardGeneric?{standardGeneric}:{})});
 export const INTEGER_DATA=freeze([{k:'module',name:'std',span,items:[{k:'module',name:'num',span,items:[declaration('IntErrorKind',kindCtors),declaration('ParseIntError',errorCtors)]}]}]);
 export const INTEGER_ERROR_CONTRACTS=freeze([
-  {id:'std_num_parse_int_error_kind',jsExport:'std_num_parse_int_error_kind',rustPath:['std','num','ParseIntError','kind'],kind:'method',receiver:INTEGER_TYPES.error,params:[INTEGER_TYPES.error],ret:INTEGER_TYPES.kind,async:false,pure:true,constEligible:true,constSince:'1.82.0',borrow:{receiver:'shared',result:'shared-field'}},
-  {id:'std_num_parse_int_error_to_string',jsExport:'std_num_parse_int_error_to_string',rustPath:['std','num','ParseIntError','to_string'],kind:'method',receiver:INTEGER_TYPES.error,params:[INTEGER_TYPES.error],ret:{kind:'string'},async:false,pure:true,constEligible:false},
+  {id:'std_num_parse_int_error_kind',jsExport:'std_num_parse_int_error_kind',rustPath:['std','num','ParseIntError','kind'],kind:'method',receiver:INTEGER_TYPES.error,params:[INTEGER_TYPES.error],ret:sourceShared(INTEGER_TYPES.kind),async:false,pure:true,constEligible:true,constSince:'1.82.0',borrow:{receiver:'shared',result:'shared-field'}},
+  {id:'std_num_parse_int_error_to_string',jsExport:'std_num_parse_int_error_to_string',rustPath:['std','num','ParseIntError','to_string'],kind:'method',receiver:INTEGER_TYPES.error,params:[INTEGER_TYPES.error],ret:SOURCE_STRING,async:false,pure:true,constEligible:false},
 ]);
 const assumptions=[
   'The actual checked fixed-integer target, signedness and width determine this monomorphic parser and Result layout.',

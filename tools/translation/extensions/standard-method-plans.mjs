@@ -43,7 +43,18 @@ function standard(type,kind,context,required=false) {
 
 // Equal runtime widths do not prove the same Rust primitive identity. This
 // operation has one U, shared by the eager default and callback result.
-const sameOutput=(left,right)=>typeKey(left)===typeKey(right) && left.patternOwnershipRefusal===right.patternOwnershipRefusal && (left.kind!=='fixed' || left.rustPrimitiveName===right.rustPrimitiveName) && (left.kind!=='array' || sameOutput(left.element,right.element)) && (!left.rustStandardGeneric&&!right.rustStandardGeneric || left.rustStandardGeneric?.kind===right.rustStandardGeneric?.kind && left.rustStandardGeneric.arguments.length===right.rustStandardGeneric.arguments.length && left.rustStandardGeneric.arguments.every((type,index)=>sameOutput(type,right.rustStandardGeneric.arguments[index])));
+const owner=type=>type.rustOwnership??(type.kind==='string'&&type.patternOwnershipRefusal?.startsWith('owned String')?{kind:'owned',source:'String'}:null);
+function sameOutput(left,right) {
+  if(typeKey(left)!==typeKey(right)||left.rustGenericIdentityUnresolved||right.rustGenericIdentityUnresolved)return false;
+  const a=owner(left),b=owner(right);
+  if(a?.kind!==b?.kind||a?.source!==b?.source)return false;
+  if(left.rustReference||right.rustReference){if(left.rustReference?.kind!=='shared'||right.rustReference?.kind!=='shared'||!left.rustReference.pointee||!right.rustReference.pointee||!sameOutput(left.rustReference.pointee,right.rustReference.pointee))return false;}
+  else if(!(left.kind==='string'&&a?.kind==='owned')&&left.patternOwnershipRefusal!==right.patternOwnershipRefusal)return false;
+  if(left.kind==='fixed'&&left.rustPrimitiveName!==right.rustPrimitiveName)return false;
+  if(left.kind==='array'&&!sameOutput(left.element,right.element))return false;
+  const x=left.rustStandardGeneric,y=right.rustStandardGeneric;
+  return !x&&!y||x?.kind===y?.kind&&x?.arguments?.length===y?.arguments?.length&&x?.arguments?.every((type,index)=>sameOutput(type,y.arguments[index]));
+}
 function mapOrOutput(type,span){
   checkedType(type,span);
   if(type.rustGenericIdentityUnresolved)throw typeError('Option.map_or output requires an unerased checked Rust generic identity',span);

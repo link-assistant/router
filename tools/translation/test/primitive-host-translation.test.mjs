@@ -24,12 +24,12 @@ const none=Object.freeze({$:'None'}),some=value=>Object.freeze({$:'Some',field0:
 const error=kind=>({$:'Err',field0:{$:'ParseIntError',kind:{$:kind}}});
 
 test('fixed parse and checked standard callbacks execute in unchanged JavaScript and strict compiled TypeScript', {timeout:30_000}, async()=>{
-  const result=project('pub fn parse(source:&str)->Result<u64,std::num::ParseIntError>{source.parse::<u64>()} pub fn signed(source:&str)->Result<i8,std::num::ParseIntError>{source.parse::<i8>()} pub fn inferred(source:&str)->Result<u16,std::num::ParseIntError>{source.parse()} pub fn ok(source:&str)->Option<u64>{source.parse::<u64>().ok()} pub fn map(value:Option<u8>)->Option<u16>{value.map(|v|v as u16)} pub fn lazy(flag:bool)->Option<u8>{flag.then(||panic!("called"))} pub fn kind(source:&str)->std::num::IntErrorKind{match source.parse::<u8>() {Ok(_) => std::num::IntErrorKind::Empty,Err(error) => error.kind()}}');
+  const result=project('pub fn parse(source:&str)->Result<u64,std::num::ParseIntError>{source.parse::<u64>()} pub fn signed(source:&str)->Result<i8,std::num::ParseIntError>{source.parse::<i8>()} pub fn inferred(source:&str)->Result<u16,std::num::ParseIntError>{source.parse()} pub fn ok(source:&str)->Option<u64>{source.parse::<u64>().ok()} pub fn map(value:Option<u8>)->Option<u16>{value.map(|v|v as u16)} pub fn lazy(flag:bool)->Option<u8>{flag.then(||panic!("called"))} pub fn kind(value:&std::num::ParseIntError)->&std::num::IntErrorKind{value.kind()}');
   await artifacts(result,api=>{
     for(const [input,expected] of [['23',{$:'Ok',field0:23n}],['+23',{$:'Ok',field0:23n}],['18446744073709551615',{$:'Ok',field0:18446744073709551615n}],['18446744073709551616',error('PosOverflow')],['-1',error('InvalidDigit')],['23x',error('InvalidDigit')],['',error('Empty')]])assert.deepEqual(api.parse(input),expected);
     assert.deepEqual(api.signed('-128'),{$:'Ok',field0:-128n});assert.deepEqual(api.signed('-129'),error('NegOverflow'));assert.deepEqual(api.inferred('65535'),{$:'Ok',field0:65535n});
     assert.deepEqual(api.ok('23'),some(23n));assert.deepEqual(api.ok('wrong'),none);assert.deepEqual(api.map(some(7n)),some(7n));assert.deepEqual(api.map(none),none);
-    assert.deepEqual(api.lazy(false),none);assert.throws(()=>api.lazy(true),{message:'called'});assert.deepEqual(api.kind('256'),{$:'PosOverflow'});
+    assert.deepEqual(api.lazy(false),none);assert.throws(()=>api.lazy(true),{message:'called'});assert.deepEqual(api.kind(error('PosOverflow').field0),{$:'PosOverflow'});
     assert.throws(()=>api.parse('\ud800'),TypeError);assert.throws(()=>api.map({$:'Some',field0:256n}),TypeError);
   });
 });

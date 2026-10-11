@@ -7,6 +7,7 @@ import {valueSchema} from '../type-layout.mjs';
 import {validateRustValue} from '../type-layout-runtime.mjs';
 import {JSON_DATA,JSON_TYPES} from '../extensions/json-contracts.mjs';
 import {serde_json_from_str} from '../extensions/json-runtime.mjs';
+import {monomorphicTypeName} from '../monomorphic.mjs';
 const check=items=>new Checker('Rust',[]).program({language:'Rust',items});
 const fixed=(bits=64,signed=false)=>({kind:'fixed',bits,signed});
 const runtime=(element,declarations=new Map(),options={})=>{
@@ -15,7 +16,8 @@ const runtime=(element,declarations=new Map(),options={})=>{
 };
 test('generic readers resolve actual primitive, nested and recursive Option layouts without collisions',()=>{
   const checked=check(structuredClone(JSON_DATA)),factory=vectorContracts(JSON_TYPES.value,checked.declarations);
-  assert.equal(factory.element.name,'serde_json.Value');assert.equal(factory.data.length,0);
+  assert.equal(factory.element.name,'serde_json.Value');assert.equal(factory.data.length,checked.declarations.has(factory.option.path[0])?0:1);
+  assert.notEqual(factory.option.path[0],monomorphicTypeName('Option',[JSON_TYPES.value]));
   for(const contract of factory.contracts) {
     assert.equal(contract.receiver.kind,'array');assert.equal(contract.ret.path[0],factory.option.path[0]);
     assert.equal(contract.pure,true);assert.equal(contract.constEligible,false);assert.equal(contract.borrow.result,'shared-element');
@@ -23,7 +25,8 @@ test('generic readers resolve actual primitive, nested and recursive Option layo
   const fresh=vectorContracts({kind:'array',element:fixed()},new Map());
   const declaration=check(structuredClone(fresh.data)).declarations.get(fresh.option.path[0]);
   assert.equal(declaration.ctors[1].fields[0].type.kind,'array');
-  assert.deepEqual(declaration.standardGeneric,{kind:'Option',arguments:[fresh.element]});
+  assert.deepEqual(declaration.standardGeneric,{kind:'Option',arguments:[fresh.borrowedElement]});
+  assert.equal(fresh.borrowedElement.rustReference.kind,'shared');assert.deepEqual(fresh.borrowedElement.rustReference.pointee,fresh.element);
   const unproven=new Map([[fresh.option.path[0],{...declaration,standardGeneric:undefined}]]);
   assert.throws(()=>vectorContracts({kind:'array',element:fixed()},unproven),/Conflicting checked Option provenance/);
   assert.equal(vectorContracts({kind:'array',element:fixed()},new Map([[fresh.option.path[0],declaration]])).data.length,0);
@@ -32,6 +35,7 @@ test('generic readers resolve actual primitive, nested and recursive Option layo
   const conflicted=new Map([[fresh.option.path[0],{k:'data',ctors:[{name:'None',fields:[]}]}]]);
   assert.throws(()=>vectorContracts({kind:'array',element:fixed()},conflicted),/Conflicting checked Option/);
   for(const type of [{kind:'any'},{kind:'named',path:['Unknown']},{kind:'fixed',bits:7,signed:false},null])assert.throws(()=>vectorContracts(type,new Map()),TypeError);
+  assert.throws(()=>vectorContracts({...fixed(8),rustGenericIdentityUnresolved:true},new Map()),/unerased checked Rust generic identity/);
 });
 test('get first and last preserve absence, unit presence and exact usize boundaries',()=>{
   const {reader}=runtime(fixed()),values=[10n,40n,30n];

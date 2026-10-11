@@ -13,7 +13,8 @@ function sourceQualifiers(type) {
   return {
     ...(type.rustPrimitiveName?{primitive:type.rustPrimitiveName}:{}),
     ...(type.patternOwnershipRefusal?{ownership:type.patternOwnershipRefusal}:{}),
-    ...(type.rustReference?{reference:type.rustReference.kind}:{}),
+    ...(type.rustOwnership?{sourceOwnership:type.rustOwnership}:{}),
+    ...(type.rustReference?{reference:{kind:type.rustReference.kind,pointee:sourceQualifiers(type.rustReference.pointee)}}:{}),
     ...(type.rustGenericIdentityUnresolved?{unresolved:true}:{}),
     ...(type.kind==='array'?{element:sourceQualifiers(type.element)}:{}),
     ...(type.rustStandardGeneric?{generic:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(sourceQualifiers)}}:{}),

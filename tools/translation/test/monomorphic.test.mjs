@@ -21,3 +21,13 @@ test('actual pointer integer identities remain distinct from portable fixed widt
   assert.equal(new Set(types.map(element=>encodeMonomorphicType(array(element)))).size,4);
   assert.equal(new Set(types.flatMap(left=>types.map(right=>monomorphicTypeName('Result',[left,right])))).size,16);
 });
+test('source references and ownership retain injective generic identities',()=>{
+  const u64={kind:'fixed',bits:64,signed:false,rustPrimitiveName:'u64'},usize={...u64,rustPrimitiveName:'usize'};
+  const shared=pointee=>({...pointee,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee}});
+  const string={kind:'string',rustOwnership:{kind:'borrowed',source:'str'}},owned={kind:'string',rustOwnership:{kind:'owned',source:'String'}};
+  const types=[u64,usize,shared(u64),shared(usize),shared(shared(u64)),string,owned,shared(string),shared(owned),array(u64),{...array(u64),rustOwnership:{kind:'owned',source:'Vec'}},shared(array(u64)),{...u64,rustGenericIdentityUnresolved:true}];
+  assert.equal(new Set(types.map(encodeMonomorphicType)).size,types.length);
+  assert.equal(new Set(types.map(type=>monomorphicTypeName('Option',[type]))).size,types.length);
+  assert.equal(encodeMonomorphicType(shared({...u64,span:{start:1,end:2}})),encodeMonomorphicType(shared({...u64,span:{start:9,end:10}})));
+  assert.throws(()=>encodeMonomorphicType({...u64,rustReference:{kind:'shared'}}),/checked shared pointee/);
+});

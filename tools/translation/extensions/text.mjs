@@ -5,6 +5,7 @@ import {FormatRustParser,FormatChecker,FormatEmitter} from './formatting.mjs';
 import {BOOL,STRING,fixed,rustFixedType,sameType} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {SOURCE_STR} from './source-contract-types.mjs';
 const SPLITS=new Set(['split_once','rsplit_once']);
 const STRIPS=new Set(['strip_prefix','strip_suffix']);
 const TRIMS=new Set(['trim_start_matches','trim_end_matches','trim_matches']);
@@ -36,7 +37,7 @@ export class TextRustParser extends FormatRustParser {
     // instantiator needed by this expanded string/character Pattern profile.
     if(STRIPS.has(name.value)&&typeof this.registeredGenericKind!=='function')return super.method(object,name,args,span);
     if(args.length!==METHODS.get(name.value))throw typeError(`${name.value} expects ${METHODS.get(name.value)} arguments`,span);
-    const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:STRING,rustTypeSyntax:['&','str']})),span):null;
+    const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:SOURCE_STR,rustTypeSyntax:['&','str']})),span):null;
     return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),span};
   }
 }
@@ -74,12 +75,12 @@ export class TextChecker extends FormatChecker {
     }
     if(STRIPS.has(node.op)) {
       if(!this.instantiations?.option)throw unsupported('strip standard Option','requires checked standard-library result instantiation',node.span);
-      type=this.instantiations.option(STRING,node.span);
+      type=this.instantiations.option(SOURCE_STR,node.span);
       if(expected&&!sameType(expected,type))throw typeError('strip result differs from the actual expected standard Option layout',node.span);
     }
     if(TRIMS.has(node.op)) {
       if(node.op==='trim_matches'&&node.args[0].k!=='routerPatternChar')throw unsupported('double-ended trim Pattern','the checked profile requires an actual scalar char literal; str searchers do not implement the required DoubleEndedSearcher',node.span);
-      type=STRING;
+      type=SOURCE_STR;
     }
     const operation={k:node.k,op:node.op,value,args,type,...(tupleType?{tupleType}:{}),constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
     return bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),operation);
