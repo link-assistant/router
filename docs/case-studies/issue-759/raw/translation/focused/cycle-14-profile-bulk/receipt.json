@@ -1,0 +1,629 @@
+{
+  "schema": "complete-focused-profile-bulk-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "scope": "25 files, including independent profile full-corpus draft fixtures and affected module/namespace checking",
+  "finalSourceHead": "ea021fb7ab65dd8e29e51ecc0a94a07ea1dfa221",
+  "finalInputSha256": "47eacb54081c50ed910634fd688bc974434eaa16ff35ba020f4680810052676b",
+  "attempts": [
+    {
+      "phase": "initial",
+      "engine": "node",
+      "sourceHead": "4a7059b0ae363a9adff3792a50ab11ab471c4c23",
+      "sourceInputSha256": "1a3afccf2ac7d0469e183c9411b008901cf59770a64d24964e69c0c4dec0b7cb",
+      "counts": {
+        "tests": 243,
+        "pass": 240,
+        "fail": 3,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 46.048,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 209485824,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/1fdf248b7ade452d493607c8b66667296fa18e878457c10c970d3caa8dbe8727.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/6ceadbf5bc1f1e1bbcecb245a1e29c39efffb9a7001e1615e633b2291c8d5dfe.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/afa29bd2fa0f4d195edbc0fac4c82ed7c8535b24d456feea3b6f0223da04c983.gz"
+    },
+    {
+      "phase": "initial",
+      "engine": "bun",
+      "sourceHead": "4a7059b0ae363a9adff3792a50ab11ab471c4c23",
+      "sourceInputSha256": "1a3afccf2ac7d0469e183c9411b008901cf59770a64d24964e69c0c4dec0b7cb",
+      "counts": {
+        "tests": 243,
+        "pass": 240,
+        "fail": 3,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 30.422,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 366084096,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/fb16a8954a43914d0b19e4717b75d651ed6dd16c1ef1fe596c8e668d3fc44606.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/84f1c93b4a3f35a23cf444941553445fb77d27bbf9b0686dc030f89103f4faa0.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/afa29bd2fa0f4d195edbc0fac4c82ed7c8535b24d456feea3b6f0223da04c983.gz"
+    },
+    {
+      "phase": "final",
+      "engine": "node",
+      "sourceHead": "27530fa75806dc62bab22a4b4625511a9842e434",
+      "sourceInputSha256": "ea64137fcce6c942c21078afcf00140c04e0d20266d4e1d27459fa7694ea082b",
+      "counts": {
+        "tests": 245,
+        "pass": 244,
+        "fail": 1,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 48.316,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 202653696,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5169d0599d7c3215e2384fc1f01ffef1f3210e636d3251195a79c819ab774a93.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/9eae1df329c5321d18eb4bef7879ba4bcdbf8740981c9992864797f56aad8040.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5d43661a3aca6dc9d8faeb910740a1ff7be33bf3e66092a8e67be765799a6edf.gz"
+    },
+    {
+      "phase": "final",
+      "engine": "bun",
+      "sourceHead": "27530fa75806dc62bab22a4b4625511a9842e434",
+      "sourceInputSha256": "ea64137fcce6c942c21078afcf00140c04e0d20266d4e1d27459fa7694ea082b",
+      "counts": {
+        "tests": 245,
+        "pass": 244,
+        "fail": 1,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 30.232,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 377896960,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/580b873ea6ee84b575672d46c8a480b5f9c645ad0d2b17130d1a0c5649770762.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5cdacab98e7cf50087e7b36b9f289943bb89bd584de241731084bd7c695cfd9d.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5d43661a3aca6dc9d8faeb910740a1ff7be33bf3e66092a8e67be765799a6edf.gz"
+    },
+    {
+      "phase": "coordinate-final",
+      "engine": "node",
+      "sourceHead": "9205f21eb3926c464927daf2dfcee81ad4ee3e84",
+      "sourceInputSha256": "3b2ecb0c51e55b1426f7be8161ad3c4bb5370780ec020b9393380e3a1c730c58",
+      "counts": {
+        "tests": 246,
+        "pass": 245,
+        "fail": 1,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 51.054,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 209862656,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/70f6108efd199f3409152143c68d665e25bce3952da42057aa6b154ca2dcfed2.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/11974ae7b65330a5b54fdb6a97640fc1695c7ccdc6b1ad9126a86b77480d6752.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/535db87ac595779839edf0c420445e4224a489831ec51a6212d46c185b4bb932.gz"
+    },
+    {
+      "phase": "coordinate-final",
+      "engine": "bun",
+      "sourceHead": "9205f21eb3926c464927daf2dfcee81ad4ee3e84",
+      "sourceInputSha256": "3b2ecb0c51e55b1426f7be8161ad3c4bb5370780ec020b9393380e3a1c730c58",
+      "counts": {
+        "tests": 246,
+        "pass": 245,
+        "fail": 1,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 31.052,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 426770432,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/d813b989db51ae4f401db1234602b54c413ce3a7cc997d87f21f604ab92197e9.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/8f30f98bf0f51a1e1babdde9d7c3fd4b074bb3d16f0b2be3728e716f5ed1e688.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/535db87ac595779839edf0c420445e4224a489831ec51a6212d46c185b4bb932.gz"
+    },
+    {
+      "phase": "owner-final",
+      "engine": "node",
+      "sourceHead": "d651405ec1905306c3f08432eddb5ce3a78ca496",
+      "sourceInputSha256": "15e41d9ac01cf41ba299c7d7802ae7d04dbf5bc448c9ccae79e4d859b28c3a8a",
+      "counts": {
+        "tests": 247,
+        "pass": 246,
+        "fail": 1,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 48.683,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 204472320,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b69a67d6748f8361f21358ef2f99cc8dae35c9536de294ea53b1b9feada794d2.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/7e3a7781ec7d3957a6bcbd0f517d20891f246e00f3c77d99287de24efd71a046.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5b4316b0f16b68959f7366261055dba66ee97e61bd7b78c05fa9fa2d275bd72f.gz"
+    },
+    {
+      "phase": "owner-final",
+      "engine": "bun",
+      "sourceHead": "d651405ec1905306c3f08432eddb5ce3a78ca496",
+      "sourceInputSha256": "15e41d9ac01cf41ba299c7d7802ae7d04dbf5bc448c9ccae79e4d859b28c3a8a",
+      "counts": {
+        "tests": 247,
+        "pass": 246,
+        "fail": 1,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 31.257,
+      "exitCode": 1,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 402800640,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/8ec12323aac16fd48c9abd48cd28da920194d4905c937b8954e888a66cc5779a.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/a93b188bd72589a8ab7a901245a304011af97171116b032708f125e07a8cfb30.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5b4316b0f16b68959f7366261055dba66ee97e61bd7b78c05fa9fa2d275bd72f.gz"
+    },
+    {
+      "phase": "validated-final",
+      "engine": "node",
+      "sourceHead": "ea021fb7ab65dd8e29e51ecc0a94a07ea1dfa221",
+      "sourceInputSha256": "47eacb54081c50ed910634fd688bc974434eaa16ff35ba020f4680810052676b",
+      "counts": {
+        "tests": 247,
+        "pass": 247,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "elapsedSeconds": 56.837,
+      "exitCode": 0,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 208568320,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/33073b80968a22c64ed5870d5a8afef6814f785eeb2269f953703e2e74a8b55d.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/4e4bd9c7b45b3aa2deb8887eccf88058db8d7136eedde7c969765b44d4d54195.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/7399bd4b57523db427471798a344442ec3632b88ee14ed3e9099bb1cab3f12d8.gz"
+    },
+    {
+      "phase": "validated-final",
+      "engine": "bun",
+      "sourceHead": "ea021fb7ab65dd8e29e51ecc0a94a07ea1dfa221",
+      "sourceInputSha256": "47eacb54081c50ed910634fd688bc974434eaa16ff35ba020f4680810052676b",
+      "counts": {
+        "tests": 247,
+        "pass": 247,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "elapsedSeconds": 31.136,
+      "exitCode": 0,
+      "timedOut": false,
+      "resourceScope": "all terminated harness child processes, including git and engine version; not process-tree peak or peak footprint",
+      "ownedChildrenMaxRssBytes": 337543168,
+      "receipt": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/78d10a784ed07a8e0108ccc97a4e4ad53767b416d7cbb6608392587c17b968f4.gz",
+      "log": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/d1ac3edaac60cc9c9dcab8db26e2693913d8bb475c59eab374d8039aa154ae36.gz",
+      "inputManifest": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/7399bd4b57523db427471798a344442ec3632b88ee14ed3e9099bb1cab3f12d8.gz"
+    }
+  ],
+  "objects": [
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/1fdf248b7ade452d493607c8b66667296fa18e878457c10c970d3caa8dbe8727.gz",
+      "rawBytes": 3182,
+      "rawSha256": "1fdf248b7ade452d493607c8b66667296fa18e878457c10c970d3caa8dbe8727",
+      "storedBytes": 1108,
+      "storedSha256": "d9814746d667d1fadb8065ead5e3519876c6a58ab19d70814f4cd77b8242cbd3",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/6ceadbf5bc1f1e1bbcecb245a1e29c39efffb9a7001e1615e633b2291c8d5dfe.gz",
+      "rawBytes": 55552,
+      "rawSha256": "6ceadbf5bc1f1e1bbcecb245a1e29c39efffb9a7001e1615e633b2291c8d5dfe",
+      "storedBytes": 11964,
+      "storedSha256": "3a8ee3fc2cfa62ffad3cc1f8ed251279d00b8cfa77ea25b74bd15e4d289d7bd7",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/afa29bd2fa0f4d195edbc0fac4c82ed7c8535b24d456feea3b6f0223da04c983.gz",
+      "rawBytes": 219457,
+      "rawSha256": "afa29bd2fa0f4d195edbc0fac4c82ed7c8535b24d456feea3b6f0223da04c983",
+      "storedBytes": 66200,
+      "storedSha256": "2bf95031fee4c2fa400dd1d9d65b1381f6bbb587246a5ab35ebdf15cc854f79c",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-node.inputs.json",
+        "/tmp/router-759-core-profile-initial-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/fb16a8954a43914d0b19e4717b75d651ed6dd16c1ef1fe596c8e668d3fc44606.gz",
+      "rawBytes": 3183,
+      "rawSha256": "fb16a8954a43914d0b19e4717b75d651ed6dd16c1ef1fe596c8e668d3fc44606",
+      "storedBytes": 1111,
+      "storedSha256": "a6c61f7ef06622149581e49852ed92ccafb3928ac35bfda3baf832c15e50c82e",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/84f1c93b4a3f35a23cf444941553445fb77d27bbf9b0686dc030f89103f4faa0.gz",
+      "rawBytes": 333426,
+      "rawSha256": "84f1c93b4a3f35a23cf444941553445fb77d27bbf9b0686dc030f89103f4faa0",
+      "storedBytes": 94538,
+      "storedSha256": "794e7e8c60e258e27935241b3736bd75df87af3f37579d4958b6a94ab7289832",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5169d0599d7c3215e2384fc1f01ffef1f3210e636d3251195a79c819ab774a93.gz",
+      "rawBytes": 3176,
+      "rawSha256": "5169d0599d7c3215e2384fc1f01ffef1f3210e636d3251195a79c819ab774a93",
+      "storedBytes": 1108,
+      "storedSha256": "7cca241383ff076dd030b6749e85183ec35d19eb1c4aa5e865da702b30e2c5c2",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-final-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/9eae1df329c5321d18eb4bef7879ba4bcdbf8740981c9992864797f56aad8040.gz",
+      "rawBytes": 53889,
+      "rawSha256": "9eae1df329c5321d18eb4bef7879ba4bcdbf8740981c9992864797f56aad8040",
+      "storedBytes": 11530,
+      "storedSha256": "18f1311b23ec737fdd072c3f66f589a87667130f4709aa47d67398ae7cc40e21",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-final-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5d43661a3aca6dc9d8faeb910740a1ff7be33bf3e66092a8e67be765799a6edf.gz",
+      "rawBytes": 219458,
+      "rawSha256": "5d43661a3aca6dc9d8faeb910740a1ff7be33bf3e66092a8e67be765799a6edf",
+      "storedBytes": 66204,
+      "storedSha256": "ddb91bc4414be120afafc1e34508cf0360d1f536331c519f8472f3d7bc8ed86c",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-final-node.inputs.json",
+        "/tmp/router-759-core-profile-final-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/580b873ea6ee84b575672d46c8a480b5f9c645ad0d2b17130d1a0c5649770762.gz",
+      "rawBytes": 3176,
+      "rawSha256": "580b873ea6ee84b575672d46c8a480b5f9c645ad0d2b17130d1a0c5649770762",
+      "storedBytes": 1106,
+      "storedSha256": "36cd3d6592723417e18f926803322f39554f39867ff18c54e2b334b42183e9a4",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-final-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5cdacab98e7cf50087e7b36b9f289943bb89bd584de241731084bd7c695cfd9d.gz",
+      "rawBytes": 26691,
+      "rawSha256": "5cdacab98e7cf50087e7b36b9f289943bb89bd584de241731084bd7c695cfd9d",
+      "storedBytes": 9100,
+      "storedSha256": "55ecb486f00db6673ca444f712db760b4942a8179cd66633143566eff054a1b8",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-final-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/70f6108efd199f3409152143c68d665e25bce3952da42057aa6b154ca2dcfed2.gz",
+      "rawBytes": 3209,
+      "rawSha256": "70f6108efd199f3409152143c68d665e25bce3952da42057aa6b154ca2dcfed2",
+      "storedBytes": 1118,
+      "storedSha256": "26cbcd3f7155094f7ba8e95666e15817ca2e9d6a912af48e3a8eef3b5ba2e1d1",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-final-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/11974ae7b65330a5b54fdb6a97640fc1695c7ccdc6b1ad9126a86b77480d6752.gz",
+      "rawBytes": 54354,
+      "rawSha256": "11974ae7b65330a5b54fdb6a97640fc1695c7ccdc6b1ad9126a86b77480d6752",
+      "storedBytes": 11593,
+      "storedSha256": "de8aa6b8803e5a625b95f03e2b91809975b8e496fec2e7bc5fe90329e01e988f",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-final-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/535db87ac595779839edf0c420445e4224a489831ec51a6212d46c185b4bb932.gz",
+      "rawBytes": 219458,
+      "rawSha256": "535db87ac595779839edf0c420445e4224a489831ec51a6212d46c185b4bb932",
+      "storedBytes": 66202,
+      "storedSha256": "ae042facf875e331453a0c38ea1a7324dfcb21935a0d894aca133f4f512aaeae",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-final-node.inputs.json",
+        "/tmp/router-759-core-profile-coordinate-final-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/d813b989db51ae4f401db1234602b54c413ce3a7cc997d87f21f604ab92197e9.gz",
+      "rawBytes": 3209,
+      "rawSha256": "d813b989db51ae4f401db1234602b54c413ce3a7cc997d87f21f604ab92197e9",
+      "storedBytes": 1112,
+      "storedSha256": "264d656556489033cff5d7cfff78c3ac5eceb869fa8f3103566eefb3940de479",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-final-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/8f30f98bf0f51a1e1babdde9d7c3fd4b074bb3d16f0b2be3728e716f5ed1e688.gz",
+      "rawBytes": 26772,
+      "rawSha256": "8f30f98bf0f51a1e1babdde9d7c3fd4b074bb3d16f0b2be3728e716f5ed1e688",
+      "storedBytes": 9131,
+      "storedSha256": "213351e14b647e4bb0efcdadc4284d4afd84fd1f0df671c4a0c7747a7b053e7b",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-final-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b69a67d6748f8361f21358ef2f99cc8dae35c9536de294ea53b1b9feada794d2.gz",
+      "rawBytes": 3194,
+      "rawSha256": "b69a67d6748f8361f21358ef2f99cc8dae35c9536de294ea53b1b9feada794d2",
+      "storedBytes": 1111,
+      "storedSha256": "73af1e5dd39f385376bc66871c53e0031cbd1efc94e8efdaa049297ff0d356f1",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-owner-final-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/7e3a7781ec7d3957a6bcbd0f517d20891f246e00f3c77d99287de24efd71a046.gz",
+      "rawBytes": 54680,
+      "rawSha256": "7e3a7781ec7d3957a6bcbd0f517d20891f246e00f3c77d99287de24efd71a046",
+      "storedBytes": 11616,
+      "storedSha256": "ecd444608db52d9d2a21d690fb40340d0c7f3a8c033c70c83389213520047c4b",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-owner-final-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/5b4316b0f16b68959f7366261055dba66ee97e61bd7b78c05fa9fa2d275bd72f.gz",
+      "rawBytes": 219458,
+      "rawSha256": "5b4316b0f16b68959f7366261055dba66ee97e61bd7b78c05fa9fa2d275bd72f",
+      "storedBytes": 66208,
+      "storedSha256": "71336bb21f0441c99cda86551fda73af7ccc2a9b94d4ea5e7d3c7a979aa7e709",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-owner-final-node.inputs.json",
+        "/tmp/router-759-core-profile-owner-final-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/8ec12323aac16fd48c9abd48cd28da920194d4905c937b8954e888a66cc5779a.gz",
+      "rawBytes": 3194,
+      "rawSha256": "8ec12323aac16fd48c9abd48cd28da920194d4905c937b8954e888a66cc5779a",
+      "storedBytes": 1107,
+      "storedSha256": "f5f4a1500a7fd646a85999ea6dd77271772944e55532efe6c83c00986c8b46a7",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-owner-final-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/a93b188bd72589a8ab7a901245a304011af97171116b032708f125e07a8cfb30.gz",
+      "rawBytes": 28902,
+      "rawSha256": "a93b188bd72589a8ab7a901245a304011af97171116b032708f125e07a8cfb30",
+      "storedBytes": 9639,
+      "storedSha256": "19e7b3989b783f926c4fa625f14886dcce7b379fc49168a48062f90af4608b3a",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-owner-final-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/33073b80968a22c64ed5870d5a8afef6814f785eeb2269f953703e2e74a8b55d.gz",
+      "rawBytes": 3206,
+      "rawSha256": "33073b80968a22c64ed5870d5a8afef6814f785eeb2269f953703e2e74a8b55d",
+      "storedBytes": 1115,
+      "storedSha256": "c5340b955041ff0d5db7af98bf77ba446e8b0e87bc5d6af66251c001c40c6c45",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-validated-final-node.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/4e4bd9c7b45b3aa2deb8887eccf88058db8d7136eedde7c969765b44d4d54195.gz",
+      "rawBytes": 53652,
+      "rawSha256": "4e4bd9c7b45b3aa2deb8887eccf88058db8d7136eedde7c969765b44d4d54195",
+      "storedBytes": 11257,
+      "storedSha256": "238beb11a0ac271129e0d619e5f306bebda58eee4fe3b59fdf1f4acbf2474e7b",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-validated-final-node.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/7399bd4b57523db427471798a344442ec3632b88ee14ed3e9099bb1cab3f12d8.gz",
+      "rawBytes": 219458,
+      "rawSha256": "7399bd4b57523db427471798a344442ec3632b88ee14ed3e9099bb1cab3f12d8",
+      "storedBytes": 66203,
+      "storedSha256": "4d424831aadecbdc04db72b54552e5cd2b77edd8f307e7def554709450191353",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-validated-final-node.inputs.json",
+        "/tmp/router-759-core-profile-validated-final-bun.inputs.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/78d10a784ed07a8e0108ccc97a4e4ad53767b416d7cbb6608392587c17b968f4.gz",
+      "rawBytes": 3206,
+      "rawSha256": "78d10a784ed07a8e0108ccc97a4e4ad53767b416d7cbb6608392587c17b968f4",
+      "storedBytes": 1111,
+      "storedSha256": "8bbc079ec4e3c80cd07735a106eff8ac3439bf81f6bd1e1f7aa2c794b0e1ec50",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-validated-final-bun.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/d1ac3edaac60cc9c9dcab8db26e2693913d8bb475c59eab374d8039aa154ae36.gz",
+      "rawBytes": 25343,
+      "rawSha256": "d1ac3edaac60cc9c9dcab8db26e2693913d8bb475c59eab374d8039aa154ae36",
+      "storedBytes": 8519,
+      "storedSha256": "d5c744b8c02163e785d2e8413df0056518697bb71e72d2e9956c60dd2f79380b",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-validated-final-bun.log"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/61e4fd4253aa05709ffae0a6ec87bbf08bc2cfb44331ef11ffa60e1532be13e8.gz",
+      "rawBytes": 6616,
+      "rawSha256": "61e4fd4253aa05709ffae0a6ec87bbf08bc2cfb44331ef11ffa60e1532be13e8",
+      "storedBytes": 2671,
+      "storedSha256": "c885b5c5fd31c7d6293d1fec1ec7b9f94df35fe2defb14842847948d1321e27d",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-focused.py"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/db3558c2ef4ac464f1078b0995b917c7265a39a3454ed4705a45c63ea20bb0f9.gz",
+      "rawBytes": 46327,
+      "rawSha256": "db3558c2ef4ac464f1078b0995b917c7265a39a3454ed4705a45c63ea20bb0f9",
+      "storedBytes": 2872,
+      "storedSha256": "9e5c9426cc0aefb9dfd7508fb9701f16cabf02a506d845daf2b1b7ba12108878",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-host-shadow-diagnostic.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/46504cf1247b3bb1fc03c0870e9648ec56ff638bee409a81bd2e47d144f6d423.gz",
+      "rawBytes": 2025,
+      "rawSha256": "46504cf1247b3bb1fc03c0870e9648ec56ff638bee409a81bd2e47d144f6d423",
+      "storedBytes": 569,
+      "storedSha256": "0c226d7c35dc943cd9052cfb8eba2b34cf4843af0ba185202b22e11446dddf9e",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-fixture-diagnostic.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/681712d253e61b388454c1751462de3d10782c00c0ad72fb656e8025d33c5a1e.gz",
+      "rawBytes": 9299,
+      "rawSha256": "681712d253e61b388454c1751462de3d10782c00c0ad72fb656e8025d33c5a1e",
+      "storedBytes": 3270,
+      "storedSha256": "48fa54f3ea41d210e7c5fd6013bbf5e4bbcf48aca0f98bb91fe2fb49880a1a04",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-initial-repair.patch"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/900a4c1e775829c69d3f03c57f751362943928794c8f51ad8413251077f20ee2.gz",
+      "rawBytes": 4590,
+      "rawSha256": "900a4c1e775829c69d3f03c57f751362943928794c8f51ad8413251077f20ee2",
+      "storedBytes": 1823,
+      "storedSha256": "43c80afae54affde921329c94d2b1f285a6c9d8abcb1fd47f4ae7d6659d19453",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-coordinate-repair.patch"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b03394e51fa12b0b550e121a425019d0d5fa05c2f75353c592e4b66b8db56544.gz",
+      "rawBytes": 4941,
+      "rawSha256": "b03394e51fa12b0b550e121a425019d0d5fa05c2f75353c592e4b66b8db56544",
+      "storedBytes": 1924,
+      "storedSha256": "eac7211a53962aa874f4d7bbaf8fa20ef3c4621bba73cf59aa377998b9f5235f",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-fixture-owner-repair.patch"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/64fcb2b431ebbf595fa73836e7fe8bba2cd41c30acb9eb28ce6415b129157363.gz",
+      "rawBytes": 1904,
+      "rawSha256": "64fcb2b431ebbf595fa73836e7fe8bba2cd41c30acb9eb28ce6415b129157363",
+      "storedBytes": 890,
+      "storedSha256": "f864cfc974602ad6a8733c363ff8fbcb840b0833048269a240fc78aaacacdad9",
+      "originalPaths": [
+        "/tmp/router-759-core-profile-value-domain-repair.patch"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/cf56a5de8c58a8a9c7233891fcd1bb4845fa288ad3141882079a7b232f5aacb0.gz",
+      "rawBytes": 283612,
+      "rawSha256": "cf56a5de8c58a8a9c7233891fcd1bb4845fa288ad3141882079a7b232f5aacb0",
+      "storedBytes": 61464,
+      "storedSha256": "c74e20df9e43dbdb6bd638b7bba791d233188467b68aaa9748c56a2a26d0c70f",
+      "originalPaths": [
+        "/tmp/router-759-root-tracked-corpus-materialization.json"
+      ]
+    },
+    {
+      "path": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b17bef8bdc43a396eedda049dcfb41a57a299afbd881fce5abb2c596cfb5fe36.gz",
+      "rawBytes": 1773,
+      "rawSha256": "b17bef8bdc43a396eedda049dcfb41a57a299afbd881fce5abb2c596cfb5fe36",
+      "storedBytes": 718,
+      "storedSha256": "e8d9a40b06bc5eb578bacb9606afadd087f5fbf6a8fed75d9c454f80e671c401",
+      "originalPaths": [
+        "/tmp/router-759-profile-bulk-verify-setup.json"
+      ]
+    }
+  ],
+  "extraEvidence": [
+    {
+      "originalPath": "/tmp/router-759-core-profile-focused.py",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/61e4fd4253aa05709ffae0a6ec87bbf08bc2cfb44331ef11ffa60e1532be13e8.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-host-shadow-diagnostic.json",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/db3558c2ef4ac464f1078b0995b917c7265a39a3454ed4705a45c63ea20bb0f9.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-coordinate-fixture-diagnostic.json",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/46504cf1247b3bb1fc03c0870e9648ec56ff638bee409a81bd2e47d144f6d423.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-initial-repair.patch",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/681712d253e61b388454c1751462de3d10782c00c0ad72fb656e8025d33c5a1e.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-coordinate-repair.patch",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/900a4c1e775829c69d3f03c57f751362943928794c8f51ad8413251077f20ee2.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-fixture-owner-repair.patch",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b03394e51fa12b0b550e121a425019d0d5fa05c2f75353c592e4b66b8db56544.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-core-profile-value-domain-repair.patch",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/64fcb2b431ebbf595fa73836e7fe8bba2cd41c30acb9eb28ce6415b129157363.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-root-tracked-corpus-materialization.json",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/cf56a5de8c58a8a9c7233891fcd1bb4845fa288ad3141882079a7b232f5aacb0.gz"
+    },
+    {
+      "originalPath": "/tmp/router-759-profile-bulk-verify-setup.json",
+      "archive": "docs/case-studies/issue-759/raw/translation/focused/cycle-14-profile-bulk/b17bef8bdc43a396eedda049dcfb41a57a299afbd881fce5abb2c596cfb5fe36.gz"
+    }
+  ],
+  "storedObjectBytes": 607212,
+  "archiveObjectsReopened": 34,
+  "hashErrors": 0,
+  "fixtureProofs": [
+    "complete Rust and Cargo corpus snapshots, sparse inputs and unchanged source hashes",
+    "independent neutral, Unix-family and Windows-family meta/JS/strict-TS drafts with separate namespaces",
+    "all profile plans validate before any writes; symlinks, unsealed clones, proxy/getter selections and edited plan manifests refused",
+    "whole unchanged lib and Unix listener configured edges retain unresolved obligations",
+    "typed inline function Some executes the original source body and rejects integer overflow",
+    "source host namespace exclusion removes dependent registered support transitively",
+    "nested source std Duration keeps its custom layout without the standard nanosecond refinement",
+    "original-file UTF-16 parser refusal coordinates across inline/external modules and a leading astral scalar",
+    "all 804 original canonical Rust artifacts reconstruct source and their existing generated JS modules load"
+  ],
+  "limitations": [
+    "Existing canonical corpus artifacts were materialized from the frozen tracked HEAD, without regeneration; new implementation output freshness requires the later producer/check.",
+    "No actual 804-source three-profile production corpus was generated in this focused window.",
+    "Independent configured profiles do not prove the complete platform/Cargo feature domain or a common executable.",
+    "All initial and intermediate failed attempts remain archived."
+  ],
+  "producerRuns": 0,
+  "fullGateRuns": 0,
+  "rustBuilds": 0,
+  "nativeParity": false,
+  "strictGapsCleared": 0
+}

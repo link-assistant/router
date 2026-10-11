@@ -1,40 +1,28 @@
-Draft a reusable full-corpus translator for explicitly selected compilation
-profiles. A privately captured, bounded corpus retains complete original Rust
-and Cargo bytes, including sparse tracked inputs. Every profile builds its own
-module, namespace, type and effect contexts and emits meta-language, JavaScript,
-TypeScript, runtime assets and an inventory under its exact profile digest.
-Prepare every output plan and validate isolated paths before writing any
-profile; ordinary neutral outputs remain separate. Drift checks preserve all
-missing, stale and unexpected paths. Source sets, matrix membership, required
-profiles and translator implementation hashes remain in the inventories.
-No profile-independent executable, complete platform domain or native parity
-is claimed. The reusable translator CLI supports an explicit --profile-matrix
-write or drift-check cycle. Ten newly authored source-corpus and bulk-profile
-tests pass under Node and Bun. The complete initial 25-file regression scope
-has 240 passing and three failing cases under each engine. The failures retain
-the sparse generated-artifact prerequisite, a historical inline-function
-expectation, and dependent host support referencing a shadowed namespace.
-The latter two now have source repairs awaiting coherent rerun; no corpus
-producer, full gate or local Rust build ran in this focused window.
-Sealed plans deeply freeze their inventories, and supplied corpus selections
-are validated as ordinary path data without invoking getters or proxy traps.
-Qualified namespace setup computes ancestor macro and prelude evidence once
-for the consuming scope; other owners contribute the same namespace maps and
-visibility checks. This source-only refactor has no measured performance claim
-and passes the initial module and namespace regression cases.
-When a source module excludes a registered host namespace, its dependent
-support types are excluded transitively; actual source refusals keep their
-own location. Checked inline source functions called Some execute their
-original body and preserve integer overflow checks.
-The first repaired 25-file run has 244 passing and one failing case under both
-engines. Its new source-location assertion exposes declaration-local parser
-coordinates; those now relocate once into the complete original file's UTF-16
-coordinates, including inline and external modules. The following run has
-245 passing and one failing case per engine: its newly authored nested-std
-negative assumption is invalid because the checked custom type is distinct
-from the standard owner. A typed positive now checks that custom layout,
-while an explicitly unsupported unsafe expression checks exact original
-inline/external parser coordinates. Both engines then pass 246 of 247 cases;
-the new malformed custom-field assertion expects the existing TypeError value
-domain guard, separately from arithmetic RangeError overflow. Its exact
-message and full domain check remain required. The scope awaits final rerun.
+Draft the complete Rust corpus through a reusable, explicitly selected
+compilation matrix into separate meta-language, JavaScript and TypeScript
+outputs. Private bounded snapshots retain original Rust and Cargo bytes,
+including sparse tracked inputs. Each profile creates independent module,
+namespace, type and effect contexts, with separate runtime assets and an
+inventory under its full profile digest. The CLI supports --profile-matrix
+generation and freshness checking, while canonical neutral outputs stay
+separate. Prepare every sealed output plan and validate all paths and budgets
+before writing any profile. Inventories retain corpus, Cargo, implementation,
+matrix membership and required-profile identities; drift checks reject missing,
+stale and unexpected files. Getter and proxy selections, cloned plans, edited
+manifests and symlink output paths cannot bypass those checks.
+
+Preserve source namespace exclusions through dependent host support types,
+allow checked inline functions called Some to execute their original bodies,
+and locate declaration-parser refusals in complete original-file UTF-16
+coordinates. Custom source types nested under std keep their own checked
+layout without acquiring standard-owner refinements. Qualified namespace
+setup reuses consuming-scope ancestor evidence without caching mutable proof.
+
+All 247 tests across the complete 25-file affected scope pass under both Node
+and Bun. The archive retains every initial and intermediate failure, complete
+logs, commands, source hashes, input manifests and repairs. Existing tracked
+canonical artifacts reconstruct all 804 original Rust files and their generated
+JavaScript modules load. This focused verification did not regenerate the
+actual three-profile corpus or run the full gate or a local Rust build.
+Independent profiles do not prove a common executable, a complete platform
+and Cargo feature domain, or native parity; unresolved obligations remain.
