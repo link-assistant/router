@@ -15,7 +15,16 @@ enumeration, gaps, guarded overlaps, effect order, suffix identity, strict TS,
 and explicit refusals. Nonliteral/open endpoints, custom/ref/float/char domains,
 nested aggregate range matches and guarded const matches remain unsupported.
 
-Source-only draft based on integrated 7e25187c90f5201fc529c528ab98037d4a184d7c.
-git diff --check passes. Compiler, runtime and strict TypeScript tests have not
-run: the publisher holds the current compiler window. No generated artifacts,
-original Rust bodies, dependencies or runtime parity claims are changed.
+The draft began on integrated 7e25187c90f5201fc529c528ab98037d4a184d7c.
+The initial 14-file scope passed 103/105 cases in both Node and Bun: the new
+out-of-domain assertion expected TypeError instead of the existing RangeError,
+and that preserved baseline still had the nested-Option refusal already repaired
+in the published current cohort. Both failure logs are retained.
+
+Final verification starts from published 7bfc51aa447c8929f7b88540986b18f50554ef3d
+plus this range feature and the exact RangeError assertion correction. All 106
+cases in the same 14 files pass in Node (36.271s) and Bun (39.88s), including
+unchanged JavaScript, separately strict-compiled TypeScript, original source
+pins, constant evaluation and ownership refusals. The other 15 unsupported
+pattern inputs remain intact. No generated artifacts, original Rust bodies,
+dependency packages or runtime parity claims are changed.

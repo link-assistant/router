@@ -36,7 +36,7 @@ test('inclusive exclusive signed minima and adjacent complete domains execute JS
   const result=await both(source,api=>{
     for(const [value,expected]of [[-128n,1n],[-1n,1n],[0n,2n],[126n,2n],[127n,3n]])assert.equal(api.signed(value),expected);
     for(const [value,expected]of [[0n,1n],[9n,1n],[10n,2n],[20n,2n],[21n,3n],[255n,3n]])assert.equal(api.unsigned(value),expected);
-    assert.equal(api.wide(0n),true);assert.equal(api.wide((1n<<128n)-1n),true);assert.equal(api.SELECTED,1n);assert.throws(()=>api.unsigned(256n),TypeError);
+    assert.equal(api.wide(0n),true);assert.equal(api.wide((1n<<128n)-1n),true);assert.equal(api.SELECTED,1n);assert.throws(()=>api.unsigned(256n),RangeError);
   });
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
   assert.equal(checked.declarations.get('signed').body.integerRangeMatchProof.exhaustiveness,'unguarded-interval-union');
