@@ -3,7 +3,16 @@
 import { assertImmutableCopy as ml_pattern_immutable } from "../../runtime/copy-runtime.mjs";
 
 const ml_router_try_return = Symbol('checked Rust early return');
-function ml_router_try(value, option) { if (value.$ === (option ? 'Some' : 'Ok')) return value.field0; throw { [ml_router_try_return]: true, value: option ? Object.freeze({ $: 'None' }) : Object.freeze({ $: 'Err', field0: value.field0 }) }; }
+function ml_router_try(value, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+    if (value.$ === 'None') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'None' }) };
+  } else {
+    if (value.$ === 'Ok') return value.field0;
+    if (value.$ === 'Err') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'Err', field0: value.field0 }) };
+  }
+  throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
+}
 function ml_router_propagated(error) { return error && error[ml_router_try_return] === true; }
 
 function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }

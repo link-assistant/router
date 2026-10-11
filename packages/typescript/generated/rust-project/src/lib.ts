@@ -361,7 +361,18 @@ function ml_router_collect<T>(values: Iterable<T>) { return Object.freeze(Array.
 function ml_router_fold<T, A>(values: Iterable<T>, initial: A, combine: (accumulator: A, value: T) => A) { let result = initial; for (const value of values) result = combine(result, value); return result; }
 
 const ml_router_try_return = Symbol('checked Rust early return');
-function ml_router_try(value: { $: string; field0?: any }, option: boolean) { if (value.$ === (option ? 'Some' : 'Ok')) return value.field0; throw { [ml_router_try_return]: true, value: option ? Object.freeze({ $: 'None' }) : Object.freeze({ $: 'Err', field0: value.field0 }) }; }
+function ml_router_try<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, option:true): T;
+function ml_router_try<R extends Readonly<{$:'Err';field0:unknown}>|Readonly<{$:'Ok';field0:unknown}>>(value: R, option:false): Extract<R,Readonly<{$:'Ok';field0:unknown}>>['field0'];
+function ml_router_try<T, E>(value: Readonly<{$:'Some'|'Ok';field0:T}>|Readonly<{$:'None'}>|Readonly<{$:'Err';field0:E}>, option: boolean): T {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+    if (value.$ === 'None') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'None' }) };
+  } else {
+    if (value.$ === 'Ok') return value.field0;
+    if (value.$ === 'Err') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'Err', field0: value.field0 }) };
+  }
+  throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
+}
 function ml_router_propagated(error: any) { return error && error[ml_router_try_return] === true; }
 
 const ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb = {"schemaVersion":1,"types":{"rp_6163636f756e74732e43726564656e7469616c5374617465":{"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465","ctors":[{"name":"Usable","fields":[]},{"name":"Refreshable","fields":[]},{"name":"Rejected","fields":[]},{"name":"Expired","fields":[]},{"name":"Unusable","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};

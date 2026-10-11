@@ -63,7 +63,16 @@ function ml_router_collect(values) { return Object.freeze(Array.from(values)); }
 function ml_router_fold(values, initial, combine) { let result = initial; for (const value of values) result = combine(result, value); return result; }
 
 const ml_router_try_return = Symbol('checked Rust early return');
-function ml_router_try(value, option) { if (value.$ === (option ? 'Some' : 'Ok')) return value.field0; throw { [ml_router_try_return]: true, value: option ? Object.freeze({ $: 'None' }) : Object.freeze({ $: 'Err', field0: value.field0 }) }; }
+function ml_router_try(value, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+    if (value.$ === 'None') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'None' }) };
+  } else {
+    if (value.$ === 'Ok') return value.field0;
+    if (value.$ === 'Err') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'Err', field0: value.field0 }) };
+  }
+  throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
+}
 function ml_router_propagated(error) { return error && error[ml_router_try_return] === true; }
 
 const ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb = {"schemaVersion":1,"types":{"rp_6163636f756e74732e43726564656e7469616c5374617465":{"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465","ctors":[{"name":"Usable","fields":[]},{"name":"Refreshable","fields":[]},{"name":"Rejected","fields":[]},{"name":"Expired","fields":[]},{"name":"Unusable","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
