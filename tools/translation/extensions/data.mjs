@@ -7,6 +7,7 @@ import { coerce } from '../vendor/meta-language/translation/check.js';
 import { data, rustFixedType } from '../vendor/meta-language/translation/types.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 import {validCopyCertificate} from '../impl-resolver.mjs';
+import {withStandardStringEqualityChecker} from './standard-string-equality.mjs';
 
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -177,7 +178,7 @@ export class DataRustParser extends TextRustParser {
   }
 }
 
-export class DataChecker extends TextChecker {
+export class DataChecker extends withStandardStringEqualityChecker(TextChecker) {
   resolveType(type,path,span) {
     const resolved=super.resolveType(type,path,span);
     return {...resolved,...(type?.rustSharedFieldCopies?{rustSharedFieldCopies:type.rustSharedFieldCopies}:{}),...(type?.rustSharedReceiverSource?{rustSharedReceiverSource:type.rustSharedReceiverSource}:{})};
