@@ -19,7 +19,7 @@ test('actual output limiter declaration keeps its Default derive and original fi
   assert.equal(entry.ctors[0].ctorStyle,'named');
   assert.deepEqual(entry.ctors[0].fields.map(field=>field.name),['remaining','stopped']);
   assert.equal(checked.declarations.get(entry.ctors[0].fields[0].type.name).standardGeneric.kind,'Option');
-  assert.deepEqual(entry.ctors[0].fields[1].type,{kind:'bool'});
+  assert.deepEqual(entry.ctors[0].fields[1].type,{kind:'bool',rustSourceType:true});
   assert.equal([...checked.declarations.values()].filter(entry=>entry.k==='fn').length,0);
 });
 

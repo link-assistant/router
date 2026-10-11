@@ -152,10 +152,10 @@ test('actual output limiter constructor saturates token budgets and preserves un
   assert.deepEqual(record.deriveTraits,['Clone','Debug','Default']);
   assert.equal(record.ctors[0].ctorStyle,'named');
   assert.deepEqual(record.ctors[0].fields.map(field=>field.name),['remaining','stopped']);
-  assert.deepEqual(record.ctors[0].fields[1].type,{kind:'bool'});
+  assert.deepEqual(record.ctors[0].fields[1].type,{kind:'bool',rustSourceType:true});
   const option=declarations.get(record.ctors[0].fields[0].type.name);
   assert.equal(option.standardGeneric.kind,'Option');
-  assert.deepEqual(option.ctors.find(ctor=>ctor.name==='Some').fields[0].type,{kind:'fixed',signed:false,bits:64,rustPrimitiveName:'u64'});
+  assert.deepEqual(option.ctors.find(ctor=>ctor.name==='Some').fields[0].type,{kind:'fixed',signed:false,bits:64,rustPrimitiveName:'u64',rustSourceType:true});
   assert.ok(![...declarations.values()].some(entry=>entry.k==='fn'&&entry.name==='default'),'layout evidence must not synthesize a Default implementation');
   const none=tagged('None'),some=value=>tagged('Some',{field0:value}),limiter=remaining=>tagged('OutputTokenLimiter',{remaining,stopped:false});
   for(const translated of apis){

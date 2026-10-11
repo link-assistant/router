@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {HostChecker,parseRust} from '../extensions/host-contracts.mjs';
 import {planStandardMethod,completeStandardMethod,STANDARD_METHOD_PROFILE} from '../extensions/standard-method-plans.mjs';
 const U8={kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'},U16={kind:'fixed',bits:16,signed:false,rustPrimitiveName:'u16'},span={start:21,end:89};
+const SOURCE_U8={...U8,rustSourceType:true},SOURCE_U16={...U16,rustSourceType:true};
 function context() {
   const checker=new HostChecker('Rust',[]);
   const checked=checker.program(parseRust('fn input(value: Option<u8>) -> Option<u16> { None } fn result(value: Result<u8, String>) -> Option<u8> { None } enum Fake { None, Some(u8) } fn main() {}'));
@@ -12,8 +13,8 @@ function context() {
 }
 test('Option.map plans use actual checked input and contextually expected output layouts',()=>{
   const {input,options}=context(),frozenBefore=Object.isFrozen(input.params[0].type),plan=planStandardMethod(input.params[0].type,'map',{...options,expected:input.ret,argumentCount:1});
-  assert.equal(plan.operation,'option_map');assert.deepEqual(plan.callbackParameters,[U8]);assert.deepEqual(plan.callbackExpected,U16);
-  assert.deepEqual(plan.element,U8);assert.equal(plan.constEligible,false);assert.deepEqual(plan.expectedResult,input.ret);
+  assert.equal(plan.operation,'option_map');assert.deepEqual(plan.callbackParameters,[SOURCE_U8]);assert.deepEqual(plan.callbackExpected,SOURCE_U16);
+  assert.deepEqual(plan.element,SOURCE_U8);assert.equal(plan.constEligible,false);assert.deepEqual(plan.expectedResult,input.ret);
   const completed=completeStandardMethod(plan,U16,{optionType:element=>{assert.deepEqual(element,U16);return input.ret;}});
   assert.deepEqual(completed,input.ret);assert.ok(Object.isFrozen(plan.callbackParameters[0]));
   assert.equal(Object.isFrozen(input.params[0].type),frozenBefore,'plans preserve the existing mutability of borrowed checker inputs');
@@ -28,13 +29,13 @@ test('Option.map without an expected type defers output instantiation until call
 });
 test('Result.ok selects the checked success type and requires no callback',()=>{
   const {result,options}=context(),plan=planStandardMethod(result.params[0].type,'ok',{...options,expected:result.ret,argumentCount:0});
-  assert.equal(plan.operation,'result_ok');assert.deepEqual(plan.callbackParameters,[]);assert.equal(plan.callbackExpected,null);assert.deepEqual(plan.element,U8);
-  assert.deepEqual(completeStandardMethod(plan,null,{optionType:element=>{assert.deepEqual(element,U8);return result.ret;}}),result.ret);
+  assert.equal(plan.operation,'result_ok');assert.deepEqual(plan.callbackParameters,[]);assert.equal(plan.callbackExpected,null);assert.deepEqual(plan.element,SOURCE_U8);
+  assert.deepEqual(completeStandardMethod(plan,null,{optionType:element=>{assert.deepEqual(element,SOURCE_U8);return result.ret;}}),result.ret);
   assert.throws(()=>completeStandardMethod(plan,U8,{optionType:()=>result.ret}),error=>error.kind==='type');
 });
 test('bool.then plans a zero-parameter callback and typed canonical Option result',()=>{
   const {input,options}=context(),plan=planStandardMethod({kind:'bool'},'then',{...options,expected:input.ret,argumentCount:1});
-  assert.equal(plan.operation,'bool_then');assert.deepEqual(plan.callbackParameters,[]);assert.deepEqual(plan.callbackExpected,U16);assert.equal(plan.element,null);
+  assert.equal(plan.operation,'bool_then');assert.deepEqual(plan.callbackParameters,[]);assert.deepEqual(plan.callbackExpected,SOURCE_U16);assert.equal(plan.element,null);
   assert.deepEqual(completeStandardMethod(plan,U16,{optionType:()=>input.ret}),input.ret);
   assert.equal(planStandardMethod(U8,'then',{...options,argumentCount:1}),null);
 });

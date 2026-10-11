@@ -43,7 +43,7 @@ test('real effect capabilities observe receiver then default then the Some-only 
 test('plans preserve registered provenance type identity ownership and source evaluation evidence',()=>{
   const checked=checkProgram(parseRust('fn input(value:Option<u8>)->u16{0} enum Fake{None,Some(u8)} fn main(){}')),entry=checked.declarations.get('input'),span={start:10,end:50};
   const options={declarations:checked.declarations,resolveType:type=>type,argumentCount:2,defaultType:entry.ret,expected:entry.ret,span},plan=planStandardMethod(entry.params[0].type,'map_or',options);
-  assert.equal(plan.operation,'option_map_or');assert.deepEqual(plan.evaluationOrder,['receiver','default','callback']);assert.equal(plan.callbackCondition,'Some');assert.equal(plan.constEligible,false);assert.deepEqual(plan.callbackParameters,[{kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'}]);assert.deepEqual(JSON.parse(JSON.stringify(plan)),plan);
+  assert.equal(plan.operation,'option_map_or');assert.deepEqual(plan.evaluationOrder,['receiver','default','callback']);assert.equal(plan.callbackCondition,'Some');assert.equal(plan.constEligible,false);assert.deepEqual(plan.callbackParameters,[{kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8',rustSourceType:true}]);assert.deepEqual(JSON.parse(JSON.stringify(plan)),plan);
   assert.deepEqual(completeStandardMethod(plan,entry.ret),entry.ret);assert.equal(planStandardMethod({kind:'data',name:'Fake'},'map_or',options),null);
   for(const argumentCount of [0,1,3])assert.throws(()=>planStandardMethod(entry.params[0].type,'map_or',{...options,argumentCount}),error=>error.kind==='type');
   const u64={kind:'fixed',bits:64,signed:false,rustPrimitiveName:'u64'},usize={...u64,rustPrimitiveName:'usize'};

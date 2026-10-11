@@ -38,7 +38,7 @@ const refuse=source=>{
 };
 
 test('standard Option tuple callbacks bind scalar projections with checked scopes and nested products',async()=>{
-  const source='pub fn pick(value:Option<(&str,&str)>)->Option<&str>{value.map(|(_,right)|right)} pub fn equal(value:Option<(&str,&str)>,outer:&str)->Option<bool>{value.map(|(outer,right)|outer==right)} pub fn deep(value:Option<(u8,(bool,&str))>)->Option<u8>{value.map(|(n,(flag,text))|if flag&&text=="Ω"{n}else{0})} pub fn scalar(value:Option<u8>)->Option<u8>{value.map(|n|n+1)}';
+  const source="pub fn pick(value:Option<(&'static str,&'static str)>)->Option<&'static str>{value.map(|(_,right)|right)} pub fn equal(value:Option<(&str,&str)>,outer:&str)->Option<bool>{value.map(|(outer,right)|outer==right)} pub fn deep(value:Option<(u8,(bool,&str))>)->Option<u8>{value.map(|(n,(flag,text))|if flag&&text==\"Ω\"{n}else{0})} pub fn scalar(value:Option<u8>)->Option<u8>{value.map(|n|n+1)}";
   const {result,checked}=compiled(source);
   const body=checked.declarations.get('pick').body;
   assert.equal(body.callback.patternControl.kind,'tuple-callback');
@@ -87,6 +87,7 @@ test('tuple callback input guards precede layout reads and projections',async()=
 
 test('tuple callbacks refuse unresolved moves, references, aggregates, annotations and exits',()=>{
   for(const source of [
+    'fn bad(value:Option<(&str,&str)>)->Option<&str>{value.map(|(_,right)|right)}',
     'fn bad(value:&Option<(u8,u8)>)->Option<u8>{value.map(|(n,_)|n)}',
     'fn bad(value:[(u8,u8);1])->u64{value.iter().map(|(n,_)|n).count()}',
     'fn bad(value:Option<(u8,u8)>)->Option<u8>{value.map(|&(n,_)|n)}',
