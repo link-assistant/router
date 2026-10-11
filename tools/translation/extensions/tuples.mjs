@@ -4,6 +4,7 @@ import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {withParameterPatternParser} from './parameter-patterns.mjs';
 
 const span=(start,end)=>({start:start.start,end:end.end});
 // Portable widths and scalar encodings are insufficient to intern Rust tuple
@@ -20,7 +21,7 @@ function sourceQualifiers(type) {
     ...(type.rustStandardGeneric?{generic:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(sourceQualifiers)}}:{}),
   };
 }
-export class TupleRustParser extends PatternControlRustParser {
+export class TupleRustParser extends withParameterPatternParser(PatternControlRustParser) {
   tupleType(fields,location) {
     const qualifiers=Buffer.from(JSON.stringify(fields.map(field=>sourceQualifiers(field.type))),'utf8').toString('hex');
     const name=monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
