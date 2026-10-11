@@ -7,6 +7,11 @@ import {typeError,unsupported} from '../vendor/meta-language/translation/diagnos
 
 const span=(start,end)=>({start:start.start,end:end.end});
 export class TupleRustParser extends PatternControlRustParser {
+  tupleType(fields,location) {
+    const name=monomorphicTypeName('Tuple',fields.map(field=>field.type));
+    if(!this.genericTypes.has(name))this.genericTypes.set(name,{k:'data',name,tuple:true,ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,generated:'router-tuple-type'});
+    return {kind:'named',path:['crate',name],span:location};
+  }
   type() {
     const c=this.cursor;if(!c.is('('))return super.type();
     const start=c.next();if(c.eat(')'))return UNIT;
@@ -28,9 +33,7 @@ export class TupleRustParser extends PatternControlRustParser {
       if(!c.eat(',')) {if(fields.length===1){c.expect(')','parenthesized type');return type;}c.expect(')','tuple type');break;}
       if(c.eat(')'))break;
     }
-    const name=monomorphicTypeName('Tuple',fields.map(field=>field.type));
-    if(!this.genericTypes.has(name))this.genericTypes.set(name,{k:'data',name,tuple:true,ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:span(start,c.peek()),generated:'router-tuple-type'});
-    return {kind:'named',path:['crate',name],span:span(start,c.peek())};
+    return this.tupleType(fields,span(start,c.peek()));
   }
 
   primary(path,options) {

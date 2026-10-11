@@ -2,10 +2,11 @@
 // https://doc.rust-lang.org/std/primitive.str.html#method.contains
 // https://doc.rust-lang.org/std/primitive.str.html#method.replacen
 import {FormatRustParser,FormatChecker,FormatEmitter} from './formatting.mjs';
-import {BOOL,STRING,fixed,rustFixedType} from '../vendor/meta-language/translation/types.js';
+import {BOOL,STRING,fixed,rustFixedType,sameType} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
-const METHODS=new Map([['starts_with',1],['ends_with',1],['contains',1],['replace',2],['replacen',3]]);
+const SPLITS=new Set(['split_once','rsplit_once']);
+const METHODS=new Map([['starts_with',1],['ends_with',1],['contains',1],['replace',2],['replacen',3],...Array.from(SPLITS,method=>[method,1])]);
 const USIZE={...fixed(64,false),rustPrimitiveName:'usize'};
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
 export class TextRustParser extends FormatRustParser {
@@ -29,7 +30,8 @@ export class TextRustParser extends FormatRustParser {
   method(object,name,args,span) {
     if(!METHODS.has(name.value))return super.method(object,name,args,span);
     if(args.length!==METHODS.get(name.value))throw typeError(`${name.value} expects ${METHODS.get(name.value)} arguments`,span);
-    return {k:'routerTextPattern',op:name.value,object,args,span};
+    const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:STRING,rustTypeSyntax:['&','str']})),span):null;
+    return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),span};
   }
 }
 export class TextChecker extends FormatChecker {
@@ -55,8 +57,16 @@ export class TextChecker extends FormatChecker {
       return {k:'var',name,type:value.type,span:surface.span};
     };
     const value=bind(node.object,STRING),args=node.args.map((arg,index)=>bind(arg,index===2?USIZE:STRING,index<2,index===0));
-    const owning=node.op==='replace'||node.op==='replacen',type=owning?{...STRING,patternOwnershipRefusal:'owned String replacement'}:BOOL;
-    const operation={k:node.k,op:node.op,value,args,type,constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
+    const owning=node.op==='replace'||node.op==='replacen';let type=owning?{...STRING,patternOwnershipRefusal:'owned String replacement'}:BOOL,tupleType;
+    if(SPLITS.has(node.op)) {
+      if(value.type.patternOwnershipRefusal)throw unsupported('split borrowed receiver','requires actual borrowed str provenance; owned temporaries and erased references need checked lifetimes',node.span);
+      tupleType=this.resolveType(node.tupleType,path,node.span);const entry=this.items.get(tupleType.name);
+      if(!entry?.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||entry.ctors[0].name!=='Tuple'||entry.ctors[0].fields.length!==2||entry.ctors[0].fields.some(field=>!sameType(field.type,STRING)||field.type.patternOwnershipRefusal||field.rustTypeSyntax?.[0]!=='&'||field.rustTypeSyntax?.at(-1)!=='str'))throw unsupported('split borrowed product','requires the actual two-borrowed-str tuple layout; equal portable scalar encodings do not prove ownership',node.span);
+      if(!this.instantiations?.option)throw unsupported('split standard Option','requires checked standard-library result instantiation',node.span);
+      type=this.instantiations.option(tupleType,node.span);
+      if(expected&&!sameType(expected,type))throw typeError('split result differs from the actual expected standard Option layout',node.span);
+    }
+    const operation={k:node.k,op:node.op,value,args,type,...(tupleType?{tupleType}:{}),constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
     return bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),operation);
   }
 }
@@ -66,6 +76,12 @@ export class TextEmitter extends FormatEmitter {
     if(node.k!=='routerTextPattern')return super.expr(node);
     const value=this.expr(node.value),[pattern,replacement,count]=node.args.map(arg=>this.expr(arg));
     if(['starts_with','ends_with','contains'].includes(node.op))return `${value}.${{starts_with:'startsWith',ends_with:'endsWith',contains:'includes'}[node.op]}(${pattern})`;
+    if(SPLITS.has(node.op)) {
+      const option=this.program.declarations.get(node.type.name),tuple=this.program.declarations.get(node.tupleType.name);
+      const product=this.ctorObject(tuple,tuple.ctors[0],[`${value}.slice(0,index)`,`${value}.slice(index+${pattern}.length)`]);
+      const some=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='Some'),[product]),none=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='None'),[]);
+      return `(()=>{const index=${value}.${node.op==='split_once'?'indexOf':'lastIndexOf'}(${pattern});return index<0?${none}:${some};})()`;
+    }
     // Empty patterns match each UTF-8 character boundary, including both ends.
     // Array.from visits Unicode scalars, unlike String.split("") or replaceAll.
     if(node.op==='replace')return `(${pattern}.length===0?(${value}.length===0?${replacement}:${replacement}+Array.from(${value}).join(${replacement})+${replacement}):${value}.split(${pattern}).join(${replacement}))`;
