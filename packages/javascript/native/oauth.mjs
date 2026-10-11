@@ -3,20 +3,27 @@ import { access, mkdir, open, realpath, rename, rm, unlink } from 'node:fs/promi
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { constants } from 'node:fs';
 import { tokenExpired } from '../portable/policy.mjs';
-import { atomicWrite, decodeLino, encodeLino, serialized, withNativeFileLock } from './storage.mjs';
+import { atomicWrite, decodeLino, encodeLino, serialized } from './storage.mjs';
+import { withAdvisoryFileLock } from './file-lock.mjs';
 import { RouterError } from './tokens.mjs';
 
 export const CLAUDE_CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e';
 export const CODEX_CLIENT_ID = 'app_EMoamEEZ73f0CkXaXp7hrann';
 export const CLAUDE_TOKEN_URL = 'https://platform.claude.com/v1/oauth/token';
 export const CODEX_TOKEN_URL = 'https://auth.openai.com/oauth/token';
+export const GEMINI_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+export const QWEN_TOKEN_URL = 'https://chat.qwen.ai/api/v1/oauth2/token';
+export const GEMINI_CLIENT_ID = '681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com';
+// The official installed application embeds this public client value.
+export const GEMINI_CLIENT_SECRET = 'GOCSPX-4uHgMPm'+'-1o7Sk-geV6Cu5clXFsxl';
+export const QWEN_CLIENT_ID = 'f0304373b74a44d2b584a3fb70ca9e56';
 export const CLAUDE_AUTHORIZE_URL = 'https://claude.com/cai/oauth/authorize';
 export const CLAUDE_REDIRECT_URI = 'https://platform.claude.com/oauth/code/callback';
 export const CLAUDE_SCOPES = 'org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload';
 export const CLAUDE_INFERENCE_SCOPE = 'user:inference';
 export const CLAUDE_OAUTH_USER_AGENT = 'anthropic-sdk-typescript/0.112.1 userOAuthProvider';
 const PENDING_FILE = '.link-assistant-router-claude-login.json';
-const files = {claude:['.credentials.json','credentials.json','auth.json','oauth.json','config.json'],codex:['auth.json']};
+const files = {claude:['.credentials.json','credentials.json','auth.json','oauth.json','config.json'],codex:['auth.json'],gemini:['oauth_creds.json'],qwen:['oauth_creds.json']};
 const flights = new Map();
 const uncertain = new Map();
 const nonempty = value => typeof value === 'string' && value.length ? value : null;
@@ -58,7 +65,23 @@ export function subscriptionProvider(value) {
   const name = String(value).trim().toLowerCase();
   if (['claude','anthropic','claude-code'].includes(name)) return 'claude';
   if (['codex','chatgpt','openai-codex'].includes(name)) return 'codex';
-  throw fail('native_unsupported','Native OAuth supports explicit Claude and Codex file credentials',501);
+  if (['gemini','google','code-assist'].includes(name)) return 'gemini';
+  if (['qwen','qwen-code','dashscope'].includes(name)) return 'qwen';
+  throw fail('invalid_provider','Unknown subscription credential provider');
+}
+export function subscriptionHome(provider,{config = {},env = {}} = {}) {
+  provider = subscriptionProvider(provider);
+  if (provider === 'gemini' && env.GEMINI_CLI_HOME) return resolve(env.GEMINI_CLI_HOME,'.gemini');
+  return resolve(config[`${provider}_home`] ?? (provider === 'claude' ? config.claude_code_home : null) ?? env[provider === 'claude' ? 'CLAUDE_CODE_HOME' : `${provider.toUpperCase()}_HOME`] ?? join(config.home ?? env.HOME ?? config.data_dir ?? '.',`.${provider}`));
+}
+export function subscriptionBaseURL(provider,token = {}) {
+  provider = subscriptionProvider(provider);
+  const defaults = {claude:'https://api.anthropic.com',codex:'https://chatgpt.com/backend-api/codex',gemini:'https://cloudcode-pa.googleapis.com',qwen:'https://dashscope.aliyuncs.com/compatible-mode/v1'};
+  if (!token.resource_url) return defaults[provider];
+  const value = /^https?:\/\//.test(token.resource_url) ? token.resource_url : `https://${token.resource_url}`;
+  const url = new URL(value);
+  if (!['https:','http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw fail('credential_invalid','Subscription resource URL is invalid');
+  return provider === 'qwen' && !value.replace(/\/+$/,'').endsWith('/v1') ? `${value.replace(/\/+$/,'')}/v1` : value;
 }
 function integer(value,name) {
   if (value == null) return null;
@@ -98,6 +121,14 @@ export function parseCredentialDocument(provider, input) {
       expires_at_ms:integer(field(block,'expiresAt','expires_at','expiryDate','expiry_date'),'Credential expiry'),account_id:null,resource_url:null};
     return {document,token,scopes:scopesFrom(block)};
   }
+  if (provider === 'gemini' || provider === 'qwen') {
+    const accessToken = nonempty(field(document,'access_token','accessToken','token','oauthToken','oauth_token'));
+    if (!accessToken) throw fail('credential_missing_token','Subscription credential contains no access token',401);
+    token = {access_token:accessToken,refresh_token:nonempty(field(document,'refresh_token','refreshToken')),
+      expires_at_ms:integer(field(document,'expiry_date','expiryDate','expiresAt','expires_at'),'Credential expiry'),
+      account_id:nonempty(field(document,'account_id','accountId','chatgpt_account_id')),resource_url:nonempty(field(document,'resource_url','resourceUrl'))};
+    return {document,token,scopes:scopesFrom(document)};
+  }
   const block = document.tokens;
   const accessToken = nonempty(field(block,'access_token','accessToken'));
   if (!accessToken) throw fail('credential_missing_token','Codex credential contains no subscription access token',401);
@@ -119,11 +150,15 @@ export function mergeCredentialDocument(provider, document, token, nowMs) {
     target[key('accessToken','access_token')] = token.access_token;
     if (token.refresh_token) target[key('refreshToken','refresh_token')] = token.refresh_token;
     if (token.expires_at_ms != null) target[key('expiresAt','expires_at')] = token.expires_at_ms;
-  } else {
+  } else if (provider === 'codex') {
     document.tokens ??= {};
     document.tokens.access_token = token.access_token;
     if (token.refresh_token) document.tokens.refresh_token = token.refresh_token;
     document.last_refresh = new Date(nowMs).toISOString();
+  } else {
+    document.access_token = token.access_token;
+    if (token.refresh_token) document.refresh_token = token.refresh_token;
+    if (token.expires_at_ms != null) document.expiry_date = token.expires_at_ms;
   }
   return document;
 }
@@ -150,6 +185,8 @@ export function validateOAuthEndpoint(value,{allowLoopback = false,expected} = {
 export function oauthHeaders(provider, token, {codexVersion = '0.154.0'} = {}) {
   provider = subscriptionProvider(provider);
   if (provider === 'claude') return {'anthropic-version':'2023-06-01','anthropic-beta':'oauth-2025-04-20'};
+  if (provider === 'gemini') return {'x-goog-api-client':'gl-node/22.14.0','user-agent':'google-api-nodejs-client/10.9.0'};
+  if (provider === 'qwen') return {accept:'application/json'};
   const headers = {originator:'codex_cli_rs','user-agent':`codex_cli_rs/${codexVersion} (${process.platform}; ${process.arch}) unknown`};
   if (token.account_id && !/[\r\n\0]/.test(token.account_id)) headers['chatgpt-account-id'] = token.account_id;
   return headers;
@@ -228,7 +265,7 @@ export class CredentialFileStore {
       catch { throw fail('credential_persistence_failed','Rotated credential could not be durably persisted',503); }
     }
   }
-  async transaction(operation) { return serialized(this.lockPath,() => withNativeFileLock(this.lockPath,operation,5000)); }
+  async transaction(operation) { return serialized(this.lockPath,() => withAdvisoryFileLock(this.lockPath,operation,{timeout:5000})); }
 }
 
 async function boundedJSON(response,code,maxBytes = 1024*1024) {
@@ -245,19 +282,20 @@ async function boundedJSON(response,code,maxBytes = 1024*1024) {
   try { return JSON.parse(text); } catch { throw fail(code,'Provider returned an invalid JSON response',502); }
 }
 export class OAuthManager {
-  constructor({fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1000),endpoints = {},allowLoopback = false,timeoutMs = 20000} = {}) {
+  constructor({fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1000),endpoints = {},allowLoopback = false,timeoutMs = 20000,env = {}} = {}) {
     if (typeof fetch !== 'function') throw fail('invalid_argument','OAuth requires a fetch implementation');
-    this.fetch = fetch; this.clock = clock; this.allowLoopback = allowLoopback; this.timeoutMs = timeoutMs;
+    this.fetch = fetch; this.clock = clock; this.allowLoopback = allowLoopback; this.timeoutMs = timeoutMs; this.env = env;
     this.endpoints = {};
-    for (const [provider,official] of [['claude',CLAUDE_TOKEN_URL],['codex',CODEX_TOKEN_URL]]) this.endpoints[provider] = validateOAuthEndpoint(endpoints[provider] ?? official,{allowLoopback,expected:official});
+    for (const [provider,official] of [['claude',CLAUDE_TOKEN_URL],['codex',CODEX_TOKEN_URL],['gemini',GEMINI_TOKEN_URL],['qwen',QWEN_TOKEN_URL]]) this.endpoints[provider] = validateOAuthEndpoint(endpoints[provider] ?? official,{allowLoopback,expected:official});
   }
   async exchange(provider,body) {
     provider = subscriptionProvider(provider);
-    const headers = {'content-type':'application/json'};
+    const form = provider === 'gemini' || provider === 'qwen';
+    const headers = {'content-type':form ? 'application/x-www-form-urlencoded' : 'application/json'};
     if (provider === 'claude') { headers['anthropic-beta'] = 'oauth-2025-04-20'; headers['user-agent'] = CLAUDE_OAUTH_USER_AGENT; }
     else Object.assign(headers,oauthHeaders(provider,{}));
     let response;
-    try { response = await this.fetch(this.endpoints[provider],{method:'POST',headers,body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(this.timeoutMs)}); }
+    try { response = await this.fetch(this.endpoints[provider],{method:'POST',headers,body:form ? new URLSearchParams(body).toString() : JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(this.timeoutMs)}); }
     catch { throw fail('oauth_exchange_uncertain','OAuth exchange outcome is uncertain; the refresh grant was not retried',502); }
     if (!response.ok) {
       const data = await boundedJSON(response,'oauth_response_invalid').catch(() => ({}));
@@ -284,7 +322,14 @@ export class OAuthManager {
       if (!due || !held.token.refresh_token && (held.token.expires_at_ms == null || !tokenExpired(nowMs,held.token.expires_at_ms,0))) return {...held.token,scopes:held.scopes};
       await store.prepareRefresh(held);
       let response;
-      try { response = await this.exchange(store.provider,{grant_type:'refresh_token',refresh_token:held.token.refresh_token,client_id:store.provider === 'claude' ? CLAUDE_CLIENT_ID : CODEX_CLIENT_ID}); }
+      const client = {claude:CLAUDE_CLIENT_ID,codex:CODEX_CLIENT_ID,gemini:GEMINI_CLIENT_ID,qwen:QWEN_CLIENT_ID};
+      const body = {grant_type:'refresh_token',refresh_token:held.token.refresh_token,client_id:client[store.provider]};
+      if (store.provider === 'gemini') {
+        const id = nonempty(this.env.GEMINI_OAUTH_CLIENT_ID?.trim()), secret = nonempty(this.env.GEMINI_OAUTH_CLIENT_SECRET?.trim());
+        if (Boolean(id) !== Boolean(secret)) throw fail('invalid_oauth_client','Custom Gemini OAuth client requires both client ID and client secret');
+        body.client_id = id ?? GEMINI_CLIENT_ID; body.client_secret = secret ?? GEMINI_CLIENT_SECRET;
+      }
+      try { response = await this.exchange(store.provider,body); }
       catch (error) { if (error.code === 'oauth_exchange_uncertain' || error.code === 'oauth_response_invalid') uncertain.set(key,fingerprint); throw error; }
       const token = {...held.token,access_token:response.access_token,refresh_token:nonempty(response.refresh_token) ?? held.token.refresh_token,
         expires_at_ms:response.expires_in == null ? null : nowMs+response.expires_in*1000};
@@ -303,25 +348,38 @@ export class OAuthManager {
 
 export async function validateCredentialCatalog({provider,token,fetch = globalThis.fetch,baseURL,allowLoopback = false,timeoutMs = 20000}) {
   provider = subscriptionProvider(provider);
-  const official = provider === 'claude' ? 'https://api.anthropic.com' : 'https://chatgpt.com/backend-api/codex';
+  const official = provider === 'gemini' ? 'https://generativelanguage.googleapis.com' : subscriptionBaseURL(provider,token);
   const base = validateOAuthEndpoint(baseURL ?? official,{allowLoopback,expected:official+'/'}).replace(/\/$/,'');
-  const models = [], seen = new Set(); let after = null;
-  for (let page = 0;page < 16;page++) {
-    const url = new URL(base+(provider === 'claude' ? '/v1/models' : '/models'));
-    url.searchParams.set(provider === 'claude' ? 'limit' : 'client_version',provider === 'claude' ? '1000' : '0.154.0');
-    if (after) url.searchParams.set('after_id',after);
+  const models = [], seen = new Set(); let cursor = null;
+  for (let page = 0;page < 100;page++) {
+    const url = new URL(base+(provider === 'claude' ? '/v1/models' : provider === 'gemini' ? '/v1beta/models' : '/models'));
+    if (provider === 'claude') url.searchParams.set('limit','1000');
+    if (provider === 'codex') url.searchParams.set('client_version','0.154.0');
+    if (provider === 'gemini') url.searchParams.set('pageSize','1000');
+    if (cursor) url.searchParams.set(cursor.key,cursor.value);
     let response;
     try { response = await fetch(url,{method:'GET',headers:{authorization:`Bearer ${token.access_token}`,...oauthHeaders(provider,token)},redirect:'error',signal:AbortSignal.timeout(timeoutMs)}); }
     catch { throw fail('catalog_unverified','Subscription catalog could not be verified',502); }
     if (!response.ok) throw fail('catalog_rejected','Subscription catalog rejected the credential',401);
     const data = await boundedJSON(response,'catalog_invalid',4*1024*1024);
-    const rows = provider === 'codex' ? data.models ?? data.data : data.data;
-    if (!Array.isArray(rows) || rows.some(row => !nonempty(row.id ?? row.slug))) throw fail('catalog_invalid','Subscription catalog has no exact model identities',502);
-    for (const row of rows) { const id = row.id ?? row.slug; if (!models.includes(id)) models.push(id); }
-    if (!data.has_more) { if (!models.length) throw fail('catalog_unverified','Subscription catalog returned no models',403); return models; }
-    const next = data.last_id;
-    if (!nonempty(next) || seen.has(next)) throw fail('catalog_invalid','Subscription catalog pagination is invalid',502);
-    seen.add(next); after = next;
+    const rows = provider === 'gemini' || provider === 'codex' ? data.models : data.data;
+    if (!Array.isArray(rows)) throw fail('catalog_invalid','Subscription catalog has no model array',502);
+    const identity = provider === 'gemini' ? 'name' : provider === 'codex' ? 'slug' : 'id';
+    const pageModels = rows.filter(row => row && typeof row === 'object' && !Array.isArray(row) &&
+      (provider !== 'gemini' || !Array.isArray(row.supportedGenerationMethods) || row.supportedGenerationMethods.includes('generateContent')))
+      .map(row => nonempty(row[identity])).filter(Boolean);
+    for (const id of pageModels) if (!models.includes(id)) models.push(id);
+    const pageToken = nonempty(data.nextPageToken ?? data.next_page_token), nextCursor = nonempty(data.next_cursor ?? data.cursor ?? data.next ?? data.pagination?.next_cursor);
+    if (pageToken) cursor = {key:provider === 'gemini' ? 'pageToken' : 'page_token',value:pageToken};
+    else if (nextCursor) cursor = {key:'cursor',value:nextCursor};
+    else if (data.has_more === true) {
+      const next = nonempty(data.last_id) ?? pageModels.at(-1);
+      if (!next) throw fail('catalog_invalid','Subscription catalog pagination is invalid',502);
+      cursor = {key:provider === 'claude' ? 'after_id' : 'after',value:next};
+    } else { if (!models.length) throw fail('catalog_unverified','Subscription catalog returned no executable models',403); return models; }
+    const key = `${cursor.key}=${cursor.value}`;
+    if (seen.has(key)) throw fail('catalog_invalid','Subscription catalog pagination repeats a cursor',502);
+    seen.add(key);
   }
   throw fail('catalog_invalid','Subscription catalog exceeded pagination limits',502);
 }
@@ -336,7 +394,7 @@ function acceptedModels(value) {
   if (!Array.isArray(value) || !value.length || value.some(model => typeof model !== 'string' || !model)) throw fail('catalog_unverified','Credential catalog acceptance requires exact nonempty model ids',403);
   return [...new Set(value)];
 }
-async function installAcceptedDocument({provider,document,sourcePath,destinationHome,dataDir,ifAbsent = false,follow = false,snapshot = false,beforePromote}) {
+export async function installAcceptedDocument({provider,document,sourcePath,destinationHome,dataDir,ifAbsent = false,follow = false,snapshot = false,beforePromote}) {
   const store = new CredentialFileStore({provider,home:destinationHome,dataDir});
   return store.transaction(async () => {
     const previous = await store.readPrimary();

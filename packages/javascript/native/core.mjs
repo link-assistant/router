@@ -2,7 +2,7 @@ import { loadConfig, ProviderStore,nativeConfigEnvironment } from './config.mjs'
 import { createTokenStore } from './storage.mjs';
 import { TokenManager, RouterError } from './tokens.mjs';
 import { AccountRouter } from './accounts.mjs';
-import { OAuthManager, CredentialFileStore, subscriptionProvider } from './oauth.mjs';
+import { OAuthManager, CredentialFileStore, subscriptionProvider,subscriptionHome,subscriptionBaseURL } from './oauth.mjs';
 import { modelCandidates, catalogModels } from './routing.mjs';
 import { AffinityStore } from './affinities.mjs';
 import { AdminClaim } from './admin.mjs';
@@ -17,7 +17,7 @@ export class RouterCore {
     this.tokens = new TokenManager({secret:config.token_secret,store:createTokenStore({...config,storage}),clock});
     this.providers = new ProviderStore({dataDir:config.data_dir,secret:config.token_secret,env,records:config.providers,persistent:config.storage_policy !== 'memory'});
     this.accounts = new AccountRouter({config,clock});
-    this.oauth = new OAuthManager({fetch,clock,...oauth});
+    this.oauth = new OAuthManager({fetch,clock,env,...oauth});
     this.credentialStores = new Map();
     this.affinities = new AffinityStore({dataDir:config.data_dir,persistent:config.storage_policy !== 'memory',clock});
     this.admin = new AdminClaim(this,{env});
@@ -61,7 +61,8 @@ export class RouterCore {
   attachCredentials(ordered,providers) {
     for (const candidate of ordered) {
       const account = this.accounts.records.get(candidate.account), provider = providers.find(p => p.name === candidate.provider);
-      const home = account?.credential_home ?? account?.oauth?.home ?? provider?.credential_home ?? provider?.oauth?.home ?? ((provider?.kind === 'anthropic' || provider?.kind === 'codex') ? account?.home : null);
+      const subscription = ['anthropic','claude','codex','gemini','qwen'].includes(provider?.kind);
+      const home = account?.credential_home ?? account?.oauth?.home ?? provider?.credential_home ?? provider?.oauth?.home ?? (subscription ? account?.home ?? subscriptionHome(provider.kind,{config:this.config,env:this.env}) : null);
       if (home) {
         const kind = subscriptionProvider(account?.oauth_provider ?? account?.oauth?.provider ?? provider?.oauth?.provider ?? provider.kind);
         const key = `${kind}\0${candidate.account}\0${home}`;
@@ -106,6 +107,7 @@ export class RouterCore {
     if (!this.accounts.serves(candidate.account,candidate.model)) throw new RouterError('account_unavailable','Account became unavailable during credential preparation',503);
     const {credential_key,...prepared} = candidate;
     return {...prepared,api_key:token.access_token,apiKey:token.access_token,account_id:token.account_id,oauth_headers:headers,
+      ...(store.provider === 'qwen' && token.resource_url ? {base_url:subscriptionBaseURL('qwen',token),baseUrl:subscriptionBaseURL('qwen',token)} : {}),
       ...(store.provider === 'codex' ? {endpointPath:'/responses',protocol:'responses'} : {})};
   }
   async resolveCandidates(model, context = {}) { return this.candidates({ ...context,model }); }
@@ -113,7 +115,10 @@ export class RouterCore {
   async reportFailure(candidate, details) { return this.accounts.reportFailure(candidate,details); }
   async reportSuccess(candidate) { return this.accounts.reportSuccess(candidate); }
   async authenticate(token, options) {
-    if (options?.admin && (this.config.allow_anonymous_admin || await this.admin.verify(token))) return {sub:`admin-credential-${createHash('sha256').update(token ?? '').digest('hex')}`,scope:'admin',is_admin:true,record:null};
+    if (options?.admin && (this.config.allow_anonymous_admin || await this.admin.verify(token))) {
+      try { return await this.tokens.validate(token,options); }
+      catch { return {scope:'admin',is_admin:true,admin_credential_kind:this.config.allow_anonymous_admin ? 'anonymous' : this.admin.envKey ? 'environment' : 'legacy_opaque',record:null}; }
+    }
     return this.tokens.validate(token,options);
   }
   async withConfig(overrides = {},{env = this.env,cwd = process.cwd()} = {}) {
@@ -129,6 +134,7 @@ export class RouterCore {
       return this.contexts.get(identity).withConfig({}, {env,cwd});
     }
     const context = Object.assign(Object.create(Object.getPrototypeOf(this)),this,{config,env});
+    context.oauth = Object.assign(Object.create(Object.getPrototypeOf(this.oauth)),this.oauth,{env});
     context.providers = Object.assign(Object.create(Object.getPrototypeOf(this.providers)),this.providers,{env});
     Object.defineProperty(context.providers,'records',{get:() => this.providers.records,set:value => {this.providers.records=value;},enumerable:true});
     context.accounts = Object.assign(Object.create(Object.getPrototypeOf(this.accounts)),this.accounts,{config});

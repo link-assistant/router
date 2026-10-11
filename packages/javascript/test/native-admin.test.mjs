@@ -20,6 +20,7 @@ test('admin candidates remain revoked until proof of possession and confirmed cl
   await assert.rejects(core.admin.confirm(candidate.claim_id,'wrong'),error => error.status === 401);
   await assert.rejects(core.admin.confirm('wrong',candidate.token),error => error.status === 400);
   await core.admin.confirm(candidate.claim_id,candidate.token);
+  assert.equal((await core.authenticate(candidate.token,{admin:true})).sub,(await core.admin.status()).token_id);
   assert.equal((await core.admin.status()).credential_kind,'jwt');
   assert.equal(await core.admin.verify(candidate.token),true);
   await assert.rejects(core.authenticate(old.token,{admin:true}),error => error.code === 'revoked');
@@ -48,6 +49,7 @@ test('environment administrator closes bootstrap and anonymous management requir
   assert.equal((await core.admin.status()).credential_kind,'environment');
   await assert.rejects(core.admin.beginWithTtl(),error => error.status === 409);
   assert.equal((await core.authenticate('independent-environment-admin',{admin:true})).is_admin,true);
+  assert.equal((await core.authenticate('independent-environment-admin',{admin:true})).sub,undefined);
   await assert.rejects(core.authenticate(undefined,{admin:true}));
   const other = await fixture(t,{allow_anonymous_admin:true}); assert.equal((await other.core.authenticate(undefined,{admin:true})).is_admin,true);
 });

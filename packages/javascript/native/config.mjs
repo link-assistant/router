@@ -27,11 +27,11 @@ const bool = value => {
 export const nativeConfigOptions = new Set(['token_secret','data_dir','storage_policy','host','port','account_strategy',
   'account_failover','account_cooldown_seconds','account_max_cooldown_seconds','session_affinity_ttl_seconds',
   'token_admin_key','admin_key','allow_anonymous_admin','disable_login_api','login_max_sessions','login_session_ttl_secs',
-  'claude_code_home','claude_home','codex_home','home','openai_compatible_provider_name',
+  'claude_code_home','claude_home','codex_home','gemini_home','qwen_home','home','openai_compatible_provider_name',
   'management_allow_remote','management_lockout_failures','management_lockout_secs','management_lockout_exempt_loopback']);
 export const nativeConfigEnvironment = {TOKEN_SECRET:'token_secret',DATA_DIR:'data_dir',STORAGE_POLICY:'storage_policy',HOST:'host',PORT:'port',
   ACCOUNT_STRATEGY:'account_strategy',ACCOUNT_FAILOVER:'account_failover',ACCOUNT_COOLDOWN_SECONDS:'account_cooldown_seconds',
-  SESSION_AFFINITY_TTL_SECONDS:'session_affinity_ttl_seconds',TOKEN_ADMIN_KEY:'token_admin_key',CLAUDE_CODE_HOME:'claude_code_home',CODEX_HOME:'codex_home',
+  SESSION_AFFINITY_TTL_SECONDS:'session_affinity_ttl_seconds',TOKEN_ADMIN_KEY:'token_admin_key',CLAUDE_CODE_HOME:'claude_code_home',CODEX_HOME:'codex_home',GEMINI_HOME:'gemini_home',QWEN_HOME:'qwen_home',
   MANAGEMENT_ALLOW_REMOTE:'management_allow_remote',MANAGEMENT_LOCKOUT_FAILURES:'management_lockout_failures',MANAGEMENT_LOCKOUT_SECS:'management_lockout_secs',MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK:'management_lockout_exempt_loopback'};
 export function normalizeProvider(record, env = process.env) {
   const name = record.name ?? record.provider_name ?? record.provider;
