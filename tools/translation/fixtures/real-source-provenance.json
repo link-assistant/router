@@ -228,10 +228,6 @@
   ],
   "obligations": [
     {
-      "id": "identity-first-block",
-      "reason": "Value import and Option/Vec closure lowering"
-    },
-    {
       "id": "token-records",
       "reason": "Value import and Option<Vec<Value>>::cloned/unwrap_or_default"
     },
@@ -281,6 +277,26 @@
       "role": "new-json-method",
       "fixtureCarriers": 1,
       "independentCases": 12
+    },
+    {
+      "id": "identity-first-block",
+      "productionBodies": [
+        "first_block_is_identity"
+      ],
+      "role": "new-shared-vector-json",
+      "independentCases": 10,
+      "domainGuards": 1
     }
-  ]
+  ],
+  "verificationMatrix": {
+    "source": "Original declarations and methods selected by structural SHA256/span pins",
+    "emittedJavaScript": "Executed unchanged and checked with node --check",
+    "emittedTypeScript": "Compiled unchanged with tsc --strict --target ES2022 --module NodeNext --moduleResolution NodeNext; every literal case executed independently",
+    "runtimes": [
+      "Node",
+      "Bun"
+    ],
+    "sourceRewrites": false,
+    "fixtureCarriersAreProductionBodies": false
+  }
 }
