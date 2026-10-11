@@ -21,7 +21,7 @@ export const CONDITIONAL_ATTRIBUTE_PROFILE=freeze({...manifest,activeExpansionAu
 const text=token=>token?.text??token?.raw??token?.value;
 const identifier=/^[\p{XID_Start}_][\p{XID_Continue}_]*$/u;
 const pathName=token=>{const name=text(token);return typeof name==='string'&&name!=='_'&&identifier.test(name)&&name.normalize('NFC')===name&&!keywords.has(name);};
-const pairs={'(':')','[':']','{':'};
+const pairs={'(':')','[':']','{':'}'};
 function groupEnd(tokens,start){
   const stack=[];
   for(let at=start;at<tokens.length;at++){
