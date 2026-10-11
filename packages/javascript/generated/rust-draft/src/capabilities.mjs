@@ -19,7 +19,10 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_array as ml_host_serde_json_value_as_array } from "../runtime/json-runtime.mjs";
 
 function ml_router_unwrap(value, fallback, option) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";

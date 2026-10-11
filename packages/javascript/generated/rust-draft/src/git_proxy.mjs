@@ -34,7 +34,10 @@ function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
 
 function ml_router_unwrap(value, fallback, option) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 function rp_6769745f70726f78792e5a45524f5f4f4944() {

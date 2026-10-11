@@ -15,7 +15,10 @@ import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-run
 import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
 function ml_router_unwrap(value, fallback, option) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 function ml_router_array(values, validate) {

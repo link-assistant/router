@@ -43,7 +43,10 @@ function ml_router_array(values, validate) {
 }
 
 function ml_router_unwrap(value, fallback, option) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";

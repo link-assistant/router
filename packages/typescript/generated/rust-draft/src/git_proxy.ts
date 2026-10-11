@@ -84,8 +84,11 @@ function ml_router_iter<T>(values: ReadonlyArray<T>, immutable: boolean): ArrayI
 
 function ml_router_any<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) return true; return false; }
 
-function ml_router_unwrap(value: any, fallback: any, option: boolean) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 function rp_6769745f70726f78792e5a45524f5f4f4944(): string {

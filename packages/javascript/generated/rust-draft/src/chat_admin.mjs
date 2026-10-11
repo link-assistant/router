@@ -26,7 +26,10 @@ function ml_validate_duration(value) { ml_host_duration_as_secs(value); return t
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
 function ml_router_unwrap(value, fallback, option) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }

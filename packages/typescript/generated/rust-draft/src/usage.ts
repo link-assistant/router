@@ -60,8 +60,11 @@ import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-run
 
 import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
-function ml_router_unwrap(value: any, fallback: any, option: boolean) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {

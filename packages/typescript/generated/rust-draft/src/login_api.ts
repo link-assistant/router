@@ -5,8 +5,11 @@ type MLData_72705f37333735363237333633373236393730373436393666366532653734373937
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
-function ml_router_unwrap(value: any, fallback: any, option: boolean) {
-  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
 }
 
 const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
