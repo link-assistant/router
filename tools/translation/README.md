@@ -4,7 +4,9 @@ The future standard namespace census derives stable public type names from
 original Rust 1.89 declarations and the explicit std → alloc → core reexport
 chain. It registers incomplete named formatting type facts without layouts,
 constructors, globs or runtime formatting. Source byte hashes and spans accompany
-each fact; focused compiler and emitted-target verification is pending.
+each fact. All 72 focused Node and Bun cases passed, including strict
+TypeScript execution, copied-bundle regeneration and source archive tamper
+refusals. The complete combined repository gate remains required.
 
 The source-only tool-attribute draft verifies original Rust 1.89 resolver bytes
 before proving an unshadowed `rustfmt::skip` owner in active ancestor scopes.

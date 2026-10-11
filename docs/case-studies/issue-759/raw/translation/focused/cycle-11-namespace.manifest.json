@@ -1,0 +1,60 @@
+{
+  "schema": "retained-focus-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "pack": "cycle-11-namespace.tar.gz",
+  "bytes": 18338,
+  "sha256": "7ef797af95a8df7bcd4714ac964c68b960f1ca6138540367d26860f690b857cd",
+  "receiptSha256": "19c8047142a0a55105cea0b8b9ef67543370f299dee6a381316b54f84cdccc92",
+  "members": [
+    {
+      "path": "router-759-future11-core-complete-receipt.json",
+      "bytes": 2069,
+      "sha256": "19c8047142a0a55105cea0b8b9ef67543370f299dee6a381316b54f84cdccc92"
+    },
+    {
+      "path": "router-759-future11-core-final-bun.log",
+      "bytes": 17548,
+      "sha256": "1cb7a23b460f9445f96b3cb1d13ee51748b0c154551adc10c58eca1433f951ef"
+    },
+    {
+      "path": "router-759-future11-core-final-node.log",
+      "bytes": 24599,
+      "sha256": "bfddb28df58f3cf0af9cac6cffbb5676ceb350345b16da4a92a743cf448f532c"
+    },
+    {
+      "path": "router-759-future11-core-final.json",
+      "bytes": 2226,
+      "sha256": "dbad5d7e88552516103b7cf59fb97f0fda983780ba9728e3b868eedc92e9ce6b"
+    },
+    {
+      "path": "router-759-future11-core-initial-bun.log",
+      "bytes": 14463,
+      "sha256": "b88a9fb8d1cb36955ceb5505f8b1806666ab755c700f2fb9924b5d763ebbaff1"
+    },
+    {
+      "path": "router-759-future11-core-initial-node.log",
+      "bytes": 19449,
+      "sha256": "1dc945c47b6b398592170db8e2bd041b7466db8471f70e47fb7246328170b7cd"
+    },
+    {
+      "path": "router-759-future11-core-initial.json",
+      "bytes": 2231,
+      "sha256": "8dcf27a89b989891b790689790c27b4282ee2e6f42f97eabffa1e62d9b5b4130"
+    },
+    {
+      "path": "router-759-future11-core-retry-bun.log",
+      "bytes": 18673,
+      "sha256": "ff3065e929814e177107e8904beee5411081572285d36759ec45d81eb092908c"
+    },
+    {
+      "path": "router-759-future11-core-retry-node.log",
+      "bytes": 25315,
+      "sha256": "8fe4e530b5242849ace2a847c3a1725b82d21f6c4f2014032217b11b41a9cfaf"
+    },
+    {
+      "path": "router-759-future11-core-retry.json",
+      "bytes": 2226,
+      "sha256": "2c4f7d63999974c80c3f85abf9545a440acd4b5652a31aed4beea3ddafb65372"
+    }
+  ]
+}
