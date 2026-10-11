@@ -18,7 +18,7 @@ function rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f4845
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253() {
-  return Object.freeze(["content-length", "transfer-encoding", "connection", "date"]);
+  return Object.freeze(Object.freeze(["content-length", "transfer-encoding", "connection", "date"]));
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459() {

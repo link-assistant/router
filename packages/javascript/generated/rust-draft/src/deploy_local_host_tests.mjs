@@ -42,6 +42,7 @@ function CANDIDATE_PORT() {
 }
 
 function ml_make_Process_Process(port, secret) {
+  if (typeof port !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(port, 0n, 65535n, "u16 argument port out of range");
   if (!(typeof port === 'bigint' && port >= 0n && port <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof secret === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(secret))) throw new TypeError('argument outside supported Rust value domain');

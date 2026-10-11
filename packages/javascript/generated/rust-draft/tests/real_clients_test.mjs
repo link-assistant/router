@@ -11,9 +11,9 @@ function ml_router_array(values, validate) {
   return true;
 }
 
-const ml_host_value_schema_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 = {"schemaVersion":1,"types":{"RouterTuple_6_string_6_string":{"kind":"data","name":"RouterTuple_6_string_6_string","ctors":[{"name":"Tuple","fields":[{"name":"field0","type":{"kind":"string"}},{"name":"field1","type":{"kind":"string"}}]}]}}};
+const ml_host_value_schema_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa2813520f59b8614b1 = {"schemaVersion":1,"types":{"RouterTuple_17_rust_owned_string_17_rust_owned_string_rust_5b7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d2c7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d5d":{"kind":"data","name":"RouterTuple_17_rust_owned_string_17_rust_owned_string_rust_5b7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d2c7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d5d","ctors":[{"name":"Tuple","fields":[{"name":"field0","type":{"kind":"string"}},{"name":"field1","type":{"kind":"string"}}]}]}}};
 
-const ml_host_value_refinements_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 = new Map([]);
+const ml_host_value_refinements_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa2813520f59b8614b1 = new Map([]);
 
 function PROMPT() {
   return "Reply with exactly ROUTER_CAPTURE_OK";
@@ -71,7 +71,7 @@ function ml_make_ClientCase_ClientCase(client, executable, version, model, owner
 function ml_make_CapturedRequest_CapturedRequest(method, path, headers, body) {
   if (!(typeof method === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(method))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(headers, {"kind":"array","element":{"kind":"data","name":"RouterTuple_6_string_6_string"},"patternOwnershipRefusal":"ownership-bearing Vec type"}, ml_host_value_schema_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2, { refinements: ml_host_value_refinements_7897d7f0c726e612ccdd23bd7b221da85c02ed76fedffb112fe173402d9bacc2 });
+  ml_validate_rust_value(headers, {"kind":"array","element":{"kind":"data","name":"RouterTuple_17_rust_owned_string_17_rust_owned_string_rust_5b7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d2c7b226f776e657273686970223a226f776e6572736869702d62656172696e6720537472696e672074797065222c22736f757263654f776e657273686970223a7b226b696e64223a226f776e6564222c22736f75726365223a22537472696e67227d7d5d"}}, ml_host_value_schema_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa2813520f59b8614b1, { refinements: ml_host_value_refinements_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa2813520f59b8614b1 });
   if (!ml_router_array(body, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "CapturedRequest", ["method"]: method, ["path"]: path, ["headers"]: headers, ["body"]: body });
 }

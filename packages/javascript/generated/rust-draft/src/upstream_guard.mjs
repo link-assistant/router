@@ -53,7 +53,7 @@ function ml_make_NetworkPolicy_NetworkPolicy(loopback, private_, link_local, all
 }
 
 function rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553() {
-  return Object.freeze(["metadata.google.internal", "metadata", "instance-data"]);
+  return Object.freeze(Object.freeze(["metadata.google.internal", "metadata", "instance-data"]));
 }
 
 export const translated = { ["ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["AddressClass"]: Object.freeze({ ["Loopback"]: ml_make_AddressClass_Loopback, ["Private"]: ml_make_AddressClass_Private, ["LinkLocal"]: ml_make_AddressClass_LinkLocal, ["NonUnicast"]: ml_make_AddressClass_NonUnicast }), ["NetworkPolicy"]: ml_make_NetworkPolicy_NetworkPolicy, ["METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553() };

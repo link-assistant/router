@@ -16,8 +16,10 @@ const ml_host_value_refinements_d455489a83966d4b670ddf6c3d2ae90088973fc7bd8b7c61
 function ml_validate_duration(value) { ml_host_duration_as_secs(value); return true; }
 
 function ml_make_RetryPolicy_RetryPolicy(rounds, max_credentials, max_interval) {
+  if (typeof rounds !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(rounds, 0n, 4294967295n, "u32 argument rounds out of range");
   if (!(typeof rounds === 'bigint' && rounds >= 0n && rounds <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof max_credentials !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(max_credentials, 0n, 4294967295n, "u32 argument max_credentials out of range");
   if (!(typeof max_credentials === 'bigint' && max_credentials >= 0n && max_credentials <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
   ml_validate_rust_value(max_interval, {"kind":"data","name":"std.time.Duration"}, ml_host_value_schema_d455489a83966d4b670ddf6c3d2ae90088973fc7bd8b7c6119ab0f9f46c91506, { refinements: ml_host_value_refinements_d455489a83966d4b670ddf6c3d2ae90088973fc7bd8b7c6119ab0f9f46c91506 });

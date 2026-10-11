@@ -10,7 +10,7 @@ function rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f
 }
 
 function rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(): ReadonlyArray<string> {
-  return Object.freeze(["forwarded", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-server", "x-original-forwarded-for", "x-real-ip", "x-client-ip", "x-cluster-client-ip", "cf-connecting-ip", "true-client-ip", "fastly-client-ip", "fly-client-ip", "x-envoy-external-address", "x-forwarded-client-cert", "x-azure-clientip", "x-appengine-user-ip", "cloudfront-viewer-address"]);
+  return Object.freeze(Object.freeze(["forwarded", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-server", "x-original-forwarded-for", "x-real-ip", "x-client-ip", "x-cluster-client-ip", "cf-connecting-ip", "true-client-ip", "fastly-client-ip", "fly-client-ip", "x-envoy-external-address", "x-forwarded-client-cert", "x-azure-clientip", "x-appengine-user-ip", "cloudfront-viewer-address"]));
 }
 
 export const translated: { "DEFAULT_ANTHROPIC_VERSION": string; "OAUTH_BETA_FLAG": string; "INGRESS_NETWORK_HEADERS": ReadonlyArray<string> } = { ["DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253() };

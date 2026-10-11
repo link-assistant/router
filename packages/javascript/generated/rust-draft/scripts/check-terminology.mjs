@@ -1,7 +1,7 @@
 // Generated draft from scripts/check-terminology.rs; sha256=5c6013eb135246b6bda2abea188896930a5bc76df350b2cf09db7fed85559c4c
 // Carried constructs are data, never runtime parity evidence.
 function SCANNED_EXTENSIONS() {
-  return Object.freeze([".rs", ".md", ".toml", ".yml", ".yaml", ".json", ".sh", ".ts", ".tsx", ".js", ".jsx", ".html", ".css", ".txt"]);
+  return Object.freeze(Object.freeze([".rs", ".md", ".toml", ".yml", ".yaml", ".json", ".sh", ".ts", ".tsx", ".js", ".jsx", ".html", ".css", ".txt"]));
 }
 
 const std = {
@@ -29,11 +29,11 @@ const serde_json = {
 };
 
 function EXCLUDED_PATHS() {
-  return Object.freeze(["CONTRIBUTING.md", "CHANGELOG.md", "changelog.d/", "scripts/check-terminology.rs", "target", ".git/", "node_modules", "dev/log", "/raw/", "ui/dist"]);
+  return Object.freeze(Object.freeze(["CONTRIBUTING.md", "CHANGELOG.md", "changelog.d/", "scripts/check-terminology.rs", "target", ".git/", "node_modules", "dev/log", "/raw/", "ui/dist"]));
 }
 
 function ALLOWED_PHRASES() {
-  return Object.freeze(["graphql", "graphiql", "graphviz", "graphite", "langgraph", "object graph", "dependency graph", "workflow graph", "module graph", "call graph", "paragraph", "lexicographic", "lexicographical", "geographic", "geographical", "geography", "cryptographic", "cryptographically", "cryptography", "typographic", "orthographic", "digraph", "telegraph", "autograph", "photograph", "graphic", "graphite", "/graphs/"]);
+  return Object.freeze(Object.freeze(["graphql", "graphiql", "graphviz", "graphite", "langgraph", "object graph", "dependency graph", "workflow graph", "module graph", "call graph", "paragraph", "lexicographic", "lexicographical", "geographic", "geographical", "geography", "cryptographic", "cryptographically", "cryptography", "typographic", "orthographic", "digraph", "telegraph", "autograph", "photograph", "graphic", "graphite", "/graphs/"]));
 }
 
 export const translated = { ["SCANNED_EXTENSIONS"]: SCANNED_EXTENSIONS(), ["EXCLUDED_PATHS"]: EXCLUDED_PATHS(), ["ALLOWED_PHRASES"]: ALLOWED_PHRASES() };

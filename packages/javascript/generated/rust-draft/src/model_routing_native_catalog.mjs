@@ -38,8 +38,10 @@ function DEFAULT_ANTHROPIC_PAGE() {
 }
 
 function ml_make_AnthropicPage_AnthropicPage(start, end, has_more) {
+  if (typeof start !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(start, 0n, 18446744073709551615n, "u64 argument start out of range");
   if (!(typeof start === 'bigint' && start >= 0n && start <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof end !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(end, 0n, 18446744073709551615n, "u64 argument end out of range");
   if (!(typeof end === 'bigint' && end >= 0n && end <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof has_more === 'boolean')) throw new TypeError('argument outside supported Rust value domain');

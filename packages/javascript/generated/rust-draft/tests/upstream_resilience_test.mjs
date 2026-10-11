@@ -39,6 +39,7 @@ function ml_make_Post_Stall(field0) {
 }
 
 function ml_make_Post_Redirect(field0, field1) {
+  if (typeof field0 !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(field0, 0n, 65535n, "u16 argument field0 out of range");
   if (!(typeof field0 === 'bigint' && field0 >= 0n && field0 <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof field1 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field1))) throw new TypeError('argument outside supported Rust value domain');

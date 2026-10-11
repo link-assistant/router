@@ -9,7 +9,7 @@ function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e45
 }
 
 function rp_6163636f756e745f687474702e50524f58595f534348454d4553() {
-  return Object.freeze(["http", "https", "socks5", "socks5h"]);
+  return Object.freeze(Object.freeze(["http", "https", "socks5", "socks5h"]));
 }
 
 function ml_make_CookieMode_None() {

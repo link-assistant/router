@@ -10,6 +10,7 @@ function rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e() {
 }
 
 function ml_make_Settlement_Settlement(tokens, estimated) {
+  if (typeof tokens !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(tokens, 0n, 18446744073709551615n, "u64 argument tokens out of range");
   if (!(typeof tokens === 'bigint' && tokens >= 0n && tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof estimated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');

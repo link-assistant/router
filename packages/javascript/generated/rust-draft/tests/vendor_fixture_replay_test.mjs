@@ -38,11 +38,14 @@ function PROMPT() {
 }
 
 function ml_make_Outcome_Outcome(status, body, used, reserved) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof body === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(body))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof used !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(used, 0n, 18446744073709551615n, "u64 argument used out of range");
   if (!(typeof used === 'bigint' && used >= 0n && used <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof reserved !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(reserved, 0n, 18446744073709551615n, "u64 argument reserved out of range");
   if (!(typeof reserved === 'bigint' && reserved >= 0n && reserved <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Outcome", ["status"]: status, ["body"]: body, ["used"]: used, ["reserved"]: reserved });

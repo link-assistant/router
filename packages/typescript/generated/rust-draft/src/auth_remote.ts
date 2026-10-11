@@ -1,4 +1,4 @@
-type MLData_72705f35323666373537343635373234663730373436393666366535663333333735663665363136643635363435663337333333363335333733323336333433363335333536363336363133373333333636363336363535663335333633363331333636333337333533363335 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
+type MLData_72705f3532366637353734363537323466373037343639366636653566333533343566373236353636363537323635366536333635356637333638363137323635363435663665363136643635363435663337333333363335333733323336333433363335333536363336363133373333333636363336363535663335333633363331333636333337333533363335 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
 type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 type MLData_72705f3733363537323634363535663661373336663665326534643631373034353665373437323739 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
 type MLData_72705f373336353732363436353566366137333666366532653464363137303566353337343732363936653637356635363631366337353635 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_72705f3733363537323634363535663661373336663665326534643631373034353665373437323739> }>;
@@ -29,10 +29,14 @@ function rp_617574685f72656d6f74652e524551554553545f54494d454f5554(): Readonly<{
   return ml_host_std_time_duration_from_secs(30n);
 }
 
+function rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(3n);
+}
+
 function rp_617574685f72656d6f74652e7374617475735f6f66(view: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): string {
-  ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(view, "status"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then"), "unknown", true);
 }
 
-export const translated: { "REQUEST_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "status_of": (view: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => string } = { ["REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66 };
-export const provenance = {"sourcePath":"src/auth_remote.rs","sourceSha256":"10e9e8cf780427d1a75abcc2ccfa567a69ba7b4d66c26e51646af216466fd05f","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":27,"preserved":30,"runtimeParity":false};
+export const translated: { "REQUEST_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "POLL_INTERVAL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "status_of": (view: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => string } = { ["REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66 };
+export const provenance = {"sourcePath":"src/auth_remote.rs","sourceSha256":"10e9e8cf780427d1a75abcc2ccfa567a69ba7b4d66c26e51646af216466fd05f","executable":3,"executableFunctions":1,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":26,"preserved":30,"runtimeParity":false};

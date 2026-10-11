@@ -14,15 +14,15 @@ function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(): ReadonlyArray<string> {
-  return Object.freeze(["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"]);
+  return Object.freeze(Object.freeze(["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"]));
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(): ReadonlyArray<string> {
-  return Object.freeze([".chatgpt.com", ".chatgpt-staging.com"]);
+  return Object.freeze(Object.freeze([".chatgpt.com", ".chatgpt-staging.com"]));
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(): ReadonlyArray<string> {
-  return Object.freeze(["__cf_bm", "__cflb", "__cfruid", "__cfseq", "__cfwaitingroom", "_cfuvid", "cf_clearance", "cf_ob_info", "cf_use_ob"]);
+  return Object.freeze(Object.freeze(["__cf_bm", "__cflb", "__cfruid", "__cfseq", "__cfwaitingroom", "_cfuvid", "cf_clearance", "cf_ob_info", "cf_use_ob"]));
 }
 
 export const translated: { "MAX_COOKIE_BYTES": bigint; "MAX_COOKIE_COUNT": bigint; "MAX_COOKIE_HEADER_BYTES": bigint; "EXACT_HOSTS": ReadonlyArray<string>; "SUBDOMAIN_SUFFIXES": ReadonlyArray<string>; "EXACT_COOKIE_NAMES": ReadonlyArray<string> } = { ["MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553() };

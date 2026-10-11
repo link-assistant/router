@@ -7,8 +7,10 @@ function ml_fixed(value, min, max, message) {
 
 function ml_make_ManagementConfig_ManagementConfig(allow_remote, lockout_failures, lockout_secs, exempt_loopback) {
   if (!(typeof allow_remote === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof lockout_failures !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(lockout_failures, 0n, 4294967295n, "u32 argument lockout_failures out of range");
   if (!(typeof lockout_failures === 'bigint' && lockout_failures >= 0n && lockout_failures <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof lockout_secs !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(lockout_secs, 0n, 18446744073709551615n, "u64 argument lockout_secs out of range");
   if (!(typeof lockout_secs === 'bigint' && lockout_secs >= 0n && lockout_secs <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof exempt_loopback === 'boolean')) throw new TypeError('argument outside supported Rust value domain');

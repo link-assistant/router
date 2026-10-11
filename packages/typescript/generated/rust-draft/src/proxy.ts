@@ -6,19 +6,19 @@ function rp_70726f78792e4150495f505245464958(): string {
 }
 
 function rp_70726f78792e52455155495245445f464f52574152445f48454144455253(): ReadonlyArray<string> {
-  return Object.freeze(["anthropic-beta", "anthropic-version"]);
+  return Object.freeze(Object.freeze(["anthropic-beta", "anthropic-version"]));
 }
 
 function rp_70726f78792e484f505f42595f484f505f48454144455253(): ReadonlyArray<string> {
-  return Object.freeze(["host", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
+  return Object.freeze(Object.freeze(["host", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]));
 }
 
 function rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(): ReadonlyArray<string> {
-  return Object.freeze(["authorization", "proxy-authorization", "set-cookie", "set-cookie2", "x-api-key", "x-goog-api-key", "anthropic-auth-token"]);
+  return Object.freeze(Object.freeze(["authorization", "proxy-authorization", "set-cookie", "set-cookie2", "x-api-key", "x-goog-api-key", "anthropic-auth-token"]));
 }
 
 function rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(): ReadonlyArray<string> {
-  return Object.freeze(["x-api-key", "x-goog-api-key"]);
+  return Object.freeze(Object.freeze(["x-api-key", "x-goog-api-key"]));
 }
 
 function rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(): string {

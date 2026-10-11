@@ -29,11 +29,11 @@ const serde_json = {
 };
 
 function KEPT_HEADERS() {
-  return Object.freeze(["content-type", "retry-after"]);
+  return Object.freeze(Object.freeze(["content-type", "retry-after"]));
 }
 
 function FORBIDDEN() {
-  return Object.freeze(["sk-ant-", "sk-proj-", "bearer ", "ya29.", "aiza", "anthropic-organization-id", "openai-organization", "set-cookie"]);
+  return Object.freeze(Object.freeze(["sk-ant-", "sk-proj-", "bearer ", "ya29.", "aiza", "anthropic-organization-id", "openai-organization", "set-cookie"]));
 }
 
 export const translated = { ["SCHEMA"]: SCHEMA(), ["KEPT_HEADERS"]: KEPT_HEADERS(), ["FORBIDDEN"]: FORBIDDEN() };

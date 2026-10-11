@@ -55,8 +55,10 @@ const serde_json = {
 };
 
 function rp_766b2e69735f70726976617465(peer_id, from_id) {
+  if (typeof peer_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(peer_id, -9223372036854775808n, 9223372036854775807n, "i64 argument peer_id out of range");
   if (!(typeof peer_id === 'bigint' && peer_id >= -9223372036854775808n && peer_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof from_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(from_id, -9223372036854775808n, 9223372036854775807n, "i64 argument from_id out of range");
   if (!(typeof from_id === 'bigint' && from_id >= -9223372036854775808n && from_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
   return (((peer_id === from_id) && (from_id > 0n)) && (peer_id < rp_766b2e434841545f504545525f4f4646534554()));

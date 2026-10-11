@@ -7,23 +7,26 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
-const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+const ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
-const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
+const ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = new Map([]);
 
-const ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65":{"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]}}};
+const ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65":{"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]}}};
 
-const ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb = new Map([]);
+const ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = new Map([]);
 
 function ml_make_StreamOutcome_StreamOutcome(streamed, terminated, inspectable, detail, frames, bytes, duration_ms) {
   if (!(typeof streamed === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof terminated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof inspectable === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(detail, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(detail, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  if (typeof frames !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(frames, 0n, 18446744073709551615n, "u64 argument frames out of range");
   if (!(typeof frames === 'bigint' && frames >= 0n && frames <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof bytes !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(bytes, 0n, 18446744073709551615n, "u64 argument bytes out of range");
   if (!(typeof bytes === 'bigint' && bytes >= 0n && bytes <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof duration_ms !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(duration_ms, 0n, 340282366920938463463374607431768211455n, "u128 argument duration_ms out of range");
   if (!(typeof duration_ms === 'bigint' && duration_ms >= 0n && duration_ms <= 340282366920938463463374607431768211455n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "StreamOutcome", ["streamed"]: streamed, ["terminated"]: terminated, ["inspectable"]: inspectable, ["detail"]: detail, ["frames"]: frames, ["bytes"]: bytes, ["duration_ms"]: duration_ms });
@@ -58,12 +61,12 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67(outcome) {
-  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   return rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(outcome);
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   if (((router_self).detail.$ === 'Some')) {
     return true;
   } else {
@@ -73,7 +76,23 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text) {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
-  return (((text.includes("message_stop") || text.includes("[DONE]")) || text.includes("response.completed")) || text.includes("finishReason"));
+  return ((((() => {
+    const ml_text_1 = text;
+    const ml_text_2 = "message_stop";
+    return ml_text_1.includes(ml_text_2);
+  })() || (() => {
+    const ml_text_3 = text;
+    const ml_text_4 = "[DONE]";
+    return ml_text_3.includes(ml_text_4);
+  })()) || (() => {
+    const ml_text_5 = text;
+    const ml_text_6 = "response.completed";
+    return ml_text_5.includes(ml_text_6);
+  })()) || (() => {
+    const ml_text_7 = text;
+    const ml_text_8 = "finishReason";
+    return ml_text_7.includes(ml_text_8);
+  })());
 }
 
 export const translated = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d };

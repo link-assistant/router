@@ -30,8 +30,10 @@ function rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f555450
 }
 
 function ml_make_RequestBudget_RequestBudget(input, output) {
+  if (typeof input !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(input, 0n, 18446744073709551615n, "u64 argument input out of range");
   if (!(typeof input === 'bigint' && input >= 0n && input <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof output !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(output, 0n, 18446744073709551615n, "u64 argument output out of range");
   if (!(typeof output === 'bigint' && output >= 0n && output <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "RequestBudget", ["input"]: input, ["output"]: output });
@@ -63,7 +65,7 @@ const serde_json = {
 
 function rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73(body) {
   ml_pattern_immutable(body);
-  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   for (const field of ml_router_iter(Object.freeze(["max_output_tokens", "max_completion_tokens", "max_tokens"]))) {
     const ml_pattern_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(body, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
     if ((ml_pattern_immutable(ml_pattern_2) && (ml_pattern_2.$ === "Some"))) {

@@ -1,11 +1,11 @@
 // Generated draft from src/login.rs; sha256=fbe7b5cbe73c68dfe53ed0c8b0f343595ed100de9f7175fcd240d69d83b6c0c5
 // Carried constructs are data, never runtime parity evidence.
 function rp_6c6f67696e2e535543434553535f4d41524b455253() {
-  return Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]);
+  return Object.freeze(Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]));
 }
 
 function rp_6c6f67696e2e4641494c5552455f4d41524b455253() {
-  return Object.freeze(["OAutherror", "PressEntertoretry", "Invalidcode", "invalid_grant", "Authenticationfailed", "Loginfailed"]);
+  return Object.freeze(Object.freeze(["OAutherror", "PressEntertoretry", "Invalidcode", "invalid_grant", "Authenticationfailed", "Loginfailed"]));
 }
 
 function rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552() {

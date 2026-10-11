@@ -7,7 +7,7 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
 }
 
 function rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(): ReadonlyArray<bigint> {
-  return Object.freeze([1113n, 1309n, 1310n, 1311n, 1314n, 1315n, 1316n, 1317n, 1318n, 1319n, 1320n, 1321n]);
+  return Object.freeze(Object.freeze([1113n, 1309n, 1310n, 1311n, 1314n, 1315n, 1316n, 1317n, 1318n, 1319n, 1320n, 1321n]));
 }
 
 function rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(): bigint {

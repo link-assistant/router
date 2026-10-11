@@ -62,6 +62,7 @@ const serde_json = {
 };
 
 function rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 429n)) {

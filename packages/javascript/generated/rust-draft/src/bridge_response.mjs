@@ -21,9 +21,27 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
+const ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = new Map([]);
+
 const ml_host_value_schema_553e25c9d5c60941635c31afef528c6359eae5b8e916dc2d88b2649276a5bfa3 = {"schemaVersion":1,"types":{"RouterOption_37_named_73657264655f6a736f6e_56616c7565":{"kind":"data","name":"RouterOption_37_named_73657264655f6a736f6e_56616c7565","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"serde_json.Value"}}]}]},"serde_json.Map_String_Value":{"kind":"data","name":"serde_json.Map_String_Value","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"serde_json.MapEntry"}}}]}]},"serde_json.MapEntry":{"kind":"data","name":"serde_json.MapEntry","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"serde_json.Value"}}]}]},"serde_json.Number":{"kind":"data","name":"serde_json.Number","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"serde_json.Value":{"kind":"data","name":"serde_json.Value","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"serde_json.Number"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"serde_json.Value"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"serde_json.Map_String_Value"}}]}]}}};
 
 const ml_host_value_refinements_553e25c9d5c60941635c31afef528c6359eae5b8e916dc2d88b2649276a5bfa3 = new Map([["serde_json.Number", ml_validate_json_number], ["serde_json.Map_String_Value", ml_validate_json_map]]);
+
+import { serde_json_value_as_str as ml_host_serde_json_value_as_str } from "../runtime/json-runtime.mjs";
+
+import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
+
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
+const ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
 function ml_make_StopSemantics_StopSemantics(chat_finish_reason, response_status, incomplete_reason, refusal) {
   if (!(typeof chat_finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(chat_finish_reason))) throw new TypeError('argument outside supported Rust value domain');
@@ -112,18 +130,56 @@ function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_rea
 }
 
 function ml_make_AnthropicUsage_AnthropicUsage(input_tokens, cache_creation_input_tokens, cache_read_input_tokens, output_tokens, service_tier, server_tool_use) {
+  if (typeof input_tokens !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(input_tokens, 0n, 18446744073709551615n, "u64 argument input_tokens out of range");
   if (!(typeof input_tokens === 'bigint' && input_tokens >= 0n && input_tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof cache_creation_input_tokens !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(cache_creation_input_tokens, 0n, 18446744073709551615n, "u64 argument cache_creation_input_tokens out of range");
   if (!(typeof cache_creation_input_tokens === 'bigint' && cache_creation_input_tokens >= 0n && cache_creation_input_tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof cache_read_input_tokens !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(cache_read_input_tokens, 0n, 18446744073709551615n, "u64 argument cache_read_input_tokens out of range");
   if (!(typeof cache_read_input_tokens === 'bigint' && cache_read_input_tokens >= 0n && cache_read_input_tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof output_tokens !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(output_tokens, 0n, 18446744073709551615n, "u64 argument output_tokens out of range");
   if (!(typeof output_tokens === 'bigint' && output_tokens >= 0n && output_tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(service_tier, {"kind":"data","name":"RouterOption_6_string","patternOwnershipRefusal":"ownership-bearing String type"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(service_tier, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
   ml_validate_rust_value(server_tool_use, {"kind":"data","name":"RouterOption_37_named_73657264655f6a736f6e_56616c7565"}, ml_host_value_schema_553e25c9d5c60941635c31afef528c6359eae5b8e916dc2d88b2649276a5bfa3, { refinements: ml_host_value_refinements_553e25c9d5c60941635c31afef528c6359eae5b8e916dc2d88b2649276a5bfa3 });
   return Object.freeze({ $: "AnthropicUsage", ["input_tokens"]: input_tokens, ["cache_creation_input_tokens"]: cache_creation_input_tokens, ["cache_read_input_tokens"]: cache_read_input_tokens, ["output_tokens"]: output_tokens, ["service_tier"]: service_tier, ["server_tool_use"]: server_tool_use });
 }
 
-export const translated = { ["StopSemantics"]: ml_make_StopSemantics_StopSemantics, ["stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["AnthropicUsage"]: ml_make_AnthropicUsage_AnthropicUsage };
-export const provenance = {"sourcePath":"src/bridge_response.rs","sourceSha256":"5dc06a1b9326f20e357391fc3aae75ef06ec8c151835b4b257011c3cf0136340","executable":5,"executableFunctions":3,"executableConstants":0,"executableTypes":2,"executableConstructors":2,"carried":15,"preserved":21,"runtimeParity":false};
+function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169(value) {
+  ml_pattern_immutable(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  const ml_s4 = (() => {
+    const ml_match_subject7 = ml_host_option_bind(value, (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject7);
+    return ml_match_subject7;
+  })();
+  switch (ml_s4.$) {
+    case "None": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "Some": {
+      const ml_f1 = ml_s4.field0;
+      if ((ml_f1 === "default")) {
+        return Object.freeze({ $: 'Some', field0: "standard" });
+      } else {
+        if ((ml_f1 === "auto")) {
+          return Object.freeze({ $: 'Some', field0: "standard" });
+        } else {
+          if ((ml_f1 === "priority")) {
+            return Object.freeze({ $: 'Some', field0: "priority" });
+          } else {
+            return Object.freeze({ $: 'None' });
+          }
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s4);
+    }
+  }
+}
+
+export const translated = { ["StopSemantics"]: ml_make_StopSemantics_StopSemantics, ["stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["AnthropicUsage"]: ml_make_AnthropicUsage_AnthropicUsage, ["anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169 };
+export const provenance = {"sourcePath":"src/bridge_response.rs","sourceSha256":"5dc06a1b9326f20e357391fc3aae75ef06ec8c151835b4b257011c3cf0136340","executable":6,"executableFunctions":4,"executableConstants":0,"executableTypes":2,"executableConstructors":2,"carried":14,"preserved":21,"runtimeParity":false};

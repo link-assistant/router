@@ -34,15 +34,16 @@ const serde_json = {
 };
 
 function FILE_EXTENSIONS() {
-  return Object.freeze([".rs"]);
+  return Object.freeze(Object.freeze([".rs"]));
 }
 
 function EXCLUDE_PATTERNS() {
-  return Object.freeze(["target", ".git", "node_modules", "dev/log"]);
+  return Object.freeze(Object.freeze(["target", ".git", "node_modules", "dev/log"]));
 }
 
 function ml_make_Violation_Violation(file, lines) {
   if (!(typeof file === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(file))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof lines !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(lines, 0n, 18446744073709551615n, "u64 argument lines out of range");
   if (!(typeof lines === 'bigint' && lines >= 0n && lines <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Violation", ["file"]: file, ["lines"]: lines });

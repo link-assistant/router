@@ -10,7 +10,7 @@ function rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72(os) {
 }
 
 function rp_766572696669636174696f6e5f636c69656e742e434c49454e5453() {
-  return Object.freeze([Object.freeze({ $: 'Tuple', field0: "claude", field1: "ROUTER_REAL_CLIENT_CLAUDE_VERSION" }), Object.freeze({ $: 'Tuple', field0: "codex", field1: "ROUTER_REAL_CLIENT_CODEX_VERSION" }), Object.freeze({ $: 'Tuple', field0: "opencode", field1: "ROUTER_REAL_CLIENT_OPENCODE_VERSION" })]);
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "claude", field1: "ROUTER_REAL_CLIENT_CLAUDE_VERSION" }), Object.freeze({ $: 'Tuple', field0: "codex", field1: "ROUTER_REAL_CLIENT_CODEX_VERSION" }), Object.freeze({ $: 'Tuple', field0: "opencode", field1: "ROUTER_REAL_CLIENT_OPENCODE_VERSION" })]));
 }
 
 export const translated = { ["safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453() };

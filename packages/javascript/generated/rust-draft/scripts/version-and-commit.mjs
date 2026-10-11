@@ -78,10 +78,13 @@ function get_changelog_path(rust_root) {
 }
 
 function ml_make_Version_Version(major, minor, patch) {
+  if (typeof major !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(major, 0n, 4294967295n, "u32 argument major out of range");
   if (!(typeof major === 'bigint' && major >= 0n && major <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof minor !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(minor, 0n, 4294967295n, "u32 argument minor out of range");
   if (!(typeof minor === 'bigint' && minor >= 0n && minor <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof patch !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(patch, 0n, 4294967295n, "u32 argument patch out of range");
   if (!(typeof patch === 'bigint' && patch >= 0n && patch <= 4294967295n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Version", ["major"]: major, ["minor"]: minor, ["patch"]: patch });

@@ -41,32 +41,32 @@ const serde_json = {
 };
 
 function TOOLS() {
-  return Object.freeze([(() => {
+  return Object.freeze(Object.freeze([(() => {
     const ml_record1 = "rust-script";
-    const ml_record2 = Object.freeze(["rust-script ", "scripts/test-scripts.sh"]);
-    const ml_record3 = Object.freeze(["cargo install rust-script", "install-rust-script.sh"]);
+    const ml_record2 = Object.freeze(Object.freeze(["rust-script ", "scripts/test-scripts.sh"]));
+    const ml_record3 = Object.freeze(Object.freeze(["cargo install rust-script", "install-rust-script.sh"]));
     return Object.freeze({ $: "Tool", ["name"]: ml_record1, ["uses"]: ml_record2, ["installs"]: ml_record3 });
   })(), (() => {
     const ml_record4 = "cargo-cyclonedx";
-    const ml_record5 = Object.freeze(["cargo cyclonedx", "cargo-cyclonedx "]);
-    const ml_record6 = Object.freeze(["cargo install cargo-cyclonedx"]);
+    const ml_record5 = Object.freeze(Object.freeze(["cargo cyclonedx", "cargo-cyclonedx "]));
+    const ml_record6 = Object.freeze(Object.freeze(["cargo install cargo-cyclonedx"]));
     return Object.freeze({ $: "Tool", ["name"]: ml_record4, ["uses"]: ml_record5, ["installs"]: ml_record6 });
   })(), (() => {
     const ml_record7 = "cargo-audit";
-    const ml_record8 = Object.freeze(["cargo audit", "cargo-audit "]);
-    const ml_record9 = Object.freeze(["cargo install cargo-audit"]);
+    const ml_record8 = Object.freeze(Object.freeze(["cargo audit", "cargo-audit "]));
+    const ml_record9 = Object.freeze(Object.freeze(["cargo install cargo-audit"]));
     return Object.freeze({ $: "Tool", ["name"]: ml_record7, ["uses"]: ml_record8, ["installs"]: ml_record9 });
   })(), (() => {
     const ml_record10 = "cargo-llvm-cov";
-    const ml_record11 = Object.freeze(["cargo llvm-cov", "cargo-llvm-cov "]);
-    const ml_record12 = Object.freeze(["cargo install cargo-llvm-cov"]);
+    const ml_record11 = Object.freeze(Object.freeze(["cargo llvm-cov", "cargo-llvm-cov "]));
+    const ml_record12 = Object.freeze(Object.freeze(["cargo install cargo-llvm-cov"]));
     return Object.freeze({ $: "Tool", ["name"]: ml_record10, ["uses"]: ml_record11, ["installs"]: ml_record12 });
   })(), (() => {
     const ml_record13 = "sccache";
-    const ml_record14 = Object.freeze(["RUSTC_WRAPPER=sccache", "RUSTC_WRAPPER: sccache", "sccache "]);
-    const ml_record15 = Object.freeze(["mozilla-actions/sccache-action@", "cargo install sccache"]);
+    const ml_record14 = Object.freeze(Object.freeze(["RUSTC_WRAPPER=sccache", "RUSTC_WRAPPER: sccache", "sccache "]));
+    const ml_record15 = Object.freeze(Object.freeze(["mozilla-actions/sccache-action@", "cargo install sccache"]));
     return Object.freeze({ $: "Tool", ["name"]: ml_record13, ["uses"]: ml_record14, ["installs"]: ml_record15 });
-  })()]);
+  })()]));
 }
 
 export const translated = { ["Tool"]: ml_make_Tool_Tool, ["TOOLS"]: TOOLS() };

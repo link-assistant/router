@@ -38,13 +38,6 @@ function ml_router_array(values, validate) {
   return true;
 }
 
-function ml_router_strip(value, search, suffix) {
-  const matches = suffix ? value.endsWith(search) : value.startsWith(search);
-  if (!matches) return Object.freeze({ $: 'None' });
-  const text = suffix ? value.slice(0, value.length - search.length) : value.slice(search.length);
-  return Object.freeze({ $: 'Some', field0: text });
-}
-
 function ml_router_iter(values) { return Array.prototype.values.call(values); }
 
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
@@ -73,13 +66,13 @@ const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1
 
 const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
 
-const ml_host_value_schema_4faa4c889e5db4507ae4aa0291f0bac64b58421ba39bcf84a393f774aaa4d426 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765":{"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765","ctors":[{"name":"AnthropicUsage","fields":[{"name":"input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_creation_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_read_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"output_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"service_tier","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"server_tool_use","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+const ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
-const ml_host_value_refinements_4faa4c889e5db4507ae4aa0291f0bac64b58421ba39bcf84a393f774aaa4d426 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+const ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
 
-const ml_host_value_schema_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c757265":{"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c757265","ctors":[{"name":"AcceptanceFailure","fields":[{"name":"kind","type":{"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c7572654b696e64"}},{"name":"phase","type":{"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63655068617365"}},{"name":"transaction_id","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"message","type":{"kind":"string"}}]}]},"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c7572654b696e64":{"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c7572654b696e64","ctors":[{"name":"NotAttempted","fields":[]},{"name":"ExchangeRejected","fields":[]},{"name":"ExchangeUncertain","fields":[]},{"name":"PersistenceUncertain","fields":[]},{"name":"SuccessorRetained","fields":[]}]},"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63655068617365":{"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63655068617365","ctors":[{"name":"Preflight","fields":[]},{"name":"Exchange","fields":[]},{"name":"Persistence","fields":[]},{"name":"Catalog","fields":[]},{"name":"Promotion","fields":[]}]}}};
+const ml_host_value_schema_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765":{"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765","ctors":[{"name":"AnthropicUsage","fields":[{"name":"input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_creation_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_read_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"output_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"service_tier","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"server_tool_use","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
-const ml_host_value_refinements_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd = new Map([]);
+const ml_host_value_refinements_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
 
 const ml_host_value_schema_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c = {"schemaVersion":1,"types":{"rp_6769745f70726f78792e526566557064617465":{"kind":"data","name":"rp_6769745f70726f78792e526566557064617465","ctors":[{"name":"RefUpdate","fields":[{"name":"old","type":{"kind":"string"}},{"name":"new","type":{"kind":"string"}},{"name":"name","type":{"kind":"string"}}]}]}}};
 
@@ -89,17 +82,13 @@ const ml_host_value_schema_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db
 
 const ml_host_value_refinements_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61 = new Map([]);
 
-const ml_host_value_schema_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990 = {"schemaVersion":1,"types":{"rp_6c6566696e652e436174616c6f674661696c757265":{"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c757265","ctors":[{"name":"CatalogFailure","fields":[{"name":"kind","type":{"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c7572654b696e64"}},{"name":"message","type":{"kind":"string"}}]}]},"rp_6c6566696e652e436174616c6f674661696c7572654b696e64":{"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c7572654b696e64","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unavailable","fields":[]}]}}};
+const ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f345f626f6f6c":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"bool"}}]}]},"rp_6c6f675f616e616c797369732e45786368616e6765":{"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765","ctors":[{"name":"Exchange","fields":[{"name":"correlation_id","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"upstream_status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"uri","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"streamed","type":{"kind":"bool"}},{"name":"stream_evidence","type":{"kind":"bool"}},{"name":"response_media_type","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"stream_requested","type":{"kind":"bool"}},{"name":"body_terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"stream_outcome","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"stream_complete","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"undecodable_bodies","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"records","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"stream_error","type":{"kind":"bool"}},{"name":"encoded_frames","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}},{"name":"content_encoding","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
 
-const ml_host_value_refinements_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990 = new Map([]);
+const ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 = new Map([]);
 
-const ml_host_value_schema_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f345f626f6f6c":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"bool"}}]}]},"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6c6f675f616e616c797369732e45786368616e6765":{"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765","ctors":[{"name":"Exchange","fields":[{"name":"correlation_id","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"upstream_status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"uri","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"streamed","type":{"kind":"bool"}},{"name":"stream_evidence","type":{"kind":"bool"}},{"name":"response_media_type","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"stream_requested","type":{"kind":"bool"}},{"name":"body_terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"stream_outcome","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"stream_complete","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"undecodable_bodies","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"records","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"stream_error","type":{"kind":"bool"}},{"name":"encoded_frames","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}},{"name":"content_encoding","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}}]}]}}};
+const ml_host_value_schema_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6d70702e4d7070436f6e666967":{"kind":"data","name":"rp_6d70702e4d7070436f6e666967","ctors":[{"name":"MppConfig","fields":[{"name":"enabled","type":{"kind":"bool"}},{"name":"amount","type":{"kind":"string"}},{"name":"currency","type":{"kind":"string"}},{"name":"recipient","type":{"kind":"string"}},{"name":"method","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
 
-const ml_host_value_refinements_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918 = new Map([]);
-
-const ml_host_value_schema_df343cfed053ceb5b9ace01836a47f95adea466d00aa1bacd85207c46ae767a7 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6d70702e4d7070436f6e666967":{"kind":"data","name":"rp_6d70702e4d7070436f6e666967","ctors":[{"name":"MppConfig","fields":[{"name":"enabled","type":{"kind":"bool"}},{"name":"amount","type":{"kind":"string"}},{"name":"currency","type":{"kind":"string"}},{"name":"recipient","type":{"kind":"string"}},{"name":"method","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}}]}]}}};
-
-const ml_host_value_refinements_df343cfed053ceb5b9ace01836a47f95adea466d00aa1bacd85207c46ae767a7 = new Map([]);
+const ml_host_value_refinements_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d = new Map([]);
 
 const ml_host_value_schema_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
 
@@ -113,13 +102,13 @@ const ml_host_value_schema_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf
 
 const ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
 
-const ml_host_value_schema_cac9604dc9765a0af65b1c31155247bb6eae92864c8dcffc3eec87b70f8374b7 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6163636f756e74732e526f7574696e67436f6e74657874":{"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874","ctors":[{"name":"RoutingContext","fields":[{"name":"session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"parent_session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"pinned_account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"exclude","type":{"kind":"array","element":{"kind":"string"}}}]}]}}};
+const ml_host_value_schema_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6163636f756e74732e526f7574696e67436f6e74657874":{"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874","ctors":[{"name":"RoutingContext","fields":[{"name":"session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"parent_session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"pinned_account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"exclude","type":{"kind":"array","element":{"kind":"string"}}}]}]}}};
 
-const ml_host_value_refinements_cac9604dc9765a0af65b1c31155247bb6eae92864c8dcffc3eec87b70f8374b7 = new Map([]);
+const ml_host_value_refinements_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = new Map([]);
 
-const ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65":{"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]}}};
+const ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65":{"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]}}};
 
-const ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb = new Map([]);
+const ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = new Map([]);
 
 const ml_host_value_schema_e7ee5cdad12a2c42655adc11b0c79869f6ca16ad6b7bb23285fe46220669f0f7 = {"schemaVersion":1,"types":{"rp_7374642e74696d652e4475726174696f6e":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e","ctors":[{"name":"Duration","fields":[{"name":"secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"nanos","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
 
@@ -137,10 +126,6 @@ const ml_host_value_schema_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db43
 
 const ml_host_value_refinements_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db4332ec3f01ff5 = new Map([]);
 
-const ml_host_value_schema_1c499caf4dae6d3d3340ae46e10ab5a1268e3757bf0a7c6ea7cebbc94f754bbe = {"schemaVersion":1,"types":{"rp_7468696e6b696e672e5468696e6b696e6750726f746f636f6c":{"kind":"data","name":"rp_7468696e6b696e672e5468696e6b696e6750726f746f636f6c","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAIChat","fields":[]},{"name":"OpenAIResponses","fields":[]},{"name":"Gemini","fields":[]},{"name":"Vertex","fields":[]},{"name":"Codex","fields":[]},{"name":"Qwen","fields":[]},{"name":"Interactions","fields":[]},{"name":"Antigravity","fields":[]},{"name":"Kimi","fields":[]},{"name":"Xai","fields":[]}]}}};
-
-const ml_host_value_refinements_1c499caf4dae6d3d3340ae46e10ab5a1268e3757bf0a7c6ea7cebbc94f754bbe = new Map([]);
-
 const ml_host_value_schema_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = {"schemaVersion":1,"types":{"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379":{"kind":"data","name":"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379","ctors":[{"name":"NetworkPolicy","fields":[{"name":"loopback","type":{"kind":"bool"}},{"name":"private","type":{"kind":"bool"}},{"name":"link_local","type":{"kind":"bool"}},{"name":"all","type":{"kind":"bool"}}]}]}}};
 
 const ml_host_value_refinements_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = new Map([]);
@@ -149,10 +134,6 @@ const ml_host_value_schema_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d0
 
 const ml_host_value_refinements_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d002e910f6475 = new Map([]);
 
-const ml_host_value_schema_60c64955d2621ea17dc08bfce2195e5d8ac9dc6c374f0ffba7fa736e430ce1c1 = {"schemaVersion":1,"types":{"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c757265":{"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c757265","ctors":[{"name":"ZaiProbeFailure","fields":[{"name":"kind","type":{"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64"}},{"name":"message","type":{"kind":"string"}}]}]},"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64":{"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
-
-const ml_host_value_refinements_60c64955d2621ea17dc08bfce2195e5d8ac9dc6c374f0ffba7fa736e430ce1c1 = new Map([]);
-
 function ml_validate_duration(value) { ml_host_duration_as_secs(value); return true; }
 
 function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
@@ -160,6 +141,8 @@ function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 
 function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }
 
 function ml_host_option_map(value, callback) { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map_or(value, defaultValue, callback) { return value.$ === 'Some' ? callback(value.field0) : defaultValue; }
 
 function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
@@ -180,7 +163,7 @@ function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e45
 }
 
 function rp_6163636f756e745f687474702e50524f58595f534348454d4553() {
-  return Object.freeze(["http", "https", "socks5", "socks5h"]);
+  return Object.freeze(Object.freeze(["http", "https", "socks5", "socks5h"]));
 }
 
 function rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958() {
@@ -282,11 +265,12 @@ function rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e(fin
 }
 
 function rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579(event) {
-  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return Object.freeze({ $: 'Tuple', field0: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"), 0n, true), field1: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_5_0); }, "and_then"), 0n, true) });
 }
 
 function rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 400n)) {
@@ -317,6 +301,7 @@ function rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065(status) {
 }
 
 function rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 401n)) {
@@ -376,17 +361,21 @@ function rp_617574685f72656d6f74652e524551554553545f54494d454f5554() {
   return ml_host_std_time_duration_from_secs(30n);
 }
 
+function rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_secs(3n);
+}
+
 function rp_617574685f72656d6f74652e7374617475735f6f66(view) {
-  ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(view, "status"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then"), "unknown", true);
 }
 
 function rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453() {
-  return Object.freeze(["model", "messages", "max_tokens", "max_completion_tokens", "temperature", "top_p", "frequency_penalty", "presence_penalty", "logit_bias", "seed", "stream", "stream_options", "stop", "tools", "tool_choice", "reasoning_effort", "reasoning", "response_format", "parallel_tool_calls", "n", "modalities", "audio", "logprobs", "top_logprobs", "safety_identifier", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "prediction", "user"]);
+  return Object.freeze(Object.freeze(["model", "messages", "max_tokens", "max_completion_tokens", "temperature", "top_p", "frequency_penalty", "presence_penalty", "logit_bias", "seed", "stream", "stream_options", "stop", "tools", "tool_choice", "reasoning_effort", "reasoning", "response_format", "parallel_tool_calls", "n", "modalities", "audio", "logprobs", "top_logprobs", "safety_identifier", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "prediction", "user"]));
 }
 
 function rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453() {
-  return Object.freeze(["model", "input", "instructions", "max_output_tokens", "temperature", "top_p", "stream", "tools", "tool_choice", "reasoning", "text", "parallel_tool_calls", "background", "max_tool_calls", "truncation", "store", "stream_options", "safety_identifier", "previous_response_id", "conversation", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "metadata", "include", "prompt", "user", "context_management", "top_logprobs"]);
+  return Object.freeze(Object.freeze(["model", "input", "instructions", "max_output_tokens", "temperature", "top_p", "stream", "tools", "tool_choice", "reasoning", "text", "parallel_tool_calls", "background", "max_tool_calls", "truncation", "store", "stream_options", "safety_identifier", "previous_response_id", "conversation", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "metadata", "include", "prompt", "user", "context_management", "top_logprobs"]));
 }
 
 function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason) {
@@ -443,8 +432,42 @@ function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_rea
   return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 });
 }
 
+function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169(value) {
+  ml_pattern_immutable(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  const ml_s4 = (() => {
+    const ml_match_subject7 = ml_host_option_bind(value, (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject7);
+    return ml_match_subject7;
+  })();
+  switch (ml_s4.$) {
+    case "None": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "Some": {
+      const ml_f1 = ml_s4.field0;
+      if ((ml_f1 === "default")) {
+        return Object.freeze({ $: 'Some', field0: "standard" });
+      } else {
+        if ((ml_f1 === "auto")) {
+          return Object.freeze({ $: 'Some', field0: "standard" });
+        } else {
+          if ((ml_f1 === "priority")) {
+            return Object.freeze({ $: 'Some', field0: "priority" });
+          } else {
+            return Object.freeze({ $: 'None' });
+          }
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s4);
+    }
+  }
+}
+
 function rp_6272696467655f726573706f6e73652e6d6c5f696d706c5f3633373236313734363532653632373236393634363736353566373236353733373036663665373336353265343136653734363837323666373036393633353537333631363736355f37343666373436313663356636393665373037353734(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765"}, ml_host_value_schema_4faa4c889e5db4507ae4aa0291f0bac64b58421ba39bcf84a393f774aaa4d426, { refinements: ml_host_value_refinements_4faa4c889e5db4507ae4aa0291f0bac64b58421ba39bcf84a393f774aaa4d426 });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765"}, ml_host_value_schema_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8, { refinements: ml_host_value_refinements_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 });
   return ml_host_rust_fixed_saturating_add_u64(ml_host_rust_fixed_saturating_add_u64((router_self).input_tokens, (router_self).cache_creation_input_tokens), (router_self).cache_read_input_tokens);
 }
 
@@ -472,6 +495,23 @@ function rp_636861745f61646d696e2e4d41585f53455353494f4e53() {
   return 512n;
 }
 
+function rp_636861745f61646d696e2e6e6f726d616c697365(word) {
+  if (!(typeof word === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(word))) throw new TypeError('argument outside supported Rust value domain');
+  const word_2 = ml_router_unwrap((() => {
+    const ml_text_17 = word;
+    const ml_text_18 = "/";
+    return (ml_text_17.startsWith(ml_text_18)?Object.freeze({ $: 'Some', field0: ml_text_17.slice(ml_text_18.length) }):Object.freeze({ $: 'None' }));
+  })(), word, true);
+  const word_3 = ml_host_option_map_or((() => {
+    const ml_text_25 = word_2;
+    const ml_text_26 = "@";
+    return (()=>{const index=ml_text_25.indexOf(ml_text_26);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_25.slice(0,index), field1: ml_text_25.slice(index+ml_text_26.length) }) });})();
+  })(), word_2, (ml_pattern_callback_27) => { ml_pattern_immutable(ml_pattern_callback_27);
+  const name = (ml_pattern_callback_27)["field0"];
+  return name; });
+  return word_3.toLowerCase();
+}
+
 function rp_636861745f61646d696e2e414c52454144595f434c41494d4544() {
   return "Administration of this router is already claimed (here, through the web UI, or by deployment configuration). Send `/auth <admin token>` with an admin credential.";
 }
@@ -493,7 +533,7 @@ function rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954() {
 }
 
 function rp_636861745f636f6d6d616e64732e49535355455f4b455953() {
-  return Object.freeze([Object.freeze({ $: 'Tuple', field0: "label", field1: Object.freeze(["label", "name"]) }), Object.freeze({ $: 'Tuple', field0: "ttl_hours", field1: Object.freeze(["ttl_hours", "ttl"]) }), Object.freeze({ $: 'Tuple', field0: "max_requests", field1: Object.freeze(["max_requests", "requests"]) }), Object.freeze({ $: 'Tuple', field0: "max_tokens", field1: Object.freeze(["max_tokens", "tokens"]) }), Object.freeze({ $: 'Tuple', field0: "rate_limit_per_minute", field1: Object.freeze(["rate_limit_per_minute", "rpm", "rate"]) }), Object.freeze({ $: 'Tuple', field0: "account", field1: Object.freeze(["account", "pin"]) })]);
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "label", field1: Object.freeze(Object.freeze(["label", "name"])) }), Object.freeze({ $: 'Tuple', field0: "ttl_hours", field1: Object.freeze(Object.freeze(["ttl_hours", "ttl"])) }), Object.freeze({ $: 'Tuple', field0: "max_requests", field1: Object.freeze(Object.freeze(["max_requests", "requests"])) }), Object.freeze({ $: 'Tuple', field0: "max_tokens", field1: Object.freeze(Object.freeze(["max_tokens", "tokens"])) }), Object.freeze({ $: 'Tuple', field0: "rate_limit_per_minute", field1: Object.freeze(Object.freeze(["rate_limit_per_minute", "rpm", "rate"])) }), Object.freeze({ $: 'Tuple', field0: "account", field1: Object.freeze(Object.freeze(["account", "pin"])) })]));
 }
 
 function rp_636861745f636f6d6d616e64732e7965735f6e6f(value) {
@@ -535,12 +575,16 @@ function rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f564552
 
 function rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c(token) {
   if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
-  return token.startsWith("sk-ant-oat");
+  const ml_text_1 = token;
+  const ml_text_2 = "sk-ant-oat";
+  return ml_text_1.startsWith(ml_text_2);
 }
 
 function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479(blocks) {
-  ml_validate_rust_value(blocks, {"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"},"patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565(blocks), (block) => { return ml_host_serde_json_value_get_string(block, "text"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (text) => { return text.startsWith(rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054()); }, "is_some_and");
+  ml_validate_rust_value(blocks, {"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565(blocks), (block) => { return ml_host_serde_json_value_get_string(block, "text"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (text) => { const ml_text_2 = text;
+  const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
+  return ml_text_2.startsWith(ml_text_3); }, "is_some_and");
 }
 
 function rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56() {
@@ -557,14 +601,6 @@ function rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943
 
 function rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52() {
   return "this Claude.ai operation cannot be routed because released Claude Code (checked through 2.1.283) has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
-}
-
-function rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553() {
-  return Object.freeze(["HOME", "USERPROFILE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "APPDATA", "LOCALAPPDATA", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "CURSOR_CONFIG_DIR", "GEMINI_CLI_HOME", "OPENCODE_CONFIG_DIR", "QWEN_HOME", "QWEN_RUNTIME_DIR"]);
-}
-
-function rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159() {
-  return ml_host_std_time_duration_from_millis(20n);
 }
 
 function rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552() {
@@ -668,15 +704,15 @@ function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453() {
-  return Object.freeze(["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"]);
+  return Object.freeze(Object.freeze(["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"]));
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553() {
-  return Object.freeze([".chatgpt.com", ".chatgpt-staging.com"]);
+  return Object.freeze(Object.freeze([".chatgpt.com", ".chatgpt-staging.com"]));
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553() {
-  return Object.freeze(["__cf_bm", "__cflb", "__cfruid", "__cfseq", "__cfwaitingroom", "_cfuvid", "cf_clearance", "cf_ob_info", "cf_use_ob"]);
+  return Object.freeze(Object.freeze(["__cf_bm", "__cflb", "__cfruid", "__cfseq", "__cfwaitingroom", "_cfuvid", "cf_clearance", "cf_ob_info", "cf_use_ob"]));
 }
 
 function rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e() {
@@ -792,7 +828,7 @@ function rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f4845
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253() {
-  return Object.freeze(["content-length", "transfer-encoding", "connection", "date"]);
+  return Object.freeze(Object.freeze(["content-length", "transfer-encoding", "connection", "date"]));
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459() {
@@ -800,11 +836,11 @@ function rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f42
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253() {
-  return Object.freeze(["authorization", "content-length", "host", "proxy-authorization", "user-agent", "x-api-key", "x-request-id", "date", "cookie"]);
+  return Object.freeze(Object.freeze(["authorization", "content-length", "host", "proxy-authorization", "user-agent", "x-api-key", "x-request-id", "date", "cookie"]));
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453() {
-  return Object.freeze(["method", "uri"]);
+  return Object.freeze(Object.freeze(["method", "uri"]));
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954() {
@@ -820,14 +856,14 @@ function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f504841
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365(record) {
-  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const ml_record1 = rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, "router_version");
   const ml_record2 = rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, "provider");
   return Object.freeze({ $: "Provenance", ["router_version"]: ml_record1, ["provider"]: ml_record2 });
 }
 
 function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, name) {
-  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
 }
@@ -850,16 +886,6 @@ function rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54
 
 function rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259() {
   return "auth-import-candidates";
-}
-
-function rp_63726564656e7469616c5f616363657074616e63652e6d6c5f696d706c5f3633373236313734363532653633373236353634363536653734363936313663356636313633363336353730373436313665363336353265343136333633363537303734363136653633363534363631363936633735373236355f3662363936653634(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c757265"}, ml_host_value_schema_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd, { refinements: ml_host_value_refinements_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd });
-  return (router_self).kind;
-}
-
-function rp_63726564656e7469616c5f616363657074616e63652e6d6c5f696d706c5f3633373236313734363532653633373236353634363536653734363936313663356636313633363336353730373436313665363336353265343136333633363537303734363136653633363534363631363936633735373236355f37303638363137333635(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_63726564656e7469616c5f616363657074616e63652e416363657074616e63654661696c757265"}, ml_host_value_schema_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd, { refinements: ml_host_value_refinements_0099380dfa1b94ae9397ac80bfbd3dbaf27ebbc7d676499c85829e92d78ff5dd });
-  return (router_self).phase;
 }
 
 function rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259() {
@@ -931,15 +957,15 @@ function rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c() {
 }
 
 function rp_6465706c6f795f636f6e6669672e52455345525645445f454e56() {
-  return Object.freeze(["TOKEN_SECRET", "DATA_DIR", "STORAGE_POLICY", "HOME", "PATH", "USER", "SHELL", "PWD", "IFS", "CLAUDE_CODE_HOME", "CLAUDE_CONFIG_DIR", "LISTENERS", "ROUTER_HOST", "ROUTER_PORT", "NODE_EXTRA_CA_CERTS"]);
+  return Object.freeze(Object.freeze(["TOKEN_SECRET", "DATA_DIR", "STORAGE_POLICY", "HOME", "PATH", "USER", "SHELL", "PWD", "IFS", "CLAUDE_CODE_HOME", "CLAUDE_CONFIG_DIR", "LISTENERS", "ROUTER_HOST", "ROUTER_PORT", "NODE_EXTRA_CA_CERTS"]));
 }
 
 function rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553() {
-  return Object.freeze(["ROUTER_DEPLOY_", "TLS_", "VERIFY_", "PRESERVATION_"]);
+  return Object.freeze(Object.freeze(["ROUTER_DEPLOY_", "TLS_", "VERIFY_", "PRESERVATION_"]));
 }
 
 function rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453() {
-  return Object.freeze(["claude", "codex", "qwen-code", "gemini", "opencode"]);
+  return Object.freeze(Object.freeze(["claude", "codex", "qwen-code", "gemini", "opencode"]));
 }
 
 function rp_6465706c6f795f72656c61792e53544154455f454e56() {
@@ -1089,6 +1115,44 @@ function rp_6769745f70726f78792e5a45524f5f4f4944() {
   return "0000000000000000000000000000000000000000";
 }
 
+function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(payload) {
+  ml_pattern_immutable(payload);
+  ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_s4 = (() => {
+    const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject7);
+    return ml_match_subject7;
+  })();
+  switch (ml_s4.$) {
+    case "None": {
+      return Object.freeze({ $: 'Unknown' });
+    }
+    case "Some": {
+      const ml_f1 = ml_s4.field0;
+      if ((ml_f1 === "ahead")) {
+        return Object.freeze({ $: 'FastForward' });
+      } else {
+        if ((ml_f1 === "identical")) {
+          return Object.freeze({ $: 'FastForward' });
+        } else {
+          if ((ml_f1 === "behind")) {
+            return Object.freeze({ $: 'Diverged' });
+          } else {
+            if ((ml_f1 === "diverged")) {
+              return Object.freeze({ $: 'Diverged' });
+            } else {
+              return Object.freeze({ $: 'Unknown' });
+            }
+          }
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s4);
+    }
+  }
+}
+
 function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, repository) {
   if (!ml_router_array(allowed_repositories, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof repository === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(repository))) throw new TypeError('argument outside supported Rust value domain');
@@ -1097,7 +1161,11 @@ function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, r
 
 function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_unwrap(ml_router_strip(path, "/api/services/github", false), path, true);
+  return ml_router_unwrap((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/github";
+    return (ml_text_5.startsWith(ml_text_6)?Object.freeze({ $: 'Some', field0: ml_text_5.slice(ml_text_6.length) }):Object.freeze({ $: 'None' }));
+  })(), path, true);
 }
 
 function rp_6769745f70726f78792e6d6c5f696d706c5f36333732363137343635326536373639373435663730373236663738373932653532363536363535373036343631373436355f363937333566363436353663363537343635(router_self) {
@@ -1159,11 +1227,6 @@ function rp_6c6566696e652e6d6c5f696d706c5f36333732363137343635326536633635363636
   return Object.freeze({ $: "CatalogFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
 }
 
-function rp_6c6566696e652e6d6c5f696d706c5f3633373236313734363532653663363536363639366536353265343336313734363136633666363734363631363936633735373236355f3662363936653634(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c757265"}, ml_host_value_schema_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990, { refinements: ml_host_value_refinements_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990 });
-  return (router_self).kind;
-}
-
 function rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552() {
   return "#a";
 }
@@ -1177,22 +1240,22 @@ function rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47() {
 }
 
 function rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d(record) {
-  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_router_unwrap(ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(record, "body"), (body) => { return ml_host_serde_json_value_get_string(body, "json"); }, "and_then"), (body_2) => { return ml_host_serde_json_value_get_string(body_2, "stream"); }, "and_then"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_bool(ml_host_callback_2_0); }, "and_then"), false, true);
 }
 
 function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f3633363137323732363936353634356636313665356636353732373236663732(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918, { refinements: ml_host_value_refinements_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918 });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
   return (router_self).stream_error;
 }
 
 function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f3639373335663735366537363635373236393636363936313632366336353566373337343732363536313664(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918, { refinements: ml_host_value_refinements_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918 });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
   return ((router_self).streamed && !(router_self).inspectable);
 }
 
 function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f363937333566373536653734363537323664363936653631373436353634(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918, { refinements: ml_host_value_refinements_0b75292c9407c26cc4ad1e658e26529bf2b189e554b18341bf8ebebf59095918 });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
   return ((((router_self).streamed && (router_self).inspectable) && ((router_self).stream_outcome.$ === 'None')) && !(router_self).body_terminated);
 }
 
@@ -1201,11 +1264,11 @@ function rp_6c6f675f6465636f64652e42524f544c495f425546464552() {
 }
 
 function rp_6c6f67696e2e535543434553535f4d41524b455253() {
-  return Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]);
+  return Object.freeze(Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]));
 }
 
 function rp_6c6f67696e2e4641494c5552455f4d41524b455253() {
-  return Object.freeze(["OAutherror", "PressEntertoretry", "Invalidcode", "invalid_grant", "Authenticationfailed", "Loginfailed"]);
+  return Object.freeze(Object.freeze(["OAutherror", "PressEntertoretry", "Invalidcode", "invalid_grant", "Authenticationfailed", "Loginfailed"]));
 }
 
 function rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552() {
@@ -1236,18 +1299,12 @@ function rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c() {
   return ml_host_std_time_duration_from_millis(50n);
 }
 
-function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(compact, markers) {
-  if (!(typeof compact === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(compact))) throw new TypeError('argument outside supported Rust value domain');
-  if (!ml_router_array(markers, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_any(ml_router_iter(markers), (marker) => { return compact.includes(marker); });
-}
-
 function rp_6c6f67696e5f75726c2e415554485f484f535453() {
-  return Object.freeze(["claude.ai", "claude.com", "anthropic.com"]);
+  return Object.freeze(Object.freeze(["claude.ai", "claude.com", "anthropic.com"]));
 }
 
 function rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553() {
-  return Object.freeze(["sk-ant-oat", "sk-ant-"]);
+  return Object.freeze(Object.freeze(["sk-ant-oat", "sk-ant-"]));
 }
 
 function rp_6c6f67696e5f75726c2e5245444143544544() {
@@ -1255,7 +1312,21 @@ function rp_6c6f67696e5f75726c2e5245444143544544() {
 }
 
 function rp_6c6f67696e5f75726c2e5345435245545f5052454649584553() {
-  return Object.freeze(["sk-ant-", rp_746f6b656e2e544f4b454e5f505245464958(), rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), rp_61646d696e2e41444d494e5f544f4b454e5f505245464958()]);
+  return Object.freeze(Object.freeze(["sk-ant-", rp_746f6b656e2e544f4b454e5f505245464958(), rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), rp_61646d696e2e41444d494e5f544f4b454e5f505245464958()]));
+}
+
+function rp_6c6f67696e5f75726c2e7265646163745f76616c7565(text, secret) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof secret === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(secret))) throw new TypeError('argument outside supported Rust value domain');
+  const secret_2 = (secret).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
+  if ((BigInt(new TextEncoder().encode(secret_2).length) < 4n)) {
+    return text;
+  } else {
+  }
+  const ml_text_1 = text;
+  const ml_text_2 = secret_2;
+  const ml_text_3 = rp_6c6f67696e5f75726c2e5245444143544544();
+  return (ml_text_2.length===0?(ml_text_1.length===0?ml_text_3:ml_text_3+Array.from(ml_text_1).join(ml_text_3)+ml_text_3):ml_text_1.split(ml_text_2).join(ml_text_3));
 }
 
 function rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259() {
@@ -1314,8 +1385,21 @@ function rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e
   return "model-catalog-invalidations";
 }
 
+function rp_6d70702e6573636170655f6865616465725f76616c7565(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_10 = (() => {
+    const ml_text_7 = value;
+    const ml_text_8 = "\\";
+    const ml_text_9 = "\\\\";
+    return (ml_text_8.length===0?(ml_text_7.length===0?ml_text_9:ml_text_9+Array.from(ml_text_7).join(ml_text_9)+ml_text_9):ml_text_7.split(ml_text_8).join(ml_text_9));
+  })();
+  const ml_text_11 = "\"";
+  const ml_text_12 = "\\\"";
+  return (ml_text_11.length===0?(ml_text_10.length===0?ml_text_12:ml_text_12+Array.from(ml_text_10).join(ml_text_12)+ml_text_12):ml_text_10.split(ml_text_11).join(ml_text_12));
+}
+
 function rp_6d70702e6d6c5f696d706c5f36333732363137343635326536643730373032653464373037303433366636653636363936375f3639373335663633366636653636363936373735373236353634(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6d70702e4d7070436f6e666967"}, ml_host_value_schema_df343cfed053ceb5b9ace01836a47f95adea466d00aa1bacd85207c46ae767a7, { refinements: ml_host_value_refinements_df343cfed053ceb5b9ace01836a47f95adea466d00aa1bacd85207c46ae767a7 });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6d70702e4d7070436f6e666967"}, ml_host_value_schema_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d, { refinements: ml_host_value_refinements_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d });
   return ((((router_self).enabled && !(((router_self).amount).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0)) && !(((router_self).currency).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0)) && !(((router_self).recipient).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0));
 }
 
@@ -1336,8 +1420,20 @@ function rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e() {
 }
 
 function rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74(event) {
-  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  return ((ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (kind) => { return ((kind.includes("output_text.delta") || kind.includes("content_block_delta")) || kind.includes("function_call_arguments.delta")); }, "is_some_and") || ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "choices"), (ml_host_callback_1_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_1_0); }, "and_then"), (choices) => { return !(choices.length === 0); }, "is_some_and")) || ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "candidates"), () => { return ml_host_serde_json_value_pointer(event, "/response/candidates"); }, "or_else"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_2_0); }, "and_then"), (candidates) => { return !(candidates.length === 0); }, "is_some_and"));
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ((ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (kind) => { return (((() => {
+    const ml_text_2 = kind;
+    const ml_text_3 = "output_text.delta";
+    return ml_text_2.includes(ml_text_3);
+  })() || (() => {
+    const ml_text_4 = kind;
+    const ml_text_5 = "content_block_delta";
+    return ml_text_4.includes(ml_text_5);
+  })()) || (() => {
+    const ml_text_6 = kind;
+    const ml_text_7 = "function_call_arguments.delta";
+    return ml_text_6.includes(ml_text_7);
+  })()); }, "is_some_and") || ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "choices"), (ml_host_callback_7_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_7_0); }, "and_then"), (choices) => { return !(choices.length === 0); }, "is_some_and")) || ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "candidates"), () => { return ml_host_serde_json_value_pointer(event, "/response/candidates"); }, "or_else"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"), (candidates) => { return !(candidates.length === 0); }, "is_some_and"));
 }
 
 function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f366536353737(limit) {
@@ -1383,6 +1479,7 @@ function rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353() {
 }
 
 function rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 429n)) {
@@ -1422,7 +1519,7 @@ function rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553() {
 
 function rp_706f6f6c5f72657472792e6d6c5f696d706c5f36333732363137343635326537303666366636633566373236353734373237393265353236353734373237393432373536343637363537345f3732366637353665363435663636373536633663(router_self, context) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279427564676574"}, ml_host_value_schema_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323, { refinements: ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 });
-  ml_validate_rust_value(context, {"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_cac9604dc9765a0af65b1c31155247bb6eae92864c8dcffc3eec87b70f8374b7, { refinements: ml_host_value_refinements_cac9604dc9765a0af65b1c31155247bb6eae92864c8dcffc3eec87b70f8374b7 });
+  ml_validate_rust_value(context, {"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874"}, ml_host_value_schema_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9, { refinements: ml_host_value_refinements_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 });
   return (BigInt((context).exclude.length) >= (router_self).per_round);
 }
 
@@ -1448,19 +1545,19 @@ function rp_70726f78792e4150495f505245464958() {
 }
 
 function rp_70726f78792e52455155495245445f464f52574152445f48454144455253() {
-  return Object.freeze(["anthropic-beta", "anthropic-version"]);
+  return Object.freeze(Object.freeze(["anthropic-beta", "anthropic-version"]));
 }
 
 function rp_70726f78792e484f505f42595f484f505f48454144455253() {
-  return Object.freeze(["host", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
+  return Object.freeze(Object.freeze(["host", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]));
 }
 
 function rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253() {
-  return Object.freeze(["authorization", "proxy-authorization", "set-cookie", "set-cookie2", "x-api-key", "x-goog-api-key", "anthropic-auth-token"]);
+  return Object.freeze(Object.freeze(["authorization", "proxy-authorization", "set-cookie", "set-cookie2", "x-api-key", "x-goog-api-key", "anthropic-auth-token"]));
 }
 
 function rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253() {
-  return Object.freeze(["x-api-key", "x-goog-api-key"]);
+  return Object.freeze(Object.freeze(["x-api-key", "x-goog-api-key"]));
 }
 
 function rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54() {
@@ -1476,7 +1573,62 @@ function rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f
 }
 
 function rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253() {
-  return Object.freeze(["forwarded", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-server", "x-original-forwarded-for", "x-real-ip", "x-client-ip", "x-cluster-client-ip", "cf-connecting-ip", "true-client-ip", "fastly-client-ip", "fly-client-ip", "x-envoy-external-address", "x-forwarded-client-cert", "x-azure-clientip", "x-appengine-user-ip", "cloudfront-viewer-address"]);
+  return Object.freeze(Object.freeze(["forwarded", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-server", "x-original-forwarded-for", "x-real-ip", "x-client-ip", "x-cluster-client-ip", "cf-connecting-ip", "true-client-ip", "fastly-client-ip", "fly-client-ip", "x-envoy-external-address", "x-forwarded-client-cert", "x-azure-clientip", "x-appengine-user-ip", "cloudfront-viewer-address"]));
+}
+
+function rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_pattern_3 = (() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/anthropic";
+    return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+    const rest = (ml_pattern_3)["field0"];
+    return rest;
+  } else {
+  }
+  const ml_pattern_6 = (() => {
+    const ml_text_4 = path;
+    const ml_text_5 = "/api/services/bedrock";
+    return (ml_text_4.startsWith(ml_text_5)?Object.freeze({ $: 'Some', field0: ml_text_4.slice(ml_text_5.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_6) && (ml_pattern_6.$ === "Some"))) {
+    const rest_2 = (ml_pattern_6)["field0"];
+    return rest_2;
+  } else {
+  }
+  const ml_pattern_9 = (() => {
+    const ml_text_7 = path;
+    const ml_text_8 = "/api/services/vertex";
+    return (ml_text_7.startsWith(ml_text_8)?Object.freeze({ $: 'Some', field0: ml_text_7.slice(ml_text_8.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_9) && (ml_pattern_9.$ === "Some"))) {
+    const rest_3 = (ml_pattern_9)["field0"];
+    return rest_3;
+  } else {
+  }
+  const ml_pattern_12 = (() => {
+    const ml_text_10 = path;
+    const ml_text_11 = "/api/anthropic";
+    return (ml_text_10.startsWith(ml_text_11)?Object.freeze({ $: 'Some', field0: ml_text_10.slice(ml_text_11.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_12) && (ml_pattern_12.$ === "Some"))) {
+    const rest_4 = (ml_pattern_12)["field0"];
+    return rest_4;
+  } else {
+  }
+  const ml_pattern_15 = (() => {
+    const ml_text_13 = path;
+    const ml_text_14 = "/api/latest/anthropic";
+    return (ml_text_13.startsWith(ml_text_14)?Object.freeze({ $: 'Some', field0: ml_text_13.slice(ml_text_14.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_15) && (ml_pattern_15.$ === "Some"))) {
+    const rest_5 = (ml_pattern_15)["field0"];
+    return rest_5;
+  } else {
+  }
+  return path;
 }
 
 function rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54() {
@@ -1560,17 +1712,33 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67(outcome) {
-  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   return rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(outcome);
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text) {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
-  return (((text.includes("message_stop") || text.includes("[DONE]")) || text.includes("response.completed")) || text.includes("finishReason"));
+  return ((((() => {
+    const ml_text_1 = text;
+    const ml_text_2 = "message_stop";
+    return ml_text_1.includes(ml_text_2);
+  })() || (() => {
+    const ml_text_3 = text;
+    const ml_text_4 = "[DONE]";
+    return ml_text_3.includes(ml_text_4);
+  })()) || (() => {
+    const ml_text_5 = text;
+    const ml_text_6 = "response.completed";
+    return ml_text_5.includes(ml_text_6);
+  })()) || (() => {
+    const ml_text_7 = text;
+    const ml_text_8 = "finishReason";
+    return ml_text_7.includes(ml_text_8);
+  })());
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f36393733356636333666366437303663363537343635(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   if (!(router_self).streamed) {
     return ((router_self).detail.$ === 'None');
   } else {
@@ -1583,7 +1751,7 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   if (((router_self).detail.$ === 'Some')) {
     return true;
   } else {
@@ -1592,7 +1760,7 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
 }
 
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f36633631363236353663(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb, { refinements: ml_host_value_refinements_6c7ef5e1c2e4745d0fa540599f956e9125cb91c8e1b7ba9204a21a9b7a5a1ceb });
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
   if (((router_self).detail.$ === 'Some')) {
     return "upstream_error";
   } else {
@@ -1751,7 +1919,7 @@ function rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f42
 
 function rp_73747265616d5f7465726d696e6174696f6e2e6d6c5f696d706c5f3633373236313734363532653733373437323635363136643566373436353732366436393665363137343639366636653265343636313639366337353732363534623639366536345f3666363635663639366535663632363136653634(event) {
 try {
-  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const code = ml_router_try(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_pointer(event, "/error/code"), () => { return ml_host_serde_json_value_get_string(event, "code"); }, "or_else"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then"), true);
   if ((code === "upstream_timeout")) {
     return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Stalled' }) });
@@ -1820,7 +1988,7 @@ function rp_74656c656772616d2e414c4c4f5745445f55504441544553() {
 }
 
 function rp_74656c656772616d2e7570646174655f6964(update) {
-  ml_validate_rust_value(update, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(update, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(update, "update_id"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_i64(ml_host_callback_2_0); }, "and_then"), 0n, true);
 }
 
@@ -1898,48 +2066,6 @@ function rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274
   }
 }
 
-function rp_7468696e6b696e672e706f6c6963792e6b657973(protocol) {
-  ml_validate_rust_value(protocol, {"kind":"data","name":"rp_7468696e6b696e672e5468696e6b696e6750726f746f636f6c"}, ml_host_value_schema_1c499caf4dae6d3d3340ae46e10ab5a1268e3757bf0a7c6ea7cebbc94f754bbe, { refinements: ml_host_value_refinements_1c499caf4dae6d3d3340ae46e10ab5a1268e3757bf0a7c6ea7cebbc94f754bbe });
-  switch (protocol.$) {
-    case "Anthropic": {
-      return Object.freeze(["thinking", "output_config"]);
-    }
-    case "OpenAIChat": {
-      return Object.freeze(["reasoning_effort", "reasoning", "enable_thinking", "thinking_budget"]);
-    }
-    case "OpenAIResponses": {
-      return Object.freeze(["reasoning"]);
-    }
-    case "Gemini": {
-      return Object.freeze(["generationConfig", "generation_config"]);
-    }
-    case "Vertex": {
-      return Object.freeze(["generationConfig", "generation_config"]);
-    }
-    case "Codex": {
-      return Object.freeze(["reasoning"]);
-    }
-    case "Qwen": {
-      return Object.freeze(["reasoning_effort", "reasoning", "enable_thinking", "thinking_budget"]);
-    }
-    case "Interactions": {
-      return Object.freeze(["thinking_level", "thinking_budget"]);
-    }
-    case "Antigravity": {
-      return Object.freeze(["generationConfig", "generation_config"]);
-    }
-    case "Kimi": {
-      return Object.freeze(["thinking", "output_config"]);
-    }
-    case "Xai": {
-      return Object.freeze(["reasoning"]);
-    }
-    default: {
-      return ml_router_unexpected(protocol);
-    }
-  }
-}
-
 function rp_746c732e47454e4552415445445f4449524543544f5259() {
   return "tls";
 }
@@ -1978,7 +2104,7 @@ function rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f555450
 
 function rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73(body) {
   ml_pattern_immutable(body);
-  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","patternOwnershipRefusal":"non-string reference type"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   for (const field of ml_router_iter(Object.freeze(["max_output_tokens", "max_completion_tokens", "max_tokens"]))) {
     const ml_pattern_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(body, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
     if ((ml_pattern_immutable(ml_pattern_2) && (ml_pattern_2.$ === "Some"))) {
@@ -2036,6 +2162,7 @@ function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46
 
 function rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373(value, default_) {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  if (typeof default_ !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(default_, 0n, 18446744073709551615n, "u64 argument default_ out of range");
   if (!(typeof default_ === 'bigint' && default_ >= 0n && default_ <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   const seconds = ml_router_unwrap(ml_host_option_bind(value, (value_2) => { return ml_host_result_ok(ml_host_rust_integer_parse_u64((value_2).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''))); }, "and_then"), default_, true);
@@ -2052,7 +2179,7 @@ function rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f
 }
 
 function rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553() {
-  return Object.freeze(["metadata.google.internal", "metadata", "instance-data"]);
+  return Object.freeze(Object.freeze(["metadata.google.internal", "metadata", "instance-data"]));
 }
 
 function rp_757073747265616d5f67756172642e6d6c5f696d706c5f36333732363137343635326537353730373337343732363536313664356636373735363137323634326534653635373437373666373236623530366636633639363337395f363136633663366637373566363136633663() {
@@ -2078,11 +2205,11 @@ function rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554
 }
 
 function rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245() {
-  return Object.freeze(["-p", "ok"]);
+  return Object.freeze(Object.freeze(["-p", "ok"]));
 }
 
 function rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245() {
-  return Object.freeze(["exec", "--skip-git-repo-check", "ok"]);
+  return Object.freeze(Object.freeze(["exec", "--skip-git-repo-check", "ok"]));
 }
 
 function rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56() {
@@ -2099,7 +2226,7 @@ function rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72(os) {
 }
 
 function rp_766572696669636174696f6e5f636c69656e742e434c49454e5453() {
-  return Object.freeze([Object.freeze({ $: 'Tuple', field0: "claude", field1: "ROUTER_REAL_CLIENT_CLAUDE_VERSION" }), Object.freeze({ $: 'Tuple', field0: "codex", field1: "ROUTER_REAL_CLIENT_CODEX_VERSION" }), Object.freeze({ $: 'Tuple', field0: "opencode", field1: "ROUTER_REAL_CLIENT_OPENCODE_VERSION" })]);
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "claude", field1: "ROUTER_REAL_CLIENT_CLAUDE_VERSION" }), Object.freeze({ $: 'Tuple', field0: "codex", field1: "ROUTER_REAL_CLIENT_CODEX_VERSION" }), Object.freeze({ $: 'Tuple', field0: "opencode", field1: "ROUTER_REAL_CLIENT_OPENCODE_VERSION" })]));
 }
 
 function rp_766b2e4150495f56455253494f4e() {
@@ -2119,8 +2246,10 @@ function rp_766b2e434841545f504545525f4f4646534554() {
 }
 
 function rp_766b2e69735f70726976617465(peer_id, from_id) {
+  if (typeof peer_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(peer_id, -9223372036854775808n, 9223372036854775807n, "i64 argument peer_id out of range");
   if (!(typeof peer_id === 'bigint' && peer_id >= -9223372036854775808n && peer_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof from_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(from_id, -9223372036854775808n, 9223372036854775807n, "i64 argument from_id out of range");
   if (!(typeof from_id === 'bigint' && from_id >= -9223372036854775808n && from_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
   return (((peer_id === from_id) && (from_id > 0n)) && (peer_id < rp_766b2e434841545f504545525f4f4646534554()));
@@ -2170,13 +2299,8 @@ function rp_7a61695f636f64696e675f706c616e2e6d6c5f696d706c5f36333732363137343635
   return Object.freeze({ $: "ZaiProbeFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
 }
 
-function rp_7a61695f636f64696e675f706c616e2e6d6c5f696d706c5f36333732363137343635326537613631363935663633366636343639366536373566373036633631366532653561363136393530373236663632363534363631363936633735373236355f3662363936653634(router_self) {
-  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c757265"}, ml_host_value_schema_60c64955d2621ea17dc08bfce2195e5d8ac9dc6c374f0ffba7fa736e430ce1c1, { refinements: ml_host_value_refinements_60c64955d2621ea17dc08bfce2195e5d8ac9dc6c374f0ffba7fa736e430ce1c1 });
-  return (router_self).kind;
-}
-
 function rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553() {
-  return Object.freeze([1113n, 1309n, 1310n, 1311n, 1314n, 1315n, 1316n, 1317n, 1318n, 1319n, 1320n, 1321n]);
+  return Object.freeze(Object.freeze([1113n, 1309n, 1310n, 1311n, 1314n, 1315n, 1316n, 1317n, 1318n, 1319n, 1320n, 1321n]));
 }
 
 function rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459() {
@@ -2191,8 +2315,20 @@ function rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f52
   return ml_fixed((ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+function rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559() {
+  return rp_6465706c6f792e4c4142454c5f4b4559();
+}
+
+function rp_6465706c6f795f6c6f63616c2e4c4547414359() {
+  return rp_6465706c6f792e434f4e5441494e4552();
+}
+
 function rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e() {
   return "local-v1";
+}
+
+function rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453() {
+  return 300n;
 }
 
 function rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45() {
@@ -2223,6 +2359,10 @@ function rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f
   return "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_PRESERVATION_TOKEN}});if(r.status!==200)process.exit(2);const b=await r.json();if(!Array.isArray(b.data))process.exit(3);console.log(JSON.stringify(b.data.map(m=>String(m.owned_by||'')+'/'+m.id).sort()))";
 }
 
+function rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453() {
+  return 120n;
+}
+
 function rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958() {
   return "runtime-env";
 }
@@ -2240,6 +2380,7 @@ function rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054() {
 }
 
 function rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   return ((status !== 401n) && (status < 500n));
@@ -2306,11 +2447,11 @@ function rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45
 }
 
 function rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354() {
-  return Object.freeze(["x-request-id", "x-correlation-id", "traceparent", "tracestate", "x-claude-code-session-id", "x-codex-session-id", "x-session-id", "session-id"]);
+  return Object.freeze(Object.freeze(["x-request-id", "x-correlation-id", "traceparent", "tracestate", "x-claude-code-session-id", "x-codex-session-id", "x-session-id", "session-id"]));
 }
 
 function rp_6d616e6167656d656e745f6163636573732e534e415053484f54() {
   return "management-lockouts.lenv";
 }
-export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["audit.surface_name"]: rp_61756469742e737572666163655f6e616d65, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_auth.CLAUDE_AUTHORIZE_URL"]: rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c(), ["claude_auth.CLAUDE_REDIRECT_URI"]: rp_636c617564655f617574682e434c415544455f52454449524543545f555249(), ["claude_auth.CLAUDE_SCOPES"]: rp_636c617564655f617574682e434c415544455f53434f504553(), ["claude_auth.CLAUDE_INFERENCE_SCOPE"]: rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045(), ["claude_auth.PENDING_LOGIN_FILE"]: rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45(), ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_lifecycle.active.PROFILE_VARIABLES"]: rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553(), ["client_lifecycle.active.SETTLE_DELAY"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.BACKEND_PATH"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.HEALTH_HEADER"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552(), ["codex_loopback_bridge.DAEMON_MARKER_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56(), ["codex_loopback_bridge.DAEMON_UPSTREAM_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56(), ["codex_loopback_bridge.DAEMON_STATE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56(), ["codex_loopback_bridge.DAEMON_NONCE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56(), ["codex_loopback_bridge.DAEMON_LISTEN_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["crater.ACTIVITY_JSON"]: rp_6372617465722e41435449564954595f4a534f4e(), ["crater.LINKED_DATA_JSON"]: rp_6372617465722e4c494e4b45445f444154415f4a534f4e(), ["crater.DEFAULT_MODEL"]: rp_6372617465722e44454641554c545f4d4f44454c(), ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["login.SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["login.FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["login.THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["login.WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["login.LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["login.READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.LOG_FILE"]: rp_726571756573745f6c6f672e4c4f475f46494c45(), ["request_log.LEGACY_LOG_FILE"]: rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45(), ["request_log.REDACTED"]: rp_726571756573745f6c6f672e5245444143544544(), ["request_log.UNAUTHENTICATED"]: rp_726571756573745f6c6f672e554e41555448454e54494341544544(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["thinking.policy.keys"]: rp_7468696e6b696e672e706f6c6963792e6b657973, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["tunnel_command.TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["tunnel_command.DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["tunnel_command.SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
-export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":299,"executableFunctions":40,"executableConstants":355};
+export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["audit.surface_name"]: rp_61756469742e737572666163655f6e616d65, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_auth.CLAUDE_AUTHORIZE_URL"]: rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c(), ["claude_auth.CLAUDE_REDIRECT_URI"]: rp_636c617564655f617574682e434c415544455f52454449524543545f555249(), ["claude_auth.CLAUDE_SCOPES"]: rp_636c617564655f617574682e434c415544455f53434f504553(), ["claude_auth.CLAUDE_INFERENCE_SCOPE"]: rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045(), ["claude_auth.PENDING_LOGIN_FILE"]: rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45(), ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.BACKEND_PATH"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.HEALTH_HEADER"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552(), ["codex_loopback_bridge.DAEMON_MARKER_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56(), ["codex_loopback_bridge.DAEMON_UPSTREAM_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56(), ["codex_loopback_bridge.DAEMON_STATE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56(), ["codex_loopback_bridge.DAEMON_NONCE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56(), ["codex_loopback_bridge.DAEMON_LISTEN_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["crater.ACTIVITY_JSON"]: rp_6372617465722e41435449564954595f4a534f4e(), ["crater.LINKED_DATA_JSON"]: rp_6372617465722e4c494e4b45445f444154415f4a534f4e(), ["crater.DEFAULT_MODEL"]: rp_6372617465722e44454641554c545f4d4f44454c(), ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["login.SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["login.FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["login.THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["login.WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["login.LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["login.READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.LOG_FILE"]: rp_726571756573745f6c6f672e4c4f475f46494c45(), ["request_log.LEGACY_LOG_FILE"]: rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45(), ["request_log.REDACTED"]: rp_726571756573745f6c6f672e5245444143544544(), ["request_log.UNAUTHENTICATED"]: rp_726571756573745f6c6f672e554e41555448454e54494341544544(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["tunnel_command.TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["tunnel_command.DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["tunnel_command.SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
+export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":300,"executableFunctions":44,"executableConstants":358};

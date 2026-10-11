@@ -1,7 +1,7 @@
 // Generated draft from docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs; sha256=9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76
 // Carried constructs are data, never runtime parity evidence.
 function FILE_EXTENSIONS() {
-  return Object.freeze([".rs", ".md"]);
+  return Object.freeze(Object.freeze([".rs", ".md"]));
 }
 
 const std = {
@@ -29,7 +29,7 @@ const serde_json = {
 };
 
 function EXCLUDE_PATTERNS() {
-  return Object.freeze(["target", ".git", "node_modules"]);
+  return Object.freeze(Object.freeze(["target", ".git", "node_modules"]));
 }
 
 function ml_make_LineStatus_WithinLimit() {

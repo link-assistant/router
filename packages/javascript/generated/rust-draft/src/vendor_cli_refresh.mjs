@@ -7,11 +7,11 @@ function rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554
 }
 
 function rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245() {
-  return Object.freeze(["-p", "ok"]);
+  return Object.freeze(Object.freeze(["-p", "ok"]));
 }
 
 function rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245() {
-  return Object.freeze(["exec", "--skip-git-repo-check", "ok"]);
+  return Object.freeze(Object.freeze(["exec", "--skip-git-repo-check", "ok"]));
 }
 
 function rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56() {

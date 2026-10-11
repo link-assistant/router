@@ -22,6 +22,7 @@ function ml_make_Recovery_Recovery(token, token_id, revoked, retained_admins) {
   if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
   if (!ml_router_array(revoked, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof retained_admins !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(retained_admins, 0n, 18446744073709551615n, "u64 argument retained_admins out of range");
   if (!(typeof retained_admins === 'bigint' && retained_admins >= 0n && retained_admins <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Recovery", ["token"]: token, ["token_id"]: token_id, ["revoked"]: revoked, ["retained_admins"]: retained_admins });

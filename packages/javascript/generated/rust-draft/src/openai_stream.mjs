@@ -41,6 +41,7 @@ function ml_make_ResponseToolCall_ResponseToolCall(call_id, name, arguments_, ou
   if (!(typeof call_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(call_id))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof arguments_ === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(arguments_))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof output_index !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(output_index, 0n, 18446744073709551615n, "u64 argument output_index out of range");
   if (!(typeof output_index === 'bigint' && output_index >= 0n && output_index <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "ResponseToolCall", ["call_id"]: call_id, ["name"]: name, ["arguments"]: arguments_, ["output_index"]: output_index });

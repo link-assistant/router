@@ -15,6 +15,7 @@ function rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56() {
 
 function ml_make_Binding_Binding(listen, backend_port) {
   if (!(typeof listen === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(listen))) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof backend_port !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(backend_port, 0n, 65535n, "u16 argument backend_port out of range");
   if (!(typeof backend_port === 'bigint' && backend_port >= 0n && backend_port <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   return Object.freeze({ $: "Binding", ["listen"]: listen, ["backend_port"]: backend_port });
