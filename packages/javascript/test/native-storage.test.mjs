@@ -115,5 +115,9 @@ test('operation contexts preserve authority and counters while isolating explici
   const isolated = await createOperationContext(core,{configOverrides:{data_dir:'different'},cwd:home});
   assert.equal(isolated.config.data_dir,join(home,'different')); assert.notEqual(isolated.core.tokens,core.tokens); assert.equal(await isolated.core.tokens.get(held.id),null);
   assert.equal((await createOperationContext(core,{configOverrides:{data_dir:'different'},cwd:home})).core.tokens,isolated.core.tokens);
+  const environment = await createOperationContext(core,{env:{PORT:'0',ACCOUNT_FAILOVER:'yes',TOKEN_ADMIN_KEY:'new-independent-admin'}});
+  assert.equal(environment.config.port,0); assert.equal(environment.config.account_failover,true);
+  assert.equal((await environment.core.authenticate('new-independent-admin',{admin:true})).is_admin,true);
+  assert.equal(await core.admin.verify('new-independent-admin'),false);
   assert.equal(createTokenStore({storage_policy:'clink'}).constructor.name,'BinaryTokenStore');
 });

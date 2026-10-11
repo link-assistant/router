@@ -17,7 +17,22 @@ export function parseLenv(text) {
   }
   return values;
 }
-const bool = value => value === true || value === 'true' || value === '1';
+const bool = value => {
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value).trim().toLowerCase();
+  if (['true','1','yes','on'].includes(normalized)) return true;
+  if (['false','0','no','off'].includes(normalized)) return false;
+  throw new RouterError('invalid_config','Boolean configuration must be true or false');
+};
+export const nativeConfigOptions = new Set(['token_secret','data_dir','storage_policy','host','port','account_strategy',
+  'account_failover','account_cooldown_seconds','account_max_cooldown_seconds','session_affinity_ttl_seconds',
+  'token_admin_key','admin_key','allow_anonymous_admin','disable_login_api','login_max_sessions','login_session_ttl_secs',
+  'claude_code_home','claude_home','codex_home','home','openai_compatible_provider_name',
+  'management_allow_remote','management_lockout_failures','management_lockout_secs','management_lockout_exempt_loopback']);
+export const nativeConfigEnvironment = {TOKEN_SECRET:'token_secret',DATA_DIR:'data_dir',STORAGE_POLICY:'storage_policy',HOST:'host',PORT:'port',
+  ACCOUNT_STRATEGY:'account_strategy',ACCOUNT_FAILOVER:'account_failover',ACCOUNT_COOLDOWN_SECONDS:'account_cooldown_seconds',
+  SESSION_AFFINITY_TTL_SECONDS:'session_affinity_ttl_seconds',TOKEN_ADMIN_KEY:'token_admin_key',CLAUDE_CODE_HOME:'claude_code_home',CODEX_HOME:'codex_home',
+  MANAGEMENT_ALLOW_REMOTE:'management_allow_remote',MANAGEMENT_LOCKOUT_FAILURES:'management_lockout_failures',MANAGEMENT_LOCKOUT_SECS:'management_lockout_secs',MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK:'management_lockout_exempt_loopback'};
 export function normalizeProvider(record, env = process.env) {
   const name = record.name ?? record.provider_name ?? record.provider;
   if (typeof name !== 'string' || !/^[A-Za-z0-9._-]+$/.test(name)) throw new RouterError('invalid_provider','Provider name must contain ASCII letters, digits, dash, underscore or dot');
@@ -62,6 +77,20 @@ export function normalizeConfig(input = {}, env = process.env) {
   config.providers = providers.map(p => normalizeProvider(p,env));
   if (new Set(config.providers.map(p => p.name)).size !== config.providers.length) throw new RouterError('invalid_config','Provider names must be unique');
   config.accounts = input.accounts ?? [];
+  config.token_admin_key = input.token_admin_key ?? input.admin_key ?? env.TOKEN_ADMIN_KEY ?? null;
+  config.allow_anonymous_admin = bool(input.allow_anonymous_admin ?? false);
+  config.disable_login_api = bool(input.disable_login_api ?? false);
+  config.management = {
+    allow_remote:bool(input.management_allow_remote ?? input.management?.allow_remote ?? env.MANAGEMENT_ALLOW_REMOTE ?? false),
+    exempt_loopback:bool(input.management_lockout_exempt_loopback ?? input.management?.exempt_loopback ?? env.MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK ?? true),
+    lockout_failures:Number(input.management_lockout_failures ?? input.management?.lockout_failures ?? env.MANAGEMENT_LOCKOUT_FAILURES ?? 5),
+    lockout_secs:Number(input.management_lockout_secs ?? input.management?.lockout_secs ?? env.MANAGEMENT_LOCKOUT_SECS ?? 1800),
+  };
+  for (const field of ['lockout_failures','lockout_secs']) if (!Number.isSafeInteger(config.management[field]) || config.management[field] < 0) throw new RouterError('invalid_config',`management ${field} must be nonnegative`);
+  for (const [environment,field] of Object.entries(nativeConfigEnvironment)) if (config[field] == null && env[environment] != null) config[field] = env[environment];
+  for (const field of ['login_max_sessions','login_session_ttl_secs']) if (config[field] != null) {
+    config[field] = Number(config[field]); if (!Number.isSafeInteger(config[field]) || config[field] <= 0) throw new RouterError('invalid_config',`${field} must be positive`);
+  }
   return config;
 }
 export async function loadConfig({ config = {}, configPath, env = process.env } = {}) {

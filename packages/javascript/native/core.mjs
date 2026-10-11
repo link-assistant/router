@@ -1,22 +1,29 @@
-import { loadConfig, ProviderStore } from './config.mjs';
+import { loadConfig, ProviderStore,nativeConfigEnvironment } from './config.mjs';
 import { createTokenStore } from './storage.mjs';
 import { TokenManager, RouterError } from './tokens.mjs';
 import { AccountRouter } from './accounts.mjs';
 import { OAuthManager, CredentialFileStore, subscriptionProvider } from './oauth.mjs';
 import { modelCandidates, catalogModels } from './routing.mjs';
 import { AffinityStore } from './affinities.mjs';
+import { AdminClaim } from './admin.mjs';
+import { NativeLoginManager,nativeCredentialStatus } from './auth-service.mjs';
+import { ManagementAccess } from './management-access.mjs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
 export class RouterCore {
-  constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {} }) {
-    this.config = config; this.clock = clock; this.env = env; this.fetch = fetch; this.contexts = new Map();
+  constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {},management = {} }) {
+    this.config = config; this.clock = clock; this.env = env; this.fetch = fetch; this.oauthOptions = oauth; this.contexts = new Map();
     this.tokens = new TokenManager({secret:config.token_secret,store:createTokenStore({...config,storage}),clock});
     this.providers = new ProviderStore({dataDir:config.data_dir,secret:config.token_secret,env,records:config.providers,persistent:config.storage_policy !== 'memory'});
     this.accounts = new AccountRouter({config,clock});
     this.oauth = new OAuthManager({fetch,clock,...oauth});
     this.credentialStores = new Map();
     this.affinities = new AffinityStore({dataDir:config.data_dir,persistent:config.storage_policy !== 'memory',clock});
+    this.admin = new AdminClaim(this,{env});
+    this.login = new NativeLoginManager(this,{env,fetch,clock,...oauth});
+    this.credentialStatus = () => nativeCredentialStatus(this,{env,fetch,...oauth});
+    this.managementAccess = new ManagementAccess({config:config.management,dataDir:config.data_dir,persistent:config.storage_policy !== 'memory',clock,...management});
   }
   async listProviders() { return this.providers.list(); }
   async showProvider(name) { return this.providers.get(name); }
@@ -105,16 +112,20 @@ export class RouterCore {
   async route(context = {}) { const candidate = await this.prepareCandidate((await this.candidates(context))[0]); this.accounts.recordUse(candidate,context); return candidate; }
   async reportFailure(candidate, details) { return this.accounts.reportFailure(candidate,details); }
   async reportSuccess(candidate) { return this.accounts.reportSuccess(candidate); }
-  async authenticate(token, options) { return this.tokens.validate(token,options); }
+  async authenticate(token, options) {
+    if (options?.admin && (this.config.allow_anonymous_admin || await this.admin.verify(token))) return {sub:`admin-credential-${createHash('sha256').update(token ?? '').digest('hex')}`,scope:'admin',is_admin:true,record:null};
+    return this.tokens.validate(token,options);
+  }
   async withConfig(overrides = {},{env = this.env,cwd = process.cwd()} = {}) {
     const input = {...this.config,...overrides};
+    for (const [environment,field] of Object.entries(nativeConfigEnvironment)) if (!Object.hasOwn(overrides,field) && env[environment] !== this.env[environment]) input[field] = env[environment];
     if (overrides.data_dir != null || overrides.dataDir != null) input.data_dir = resolve(cwd,overrides.data_dir ?? overrides.dataDir);
     if (overrides.home != null) input.home = resolve(cwd,overrides.home);
     const config = await loadConfig({config:input,env});
     const identity = createHash('sha256').update(JSON.stringify([config.data_dir,config.storage_policy,config.token_secret])).digest('hex');
     const baseIdentity = createHash('sha256').update(JSON.stringify([this.config.data_dir,this.config.storage_policy,this.config.token_secret])).digest('hex');
     if (identity !== baseIdentity) {
-      if (!this.contexts.has(identity)) this.contexts.set(identity,await createRouterCore({config,env,clock:this.clock,fetch:this.fetch}));
+      if (!this.contexts.has(identity)) this.contexts.set(identity,await createRouterCore({config,env,clock:this.clock,fetch:this.fetch,oauth:this.oauthOptions}));
       return this.contexts.get(identity).withConfig({}, {env,cwd});
     }
     const context = Object.assign(Object.create(Object.getPrototypeOf(this)),this,{config,env});
@@ -123,6 +134,13 @@ export class RouterCore {
     context.accounts = Object.assign(Object.create(Object.getPrototypeOf(this.accounts)),this.accounts,{config});
     for (const key of ['cursor','failoverCursor']) Object.defineProperty(context.accounts,key,{get:() => this.accounts[key],set:value => {this.accounts[key]=value;},enumerable:true});
     if (overrides.account_strategy != null) context.accounts.setStrategy(config.account_strategy);
+    context.admin = Object.assign(Object.create(Object.getPrototypeOf(this.admin)),this.admin,{core:context,envKey:config.token_admin_key});
+    for (const key of ['file','candidate']) Object.defineProperty(context.admin,key,{get:() => this.admin[key],set:value => {this.admin[key]=value;},enumerable:true});
+    context.login = Object.assign(Object.create(Object.getPrototypeOf(this.login)),this.login,{core:context,env,enabled:config.login?.enabled ?? !config.disable_login_api,
+      maxSessions:config.login?.max_sessions ?? config.login_max_sessions ?? this.login.maxSessions,
+      ttlSeconds:config.login?.session_ttl_secs ?? config.login_session_ttl_secs ?? this.login.ttlSeconds});
+    context.credentialStatus = () => nativeCredentialStatus(context,{env,fetch:this.fetch,...this.oauthOptions});
+    context.managementAccess = Object.assign(Object.create(Object.getPrototypeOf(this.managementAccess)),this.managementAccess,{policy:config.management});
     return context;
   }
 }
@@ -142,6 +160,7 @@ export async function createRouterCore(options = {}) {
 }
 export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';
 export { loadConfig, normalizeConfig, ProviderStore } from './config.mjs';
+export { nativeConfigOptions } from './config.mjs';
 export { MemoryTokenStore, TextTokenStore, BinaryTokenStore, DualTokenStore, createTokenStore } from './storage.mjs';
 export { AffinityStore } from './affinities.mjs';
 export { AccountRouter } from './accounts.mjs';

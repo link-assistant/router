@@ -138,5 +138,18 @@ export class TokenManager {
     return this.store.transaction(records => { const r = records.get(id); if (r) { r.reserved_tokens = Math.max(0,(r.reserved_tokens ?? 0)-reserved); r.used_tokens = Math.min(Number.MAX_SAFE_INTEGER,(r.used_tokens ?? 0)+actual); } });
   }
   async releaseStaleReservations() { return this.store.transaction(records => { let n = 0; for (const r of records.values()) if (r.reserved_tokens) { r.reserved_tokens = 0; n++; } return n; }); }
+  async enforceRequestBudget(id,reserve = 0) {
+    const verdict = await this.admit(id,reserve);
+    if (verdict !== 'admitted') throw new RouterError(verdict,'Router token budget is exhausted',429);
+  }
+  async recordUsage(id,tokens) { return this.settle(id,0,tokens); }
+  async renewRunLease(id) {
+    return this.store.transaction(records => {
+      const record = records.get(id), now = this.clock();
+      if (!record?.ephemeral || record.revoked || record.expires_at <= now || record.run_lease_expires_at == null) throw new RouterError('invalid_token','Run lease is absent, revoked, expired as a token, or not ephemeral',401);
+      record.run_lease_expires_at = now+120;
+      return record.run_lease_expires_at;
+    });
+  }
 }
 export const codexTokenAlias = token => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;
