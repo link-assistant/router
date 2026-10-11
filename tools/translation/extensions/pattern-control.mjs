@@ -114,6 +114,12 @@ export function withPatternControlParser(Base=ControlRustParser) {
       finally {this.cursor=c;c.index=bounded.index;}
       return {pattern,span:pattern.span};
     }
+    primary(path,options) {
+      const c=this.cursor;
+      if(!c.is('return'))return super.primary(path,options);
+      const first=c.next(),value=[';',',','}',')',']'].some(token=>c.is(token))?{k:'unit',span:range(first,first)}:this.expr(path);
+      return {k:'routerReturn',value,body:{k:'unit',span:range(first,c.peek())},expressionReturn:true,span:range(first,c.peek())};
+    }
     letStatement(path) {
       const c=this.cursor,checkpoint=c.index;
       // Look only for a structural statement-level else. Ordinary let parsing
@@ -302,6 +308,31 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return {k:'routerLambda',binding:body,arity:parameters.length,type:{kind:'routerCallback',result},span:node.span,patternControl:{kind:'tuple-callback',parameters:parameters.map(param=>({type:param.type,plan:param.plan})),ownership:'checked-by-value-option'}};
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='match'&&containsExit(node)) {
+        env=this.contextEnvironment(node,env,expected);
+        if(node.scrutinees.length!==1||containsExit(node.scrutinees[0]))throw unsupported('return-valued match subject','requires one ordinary once-evaluated subject',node.span);
+        if(node.rows.some(row=>containsExit(row.body)&&row.body.k!=='routerReturn'))throw unsupported('nested match-arm control','only direct function-return arms have a checked join contract',node.span);
+        const subject=this.expr(node.scrutinees[0],env,path);this.patternDomain(subject.type,node.span);
+        let join=expected;
+        if(!join) {
+          const seed=node.rows.find(row=>row.body.k!=='routerReturn');
+          if(!seed)throw unsupported('all-return match join','requires an explicit contextual result type',node.span);
+          const value=this.expr(seed.body,env,path,undefined,true);
+          join=value.type.kind==='literal'?this.defaultNumber():value.type;
+        }
+        const value=super.expr(node,env,path,join,allowLiteral);
+        return {k:'routerControlInitializer',value,type:value.type,span:node.span,patternControl:{kind:'match-return',initializerType:value.type}};
+      }
+      if(node.k==='let'&&containsExit(node.value)) {
+        env=this.contextEnvironment(node,env,expected);
+        if(node.value.k!=='match')throw unsupported('return-valued let initializer','requires an ordinary match with direct function-return arms',node.span);
+        const declared=node.type?this.resolveType(node.type,path,node.span):undefined;
+        let value=this.expr(node.value,env,path,declared);
+        if(value.k!=='routerControlInitializer'||!scalar(value.type)||value.type.patternOwnershipRefusal||node.mutable)throw unsupported('match initializer binding ownership','only immutable scalar joins have a checked contract',node.span);
+        if(declared)value=coerce(value,declared,this.language,node.span);
+        const body=this.expr(node.body,this.bindingEnvironment(env,node.name,value.type,false),path,expected,allowLiteral);
+        return {k:'let',name:node.name,value,body,mutable:false,type:body.type,span:node.span};
+      }
       if(node.k==='routerLetPattern') {
         env=this.contextEnvironment(node,env,expected);
         if(containsExit(node.subject))throw unsupported('tuple binding subject control','nonlocal exits cannot be emitted through a subject value',node.subject.span);
@@ -411,7 +442,22 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
       if(result.preludes.includes(dependency))return result;
       return {...result,preludes:[dependency,...result.preludes],text:dependency+'\n'+result.text};
     }
+    statements(node,unit=false) {
+      if(node.k==='let'&&node.value.k==='routerControlInitializer') {
+        const label=`ml_control_exit_${this.controlLabels=(this.controlLabels??0)+1}`,previous=this.controlValueTarget;
+        this.controlValueTarget={name:node.name,label};
+        let initializer;
+        try{initializer=this.statements(node.value.value);}finally{this.controlValueTarget=previous;}
+        return [`let ${node.name};`,`${label}: {`,...initializer.map(line=>'  '+line),'}',...this.statements(node.body,unit)];
+      }
+      if(node.k==='routerControlInitializer')return this.statements(node.value,unit);
+      if(this.controlValueTarget&&!['let','if','match','routerReturn','routerIf','routerDiscard','routerSet','routerWhile','routerBreak','routerContinue'].includes(node.k)) {
+        return [`${this.controlValueTarget.name} = ${this.expr(node)};`,`break ${this.controlValueTarget.label};`];
+      }
+      return super.statements(node,unit);
+    }
     expr(node) {
+      if(node.k==='routerControlInitializer')throw unsupported('return-valued match emission','requires statement lowering; a value IIFE would erase the function return',node.span);
       if(node.k==='routerPatternImmutable'){this.patternImmutability=true;return `ml_pattern_immutable(${this.expr(node.object)})`;}
       if(node.k==='routerPatternTag')return `(${this.expr(node.object)}.$ === ${JSON.stringify(node.ctor)})`;
       if(node.k==='routerPatternProjection')return `(${this.expr(node.object)})[${JSON.stringify(node.field)}]`;
