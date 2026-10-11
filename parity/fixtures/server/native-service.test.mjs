@@ -32,13 +32,13 @@ test('opaque relay forwards actual multipart bytes/query and application headers
   assert.equal(observed.url,'/v1/audio/transcriptions?language=ru');assert.equal(observed.body,body);assert.equal(observed.headers.authorization,'Bearer vendor-secret');assert.equal(observed.headers['x-stainless-lang'],'js');
   for(const key of ['cookie','x-forwarded-for','x-router-internal','x-client-private'])assert.equal(observed.headers[key],undefined);
 });
-test('Conversations retain owner/exact destination and filter items against durable affinity',async () => {
+test('Conversations retain owner/exact destination and capture upstream-owned child items',async () => {
   const calls=[],affinities=new NativeAffinityStore();let changed=false;
   const c=core({affinities,nativeCandidates:async () => [{...candidate,base_url:changed?'http://other/v1':candidate.base_url}]});
   const router=createNativeRouter({core:c,fetch:async (url,options) => {
     calls.push([String(url),options.method]);
     if(options.method === 'POST' && String(url).endsWith('/conversations'))return Response.json({id:'conv_1',object:'conversation',metadata:{}});
-    if(options.method === 'POST')return Response.json({id:'item_1',object:'conversation.item'});
+    if(options.method === 'POST')return Response.json({object:'list',data:[{id:'item_1',object:'conversation.item'}]});
     if(String(url).endsWith('/items'))return Response.json({data:[{id:'item_1'},{id:'foreign'}],has_more:false});
     return Response.json({id:'conv_1'});
   }});
@@ -46,8 +46,26 @@ test('Conversations retain owner/exact destination and filter items against dura
   assert.equal((await router.fetch(req('/api/services/openai/v1/conversations/conv_1','GET',undefined,'bob'))).status,404);
   assert.equal(calls.length,1);
   assert.equal((await router.fetch(req('/api/services/openai/v1/conversations/conv_1/items','POST',{items:[{type:'message'}]}))).status,200);
-  const list=await (await router.fetch(req('/api/services/openai/v1/conversations/conv_1/items'))).json();assert.deepEqual(list.data,[{id:'item_1'}]);
+  const list=await (await router.fetch(req('/api/services/openai/v1/conversations/conv_1/items'))).json();assert.deepEqual(list.data,[{id:'item_1'},{id:'foreign'}]);
   changed=true;assert.equal((await router.fetch(req('/api/services/openai/v1/conversations/conv_1'))).status,503);assert.equal(calls.length,3);
+});
+test('native Responses capture foreground/background and stream IDs before exposing bytes, then relay exact lifecycle',async()=>{
+  const calls=[],affinities=new NativeAffinityStore();
+  const router=createNativeRouter({core:core({affinities}),fetch:async(url,options)=>{
+    calls.push([String(url),options.method,options.body?.toString()]);
+    if(options.method === 'GET')return Response.json({id:'r',status:'completed',output:[]});
+    const body=JSON.parse(options.body);
+    if(body.stream)return new Response('data: {"type":"response.created","response":{"id":"stream","status":"in_progress"}}\n\ndata: {"type":"response.completed","response":{"id":"stream","usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}\n\n',{headers:{'content-type':'text/event-stream'}});
+    return Response.json({id:body.store===false?'unretained':'r',status:body.background?'queued':'completed',model:'m',output:[]});
+  }});
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses','POST',{model:'m',input:'hello',background:true}))).status,200);
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses/r'))).status,200);
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses/r','GET',undefined,'bob'))).status,404);
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses','POST',{model:'m',input:'hello',previous_response_id:'r'}))).status,200);
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses','POST',{model:'m',input:'hello',store:false}))).status,200);
+  assert.equal((await router.fetch(req('/api/services/openai/v1/responses/unretained'))).status,404);
+  const stream=await router.fetch(req('/api/services/openai/v1/responses','POST',{model:'m',input:'hello',stream:true}));assert.equal(stream.status,200);assert.ok(await affinities.get('/api/services/openai/v1/responses',{client_kind:'claude',principal_id:'alice'},'stream'));assert.match(await stream.text(),/response.completed/);
+  assert.equal(calls.length,5);
 });
 test('vendor resources enforce official client, native error passthrough, bounded bodies and references',async () => {
   let calls=0;

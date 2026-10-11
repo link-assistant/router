@@ -10,10 +10,11 @@ import { ResponsesStore, responseOwner, normalizeResponseInput } from './respons
 import { createNativeService } from './native-service.mjs';
 import {managementOperation} from './http-management.mjs';
 import {relayWebSocket} from './websocket-relay.mjs';
+import {UsageTracker} from './usage.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
-const redactedKeys = /(?:api[_-]?key|token|password|secret|authorization|credential|cookie)/i;
+const redactedKeys = /(?:api[_-]?key|password|secret|authorization|credential|cookie|(?:access|refresh|id)[_-]?token|^token$)/i;
 export function redact(value) {
   if (Array.isArray(value)) return value.map(redact);
   if (!value || typeof value !== 'object') return value;
@@ -281,21 +282,24 @@ export function createNativeRouter(options = {}) {
         if (body.stream) {
           if (!response.headers.get('content-type')?.includes('text/event-stream') || !response.body) { cleanup(); await response.body?.cancel(); throw new ProtocolError('Upstream did not return an SSE stream', 502); }
           let resourceCancelled = false;
+          const usageTracker=new UsageTracker({maxBytes:maxResponseBytes});
+          const measuredBody=response.body.pipeThrough(new TransformStream({transform(chunk,controller){usageTracker.feed(chunk);controller.enqueue(chunk);}}));
+          const measuredUsage = usage => ({...(usage ?? normalizeUsage()),total:Math.max(usage?.total ?? 0,usageTracker.finish().tokens)});
           const callbacks = {
             clock, model: body.model,
             onStart: async response => { if (retain) { responseStore.save(namespace, owner, response, responseInput, { abort: () => { resourceCancelled = true; controller.abort(new Error('Response cancelled')); } }); retainedId = response.id; } },
             onComplete: async state => {
-              cleanup(); await settle(state.usage);
+              cleanup(); await settle(measuredUsage(state.usage));
               if (retain) {
                 if (!state.response || !['completed', 'incomplete'].includes(state.response.status)) throw new ProtocolError('Upstream stream did not supply a completed response resource', 502);
                 responseStore.save(namespace, owner, state.response, responseInput, { update: true });
               }
               await core.reportSuccess?.(candidate);
             },
-            onError: async (_error, state) => { cleanup(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); if (!resourceCancelled && !request.signal.aborted) await core.reportFailure?.(candidate, { status: 502 }); await settle(state?.usage); },
-            onCancel: async () => { cleanup(); controller.abort(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await settle(); },
+            onError: async (_error, state) => { cleanup(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); if (!resourceCancelled && !request.signal.aborted) await core.reportFailure?.(candidate, { status: 502 }); await settle(measuredUsage(state?.usage)); },
+            onCancel: async () => { cleanup(); controller.abort(); if (retain && retainedId) responseStore.fail(namespace, owner, retainedId); await settle(measuredUsage()); },
           };
-          const stream = source === protocol ? monitorNativeStream(response.body, protocol, callbacks) : translateStream(response.body, protocol, source, body.model, callbacks);
+          const stream = source === protocol ? monitorNativeStream(measuredBody, protocol, callbacks) : translateStream(measuredBody, protocol, source, body.model, callbacks);
           return new Response(stream, { status: 200, headers: { ...headers, 'content-type': 'text/event-stream', 'cache-control': 'no-cache', 'x-accel-buffering': 'no' } });
         }
         let raw;
@@ -363,7 +367,7 @@ export function createNativeRouter(options = {}) {
       }
       else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', ...['openai','codex','qwen'].flatMap(service => [`/api/services/${service}/v1/responses`,`/api/services/${service}/v1/chat/completions`]), '/api/services/anthropic/v1/messages'].includes(path) && request.method === 'POST') {
         const body = await boundedJSON(request.clone(),maxBodyBytes);
-        response = core.nativeCandidates && source === 'responses' && (body.background || body.conversation || body.previous_response_id) ? await nativeService.fetch(request) : await inference(request,source,body);
+        response = core.nativeCandidates && source === 'responses' && /^\/api\/services\/(?:openai|codex)\/v1\/responses$/.test(path) ? await nativeService.fetch(request) : await inference(request,source,body);
       }
       else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path)) response = await nativeService.fetch(request);
       else throw new ProtocolError('Route not found', 404);
