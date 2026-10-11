@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
-import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {readFileSync,mkdtempSync,writeFileSync,rmSync,mkdirSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {withPatternControlParser,withPatternControlChecker,withPatternControlEmitter} from '../extensions/pattern-control.mjs';
 import {DataRustParser,DataChecker,DataEmitter} from '../extensions/data.mjs';
 import {emitWith} from '../extensions/core.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
-import {annotateRuntimeTypes} from '../translate.mjs';
+import {annotateRuntimeTypes,translateSource} from '../translate.mjs';
+import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
 const Parser=withPatternControlParser(DataRustParser),Checker=withPatternControlChecker(DataChecker),Emitter=withPatternControlEmitter(DataEmitter);
@@ -176,4 +177,54 @@ test('repeated emitter adaptation keeps the exact immutable import idempotent',a
   const {apis,runtime}=await compile('pub fn repeat(value: Option<u8>) -> u8 { if let Some(v) = value { v } else { 0 } }',{repeatedEmitter:true});
   assert.equal(runtime.split('import { assertImmutableCopy as ml_pattern_immutable }').length-1,1);
   for(const api of apis){assert.equal(api.repeat(some(2n)),2n);assert.equal(api.repeat(none),0n);}
+});
+
+async function defaultArtifacts(result,entryPath=result.ir?.sourcePath??'src/proxy/upstream_path.rs') {
+  execFileSync('node',['--input-type=module','--check'],{input:result.javascript,encoding:'utf8',timeout:10000});
+  const directory=mkdtempSync(join(tmpdir(),'router-default-pattern-ts-'));
+  try {writeRuntimeAssets(directory);
+    // Keep generated modules at their actual source-relative location. The
+    // emitted runtime imports stay unchanged, including nested module paths.
+    const stem=entryPath.replace(/\.rs$/u,'');
+    const javascript=join(directory,stem+'.mjs'),typescript=join(directory,stem+'.ts');
+    mkdirSync(dirname(javascript),{recursive:true});writeFileSync(javascript,result.javascript);writeFileSync(typescript,result.typescript);
+    const javaScript=(await import(pathToFileURL(javascript).href)).translated;
+    execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext',typescript],{encoding:'utf8',timeout:30000});
+    const typeScript=(await import(pathToFileURL(join(directory,stem+'.js')).href)).translated;
+    return [javaScript,typeScript];
+  }finally{rmSync(directory,{recursive:true,force:true});}
+}
+
+test('default highest host emitter runs its early pattern guard before any hostile data inspection',async()=>{
+  const source='pub fn pick(value: Option<u8>) -> u8 { if let Some(v) = value { v } else { 11 } }';
+  const result=translateSource(source,'pattern-default.rs');
+  assert.equal(result.ir.runtimeParity,false);assert.equal(result.ir.counts.executableFunctions,1);assert.equal(result.ir.counts.carried,0);
+  const early=result.javascript.indexOf('ml_pattern_immutable(value);'),layout=result.javascript.indexOf('ml_validate_rust_value(value,');
+  assert.ok(early>=0&&layout>early,'highest layout guard must follow the explicit early pattern guard');
+  for(const api of await defaultArtifacts(result)){
+    assert.equal(api.pick(some(3n)),3n);assert.equal(api.pick(none),11n);
+    assert.throws(()=>api.pick({$:'Some',field0:3n}),TypeError);
+    let reads=0;
+    const accessor=Object.freeze(Object.defineProperty({},'$',{get(){reads++;return 'Some';}}));
+    assert.throws(()=>api.pick(accessor),TypeError);assert.equal(reads,0);
+    const proxy=new Proxy(some(3n),{
+      get(target,key){reads++;return Reflect.get(target,key);},
+      ownKeys(target){reads++;return Reflect.ownKeys(target);},
+      getOwnPropertyDescriptor(target,key){reads++;return Reflect.getOwnPropertyDescriptor(target,key);},
+      getPrototypeOf(target){reads++;return Reflect.getPrototypeOf(target);},
+    });
+    assert.throws(()=>api.pick(proxy),TypeError);assert.equal(reads,0);
+  }
+});
+
+test('default project frontend executes the unchanged tracked upstream-path function',async()=>{
+  const path='src/proxy/upstream_path.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  assert.equal(hash(source),'bd1cf836b23868fdc92750d17c0548c8318930314eef81196fd9768d46ccb898');
+  const item=sourceItems(source).find(item=>item.name==='resolve_upstream_path');
+  assert.deepEqual({start:item.start,end:item.end},{start:687,end:1472});
+  assert.equal(hash(source.slice(item.start,item.end)),'f6e0b6a8d1b6a82416241b45b855013c192e8c394fb07eb3306b4a288e18eaa7');
+  const result=translateProject({entry:path,paths:[path],readSource:requested=>{assert.equal(requested,path);return source;}});
+  assert.deepEqual(result.meta.moduleDiagnostics,[]);assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.runtimeParity,false);
+  assert.deepEqual(result.meta.executable.filter(entry=>entry.term==='fn').map(entry=>entry.name),['resolve_upstream_path']);
+  for(const api of await defaultArtifacts(result))for(const [input,expected] of [['/api/services/anthropic/v1/messages','/v1/messages'],['/api/services/bedrock/invoke','/invoke'],['/api/services/vertex/model:rawPredict','/model:rawPredict'],['/api/anthropic/v1/messages','/v1/messages'],['/api/latest/anthropic/v1/messages','/v1/messages'],['/v1/messages','/v1/messages'],['/api/anthropicx','x'],['/api/services/anthropic',''],['','']])assert.equal(api.resolve_upstream_path(input),expected);
 });
