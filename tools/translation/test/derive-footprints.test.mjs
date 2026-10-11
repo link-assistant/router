@@ -58,7 +58,7 @@ test('unknown helpers generic inputs and macro-bearing fragments retain namespac
   for(const declaration of [
     '#[derive(serde::Serialize)] #[serde(crate="other")] pub struct Entry {value:u8}',
     '#[derive(serde::Serialize)] #[serde(remote="Other")] pub struct Entry {value:u8}',
-    '#[derive(serde::Deserialize)] pub struct Entry {#[serde(default="helper")] value:u8}',
+    '#[derive(serde::Deserialize)] pub struct Entry {#[serde(default="helper()")] value:u8}',
     '#[derive(schemars::JsonSchema)] #[schemars(title={#[macro_export] macro_rules! escaped{()=>{}} "title"})] pub struct Entry {value:u8}',
     '#[derive(serde::Serialize)] pub struct Entry<T>{value:T}',
     '#[derive(serde::Serialize)] pub struct Entry{value:injected!()}',

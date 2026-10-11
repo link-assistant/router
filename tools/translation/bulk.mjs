@@ -96,7 +96,7 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   // Namespace authority consumes the exact offline dependency source bytes,
   // not only descriptors containing their expected digests.
-  implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-helper-paths.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push(...['tool-attributes.mjs','tool-attribute-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['rust-resolve-macros-1.89.0.rs.gz','rust-resolve-ident-1.89.0.rs.gz','rust-builtin-attrs-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/tool-attributes/${name}`));

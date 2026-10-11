@@ -1,0 +1,88 @@
+{
+  "schema": "derive-helper-original-source-provenance-v1",
+  "rustExecution": false,
+  "wholeOriginalFiles": true,
+  "fullParity": false,
+  "generatedTraitBehavior": false,
+  "entries": [
+    {
+      "path": "src/provider_acceptance.rs",
+      "sourceSha256": "10691cf39c506c67bc415d28339ec96859f2304f813411e924b13b2cda9df1fa",
+      "methods": [
+        {
+          "owner": "ProviderProvisionFailure",
+          "name": "kind",
+          "span": {
+            "start": 3190,
+            "end": 3288
+          },
+          "sha256": "c42dc7bb996beac3cce5076bc7d290ba0ff0e40cc194c0d8de3d8a2a5bdf1438",
+          "expectation": "pending-positive"
+        }
+      ]
+    },
+    {
+      "path": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "methods": [
+        {
+          "owner": "ResponseNamespace",
+          "name": "from_path",
+          "span": {
+            "start": 1179,
+            "end": 1953
+          },
+          "sha256": "ada188f51465b090bb836191fc7124f4b8248e7b4050d4473a3ae06f48027c57",
+          "expectation": "pending-positive"
+        },
+        {
+          "owner": "ResponseNamespace",
+          "name": "conversations_from_path",
+          "span": {
+            "start": 1959,
+            "end": 2533
+          },
+          "sha256": "91604f53f5d3df033a1105003d5f24ed4134896f8150239731d52f68be8fc95b",
+          "expectation": "pending-positive"
+        }
+      ]
+    },
+    {
+      "path": "src/bridge_selection.rs",
+      "sourceSha256": "b1b06bd11c9567e1b0110aad0b92c28dd9ec7111563e062c78f0bb6fba8af32a",
+      "methods": [
+        {
+          "owner": "BridgeModelPolicy",
+          "name": "name",
+          "span": {
+            "start": 2243,
+            "end": 2449
+          },
+          "sha256": "f2de41c24cd20b567e462b18f6574d849095d2373a71522691adb9abfb8231ef",
+          "expectation": "retained-default-helper-refusal"
+        }
+      ]
+    },
+    {
+      "path": "src/accounts.rs",
+      "sourceSha256": "d1856d49f32a559ca5c464a66a7da76c2354a2f3723cc53ccb141056f646baee",
+      "methods": [
+        {
+          "owner": "SelectionStrategy",
+          "name": "from_str_opt",
+          "span": {
+            "start": 1205,
+            "end": 1750
+          },
+          "sha256": "b268173273e23745d19f7e5ee43c1514b1caecff103e54f88b3711da606b1a28",
+          "expectation": "retained-default-helper-refusal"
+        }
+      ]
+    }
+  ],
+  "obligations": [
+    "Pending JS and independently strict-compiled TypeScript proof before positive admission",
+    "Original Default enum helper and all unrelated scope/effect/trait uncertainties remain unsupported",
+    "Production corpus gains require publisher regeneration, not this fixed fixture inventory"
+  ]
+}

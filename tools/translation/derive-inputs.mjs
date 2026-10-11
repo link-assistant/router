@@ -1,4 +1,5 @@
 import {itemConfiguration} from './cfg-profile.mjs';
+import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
 
 export const STANDARD_LAYOUT_DERIVES=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
 const identifier=token=>token?.type==='ident'&&/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
@@ -34,13 +35,23 @@ function helper(body,position,kind) {
   while(at<values.length) {
     const key=values[at++];if(!identifier(key))throw new TypeError('Unregistered derive helper key');
     let value=null;if(values[at]?.text==='='){at++;value=literal(values[at++]);}
-    if(['rename','rename_all','alias'].includes(key.text)) {
+    let namespaceInput=null;
+    if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
+      if(value===null||position!=='field'&&!(position==='variant'&&key.text==='with'))throw new TypeError('Invalid bounded Serde path helper position');
+      namespaceInput=boundedSerdeExprPath(value);
+    } else if(body[0].text==='serde'&&key.text==='default'&&value!==null) {
+      if(position==='variant'||position==='container'&&kind!=='struct')throw new TypeError('Invalid bounded Serde default path position');
+      namespaceInput=boundedSerdeExprPath(value);
+    } else if(body[0].text==='serde'&&['tag','content'].includes(key.text)) {
+      if(value===null||position!=='container'||kind!=='enum')throw new TypeError('Invalid bounded Serde tag metadata position');
+      namespaceInput={profile:'bounded-serde-tag-literal-v1',generatedHelperBehavior:false};
+    } else if(['rename','rename_all','alias'].includes(key.text)) {
       if(value===null||key.text==='rename_all'&&!cases.has(value)||key.text==='alias'&&position==='container')throw new TypeError('Unregistered derive rename metadata');
     } else if(['default','skip','skip_serializing','skip_deserializing','deny_unknown_fields','untagged'].includes(key.text)) {
       if(value!==null||key.text==='default'&&position==='container'&&kind!=='struct'||key.text.startsWith('skip')&&position==='container'||['deny_unknown_fields','untagged'].includes(key.text)&&position!=='container'||key.text==='untagged'&&kind!=='enum')throw new TypeError('Invalid bounded derive flag position');
     } else throw new TypeError('Derive helper requires a separately checked input profile: '+key.text);
     if(entries.some(entry=>entry.key===key.text)&&key.text!=='alias')throw new TypeError('Duplicate bounded derive helper');
-    entries.push({key:key.text,value});
+    entries.push({key:key.text,value,...(namespaceInput?{namespaceInput}:{})});
     if(at<values.length&&values[at++].text!==',')throw new TypeError('Unregistered derive helper expression');
   }
   if(!entries.length)throw new TypeError('Empty bounded derive helper');return entries;
