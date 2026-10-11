@@ -96,29 +96,30 @@ export function normalizeManagedOrigin(value) {
   if (!['http:','https:'].includes(url.protocol) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw fail('Server URL must be an absolute http:// or https:// origin without credentials, path, query, or fragment');
   return url.origin;
 }
-function request(url,{method = 'GET',headers = {},body,limit = 65536,timeout = 1200} = {}) {
+function request(url,{method = 'GET',headers = {},body,limit = 65536,timeout = 1200,phase = 'control'} = {}) {
   return new Promise((done,reject)=> {
+    const started = performance.now();
     const call = httpRequest(url,{method,headers,agent:false},response=> {
       const chunks = []; let size = 0;
       response.on('data',bytes=> { size += bytes.length; if (size > limit) call.destroy(fail('Managed control response exceeds its budget')); else chunks.push(bytes); });
       response.on('error',reject); response.on('end',()=>done({status:response.statusCode,text:Buffer.concat(chunks).toString('utf8')}));
     });
-    call.setTimeout(timeout,()=>call.destroy(fail('Managed control request timed out'))); call.on('error',reject); call.end(body);
+    call.setTimeout(timeout,()=>call.destroy(fail(`Managed ${phase} request timed out (budget=${timeout}ms, elapsed=${Math.round(performance.now()-started)}ms)`))); call.on('error',reject); call.end(body);
   });
 }
-async function proof(state,action = 'health') {
-  const challenge = nonce(), body = JSON.stringify({challenge,boot_id:state.boot_id});
-  const result = await request(`http://127.0.0.1:${state.control_port}/${action}`,{method:'POST',headers:{authorization:`Bearer ${state.control_key}`,'content-type':'application/json'},body});
+async function proof(state,action = 'health',verifyBootstrap = false) {
+  const challenge = nonce(), body = JSON.stringify({challenge,boot_id:state.boot_id,verify_bootstrap:verifyBootstrap});
+  const result = await request(`http://127.0.0.1:${state.control_port}/${action}`,{method:'POST',headers:{authorization:`Bearer ${state.control_key}`,'content-type':'application/json'},body,phase:verifyBootstrap ? 'bootstrap verification' : `${action} proof`});
   if (result.status !== 200) throw fail('Managed daemon ownership verification failed');
   let report; try { report = JSON.parse(result.text); } catch { throw fail('Managed daemon ownership verification failed'); }
   const {mac,...payload} = report;
   if (!equal(mac,digest(state.control_key,JSON.stringify(payload))) || payload.challenge !== challenge || payload.boot_id !== state.boot_id || payload.pid !== state.pid || payload.role !== ENGINE || payload.healthy !== true) throw fail('Managed daemon process identity does not match the owned registry');
   return payload;
 }
-async function verified(state) {
+async function verified(state,verifyBootstrap = false) {
   if (!state.pid || !alive(state.pid)) throw fail('Managed daemon is stopped or its recorded process has exited');
-  const result = await proof(state);
-  const health = await request(`http://127.0.0.1:${state.port}/health`);
+  const result = await proof(state,'health',verifyBootstrap);
+  const health = await request(`http://127.0.0.1:${state.port}/health`,{phase:'public health'});
   if (health.status !== 200 || health.text.trim() !== 'ok') throw fail('Managed daemon public listener is not healthy');
   return result;
 }
@@ -145,7 +146,7 @@ async function start(p,state,config,keepRunning) {
   let committed = false;
   try {
     const ready = await new Promise((done,reject)=> {
-      const timer = setTimeout(()=>reject(fail('Managed daemon did not become ready within 10 seconds')),10000);
+      const timer = setTimeout(()=>finish(reject)(fail('Managed daemon did not become ready within 10 seconds')),10000);
       const finish = fn => value => {clearTimeout(timer); child.off('error',onError); child.off('exit',onExit); child.off('message',onMessage); fn(value);};
       const onError = finish(reject), onExit = finish(()=>reject(fail('Managed daemon exited before readiness')));
       const onMessage = finish(message=>message?.ready ? done(message) : reject(fail('Managed daemon failed to start')));
@@ -155,7 +156,15 @@ async function start(p,state,config,keepRunning) {
     if (ready.pid !== child.pid || ready.boot_id !== state.boot_id || !Number.isInteger(ready.port) || !Number.isInteger(ready.control_port)) throw fail('Managed readiness identity mismatch');
     Object.assign(state,{pid:ready.pid,port:ready.port,control_port:ready.control_port,bootstrap_token:ready.bootstrap_token});
     await verified(state); await writeJSON(p.state,state);
-    child.send({commit:true}); committed = true; children.set(child.pid,child);
+    await new Promise((done,reject)=> {
+      const timer = setTimeout(()=>finish(reject)(fail('Managed daemon did not acknowledge commit within 10 seconds')),10000);
+      const finish = fn => value => {clearTimeout(timer); child.off('error',onError); child.off('exit',onExit); child.off('message',onMessage); fn(value);};
+      const onError = finish(reject), onExit = finish(()=>reject(fail('Managed daemon exited before commit')));
+      const onMessage = finish(message=>message?.committed && message.pid === child.pid && message.boot_id === state.boot_id ? done() : reject(fail('Managed commit identity mismatch')));
+      child.once('error',onError); child.once('exit',onExit); child.once('message',onMessage);
+      child.send({commit:true,boot_id:state.boot_id},error=> {if (error) onError(error);});
+    });
+    committed = true; children.set(child.pid,child);
     child.once('exit',()=>children.delete(child.pid)); child.disconnect(); child.unref();
     return state;
   } finally {
@@ -304,7 +313,7 @@ export async function executeManagedOperation({name,options = {},invocation = {}
     if (name === 'server.claim') {
       if (!state) throw fail('Managed router is absent; run server.start first');
       if (state.claimed) throw fail('Managed router administrator is already claimed; its credential is not printed twice');
-      const identity = await verified(state); if (!identity.bootstrap_valid || typeof state.bootstrap_token !== 'string' || identity.bootstrap_fingerprint !== fingerprint(state.bootstrap_token)) throw fail('Managed bootstrap administrator is unavailable, mismatched, or expired');
+      const identity = await verified(state,true); if (!identity.bootstrap_valid || typeof state.bootstrap_token !== 'string' || identity.bootstrap_fingerprint !== fingerprint(state.bootstrap_token)) throw fail('Managed bootstrap administrator is unavailable, mismatched, or expired');
       state.claimed = true; await writeJSON(p.state,state); return out(state.bootstrap_token);
     }
     if (name === 'server.reap') {
@@ -327,16 +336,21 @@ export async function acquireManagedReference({core,config = {}}) {
 }
 
 async function daemon() {
-  let runtime, control, committed = false, started = false;
+  let runtime, control, committed = false, started = false, ready = false, bootId;
   const exit = async()=> {const timer = setTimeout(()=>process.exit(0),3000); timer.unref(); await runtime?.close().catch(()=>{}); control?.close(); process.exit(0);};
   const deadline = setTimeout(()=>exit(),10000);
   process.on('disconnect',()=> {if (!committed) exit();}); process.on('SIGTERM',exit); process.on('SIGINT',exit);
   process.on('message',async message=> {
-    if (message?.commit) {committed = true; clearTimeout(deadline); return;}
+    if (message?.commit) {
+      if (!ready || message.boot_id !== bootId) {await exit(); return;}
+      committed = true; clearTimeout(deadline);
+      process.send?.({committed:true,pid:process.pid,boot_id:bootId}); return;
+    }
     if (message?.abort) {await exit(); return;}
     if (started || !message?.config || !message?.state) return; started = true;
     try {
       const state = validateState(message.state), core = await (await import('./core.mjs')).createRouterCore({config:message.config,env:{}});
+      bootId = state.boot_id;
       let token = state.bootstrap_token;
       if (!token) token = (await core.tokens.issue({scope:'admin',ttl_hours:87600,label:'native-managed-bootstrap'})).token;
       runtime = (await import('./server.mjs')).createNativeRouter({core}); await runtime.listen({host:'127.0.0.1',port:0});
@@ -347,7 +361,11 @@ async function daemon() {
           for await (const bytes of req) {length += bytes.length; if (length > 4096) throw fail('Control body too large'); chunks.push(bytes);}
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
           if (!/^[a-f0-9]{64}$/.test(body.challenge) || body.boot_id !== state.boot_id) throw fail('Invalid control challenge');
-          let bootstrapValid = false; try {await core.tokens.validate(token,{admin:true}); bootstrapValid = true;} catch {}
+          // Identity and listener health must remain available while an unrelated
+          // token transaction holds the store lock. Claim still checks the live
+          // administrator token before releasing it to the parent.
+          let bootstrapValid = false;
+          if (body.verify_bootstrap === true) try {await core.tokens.validate(token,{admin:true}); bootstrapValid = true;} catch {}
           const payload = {challenge:body.challenge,boot_id:state.boot_id,pid:process.pid,role:ENGINE,healthy:!!runtime.address,bootstrap_valid:bootstrapValid,bootstrap_fingerprint:fingerprint(token)};
           res.writeHead(200,{'content-type':'application/json'}); res.end(JSON.stringify({...payload,mac:digest(state.control_key,JSON.stringify(payload))}));
           if (req.url === '/shutdown') setImmediate(exit);
@@ -355,6 +373,9 @@ async function daemon() {
       });
       control.requestTimeout = 2000; control.headersTimeout = 2000;
       await new Promise((done,reject)=> {control.once('error',reject); control.listen(0,'127.0.0.1',done);});
+      // Startup and the parent's verified registry commit each get a bounded
+      // phase. A late readiness result cannot inherit an almost-expired lease.
+      ready = true; deadline.refresh();
       process.send?.({ready:true,pid:process.pid,boot_id:state.boot_id,port:runtime.address.port,control_port:control.address().port,bootstrap_token:token});
     } catch {process.send?.({ready:false}); await exit();}
   });

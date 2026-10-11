@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import { mkdtemp, realpath, readFile, writeFile, lstat, readdir, mkdir, symlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
+import { withAdvisoryFileLock, rustLockPath } from '../native/file-lock.mjs';
+import { TextTokenStore } from '../native/storage.mjs';
 import { executeManagedOperation, acquireManagedReference, normalizeManagedOrigin, selectedManagedServer } from '../native/managed-server.mjs';
 
 const fixtures = [], fixture = (id,operation,run) => fixtures.push({id,operation,run});
@@ -69,6 +72,62 @@ fixture('managed-claim-once-restart-valid','server.claim',()=>temporary(async di
   assert.equal(restarted.token_secret,initial.token_secret); assert.equal(restarted.bootstrap_token,token);
   assert.equal((await fetch(`http://127.0.0.1:${restarted.port}/api/management/tokens`,{headers:{authorization:`Bearer ${token}`}})).status,200);
   await assert.rejects(operate(dir,'server.claim'),/already claimed/);
+}));
+fixture('managed-health-independent-of-token-lock','server.status',()=>temporary(async dir=> {
+  await operate(dir,'server.start');
+  let release, signal;
+  const acquired = new Promise(done=> {signal = done;});
+  const held = withAdvisoryFileLock(rustLockPath(join(dir,'native-managed','data','tokens.lino')),async()=> {
+    signal(); await new Promise(done=> {release = done;});
+  });
+  await Promise.race([acquired,held]);
+  try {
+    assert.equal((await operate(dir,'server.status')).managed.state,'running');
+    await assert.rejects(operate(dir,'server.claim'),error=>error.code === 'managed_server' && /bootstrap verification request timed out \(budget=1200ms, elapsed=\d+ms\)/.test(error.message));
+    assert.equal((await state(dir)).claimed,false);
+  } finally {release?.(); await held;}
+  const claimed = await operate(dir,'server.claim'); assert.ok(claimed.output[0].startsWith('la_sk_'));
+}));
+fixture('managed-claim-checks-live-revocation','server.claim',()=>temporary(async dir=> {
+  await operate(dir,'server.start');
+  const tokens = new TextTokenStore(join(dir,'native-managed','data','tokens.lino'));
+  await tokens.transaction(records=> {
+    const bootstrap = [...records.values()].find(record=>record.label === 'native-managed-bootstrap');
+    assert.ok(bootstrap); bootstrap.revoked = true;
+  });
+  assert.equal((await operate(dir,'server.status')).managed.state,'running');
+  await assert.rejects(operate(dir,'server.claim'),/administrator is unavailable/);
+  assert.equal((await state(dir)).claimed,false);
+}));
+fixture('managed-readiness-has-full-commit-lease','server.start',()=>temporary(async dir=> {
+  await operate(dir,'server.start'); await operate(dir,'server.stop'); const saved = await state(dir);
+  const module = new URL('../native/managed-server.mjs',import.meta.url);
+  const child = spawn('node',[fileURLToPath(module),'--daemon'],{stdio:['ignore','ignore','ignore','ipc'],env:{PATH:process.env.PATH ?? ''}});
+  const exited = new Promise((done,reject)=> {child.once('error',reject); child.once('exit',done);});
+  const message = timeout=>new Promise((done,reject)=> {
+    const timer = setTimeout(()=>finish(reject)(new Error('Owned daemon fixture message timed out')),timeout);
+    const finish = fn => value=> {clearTimeout(timer); child.off('message',onMessage); child.off('exit',onExit); child.off('error',onError); fn(value);};
+    const onMessage = finish(done), onError = finish(reject), onExit = finish(()=>reject(new Error('Owned daemon fixture exited before commit')));
+    child.once('message',onMessage); child.once('exit',onExit); child.once('error',onError);
+  });
+  try {
+    // Delay initial configuration, then delay the parent's commit until after
+    // the original startup lease. The real child must still accept its owned
+    // commit and acknowledge it before the IPC channel is disconnected.
+    await new Promise(done=>setTimeout(done,6000));
+    const readiness = message(4000);
+    child.send({state:saved,config:{data_dir:join(dir,'native-managed','data'),token_secret:saved.token_secret,storage_policy:'text',providers:[],accounts:[]}});
+    const ready = await readiness; assert.equal(ready.ready,true); assert.equal(ready.pid,child.pid);
+    await new Promise(done=>setTimeout(done,5000));
+    const committed = message(2000); child.send({commit:true,boot_id:ready.boot_id});
+    assert.deepEqual(await committed,{committed:true,pid:child.pid,boot_id:saved.boot_id});
+    child.disconnect();
+    assert.equal((await fetch(`http://127.0.0.1:${ready.port}/health`)).status,200);
+  } finally {
+    // This fixture owns the exact spawned process even after IPC disconnect.
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+    await exited;
+  }
 }));
 fixture('managed-remove-confirmation-owned-volume','server.remove',()=>temporary(async dir=> {
   await operate(dir,'server.start'); await writeFile(join(dir,'unrelated.txt'),'keep');
@@ -154,7 +213,10 @@ fixture('managed-failed-readiness-cleans-registry','server.start',()=>temporary(
 
 export async function runParityFixtures() {
   const results = new Map();
-  for (const {id,operation,run} of fixtures) {await run(); results.set(id,{operation,success:true});}
+  for (const {id,operation,run} of fixtures) {
+    try {await run();} catch (error) {error.message = `${id}: ${error.message}`; throw error;}
+    results.set(id,{operation,success:true});
+  }
   return results;
 }
 export const fixtureIds = fixtures.map(item=>item.id);
