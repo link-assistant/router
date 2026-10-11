@@ -7,7 +7,9 @@ import { BOOL, UNIT, array, fixed, isNumeric, sameType } from '../vendor/meta-la
 import { coerce } from '../vendor/meta-language/translation/check.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
-const USIZE = fixed(64, false);
+// Iterator::count and size-taking adapters use the actual Rust usize type,
+// even on a profile whose portable integer width also represents u64.
+const USIZE = {...fixed(64, false),rustPrimitiveName:'usize'};
 const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned']);
 const span = (start, end) => ({ start: start.start, end: end.end });
 const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue', 'routerTry', 'routerAwait'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
@@ -178,7 +180,10 @@ export class IteratorChecker extends DataChecker {
       if (wanted && !sameType(type, wanted)) throw typeError('collect element does not match its expected array type', node.span);
       return { k: 'routerIteratorOperation', op, object, args: [], type, span: node.span };
     }
-    if (op === 'count') return { k: 'routerIteratorOperation', op, object, args: [], type: USIZE, span: node.span };
+    if (op === 'count') {
+      if(wanted?.patternOwnershipRefusal||wanted?.rustPrimitiveName&&wanted.rustPrimitiveName!=='usize')throw typeError('Iterator::count returns actual by-value usize, not an equal-width Rust primitive or reference',node.span);
+      return { k: 'routerIteratorOperation', op, object, args: [], type: USIZE, span: node.span };
+    }
     if (op === 'any' || op === 'all') return { k: 'routerIteratorOperation', op, object, args: [this.lambda(node.args[0], [element], env, path, BOOL,{source:'iterator'})], type: BOOL, span: node.span };
     if (op === 'fold') {
       let initial = this.expr(node.args[0], env, path, wanted);
