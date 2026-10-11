@@ -148,6 +148,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push('tools/translation/generate-whitespace-data.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/csv-strings/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/csv-strings/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/result-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/result-iterators/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/option-deref/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/option-deref/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/standard-bool/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-bool/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };

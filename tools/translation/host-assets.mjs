@@ -5,6 +5,8 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
+  files.set('option-deref-runtime.mjs',readFileSync(new URL('./extensions/option-deref-runtime.mjs',import.meta.url),'utf8'));
+  files.set('option-deref-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function optionStringAsDeref(value: RustOption<string>): RustOption<string>;\n");
   files.set('result-iterator-runtime.mjs',readFileSync(new URL('./extensions/result-iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('result-iterator-runtime.d.mts',"type RustResult<T,E> = Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:E}>;\ntype Success<R extends RustResult<unknown,unknown>> = Extract<R,{$:'Ok'}>['field0'];\ntype Failure<R extends RustResult<unknown,unknown>> = Extract<R,{$:'Err'}>['field0'];\nexport declare function collectResult<R extends RustResult<unknown,unknown>>(values: Iterable<R>): RustResult<ReadonlyArray<Success<R>>,Failure<R>>;\nexport declare function mapResultError<R extends RustResult<unknown,unknown>,F>(value: R, callback: (error: Failure<R>) => F): RustResult<Success<R>,F>;\n");
   files.set('csv-string-runtime.mjs',readFileSync(new URL('./extensions/csv-string-runtime.mjs',import.meta.url),'utf8'));

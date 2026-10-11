@@ -314,13 +314,19 @@ export function translateProject(options) {
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
   meta.jsonParserProfile=jsonParserProfile;
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile}));
-  const executableDeclarations = entries.map(entry => ({ source: entry.file, sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source), name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
-    const program = declarationProgram(target.program, target.names.get(entry.name));
-    const emitted = emitJavaScript(program, options);
-    const own = program.declarations.get(target.names.get(entry.name));
-    const targetMapping = emitted.mappings.find(mapping => mapping.source === own.fullName);
-    const signatures = [...program.declarations.values()].filter(entry=>entry.k === 'fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source === entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
-    return { own, program, emitted: { ...emitted, signatures, mappings: [...emitted.mappings, { ...targetMapping, source: entry.name.split('.').at(-1) }] } };
-  } }));
-  return { meta, javascript, typescript, executableDeclarations, sourceScopes };
+  const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
+    const program=declarationProgram(target.program,target.names.get(entry.name));
+    const emitted=emitJavaScript(program,lowerOptions),own=program.declarations.get(target.names.get(entry.name));
+    const targetMapping=emitted.mappings.find(mapping=>mapping.source===own.fullName);
+    const signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
+    return {own,program,emitted:{...emitted,signatures,mappings:[...emitted.mappings,{...targetMapping,source:name}]}};
+  };
+  const executableDeclarations=entries.map(entry=>({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.name.split('.').at(-1),span:entry.span,project:options.entry,qualifiedName:entry.name,lower:lowerDeclaration(entry,entry.name.split('.').at(-1))}));
+  // This additive facade closes over the same actual checked program. It does
+  // not append a synthetic Rust wrapper or count a method as a source fn.
+  const checkedMethodDeclarations=methods.map(entry=>{
+    const own=checked.declarations.get(entry.name),name=entry.surface.impl.method;
+    return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name,term:'method',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:structuredClone({params:own.params,ret:own.ret}),lower:lowerDeclaration(entry,name)});
+  });
+  return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, sourceScopes };
 }

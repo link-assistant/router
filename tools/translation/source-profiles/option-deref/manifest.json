@@ -1,0 +1,31 @@
+{
+  "profile": "rust-1.89-shared-option-string-as-deref",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "sources": [
+    {
+      "file": "core-option.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/option.rs",
+      "bytes": 86718,
+      "sha256": "4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd",
+      "compressedSha256": "2f8986530d23db3ed08f32fbe8b0c82b7ffb1c3abe6b407b38ff989998739cb1",
+      "lines": [
+        733,
+        738,
+        1360,
+        1366
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/alloc-string.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/string.rs",
+      "bytes": 111988,
+      "sha256": "46dadb69bbe909b50146366020dc23d4fa88f53b93435b7e0f70c6692d0ba629",
+      "compressedSha256": "3f9bb719280924aa34b9f3693879b5a65e45eecc78f4fa8dea84219bf1105523",
+      "lines": [
+        2732,
+        2739
+      ]
+    }
+  ]
+}

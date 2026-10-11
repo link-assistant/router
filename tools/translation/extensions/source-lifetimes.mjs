@@ -116,6 +116,10 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
+  if(node.k==='routerOptionAsDeref'){
+    if(node.optionDerefProof?.profile!=='rust-1.89-shared-option-string-as-deref'||node.optionDerefProof.verified!==true||node.optionDerefProof.receiver!=='existing-shared-place'||node.object.type?.rustReference?.kind!=='shared')throw unsupported('Option String Deref borrow origin','requires its existing checked shared source receiver',node.span);
+    return borrowed?uniformOrigins(node.type,at(read(node.object),[]),context):new Set();
+  }
   if(['routerResultMapErr','routerResultCollect'].includes(node.k)){
     const proof=node.resultIteratorProof;
     if(proof?.profile!=='rust-1.89-checked-result-collection'||proof.verified!==true)throw unsupported('Result iterator borrow origin','requires the actual checked standard Result pipeline',node.span);
