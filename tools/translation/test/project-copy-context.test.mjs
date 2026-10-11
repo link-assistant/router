@@ -32,7 +32,7 @@ test('an inactive source module supplies neither layout context nor trait implem
   await verifyTypedTargets(result,api=>assert.equal(api.run(Object.freeze({$:'A'})),1n));
 });
 test('unknown conditional implementation scopes retain their Copy obligations',()=>{
-  const files={'src/lib.rs':copy+'mod empty;','src/empty.rs':'#![cfg(unix)]\nimpl Drop for crate::Kind{fn drop(&mut self){}} trait Marker{} impl Marker for std::time::Duration{}}'};
+  const files={'src/lib.rs':copy+'mod empty;','src/empty.rs':'#![cfg(unix)]\nimpl Drop for crate::Kind{fn drop(&mut self){}} trait Marker{} impl Marker for std::time::Duration{}'};
   const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.executable.some(item=>item.name==='run'),false);
   assert.equal(result.sourceScopes.find(scope=>scope.module[0]==='empty').configurationCondition,'unknown');
