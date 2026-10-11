@@ -40824,8 +40824,45 @@
       "headSha": "1c780434e2fb1fb942dfb93088434f8a93308549",
       "status": "All seven stages terminal; unexpected generated TypeScript and one fixture failure; strict442gaps/0validationerrors; no stamp or Rust.",
       "archivedAtUtc": "2026-10-11T19:41:42.882533+00:00"
+    },
+    {
+      "label": "combined-current-repair-producer",
+      "cycle": 8,
+      "pack": "f8ab7a4fc58e28eef351e1971d7d7cdb92d3b84320f12f90cdc723972559f413.tar.gz",
+      "sha256": "f8ab7a4fc58e28eef351e1971d7d7cdb92d3b84320f12f90cdc723972559f413",
+      "storedBytes": 7132,
+      "members": [
+        {
+          "path": "combined-current-repair-producer/router-759-census-a9fec138f.json",
+          "bytes": 39362,
+          "sha256": "9cd197990921aafb852c4f77c5fb1d08916ca7c9869e91af5638674db6b0311a"
+        },
+        {
+          "path": "combined-current-repair-producer/router-759-generated-a9fec138f-integrity.json",
+          "bytes": 4333,
+          "sha256": "e20fd2a83108ce9c4ae0196c0e2620f47ea65a2b68be30e66e66d9b36912c5d4"
+        },
+        {
+          "path": "combined-current-repair-producer/router-759-generation-a9fec138f-time.log",
+          "bytes": 777,
+          "sha256": "2db380685210f13db8179ca28653bcfc4051da077444cb64079e8ee550d77025"
+        },
+        {
+          "path": "combined-current-repair-producer/router-759-generation-a9fec138f.json",
+          "bytes": 774,
+          "sha256": "54be00ba51a06cc35e74e1fdbd06fbfe77c415d8bd6c1106570d324cf06aa26a"
+        },
+        {
+          "path": "combined-current-repair-producer/router-759-generation-a9fec138f.log",
+          "bytes": 1072,
+          "sha256": "24cf59977a4ee1bce290603fae5931cc5e4bf412e14f32daffeb9ca625457e12"
+        }
+      ],
+      "headSha": "fffe5e53467af319a89487cc439759be1ad31c01",
+      "status": "Corrected producer passed; complete new frozen all-seven verification pending.",
+      "archivedAtUtc": "2026-10-11T19:57:06.549170+00:00"
     }
   ],
-  "totalStoredPackBytes": 18609770,
-  "totalMembers": 7334
+  "totalStoredPackBytes": 18616902,
+  "totalMembers": 7339
 }
