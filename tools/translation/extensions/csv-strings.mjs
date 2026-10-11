@@ -37,7 +37,11 @@ export function checkCharacterSplitNext(checker,node,object){
 export function allocatingStringFunctionItem(parser,segments,path){
   if(segments.at(-1)!=='to_string')return null;
   const writtenOwner=segments.slice(0,-1),owner=parser.resolveSourceNamespace(writtenOwner,path,'type');
-  if(writtenOwner.length===1&&writtenOwner[0]==='str'&&!parser.builtinShadow('str',path)&&owner.join('::')==='str')return 'str::to_string';
+  // str::to_string is provided by the standard ToString trait, not an
+  // inherent str method. A local/inherited ToString can replace that prelude
+  // trait while leaving the primitive str owner itself entirely unchanged.
+  const trait=parser.resolveSourceNamespace(['ToString'],path,'type'),standardTrait=!parser.builtinShadow('ToString',path)&&['ToString','std::string::ToString'].includes(trait.join('::'));
+  if(writtenOwner.length===1&&writtenOwner[0]==='str'&&standardTrait&&!parser.builtinShadow('str',path)&&owner.join('::')==='str')return 'str::to_string';
   if(writtenOwner.length===1&&writtenOwner[0]==='ToString'&&!parser.builtinShadow('ToString',path)&&['ToString','std::string::ToString'].includes(owner.join('::')))return 'ToString::to_string';
   return null; // Qualified/aliased/custom traits need separate namespace proof.
 }

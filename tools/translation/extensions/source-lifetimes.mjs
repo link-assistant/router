@@ -116,6 +116,16 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
+  if(['routerResultMapErr','routerResultCollect'].includes(node.k)){
+    const proof=node.resultIteratorProof;
+    if(proof?.profile!=='rust-1.89-checked-result-collection'||proof.verified!==true)throw unsupported('Result iterator borrow origin','requires the actual checked standard Result pipeline',node.span);
+    const value=read(node.object);
+    if(node.k==='routerResultMapErr'){
+      const called=origins(node.callback.binding,env,{...context,lambdaInputs:[project(value,['argument',1])]},returns,depth+1);
+      return borrowed?union(prefix(project(value,['argument',0]),['argument',0]),prefix(called,['argument',1])):new Set();
+    }
+    return borrowed?union(prefix(project(value,['argument',0]),['argument',0,'element']),prefix(project(value,['argument',1]),['argument',1])):new Set();
+  }
   if(['routerStringSplit','routerStringSplitNext','routerAllocatingStringItem'].includes(node.k)){
     if(node.csvStringProof?.profile!=='rust-1.89-literal-char-split-string-items'||node.csvStringProof.verified!==true)throw unsupported('CSV string borrow origin','requires its actual checked standard source profile',node.span);
     const value=read(node.object);

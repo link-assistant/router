@@ -6,6 +6,7 @@ import { tokenizeRust } from './lexical.mjs';
 import { BOOL, UNIT, array, fixed, isNumeric, sameType, rustFixedType } from '../checked-types.mjs';
 import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
+import {canonicalResult,resultCollectionContext,checkResultMapItem,checkResultCollect} from './result-iterators.mjs';
 
 // Iterator::count and size-taking adapters use the actual Rust usize type,
 // even on a profile whose portable integer width also represents u64.
@@ -232,7 +233,8 @@ export class IteratorChecker extends DataChecker {
     if (node.args.length !== count) throw typeError(`${op} expects ${count} arguments`, node.span);
     const inferElement=node.op==='collect'&&node.explicit?.kind==='array'&&node.explicit.element?.kind==='routerIteratorElementInference'&&node.explicit.iteratorCollectInference?.profile==='checked-standard-vec-item-inference-v1'&&node.explicit.rustOwnership?.kind==='owned'&&node.explicit.rustOwnership.source==='Vec';
     const wanted = node.explicit&&!inferElement ? this.resolveType(node.explicit, path, node.span) : expected;
-    const itemExpected = op === 'collect' && wanted?.kind === 'array' ? { kind: 'routerIterator', element: wanted.element } : expected?.kind === 'routerIterator' ? expected : undefined;
+    const resultContext=op==='collect'?resultCollectionContext(this,wanted,path,node.span):null;
+    const itemExpected = resultContext??(op === 'collect' && wanted?.kind === 'array' ? { kind: 'routerIterator', element: wanted.element } : expected?.kind === 'routerIterator' ? expected : undefined);
     const object = this.expr(node.object, env, path, itemExpected);
     if (op === 'iter' || op === 'into_iter') {
       if (object.type.kind !== 'array') throw unsupported('iterator receiver', 'only immutable typed scalar arrays have an iterator adapter', node.span);
@@ -266,8 +268,10 @@ export class IteratorChecker extends DataChecker {
     }
     if (['copied', 'cloned'].includes(op))return {...object,type:{kind:'routerIterator',element:copyItem(element,node.span)},sourceIteratorCopy:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,itemType:structuredClone(element),span:{...node.span}}};
     if (op === 'map' || op === 'filter') {
+      if(op==='filter'&&canonicalResult(this,element,path,node.span,false))throw unsupported('Result iterator filter','discarding an arbitrary Err needs a separate destruction contract',node.span);
       const transform = callback(node.args[0], [op==='filter'?sharedItem(element,node.span,'Iterator::filter'):element], op === 'filter' ? BOOL : itemExpected?.element);
       const result = op === 'map' ? transform.type.result : element;
+      if(op==='map'&&canonicalResult(this,result,path,node.span,false))return {k:'routerIteratorOperation',op,object,args:[transform],type:{kind:'routerIterator',element:result},resultIteratorProof:checkResultMapItem(this,result,itemExpected,path,node.span),span:node.span};
       if (!['fixed', 'bool', 'string'].includes(result.kind)) throw unsupported('mapped iterator result', 'only scalar iterator values have a checked contract', node.span);
       return { k: 'routerIteratorOperation', op, object, args: [transform], type: { kind: 'routerIterator', element: result }, span: node.span };
     }
@@ -276,6 +280,7 @@ export class IteratorChecker extends DataChecker {
       return { k: 'routerIteratorOperation', op, object, args: [limit], type: object.type, span: node.span };
     }
     if (op === 'collect') {
+      if(resultContext)return checkResultCollect(this,node,object,wanted,path);
       const type = inferElement?{...array(element),rustSourceType:true,rustOwnership:{kind:'owned',source:'Vec'}}:array(element);
       if (wanted && !sameType(type, wanted)) throw typeError('collect element does not match its expected array type', node.span);
       return { k: 'routerIteratorOperation', op, object, args: [], type,...(inferElement?{iteratorCollectInference:{profile:'checked-standard-vec-item-inference-v1',itemType:structuredClone(element),span:node.span}}:{}), span: node.span };

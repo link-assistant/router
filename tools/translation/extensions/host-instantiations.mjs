@@ -47,6 +47,26 @@ export class HostInstantiations {
     }
     return {...this.checker.resolveType({kind:'named',path:[name]},[],span),rustStandardGeneric:{kind:'Option',arguments:[structuredClone(element)]}};
   }
+  result(success,error,span) {
+    const arguments_=[success,error].map(type=>this.checker.resolveType(type,[],span));
+    const name=monomorphicTypeName('Result',arguments_),existing=this.checker.items.get(name);
+    if(existing){
+      if(existing.k!=='data'||existing.standardGeneric?.kind!=='Result'||existing.standardGeneric.arguments?.length!==2||existing.ctors?.length!==2)throw typeError('conflicting canonical Result provenance or layout',span);
+      for(const [index,tag]of ['Ok','Err'].entries()){
+        const constructors=existing.ctors.filter(ctor=>ctor.name===tag),fields=constructors[0]?.fields;
+        if(constructors.length!==1||fields?.length!==1||fields[0].name!=='field0')throw typeError('conflicting canonical Result constructor layout',span);
+        for(const actual of [fields[0].type,existing.standardGeneric.arguments[index]]){
+          const resolved=this.checker.resolveType(actual,existing.modulePath,span);
+          if(!sameType(resolved,arguments_[index]))throw typeError('conflicting canonical Result payload identity',span);
+          this.checker.expectedOwnership?.(resolved,arguments_[index],[],span);this.checker.expectedPrimitiveIdentity?.(resolved,arguments_[index],[],span);
+        }
+      }
+    }else{
+      const data=[{k:'data',name,ctors:['Ok','Err'].map((tag,index)=>({name:tag,fields:[{name:'field0',type:arguments_[index]}]})),span,generated:'router-standard-result-instantiation',standardGeneric:{kind:'Result',arguments:arguments_}}];
+      this.checker.declare(data,[]);this.items.push(...this.checker.checkItems(data,[]));
+    }
+    return {...this.checker.resolveType({kind:'named',path:[name]},[],span),rustStandardGeneric:{kind:'Result',arguments:structuredClone(arguments_)}};
+  }
   vector(element, span) { return this.register('vector', element, vectorContracts, span); }
   fixed(type,span) {return this.register('fixed',type,fixedIntegerContracts,span);}
   integer(type, span) { return this.register('integer', type, integerContracts, span); }
