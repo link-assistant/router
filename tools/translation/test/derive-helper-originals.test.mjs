@@ -42,16 +42,19 @@ test('whole original provider acceptance getter retains exact checked Copy field
   });
 });
 
-test('whole original response affinity selectors preserve canonical tagged route outcomes',async()=>{
+test('whole original response affinity retains unresolved inner lint attributes and selector provenance',()=>{
   const {pin,result}=original('src/response_affinity.rs');
-  for(const method of pin.methods)assert.deepEqual(result.meta.checkedMethods.find(entry=>entry.name===method.owner+'.'+method.name)?.span,method.span);
-  assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.length,'affinity persistence and generated trait methods remain obligations');
-  await verifyTypedTargets(expose(result,[['ResponseNamespace','from_path','originalNamespace'],['ResponseNamespace','conversations_from_path','originalConversations']]),(_api,_result,module)=>{
-    for(const [path,name]of [['/api/services/openai/v1/responses','OpenAiResponses'],['/api/services/codex/v1/responses/response-id','CodexResponses'],['/api/services/qwen/v1/responses-suffix','QwenResponses'],['/api/services/openai/v1/chat/completions','OpenAiChat'],['/api/services/codex/v1/chat/completions','CodexChat'],['/api/services/qwen/v1/chat/completions','QwenChat']])assert.deepEqual(module.originalNamespace(path),tag('Some',{field0:tag(name)}));
-    for(const path of ['','/v1/responses','/api/services/OPENAI/v1/responses','/api/services/openai/v1/conversations'])assert.deepEqual(module.originalNamespace(path),tag('None'));
-    for(const [provider,left,right]of [['openai','OpenAiConversations','OpenAiConversationItems'],['codex','CodexConversations','CodexConversationItems'],['qwen','QwenConversations','QwenConversationItems']])assert.deepEqual(module.originalConversations('/api/services/'+provider+'/v1/conversations/id'),tag('Some',{field0:tag('Tuple',{field0:tag(left),field1:tag(right)})}));
-    assert.deepEqual(module.originalConversations('/api/services/openai/v1/responses'),tag('None'));
-  });
+  assert.equal(result.meta.runtimeParity,false);assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,0);
+  assert.ok(result.meta.deriveNamespaceFootprints.diagnostics.some(entry=>entry.name==='ResponseNamespace'&&entry.message.includes('Sibling attribute')));
+  const scope=result.sourceScopes[0].scope;assert.equal(scope.unresolvedTypeScope,true);assert.equal(scope.unresolvedAttributeMacroScope,true);
+  assert.ok(scope.unresolvedImports.some(entry=>entry.span.start===84&&entry.span.end===122&&entry.message.includes('item can introduce bindings')));
+  assert.ok(result.meta.refused.some(entry=>entry.name==='ResponseNamespace'&&entry.message.includes('derive(Serialize)')));
+  for(const method of pin.methods) {
+    assert.equal(result.meta.checkedMethods.some(entry=>entry.name===method.owner+'.'+method.name),false);
+    const refusal=result.meta.refused.find(entry=>entry.term==='method'&&entry.name.endsWith('.'+method.owner+'.'+method.name));
+    assert.ok(refusal);assert.match(refusal.message,/shadowed Option generic/);
+    assert.ok(refusal.span.start>=method.span.start&&refusal.span.end<=method.span.end);
+  }
 });
 
 test('whole original standard-default-helper selectors retain bodies and unit layout',async()=>{

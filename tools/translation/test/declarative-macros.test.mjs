@@ -31,8 +31,15 @@ test('forwarded type fragments remain opaque to literal matching',()=>{
   const first=expandDeclarativeMacro(sender,originalMacroTrees('u8'));
   const result=expandDeclarativeMacro(receiver,declarativeSubInput(first));
   assert.equal(render(result),'OPAQUE');assert.equal(result.input.parentDigest,first.digest);
-  const tokenReceiver=compile('macro_rules! example {($tree:tt)=>{TOKEN};}');
-  assert.throws(()=>expandDeclarativeMacro(tokenReceiver,declarativeSubInput(first)),/same checked fragment kind/);
+  const tokenReceiver=compile('macro_rules! example {($tree:tt)=>{$tree};}');
+  const token=expandDeclarativeMacro(tokenReceiver,declarativeSubInput(first));
+  assert.equal(token.trees[0].fragment,'tt');
+  assert.equal(token.trees[0].trees[0].fragment,'ty');
+  assert.equal(render(expandDeclarativeMacro(receiver,declarativeSubInput(token))),'OPAQUE');
+  const literalOnly=compile('macro_rules! example {(u8)=>{WRONG};}');
+  assert.throws(()=>expandDeclarativeMacro(literalOnly,declarativeSubInput(token)),/does not match/);
+  const differentKind=compile('macro_rules! example {($value:meta)=>{WRONG};}');
+  assert.throws(()=>expandDeclarativeMacro(differentKind,declarativeSubInput(token)),/same checked fragment kind/);
   const identSender=compile('macro_rules! example {($name:ident)=>{$name};}');
   const name=expandDeclarativeMacro(identSender,originalMacroTrees('u8'));
   assert.equal(render(expandDeclarativeMacro(receiver,declarativeSubInput(name))),'LITERAL');

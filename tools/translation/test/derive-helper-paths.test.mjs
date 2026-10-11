@@ -13,7 +13,7 @@ test('bounded Serde helper ExprPath grammar retains original source paths and un
   for(const [written,absolute,segments]of [['Option::is_none',false,['Option','is_none']],[' ::std :: vec::Vec::is_empty ',true,['std','vec','Vec','is_empty']],['crate::is_false',false,['crate','is_false']],['super::super::default_value',false,['super','super','default_value']],['r#type::r#default',false,['r#type','r#default']]]){
     const result=boundedSerdeExprPath(written);assert.equal(result.leadingColon,absolute);assert.deepEqual(result.segments,segments);assert.equal(result.generatedHelperBehavior,false);
   }
-  for(const value of ['',':x','x::','x()','m!()','{#[macro_export] macro_rules! escape {()=>{}}}','Vec::<u8>::is_empty','<T as Trait>::function','fn','gen','self::super::f','::crate::f','r#self::f','_','x; mod escaped {}','a::::b'])assert.throws(()=>boundedSerdeExprPath(value),/Serde helper/);
+  for(const value of ['',':x','x::','x()','m!()','{#[macro_export] macro_rules! escape {()=>{}}}','Vec::<u8>::is_empty','<T as Trait>::function','fn','gen','self::super::f','::crate::f','r#self::f','_','x; mod escaped {}','a::::b'])assert.throws(()=>boundedSerdeExprPath(value),error=>error instanceof TypeError&&/^Serde (?:helper|super) path/u.test(error.message));
 });
 
 test('actual locked derive owners certify literal path and tag inputs without granting helper execution',()=>{

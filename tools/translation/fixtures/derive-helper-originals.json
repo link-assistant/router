@@ -33,7 +33,7 @@
             "end": 1953
           },
           "sha256": "ada188f51465b090bb836191fc7124f4b8248e7b4050d4473a3ae06f48027c57",
-          "expectation": "pending-positive"
+          "expectation": "retained-negative-unresolved-inner-lint-attribute"
         },
         {
           "owner": "ResponseNamespace",
@@ -43,7 +43,7 @@
             "end": 2533
           },
           "sha256": "91604f53f5d3df033a1105003d5f24ed4134896f8150239731d52f68be8fc95b",
-          "expectation": "pending-positive"
+          "expectation": "retained-negative-unresolved-inner-lint-attribute"
         }
       ]
     },

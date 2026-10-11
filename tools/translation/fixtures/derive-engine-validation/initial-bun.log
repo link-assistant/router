@@ -1,0 +1,120 @@
+bun test v1.4.3 (c6da4a4d3)
+
+tools/translation/test/derive-builtin-default.test.mjs:
+(pass) builtin Default original compiler and core sources have sealed versioned evidence [2.57ms]
+(pass) standard-only and actual external derives retain unit default helper without implementing traits [4.19ms]
+(pass) Default helpers retain actual owner and original input refusal boundaries [6.91ms]
+(pass) certified unit default layout executes existing selectors and retains Default call refusal [872.93ms]
+
+tools/translation/test/derive-helper-paths.test.mjs:
+11 | test('bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior',()=>{
+12 |   assert.equal(SERDE_HELPER_GRAMMAR.sha256,'7abe82fde303a3c31f967c13e0ee1afe49ea584d882b9d2c32b067888e1c8225');
+13 |   for(const [written,absolute,segments]of [['Option::is_none',false,['Option','is_none']],[' ::std :: vec::Vec::is_empty ',true,['std','vec','Vec','is_empty']],['crate::is_false',false,['crate','is_false']],['super::super::default_value',false,['super','super','default_value']],['r#type::r#default',false,['r#type','r#default']]]){
+14 |     const result=boundedSerdeExprPath(written);assert.equal(result.leadingColon,absolute);assert.deepEqual(result.segments,segments);assert.equal(result.generatedHelperBehavior,false);
+15 |   }
+16 |   for(const value of ['',':x','x::','x()','m!()','{#[macro_export] macro_rules! escape {()=>{}}}','Vec::<u8>::is_empty','<T as Trait>::function','fn','gen','self::super::f','::crate::f','r#self::f','_','x; mod escaped {}','a::::b'])assert.throws(()=>boundedSerdeExprPath(value),/Serde helper/);
+                                                                                                                                                                                                                                                    ^
+AssertionError: The input did not match the regular expression /Serde helper/. Input:
+
+'TypeError: Serde super path requires an original leading parent chain'
+
+ generatedMessage: true,
+   expected: /Serde helper/,
+   operator: "throws",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:16:240
+      at run (node:async_hooks:144:29)
+      at node:test:1445:26
+      at executeTestNode (node:test:1448:45)
+      at node:test:1591:20
+
+25 |   const text=value.trim(),absolute=text.startsWith('::'),segments=(absolute?text.slice(2):text).split('::').map(part=>part.trim());
+26 |   if(!segments.length||segments.length>32)throw new TypeError('Serde helper path exceeds the bounded ExprPath profile');
+27 |   for(const [index,segment]of segments.entries()) {
+28 |     const raw=segment.startsWith('r#'),name=raw?segment.slice(2):segment;
+29 |     if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)||name==='_'||name.length>128||raw&&prefixes.has(name)||!raw&&(keywords.has(name)||prefixes.has(name)&&(absolute||index>0&&name!=='super')))throw new TypeError('Serde helper path requires a macro-free nongeneric ExprPath');
+30 |     if(index>0&&name==='super'&&segments.slice(0,index).some(part=>part!=='super'))throw new TypeError('Serde super path requires an original leading parent chain');
+                                                                                                  ^
+TypeError: Serde super path requires an original leading parent chain
+      at boundedSerdeExprPath (/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/derive-helper-paths.mjs:30:94)
+      at getActual (node:assert:340:7)
+      at throws (node:assert:430:33)
+      at <anonymous> (/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:16:240)
+      at run (node:async_hooks:144:29)
+      at <anonymous> (node:test:1445:26)
+      at executeTestNode (node:test:1448:45)
+      at <anonymous> (node:test:1591:20)
+(fail) bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior [7.21ms]
+(pass) actual locked derive owners certify literal path and tag inputs without granting helper execution [2.10ms]
+(pass) helper expressions owners positions and unrelated procedural uncertainty remain closed [2.87ms]
+
+tools/translation/test/derive-layout.test.mjs:
+(pass) written string borrow and allocation chains retain the actual outer operation [900.72ms]
+(pass) sealed actual derive attributes retain layout source and do not implement serialization [842.42ms]
+(pass) unchanged whole tracked thinking file retains unproved task-local and Copy provenance [177.67ms]
+(pass) unchanged whole subscription file checks only proven original shared expiry behavior [974.28ms]
+
+tools/translation/test/derive-footprints.test.mjs:
+(pass) actual locked archives and all audited members are verified before dependency branding [15.13ms]
+(pass) actual qualified and imported derive owners certify independent namespace dimensions [1.13ms]
+(pass) literal default and skip metadata remain original attributes and generated trait obligations [0.43ms]
+(pass) binder narrows only sealed declaration dimensions and keeps exported bang uncertainty [0.92ms]
+(pass) unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty [1.56ms]
+(pass) actual local packages unknown macro imports and custom core owners cannot forge standard derives [1.22ms]
+
+tools/translation/test/reuse-translation.test.mjs:
+(pass) source-only relocated bulk translator regenerates a separate tracked repository and executes both targets [2802.81ms]
+
+tools/translation/test/declarative-macros.test.mjs:
+
+# Unhandled error between tests
+-------------------------------
+6 | const pairs={'(':')','[':']','{':'};
+                                     ^
+error: Unterminated string literal
+    at /Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/macro-token-trees.mjs:6:34
+-------------------------------
+
+
+tools/translation/test/derive-helper-originals.test.mjs:
+(pass) whole original provider acceptance getter retains exact checked Copy field behavior [979.49ms]
+42 |   });
+43 | });
+44 | 
+45 | test('whole original response affinity selectors preserve canonical tagged route outcomes',async()=>{
+46 |   const {pin,result}=original('src/response_affinity.rs');
+47 |   for(const method of pin.methods)assert.deepEqual(result.meta.checkedMethods.find(entry=>entry.name===method.owner+'.'+method.name)?.span,method.span);
+                                              ^
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
++ undefined
+- {
+-   end: 1953,
+-   start: 1179
+- }
+
+ generatedMessage: true,
+     actual: undefined,
+   expected: {
+  start: 1179,
+  end: 1953,
+},
+   operator: "deepStrictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-originals.test.mjs:47:42
+      at run (node:async_hooks:144:29)
+      at node:test:1445:26
+      at executeTestNode (node:test:1448:45)
+      at node:test:1591:20
+(fail) whole original response affinity selectors preserve canonical tagged route outcomes [46.12ms]
+(pass) whole original standard-default-helper selectors retain bodies and unit layout [2198.74ms]
+
+ 19 pass
+ 3 fail
+ 1 error
+Ran 22 tests across 7 files. [10.08s]

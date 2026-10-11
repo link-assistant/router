@@ -140,6 +140,9 @@ function boundedMeta(trees,start,depth=0) {
   return at;
 }
 function fragmentEnd(fragment,trees,start) {
+  // Rust's TT parser captures an invisible-delimited nonterminal as one
+  // tree. Keep its opaque fragment intact; this never exposes its interior.
+  if(fragment==='tt')return start<trees.length?start+1:null;
   if(opaque(trees[start],fragment))return start+1;
   // A checked Block AST is a Rust expression. Retain its opaque AST rather
   // than exposing its interior to literal matching when forwarded as Expr.
@@ -149,7 +152,6 @@ function fragmentEnd(fragment,trees,start) {
     if(['ident','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1)return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;
     throw new TypeError('Opaque declarative fragments require the same checked fragment kind when forwarded');
   }
-  if(fragment==='tt')return start<trees.length?start+1:null;
   if(fragment==='ident')return ident(trees[start])?start+1:null;
   if(fragment==='ty')return boundedType(trees,start);
   if(fragment==='block')return boundedMacroBlock(trees[start],boundedType)?start+1:null;

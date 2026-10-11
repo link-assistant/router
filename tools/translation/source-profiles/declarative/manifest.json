@@ -115,6 +115,24 @@
       "archive": "rust-1.89-library_Cargo.lock.gz",
       "archiveBytes": 2559,
       "archiveSha256": "5676ed531a06a4f63741f49b5c6c0dc912f59f157b4fc2a9f4f2ae5017e087ea"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/nonterminal.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/nonterminal.rs",
+      "bytes": 9585,
+      "sha256": "2d1859eb9295a1a11f8567ce0563b53d428a6063a3d3b10cf380e6e5cdf6fff3",
+      "archive": "rust-1.89-compiler_rustc_parse_src_parser_nonterminal.rs.gz",
+      "archiveBytes": 2406,
+      "archiveSha256": "5a8680f93bd4822919abf0f6090d2ecbd2d68085849cbc8804879a7122a2742a"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/mod.rs",
+      "bytes": 64389,
+      "sha256": "88e79af509064c441a88eb1b60facbfb50f8024dc0bcbf139a01a1902d111d59",
+      "archive": "rust-1.89-compiler_rustc_parse_src_parser_mod.rs.gz",
+      "archiveBytes": 16588,
+      "archiveSha256": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05"
     }
   ],
   "license": "Tokio MIT; Rust MIT OR Apache-2.0",

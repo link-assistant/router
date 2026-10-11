@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {rustTokens} from './rust-structure.mjs';
 const snapshots=new WeakMap();
-const pairs={'(':')','[':']','{':'};
+const pairs={'(':')','[':']','{':'}'};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export const freezeMacroTree=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freezeMacroTree);Object.freeze(value);}return value;};
 
