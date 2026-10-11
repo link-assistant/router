@@ -73,6 +73,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
       if(!node.rest && names.size !== fields.length)throw typeError(`record pattern names ${names.size} of ${fields.length} fields without rest`,location);
     } else {
       if(tuple && !entry.tuple && !fields.every((field,index)=>field.name === `field${index}`))throw unsupported('tuple pattern','named-field layout requires a record pattern',location);
+      if(!tuple && !fields.every((field,index)=>field.name === `field${index}`))throw unsupported('tuple constructor pattern','named-field layout requires a record pattern',location);
       const patterns=tuple?node.items:node.args ?? node.patterns ?? node.binds?.map(name=>({k:'bind',name})) ?? [];
       if(!Array.isArray(patterns) || patterns.length !== fields.length)throw typeError(`${name} pattern names ${patterns?.length ?? 0} of ${fields.length} fields`,location);
       children=patterns.map((child,index)=>visit(child,fields[index].type,[...projection,fields[index].name]));
@@ -97,6 +98,10 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
       return {refutable:false,bindings:[],test:always()};
     } else {
       if(!['fixed','nat','int'].includes(current.kind))throw typeError('numeric pattern has the wrong checked type',location);
+      if(node.suffix) {
+        const suffix=/^([ui])(8|16|32|64|128|size)$/u.exec(node.suffix),bits=suffix?.[2] === 'size'?64:Number(suffix?.[2]);
+        if(!suffix || current.kind !== 'fixed' || current.bits !== bits || current.signed !== (suffix[1] === 'i'))throw typeError('numeric pattern suffix has the wrong checked type',location);
+      }
       try {value=BigInt(typeof raw === 'object'?raw.value:raw)*(raw?.negative?-1n:1n);}catch{throw typeError('numeric pattern is not an exact integer',location);}
       if(current.kind === 'nat' && value < 0n)throw typeError('negative pattern for a natural type',location);
       if(current.kind === 'fixed'){const {min,max}=fixedBounds(current);if(value < min || value > max)throw typeError(`pattern literal is outside ${typeKey(current)}`,location);}

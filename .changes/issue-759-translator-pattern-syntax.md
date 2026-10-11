@@ -1,0 +1,1 @@
+- Add source-spanned Rust constructor, record, tuple and or-pattern syntax for the checked translator binding planner. Preserve literal suffix obligations and qualified paths while explicitly refusing unresolved reference, mutation, range and ownership-sensitive patterns.
