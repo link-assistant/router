@@ -5,10 +5,16 @@ receiver/needle evaluation order and refuse custom element traits or unproved
 borrow adjustments.
 
 The draft includes runtime, JavaScript/strict-TypeScript and whole-original-file
-fixtures for four Router predicates. These checks are unrun and no emitted-body
-recovery, complete namespace closure or full Router parity is claimed. Publisher
+fixtures for four Router predicates. No complete namespace closure or full
+Router parity is claimed. Publisher
 integration requires the coordinated focused checks and combined gate.
 
-Add an unrun slice inherent-priority regression against a visible false-returning
+Add a slice inherent-priority regression against a visible false-returning
 by-value trait method, plus actual source module-scope snapshot assertions for
 Vec/fixed-array receiver adjustments. Keep all prior trait/refusal boundaries.
+
+Accept only the canonical ownership marker on actual source-owned Vec receivers;
+all other unknown ownership obligations remain refused. Preserve the original
+shared fixed-array case and both its initial Copy/lifetime diagnostic and current
+earlier membership refusal. Fix source-order fixture instrumentation to insert
+only into the emitted function body, preserving its TypeScript return type.

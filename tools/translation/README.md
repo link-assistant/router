@@ -185,9 +185,13 @@ adjustment additionally requires a closed value-only source namespace so an
 earlier trait method cannot replace slice membership. Its descriptor
 runtime validates dense own data elements before content comparison; proxy,
 accessor, custom-trait and escaping temporary-borrow cases remain unsupported.
-The draft tests include whole unchanged Router files and separate strict
-TypeScript execution, but have not been run. No recovered production-body count,
-complete namespace authority or Router parity is claimed by this profile.
+Shared fixed-array inputs retain the existing unsupported Copy/lifetime
+prerequisite; by-value source fixed arrays remain checked.
+The focused tests read three whole unchanged Router files and execute four
+predicates against independent expectations in JavaScript and strict compiled
+TypeScript. Archived execution evidence is separate from the initial draft
+receipt. No generated-corpus gain, complete namespace authority or Router parity
+is claimed by this profile.
 
 With Node, Bun and the repository’s TypeScript tooling available:
 

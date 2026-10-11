@@ -92,7 +92,8 @@
     "Receiver method adjustment is restricted to one checked shared reference, builtin fixed-array unsizing and the pinned standard Vec Deref to slice.",
     "Vec/fixed-array method adjustment requires the actual closed value-only module namespace; trait, imported type, attribute and unknown namespace candidates remain unsupported.",
     "The pinned shared-reference PartialEq forwards to standard str byte-content equality; custom traits and other element types remain unsupported.",
-    "This source profile does not provide namespace, macro, custom allocator, target runtime or full Router parity authority."
+    "This source profile does not provide namespace, macro, custom allocator, target runtime or full Router parity authority.",
+    "Shared fixed-array inputs remain unsupported by the existing Copy/lifetime profile; this membership profile does not widen that prerequisite."
   ],
   "licenses": [
     {

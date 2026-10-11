@@ -9,7 +9,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const root=new URL('../source-profiles/slice-membership/',import.meta.url);
 const manifestBytes=readFileSync(new URL('manifest.json',root));
-if(hash(manifestBytes)!=='832476761c901eb0e22a72c12480482f111c31111d4dddd007ee7701fffe7fe9')throw new TypeError('Slice membership source manifest changed');
+if(hash(manifestBytes)!=='c56fafc7c0af725d984425439b2a03c7378fadc36e4331d81cad19694b769aa8')throw new TypeError('Slice membership source manifest changed');
 const manifest=JSON.parse(manifestBytes.toString('utf8'));
 for(const entry of manifest.sources){
   const packed=readFileSync(new URL(entry.file,root));
@@ -30,12 +30,14 @@ function reference(type,span){
 export function borrowedStringSliceReceiver(type,span){
   if(type?.kind!=='array'||type.rustSourceType!==true||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return fail(span);
   const base=type.rustReference?reference(type,span):type;
-  if(base.kind!=='array'||base.rustGenericIdentityUnresolved||base.rustBorrowingUnresolved||base.patternOwnershipRefusal||!scalar(base.element)||base.element.rustBorrowingUnresolved)return fail(span);
-  const owner=base.rustOwnership,length=fixedArrayLength(base);
+  const owner=base.rustOwnership,knownVec=base.rustSourceType===true&&owner?.kind==='owned'&&owner.source==='Vec';
+  const canonicalVecMarker=knownVec&&base.patternOwnershipRefusal==='ownership-bearing Vec type';
+  if(base.kind!=='array'||base.rustGenericIdentityUnresolved||base.rustBorrowingUnresolved||base.patternOwnershipRefusal&&!canonicalVecMarker||!scalar(base.element)||base.element.rustBorrowingUnresolved)return fail(span);
+  const length=fixedArrayLength(base);
   let kind;
   if(owner?.kind==='owned'&&owner.source==='Vec'&&length===null)kind='Vec';
   else if(owner?.kind==='borrowed'&&owner.source==='slice'&&type.rustReference&&length===null)kind='slice';
-  else if(owner?.kind==='value'&&owner.source==='array'&&length!==null)kind='fixed-array';
+  else if(owner?.kind==='value'&&owner.source==='array'&&length!==null&&!type.rustReference)kind='fixed-array';
   else return fail(span);
   return {kind,length,sharedReceiver:Boolean(type.rustReference)};
 }
