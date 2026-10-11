@@ -8,7 +8,7 @@ import { roundTripProgram } from './semantic-meta.mjs';
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
 export const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? { $bigint: item.toString() } : item instanceof Map ? Object.fromEntries(item) : item) + '\n';
-const tsType = (type, dataTypes = []) => {
+export const tsType = (type, dataTypes = []) => {
   if (type.kind === 'array') return `ReadonlyArray<${tsType(type.element, dataTypes)}>`;
   if (type.kind === 'data') {
     const definition = dataTypes.find(entry => entry.fullName === type.name);
@@ -24,7 +24,7 @@ function relocate(value, offset) {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
-export function translateSource(source, path = 'input.rs') {
+export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
   let structural;
   let structuralDiagnostic = null;
   try { structural = sourceItems(source); }
@@ -138,6 +138,16 @@ export function translateSource(source, path = 'input.rs') {
       item.diagnostic = { kind: error.kind, message: error.reason, span: error.span ?? { start: item.span.start, end: item.span.end }, details: error.details };
     }
   }
+  for (const item of items.filter(item => item.status === 'carried' && ['fn', 'const'].includes(item.term))) {
+    const contexts = projectDeclarations.filter(entry => entry.source === path && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);
+    // A source reached through two crate roots may have different bindings.
+    // Keep that ambiguity carried rather than selecting a guessed namespace.
+    if (contexts.length !== 1) continue;
+    const context = contexts[0], { own, program, emitted } = context.lower();
+    item.status = 'executable'; item.diagnostic = null;
+    item.semantic = { checkedIR: own, dataTypes: [...program.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.ret, project: { entry: context.project, declaration: context.qualifiedName } };
+    emissions.set(item.name, emitted);
+  }
   // A parsed signature is no implementation. Reject every dependent of a
   // carried function, transitively, before exposing executable definitions.
   const dependencies = node => {
@@ -164,10 +174,11 @@ export function translateSource(source, path = 'input.rs') {
   const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'portable value results, local scalar mutation, immutable constructors and aborts; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
   const body = [...preludes, ...definitions].join('\n\n');
-  const entries = executable.map(item => item.semantic.constructors ? item.name : emissions.get(item.name).mappings.find(mapping => mapping.source === item.name)?.target ?? item.name);
+  const entries = executable.map(item => item.semantic.constructors || item.semantic.project ? item.name : emissions.get(item.name).mappings.find(mapping => mapping.source === item.name)?.target ?? item.name);
   const constructorTarget = (item, ctor) => emissions.get(item.name).mappings.find(mapping => mapping.source === ctor.fullName).target;
   const runtimeEntries = entries.map((entry, index) => {
     const item = executable[index];
+    if (item.semantic.project) { const target = emissions.get(item.name).mappings.find(mapping => mapping.source === item.name).target; return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`; }
     if (item.semantic.constructors) return `[${JSON.stringify(entry)}]: ${item.term === 'struct' ? constructorTarget(item, item.semantic.constructors[0]) : `Object.freeze({ ${item.semantic.constructors.map((ctor, index) => `[${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}]: ${constructorTarget(item, ctor)}`).join(', ')} })`}`;
     return item.term === 'const' ? `${JSON.stringify(entry)}: ${entry}()` : entry;
   });
@@ -176,6 +187,12 @@ export function translateSource(source, path = 'input.rs') {
   const signature = (params, returns) => `(${params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(returns, dataTypes)}`;
   const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
+  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes);
+  const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
+  return { ir, javascript: runtime, typescript };
+}
+
+export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = []) {
   const tokens = tokenize(runtime, 'JavaScript').tokens;
   const annotations = [];
   const helperTypes = {
@@ -186,28 +203,30 @@ export function translateSource(source, path = 'input.rs') {
     ml_abort: ['string'],
     ml_assert: ['boolean', 'string'],
     ml_showNumber: ['number'],
-    ml_at: ['ReadonlyArray<any>', 'number | bigint'],
+    ml_at: ['ReadonlyArray<T>', 'number | bigint'],
     ml_forall: ['any[]', '(value: any) => boolean'],
     ml_router_strip: ['string', 'string', 'boolean'],
     ml_router_unwrap: ['any', 'any', 'boolean'],
     ml_router_unexpected: ['any'],
     ml_router_array: ['ReadonlyArray<any>', '(value: any) => boolean'],
-    ml_router_iter: ['ReadonlyArray<any>'],
+    ml_router_iter: ['ReadonlyArray<T>'],
     ml_router_range: ['bigint', 'bigint', 'boolean'],
-    ml_router_map: ['Iterable<any>', '(value: any) => any'],
-    ml_router_filter: ['Iterable<any>', '(value: any) => boolean'],
-    ml_router_take: ['Iterator<any>', 'bigint'],
-    ml_router_collect: ['Iterable<any>'],
-    ml_router_count: ['Iterable<any>'],
-    ml_router_any: ['Iterable<any>', '(value: any) => boolean'],
-    ml_router_all: ['Iterable<any>', '(value: any) => boolean'],
-    ml_router_fold: ['Iterable<any>', 'any', '(accumulator: any, value: any) => any'],
+    ml_router_map: ['Iterable<T>', '(value: T) => U'],
+    ml_router_filter: ['Iterable<T>', '(value: T) => boolean'],
+    ml_router_take: ['Iterator<T>', 'bigint'],
+    ml_router_collect: ['Iterable<T>'],
+    ml_router_count: ['Iterable<T>'],
+    ml_router_any: ['Iterable<T>', '(value: T) => boolean'],
+    ml_router_all: ['Iterable<T>', '(value: T) => boolean'],
+    ml_router_fold: ['Iterable<T>', 'A', '(accumulator: A, value: T) => A'],
   };
+  const generics = { ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
     if (tokens[nameAt + 1]?.value !== '(') continue;
     const name = tokens[nameAt].value;
+    if (generics[name]) annotations.push({ offset: tokens[nameAt].end, text: `<${generics[name]}>` });
     const known = parameterTypes.get(name);
     const helper = helperTypes[name];
     let index = 0;
@@ -220,9 +239,12 @@ export function translateSource(source, path = 'input.rs') {
       const close = tokens.find((token, index) => index > at + 2 && token.value === ')');
       annotations.push({ offset: close.end, text: ': never' });
     }
+    if (name === 'ml_router_iter') {
+      const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
+      annotations.push({ offset: close.end, text: ': ArrayIterator<T>' });
+    }
   }
   let typedRuntime = runtime;
   for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);
-  const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
-  return { ir, javascript: runtime, typescript };
+  return typedRuntime;
 }

@@ -4,10 +4,18 @@ import { fileURLToPath } from 'node:url';
 import { regenerate } from '../tools/translation/bulk.mjs';
 
 const args = process.argv.slice(2);
-if (args.some(arg => !['--check', '--root'].includes(arg) && args[args.indexOf(arg) - 1] !== '--root')) throw new Error('Usage: node scripts/translate-router.mjs [--check] [--root REPOSITORY]');
-const root = args.includes('--root') ? resolve(args[args.indexOf('--root') + 1]) : resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const { manifest, failures } = regenerate({ root, check: args.includes('--check') });
-console.log(JSON.stringify({ ...manifest.totals, runtimeParity: false, mode: args.includes('--check') ? 'check' : 'write' }));
+let root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), check = false;
+const entries = [];
+for (let index = 0; index < args.length; index++) {
+  const argument = args[index];
+  if (argument === '--check') check = true;
+  else if (['--root', '--entry'].includes(argument) && args[index + 1] && !args[index + 1].startsWith('--')) {
+    const value = args[++index];
+    if (argument === '--root') root = resolve(value); else entries.push(value);
+  } else throw new Error('Usage: node scripts/translate-router.mjs [--check] [--root REPOSITORY] [--entry TRACKED_RS]');
+}
+const { manifest, failures } = regenerate({ root, check, entries: entries.length ? entries : undefined });
+console.log(JSON.stringify({ ...manifest.totals, projects: manifest.projects, runtimeParity: false, mode: check ? 'check' : 'write' }));
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exitCode = 1;

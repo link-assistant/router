@@ -8,6 +8,15 @@ repository, use `--root /path/to/repository`; the same translator writes the
 same relative output layout there. No Rust build, network request or package
 installation runs during regeneration.
 
+The same command also resolves tracked out-of-line module edges from `src/lib.rs`
+and `src/main.rs`, or an explicit `--entry TRACKED_RS`. Checked cross-file calls
+and explicit crate/self/super imports produce project meta and executable JS/TS
+under `tools/translation/projects` and `packages/{javascript,typescript}/generated/rust-project`.
+Per-file callers can consume their checked project dependency closure. Ambiguous,
+missing, conditional and inline module edges remain diagnostics. External crate
+resolution, impls, macro expansion and effects remain unimplemented. Project
+counts are separate from per-file counts and are not added to the census twice.
+
 Each source produces one compact source-bearing structural meta JSON in
 `tools/translation/meta`, an executable JavaScript draft in
 `packages/javascript/generated/rust-draft`, and a typed TypeScript draft in
