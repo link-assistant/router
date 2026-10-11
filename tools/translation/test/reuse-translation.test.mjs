@@ -16,7 +16,7 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     copyFileSync(join(root,'scripts/translate-router.mjs'),join(bundle,'scripts/translate-router.mjs'));
     for(const name of readdirSync(join(root,'tools/translation')))if(name.endsWith('.mjs'))copyFileSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name));
     for(const name of ['extensions','vendor'])cpSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name),{recursive:true});
-    cpSync(join(root,'tools/translation/source-profiles/derive'),join(bundle,'tools/translation/source-profiles/derive'),{recursive:true});
+    cpSync(join(root,'tools/translation/source-profiles'),join(bundle,'tools/translation/source-profiles'),{recursive:true});
     for(const path of [bundle,repository])writeFileSync(join(path,'package.json'),'{"type":"module"}\n');
     const source='mod values; mod relay;\npub fn cap(value: u64) -> u64 { if value < 10 { value } else { 10 } }\npub fn identity(value: &serde_json::Value) -> &serde_json::Value { value }\npub fn bounded(value: std::time::Duration) -> std::time::Duration { value.min(std::time::Duration::from_secs(10)) }\npub fn normalize(value: u8) -> u8 { relay::normalize(value) }\n';
     writeFileSync(join(repository,'src/lib.rs'),source);
@@ -69,6 +69,12 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
       assert.equal(target.translated.normalize(2n),2n);assert.equal(target.translated['relay.normalize'](20n),9n);
       assert.equal(target.translated['values.allowed'](8n),true);assert.equal(target.translated['values.allowed'](9n),false);
       assert.equal(target.translated['values.LIMIT'],9n);
+    }
+    for(const name of ['rust-marker-1.89.0.rs.gz','rust-fmt-1.89.0.rs.gz','rust-path-1.89.0.rs.gz']) {
+      const archive=join(bundle,'tools/translation/source-profiles/copy-standard',name),original=readFileSync(archive),changed=Buffer.from(original);
+      changed[0]^=1;writeFileSync(archive,changed);
+      try {assert.throws(()=>run(['--check']),/Copy trait source archive checksum mismatch/);}
+      finally {writeFileSync(archive,original);}
     }
   } finally {rmSync(directory,{recursive:true,force:true});}
 });

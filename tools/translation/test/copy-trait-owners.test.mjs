@@ -40,6 +40,20 @@ test('standard Display does not alter checked Copy execution or hostile value gu
   });
 });
 
+test('original impl attributes and target identity cannot be replaced by supplied closed scopes',()=>{
+  for(const prefix of ['', '#[unknown] ']){
+    const source=value+prefix+display,module={file:'src/lib.rs',path:[],source,items:sourceItems(source),configurationCondition:'active'};
+    const raw=extractImplDeclarations(source,{sourcePath:module.file,modulePath:[]}).implementations.find(impl=>impl.traitPath);
+    const scopes=new Map([[module.file,{file:module.file,path:[],configurationCondition:'active',unresolvedTypeScope:false,bindings:[]}]]);
+    const implementation={...raw,resolvedType:{kind:'data',name:'Kind'},resolvedNominalTarget:null};
+    for(const changed of [{...implementation,typePath:['Other']},{...implementation,modulePath:['other']}]){
+      bindNonCopyTraitOwner(changed,module,scopes);assert.equal(nonCopyTraitOwner(changed),null);
+    }
+    bindNonCopyTraitOwner(implementation,module,scopes);
+    assert.equal(Boolean(nonCopyTraitOwner(implementation)),prefix==='','an unknown original attribute cannot gain an owner seal');
+  }
+});
+
 test('shadowed and unknown trait owners, Drop and conditional or unsafe implementations still refuse Copy',()=>{
   for(const extra of [
     'mod std{pub mod fmt{pub trait Display{}}} '+display,

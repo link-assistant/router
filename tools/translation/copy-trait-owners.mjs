@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {sourceItems} from './rust-structure.mjs';
+import {implementationTargetPath} from './project-nominal.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const owners=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -25,7 +26,9 @@ export const COPY_NAMESPACE_BINDINGS=freeze([
 ]);
 const fingerprint=implementation=>hash(JSON.stringify({trait:implementation.traitPath,type:implementation.typePath,generics:implementation.genericParameters,source:implementation.sourcePath,module:implementation.modulePath,span:implementation.span,header:implementation.headerSpan,attributes:implementation.attributes,diagnostics:implementation.diagnostics,resolvedType:implementation.resolvedType,resolvedNominalTarget:implementation.resolvedNominalTarget}));
 export function bindNonCopyTraitOwner(implementation,module,scopes) {
-  if(!implementation||!module||!(scopes instanceof Map)||JSON.stringify(implementation.traitPath)!==JSON.stringify(COPY_TRAIT_OWNER_PROFILE.trait)||implementation.sourcePath!==module.file||implementation.genericParameters?.length)return implementation;
+  if(!implementation||!module||!(scopes instanceof Map)||JSON.stringify(implementation.traitPath)!==JSON.stringify(COPY_TRAIT_OWNER_PROFILE.trait)||implementation.sourcePath!==module.file||JSON.stringify(implementation.modulePath)!==JSON.stringify(module.path)||implementation.genericParameters?.length)return implementation;
+  const originalTarget=implementationTargetPath(implementation,module);
+  if(!originalTarget||JSON.stringify(originalTarget)!==JSON.stringify(implementation.typePath))return implementation;
   const ancestors=[...scopes.values()].filter(scope=>scope.path.every((part,index)=>module.path[index]===part));
   if(!ancestors.some(scope=>scope.file===module.file)||ancestors.some(scope=>scope.unresolvedTypeScope!==false||scope.configurationCondition!=='active'))return implementation;
   // Bare std can resolve to a source module. Accept only the extern owner.
