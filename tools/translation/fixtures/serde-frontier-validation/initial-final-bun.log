@@ -1,0 +1,29 @@
+bun test v1.4.3 (c6da4a4d3)
+
+tools/translation/test/derive-footprints.test.mjs:
+(pass) actual locked archives and all audited members are verified before dependency branding [13.99ms]
+(pass) actual qualified and imported derive owners certify independent namespace dimensions [3.75ms]
+(pass) literal default and skip metadata remain original attributes and generated trait obligations [0.49ms]
+(pass) binder narrows only sealed declaration dimensions and keeps exported bang uncertainty [0.65ms]
+(pass) unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty [3.05ms]
+(pass) actual local packages unknown macro imports and custom core owners cannot forge standard derives [1.39ms]
+
+tools/translation/test/derive-success-frontier.test.mjs:
+(pass) pinned unit enum candidate inventories unchanged generator templates without branch or owner authority [53.63ms]
+(pass) frontier excludes payloads, helper behavior and unsupported derive owners while retaining their existing certificates [1.65ms]
+(pass) source cloning stale bytes unknown archive paths and caller closed-scope assertions cannot mint frontier evidence [0.71ms]
+
+tools/translation/test/declarative-macros.test.mjs:
+(pass) bounded declarative rules retain source order groups repetitions and definition-site owner [0.41ms]
+(pass) forwarded type fragments remain opaque to literal matching [0.32ms]
+(pass) ambiguity capture arity unsupported fragments and recursive resource excess remain explicit [1.28ms]
+(pass) nested source repetition shapes retain empty rows and reject unequal transcription axes [0.29ms]
+(pass) source metadata keeps nested conditional grammar opaque when forwarded [0.21ms]
+(pass) actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner [15.15ms]
+(pass) checked block expressions retain opacity and refuse unsupported statements or expression grammar [0.36ms]
+(pass) original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim [17.07ms]
+(pass) all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission [15.69ms]
+
+ 18 pass
+ 0 fail
+Ran 18 tests across 3 files. [212.00ms]
