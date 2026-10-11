@@ -14,3 +14,7 @@ unrun. This source-only draft depends on the pending compilation-matrix helper;
 no compiler, corpus producer, full gate or local Rust build ran on it.
 Sealed plans deeply freeze their inventories, and supplied corpus selections
 are validated as ordinary path data without invoking getters or proxy traps.
+Qualified namespace setup computes ancestor macro and prelude evidence once
+for the consuming scope; other owners contribute the same namespace maps and
+visibility checks. This source-only refactor has no measured performance claim
+and awaits the existing module and namespace regression tests.

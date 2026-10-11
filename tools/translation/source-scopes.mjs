@@ -2,7 +2,7 @@ import {compilationProfile} from './cfg-profile.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
 // Resolved namespace evidence configures parsers without expanding macros or
 // inferring a callable implementation from an imported signature.
-export function parserSourceScope(scope,scopes=[scope]){
+function sourceNamespaceMaps(scope){
   const namespaceAliases={},namespaceShadows={};
   for(const namespace of ['type','value','macro']){
     const grouped=new Map(),aliases=new Map(),shadowedBindings=new Set();
@@ -16,6 +16,10 @@ export function parserSourceScope(scope,scopes=[scope]){
     }
     namespaceAliases[namespace]=aliases;namespaceShadows[namespace]=shadowedBindings;
   }
+  return {namespaceAliases,namespaceShadows};
+}
+export function parserSourceScope(scope,scopes=[scope]){
+  const {namespaceAliases,namespaceShadows}=sourceNamespaceMaps(scope);
   const ancestors=scopes.filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
   return {compilationProfile:compilationProfile(scope.compilationProfile),aliases:namespaceAliases.type,shadowedBindings:namespaceShadows.type,namespaceAliases,namespaceShadows,shadowedPreludeTypes:new Set(scope.bindings.filter(binding=>binding.namespace==='type').map(binding=>binding.name)),
     shadowedBuiltinMacros:new Set(ancestors.flatMap(scope=>scope.bindings.filter(binding=>macroBindingAffects(binding,'bang')).map(binding=>binding.name))),
@@ -27,7 +31,9 @@ export function configureParserSourceScope(parser,scope,scopes=[scope],path=scop
   for(const candidate of scopes){
     const key=candidate.path.join('.');
     if(ownedScopes.has(key))throw new TypeError('Source namespace scopes have duplicate module paths');
-    ownedScopes.set(key,parserSourceScope(candidate,scopes));
+    // Qualified lookup consumes namespace maps only. Ancestor macro and
+    // prelude state belongs to the consuming scope and is computed above.
+    ownedScopes.set(key,sourceNamespaceMaps(candidate));
   }
   parser.compilationProfile=evidence.compilationProfile;
   parser.sourceNamespaceAliases=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...ownedScopes].map(([key,owned])=>[key,new Map(owned.namespaceAliases[namespace])]))]));
