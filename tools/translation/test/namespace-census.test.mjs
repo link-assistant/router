@@ -24,7 +24,10 @@ test('explicit original namespace reexports preserve grouped aliases and refuse 
   assert.deepEqual(candidates.map(item=>[item.path,item.name]),[[['core','fmt','Arguments'],'Arguments'],[['core','fmt','Debug'],'ActualDebug']]);
   assert.ok(originalPublicModuleCandidate('pub mod fmt;','fmt'));assert.equal(originalPublicModuleCandidate('pub(crate) mod fmt;','fmt'),null);
   assert.ok(originalExternAliasCandidate('extern crate alloc as alloc_crate;','alloc','alloc_crate'));
+  const attributed=originalExternAliasCandidate('#[allow(unused_imports)] #[macro_use] extern crate alloc as alloc_crate;','alloc','alloc_crate');
+  assert.ok(attributed);assert.equal(attributed.macroImportsComplete,false);assert.deepEqual(attributed.attributes.map(attribute=>attribute.name),['allow','macro_use']);
   assert.equal(originalExternAliasCandidate('extern crate other as alloc_crate;','alloc','alloc_crate'),null);
+  for(const source of ['#[cfg(unix)] extern crate alloc as alloc_crate;','#[macro_use(renamed)] extern crate alloc as alloc_crate;','#[other] extern crate alloc as alloc_crate;'])assert.equal(originalExternAliasCandidate(source,'alloc','alloc_crate'),null);
 });
 
 test('verified std alloc core type facts have sealed original owners and no runtime or complete namespace grant',()=>{

@@ -77,6 +77,12 @@ export function originalPublicModuleCandidate(source,name){
 }
 export function originalExternAliasCandidate(source,crate,alias){
   if(![crate,alias].every(name=>identifier.test(name??'')))throw new TypeError('Namespace crate aliases need identifiers');
-  const matches=checkedItems(source).filter(item=>item.tokens.filter(token=>token.type!=='comment').map(token=>token.text).join('')===`externcrate${crate}as${alias};`);
-  return matches.length===1?freeze(evidence(source,matches[0],{crate,alias})):null;
+  const matches=[];
+  for(const item of checkedItems(source)){
+    const tokens=item.tokens.filter(token=>token.type!=='comment'),condition=itemConfiguration(tokens,null);
+    if(condition.status!=='active'||condition.attributes.some(attribute=>!['allow','warn','deny','forbid','doc','stable','macro_use'].includes(attribute.name)||attribute.name==='macro_use'&&attribute.tokens.join('')!=='#[macro_use]'))continue;
+    const at=tokens.findIndex(token=>token.start>=(condition.attributes.at(-1)?.span.end??item.start));
+    if(at>=0&&tokens.slice(at).map(token=>token.text).join('')===`externcrate${crate}as${alias};`)matches.push({item,attributes:condition.attributes});
+  }
+  return matches.length===1?freeze(evidence(source,matches[0].item,{crate,alias,attributes:matches[0].attributes,macroImportsComplete:false})):null;
 }
