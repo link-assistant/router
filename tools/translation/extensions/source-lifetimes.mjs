@@ -156,7 +156,9 @@ function origins(node,env,context,returns,depth=0) {
   if(node.k==='lit'&&typeof node.value==='string'&&node.type?.rustBorrowLifetime?.source==='string-literal'&&node.type.rustBorrowLifetime.kind==='static')return staticOrigin();
   if(node.k==='let') {
     if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
-    const value=read(node.value),inner=new Map(env);inner.set(node.name,value);return read(node.body,inner);
+    const value=read(node.value),inner=new Map(env);
+    if(node.sourceBindingLifetimeType&&!emptyBorrowValue(node.value,context))checkStaticArguments({params:[sourceBorrowRegions(node.sourceBindingLifetimeType,context)]},[value],node.span??context.entry.span);
+    inner.set(node.name,value);return read(node.body,inner);
   }
   if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
   if(node.k==='routerOrderedMatchArms')return union(...node.branches.map(branch=>{read(branch.cond);return read(branch.body);}));
@@ -260,6 +262,15 @@ function emptyBorrowValue(node,context) {
 
 export function withSourceLifetimeChecker(Base) {
   return class extends Base {
+    expr(node,env,path,expected,allowLiteral=false) {
+      const value=super.expr(node,env,path,expected,allowLiteral);
+      if(this.language!=='Rust'||node.k!=='let'||!node.type)return value;
+      const declared=this.resolveType(node.type,path,node.span);
+      const context={declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope,span)};
+      if(!sourceBorrowRegions(declared,context).some(region=>region.kind==='static'))return value;
+      if(value.k!=='let')throw unsupported('local static borrow constraint','requires the original checked local binding',node.span);
+      return {...value,sourceBindingLifetimeType:declared};
+    }
     program(surface) {
       const mutableParameters=new Map();
       const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
