@@ -12,16 +12,40 @@ function cleanPattern(node) {
   const {routerMatchOriginalTokens,...pattern}=node;
   return {...pattern,...(pattern.args?{args:pattern.args.map(cleanPattern)}:{})};
 }
-function nestedAlternative(cursor) {
+function structuralPatternNeeded(cursor) {
   let depth=0;
   for(let at=cursor.index;at<cursor.tokens.length&&at-cursor.index<4096;at++) {
     const token=cursor.tokens[at];if(token.kind!=='punct')continue;
     if(!depth&&['=>','}'].includes(token.value))return false;
+    // A constructor's argument group follows its original identifier. A
+    // separate parenthesis group retains tuple, unit or grouping syntax that
+    // the older matrix frontend cannot parse without erasing source evidence.
+    if(token.value==='('&&(at===cursor.index||cursor.tokens[at-1]?.kind!=='identifier'))return true;
     if(['(','[','{'].includes(token.value))depth++;
     if([')',']','}'].includes(token.value))depth--;
     if(token.value==='|'&&depth>0)return true;
   }
   return false;
+}
+function matrixPattern(pattern,type,declarations) {
+  if(pattern.k==='or')return {...pattern,alternatives:pattern.alternatives.map(child=>matrixPattern(child,type,declarations))};
+  if(pattern.k==='lit'&&pattern.value===null) {
+    if(type.kind!=='unit')throw typeError('unit match pattern requires its actual checked unit type',pattern.span);
+    return {k:'wild',span:pattern.span};
+  }
+  const entry=type.kind==='data'?declarations.get(type.name):null;
+  if(pattern.k==='routerTuplePattern') {
+    if(!entry?.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1)throw unsupported('tuple match matrix','requires the actual checked anonymous tuple product',pattern.span);
+    const ctor=entry.ctors[0];
+    if(pattern.items.length!==ctor.fields.length)throw typeError('tuple match arity differs from the actual checked product',pattern.span);
+    return {k:'ctor',path:[type.name,ctor.name],data:type.name,ctor:ctor.name,args:pattern.items.map((child,index)=>matrixPattern(child,ctor.fields[index].type,declarations)),span:pattern.span};
+  }
+  if(pattern.k==='ctor') {
+    const ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);
+    if(!ctor||pattern.args.length!==ctor.fields.length)throw typeError('match constructor requires its complete actual checked field layout',pattern.span);
+    return {...pattern,args:pattern.args.map((child,index)=>matrixPattern(child,ctor.fields[index].type,declarations))};
+  }
+  return pattern;
 }
 function checkSyntaxBounds(cursor) {
   let depth=0;
@@ -114,7 +138,7 @@ export function withNestedMatchPatternsParser(Base) {
     }
     pattern(path,aliases) {
       const start=this.cursor.index;
-      if(!nestedAlternative(this.cursor)) {
+      if(!structuralPatternNeeded(this.cursor)) {
         const pattern=super.pattern(path,aliases);
         return this.collectNestedMatchSyntax?{...pattern,routerMatchOriginalTokens:originalTokens(this.cursor.tokens.slice(start,this.cursor.index))}:pattern;
       }
@@ -137,11 +161,12 @@ export function withNestedMatchPatternsChecker(Base) {
       for(const row of node.rows) {
         if(row.guard)throw unsupported('match guard','requires separate checked guard semantics',row.span);
         const source=row.patterns[0],pattern=this.patternOwner(source.k==='routerNestedMatchPattern'?source.pattern:source,subject.type,path,env);
-        validateAlternativeBindings(pattern,subject.type,this,path,row.span);
+        const matrix=matrixPattern(pattern,subject.type,this.items);
+        validateAlternativeBindings(matrix,subject.type,this,path,row.span);
         const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,row.span),span:row.span});
         for(const binding of plan.bindings)if(!scalar(binding.type)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('nested match binding ownership','only immutable scalar bindings with actual Rust primitive identities are checked',binding.span??row.span);
-        validateLiterals(pattern,subject.type,this.items);
-        const alternatives=distribute(pattern);
+        validateLiterals(matrix,subject.type,this.items);
+        const alternatives=distribute(matrix);
         if(rows.length+alternatives.length>LIMIT)throw unsupported('nested match alternatives','exceeds the checked whole-match expansion bound',row.span);
         rows.push(...alternatives.map(pattern=>({...row,patterns:[pattern]})));
         evidence.push({sourcePattern:source,plan,expandedRows:alternatives.length,span:row.span});

@@ -133,6 +133,15 @@ success alone does not prove constant-name resolution, constructor style,
 irrefutability, copying, moves or borrows. Those obligations must be established
 at each frontend integration point.
 
+The source-only tuple/unit match draft sends original structural patterns through
+that planner before normalizing anonymous products to the existing matrix ABI.
+Unit becomes a wildcard only after its actual unit type is checked. Original
+patterns remain in checked and reparsed target metadata; source identity,
+immutable scalar bindings, first-arm priority, exhaustiveness and finite
+Cartesian bounds remain mandatory. Its 13 authored cases are unrun. Computed
+tuple literals without an actual contextual product and char Pattern still need
+additional contracts; the two pinned whole-file frontiers claim no corpus gain.
+
 Unbounded generics, arbitrary trait implementations, aggregate mutation,
 unresolved derives/macros, ambiguous imports, compilation conditions and
 unsupported reference ownership remain refusals. The structural scanner is not a
