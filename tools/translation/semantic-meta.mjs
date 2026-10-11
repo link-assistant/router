@@ -2,6 +2,7 @@
 // Map entries are explicit links; the tagged encoding cannot collide with a
 // Rust literal object because literals occur only in typed semantic nodes.
 const SCHEMA = 'checked-rust-semantic-meta-v1';
+const freezeEvidence=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freezeEvidence(child);Object.freeze(value);}return value;};
 export function serializeProgram(program) {
   return JSON.stringify({ schema: SCHEMA, program }, (_, value) => value instanceof Map ? { $map: [...value] } : value);
 }
@@ -21,6 +22,7 @@ export function parseProgram(text) {
     if (entry.fullName !== name || !['fn', 'data'].includes(entry.k) || !Array.isArray(entry.modulePath)) throw new Error('invalid checked meta declaration');
     if (entry.k === 'fn' && (!Array.isArray(entry.params) || !entry.ret?.kind || !entry.body?.k || !entry.body.type?.kind)) throw new Error('unchecked meta function');
     if (entry.k === 'data' && !Array.isArray(entry.ctors)) throw new Error('unchecked meta data layout');
+    if(entry.constantEvaluationProof)freezeEvidence(entry.constantEvaluationProof);
   }
   if (serializeProgram(document.program) !== text) throw new Error('noncanonical checked Rust semantic meta');
   return document.program;

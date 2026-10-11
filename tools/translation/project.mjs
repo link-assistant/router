@@ -15,13 +15,14 @@ import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
+import {linkProjectDeclaration} from './extensions/source-links.mjs';
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
-const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
+const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='constantEvaluationProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -161,7 +162,9 @@ export function translateProject(options) {
         }
         if (!parser.cursor.atEnd()) throw new TranslationError('syntax', 'unconsumed declaration tokens', parser.cursor.peek());
         const base = module.offset + item.start;
-        declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(surface, base) });
+        const semantic=relocate(surface,base);
+        linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(module.file),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+        declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: semantic });
         for (const type of parser.genericTypes.values()) if (!declarations.some(candidate => candidate.name === type.name && candidate.path.length === 0)) declarations.push({ file: module.file, path: [], name: type.name, term: 'generated-type', globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(type, base) });
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
     }

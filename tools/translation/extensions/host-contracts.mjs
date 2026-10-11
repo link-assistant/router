@@ -25,6 +25,8 @@ import {HostInstantiations} from './host-instantiations.mjs';
 import {macroProvenance} from '../macro-provenance.mjs';
 import {configureParserSourceScope} from '../source-scopes.mjs';
 import {withSourceNamespaceParser} from './source-namespaces.mjs';
+import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSourceContext,bindCheckedSourceLinks} from './source-links.mjs';
+import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
 
 export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -78,7 +80,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser))) {
+export class HostRustParser extends withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser)))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
@@ -240,7 +242,7 @@ export class HostRustParser extends withSourceNamespaceParser(withNestedMatchPat
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker)))) {
+export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -368,6 +370,7 @@ export class HostChecker extends withSourceLifetimeChecker(withSharedArrayBorrow
   }
   program(surface) {
     const program=super.program(surface);
+    const sourceContext=checkedSourceContext(program);
     program.items.push(...this.instantiations.items);
     for(const entry of program.declarations.values())if(entry.impl?.receiver==='value'&&entry.impl.copyCertificate?.verified){const param=entry.params.find(param=>param.name===entry.impl.receiverName);if(!param)throw typeError('missing checked Copy receiver',entry.span);param.copyReceiver=true;}
     const forbidden=(node,seen=new Set())=>{
@@ -379,6 +382,12 @@ export class HostChecker extends withSourceLifetimeChecker(withSharedArrayBorrow
       return Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(item=>forbidden(item,seen)):forbidden(value,seen)));
     };
     for(const entry of program.declarations.values())if((entry.constant||entry.constFunction)&&forbidden(entry.body))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);
+    const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
+    for(const entry of program.declarations.values())if(entry.constant){
+      const result=evaluateCheckedConstant(program,entry.fullName,{sourceLinks,contracts:new Map(HOST_CONTRACTS.map(contract=>[contract.id,contract]))});
+      if(result.status!=='value'||!result.proof.sourceLinksVerified)throw unsupported('constant evaluation',result.diagnostic?.reason??'requires fresh original parser source association',entry.span);
+      entry.constantEvaluationProof=result.proof;
+    }
     return program;
   }
 }
@@ -459,6 +468,6 @@ export class HostEmitter extends EffectEmitter {
     return {...result,preludes,text:[...preludes,...result.definitions].join('\n\n')};
   }
 }
-export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);return parser.file();};
+export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
 export const checkProgram=surface=>new HostChecker(surface.language,surface.externals??[]).program(surface);
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});

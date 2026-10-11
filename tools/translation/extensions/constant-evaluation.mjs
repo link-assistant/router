@@ -2,6 +2,7 @@
 // executes emitted JavaScript, metadata functions, or host runtime adapters.
 import {createHash} from 'node:crypto';
 import {types as utilTypes} from 'node:util';
+import {copyMetadata,snapshotMap,ownData,checkedSourceEvidence,metadataDigest,ordinal} from './source-links.mjs';
 
 export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVersion:'1.89.0',pointerBits:64,
   arithmetic:'checked fixed integers',casts:'value-preserving fixed ranges only',shifts:'unsupported',
@@ -20,6 +21,7 @@ const panic=(reason,node)=>{throw new Refusal('const-panic',reason,node);};
 function frozen(value){if(value&&typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;}
 // Explicitly encoded integers make the value/proof JSON serializable.
 function canonical(value,depth=0,active=new Set(),budget={nodes:DEFAULT_LIMITS.valueCells,bytes:DEFAULT_LIMITS.serializedBytes}) {
+  if(depth===0)value=copyMetadata(value,{cells:budget.nodes,bytes:budget.bytes});
   if(--budget.nodes<0)throw new Refusal('budget-exhausted','constant metadata cell budget exhausted');
   if(depth>128)refuse('constant metadata nesting exceeds the checked profile');
   if(typeof value==='bigint')return {$integer:value.toString()};
@@ -47,6 +49,8 @@ function sameType(actual,expected) {
   if(Boolean(actual.rustReference)!==Boolean(expected.rustReference))return false;
   if(actual.rustReference&&(!sameType(actual.rustReference.pointee,expected.rustReference.pointee)||actual.rustReference.kind!==expected.rustReference.kind))return false;
   if(actual.rustOwnership&&expected.rustOwnership&&(actual.rustOwnership.kind!==expected.rustOwnership.kind||actual.rustOwnership.source!==expected.rustOwnership.source))return false;
+  if(actual.rustGenericIdentityUnresolved||expected.rustGenericIdentityUnresolved)return false;
+  if(actual.rustStandardGeneric&&expected.rustStandardGeneric){const left=actual.rustStandardGeneric,right=expected.rustStandardGeneric;if(left.kind!==right.kind||left.arguments.length!==right.arguments.length||left.arguments.some((type,index)=>!sameType(type,right.arguments[index])))return false;}
   if(actual.kind==='fixed')return actual.bits===expected.bits&&actual.signed===expected.signed;
   if(actual.kind==='array')return sameType(actual.element,expected.element);
   if(actual.kind==='data')return actual.name===expected.name;
@@ -70,10 +74,14 @@ function children(node) {
 }
 class Evaluator {
   constructor(program,options) {
-    if(!program||utilTypes.isProxy(program)||Object.getOwnPropertyDescriptor(program,'sourceLanguage')?.value!=='Rust'||Object.getOwnPropertyDescriptor(program,'schemaVersion')?.value!==1||!(Object.getOwnPropertyDescriptor(program,'declarations')?.value instanceof Map)||Object.getPrototypeOf(program.declarations)!==Map.prototype)refuse('constant evaluation requires a resolved checked Rust program');
-    if(options.targetProfile&&(options.targetProfile.pointerBits!==64||options.targetProfile.rustVersion!=='1.89.0'))refuse('constant evaluation target differs from the explicitly pinned Rust 1.89 64-bit profile');
-    this.program=program;this.sources=options.sources??new Map();this.contracts=options.contracts??new Map();
-    this.limits={...DEFAULT_LIMITS,...options.limits};
+    if(ownData(program,'sourceLanguage')!=='Rust'||ownData(program,'schemaVersion')!==1)refuse('constant evaluation requires a resolved checked Rust program');
+    const option=key=>Object.hasOwn(options,key)?ownData(options,key):undefined;
+    if(!options||utilTypes.isProxy(options)||Object.getPrototypeOf(options)!==Object.prototype)refuse('constant options require plain non-proxy data');
+    const target=option('targetProfile')?copyMetadata(option('targetProfile')):null;
+    if(target&&(target.pointerBits!==64||target.rustVersion!=='1.89.0'))refuse('constant evaluation target differs from the explicitly pinned Rust 1.89 64-bit profile');
+    this.program={declarations:snapshotMap(ownData(program,'declarations'))};this.safeEntries=new Set();
+    this.sources=snapshotMap(option('sources')??new Map());this.contracts=snapshotMap(option('contracts')??new Map());this.sourceLinks=option('sourceLinks');
+    this.limits={...DEFAULT_LIMITS,...copyMetadata(option('limits')??{})};
     for(const [name,value] of Object.entries(this.limits))if(!(name in DEFAULT_LIMITS)||!Number.isSafeInteger(value)||value<1||value>DEFAULT_LIMITS[name])refuse('constant evaluation limits must be positive bounded profile values');
     this.steps=0;this.cells=0;this.stack=[];this.eligible=new Set();this.eligibilityActive=new Set();this.resolution=new Map();this.layouts=new Map();this.trace=[];
   }
@@ -86,16 +94,21 @@ class Evaluator {
   }
   exactInteger(value,type,node,operation=false){const {min,max}=bounds(type);if(typeof value!=='bigint')refuse('checked constant integer is not an exact BigInt',node);if(value<min||value>max)(operation?panic:refuse)('constant integer outside '+(type.rustPrimitiveName??(type.signed?'i':'u')+type.bits),node);return value;}
   source(entry) {
+    const linked=checkedSourceEvidence(this.sourceLinks,entry);
+    if(linked){if(linked.targetProfileSha256!==metadataDigest(CONSTANT_EVALUATION_PROFILE))refuse('constant source links have a different target profile',entry);if(linked.sourceBytes>this.limits.sourceBytes)throw new Refusal('budget-exhausted','constant original source exceeds the source budget',entry);return {...linked,sourceAssociation:'private-parser-source-links-v1'};}
     const evidence=this.sources.get(entry.fullName);
-    if(evidence)canonical(evidence,0,new Set(),{nodes:this.limits.valueCells,bytes:this.limits.sourceBytes});
-    const valid=range=>range&&Number.isSafeInteger(range.start)&&Number.isSafeInteger(range.end)&&range.start>=0&&range.end>=range.start&&range.end<=evidence.source.length;
-    if(!evidence||typeof evidence.source!=='string'||typeof evidence.sourcePath!=='string'||!valid(evidence.declarationSpan)||!valid(evidence.bodySpan))refuse('constant evaluation requires original declaration and body source spans',entry);
-    if(Buffer.byteLength(evidence.source)>this.limits.sourceBytes)throw new Refusal('budget-exhausted','constant source evidence exceeds the source budget',entry);
-    if(!entry.span||entry.span.start!==evidence.declarationSpan.start||entry.span.end!==evidence.declarationSpan.end||evidence.bodySpan.start<entry.span.start||evidence.bodySpan.end>entry.span.end)refuse('constant source spans disagree with the checked declaration',entry);
-    return {sourcePath:evidence.sourcePath,sourceSha256:sha256(evidence.source),declarationSpan:evidence.declarationSpan,declarationSha256:sha256(evidence.source.slice(entry.span.start,entry.span.end)),bodySpan:evidence.bodySpan,bodySha256:sha256(evidence.source.slice(evidence.bodySpan.start,evidence.bodySpan.end))};
+    const safe=evidence?copyMetadata(evidence,{cells:this.limits.valueCells,bytes:this.limits.sourceBytes}):null;
+    const valid=range=>range&&Number.isSafeInteger(range.start)&&Number.isSafeInteger(range.end)&&range.start>=0&&range.end>=range.start&&range.end<=safe.source.length;
+    if(!safe||typeof safe.source!=='string'||typeof safe.sourcePath!=='string'||!valid(safe.declarationSpan)||!valid(safe.bodySpan))refuse('constant evaluation requires original declaration and body source spans',entry);
+    if(Buffer.byteLength(safe.source)>this.limits.sourceBytes)throw new Refusal('budget-exhausted','constant source evidence exceeds the source budget',entry);
+    if(!entry.span||entry.span.start!==safe.declarationSpan.start||entry.span.end!==safe.declarationSpan.end||safe.bodySpan.start<entry.span.start||safe.bodySpan.end>entry.span.end)refuse('constant source spans disagree with the checked declaration',entry);
+    return {sourceAssociation:'unlinked checked-IR unit input',sourcePath:safe.sourcePath,sourceSha256:sha256(safe.source),declarationSpan:safe.declarationSpan,declarationSha256:sha256(safe.source.slice(entry.span.start,entry.span.end)),bodySpan:safe.bodySpan,bodySha256:sha256(safe.source.slice(safe.bodySpan.start,safe.bodySpan.end))};
+  }
+  safeEntry(name) {
+    if(!this.safeEntries.has(name)){const entry=this.program.declarations.get(name);if(entry)this.program.declarations.set(name,copyMetadata(entry,{cells:this.limits.valueCells,bytes:this.limits.serializedBytes}));this.safeEntries.add(name);}return this.program.declarations.get(name);
   }
   declaration(name) {
-    const entry=this.program.declarations.get(name);
+    const entry=this.safeEntry(name);
     if(entry)this.serialize(entry);
     if(!entry||entry.k!=='fn'||entry.fullName!==name||!entry.body||entry.async||(!entry.constant&&!entry.constFunction))refuse('constant call needs the actual resolved constant implementation: '+name,entry);
     return entry;
@@ -104,11 +117,11 @@ class Evaluator {
     if(type?.kind==='array')return {...type,element:this.actualType(type.element,path)};
     if(type?.kind!=='named')return type;
     const segments=type.path[0]==='crate'?type.path.slice(1):type.path;
-    const entry=this.program.declarations.get([...path,...segments].join('.'))??this.program.declarations.get(segments.join('.'));
-    if(entry?.k!=='data')refuse('constant generic metadata has an unresolved named type');return {kind:'data',name:entry.fullName};
+    const entry=this.safeEntry([...path,...segments].join('.'))??this.safeEntry(segments.join('.'));
+    if(entry?.k!=='data')refuse('constant generic metadata has an unresolved named type');const {path:writtenPath,...metadata}=type;return {...metadata,kind:'data',name:entry.fullName};
   }
   layout(name) {
-    const entry=this.program.declarations.get(name);
+    const entry=this.safeEntry(name);
     if(entry)this.serialize(entry);
     if(entry?.k!=='data'||entry.fullName!==name||!Array.isArray(entry.ctors)||entry.ctors.some(ctor=>!Array.isArray(ctor.fields)||ctor.fields.some(field=>typeof field.name!=='string'||!field.type)))refuse('constant constructor requires a resolved checked data layout',entry);
     if(!this.layouts.has(name)){
@@ -255,7 +268,7 @@ class Evaluator {
     return result(this.exactInteger(value,node.type,node,true));
   }
   timeContract(node) {
-    const contract=this.contracts.get(node.id),operation=TIME_OPERATIONS.get(node.id),parameters=operation==='new'?['u64','u32']:['u64'];
+    const raw=this.contracts.get(node.id),contract=raw?copyMetadata(raw):null,operation=TIME_OPERATIONS.get(node.id),parameters=operation==='new'?['u64','u32']:['u64'];
     if(contract)this.serialize(contract);
     if(!operation||contract?.id!==node.id||contract.constEligible!==true||contract.async!==false||contract.pure!==true||contract.kind!=='function'||contract.rustPath?.join('.')!=='std.time.Duration.'+operation||contract.params?.length!==parameters.length||!contract.params.every((type,index)=>type.kind==='fixed'&&type.rustPrimitiveName===parameters[index]&&type.signed===false&&type.bits===(index===0?64:32))||!sameType(this.actualType(contract.ret),node.type))refuse('constant host operation needs the explicitly pinned Duration constructor contract',node);
     const entry=this.layout(node.type?.name),fields=entry.ctors[0]?.fields;
@@ -271,9 +284,10 @@ class Evaluator {
   }
   run(name) {
     const entry=this.declaration(name);if(!entry.constant||entry.params?.length)refuse('constant evaluation entry must be an actual zero-argument constant',entry);
-    this.eligibleDeclaration(name);const value=this.call(name,[],entry),resolution=[...this.resolution.values()].sort((a,b)=>a.name.localeCompare(b.name));
+    this.eligibleDeclaration(name);const value=this.call(name,[],entry),resolution=[...this.resolution.values()].sort((a,b)=>ordinal(a.name,b.name));
     const serializedValue=canonical(value.value),proof={schemaVersion:1,verified:true,scope:'this concrete checked constant root',entry:name,
-      profile:CONSTANT_EVALUATION_PROFILE,profileSha256:sha256(this.serialize(CONSTANT_EVALUATION_PROFILE)),resolution,resolvedLayouts:[...this.layouts.values()].sort((a,b)=>a.name.localeCompare(b.name)),
+      sourceLinksVerified:resolution.every(item=>item.source.sourceAssociation==='private-parser-source-links-v1')&&[...this.layouts.values()].every(item=>!item.source||item.source.sourceAssociation==='private-parser-source-links-v1'),
+      profile:CONSTANT_EVALUATION_PROFILE,profileSha256:sha256(this.serialize(CONSTANT_EVALUATION_PROFILE)),resolution,resolvedLayouts:[...this.layouts.values()].sort((a,b)=>ordinal(a.name,b.name)),
       checkedIRSha256:sha256(this.serialize(resolution.map(item=>({name:item.name,body:this.program.declarations.get(item.name).body})))),
       valueSha256:sha256(this.serialize(serializedValue)),trace:this.trace,cost:{steps:this.steps,valueCells:this.cells},limits:this.limits};
     this.serialize(proof);return frozen({status:'value',type:canonical(value.type),value:serializedValue,proof});
@@ -281,5 +295,5 @@ class Evaluator {
 }
 export function evaluateCheckedConstant(program,name,options={}) {
   try{return new Evaluator(program,options).run(name);}
-  catch(error){if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}
+  catch(error){if(error instanceof TypeError&&error.message.startsWith('source links:'))return frozen({status:'unsupported',diagnostic:{reason:error.message}});if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}
 }
