@@ -3807,7 +3807,7 @@
     },
     {
       "path": "packages/javascript/native/managed-server.mjs",
-      "sha256": "00b3acf1d71d4df893d7e8f0a5d8fcf1021b93239600f572079a87c22fd81b71",
+      "sha256": "e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf",
       "sourceItems": 47,
       "translatedItems": 0,
       "unsupportedItems": 47,
@@ -4127,37 +4127,37 @@
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
             "start": 7368,
-            "end": 8069,
+            "end": 8201,
             "encoding": "utf16"
           },
-          "example": "function request(url,{method = 'GET',headers = {},body,limit = 65536,timeout = 1200} = {}) { return new Promise((done,reject)=> { const call = httpRequest(url,{method,headers,agent"
+          "example": "function request(url,{method = 'GET',headers = {},body,limit = 65536,timeout = 1200,phase = 'control'} = {}) { return new Promise((done,reject)=> { const started = performance.now("
         },
         {
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 8070,
-            "end": 8973,
+            "start": 8202,
+            "end": 9231,
             "encoding": "utf16"
           },
-          "example": "async function proof(state,action = 'health') { const challenge = nonce(), body = JSON.stringify({challenge,boot_id:state.boot_id}); const result = await request(`http://127.0.0.1:"
+          "example": "async function proof(state,action = 'health',verifyBootstrap = false) { const challenge = nonce(), body = JSON.stringify({challenge,boot_id:state.boot_id,verify_bootstrap:verifyBoo"
         },
         {
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 8974,
-            "end": 9371,
+            "start": 9232,
+            "end": 9702,
             "encoding": "utf16"
           },
-          "example": "async function verified(state) { if (!state.pid || !alive(state.pid)) throw fail('Managed daemon is stopped or its recorded process has exited'); const result = await proof(state);"
+          "example": "async function verified(state,verifyBootstrap = false) { if (!state.pid || !alive(state.pid)) throw fail('Managed daemon is stopped or its recorded process has exited'); const resu"
         },
         {
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 9372,
-            "end": 9935,
+            "start": 9703,
+            "end": 10266,
             "encoding": "utf16"
           },
           "example": "function daemonConfig(config,state,p) { // Parent-owned live Router data and credentials are never adopted. The // managed daemon has its own volume and signing authority. return {"
@@ -4166,8 +4166,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 9936,
-            "end": 12950,
+            "start": 10267,
+            "end": 14080,
             "encoding": "utf16"
           },
           "example": "async function start(p,state,config,keepRunning) { if (state?.pid) { if (alive(state.pid)) { await verified(state); if (keepRunning) {state.keep_running = true; await writeJSON(p.s"
@@ -4176,8 +4176,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 12951,
-            "end": 13495,
+            "start": 14081,
+            "end": 14625,
             "encoding": "utf16"
           },
           "example": "async function stop(p,state) { if (!state) throw fail('Managed router is absent; run server.start first'); if (state.pid && alive(state.pid)) { await verified(state); await proof(s"
@@ -4186,8 +4186,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 13496,
-            "end": 14014,
+            "start": 14626,
+            "end": 15144,
             "encoding": "utf16"
           },
           "example": "async function validateTree(path) { let files = 0; const visit = async (path,depth) => { if (++files > 10000 || depth > 32) throw unsupported('Native managed volume exceeds its 100"
@@ -4196,8 +4196,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 14015,
-            "end": 14605,
+            "start": 15145,
+            "end": 15735,
             "encoding": "utf16"
           },
           "example": "async function selection(p,env,state) { const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL; if (configured !== undefined) return {source:'environment',url:normalize"
@@ -4206,8 +4206,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 14838,
-            "end": 15261,
+            "start": 15968,
+            "end": 16391,
             "encoding": "utf16"
           },
           "example": "export async function selectedManagedServer({core,config = {},env = {}} = {}) { config = core?.config ?? config; const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;"
@@ -4216,8 +4216,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 15347,
-            "end": 17928,
+            "start": 16477,
+            "end": 19058,
             "encoding": "utf16"
           },
           "example": "export async function selectedManagedTarget({name,options = {},config = {},env = {},cwd = process.cwd()} = {}) { if (options.local === true) return null; if (options.managed === tr"
@@ -4226,8 +4226,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 17929,
-            "end": 18800,
+            "start": 19059,
+            "end": 19930,
             "encoding": "utf16"
           },
           "example": "async function status(p,state,env) { let lifecycle = state ? 'stopped' : 'absent', detail = null; if (state?.pid && alive(state.pid)) { try { await verified(state); lifecycle = 'ru"
@@ -4236,8 +4236,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 18801,
-            "end": 19789,
+            "start": 19931,
+            "end": 20919,
             "encoding": "utf16"
           },
           "example": "function validateOptions(name,options,config) { const allowed = new Set(['data_dir',...(name === 'server.use' ? ['server','management_server','token','token_stdin','clear','run_max"
@@ -4246,8 +4246,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 19790,
-            "end": 24573,
+            "start": 20920,
+            "end": 25708,
             "encoding": "utf16"
           },
           "example": "export async function executeManagedOperation({name,options = {},invocation = {},core,config = {},env = {}}) { if (!supportedManagedOperations[name]) throw unsupported(`Native ${na"
@@ -4256,8 +4256,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 24654,
-            "end": 25197,
+            "start": 25789,
+            "end": 26332,
             "encoding": "utf16"
           },
           "example": "export async function acquireManagedReference({core,config = {}}) { config = core?.config ?? config; validateOptions('server.start',{},config); const p = paths(config.data_dir ?? c"
@@ -4266,18 +4266,18 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 25199,
-            "end": 27977,
+            "start": 26334,
+            "end": 29796,
             "encoding": "utf16"
           },
-          "example": "async function daemon() { let runtime, control, committed = false, started = false; const exit = async()=> {const timer = setTimeout(()=>process.exit(0),3000); timer.unref(); await"
+          "example": "async function daemon() { let runtime, control, committed = false, started = false, ready = false, bootId; const exit = async()=> {const timer = setTimeout(()=>process.exit(0),3000"
         },
         {
           "kind": "statement",
           "message": "a top-level statement runs once, as a program",
           "span": {
-            "start": 27978,
-            "end": 28051,
+            "start": 29797,
+            "end": 29870,
             "encoding": "utf16"
           },
           "example": "if (process.argv[1] === SELF && process.argv[2] === '--daemon') daemon();"

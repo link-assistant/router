@@ -481,16 +481,16 @@
     },
     {
       "source": "packages/javascript/native/managed-server.mjs",
-      "sourceSha256": "00b3acf1d71d4df893d7e8f0a5d8fcf1021b93239600f572079a87c22fd81b71",
+      "sourceSha256": "e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf",
       "meta": "tools/translation/js-to-rust/generated/native-typescript/native/managed-server.mjs.meta.json",
       "target": "packages/typescript/native/managed-server.ts",
-      "nodes": 9677,
-      "explicitAny": 381,
-      "inferredReturns": 40,
-      "inferredLocals": 19,
-      "metaSha256": "263f7cb42629f5f12f48f47fc261d9315afe15135261d837f867f277d87148cf",
-      "targetSha256": "0422f164d9e32566f2c0f33811eeb3dfed75fb156188fc5252a3232d14c597a2",
-      "runtimeASTSha256": "53bcb0a7a8a3d2c6f0655cb1b4dd28780b897f451939457fc28e4572aa8ffea5",
+      "nodes": 10196,
+      "explicitAny": 408,
+      "inferredReturns": 46,
+      "inferredLocals": 20,
+      "metaSha256": "8578b47dc518ee073594a31140f8080e9d7f9f016b2c220380588d2124772d0d",
+      "targetSha256": "f9b4abceb74234f2d9ce57839fdc50273eea9ac4e8db84c2c9ac678d8217c92f",
+      "runtimeASTSha256": "9e7b3cb498a6346185ef1a9126839ab670aa893a72d0f8676950c1bb5a3d8a92",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     },
     {
@@ -1144,13 +1144,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/native/managed-server.mjs.meta.json",
-      "bytes": 128885,
-      "sha256": "263f7cb42629f5f12f48f47fc261d9315afe15135261d837f867f277d87148cf"
+      "bytes": 136094,
+      "sha256": "8578b47dc518ee073594a31140f8080e9d7f9f016b2c220380588d2124772d0d"
     },
     {
       "path": "packages/typescript/native/managed-server.ts",
-      "bytes": 34887,
-      "sha256": "0422f164d9e32566f2c0f33811eeb3dfed75fb156188fc5252a3232d14c597a2"
+      "bytes": 36779,
+      "sha256": "f9b4abceb74234f2d9ce57839fdc50273eea9ac4e8db84c2c9ac678d8217c92f"
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/native/management-access.mjs.meta.json",

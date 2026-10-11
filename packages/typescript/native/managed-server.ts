@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=263f7cb42629f5f12f48f47fc261d9315afe15135261d837f867f277d87148cf; dynamic any annotations are explicit draft gaps.
+// Meta sha256=8578b47dc518ee073594a31140f8080e9d7f9f016b2c220380588d2124772d0d; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual, X509Certificate } from 'node:crypto';
@@ -164,8 +164,9 @@ export function normalizeManagedOrigin(value?: any): string {
         throw fail('Server URL must be an absolute http:// or https:// origin without credentials, path, query, or fragment');
     return url.origin;
 }
-function request(url?: any, { method = 'GET', headers = {}, body, limit = 65536, timeout = 1200 }: any = {}): any {
+function request(url?: any, { method = 'GET', headers = {}, body, limit = 65536, timeout = 1200, phase = 'control' }: any = {}): any {
     return new (Promise as any)((done?: any, reject?: any): void => {
+        const started: number = (performance as any).now();
         const call: any = httpRequest(url, { method, headers, agent: false }, (response?: any): void => {
             const chunks: any = [];
             let size: any = 0;
@@ -176,14 +177,14 @@ function request(url?: any, { method = 'GET', headers = {}, body, limit = 65536,
             response.on('error', reject);
             response.on('end', (): void => done({ status: response.statusCode, text: (Buffer as any).concat(chunks).toString('utf8') }));
         });
-        call.setTimeout(timeout, (): any => call.destroy(fail('Managed control request timed out')));
+        call.setTimeout(timeout, (): any => call.destroy(fail(`Managed ${phase} request timed out (budget=${timeout}ms, elapsed=${(Math as any).round((performance as any).now() - started)}ms)`)));
         call.on('error', reject);
         call.end(body);
     });
 }
-async function proof(state?: any, action: any = 'health'): Promise<any> {
-    const challenge: string = nonce(), body: string = (JSON as any).stringify({ challenge, boot_id: state.boot_id });
-    const result: any = await request(`http://127.0.0.1:${state.control_port}/${action}`, { method: 'POST', headers: { authorization: `Bearer ${state.control_key}`, 'content-type': 'application/json' }, body });
+async function proof(state?: any, action: any = 'health', verifyBootstrap: any = false): Promise<any> {
+    const challenge: string = nonce(), body: string = (JSON as any).stringify({ challenge, boot_id: state.boot_id, verify_bootstrap: verifyBootstrap });
+    const result: any = await request(`http://127.0.0.1:${state.control_port}/${action}`, { method: 'POST', headers: { authorization: `Bearer ${state.control_key}`, 'content-type': 'application/json' }, body, phase: verifyBootstrap ? 'bootstrap verification' : `${action} proof` });
     if (result.status !== 200)
         throw fail('Managed daemon ownership verification failed');
     let report: any;
@@ -198,11 +199,11 @@ async function proof(state?: any, action: any = 'health'): Promise<any> {
         throw fail('Managed daemon process identity does not match the owned registry');
     return payload;
 }
-async function verified(state?: any): Promise<any> {
+async function verified(state?: any, verifyBootstrap: any = false): Promise<any> {
     if (!state.pid || !alive(state.pid))
         throw fail('Managed daemon is stopped or its recorded process has exited');
-    const result: any = await proof(state);
-    const health: any = await request(`http://127.0.0.1:${state.port}/health`);
+    const result: any = await proof(state, 'health', verifyBootstrap);
+    const health: any = await request(`http://127.0.0.1:${state.port}/health`, { phase: 'public health' });
     if (health.status !== 200 || health.text.trim() !== 'ok')
         throw fail('Managed daemon public listener is not healthy');
     return result;
@@ -236,7 +237,7 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
     let committed: any = false;
     try {
         const ready: any = await new (Promise as any)((done?: any, reject?: any): void => {
-            const timer: any = setTimeout((): void => reject(fail('Managed daemon did not become ready within 10 seconds')), 10000);
+            const timer: any = setTimeout((): void => finish(reject)(fail('Managed daemon did not become ready within 10 seconds')), 10000);
             const finish: any = (fn?: any): any => (value?: any): void => { clearTimeout(timer); child.off('error', onError); child.off('exit', onExit); child.off('message', onMessage); (fn as any)(value); };
             const onError: any = finish(reject), onExit: any = finish((): void => reject(fail('Managed daemon exited before readiness')));
             const onMessage: any = finish((message?: any): void => message?.ready ? done(message) : reject(fail('Managed daemon failed to start')));
@@ -250,7 +251,17 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
         (Object as any).assign(state, { pid: ready.pid, port: ready.port, control_port: ready.control_port, bootstrap_token: ready.bootstrap_token });
         await verified(state);
         await writeJSON(p.state, state);
-        child.send({ commit: true });
+        await new (Promise as any)((done?: any, reject?: any): void => {
+            const timer: any = setTimeout((): void => finish(reject)(fail('Managed daemon did not acknowledge commit within 10 seconds')), 10000);
+            const finish: any = (fn?: any): any => (value?: any): void => { clearTimeout(timer); child.off('error', onError); child.off('exit', onExit); child.off('message', onMessage); (fn as any)(value); };
+            const onError: any = finish(reject), onExit: any = finish((): void => reject(fail('Managed daemon exited before commit')));
+            const onMessage: any = finish((message?: any): void => message?.committed && message.pid === child.pid && message.boot_id === (state as any).boot_id ? done() : reject(fail('Managed commit identity mismatch')));
+            child.once('error', onError);
+            child.once('exit', onExit);
+            child.once('message', onMessage);
+            child.send({ commit: true, boot_id: (state as any).boot_id }, (error?: any): void => { if (error)
+                onError(error); });
+        });
         (committed as any) = true;
         children.set(child.pid, child);
         child.once('exit', (): boolean => children.delete(child.pid));
@@ -471,7 +482,7 @@ export async function executeManagedOperation({ name, options = {}, invocation =
                 throw fail('Managed router is absent; run server.start first');
             if ((state as any).claimed)
                 throw fail('Managed router administrator is already claimed; its credential is not printed twice');
-            const identity: any = await verified(state);
+            const identity: any = await verified(state, true);
             if (!identity.bootstrap_valid || typeof (state as any).bootstrap_token !== 'string' || identity.bootstrap_fingerprint !== fingerprint((state as any).bootstrap_token))
                 throw fail('Managed bootstrap administrator is unavailable, mismatched, or expired');
             (state as any).claimed = true;
@@ -509,7 +520,7 @@ export async function acquireManagedReference({ core, config = {} }: any): Promi
         (state.references.push as any)({ pid: (process as any).pid, owner_boot: OWNER_BOOT }); await writeJSON(p.state, state); return { pid: (process as any).pid, url: `http://127.0.0.1:${state.port}` }; });
 }
 async function daemon(): Promise<void> {
-    let runtime: any, control: any, committed: any = false, started: any = false;
+    let runtime: any, control: any, committed: any = false, started: any = false, ready: any = false, bootId: any;
     const exit: any = async (): Promise<any> => { const timer: any = setTimeout((): any => (process as any).exit(0), 3000); timer.unref(); await (runtime as any)?.close().catch((): void => { }); (control as any)?.close(); (process as any).exit(0); };
     const deadline: any = setTimeout((): any => exit(), 10000);
     (process as any).on('disconnect', (): void => { if (!committed)
@@ -518,8 +529,13 @@ async function daemon(): Promise<void> {
     (process as any).on('SIGINT', exit);
     (process as any).on('message', async (message?: any): Promise<void> => {
         if (message?.commit) {
+            if (!ready || message.boot_id !== bootId) {
+                await exit();
+                return;
+            }
             (committed as any) = true;
             clearTimeout(deadline);
+            (process as any).send?.({ committed: true, pid: (process as any).pid, boot_id: bootId });
             return;
         }
         if (message?.abort) {
@@ -531,6 +547,7 @@ async function daemon(): Promise<void> {
         (started as any) = true;
         try {
             const state: any = validateState(message.state), core: any = await (await import("./core.js")).createRouterCore({ config: message.config, env: {} });
+            (bootId as any) = state.boot_id;
             let token: any = state.bootstrap_token;
             if (!token)
                 (token as any) = (await core.tokens.issue({ scope: 'admin', ttl_hours: 87600, label: 'native-managed-bootstrap' })).token;
@@ -555,11 +572,12 @@ async function daemon(): Promise<void> {
                     if (!/^[a-f0-9]{64}$/.test(body.challenge) || body.boot_id !== state.boot_id)
                         throw fail('Invalid control challenge');
                     let bootstrapValid: any = false;
-                    try {
-                        await core.tokens.validate(token, { admin: true });
-                        (bootstrapValid as any) = true;
-                    }
-                    catch { }
+                    if (body.verify_bootstrap === true)
+                        try {
+                            await core.tokens.validate(token, { admin: true });
+                            (bootstrapValid as any) = true;
+                        }
+                        catch { }
                     const payload: any = { challenge: body.challenge, boot_id: state.boot_id, pid: (process as any).pid, role: ENGINE, healthy: !!(runtime as any).address, bootstrap_valid: bootstrapValid, bootstrap_fingerprint: fingerprint(token) };
                     res.writeHead(200, { 'content-type': 'application/json' });
                     res.end((JSON as any).stringify({ ...payload, mac: digest(state.control_key, (JSON as any).stringify(payload)) }));
@@ -575,6 +593,8 @@ async function daemon(): Promise<void> {
             control.requestTimeout = 2000;
             control.headersTimeout = 2000;
             await new (Promise as any)((done?: any, reject?: any): void => { ((control as any).once as any)('error', reject); ((control as any).listen as any)(0, '127.0.0.1', done); });
+            (ready as any) = true;
+            deadline.refresh();
             (process as any).send?.({ ready: true, pid: (process as any).pid, boot_id: state.boot_id, port: runtime.address.port, control_port: control.address().port, bootstrap_token: token });
         }
         catch {
