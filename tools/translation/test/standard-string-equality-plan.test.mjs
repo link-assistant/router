@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {planStandardStringEquality,STANDARD_STRING_EQUALITY_PROFILE} from '../extensions/standard-string-equality.mjs';
 const range={start:1,end:2};
-const owned={kind:'string',rustSourceType:true,rustOwnership:{kind:'owned',source:'String'}};
+const owned={kind:'string',rustSourceType:true,patternOwnershipRefusal:'ownership-bearing String type',rustOwnership:{kind:'owned',source:'String'}};
 const borrowed={kind:'string',rustSourceType:true,rustOwnership:{kind:'borrowed',source:'str'}};
 const shared={kind:'string',rustOwnership:{kind:'borrowed',source:'String'},patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:owned,span:range,tokens:[{value:'&'},{value:'String'}]}};
 const value=type=>({k:'var',name:'v',type,span:range});
@@ -13,7 +13,7 @@ test('standard String equality planner registers only actual pinned trait pairs'
 });
 
 test('string equality refuses erased custom unresolved and noncanonical reference evidence',()=>{
-  for(const type of [{kind:'string'},{kind:'data',name:'String'}, {...owned,rustGenericIdentityUnresolved:true},{...owned,rustBorrowingUnresolved:'unknown'}, {...shared,rustReference:{kind:'mutable',pointee:owned}},{...shared,rustReference:{kind:'shared'}},{...shared,rustReference:{kind:'shared',pointee:shared}},{...borrowed,patternOwnershipRefusal:'unproved'}])assert.throws(()=>planStandardStringEquality(value(type),value(borrowed)),/checked source reference/);
+  for(const type of [{kind:'string'},{kind:'data',name:'String'}, {...owned,patternOwnershipRefusal:'unproved'},{...owned,rustGenericIdentityUnresolved:true},{...owned,rustBorrowingUnresolved:'unknown'}, {...shared,rustReference:{kind:'mutable',pointee:owned}},{...shared,rustReference:{kind:'shared'}},{...shared,rustReference:{kind:'shared',pointee:shared}},{...borrowed,patternOwnershipRefusal:'unproved'}])assert.throws(()=>planStandardStringEquality(value(type),value(borrowed)),/checked source reference/);
 });
 
 test('shared String field places require their actual checked nominal layout',()=>{

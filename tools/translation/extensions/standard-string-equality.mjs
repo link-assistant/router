@@ -10,7 +10,7 @@ export const STANDARD_STRING_EQUALITY_PROFILE=Object.freeze({
     Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/cmp.rs',sha256:'4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4',lines:Object.freeze([2021,2033])}),
   ]),
 });
-const owned=type=>type?.kind==='string'&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&!type.rustReference&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved;
+const owned=type=>type?.kind==='string'&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&!type.rustReference&&(!type.patternOwnershipRefusal||type.patternOwnershipRefusal==='ownership-bearing String type')&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved;
 const fail=span=>{throw unsupported('standard string equality','requires an actual registered String/str PartialEq pair and checked source reference or field-place evidence',span);};
 const sourceRange=span=>Number.isInteger(span?.start)&&Number.isInteger(span?.end)&&span.start>=0&&span.end>=span.start;
 
