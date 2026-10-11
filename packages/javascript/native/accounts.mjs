@@ -6,6 +6,11 @@ const strategyAliases = new Map([
   ['rr','round-robin'],['roundrobin','round-robin'],['weighted_round_robin','weighted-round-robin'],
   ['prio','priority'],['fill-first','priority'],['leastused','least-used'],['quota-first','least-used'],['lru','least-used'],
 ]);
+export const retryableStatus = status => [401,429,529,500,502,503,504].includes(status);
+export function requestErrorAction(policy,status,body) {
+  const prefix=Buffer.from(body ?? '').subarray(0,16384);
+  return policy.request_scoped_errors.find(rule=>rule.status===status && prefix.indexOf(Buffer.from(rule.match))>=0)?.action;
+}
 export function wildcardMatch(pattern, value) {
   const regex = pattern.split('').map(c => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\^$.[\]{}()+|]/g,'\\$&')).join('');
   return new RegExp(`^${regex}$`).test(value);
@@ -152,13 +157,13 @@ export class AccountRouter {
     const old = this.bound(context);
     if (session && this.config.session_affinity_ttl_seconds > 0) this.affinities.set(session,{name:old ?? candidate.account,until:this.clock()+this.config.session_affinity_ttl_seconds});
   }
-  async reportFailure(candidate, { status, retryAfter, scope = 'account', message = '' } = {}) {
+  async reportFailure(candidate, { status, retryAfter, scope = 'account', message = '', body } = {}) {
     const account = this.records.get(candidate.account); if (!account) return;
-    const rule = account.policy.request_scoped_errors.find(rule => rule.status === status && message.includes(rule.match));
-    if (rule?.action === 'relay' || rule?.action === 'retry-next') return rule.action;
-    if (status != null && ![401,403,408,429,500,502,503,504].includes(status) && rule?.action !== 'cooldown') return 'relay';
-    if (account.policy.disable_cooling) return 'retry-next';
-    let seconds = Number(retryAfter);
+    const action=requestErrorAction(account.policy,status,body ?? message);
+    if (action === 'relay' || action === 'retry-next') return action;
+    if (status != null && !retryableStatus(status) && action !== 'cooldown') return 'relay';
+    if (account.policy.disable_cooling) return action === 'cooldown'?'cooldown':'retry-next';
+    let seconds = typeof retryAfter==='number' || typeof retryAfter==='string' && /^\d+$/.test(retryAfter.trim()) ? Number(retryAfter):NaN;
     if (!Number.isFinite(seconds) && typeof retryAfter === 'string') seconds = Math.ceil((Date.parse(retryAfter)-this.clock()*1000)/1000);
     if (!Number.isFinite(seconds) || seconds < 0) seconds = this.config.account_cooldown_seconds;
     const until = this.clock()+Math.min(seconds,this.config.account_max_cooldown_seconds);
@@ -166,7 +171,7 @@ export class AccountRouter {
       const state = this.limits.get(candidate.account) ?? {model_cooldowns:{}};
       if (scope === 'model') { const key = candidate.model.toLowerCase(); state.model_cooldowns ??= {}; state.model_cooldowns[key] = Math.max(state.model_cooldowns[key] ?? 0,until); }
       else { state.cooldown_until_unix = Math.max(state.cooldown_until_unix ?? 0,until); state.cooldown_reason = message || `HTTP ${status ?? 'network failure'}`; }
-      this.limits.set(candidate.account,state); await this.persist(); return 'cooldown';
+      this.limits.set(candidate.account,state); await this.persist(); return action === 'cooldown'?'cooldown':'retry-next';
     });
   }
   async reportSuccess(candidate) { const state = this.limits.get(candidate.account); if (state) { state.last_error = null; } }

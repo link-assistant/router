@@ -7,7 +7,9 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
-import { createNativeService } from './native-service.mjs';
+import { createNativeService,boundedBytes } from './native-service.mjs';
+import {estimateRequestBudget} from './token-reservation.mjs';
+import {retryableStatus} from './accounts.mjs';
 import {managementOperation} from './http-management.mjs';
 import {relayWebSocket} from './websocket-relay.mjs';
 import {UsageTracker} from './usage.mjs';
@@ -59,11 +61,13 @@ function upstreamHeaders(candidate, protocol, request) {
   const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' });
   // Only operator-defined static headers are forwarded. Client credentials,
   // cookies, proxy headers and browser origin never become upstream headers.
-  const forbidden = /^(?:authorization|x-api-key|cookie|set-cookie|host|connection|content-length|transfer-encoding|proxy-.*|forwarded|x-forwarded-.*)$/i;
+  const forbidden = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
+  const copies=new Set(['x-request-id','x-correlation-id','traceparent','tracestate','x-claude-code-session-id','x-codex-session-id','x-session-id','session-id']);
   for (const [key, value] of Object.entries(candidate.headers ?? candidate.account?.headers ?? {})) {
     if (forbidden.test(key)) continue;
-    if (typeof value !== 'string' || value.startsWith('$')) continue;
-    headers.set(key, value);
+    if (typeof value !== 'string') continue;
+    if(value.startsWith('$')){const source=value.slice(1).toLowerCase();if(copies.has(source) && request.headers.has(source))headers.set(key,request.headers.get(source));}
+    else headers.set(key, value);
   }
   const key = candidate.apiKey ?? candidate.api_key ?? candidate.account?.api_key;
   if (key) headers.set(protocol === 'anthropic' && candidate.auth_type !== 'oauth' ? 'x-api-key' : 'authorization', protocol === 'anthropic' && candidate.auth_type !== 'oauth' ? key : `Bearer ${key}`);
@@ -91,7 +95,6 @@ async function boundedJSON(request, maxBytes,objectOnly=true) {
   if (objectOnly && (!value || typeof value !== 'object' || Array.isArray(value))) throw new ProtocolError('Request body must be a JSON object');
   return value;
 }
-const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);
 
 /** A native Web Request/Response router. All selection and state live in core. */
 export function createNativeRouter(options = {}) {
@@ -250,7 +253,7 @@ export function createNativeRouter(options = {}) {
     const context = { ...routingContext(request, claims), model: body.model, protocol: source, sessionKey: request.headers.get('x-router-session') ?? undefined, exclude: [] };
     const candidates = core.candidates ? await core.candidates(context) : [await core.route(context)];
     if (!candidates?.length) throw new ProtocolError('No eligible upstream account for this model', 503);
-    const reserve = body.max_completion_tokens ?? body.max_tokens ?? body.max_output_tokens ?? 0;
+    const reserve = estimateRequestBudget(body).total;
     const tokenId = claims.sub ?? claims.id;
     if (tokenId && core.tokens?.admit) {
       const denial = await core.tokens.admit(tokenId, reserve);
@@ -263,9 +266,10 @@ export function createNativeRouter(options = {}) {
       settled = true;
       if (usage) { counters.input_tokens += usage.input; counters.output_tokens += usage.output; }
     };
-    let finalError;
+    let finalError,finalResponse;
     try {
-      const attemptLimit = configuration().account_failover === false ? 1 : Math.max(1, Math.min(10, maxAttempts));
+      const retryOverride=core.accounts?.records?.get(candidates[0].account)?.policy?.request_retry;
+      const attemptLimit = context.pinnedAccount || retryOverride===0 || configuration().account_failover === false && !(retryOverride>0) ? 1 : retryOverride!=null?retryOverride+1:Math.max(1, Math.min(100, maxAttempts));
       for (const rawCandidate of candidates.slice(0, attemptLimit)) {
         let candidate = rawCandidate;
         try { candidate = core.prepareCandidate ? await core.prepareCandidate(rawCandidate) : rawCandidate; }
@@ -298,16 +302,20 @@ export function createNativeRouter(options = {}) {
         } catch (error) {
           clearTimeout(timer); request.signal.removeEventListener('abort', abort);
           if (request.signal.aborted) throw new ProtocolError('Client disconnected', 499);
-          await core.reportFailure?.(candidate, { status: 502, scope: 'account' });
+          await core.reportFailure?.(candidate, {scope:'account',message:'Upstream connection failed',reason:'transport'});
           finalError = new ProtocolError('Upstream connection failed', 502); continue;
         }
         const cleanup = () => { clearTimeout(timer); request.signal.removeEventListener('abort', abort); };
         if (!response.ok) {
-          cleanup(); const status = response.status; const retryAfter = response.headers.get('retry-after'); await response.body?.cancel();
-          const disposition = await core.reportFailure?.(candidate, { status, retryAfter, scope: retryStatuses.has(status) ? 'account' : 'request', message: `HTTP ${status}` });
+          const status = response.status,retryAfter = response.headers.get('retry-after');let bytes;try{bytes=await boundedBytes(response,maxResponseBytes);}catch(error){throw new ProtocolError('Upstream error response exceeds limit or could not be read',502);}finally{cleanup();}
+          const prefix=bytes.subarray(0,16384),message=Buffer.from(prefix).toString('utf8');
+          const disposition = await core.reportFailure?.(candidate, { status, retryAfter, scope: retryableStatus(status) ? 'account' : 'request',message,body:prefix,headers:response.headers });
           finalError = new ProtocolError(`Upstream returned HTTP ${status}`, status); finalError.code = 'upstream_error';
-          if (disposition !== 'relay' && (retryStatuses.has(status) || disposition === 'retry-next' || disposition === 'cooldown')) continue;
-          throw finalError;
+          const errorHeaders=relayHeaders(response);if(response.headers.has('content-type'))errorHeaders['content-type']=response.headers.get('content-type');
+          if(source===protocol)finalResponse=new Response(bytes,{status,headers:errorHeaders});
+          else {let value;try{value=JSON.parse(message);}catch{}finalError.message=value?.error?.message ?? value?.message ?? message ?? finalError.message;finalResponse=errorResponse(finalError,source);for(const [name,value] of Object.entries(errorHeaders))if(name!=='content-type')finalResponse.headers.set(name,value);}
+          if (!['relay','cooldown'].includes(disposition) && (retryableStatus(status) || disposition === 'retry-next')) continue;
+          await settle();return finalResponse;
         }
         const headers = relayHeaders(response);
         if (body.stream) {
@@ -343,6 +351,7 @@ export function createNativeRouter(options = {}) {
         if (retain) responseStore.save(namespace, owner, result, responseInput);
         return json(result, response.status, headers);
       }
+      if(finalResponse){await settle();return finalResponse;}
       throw finalError ?? new ProtocolError('All upstream accounts are unavailable', 503);
     } catch (error) { await settle(); throw error; }
   }

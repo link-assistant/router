@@ -13,7 +13,8 @@
     "GitHub API/Git interruption, upstream compare failure and audit log fixtures",
     "public management feature switches and full route error/observability source contracts",
     "request logging: exact eager capture/read-prefix bounds, runtime debug lease, per-process aggregate retention cache and all route error fixtures",
-    "thinking truth tables, suffix/account-capability replay and full provider model activation"
+    "thinking truth tables, suffix/account-capability replay and full provider model activation",
+    "retry rounds/deadline/recovery selection, pre-first-byte SSE error probing and live policy/account capability replay"
   ],
   "implemented_subsets": [
     "canonical 368-method route matcher",
@@ -31,6 +32,9 @@
     "HEAD methods, listener route isolation and actual socket-peer management gating/lockout callbacks",
     "private persisted request Lino logs, exact opaque-native route capture, error capture retention/clear generation fences, actual queue/request/error management lookup",
     "real core emergency authentication health/diagnostic/disable contracts and non-durable synthetic model authority",
-    "Gemini generation controls, reasoning effort budget/visibility precedence, HTTP and inline image validation matching source"
+    "Gemini generation controls, reasoning effort budget/visibility precedence, HTTP and inline image validation matching source",
+    "source spend reservations include UTF8 prompt plus default/declared output, once-per-request admission and settlement",
+    "account error rules match actual bounded upstream bytes in declaration order; exact transient retry status set, explicit relay/cooldown and pinned-account stopping, preserved last error response",
+    "reviewed account header copy allow-list applied without forwarding client credentials"
   ]
 }
