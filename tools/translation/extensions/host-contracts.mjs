@@ -26,6 +26,17 @@ export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,famil
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const nonlocalDefault=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonlocalDefault):nonlocalDefault(value))));
+const INHERENT_FIXED_COPY=new Set(['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul']);
+// Built-in shared primitive reads copy an immutable BigInt value. Trait Deref,
+// raw pointers, aggregate copies and reference creation need separate proofs.
+export function sharedFixedPointee(type,range) {
+  const reference=type?.rustReference,pointee=reference?.pointee;
+  let leaf=type,depth=0;
+  while(leaf?.rustReference){const next=leaf.rustReference.pointee;if(++depth>32||leaf.rustReference.kind!=='shared'||leaf.kind!=='fixed'||leaf.rustGenericIdentityUnresolved||!next||next.kind!=='fixed'||leaf.bits!==next.bits||leaf.signed!==next.signed||leaf.rustPrimitiveName!==next.rustPrimitiveName)throw unsupported('shared primitive dereference','requires a bounded checked shared fixed-integer reference chain',range);leaf=next;}
+  const primitive=rustFixedType(leaf?.rustPrimitiveName);
+  if(reference?.kind!=='shared'||!pointee||leaf?.kind!=='fixed'||!primitive||primitive.bits!==leaf.bits||primitive.signed!==leaf.signed||leaf.patternOwnershipRefusal||leaf.rustGenericIdentityUnresolved)throw unsupported('shared primitive dereference','requires an actual checked shared reference to a by-value standard fixed integer',range);
+  return pointee;
+}
 export const INTEGER_FROM_PROFILE=Object.freeze({rust:'1.89.0',source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/num.rs',sha256:'270e0801e5e23cba89fec51eed416be60743034a6f02c5fe64be2e8f2e8ca958',lines:[99,141],identity:{source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/mod.rs',sha256:'0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab',line:774}});
 const integerFromSources=Object.freeze({u8:[],u16:['u8'],u32:['u8','u16'],u64:['u8','u16','u32'],u128:['u8','u16','u32','u64'],usize:['u8','u16'],i8:[],i16:['i8','u8'],i32:['i8','i16','u8','u16'],i64:['i8','i16','i32','u8','u16','u32'],i128:['i8','i16','i32','i64','u8','u16','u32','u64'],isize:['i8','i16','u8']});
 export const hasIntegerFrom=(source,target)=>Object.hasOwn(integerFromSources,target)&&(source===target||integerFromSources[target].includes(source));
@@ -36,6 +47,10 @@ export function assertRustPrimitiveIdentity(actual,expected,range,{declarations,
   if(actual.kind==='fixed'&&expected.kind==='fixed') {
     if(actual.rustPrimitiveName&&expected.rustPrimitiveName&&actual.rustPrimitiveName!==expected.rustPrimitiveName)throw typeError('distinct Rust primitive integer identities require an explicit checked cast',range);
     if((actual.patternOwnershipRefusal??null)!==(expected.patternOwnershipRefusal??null))throw typeError('Rust integer reference ownership differs from the expected value type',range);
+    if(actual.rustReference||expected.rustReference){
+      if(actual.rustReference?.kind!=='shared'||expected.rustReference?.kind!=='shared'||!actual.rustReference.pointee||!expected.rustReference.pointee)throw typeError('Rust integer references require the same actual checked pointee identity',range);
+      assertRustPrimitiveIdentity(actual.rustReference.pointee,expected.rustReference.pointee,range,{declarations,resolveType},active);
+    }
   }
   if(actual.kind==='array'&&expected.kind==='array')assertRustPrimitiveIdentity(actual.element,expected.element,range,{declarations,resolveType},active);
   if(actual.kind==='data'&&expected.kind==='data') {
@@ -122,11 +137,25 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
     if(name.value!=='parse')return super.method(object,name,args,range);
     return this.instantiatedMethod(object,name,args,null,range);
   }
+  unary(path,options) {
+    const first=this.cursor.peek();if(!this.cursor.eat('*'))return super.unary(path,options);
+    const value=this.unary(path,{});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
+  }
   type(){
-    const c=this.cursor,first=c.peek();
+    const c=this.cursor;
+    // && is one lexer token, but two borrows only in a source type position.
+    // Split its coordinates here; boolean expression tokens remain untouched.
+    if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}
+    const first=c.peek();
     if(c.is('&')){
-      const start=c.index,type=super.type(),tokens=c.tokens.slice(start,c.index),pointee=tokens.slice(tokens[1]?.value==="'"?3:1);
-      return pointee.length===1&&pointee[0].value==='str'?type:{...type,patternOwnershipRefusal:type.patternOwnershipRefusal??'shared source reference',rustReference:{kind:'shared',span:span(tokens[0],tokens.at(-1)),tokens:tokens.map(token=>({value:token.value,kind:token.kind,span:{start:token.start,end:token.end}}))}};
+      const start=c.index;c.next();
+      if(c.eat("'")){const lifetime=c.identifier('lifetime');if(lifetime.value!=='static')throw unsupported('lifetime parameter',"only 'static references are portable",span(first,lifetime));}
+      if(c.is('mut'))throw unsupported('mutable reference','mutation is outside the portable core',span(first,c.peek()));
+      // Keep the existing borrowed-str value profile. Other references retain
+      // their actual parsed pointee, including nested ownership qualifiers.
+      if(c.is('str')){c.index=start;return super.type();}
+      const pointee=this.type(),tokens=c.tokens.slice(start,c.index);
+      return {...pointee,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(pointee),span:span(tokens[0],tokens.at(-1)),tokens:tokens.map(token=>({value:token.value,kind:token.kind,span:{start:token.start,end:token.end}}))}};
     }
     if(first.kind==='identifier'){
       const segments=[first.value];let offset=1;while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
@@ -195,7 +224,7 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
 }
 export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);}
-  resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:type.rustReference}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
+  resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
     if(pattern.registeredGenericOwner){
       const entry=type.kind==='data'?this.items.get(type.name):null;
@@ -245,6 +274,11 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='routerPrimitiveDereference') {
+      if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);
+      const value=this.expr(node.value,env,path),type=sharedFixedPointee(value.type,node.span);
+      return {...node,value,type,dereferenceProof:{kind:'shared-fixed-copy',primitiveName:type.rustPrimitiveName,reference:structuredClone(value.type.rustReference),sourceFeature:node.sourceFeature,span:node.span}};
+    }
     if(node.k==='num'&&expected?.kind==='fixed'&&expected.patternOwnershipRefusal)throw unsupported('integer reference literal','a literal needs checked borrowing or promotion, not a portable integer domain',node.span);
     if(node.k==='num'&&node.type?.rustPrimitiveName){
       const value=super.expr(node,env,path,expected,allowLiteral),name=node.type.rustPrimitiveName;
@@ -278,7 +312,12 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
       const inherent=this.resolvedMethod(receiver.type,method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       const contracts=HOST_CONTRACTS.filter(contract=>contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
       if(contracts.length)return this.hostCall(contracts,[node.object,...node.args],env,path,expected,node.span);
-      if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){const instance=this.instantiations.fixed(receiver.type,node.span);return this.hostCall(instance.contracts.filter(contract=>contract.rustPath.at(-1)===method),[node.object,...node.args],env,path,expected,node.span);}
+      if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){
+        const borrowed=Boolean(receiver.type.rustReference);let type=receiver.type,object=node.object;
+        if(borrowed&&!INHERENT_FIXED_COPY.has(method))throw unsupported('reference Ord method','reference trait selection is not primitive inherent autodereference',node.span);
+        while(type.rustReference){type=sharedFixedPointee(type,node.span);object={k:'routerPrimitiveDereference',value:object,sourceFeature:'inherent-receiver-autoderef',span:node.object.span};}
+        const instance=this.instantiations.fixed(type,node.span);return this.hostCall(instance.contracts.filter(contract=>contract.rustPath.at(-1)===method),[object,...node.args],env,path,expected,node.span);
+      }
       const mapOr=method==='map_or'&&receiver.type.kind==='data'&&this.items.get(receiver.type.name)?.standardGeneric?.kind==='Option';
       if(mapOr&&node.args.length!==2)throw typeError('standard map_or expects 2 arguments',node.span);
       if(mapOr&&nonlocalDefault(node.args[0]))throw unsupported('Option.map_or default control','nonlocal exits require separately checked statement lowering',node.args[0].span);
@@ -324,6 +363,9 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
 export class HostEmitter extends EffectEmitter {
   constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
+    // The portable bounds helper compares values. Reject non-BigInts before
+    // that helper can invoke a hostile object's conversion hooks.
+    if(param.type.kind==='fixed')return [`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&hasData(type.element);
     if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
     // A helper's guard must depend only on its actual reachable parameter
@@ -345,6 +387,7 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(type)}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);
     if(node.k==='routerStandardMethod'){this.standardMethods=true;return `ml_host_${node.operation}(${this.expr(node.value)}${node.defaultValue?', '+this.expr(node.defaultValue):''}${node.callback?', '+this.expr(node.callback):''})`;}
     if(node.k==='routerOptionCallback'){this.optionCallbacks=true;return `ml_host_option_bind(${this.expr(node.value)}, ${this.expr(node.callback)}, ${JSON.stringify(node.op)})`;}
