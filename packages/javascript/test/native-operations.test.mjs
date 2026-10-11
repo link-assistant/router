@@ -27,7 +27,7 @@ test('native CLI parses canonical flags and rejects secret argv', () => {
   assert.throws(() => parseNativeArguments(['version', '--verbose=false', '--verbose']), /Duplicate/);
 });
 test('native CLI writes one JSON result and returns its actual exit code', async () => {
-  for (const args of [['version', '--json'], ['deploy', '--json'], ['unknown'], ['tokens', 'show']]) {
+  for (const args of [['version', '--json'], ['deploy', '--json'], ['unknown','--json'], ['tokens', 'show','--json']]) {
     let text = '';
     const exit = await runNativeCli(args, { stdout: { write(chunk) { text += chunk; } }, env: {} });
     const result = JSON.parse(text); assert.equal(exit, result.exit_code); assert.equal(text.trim().split('\n').length, 1);

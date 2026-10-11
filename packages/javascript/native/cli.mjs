@@ -1,21 +1,32 @@
 #!/usr/bin/env node
 /** Standalone native CLI: structured contracts, never falls back to Rust. */
 import { pathToFileURL } from 'node:url';
+import {renderNativeHuman} from './cli-output.mjs';
 import { NativeRouter, catalog, operationResult } from './operations.mjs';
 
 export function parseNativeArguments(argv) {
   const remaining = [...argv], global = {};
   for (let index = 0; index < remaining.length; index++) {
-    if (remaining[index] === '--json') { remaining.splice(index--, 1); continue; }
+    if (remaining[index] === '--') break;
+    if (remaining[index] === '--json') { global.json = true;remaining.splice(index--, 1); continue; }
+    if (remaining[index].startsWith('--config=')) {global.configPath=remaining[index].slice(9);if (!global.configPath) throw new Error('--config requires a file');remaining.splice(index--,1);continue;}
     if (remaining[index] === '--config') {
       if (!remaining[index + 1]) throw new Error('--config requires a file');
       global.configPath = remaining[index + 1]; remaining.splice(index, 2); index--;
     }
   }
+  const prefix=[],rootFlags=new Map(catalog.operations.find(operation=>operation.name==='version').options.filter(option=>option.flag).map(option=>[option.flag,option]));
+  while (remaining[0]?.startsWith('--')) {
+    const arg=remaining.shift(),equal=arg.indexOf('='),flag=arg.slice(2,equal<0 ? undefined : equal),option=rootFlags.get(flag);
+    if (!option) throw new Error(`Unknown global flag: --${flag}`);prefix.push(arg);
+    if (!option.boolean && equal<0) {
+      const value=remaining.shift();if (value===undefined || value.startsWith('--')) throw new Error(`--${flag} requires a value`);prefix.push(value);
+    }
+  }
   const operation = [...catalog.operations].sort((a, b) => b.command.length - a.command.length)
     .find(operation => operation.command.every((word, index) => remaining[index] === word));
   if (!operation) throw new Error(`Unknown native command: ${remaining.slice(0, 3).join(' ')}`);
-  const options = {}, positionals = [], args = remaining.slice(operation.command.length);
+  const options = {}, positionals = [], args = [...prefix,...remaining.slice(operation.command.length)];
   const flags = new Map(operation.options.filter(option => option.flag).map(option => [option.flag, option]));
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -44,10 +55,11 @@ export function parseNativeArguments(argv) {
   if (positionals.length) throw new Error(`Unexpected positional arguments for ${operation.name}`);
   return { name: operation.name, options, global };
 }
-export async function runNativeCli(argv, { stdout = process.stdout, stdin = process.stdin, env = process.env, router } = {}) {
-  let result;
+export async function runNativeCli(argv, { stdout = process.stdout, stderr = process.stderr, stdin = process.stdin, env = process.env, router } = {}) {
+  let result,json=argv.slice(0,argv.indexOf('--')<0 ? argv.length : argv.indexOf('--')).includes('--json');
   try {
     const parsed = parseNativeArguments(argv);
+    json=parsed.global.json ?? false;
     router ??= new NativeRouter({ ...parsed.global, env });
     let input = '';
     if (parsed.options.api_key_stdin || parsed.options.token_stdin) {
@@ -56,11 +68,15 @@ export async function runNativeCli(argv, { stdout = process.stdout, stdin = proc
         if (Buffer.byteLength(input) > 1_048_576) throw new Error('stdin exceeds 1 MiB limit');
       }
     }
-    result = await router.execute(parsed.name, parsed.options, { stdin: input });
+    result = await router.execute(parsed.name, parsed.options, { stdin: input,...(!json ? {onProgress:line=>stdout.write(line+'\n')} : {}) });
   } catch (error) {
     result = operationResult('cli-error', { output: [] }, [error.message], 2);
   }
-  stdout.write(JSON.stringify(result) + '\n');
+  if (json) stdout.write(JSON.stringify(result)+'\n');
+  else {
+    const output=renderNativeHuman(result);if (output) stdout.write(output+'\n');
+    for (const diagnostic of result.diagnostics) stderr.write(`error: ${diagnostic}\n`);
+  }
   return result.exit_code;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

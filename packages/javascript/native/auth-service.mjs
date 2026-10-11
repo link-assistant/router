@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import * as oauthPrimitives from './oauth.mjs';
 import {CodexLogin} from './codex-login.mjs';
 
-const {CredentialFileStore,OAuthManager,ClaudeLogin,importCredential,validateCredentialCatalog} = oauthPrimitives;
+const {CredentialFileStore,OAuthManager,ClaudeLogin,importCredential,validateCredentialCatalog,subscriptionHome} = oauthPrimitives;
 const fail = (code,message,status = 400) => Object.assign(new Error(message),{code,status});
 const providers = ['claude','codex','gemini','qwen'];
 const pending = new Set(['awaiting_code','awaiting_callback','awaiting_device']);
@@ -14,11 +14,8 @@ const integer = (value,fallback,name) => {
   if (!Number.isSafeInteger(value) || value <= 0) throw fail('invalid_login_config',`${name} must be a positive safe integer`);
   return value;
 };
-function homeFor(core,provider,env = {}) {
-  const config = core.config;
-  return resolve(provider === 'claude' ? config.claude_code_home ?? config.claude_home ?? env.CLAUDE_CODE_HOME ?? join(config.data_dir,'claude')
-    : config[`${provider}_home`] ?? env[`${provider.toUpperCase()}_HOME`] ?? join(config.data_dir,provider));
-}
+function homeFor(core,provider,env = {}) {return subscriptionHome(provider,{config:core.config,env});}
+
 function safeCode(error) {return /^[a-z0-9_-]{1,100}$/i.test(error?.code ?? '') ? error.code : 'authorization_failed';}
 
 export async function nativeCredentialStatus(core,{env = {},fetch = core.oauth?.fetch ?? globalThis.fetch,validateCatalog = validateCredentialCatalog,catalogBaseURL,allowLoopback = false} = {}) {
@@ -27,7 +24,7 @@ export async function nativeCredentialStatus(core,{env = {},fetch = core.oauth?.
     const home = homeFor(core,provider,env);let held,store;
     try {
       store = new CredentialFileStore({provider,home,dataDir:core.config.data_dir,clock:core.clock});
-      held = await store.reload();
+      held = await store.transaction(()=>store.reload());
       if (!held) {credentials.push({provider,home,state:'absent'});sources.push({provider,source:{kind:'absent'}});continue;}
       sources.push({provider,source:held.origin === 'adopted' ? {kind:'followed',source:held.path,present:true}
         : held.origin === 'external' ? {kind:'externally-owned'} : {kind:'owned'}});

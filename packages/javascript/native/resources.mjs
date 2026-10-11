@@ -95,7 +95,7 @@ function utf8(bytes,path) {
   try { return new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
   catch { throw bad(`Resource is not valid UTF-8: ${path}`); }
 }
-async function readLogs(root, token) {
+export async function readNativeRequestLogs(root, token) {
   await noLinks(root); const rootStat = await statOptional(root);
   if (!rootStat?.isDirectory()) return { files:[], bytes:0, unparsable:0 };
   const files = [];
@@ -280,7 +280,7 @@ export async function executeResourceOperation({name,options = {},config = {},co
   if (options.token !== undefined && typeof options.token !== 'string') throw bad('Log token filter must be a string');
   if (name === 'logs.show' && typeof options.correlation_id !== 'string') throw bad('logs.show requires correlation_id');
   const root = options.request_log ?? resolvedConfig.request_log ?? join(dataDir,'requests');
-  const log = await readLogs(root,options.token);
+  const log = await readNativeRequestLogs(root,options.token);
   if (name === 'logs.show') return show(log,options.correlation_id);
   const all = exchanges(log);
   if (name === 'logs.summary') return summary(log,all);

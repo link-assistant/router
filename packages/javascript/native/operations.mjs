@@ -1,14 +1,20 @@
 /** Native operation dispatcher. This module never resolves or spawns a Rust executable. */
 import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import {readNativeText} from './operation-input.mjs';
+import {readTokenImportSource,importTokenRecords} from './token-import.mjs';
 import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';
 import { executeAuthOperation } from './oauth.mjs';
+import {CodexLogin} from './codex-login.mjs';
+import {nativeCredentialStatus} from './auth-service.mjs';
+import {nativeConfigOptions} from './config.mjs';
+import {parsePauseUntil} from './remote-operations.mjs';
 import { executeManagedOperation, supportedManagedOperations, selectedManagedTarget } from './managed-server.mjs';
 import { executeRemoteOperation, remoteStateFamilies } from './remote-operations.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 
 export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));
 export const version = catalog.version;
+const sharedOptions = new Set(catalog.operations.find(operation=>operation.name==='version').options.map(option=>option.name));
 export const operationNames = Object.freeze(catalog.operations.map(operation => operation.name));
 const camel = value => value.replace(/[-_]([a-z])/g, (_, letter) => letter.toUpperCase());
 const snake = value => value.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase()).replaceAll('-', '_');
@@ -65,7 +71,7 @@ function normalizeOptions(operation, options) {
   return normalized;
 }
 function localOnly(options, accepted = []) {
-  const consumed = new Set(['local', ...accepted]);
+  const consumed = new Set(['local', ...nativeConfigOptions, ...accepted]);
   for (const [name, value] of Object.entries(options)) {
     if (value === false) continue;
     if (!consumed.has(name)) unsupported(`Native local operation does not support ${name}; configure the native runtime explicitly or use the Rust wrapper`);
@@ -115,16 +121,25 @@ async function dispatch(router, name, options, invocation) {
     if (target) return executeRemoteOperation({name,options,invocation,target,fetch:router.options.fetch});
   }
   if (!nativeOperationSupport[name]) unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
-  // Local invocation contexts are applied by the core rather than silently
-  // changing process-global environment or working directory.
-  for (const key of ['env','cwd','deadlineMs','maxOutputBytes']) if (invocation[key] !== undefined)
-    unsupported(`Native local per-invocation ${key} requires the operation context`);
-  const core = await runtimeFor(router);
+  for (const key of ['deadlineMs','maxOutputBytes']) if (invocation[key] !== undefined && name !== 'auth.codex') unsupported(`Native local per-invocation ${key} requires operation cancellation and output accounting`);
+  const configOverrides = Object.fromEntries(Object.entries(options).filter(([key])=>sharedOptions.has(key)));
+  for (const key of Object.keys(configOverrides)) if (!nativeConfigOptions.has(key)) unsupported(`Native configuration does not implement ${key}`);
+  const baseCore = await runtimeFor(router);let core = baseCore;
+  if (Object.keys(configOverrides).length || invocation.env || invocation.cwd) {
+    if (!baseCore.withConfig) unsupported('Injected runtime cannot apply an operation context');
+    core = (await (await import('./core.mjs')).createOperationContext(baseCore,{configOverrides,env,cwd:invocation.cwd,signal:invocation.signal})).core;
+  }
+  if (invocation.signal?.aborted) throw new NativeRouterError('Operation cancelled',{code:'cancelled'});
   if (supportedManagedOperations[name]) return executeManagedOperation({ name, options, invocation, core, config: core.config, env, routerOptions: router.options });
   if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
     const accepted = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
       : name === 'auth.claude' ? ['home', 'code', 'flow', 'mode', 'from_claude_home'] : ['home', 'from_codex_home'];
-    localOnly(options, accepted);
+    localOnly(options, [...accepted,...(name === 'auth.codex' ? ['flow','port'] : [])]);
+    if (name === 'auth.codex' && !options.from_codex_home) {
+      const login = await CodexLogin.begin({home:core.config.codex_home ?? env.CODEX_HOME ?? (await import('node:path')).join(core.config.data_dir,'codex'),manager:core.oauth,clock:core.clock,dataDir:core.config.data_dir,flow:options.flow,port:options.port,signal:invocation.signal,...(invocation.deadlineMs !== undefined ? {timeoutMs:invocation.deadlineMs} : {}),...router.options.oauth});
+      invocation.onProgress?.(`Open this URL:\n${login.authorizationURL()}${login.userCode ? `\nEnter this one-time code:\n${login.userCode}` : ''}`);
+      try {await login.wait();return output(`Codex authorization saved in ${login.home}`);}finally {await login.cancel();}
+    }
     if (options.follow && options.snapshot) throw new NativeRouterError('follow and snapshot cannot be combined', { code: 'options' });
     const data = await executeAuthOperation({ name, options, core, config: core.config, env, fetch: router.options.fetch,
       clockSeconds: core.clock, oauth: router.options.oauth });
@@ -159,7 +174,7 @@ async function dispatch(router, name, options, invocation) {
   if (name === 'accounts.policy') {
     localOnly(options, ['name', 'file']);
     if (options.file) {
-      const policy = JSON.parse(await readFile(options.file, 'utf8'));
+      const policy = JSON.parse(await readNativeText(options.file,{cwd:invocation.cwd}));
       // The canonical result schema validates policy before any state change.
       operationResult(name, policy);
       await core.accounts.policy(options.name, policy);
@@ -170,34 +185,9 @@ async function dispatch(router, name, options, invocation) {
   if (name.startsWith('tokens.')) {
     const tokens = core.tokens;
     if (name === 'tokens.import') {
-      localOnly(options, ['from', 'ids', 'dry_run']);
-      if (!options.from.endsWith('.json')) unsupported('Native token import supports JSON token export files only; binary, lino and deployment directory imports remain incomplete');
-      const source = JSON.parse(await readFile(options.from, 'utf8'));
-      if (!Array.isArray(source)) throw new NativeRouterError('Token export must be an array', { code: 'options' });
-      const ids = new Set();
-      for (const record of source) {
-        operationResult('tokens.show', record);
-        if (ids.has(record.id)) throw new NativeRouterError('Duplicate imported token id', { code: 'options' });
-        ids.add(record.id);
-      }
-      const wanted = options.ids ? (Array.isArray(options.ids) ? options.ids : [options.ids]) : [];
-      const report = { mode: 'merge-missing', dry_run: options.dry_run ?? false, source_records: source.length,
-        target_records_before: 0, added: [], unchanged: [], conflicts: [], replaced: [], kept_revoked: [],
-        missing_from_source: wanted.filter(id => !ids.has(id)).sort() };
-      const apply = records => {
-        report.target_records_before = records.size;
-        for (const incoming of source.slice().sort((a,b) => a.id.localeCompare(b.id))) {
-          if (wanted.length && !wanted.includes(incoming.id)) continue;
-          const existing = records.get(incoming.id);
-          if (!existing) { report.added.push(incoming.id); if (!options.dry_run) records.set(incoming.id, structuredClone(incoming)); }
-          else {
-            const fields = [...new Set([...Object.keys(existing), ...Object.keys(incoming)])].filter(key => JSON.stringify(existing[key]) !== JSON.stringify(incoming[key])).sort();
-            if (fields.length) report.conflicts.push({ id: incoming.id, fields }); else report.unchanged.push(incoming.id);
-          }
-        }
-      };
-      if (options.dry_run) apply(new Map((await tokens.list()).map(record => [record.id, record])));
-      else await tokens.store.transaction(apply);
+      localOnly(options, ['from','ids','dry_run','replace']);
+      const source=await readTokenImportSource(options.from,{cwd:invocation.cwd,validateRecord:record=>operationResult('tokens.show',record)});
+      const report=await importTokenRecords({source,store:tokens.store,options,dataDir:core.config.data_dir,clock:core.clock});
       if (report.conflicts.length || report.missing_from_source.length) {
         const error = new NativeRouterError('Token import has unresolved conflicts or missing requested IDs', { code: 'import-conflict' });
         error.data = report; error.exitCode = 2; throw error;
@@ -251,7 +241,7 @@ async function dispatch(router, name, options, invocation) {
     }
     if (name === 'providers.import') {
       localOnly(options, ['path']);
-      const imported = JSON.parse(await readFile(options.path, 'utf8'));
+      const imported = JSON.parse(await readNativeText(options.path,{cwd:invocation.cwd}));
       const records = Array.isArray(imported) ? imported : imported.providers;
       if (!Array.isArray(records)) throw new NativeRouterError('Import requires an array or {providers: []}', { code: 'options' });
       // Validate the entire input before writing any record.
@@ -268,7 +258,7 @@ async function dispatch(router, name, options, invocation) {
     localOnly(options, ['host', 'port']);
     const port = options.port === undefined ? undefined : Number(options.port);
     if (port !== undefined && (!Number.isInteger(port) || port < 0 || port > 65535)) throw new NativeRouterError('port must be in 0..65535', { code: 'options' });
-    const server = await router.listen({ host: options.host, port });
+    const server = await router.listen({ host: options.host, port },core);
     return output('Native server is listening');
   }
   if (name === 'models.explain') {
@@ -288,8 +278,7 @@ async function dispatch(router, name, options, invocation) {
   }
   if (name === 'auth.status') {
     localOnly(options);
-    return { credentials: [], sources: [], api_key_providers: (await core.providers.list()).map(redactedProvider),
-      output: ['Native draft inspects configured API-key providers; subscription OAuth credential discovery is not implemented'] };
+    return core.credentialStatus ? core.credentialStatus() : nativeCredentialStatus(core,{env,fetch:router.options.fetch,...router.options.oauth});
   }
   if (name === 'doctor') {
     localOnly(options);
@@ -336,12 +325,18 @@ export class NativeRouter {
       code: result.diagnostics[0]?.split(':')[0] ?? 'operation' });
     return result;
   }
-  async runtime() {
+  async runtime(core) {
+    if (core) {
+      this.serverContexts ??= new Map();const key=JSON.stringify(core.config);
+      if (!this.serverContexts.has(key)) this.serverContexts.set(key,import('./server.mjs').then(({createNativeRouter})=>createNativeRouter({...this.options,core,clock:this.options.serverClock ?? Date.now})));
+      this.serverPromise ??= this.serverContexts.get(key);
+      return this.serverContexts.get(key);
+    }
     this.serverPromise ??= Promise.all([runtimeFor(this), import('./server.mjs')]).then(([core, { createNativeRouter }]) => createNativeRouter({ ...this.options, core, clock: this.options.serverClock ?? Date.now }));
     return this.serverPromise;
   }
   async fetch(request) { return (await this.runtime()).fetch(request); }
-  async listen(options) { return (await this.runtime()).listen(options); }
-  async close() { if (this.serverPromise) await (await this.serverPromise).close(); }
+  async listen(options,core) { return (await this.runtime(core)).listen(options); }
+  async close() { if (this.serverPromise) await (await this.serverPromise).close();for (const runtime of this.serverContexts?.values() ?? []) await (await runtime).close(); }
 }
 export const createNativeRouter = options => new NativeRouter(options);

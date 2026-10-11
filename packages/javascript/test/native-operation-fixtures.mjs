@@ -86,7 +86,7 @@ export async function runOperationFixtures() {
       const health = await fetch(`http://127.0.0.1:${runtime.address.port}/health`);
       assert.equal(health.status, 200);
     });
-    await record('auth.status', {}, data => { assert.equal(data.api_key_providers[0].name, 'fixture'); assert.ok(data.output[0].includes('not implemented')); });
+    await record('auth.status', {}, data => { assert.equal(data.api_key_providers[0].name, 'fixture'); assert.deepEqual(data.credentials.map(record=>record.provider),['claude','codex','gemini','qwen']); assert.ok(data.credentials.every(record=>['absent','unverified'].includes(record.state))); });
     const requests = join(directory, 'requests', 'fixture'); await mkdir(requests, { recursive: true });
     const logPath = join(requests, 'requests.jsonl');
     await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 200 }) + '\n');
@@ -123,7 +123,8 @@ export async function runOperationFixtures() {
       assert.equal((await fetch(status.data.managed.url + '/api/management/tokens', { headers: { authorization: 'Bearer ' + data.output[0] } })).status, 200);
     });
     await record('server.use', { server: 'https://fixture.invalid' }, async () => {
-      const denied = await router.execute('tokens.issue'); assert.equal(denied.success, false); assert.match(denied.diagnostics[0], /remote delegation is not implemented/);
+      let attempts=0;const previousFetch=router.options.fetch;router.options.fetch=async()=>{attempts++;throw new Error('fixture selected router unavailable');};
+      const denied = await router.execute('tokens.issue');router.options.fetch=previousFetch;assert.equal(denied.success, false);assert.equal(attempts,1);assert.match(denied.diagnostics[0], /Selected router https:\/\/fixture\.invalid request failed/);
       assert.equal((await router.tokens.list({ local: true })).success, true);
     });
     await router.server.use({ clear: true });
