@@ -1,0 +1,1 @@
+Preserve the original Rust field type tokens alongside resolved algebraic layouts. Copy and ownership checks can now distinguish an owned `Box<T>` field from `T` even when the portable type parser erases the wrapper; the metadata does not grant ownership or trait capabilities.

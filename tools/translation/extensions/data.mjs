@@ -11,6 +11,11 @@ const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const metadata = attributes => ({ rustAttributes: attributes, deriveTraits: attributes.flatMap(attribute => attribute.kind === 'derive' ? attribute.traits : []) });
 export class DataRustParser extends ControlRustParser {
+  fieldType() {
+    const c = this.cursor, start = c.index, type = this.type();
+    return { type, rustTypeSyntax: c.tokens.slice(start, c.index).map(token => token.raw ?? token.value) };
+  }
+
   attributes({ allowDefault = false } = {}) {
     const c = this.cursor, attributes = [];
     while (c.is('#') && c.is('[', 1)) {
@@ -53,14 +58,14 @@ export class DataRustParser extends ControlRustParser {
           while (!c.is('}')) {
             const fieldAttributes = this.attributes(); this.visibility();
             const name = c.identifier('field').value;
-            c.expect(':', 'field'); fields.push({ name, type: this.type(), rustAttributes: fieldAttributes });
+            c.expect(':', 'field'); fields.push({ name, ...this.fieldType(), rustAttributes: fieldAttributes });
             if (!c.eat(',')) break;
           }
           c.expect('}', 'struct');
         } else if (c.eat('(')) {
           ctorStyle = 'tuple';
           while (!c.is(')')) {
-            const fieldAttributes = this.attributes(); this.visibility(); fields.push({ name: `field${fields.length}`, type: this.type(), rustAttributes: fieldAttributes });
+            const fieldAttributes = this.attributes(); this.visibility(); fields.push({ name: `field${fields.length}`, ...this.fieldType(), rustAttributes: fieldAttributes });
             if (!c.eat(',')) break;
           }
           c.expect(')', 'tuple struct'); c.expect(';', 'tuple struct');
@@ -98,7 +103,7 @@ export class DataRustParser extends ControlRustParser {
         ctorStyle = 'tuple';
         while (!c.is(')')) {
           const fieldAttributes = this.attributes();
-          fields.push({ type: this.type(), rustAttributes: fieldAttributes }); if (!c.eat(',')) break;
+          fields.push({ ...this.fieldType(), rustAttributes: fieldAttributes }); if (!c.eat(',')) break;
         }
         c.expect(')', 'variant');
       } else if (c.is('{')) throw unsupported('struct variant', 'named variants require separate construction and pattern lowering', span(variant, c.peek()));
@@ -163,7 +168,7 @@ export class DataChecker extends ControlChecker {
       entry.ctors = entry.ctors.map((ctor, index) => ({
         ...ctor, ...(item.ctors[index].ctorStyle ? { ctorStyle: item.ctors[index].ctorStyle } : {}),
         ...(item.ctors[index].rustAttributes ? { rustAttributes: item.ctors[index].rustAttributes } : {}),
-        fields: ctor.fields.map((field, fieldIndex) => ({ ...field, ...(item.ctors[index].fields[fieldIndex].rustAttributes ? { rustAttributes: item.ctors[index].fields[fieldIndex].rustAttributes } : {}) })),
+        fields: ctor.fields.map((field, fieldIndex) => ({ ...field, ...(item.ctors[index].fields[fieldIndex].rustAttributes ? { rustAttributes: item.ctors[index].fields[fieldIndex].rustAttributes } : {}), ...(item.ctors[index].fields[fieldIndex].rustTypeSyntax ? { rustTypeSyntax: item.ctors[index].fields[fieldIndex].rustTypeSyntax } : {}) })),
       }));
     }
   }
