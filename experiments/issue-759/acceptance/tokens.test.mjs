@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { load, temporary } from './helpers.mjs';
 
@@ -117,6 +117,30 @@ test('text persistence reloads metadata and revocation, keeps raw credentials ou
   if (process.platform !== 'win32') assert.equal((await stat(path)).mode & 0o777, 0o600);
 });
 
-test('binary/both storage cannot report success via memory fallback', () => {
-  for (const storage_policy of ['binary', 'both', 'invented']) assert.throws(() => createTokenStore({ storage_policy }), { code: 'native_unsupported' });
+test('binary/both storage persists real private bytes and fresh managers observe revocation without memory fallback', {timeout:30000},async t => {
+  const root=await temporary(t);
+  for (const storage_policy of ['binary','both']) {
+    const data_dir=join(root,storage_policy),config={storage_policy,data_dir};
+    const issued=await manager({store:createTokenStore(config)}).issue({label:'independent disk acceptance',max_tokens:17});
+    const binary=await readFile(join(data_dir,'tokens.bin'));
+    assert.ok(binary.length>8,'issuance must persist nonempty binary state');
+    assert.ok(!binary.includes(Buffer.from(issued.token)));assert.ok(!binary.includes(Buffer.from(secret)));
+    if(process.platform!=='win32')assert.equal((await stat(join(data_dir,'tokens.bin'))).mode&0o777,0o600);
+    const reopened=manager({store:createTokenStore(config)});
+    assert.equal((await reopened.validate(issued.token)).sub,issued.id);
+    assert.equal((await reopened.get(issued.id)).label,'independent disk acceptance');
+    await reopened.revoke(issued.id);
+    await assert.rejects(manager({store:createTokenStore(config)}).validate(issued.token),{status:401});
+    if(storage_policy==='both') {
+      const text=await readFile(join(data_dir,'tokens.lino'),'utf8');
+      assert.ok(text.includes(issued.id));assert.ok(!text.includes(issued.token));assert.ok(!text.includes(secret));
+      assert.equal((await manager({store:new TextTokenStore(join(data_dir,'tokens.lino'))}).get(issued.id)).revoked,true);
+    } else {
+      await writeFile(join(data_dir,'tokens.bin'),Buffer.from([0]));
+      await assert.rejects(manager({store:createTokenStore(config)}).validate(issued.token));
+    }
+    const blocked=join(root,storage_policy+'-blocked');await mkdir(join(blocked,'tokens.bin'),{recursive:true});
+    await assert.rejects(manager({store:createTokenStore({storage_policy,data_dir:blocked})}).issue({label:'must not report success'}));
+  }
+  assert.throws(()=>createTokenStore({storage_policy:'invented'}),{code:'invalid_config'});
 });

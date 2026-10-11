@@ -67,12 +67,15 @@ test('unsupported issuer, flow, malformed interval and missing token fields fail
   await assert.rejects(login.wait(),error=>error.code==='oauth_response_invalid');
 });
 
-test('HTTP login session uses real Codex driver and reports authorized only after final owned promotion',async t=> {
+test('HTTP login session uses real Codex driver and reports authorized only after final owned promotion',{timeout:15000},async t=> {
   const {NativeLoginManager}=await import('../native/auth-service.mjs'),{CredentialFileStore}=await import('../native/oauth.mjs');
   const {root,issuer}=await fixture(t,successful),core={config:{data_dir:join(root,'data'),codex_home:join(root,'final')},clock:()=>1700000000,oauth:{fetch},providers:{list:async()=>[]}};
   const manager=new NativeLoginManager(core,{issuer,allowLoopback:true,catalogBaseURL:issuer});t.after(()=>manager.dispose());const begun=await manager.begin({provider:'codex'});
   assert.equal(begun.status,'awaiting_device');assert.equal(begun.user_code,'ABCD-EFGH');
-  let status;for (let attempt=0;attempt<200;attempt++) {status=await manager.status(begun.login_id);if (status.status!=='awaiting_device') break;await new Promise(resolve=>setTimeout(resolve,5));}
+  // Two owning-file promotions use the real advisory lock and durable writes.
+  // Observe their result within a bounded window, rather than assuming 1s I/O.
+  let status;const deadline=performance.now()+10000;
+  do {status=await manager.status(begun.login_id);if (status.status!=='awaiting_device') break;await new Promise(resolve=>setTimeout(resolve,25));}while(performance.now()<deadline);
   assert.equal(status.status,'authorized',JSON.stringify(status));assert.equal(JSON.stringify(status).includes('rotating-refresh'),false);
   assert.equal((await new CredentialFileStore({provider:'codex',home:core.config.codex_home,dataDir:core.config.data_dir}).reload()).token.refresh_token,'rotating-refresh');
 });
