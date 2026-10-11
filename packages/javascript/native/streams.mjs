@@ -51,18 +51,18 @@ async function* normalizedEvents(body, protocol) {
         else if (t.id || t.function?.name) throw new ProtocolError('Cannot translate fragmented tool identity', 502);
         if (t.function?.arguments) yield { type: 'arguments', index, text: t.function.arguments };
       }
-      if (c.finish_reason) { if (!['stop', 'length', 'tool_calls'].includes(c.finish_reason)) throw new ProtocolError(`Cannot translate finish reason ${c.finish_reason}`, 502); finish = c.finish_reason; }
+      if (c.finish_reason) { if (!['stop', 'length', 'tool_calls','content_filter'].includes(c.finish_reason)) throw new ProtocolError(`Cannot translate finish reason ${c.finish_reason}`, 502); finish = c.finish_reason; }
     } else if (protocol === 'gemini') {
       const value = p.response ?? p, candidate = value.candidates?.[0];
       if (!started) {started = true;id = value.responseId;yield {type:'start',id};}
       if (value.candidates?.length > 1) throw new ProtocolError('Cannot translate multiple Gemini candidates',502);
       for (const part of candidate?.content?.parts ?? []) {
-        if (part.text !== undefined) {if(part.thought || part.thoughtSignature)throw new ProtocolError('Gemini thought metadata cannot be represented',502);yield {type:'text',text:part.text};}
+        if (part.text !== undefined) {yield {type:'text',text:part.text};}
         else if (part.functionCall) {const call=part.functionCall,index=tools.size,tool={id:call.id ?? `call_${index}`,name:call.name,index};tools.set(index,tool);yield {type:'tool',...tool};yield {type:'arguments',index,text:JSON.stringify(call.args ?? {})};}
         else throw new ProtocolError('Gemini output part cannot be represented',502);
       }
       if(value.usageMetadata){usage=normalizeUsage(value.usageMetadata,'gemini');yield {type:'usage',usage};}
-      if(candidate?.finishReason){if(!['STOP','MAX_TOKENS'].includes(candidate.finishReason))throw new ProtocolError('Gemini stream reported an unsupported finish reason',502);finish=candidate.finishReason === 'MAX_TOKENS'?'length':tools.size?'tool_calls':'stop';ended=true;}
+      const reason=candidate?.finishReason ?? value.promptFeedback?.blockReason;if(reason){finish=reason === 'MAX_TOKENS'?'length':reason==='STOP'?tools.size?'tool_calls':'stop':'content_filter';ended=true;}
     } else if (protocol === 'anthropic') {
       if (type === 'message_start') { started = true; id = p.message.id; usage = normalizeUsage(p.message.usage, protocol); yield { type: 'start', id }; yield { type: 'usage', usage }; }
       else if (type === 'content_block_start') {
@@ -85,7 +85,7 @@ async function* normalizedEvents(body, protocol) {
         if (p.item.type === 'function_call') { const tool = { id: p.item.call_id, name: p.item.name, index: p.output_index }; tools.set(p.output_index, tool); yield { type: 'tool', ...tool }; }
         else if (p.item.type !== 'message') throw new ProtocolError(`Cannot translate streamed item ${p.item.type}`, 502);
       } else if (type === 'response.function_call_arguments.delta') yield { type: 'arguments', index: p.output_index, text: p.delta };
-      else if (['response.completed', 'response.incomplete'].includes(type)) { usage = normalizeUsage(p.response.usage); finish = type === 'response.incomplete' ? 'length' : tools.size ? 'tool_calls' : 'stop'; yield { type: 'usage', usage }; ended = true; break; }
+      else if (['response.completed', 'response.incomplete'].includes(type)) { usage = normalizeUsage(p.response.usage); finish = type === 'response.incomplete' ? p.response.incomplete_details?.reason==='content_filter'?'content_filter':'length' : tools.size ? 'tool_calls' : 'stop'; yield { type: 'usage', usage }; ended = true; break; }
       else if (type === 'response.refusal.delta') throw new ProtocolError('Cannot translate streamed refusal', 502);
     }
   }
@@ -144,9 +144,9 @@ export function translateStream(body, source, target, model, { clock = Date.now,
       else if (target === 'gemini') out += frame(canonicalResponse({...state,text:''},'gemini',model,now));
       else if (target === 'anthropic') { out += closeBlock(); for (const index of openToolBlocks) out += frame({ type: 'content_block_stop', index }, 'content_block_stop'); const message = canonicalResponse(state, 'anthropic', model, now); out += frame({ type: 'message_delta', delta: { stop_reason: message.stop_reason, stop_sequence: message.stop_sequence }, usage: message.usage }, 'message_delta'); out += frame({ type: 'message_stop' }, 'message_stop'); }
       else {
-        if (messageItem) { out += responses('response.output_text.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, text: state.text }); const item = { id: messageItem.id, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] }; out += responses('response.content_part.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: item.content[0] }); out += responses('response.output_item.done', { output_index: messageItem.output_index, item }); }
-        for (const r of toolMap.values()) { out += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments }); out += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: 'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } }); }
-        const type = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response = canonicalResponse(state, target, model, now);
+        if (messageItem) { out += responses('response.output_text.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, text: state.text }); const item = { id: messageItem.id, type: 'message', role: 'assistant', status: ['length','content_filter'].includes(state.finish)?'incomplete':'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] }; out += responses('response.content_part.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: item.content[0] }); out += responses('response.output_item.done', { output_index: messageItem.output_index, item }); }
+        for (const r of toolMap.values()) { out += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments }); out += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: ['length','content_filter'].includes(state.finish)?'incomplete':'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } }); }
+        const response = canonicalResponse(state, target, model, now),type = response.status === 'incomplete' ? 'response.incomplete' : 'response.completed';
         const order = new Map([...toolMap.values()].map(r => [`fc_${r.tool.id}`, r.output_index])); if (messageItem) order.set(messageItem.id, messageItem.output_index);
         response.output.sort((a, b) => order.get(a.id) - order.get(b.id));
         state.response = response;
@@ -214,8 +214,7 @@ export function monitorNativeStream(body, protocol, { model, onStart, onComplete
             if (!started) { started = true; await onStart?.({ ...response, status: 'in_progress', usage: null }); }
           }
           if (p.type === 'message_stop' || ['response.completed', 'response.incomplete'].includes(p.type)) terminal = true;
-          if (protocol === 'gemini' && p.candidates?.some(candidate => candidate.finishReason)) {
-            if (p.candidates.some(candidate => !['STOP','MAX_TOKENS'].includes(candidate.finishReason))) throw new ProtocolError('Gemini stream reported an unsupported finish reason',502);
+          if (protocol === 'gemini' && (p.candidates?.some(candidate => candidate.finishReason) || p.promptFeedback?.blockReason)) {
             terminal = true;frameData = JSON.stringify(p);
           }
         }

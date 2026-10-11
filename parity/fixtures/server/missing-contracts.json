@@ -35,6 +35,7 @@
     "Gemini generation controls, reasoning effort budget/visibility precedence, HTTP and inline image validation matching source",
     "source spend reservations include UTF8 prompt plus default/declared output, once-per-request admission and settlement",
     "account error rules match actual bounded upstream bytes in declaration order; exact transient retry status set, explicit relay/cooldown and pinned-account stopping, preserved last error response",
-    "reviewed account header copy allow-list applied without forwarding client credentials"
+    "reviewed account header copy allow-list applied without forwarding client credentials",
+    "Gemini STOP/max-token/all blocked terminal reasons and candidate-less prompt-block JSON/SSE map to source content-filter incomplete states, including incomplete output item statuses"
   ]
 }

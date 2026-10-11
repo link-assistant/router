@@ -166,7 +166,7 @@ export function responseToCanonical(body, protocol) {
     if (!choice?.message) throw new ProtocolError('Upstream Chat response has no message', 502);
     if (Array.isArray(choice.message.content) && choice.message.content.some(p => p.type !== 'text' || p.annotations?.length)) throw new ProtocolError('Cannot translate non-text response content or annotations', 502);
     result.text = text(choice.message.content); result.tools = copy(choice.message.tool_calls ?? []); result.finish = choice.finish_reason ?? 'stop';
-    if (!['stop', 'length', 'tool_calls'].includes(result.finish)) throw new ProtocolError(`Cannot translate finish reason ${result.finish}`, 502);
+    if (!['stop', 'length', 'tool_calls','content_filter'].includes(result.finish)) throw new ProtocolError(`Cannot translate finish reason ${result.finish}`, 502);
     if (choice.message.refusal) throw new ProtocolError('Refusal cannot be translated to this dialect', 502);
   } else if (protocol === 'anthropic') {
     if (!Array.isArray(body.content)) throw new ProtocolError('Upstream Messages response has no content', 502);
@@ -190,17 +190,17 @@ export function responseToCanonical(body, protocol) {
       else if (item.type === 'function_call') result.tools.push({ id: item.call_id, type: 'function', function: { name: item.name, arguments: item.arguments } });
       else throw new ProtocolError(`Cannot translate response item ${item.type}`, 502);
     }
-    result.finish = body.status === 'incomplete' ? 'length' : result.tools.length ? 'tool_calls' : 'stop';
+    result.finish = body.status === 'incomplete' ? body.incomplete_details?.reason==='content_filter'?'content_filter':'length' : result.tools.length ? 'tool_calls' : 'stop';
   }
   return result;
 }
 export function canonicalResponse(r, protocol, model = r.model, now = Date.now()) {
   if (protocol === 'gemini') return canonicalGemini(r,model);
   const created = Math.floor(now / 1000), id = r.id ?? `native_${created}`;
-  const u = r.usage;
+  const u = r.usage, incomplete=['length','content_filter'].includes(r.finish),status=incomplete?'incomplete':'completed';
   if (protocol === 'chat') return { id, object: 'chat.completion', created, model, choices: [{ index: 0, message: { role: 'assistant', content: r.text || (r.tools.length ? null : ''), ...(r.tools.length ? { tool_calls: r.tools } : {}) }, finish_reason: r.finish }], usage: { prompt_tokens: u.input, completion_tokens: u.output, total_tokens: u.total, prompt_tokens_details: { cached_tokens: u.cached } } };
   if (protocol === 'anthropic') return { id, type: 'message', role: 'assistant', model, content: [...(r.text ? [{ type: 'text', text: r.text }] : []), ...r.tools.map(t => ({ type: 'tool_use', id: t.id, name: t.function.name, input: parseArguments(t.function.arguments) }))], stop_reason: r.finish === 'tool_calls' ? 'tool_use' : r.finish === 'length' ? 'max_tokens' : r.stopSequence ? 'stop_sequence' : 'end_turn', stop_sequence: r.stopSequence ?? null, usage: { input_tokens: Math.max(0, u.input - u.cached - u.created), output_tokens: u.output, cache_read_input_tokens: u.cached, cache_creation_input_tokens: u.created } };
-  return { id: id.startsWith('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status: r.finish === 'length' ? 'incomplete' : 'completed', error: null, incomplete_details: r.finish === 'length' ? { reason: 'max_output_tokens' } : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...r.tools.map(t => ({ id: `fc_${t.id}`, type: 'function_call', status: 'completed', call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
+  return { id: id.startsWith('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status, error: null, incomplete_details: incomplete ? {reason:r.finish==='length'?'max_output_tokens':'content_filter'} : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status, content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...r.tools.map(t => ({ id: `fc_${t.id}`, type: 'function_call', status, call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
 }
 export function translateResponse(body, source, target, model, now) {
   if (source === target && source === 'gemini') return {...copy(body.response ?? body),modelVersion:model};

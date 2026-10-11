@@ -123,11 +123,10 @@ export function geminiToChat(body) {
   return out;
 }
 export function geminiCanonical(body, normalizeUsage) {
-  const value=body.response ?? body,candidate=value.candidates?.[0];if(value.candidates?.length > 1 || !candidate?.content)throw new ProtocolError('Gemini response must contain one candidate',502);
-  const r={id:value.responseId,model:value.modelVersion,text:'',tools:[],usage:normalizeUsage(value.usageMetadata,'gemini'),finish:candidate.finishReason === 'MAX_TOKENS' ? 'length':'stop'};
-  if(!['STOP','MAX_TOKENS',undefined].includes(candidate.finishReason))throw new ProtocolError(`Gemini finish reason ${candidate.finishReason} cannot be represented`,502);
-  for(const part of candidate.content.parts ?? []){if(part.text !== undefined){if(part.thought || part.thoughtSignature)throw new ProtocolError('Gemini thought metadata cannot be represented',502);r.text+=part.text;}else if(part.functionCall){const c=part.functionCall;r.tools.push({id:c.id ?? `call_${r.tools.length}`,type:'function',function:{name:c.name,arguments:JSON.stringify(c.args ?? {})}});}else throw new ProtocolError('Gemini output part cannot be represented',502);}
-  if(r.tools.length)r.finish='tool_calls';return r;
+  const value=body.response ?? body,candidate=value.candidates?.[0],reason=candidate?.finishReason ?? value.promptFeedback?.blockReason;if(value.candidates?.length > 1 || !candidate?.content && !reason)throw new ProtocolError('Gemini response must contain one candidate or a terminal prompt block',502);
+  const r={id:value.responseId,model:value.modelVersion,text:'',tools:[],usage:normalizeUsage(value.usageMetadata,'gemini'),finish:reason === 'MAX_TOKENS' ? 'length':reason==null || reason==='STOP'?'stop':'content_filter'};
+  for(const part of candidate?.content?.parts ?? []){if(part.text !== undefined){r.text+=part.text;}else if(part.functionCall){const c=part.functionCall;r.tools.push({id:c.id ?? `call_${r.tools.length}`,type:'function',function:{name:c.name,arguments:JSON.stringify(c.args ?? {})}});}else throw new ProtocolError('Gemini output part cannot be represented',502);}
+  if(r.tools.length && r.finish==='stop')r.finish='tool_calls';return r;
 }
 export function canonicalGemini(r,model) {
   return {candidates:[{index:0,content:{role:'model',parts:[...(r.text?[{text:r.text}]:[]),...r.tools.map(t=>({functionCall:{id:t.id,name:t.function.name,args:parseObject(t.function.arguments,'arguments')}}))]},finishReason:r.finish === 'length'?'MAX_TOKENS':'STOP'}],usageMetadata:{promptTokenCount:r.usage.input,candidatesTokenCount:r.usage.output,totalTokenCount:r.usage.total,cachedContentTokenCount:r.usage.cached},modelVersion:model};
