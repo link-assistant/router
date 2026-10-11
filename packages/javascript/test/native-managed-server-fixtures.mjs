@@ -102,7 +102,10 @@ fixture('managed-claim-checks-live-revocation','server.claim',()=>temporary(asyn
 fixture('managed-readiness-has-full-commit-lease','server.start',()=>temporary(async dir=> {
   await operate(dir,'server.start'); await operate(dir,'server.stop'); const saved = await state(dir);
   const module = new URL('../native/managed-server.mjs',import.meta.url);
-  const child = spawn('node',[fileURLToPath(module),'--daemon'],{stdio:['ignore','ignore','ignore','ipc'],env:{PATH:process.env.PATH ?? ''}});
+  // Compiled fixtures retain .mjs import aliases; the executable must match
+  // the canonical .js module identity used by the daemon entry-point guard.
+  const executable = await realpath(fileURLToPath(module));
+  const child = spawn('node',[executable,'--daemon'],{stdio:['ignore','ignore','ignore','ipc'],env:{PATH:process.env.PATH ?? ''}});
   const exited = new Promise((done,reject)=> {child.once('error',reject); child.once('exit',done);});
   const message = timeout=>new Promise((done,reject)=> {
     const timer = setTimeout(()=>finish(reject)(new Error('Owned daemon fixture message timed out')),timeout);

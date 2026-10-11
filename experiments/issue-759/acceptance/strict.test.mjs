@@ -6,10 +6,12 @@ import { execFile } from 'node:child_process';
 import { repository, temporary } from './helpers.mjs';
 
 const run = script => new Promise(resolve => {
-  // The checker executes native TypeScript compilation and the owned-daemon
-  // lifecycle evidence and the full canonical HTTP census as well as operation fixtures. Allow those real checks
-  // to finish on a contended CI runner; a timeout still fails this acceptance.
-  execFile(process.execPath, [script, '--strict'], { timeout: 180_000, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr + (error?.killed ? '\nChecker exceeded its 180 second acceptance deadline.' : '') }));
+  // The complete checker contains separately bounded native TS evidence and
+  // deterministic translation (180 seconds each), plus native lifecycle/HTTP
+  // fixtures. An actual 181-second timeout rejected the third tamper case.
+  // Keep those inner limits and rejection assertions; bound the whole sequence.
+  const started = performance.now(), timeout = 420_000;
+  execFile(process.execPath, [script, '--strict'], { timeout, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr + (error?.killed ? `\nChecker exceeded acceptance deadline (budget=${timeout}ms, elapsed=${Math.round(performance.now()-started)}ms).` : '') }));
 });
 async function isolatedChecker(t, edit) {
   const directory = await temporary(t);
