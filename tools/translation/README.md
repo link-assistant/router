@@ -1,100 +1,138 @@
 # Bulk Rust draft translation
 
-Run `node scripts/translate-router.mjs` to translate **every tracked `.rs`
-file**, including Rust sources, tests, benchmarks, scripts and archived case
-study examples. `node scripts/translate-router.mjs --check` regenerates in
-memory and rejects stale, missing or unexpected outputs. For another Git
-repository, use `--root /path/to/repository`; the same translator writes the
-same relative output layout there. No Rust build, network request or package
-installation runs during regeneration.
+Run `node scripts/translate-router.mjs` to regenerate every tracked `.rs` file,
+including production sources, tests, benchmarks, scripts and archived examples.
+Run the same command with `--check` to reject stale, missing or unexpected outputs
+without writing files. Regeneration runs JavaScript; it requires no Rust build,
+network request or package installation.
 
-The same command also resolves tracked out-of-line module edges from `src/lib.rs`
-and `src/main.rs`, or an explicit `--entry TRACKED_RS`. Checked cross-file calls
-and explicit crate/self/super imports produce project meta and executable JS/TS
-under `tools/translation/projects` and `packages/{javascript,typescript}/generated/rust-project`.
-Per-file callers can consume their checked project dependency closure. Ambiguous,
-missing, conditional and inline module edges remain diagnostics. External crate
-resolution, impls, macro expansion and effects remain unimplemented. Project
-counts are separate from per-file counts and are not added to the census twice.
+The executable path is Rust syntax → checked semantic meta representation →
+serialization and reparsing → JavaScript and TypeScript emission. The copied
+upstream parser, checker and emitter remain pinned and hash checked. Generic
+extensions live outside the vendor directory. A host contract describes an
+operation such as a duration comparison or JSON access; it does not replace a
+Router function body. Original bodies and their resolved dependencies still pass
+through the frontend and semantic checker.
 
-Each source produces one compact source-bearing structural meta JSON in
-`tools/translation/meta`, an executable JavaScript draft in
-`packages/javascript/generated/rust-draft`, and a typed TypeScript draft in
-`packages/typescript/generated/rust-draft`. Source text is stored only in the
-meta JSON. Source and item SHA-256 hashes, UTF-16 and UTF-8 spans, diagnostics,
-checked semantic IR, encodings and assumptions remain reviewable there.
-The inventory counts executable functions, constants, type layouts and
-constructor factories separately. Targets consume a serialized and reparsed
-checked semantic program; only structural meta retains source text.
-`parity/rust-source-inventory.json` exhaustively records source provenance,
-output paths, diagnostic frequencies, and executable/carried/preserved
-counts. Its name does **not** make draft artifacts runtime parity evidence:
-every record explicitly sets `runtimeParity: false`.
+## Outputs and evidence
 
-The pinned upstream Rust parser/type checker/emitter lower pure functions,
-primitive immutable constants, checked machine integers, booleans, immutable
-strings, `let`, `if`, supported `match` forms, string predicates and case maps,
-formatting, and calls between supported declarations in the same file. The
-public draft module exports `translated` and `provenance`. Integer inputs and
-results use BigInt. Constants are values in `translated`; functions are
-callables. TypeScript exposes checked primitive, readonly array and tagged union types;
-all generated functions have explicit parameter annotations.
+Each source produces source-bearing structural meta JSON in
+`tools/translation/meta`, a JavaScript draft in
+`packages/javascript/generated/rust-draft`, and a TypeScript draft in
+`packages/typescript/generated/rust-draft`. Source text appears in the meta JSON;
+source and item hashes, UTF-16 and UTF-8 spans, diagnostics, checked semantic IR,
+encodings and assumptions remain inspectable there.
 
-Carried constructs retain exact original source with a structured diagnostic;
-they create no callable stub or successful fake behavior. An unsupported
-dependency carries every caller. Duplicate declarations are ambiguous and
-carried. Async/Tokio, I/O, platform APIs, mutable aggregates, traits/impls, external
-modules, unbounded generics, escaping closures, conditional compilation and
-test attributes remain boundaries. Nested declarations remain inside their
-carried enclosing source item. The structural scanner is not a full Rust
-syntax validator; a lexical failure carries the full file explicitly.
+Project translation resolves library and binary entry points, file and inline
+modules, supported import aliases and actual declaration dependencies. Its meta
+artifacts live in `tools/translation/projects`; emitted dependency closures live
+in the corresponding `generated/rust-project` package directories. Shared or
+static inherent methods are checked separately against their original source
+spans. An enclosing `impl` remains carried when only some methods translate.
 
-The integer contract assumes 64-bit usize/isize and checked arithmetic.
-Rust release-profile wrapping arithmetic is outside the executable contract;
-the artifacts are drafts even for successfully lowered declarations. String
-case mapping also depends on Unicode table versions. The local checked AST extension supports String::new, to_string/to_owned/as_str,
-Rust trim/trim_start/trim_end with explicit Unicode White_Space, ASCII case maps
-and comparison, string byte length, scalar count, immutable vec! literals,
-Vec::new, and slice/array measurements. Monomorphic Option/Result values
-support typed constructors, exhaustive match, predicates and eager unwrap_or.
-Generic inference beyond explicit expected types and mutable vectors remain carried. Checked scalar locals and parameters support
-assignment, compound arithmetic, while/loop, unlabelled break/continue, statement
-if/else and early returns. Slice indexing validates usize bounds and preserves
-out-of-bounds aborts. Unit functions return null. Lazy scalar slice iterators support map/filter/take,
-collect/count/sum/fold and short-circuit any/all with contextually checked scalar
-closures. For loops preserve enclosing returns and loop controls. Bounded primitive integer ranges support exclusive and inclusive endpoints,
-including maximum inclusive endpoints without overflowing the iterator. Scalar
-array literals preserve order; repetition and fixed-length type contracts remain
-carried. Iterator locals, move captures and aggregate borrowing remain carried
-until ownership contracts exist. Slice inputs require dense own data
-elements; user accessors and iteration overrides do not supply Rust values.
-Value expressions containing
-nonlocal exits remain refused to prevent IIFE control-flow errors.
+`parity/rust-source-inventory.json` records the complete tracked source census,
+translator implementation hashes, output paths, diagnostic frequencies and
+coverage. Functions, constants, data types, constructor factories and checked
+methods have separate counts. Archived examples and helper factories are not
+production function execution evidence. Consult the generated inventory for
+current counts; this document does not freeze them.
 
-Module-local enum layouts and immutable named/tuple/unit structs now emit
-typed constructor factories. Struct fields and literal shorthand are checked;
-literal fields evaluate in written order before layout reordering. Only accepted
-non-behavioral derives are allowed. Unknown field types and unresolved dependencies
-remain refused, and constructors do not implement external derive or trait APIs. Arguments reject lone
-surrogates, wrong tags and out-of-range fixed integers. Raw literals and Rust
-ASCII line continuations normalize semantically while meta source remains exact.
-Pure const fn lowers runtime calls only. See [extensions/NOTICE.md](extensions/NOTICE.md)
-for the adaptations; original vendored bytes remain unchanged. These boundaries
-need broader behavior fixtures before any native Router parity claim.
+Generated modules export `translated` and `provenance`. The keys in `translated`
+retain source declaration names, including when JavaScript identifiers require
+renaming. Fixed integers use BigInt. Constants export values, functions export
+callables, and supported data declarations export constructor factories.
+TypeScript uses explicit parameter types, readonly arrays and recursive tagged
+union aliases for checked layouts.
 
-Validation:
+An unsupported construct retains its exact source and diagnostic. It supplies no
+callable stub. Unsupported dependencies carry their callers, and ambiguous or
+conditional declarations require resolution before emission. Every draft and
+project retains `runtimeParity: false`; successful emission is not whole-program
+behavioral parity. Native Router readiness is checked separately and continues to
+refuse incomplete operation or route coverage.
+
+## Checked capabilities
+
+The frontend supports primitive constants and functions, checked integer
+arithmetic, immutable strings and arrays, local scalar mutation, branches,
+supported exhaustive matches, early returns, bounded loops and slice indexing.
+Immutable records and algebraic constructors retain written field evaluation
+order. Typed scalar closures and generator-based iterators preserve lazy
+evaluation, short circuiting and panic timing.
+
+Monomorphic standard `Option` and `Result` values support checked constructors,
+predicates, supported callbacks and identity-error propagation. Standard-library
+behavior requires resolved type provenance; an unrelated enum with `Some` and
+`None`, or `Ok` and `Err`, does not acquire those operations. Actual checked
+inherent methods take precedence over a standard-looking method spelling.
+
+Registered filesystem and environment reads use scoped host capabilities and
+typed errors. Supported async bodies return lazy futures, with host effects
+starting when polled. Rust 2024 unsafe environment mutation is refused until
+unsafe call-site authorization is checked. Escaping futures, cancellation and
+external scheduling remain obligations.
+
+Registered serde_json contracts use the pinned default Value/Number/Map profile.
+Recursive schemas validate actual layouts, and explicit registered refinements
+enforce finite JSON numbers, normalized durations and canonical UTF-8 map key
+order. General IEEE floating-point values retain their broader domain. Duration,
+vector-reader and fixed-integer parsing adapters have independent source-derived
+fixtures; an adapter alone does not make a Rust caller executable. The checked
+frontend must consume its contract and establish the caller’s dependencies.
+
+Pattern syntax and projection planners handle supported nested constructors,
+records, literals, alternatives and actual tuple layouts. Syntax or projection
+success alone does not prove constant-name resolution, constructor style,
+irrefutability, copying, moves or borrows. Those obligations must be established
+at each frontend integration point.
+
+Unbounded generics, arbitrary trait implementations, aggregate mutation,
+unresolved derives/macros, ambiguous imports, compilation conditions and
+unsupported reference ownership remain refusals. The structural scanner is not a
+full Rust syntax validator; lexical failures carry the affected source.
+
+The integer profile assumes 64-bit `usize`/`isize` and checked overflow, matching
+debug/test behavior. Release wrapping arithmetic requires a separate contract.
+Unicode case mapping depends on source and host tables. Alternate serde_json
+features require a separately validated profile. Rust differential execution
+remains gated on the JavaScript checks.
+
+## Reuse and validation
+
+For another Git repository, run:
+
+```sh
+node scripts/translate-router.mjs --root /path/to/repository
+node scripts/translate-router.mjs --root /path/to/repository --check
+```
+
+The translator reads that repository’s tracked Rust files and writes the same
+relative output layout there. Runtime assets use relative imports and are copied
+into generated packages. No additional checkout or Rust build is needed.
+
+To relocate the forward translator, copy `scripts/translate-router.mjs`, the
+top-level `.mjs` files in `tools/translation`, and its `extensions` and `vendor`
+directories, preserving their paths, notices, licenses and upstream lock. Copy
+`fixtures`, `test` and `tsconfig.json` when carrying its validation suite. Source
+code suffices for regeneration; copying existing generated corpora is optional.
+
+With Node, Bun and the repository’s TypeScript tooling available:
 
 ```sh
 node --test tools/translation/test/*.test.mjs
+bun test tools/translation/test/*.test.mjs
 node scripts/translate-router.mjs --check
 node tools/translation/check-typescript-fixtures.mjs
 tsc -p tools/translation/tsconfig.json
 ```
 
-The fixtures exercise returned values, predicates, sibling calls, constants,
-overflow and zero-divisor aborts. Tests also check unsupported side effects,
-ambiguous names, transitive dependencies, raw strings/nested comments/Unicode
-source preservation, all generated JavaScript module loads, and tampered
-semantic IR plus stale/missing/unexpected output rejection. The TypeScript
-check requires TypeScript 5.9 or compatible tooling and does not emit files.
-See [vendor/NOTICE.md](vendor/NOTICE.md) for upstream commits and licensing.
+Set `ROUTER_TRANSLATION_TSC` to a compiler path when `tsc` is not on `PATH`.
+Independent fixtures check values, overflow, laziness, effect order, domain
+rejection, source spans, malformed semantic IR and deterministic regeneration.
+Original-source tests pin Rust body hashes and expected observations; temporary
+artifact loaders execute the emitted module with its generated runtime assets.
+TypeScript checks use strict compilation and do not establish behavioral parity
+without corresponding execution evidence.
+
+See [extensions/NOTICE.md](extensions/NOTICE.md) for local adaptations and
+[vendor/NOTICE.md](vendor/NOTICE.md) for upstream references and licensing.
