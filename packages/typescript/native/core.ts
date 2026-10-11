@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=3b96885704dfbd38c532fbacd4e95f02fe10ddfcead8cde4c554c4b14b69d9a1; dynamic any annotations are explicit draft gaps.
+// Meta sha256=978433e3190a4751a9b8a33c7b174e91ada8b1d08ab540a95182e95cfedae30d; dynamic any annotations are explicit draft gaps.
 import { loadConfig, ProviderStore } from "./config.js";
 import { createTokenStore } from "./storage.js";
 import { TokenManager, RouterError } from "./tokens.js";
@@ -14,7 +14,7 @@ export class RouterCore {
     declare oauth: any;
     declare providers: any;
     declare tokens: any;
-    constructor({ config, storage, clock = (): any => Math.floor(Date.now() / 1000), env = process.env, fetch = globalThis.fetch, oauth = {} }: any) {
+    constructor({ config, storage, clock = (): number => Math.floor(Date.now() / 1000), env = process.env, fetch = globalThis.fetch, oauth = {} }: any) {
         this.config = config;
         this.clock = clock;
         this.tokens = new (TokenManager as any)({ secret: config.token_secret, store: createTokenStore({ ...config, storage }), clock });
@@ -27,7 +27,7 @@ export class RouterCore {
     async showProvider(name?: any): Promise<any> { return this.providers.get(name); }
     async upsertProvider(input?: any): Promise<any> {
         const result: any = await this.providers.upsert(input);
-        if (![...this.accounts.records.values()].some((a?: any): any => a.provider === input.name)) {
+        if (![...this.accounts.records.values()].some((a?: any): boolean => a.provider === input.name)) {
             const fresh: any = new (AccountRouter as any)({ config: { ...this.config, accounts: [], providers: [input] }, clock: this.clock });
             for (const [name, account] of fresh.records as any)
                 this.accounts.records.set(name, account);
@@ -52,7 +52,7 @@ export class RouterCore {
     async models(): Promise<any> { return catalogModels(await this.providers.resolve(), this.accounts.records); }
     async catalogFor({ client, pinnedAccount, provider }: any = {}): Promise<any> {
         const providers: any = (await this.providers.resolve()).filter((record?: any): any => (!provider || record.name === provider) && (!client || record.supported_clients.includes(client)));
-        const accounts: any = new (Map as any)([...this.accounts.records].filter(([, account]: any): any => !pinnedAccount || account.name === pinnedAccount));
+        const accounts: any = new (Map as any)([...this.accounts.records].filter(([, account]: any): boolean => !pinnedAccount || account.name === pinnedAccount));
         if (pinnedAccount && !accounts.size)
             throw new (RouterError as any)('unknown_pinned_account', 'Pinned account does not exist', 404);
         return catalogModels(providers, accounts);
@@ -61,11 +61,11 @@ export class RouterCore {
         const providers: any = await this.providers.resolve();
         const ordered: any = this.accounts.order(modelCandidates(providers, this.accounts.records, context), context);
         for (const candidate of ordered as any) {
-            const account: any = this.accounts.records.get(candidate.account), provider: any = providers.find((p?: any): any => p.name === candidate.provider);
+            const account: any = this.accounts.records.get(candidate.account), provider: any = providers.find((p?: any): boolean => p.name === candidate.provider);
             const home: any = account?.credential_home ?? account?.oauth?.home ?? provider?.credential_home ?? provider?.oauth?.home ?? ((provider?.kind === 'anthropic' || provider?.kind === 'codex') ? account?.home : null);
             if (home) {
-                const kind: any = subscriptionProvider(account?.oauth_provider ?? account?.oauth?.provider ?? provider?.oauth?.provider ?? provider.kind);
-                const key: any = `${kind}\0${candidate.account}\0${home}`;
+                const kind: string = subscriptionProvider(account?.oauth_provider ?? account?.oauth?.provider ?? provider?.oauth?.provider ?? provider.kind);
+                const key: string = `${kind}\0${candidate.account}\0${home}`;
                 if (!this.credentialStores.has(key))
                     this.credentialStores.set(key, new (CredentialFileStore as any)({ provider: kind, home, dataDir: this.config.data_dir, account: candidate.account, clock: this.clock }));
                 candidate.auth_type = 'oauth';
@@ -93,7 +93,7 @@ export class RouterCore {
     async resolveCandidates(model?: any, context: any = {}): Promise<any> { return this.candidates({ ...context, model }); }
     async route(context: any = {}): Promise<any> { const candidate: any = await this.prepareCandidate(((await this.candidates(context)) as any)[0]); this.accounts.recordUse(candidate, context); return candidate; }
     async reportFailure(candidate?: any, details?: any): Promise<any> { return this.accounts.reportFailure(candidate, details); }
-    async reportSuccess(candidate?: any): Promise<any> { return this.accounts.reportSuccess(candidate); }
+    async reportSuccess(candidate?: any): Promise<void> { return this.accounts.reportSuccess(candidate); }
     async authenticate(token?: any, options?: any): Promise<any> { return this.tokens.validate(token, options); }
 }
 export async function createRouterCore(options: any = {}): Promise<any> {

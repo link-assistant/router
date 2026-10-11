@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=61c8ab53d195cc3f434497188b7aa3b1a85e41a3dd1f4c61759063e112fdcf6c; dynamic any annotations are explicit draft gaps.
+// Meta sha256=89fe8bca0531ee43333827090992034a8797ce083c552210d6da568748a4ea35; dynamic any annotations are explicit draft gaps.
 import { pathToFileURL } from 'node:url';
 import { NativeRouter, catalog, operationResult } from "./operations.js";
 export function parseNativeArguments(argv?: any): any {
@@ -17,8 +17,8 @@ export function parseNativeArguments(argv?: any): any {
             index--;
         }
     }
-    const operation: any = [...catalog.operations].sort((a?: any, b?: any): any => b.command.length - a.command.length)
-        .find((operation?: any): any => operation.command.every((word?: any, index?: any): any => (remaining as any)[index] === word));
+    const operation: any = [...catalog.operations].sort((a?: any, b?: any): number => b.command.length - a.command.length)
+        .find((operation?: any): any => operation.command.every((word?: any, index?: any): boolean => (remaining as any)[index] === word));
     if (!operation)
         throw new (Error as any)(`Unknown native command: ${remaining.slice(0, 3).join(' ')}`);
     const options: any = {}, positionals: any = [], args: any = remaining.slice(operation.command.length);

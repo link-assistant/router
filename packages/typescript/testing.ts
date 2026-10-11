@@ -1,18 +1,18 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=0b025abd90a61552ecd170cb8a6a2f7bb54bab349a3079e62605c856aaf0bcd8; dynamic any annotations are explicit draft gaps.
+// Meta sha256=b83ff2860ab056cf4487b3cc400f304881013f5796165cf156ce10e2ce2aee7d; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Router, RouterError, runProcess, validateOperation } from "./index.js";
 export async function temporaryHome(): Promise<any> {
-    const home: any = await mkdtemp(join(tmpdir(), 'router-home-'));
+    const home: string = await mkdtemp(join(tmpdir(), 'router-home-'));
     const env: any = { HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: join(home, '.config'), XDG_DATA_HOME: join(home, '.local/share'), XDG_CACHE_HOME: join(home, '.cache'), CODEX_HOME: join(home, '.codex'), CLAUDE_CONFIG_DIR: join(home, '.claude'), DATA_DIR: join(home, 'router-data') };
-    return { home, env, close: (): any => rm(home, { recursive: true, force: true }) };
+    return { home, env, close: (): Promise<void> => rm(home, { recursive: true, force: true }) };
 }
 export async function mockUpstream(handler: any = (request?: any): any => ({ status: 200, body: request.path.endsWith('/models') ? { object: 'list', data: [{ id: 'fixture-model', object: 'model', owned_by: 'fixture' }] } : { id: 'fixture-completion', object: 'chat.completion', model: 'fixture-model', choices: [{ index: 0, message: { role: 'assistant', content: 'fixture answer' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } } })): Promise<any> {
     const requests: any = [];
-    const server: any = createServer(async (request?: any, response?: any): Promise<any> => {
+    const server: any = createServer(async (request?: any, response?: any): Promise<void> => {
         try {
             let bytes: any = 0, body: any = '';
             for await (const chunk of request as any) {
@@ -34,16 +34,16 @@ export async function mockUpstream(handler: any = (request?: any): any => ({ sta
         }
     });
     await new (Promise as any)((resolve?: any): any => server.listen(0, '127.0.0.1', resolve));
-    return { origin: `http://127.0.0.1:${server.address().port}`, requests, close: (): any => new (Promise as any)((resolve?: any, reject?: any): any => { server.closeAllConnections?.(); server.close((error?: any): any => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()); }) };
+    return { origin: `http://127.0.0.1:${server.address().port}`, requests, close: (): any => new (Promise as any)((resolve?: any, reject?: any): void => { server.closeAllConnections?.(); server.close((error?: any): void => error && error.code !== 'ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()); }) };
 }
 export async function vendorStub({ name = 'codex', version = '0.158.0', output = 'fixture answer', exitCode = 0 }: any = {}): Promise<any> {
     if (!/^[a-z][a-z0-9-]*$/.test(name))
         throw new (RouterError as any)('Invalid stub executable name', { code: 'options' });
-    const directory: any = await mkdtemp(join(tmpdir(), 'router-vendor-'));
-    const binary: any = join(directory, name);
-    const source: any = `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log(${JSON.stringify(version)});process.exit(0)}console.log(${JSON.stringify(output)});process.exit(${Number(exitCode)});\n`;
+    const directory: string = await mkdtemp(join(tmpdir(), 'router-vendor-'));
+    const binary: string = join(directory, name);
+    const source: string = `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log(${JSON.stringify(version)});process.exit(0)}console.log(${JSON.stringify(output)});process.exit(${Number(exitCode)});\n`;
     await writeFile(binary, source, { mode: 0o755 });
-    return { binary, directory, env: { PATH: `${directory}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}` }, close: (): any => rm(directory, { recursive: true, force: true }) };
+    return { binary, directory, env: { PATH: `${directory}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}` }, close: (): Promise<void> => rm(directory, { recursive: true, force: true }) };
 }
 export async function verifyContracts({ router = new (Router as any)(), areas = [], linux = false, repository = process.cwd(), output, clientVersions = 'installed', deadlineMs = 3600000, requireParity = false, env = {} }: any = {}): Promise<any> {
     const args: any = areas.flatMap((area?: any): any => ['--area', area]);
@@ -55,7 +55,7 @@ export async function verifyContracts({ router = new (Router as any)(), areas = 
         return (await router.verify({ arguments: args }, { deadlineMs, cwd: repository, env })).data;
     }
     const response: any = await runProcess('bash', [join(repository, 'scripts/verify-contracts-in-linux.sh'), '--client-versions', clientVersions, ...args], { env, deadlineMs, cwd: repository });
-    const path: any = join(repository, 'target/verification-linux/result.json');
+    const path: string = join(repository, 'target/verification-linux/result.json');
     let result: any;
     try {
         result = JSON.parse(await readFile(path, 'utf8') as any);

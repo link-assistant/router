@@ -7,9 +7,43 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
 import { loadTypeScript, parseNativeJavaScript, emitNativeTypeScript, runtimeAST, compileNativeTypeScript, regenerateNativeTypeScript, reconstructSyntax, sourceModules } from '../native-typescript.mjs';
+import { inferenceProgram, typeNode } from '../native-inference.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const SOURCE = process.env.ROUTER_NATIVE_TS_SOURCE_ROOT ? resolve(process.env.ROUTER_NATIVE_TS_SOURCE_ROOT) : ROOT;
+
+test('closed compiler inference exposes primitive returns while retaining dynamic parameter and object gaps', async () => {
+  const ts = loadTypeScript(SOURCE);
+  const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-inference-'));
+  const source = `export function answer(value) { const doubled = value * 2; return doubled + 1; }
+export function identity(value) { return value; }
+export async function flag() { const mode = true; return mode; }
+export function nullable(yes) { return yes ? 'value' : null; }
+export function opaque() { const record = { kind: 'object' }; return record; }`;
+  try {
+    const file = join(directory, 'fixture.mjs'); writeFileSync(file, source);
+    const inference = inferenceProgram(ts, directory, ['fixture.mjs']);
+    const meta = JSON.parse(JSON.stringify(parseNativeJavaScript(ts, 'fixture.mjs', source, { file: inference.program.getSourceFile(file), checker: inference.checker })));
+    const output = emitNativeTypeScript(ts, meta);
+    assert.equal(output.inferredReturns, 3);
+    assert.equal(output.inferredLocals, 2);
+    assert.match(output.text, /answer\(value\?: any\): number/u);
+    assert.match(output.text, /identity\(value\?: any\): any/u);
+    assert.match(output.text, /flag\(\): Promise<boolean>/u);
+    assert.match(output.text, /nullable\(yes\?: any\): (?:string \| null|null \| string)/u);
+    assert.match(output.text, /const record: any/u);
+    const erased = ts.transpileModule(output.text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+    assert.deepEqual(runtimeAST(ts, erased), runtimeAST(ts, source));
+    writeFileSync(join(directory, 'target.mjs'), erased);
+    const runtime = await import(pathToFileURL(join(directory, 'target.mjs')).href);
+    assert.equal(runtime.answer('3'), 7);
+    assert.equal(runtime.identity(null), null);
+    assert.deepEqual(runtime.identity({ dynamic: true }), { dynamic: true });
+    assert.equal(await runtime.flag(), true);
+    assert.equal(runtime.nullable(false), null);
+    assert.throws(() => typeNode(ts, { kind: 'primitive', name: 'string; runCode()' }), /unsupported native type inference hint/u);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
 
 test('independent runtime fixture preserves optional chains, receivers, getters, evaluation order and literal data', async () => {
   const ts = loadTypeScript(SOURCE);

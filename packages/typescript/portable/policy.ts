@@ -1,45 +1,45 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=b0e59a5a1fc25fed71a851db657c87a9fa49e85aa07fda12af3f7365eb64e5b5; dynamic any annotations are explicit draft gaps.
-export function tokenBudgetPermits(used: number, reserved: number, reserve: number, max: number): any {
+// Meta sha256=57b842d987435bb8bfdd7ee509376d817935ce997d19cbe2710477af063ab58e; dynamic any annotations are explicit draft gaps.
+export function tokenBudgetPermits(used: number, reserved: number, reserve: number, max: number): boolean {
     return max < 0 || used + reserved < max && used + reserved + reserve <= max;
 }
-export function cooldownActive(until: number, now: number): any {
+export function cooldownActive(until: number, now: number): boolean {
     return until > now;
 }
-export function providerModelId(provider: string, model: string): any {
+export function providerModelId(provider: string, model: string): string {
     return provider + '/' + model;
 }
-export function clamp(value: number, minimum: number, maximum: number): any {
+export function clamp(value: number, minimum: number, maximum: number): number {
     return Math.min(Math.max(value, minimum), maximum);
 }
-export function longestCooldown(previous: number, next: number): any {
+export function longestCooldown(previous: number, next: number): number {
     return Math.max(previous, next);
 }
-export function retryAfterDeadline(seconds: number, now: number, maximum: number): any {
+export function retryAfterDeadline(seconds: number, now: number, maximum: number): number {
     if (!Number.isFinite(seconds) || seconds < 0) {
         return now;
     }
     return now + clamp(seconds, 0, maximum);
 }
-export function tokenCost(input: number, output: number, inputPerMillion: number, outputPerMillion: number): any {
+export function tokenCost(input: number, output: number, inputPerMillion: number, outputPerMillion: number): number {
     return (input * inputPerMillion + output * outputPerMillion) / 1000000;
 }
-export function validTokenCount(value: number): any {
+export function validTokenCount(value: number): boolean {
     return Number.isFinite(value) && value >= 0 && Math.floor(value) === value;
 }
-export function settledTokenUsage(total: number, reserved: number, actual: number): any {
+export function settledTokenUsage(total: number, reserved: number, actual: number): number {
     return Math.max(0, total - reserved) + actual;
 }
-export function remainingTokenBudget(used: number, reserved: number, max: number): any {
+export function remainingTokenBudget(used: number, reserved: number, max: number): number {
     if (max < 0) {
         return -1;
     }
     return Math.max(0, max - used - reserved);
 }
-export function completionTokenLimit(requested: number, available: number, limit: number): any {
+export function completionTokenLimit(requested: number, available: number, limit: number): number {
     return Math.max(0, Math.floor(Math.min(requested, Math.min(available, limit))));
 }
-export function retryBackoff(failures: number, base: number, maximum: number): any {
+export function retryBackoff(failures: number, base: number, maximum: number): number {
     let delay: any = base;
     let remaining: any = Math.max(0, Math.floor(failures));
     while (remaining > 0 && delay < maximum) {
@@ -48,30 +48,30 @@ export function retryBackoff(failures: number, base: number, maximum: number): a
     }
     return Math.min(delay, maximum);
 }
-export function retryableStatus(status: number): any {
+export function retryableStatus(status: number): boolean {
     return status === 408 || status === 429 || status >= 500 && status <= 599;
 }
-export function successStatus(status: number): any {
+export function successStatus(status: number): boolean {
     return status >= 200 && status <= 299;
 }
-export function weightedCapacity(weight: number, load: number): any {
+export function weightedCapacity(weight: number, load: number): number {
     if (weight <= 0 || !Number.isFinite(weight) || load < 0) {
         return 0;
     }
     return weight / (load + 1);
 }
-export function tokenExpired(now: number, expires: number, skew: number): any {
+export function tokenExpired(now: number, expires: number, skew: number): boolean {
     return now >= expires + skew;
 }
-export function isQualifiedModel(model: string): any {
+export function isQualifiedModel(model: string): boolean {
     return model.includes('/');
 }
-export function credentialPrefixMatches(value: string, prefix: string): any {
+export function credentialPrefixMatches(value: string, prefix: string): boolean {
     return value.startsWith(prefix);
 }
-export function utf16Length(value: string): any {
+export function utf16Length(value: string): number {
     return value.length;
 }
-export function modelNameLengthPermits(value: string, maximum: number): any {
+export function modelNameLengthPermits(value: string, maximum: number): boolean {
     return utf16Length(value) > 0 && utf16Length(value) <= maximum;
 }

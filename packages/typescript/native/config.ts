@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=05fe574415d468e3e303d7d95e5a9ca1d22a4fd0721571b23306b639161273a4; dynamic any annotations are explicit draft gaps.
+// Meta sha256=9e328165b062ac4c963342b7fb56ed83ae5eae6119253261b69b62c59d9310b5; dynamic any annotations are explicit draft gaps.
 import { readFile } from 'node:fs/promises';
 import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -21,7 +21,7 @@ export function parseLenv(text?: any): any {
     }
     return values;
 }
-const bool: any = (value?: any): any => value === true || value === 'true' || value === '1';
+const bool: any = (value?: any): boolean => value === true || value === 'true' || value === '1';
 export function normalizeProvider(record?: any, env: any = process.env): any {
     const name: any = record.name ?? record.provider_name ?? record.provider;
     if (typeof name !== 'string' || !/^[A-Za-z0-9._-]+$/.test(name))
@@ -37,7 +37,7 @@ export function normalizeProvider(record?: any, env: any = process.env): any {
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
         throw new (RouterError as any)('invalid_provider', 'Provider base_url must be an HTTP URL without embedded credentials');
     const models: any = record.models ?? (record.default_model ? [record.default_model] : []);
-    if (!Array.isArray(models) || models.some((m?: any): any => typeof m !== 'string' || !m.trim()))
+    if (!Array.isArray(models) || models.some((m?: any): boolean => typeof m !== 'string' || !m.trim()))
         throw new (RouterError as any)('invalid_provider', 'models must contain exact nonempty model ids');
     const kind: any = record.kind ?? 'openai-compatible';
     if (!['openai-compatible', 'openai', 'litellm', 'anthropic', 'codex', 'gemini', 'qwen', 'gonka'].includes(kind))
@@ -79,7 +79,7 @@ export function normalizeConfig(input: any = {}, env: any = process.env): any {
 export async function loadConfig({ config = {}, configPath, env = process.env }: any = {}): Promise<any> {
     let fromFile: any = {};
     if (configPath) {
-        const text: any = await readFile(configPath, 'utf8');
+        const text: string = await readFile(configPath, 'utf8');
         if (configPath.endsWith('.json') || text.trim().startsWith('{'))
             fromFile = JSON.parse(text as any);
         else
@@ -94,13 +94,13 @@ export async function loadConfig({ config = {}, configPath, env = process.env }:
     }
     return normalizeConfig({ ...fromFile, ...config }, env);
 }
-export function encryptProviderSecret(secret?: any, tokenSecret?: any): any {
+export function encryptProviderSecret(secret?: any, tokenSecret?: any): string {
     const key: any = createHash('sha256').update(ensureRealSecret(tokenSecret)).digest(), nonce: any = randomBytes(12);
     const cipher: any = createCipheriv('aes-256-gcm', key, nonce);
     const encrypted: any = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final(), cipher.getAuthTag()]);
     return `aes256gcm:${Buffer.concat([nonce, encrypted]).toString('base64')}`;
 }
-export function decryptProviderSecret(secret?: any, tokenSecret?: any): any {
+export function decryptProviderSecret(secret?: any, tokenSecret?: any): string {
     if (!secret.startsWith('aes256gcm:'))
         throw new (RouterError as any)('invalid_provider', 'Unsupported provider secret format');
     const packed: any = Buffer.from(secret.slice(10), 'base64');
@@ -135,10 +135,10 @@ export class ProviderStore {
         return map;
     }
     async resolve(): Promise<any> {
-        return [...(await this.load()).values()].filter((r?: any): any => r.enabled !== false).map((r?: any): any => normalizeProvider({ ...r, api_key: r.api_key ?? (r.api_key_env ? (this.env as any)[r.api_key_env] : null) ?? (r.encrypted_api_key ? decryptProviderSecret(r.encrypted_api_key, this.secret) : null) }, this.env));
+        return [...(await this.load()).values()].filter((r?: any): boolean => r.enabled !== false).map((r?: any): any => normalizeProvider({ ...r, api_key: r.api_key ?? (r.api_key_env ? (this.env as any)[r.api_key_env] : null) ?? (r.encrypted_api_key ? decryptProviderSecret(r.encrypted_api_key, this.secret) : null) }, this.env));
     }
     async list(): Promise<any> { return [...(await this.load()).values()].map(redact).sort((a?: any, b?: any): any => a.name.localeCompare(b.name)); }
-    async get(name?: any): Promise<any> { return (await this.list()).find((r?: any): any => r.name === name) ?? null; }
+    async get(name?: any): Promise<any> { return (await this.list()).find((r?: any): boolean => r.name === name) ?? null; }
     async mutate(operation?: any): Promise<any> {
         const operationWithState: any = async (): Promise<any> => {
             const records: any = await this.load();
@@ -151,7 +151,7 @@ export class ProviderStore {
                     records.set(name, safe);
                 }
                 const sorted: any = [...records.values()].sort((a?: any, b?: any): any => a.name.localeCompare(b.name));
-                await atomicWrite(this.path, '# Link.Assistant.Router provider store\n# Each PROVIDER value is JSON; inline API keys are encrypted.\n' + sorted.map((r?: any): any => `PROVIDER: ${JSON.stringify(r)}`).join('\n') + '\n');
+                await atomicWrite(this.path, '# Link.Assistant.Router provider store\n# Each PROVIDER value is JSON; inline API keys are encrypted.\n' + sorted.map((r?: any): string => `PROVIDER: ${JSON.stringify(r)}`).join('\n') + '\n');
             }
             this.records = records;
             return result;

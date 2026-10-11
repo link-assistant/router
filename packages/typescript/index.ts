@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=89e4ac74eedb512350c7eef1d7dc040ae1a65cc5afd63caeabb312c6b2736f02; dynamic any annotations are explicit draft gaps.
+// Meta sha256=cc875f712f2cae2d05e7a75752c832f95ad174dd1a2b36e93d367f05f61ae282; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { readFileSync, constants } from 'node:fs';
 import { mkdtemp, mkdir, readFile, writeFile, rename, rm, chmod, copyFile, lstat, access } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { StringDecoder } from 'node:string_decoder';
 import Ajv2020 from 'ajv/dist/2020.js';
-const root: any = dirname(fileURLToPath(import.meta.url));
+const root: string = dirname(fileURLToPath(import.meta.url));
 export const catalog: any = JSON.parse(readFileSync(join(root, 'catalog.json'), 'utf8') as any);
 export const version: any = catalog.version;
 export const operationNames: any = Object.freeze(catalog.operations.map((operation?: any): any => operation.name));
@@ -24,7 +24,7 @@ export class RouterError extends Error {
         Object.assign(this, { code, exitCode, stderr, result });
     }
 }
-function terminate(child?: any): any {
+function terminate(child?: any): void {
     if (child.pid && process.platform !== 'win32') {
         try {
             process.kill(-child.pid, 'SIGKILL');
@@ -37,7 +37,7 @@ function terminate(child?: any): any {
 export function runProcess(binary?: any, args?: any, { env = {}, stdin, deadlineMs = 60000, signal, cwd, maxOutputBytes = 8388608 }: any = {}): any {
     if (!Number.isFinite(deadlineMs) || deadlineMs <= 0)
         throw new (RouterError as any)('deadlineMs must be positive', { code: 'options' });
-    return new (Promise as any)((resolve?: any, reject?: any): any => {
+    return new (Promise as any)((resolve?: any, reject?: any): void => {
         if (signal?.aborted) {
             reject(new (RouterError as any)('Operation cancelled', { code: 'cancelled' }));
             return;
@@ -45,8 +45,8 @@ export function runProcess(binary?: any, args?: any, { env = {}, stdin, deadline
         const child: any = spawn(binary, args, { env: { ...process.env, ...env }, cwd, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
         let stdout: any = '', stderr: any = '', bytes: any = 0, failure: any;
         const decoders: any = { stdout: new (StringDecoder as any)('utf8'), stderr: new (StringDecoder as any)('utf8') };
-        const fail: any = (error?: any): any => { failure ??= error; terminate(child); };
-        const collect: any = (name?: any): any => (chunk?: any): any => {
+        const fail: any = (error?: any): void => { failure ??= error; terminate(child); };
+        const collect: any = (name?: any): any => (chunk?: any): void => {
             bytes += chunk.length;
             if (bytes > maxOutputBytes) {
                 fail(new (RouterError as any)('Router output exceeds limit', { code: 'output-limit' }));
@@ -59,11 +59,11 @@ export function runProcess(binary?: any, args?: any, { env = {}, stdin, deadline
         };
         child.stdout.on('data', collect('stdout'));
         child.stderr.on('data', collect('stderr'));
-        const timer: any = setTimeout((): any => fail(new (RouterError as any)('Router deadline exceeded', { code: 'deadline' })), deadlineMs);
-        const abort: any = (): any => fail(new (RouterError as any)('Operation cancelled', { code: 'cancelled' }));
+        const timer: any = setTimeout((): void => fail(new (RouterError as any)('Router deadline exceeded', { code: 'deadline' })), deadlineMs);
+        const abort: any = (): void => fail(new (RouterError as any)('Operation cancelled', { code: 'cancelled' }));
         signal?.addEventListener('abort', abort, { once: true });
-        child.on('error', (error?: any): any => { failure ??= new (RouterError as any)(`Cannot execute ${binary}`, { code: 'spawn', cause: error }); });
-        child.on('close', (exitCode?: any): any => {
+        child.on('error', (error?: any): void => { failure ??= new (RouterError as any)(`Cannot execute ${binary}`, { code: 'spawn', cause: error }); });
+        child.on('close', (exitCode?: any): void => {
             stdout += decoders.stdout.end();
             stderr += decoders.stderr.end();
             clearTimeout(timer);
@@ -77,21 +77,21 @@ export function runProcess(binary?: any, args?: any, { env = {}, stdin, deadline
             else
                 resolve({ stdout, stderr, exitCode });
         });
-        child.stdin.on('error', (error?: any): any => { if (error.code !== 'EPIPE')
+        child.stdin.on('error', (error?: any): void => { if (error.code !== 'EPIPE')
             fail(error); });
         child.stdin.end(stdin ?? '');
     });
 }
 function schemaFor(operation?: any): any {
     if (!validators.has(operation.name)) {
-        const filename: any = operation.name.replaceAll('.', '-') + '.v1.json';
+        const filename: string = operation.name.replaceAll('.', '-') + '.v1.json';
         const schema: any = JSON.parse(readFileSync(join(root, 'schemas', filename), 'utf8') as any);
         validators.set(operation.name, ajv.compile(schema));
     }
     return validators.get(operation.name);
 }
 export function validateOperation(name?: any, result?: any): any {
-    const operation: any = catalog.operations.find((operation?: any): any => operation.name === name);
+    const operation: any = catalog.operations.find((operation?: any): boolean => operation.name === name);
     if (!operation || !schemaFor(operation)(result))
         throw new (RouterError as any)(`Invalid ${name} response`, { code: 'schema', result });
     return result;
@@ -126,7 +126,7 @@ function argumentsFor(operation?: any, options?: any): any {
             for (const item of values as any)
                 flags.push('--' + option.flag, String(item));
     }
-    positional.sort((a?: any, b?: any): any => (a as any)[0] - (b as any)[0]);
+    positional.sort((a?: any, b?: any): number => (a as any)[0] - (b as any)[0]);
     const args: any = [...operation.command, '--json', ...flags];
     for (const [, values] of positional as any)
         args.push(...values.map(String));
@@ -136,7 +136,7 @@ export async function resolveBinary({ binary = process.env.ROUTER_BIN, allowDown
     let candidate: any = binary ?? env.ROUTER_BIN ?? 'router';
     if (!candidate.includes('/') && !candidate.includes('\\')) {
         for (const directory of (env.PATH ?? process.env.PATH ?? '').split(delimiter) as any) {
-            const location: any = resolve(directory, candidate);
+            const location: string = resolve(directory, candidate);
             try {
                 await access(location, constants.X_OK);
                 candidate = location;
@@ -164,7 +164,7 @@ export async function resolveBinary({ binary = process.env.ROUTER_BIN, allowDown
     catch (cause: any) {
         throw new (RouterError as any)('Binary does not implement the version JSON contract', { code: 'version', stderr: response.stderr, cause });
     }
-    const operation: any = catalog.operations.find((operation?: any): any => operation.name === 'version');
+    const operation: any = catalog.operations.find((operation?: any): boolean => operation.name === 'version');
     if (!schemaFor(operation)(result))
         throw new (RouterError as any)('Invalid binary version contract', { code: 'schema', stderr: response.stderr, result });
     if (response.exitCode !== 0 || !result.success)
@@ -173,25 +173,25 @@ export async function resolveBinary({ binary = process.env.ROUTER_BIN, allowDown
         throw new (RouterError as any)(`Package ${version} cannot use binary ${result.data.version}; opt in with allowVersionMismatch`, { code: 'version', result });
     return candidate;
 }
-async function downloadBinary({ cacheDir, deadlineMs }: any): Promise<any> {
+async function downloadBinary({ cacheDir, deadlineMs }: any): Promise<string> {
     const platform: any = process.platform === 'darwin' ? 'darwin' : process.platform === 'linux' ? 'linux' : null;
     const arch: any = process.arch === 'arm64' ? 'arm64' : process.arch === 'x64' ? 'amd64' : null;
     if (!platform || !arch)
         throw new (RouterError as any)('No verified binary asset for this platform; set ROUTER_BIN', { code: 'platform' });
-    const destination: any = join(cacheDir, version, `${platform}-${arch}`, 'router');
+    const destination: string = join(cacheDir, version, `${platform}-${arch}`, 'router');
     try {
         const receipt: any = JSON.parse(await readFile(destination + '.verified.json', 'utf8') as any);
-        const digest: any = createHash('sha256').update(await readFile(destination)).digest('hex');
+        const digest: string = createHash('sha256').update(await readFile(destination)).digest('hex');
         if (receipt.version === version && receipt.sha256 === digest)
             return destination;
     }
     catch { }
     await mkdir(dirname(destination), { recursive: true });
-    const work: any = await mkdtemp(join(tmpdir(), 'router-download-'));
+    const work: string = await mkdtemp(join(tmpdir(), 'router-download-'));
     try {
-        const asset: any = `link-assistant-router-${version}-${platform}-${arch}.tar.gz`;
-        const checksum: any = asset.replace('.tar.gz', '.sha256');
-        const base: any = `https://github.com/link-assistant/router/releases/download/v${version}/`;
+        const asset: string = `link-assistant-router-${version}-${platform}-${arch}.tar.gz`;
+        const checksum: string = asset.replace('.tar.gz', '.sha256');
+        const base: string = `https://github.com/link-assistant/router/releases/download/v${version}/`;
         for (const name of [asset, checksum] as any) {
             const response: any = await fetch(base + name, { signal: AbortSignal.timeout(deadlineMs) });
             if (!response.ok)
@@ -207,9 +207,9 @@ async function downloadBinary({ cacheDir, deadlineMs }: any): Promise<any> {
             const bytes: any = Buffer.concat(chunks);
             await writeFile(join(work, name), bytes);
         }
-        const lines: any = (await readFile(join(work, checksum), 'utf8')).split('\n');
-        const entry: any = lines.map((line?: any): any => line.trim().split(/\s+/)).find(([, name]: any): any => name?.replace(/^\*/, '') === asset);
-        const digest: any = createHash('sha256').update(await readFile(join(work, asset))).digest('hex');
+        const lines: Array<string> = (await readFile(join(work, checksum), 'utf8')).split('\n');
+        const entry: any = lines.map((line?: any): Array<string> => line.trim().split(/\s+/)).find(([, name]: any): boolean => name?.replace(/^\*/, '') === asset);
+        const digest: string = createHash('sha256').update(await readFile(join(work, asset))).digest('hex');
         if (!entry || (entry as any)[0] !== digest)
             throw new (RouterError as any)('Release checksum mismatch', { code: 'checksum' });
         const verification: any = await runProcess('gh', ['attestation', 'verify', join(work, asset), '--repo', 'link-assistant/router', '--source-ref', `refs/tags/v${version}`], { deadlineMs });
@@ -220,8 +220,8 @@ async function downloadBinary({ cacheDir, deadlineMs }: any): Promise<any> {
             throw new (RouterError as any)('Binary extraction failed', { code: 'download', stderr: extraction.stderr });
         if (!(await lstat(join(work, 'router'))).isFile())
             throw new (RouterError as any)('Release binary must be a regular file', { code: 'download' });
-        const stagingDirectory: any = await mkdtemp(join(dirname(destination), 'staging-'));
-        const staged: any = join(stagingDirectory, 'router');
+        const stagingDirectory: string = await mkdtemp(join(dirname(destination), 'staging-'));
+        const staged: string = join(stagingDirectory, 'router');
         await copyFile(join(work, 'router'), staged);
         await chmod(staged, 0o755);
         await rename(staged, destination);
@@ -258,7 +258,7 @@ export class Router {
             ? launch({ ...options, client, clientArgs: args }, invocation) : launch(client, args);
     }
     async invoke(name?: any, options: any = {}, invocation: any = {}): Promise<any> {
-        const operation: any = catalog.operations.find((operation?: any): any => operation.name === name);
+        const operation: any = catalog.operations.find((operation?: any): boolean => operation.name === name);
         if (!operation)
             throw new (RouterError as any)(`Unknown operation ${name}`, { code: 'options' });
         const args: any = argumentsFor(operation, options);

@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=5cc3b39e5ac32efe273c1d146a5eee0289e5b04376c881229502d650baef0986; dynamic any annotations are explicit draft gaps.
+// Meta sha256=d331212a38fd9b182c0dfc49c81c3a92a286d4476192be48ce4741a3ba6b2cf5; dynamic any annotations are explicit draft gaps.
 import { providerModelId } from "../portable/policy.js";
 import { accountVisibleModels } from "./accounts.js";
 import { RouterError } from "./tokens.js";
@@ -44,7 +44,7 @@ export function catalogModels(providers?: any, accounts?: any): any {
                     for (const model of provider.models as any)
                         for (const visible of accountVisibleModels(account, model) as any) {
                             for (const id of [visible.selector] as any) {
-                                const key: any = providerModelId(provider.name, id);
+                                const key: string = providerModelId(provider.name, id);
                                 if (!result.has(key))
                                     result.set(key, { id, object: 'model', created: 0, owned_by: provider.name, provider: provider.name, upstream_model: visible.model, supported_clients: provider.supported_clients });
                             }

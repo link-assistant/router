@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=46af4605b7e1f58a946022cfe8d122492d256bc2926a4c91c133885c340f9164; dynamic any annotations are explicit draft gaps.
+// Meta sha256=adaa6a471f6d8eb7d193a4111554bcbf5551bea9bb17745b903fc727cc3799a7; dynamic any annotations are explicit draft gaps.
 export class ProtocolError extends Error {
     declare code: any;
     declare status: any;
@@ -232,7 +232,7 @@ export function normalizeUsage(usage: any = {}, protocol: any = 'chat'): any {
     const created: any = usage.cache_creation_input_tokens ?? 0;
     const input: any = rawInput + (protocol === 'anthropic' ? cached + created : 0);
     const normalized: any = { input, output, cached, created, total: usage.total_tokens ?? input + output };
-    if (Object.values(normalized).some((value?: any): any => !Number.isSafeInteger(value) || value < 0))
+    if (Object.values(normalized).some((value?: any): boolean => !Number.isSafeInteger(value) || value < 0))
         throw new (ProtocolError as any)('Upstream returned invalid token usage', 502);
     return normalized;
 }
@@ -297,7 +297,7 @@ export function responseToCanonical(body?: any, protocol?: any): any {
     return result;
 }
 export function canonicalResponse(r?: any, protocol?: any, model: any = r.model, now: any = Date.now()): any {
-    const created: any = Math.floor(now / 1000), id: any = r.id ?? `native_${created}`;
+    const created: number = Math.floor(now / 1000), id: any = r.id ?? `native_${created}`;
     const u: any = r.usage;
     if (protocol === 'chat')
         return { id, object: 'chat.completion', created, model, choices: [{ index: 0, message: { role: 'assistant', content: r.text || (r.tools.length ? null : ''), ...(r.tools.length ? { tool_calls: r.tools } : {}) }, finish_reason: r.finish }], usage: { prompt_tokens: u.input, completion_tokens: u.output, total_tokens: u.total, prompt_tokens_details: { cached_tokens: u.cached } } };
@@ -316,7 +316,7 @@ export function translateResponse(body?: any, source?: any, target?: any, model?
     }
 }
 export function projectModels(entries?: any, protocol: any = 'chat', query: any = new (URLSearchParams as any)()): any {
-    const data: any = entries.map((model?: any): any => protocol === 'anthropic' ? Object.fromEntries(Object.entries({ id: model.id, type: 'model', display_name: model.display_name, created_at: model.created_at, max_input_tokens: model.max_input_tokens, max_tokens: model.max_tokens, capabilities: model.capabilities, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): any => value !== undefined)) : Object.fromEntries(Object.entries({ id: model.id, object: 'model', created: model.created, owned_by: model.owned_by, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): any => value !== undefined)));
+    const data: any = entries.map((model?: any): any => protocol === 'anthropic' ? Object.fromEntries(Object.entries({ id: model.id, type: 'model', display_name: model.display_name, created_at: model.created_at, max_input_tokens: model.max_input_tokens, max_tokens: model.max_tokens, capabilities: model.capabilities, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)) : Object.fromEntries(Object.entries({ id: model.id, object: 'model', created: model.created, owned_by: model.owned_by, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)));
     if (protocol !== 'anthropic')
         return { object: 'list', data };
     for (const key of ['limit', 'before_id', 'after_id'] as any)
@@ -326,12 +326,12 @@ export function projectModels(entries?: any, protocol: any = 'chat', query: any 
         throw new (ProtocolError as any)('before_id and after_id cannot be used together');
     if (query.has('limit') && !/^\d+$/.test(query.get('limit')))
         throw new (ProtocolError as any)('limit must be between 1 and 1000');
-    const limit: any = query.has('limit') ? Number(query.get('limit')) : 20;
+    const limit: number = query.has('limit') ? Number(query.get('limit')) : 20;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
         throw new (ProtocolError as any)('limit must be between 1 and 1000');
     let start: any = 0, end: any, has_more: any;
     if (query.has('before_id')) {
-        end = data.findIndex((m?: any): any => m.id === query.get('before_id'));
+        end = data.findIndex((m?: any): boolean => m.id === query.get('before_id'));
         if (end < 0)
             throw new (ProtocolError as any)('before_id cursor not found');
         start = Math.max(0, end - limit);
@@ -339,7 +339,7 @@ export function projectModels(entries?: any, protocol: any = 'chat', query: any 
     }
     else {
         if (query.has('after_id')) {
-            const index: any = data.findIndex((m?: any): any => m.id === query.get('after_id'));
+            const index: any = data.findIndex((m?: any): boolean => m.id === query.get('after_id'));
             if (index < 0)
                 throw new (ProtocolError as any)('after_id cursor not found');
             start = index + 1;

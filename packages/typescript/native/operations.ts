@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=977f2f364b9c77b7dd8c9e756c1b31ae25f3091fe66679f26dabd4e01dec6821; dynamic any annotations are explicit draft gaps.
+// Meta sha256=6fde108fa8f8c4f3faf63e9ce3fe563a3b3a8e21a61d93cb7955f4089cc88772; dynamic any annotations are explicit draft gaps.
 import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { executeResourceOperation, supportedResourceOperations } from "./resources.js";
@@ -10,7 +10,7 @@ export const catalog: any = JSON.parse(readFileSync(new (URL as any)('../catalog
 export const version: any = catalog.version;
 export const operationNames: any = Object.freeze(catalog.operations.map((operation?: any): any => operation.name));
 const camel: any = (value?: any): any => value.replace(/[-_]([a-z])/g, (_?: any, letter?: any): any => letter.toUpperCase());
-const snake: any = (value?: any): any => value.replace(/[A-Z]/g, (letter?: any): any => '_' + letter.toLowerCase()).replaceAll('-', '_');
+const snake: any = (value?: any): any => value.replace(/[A-Z]/g, (letter?: any): string => '_' + letter.toLowerCase()).replaceAll('-', '_');
 const validators: any = new (Map as any)();
 const ajv: any = new (Ajv2020 as any)({ strict: true, allowUnionTypes: true, validateFormats: false });
 export class NativeRouterError extends Error {
@@ -44,7 +44,7 @@ export function operationResult(name?: any, data?: any, diagnostics: any = [], e
     });
 }
 const output: any = (...lines: any[]): any => ({ output: lines });
-const unsupported: any = (message?: any): any => { throw new (NativeRouterError as any)(message, { code: 'unsupported' }); };
+const unsupported: any = (message?: any): never => { throw new (NativeRouterError as any)(message, { code: 'unsupported' }); };
 export const nativeOperationSupport: any = Object.freeze({
     ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]: any): any => [name, support.status])),
     ...Object.fromEntries(Object.keys(supportedManagedOperations).map((name?: any): any => [name, 'partial'])),
@@ -76,7 +76,7 @@ function normalizeOptions(operation?: any, options?: any): any {
             throw new (NativeRouterError as any)(`Missing ${operation.name} option: ${camel(option.name)}`, { code: 'options' });
     return normalized;
 }
-function localOnly(options?: any, accepted: any = []): any {
+function localOnly(options?: any, accepted: any = []): void {
     const consumed: any = new (Set as any)(['local', ...accepted]);
     for (const [name, value] of Object.entries(options) as any) {
         if (value === false)
@@ -92,7 +92,7 @@ function redactedProvider(provider?: any): any {
         has_encrypted_api_key: Boolean(provider.has_encrypted_api_key ?? provider.api_key),
         enabled: provider.enabled !== false, intermediary_risk_acknowledged: Boolean(provider.intermediary_risk_acknowledged),
         unsupported_clients: provider.unsupported_clients ?? [],
-        ...Object.fromEntries(['api_key_env', 'default_model', 'subscriber_id'].filter((key?: any): any => (provider as any)[key] !== undefined).map((key?: any): any => [key, (provider as any)[key]])),
+        ...Object.fromEntries(['api_key_env', 'default_model', 'subscriber_id'].filter((key?: any): boolean => (provider as any)[key] !== undefined).map((key?: any): any => [key, (provider as any)[key]])),
     };
 }
 function tokenOptions(options?: any): any {
@@ -100,7 +100,7 @@ function tokenOptions(options?: any): any {
     for (const key of ['ttl_hours', 'max_requests', 'max_tokens', 'rate_limit_per_minute'] as any) {
         if ((options as any)[key] === undefined)
             continue;
-        const number: any = Number((options as any)[key]);
+        const number: number = Number((options as any)[key]);
         if (!Number.isSafeInteger(number) || number < 0 || (key === 'ttl_hours' && number === 0))
             throw new (NativeRouterError as any)(`${key} must be a positive safe integer (limits may be zero)`, { code: 'options' });
         (result as any)[key] = number;
@@ -117,7 +117,7 @@ function tokenOptions(options?: any): any {
     return result;
 }
 const find: any = (records?: any, key?: any, value?: any): any => {
-    const record: any = records.find((record?: any): any => (record as any)[key] === value);
+    const record: any = records.find((record?: any): boolean => (record as any)[key] === value);
     if (!record)
         throw new (NativeRouterError as any)(`Unknown ${key}: ${value}`, { code: 'not-found' });
     return record;
@@ -145,7 +145,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     if (options.local !== true && await selectedManagedServer({ core, config: core.config ?? {}, env }))
         unsupported('Native remote delegation is not implemented; use local:true to explicitly operate on local state or use the Rust wrapper');
     if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
-        const accepted: any = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
+        const accepted: Array<string> = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
             : name === 'auth.claude' ? ['home', 'code', 'flow', 'mode', 'from_claude_home'] : ['home', 'from_codex_home'];
         localOnly(options, accepted);
         if (options.follow && options.snapshot)
@@ -214,8 +214,8 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
             const wanted: any = options.ids ? (Array.isArray(options.ids) ? options.ids : [options.ids]) : [];
             const report: any = { mode: 'merge-missing', dry_run: options.dry_run ?? false, source_records: source.length,
                 target_records_before: 0, added: [], unchanged: [], conflicts: [], replaced: [], kept_revoked: [],
-                missing_from_source: wanted.filter((id?: any): any => !ids.has(id)).sort() };
-            const apply: any = (records?: any): any => {
+                missing_from_source: wanted.filter((id?: any): boolean => !ids.has(id)).sort() };
+            const apply: any = (records?: any): void => {
                 report.target_records_before = records.size;
                 for (const incoming of source.slice().sort((a?: any, b?: any): any => a.id.localeCompare(b.id)) as any) {
                     if (wanted.length && !wanted.includes(incoming.id))
@@ -227,7 +227,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
                             records.set(incoming.id, structuredClone(incoming));
                     }
                     else {
-                        const fields: any = [...new (Set as any)([...Object.keys(existing), ...Object.keys(incoming)])].filter((key?: any): any => JSON.stringify((existing as any)[key]) !== JSON.stringify((incoming as any)[key])).sort();
+                        const fields: Array<string> = [...new (Set as any)([...Object.keys(existing), ...Object.keys(incoming)])].filter((key?: any): boolean => JSON.stringify((existing as any)[key]) !== JSON.stringify((incoming as any)[key])).sort();
                         if (fields.length)
                             report.conflicts.push({ id: incoming.id, fields });
                         else
@@ -261,7 +261,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
             await (tokens as any)[(name.split('.') as any)[1]](options.id);
             return output(`${(name.split('.') as any)[1]}: ${options.id}`);
         }
-        const allowed: any = ['ttl_hours', 'label', 'account', 'max_requests', 'max_tokens', 'rate_limit_per_minute', 'admin', 'github_repo', 'allowed_model'];
+        const allowed: Array<string> = ['ttl_hours', 'label', 'account', 'max_requests', 'max_tokens', 'rate_limit_per_minute', 'admin', 'github_repo', 'allowed_model'];
         if (name === 'tokens.issue') {
             localOnly(options, allowed);
             const issued: any = await tokens.issue(tokenOptions(options));
@@ -275,7 +275,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
         }
         if (name === 'tokens.recover-admin') {
             localOnly(options, ['ttl_hours', 'label', 'revoke_others']);
-            const admins: any = (await tokens.list()).filter((record?: any): any => record.scope === 'admin' && !record.revoked);
+            const admins: any = (await tokens.list()).filter((record?: any): boolean => record.scope === 'admin' && !record.revoked);
             const issued: any = await tokens.issue(tokenOptions({ ttl_hours: options.ttl_hours, label: options.label ?? 'recovered-admin', admin: true }));
             const revoked: any = [];
             if (options.revoke_others)
@@ -306,7 +306,7 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
             localOnly(options, ['name', 'kind', 'base_url', 'model', 'models', 'supported_clients', 'api_key_env', 'api_key_stdin', 'enabled', 'if_absent']);
             if (options.kind && options.kind !== 'openai-compatible')
                 unsupported('Native provider provisioning currently supports openai-compatible only; specialized provider validation is incomplete');
-            const existing: any = (await providers.list()).find((provider?: any): any => provider.name === options.name);
+            const existing: any = (await providers.list()).find((provider?: any): boolean => provider.name === options.name);
             if (existing && options.if_absent)
                 return { ...redactedProvider(existing), outcome: 'already_present' };
             const models: any = Array.isArray(options.models) ? options.models : options.models ? [options.models] : options.model ? [options.model] : [];
@@ -354,8 +354,8 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     if (name === 'models.explain') {
         localOnly(options, ['id', 'client']);
         const candidates: any = await core.candidates({ model: options.id });
-        const model: any = (await core.models()).find((model?: any): any => model.id === options.id);
-        const healthy: any = [...new (Set as any)(candidates.map((candidate?: any): any => candidate.provider?.name ?? candidate.provider).filter((name?: any): any => typeof name === 'string'))];
+        const model: any = (await core.models()).find((model?: any): boolean => model.id === options.id);
+        const healthy: any = [...new (Set as any)(candidates.map((candidate?: any): any => candidate.provider?.name ?? candidate.provider).filter((name?: any): boolean => typeof name === 'string'))];
         const route: any = { protocols: ['openai-chat'], ...(model?.provider ? { provider: model.provider } : {}) };
         return { contract_version: 1, requested_selector: options.id, selector_kind: 'concrete',
             model_descriptor: { selector_kind: 'concrete', requested_selector: options.id, route, capabilities: {},
@@ -407,7 +407,7 @@ export class NativeRouter {
             ? launch({ ...options, client, clientArgs: args }, invocation) : launch(client, args);
     }
     async execute(name?: any, options: any = {}, invocation: any = {}): Promise<any> {
-        const operation: any = catalog.operations.find((operation?: any): any => operation.name === name);
+        const operation: any = catalog.operations.find((operation?: any): boolean => operation.name === name);
         if (!operation)
             return operationResult('cli-error', output(), [`Unknown operation: ${name}`], 2);
         try {
@@ -437,7 +437,7 @@ export class NativeRouter {
     }
     async fetch(request?: any): Promise<any> { return (await this.runtime()).fetch(request); }
     async listen(options?: any): Promise<any> { return (await this.runtime()).listen(options); }
-    async close(): Promise<any> { if (this.serverPromise)
+    async close(): Promise<void> { if (this.serverPromise)
         await (await this.serverPromise).close(); }
 }
 export const createNativeRouter: any = (options?: any): any => new (NativeRouter as any)(options);

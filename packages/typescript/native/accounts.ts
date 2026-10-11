@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=7983796deca97800dc98faf318bc14188b0a89dc64fdbbec7d4421152031008b; dynamic any annotations are explicit draft gaps.
+// Meta sha256=331eafa5b8a8bf23d147aea03111eecee03e0ad60ea2e4bde63dee729365f064; dynamic any annotations are explicit draft gaps.
 import { cooldownActive } from "../portable/policy.js";
 import { atomicWrite, readOptional, serialized } from "./storage.js";
 import { RouterError } from "./tokens.js";
@@ -7,7 +7,7 @@ const strategyAliases: any = new (Map as any)([
     ['rr', 'round-robin'], ['roundrobin', 'round-robin'], ['weighted_round_robin', 'weighted-round-robin'],
     ['prio', 'priority'], ['fill-first', 'priority'], ['leastused', 'least-used'], ['quota-first', 'least-used'], ['lru', 'least-used'],
 ]);
-export function wildcardMatch(pattern?: any, value?: any): any {
+export function wildcardMatch(pattern?: any, value?: any): boolean {
     const regex: any = pattern.split('').map((c?: any): any => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\^$.[\]{}()+|]/g, '\\$&')).join('');
     return new (RegExp as any)(`^${regex}$`).test(value);
 }
@@ -17,13 +17,13 @@ export function validateAccountPolicy(policy: any = {}): any {
         throw new (RouterError as any)('invalid_policy', 'Invalid policy weight or retry');
     if (p.prefix != null && (typeof p.prefix !== 'string' || !p.prefix || p.prefix.includes('/') || /\s/.test(p.prefix)))
         throw new (RouterError as any)('invalid_policy', 'Account prefix must be one nonempty path component');
-    if (!Array.isArray(p.excluded_models) || p.excluded_models.some((m?: any): any => typeof m !== 'string'))
+    if (!Array.isArray(p.excluded_models) || p.excluded_models.some((m?: any): boolean => typeof m !== 'string'))
         throw new (RouterError as any)('invalid_policy', 'Invalid excluded_models');
-    if (!Array.isArray(p.model_aliases) || p.model_aliases.some((a?: any): any => typeof a.model !== 'string' || !a.model.trim() || typeof a.alias !== 'string' || !a.alias.trim() || a.alias === a.model))
+    if (!Array.isArray(p.model_aliases) || p.model_aliases.some((a?: any): boolean => typeof a.model !== 'string' || !a.model.trim() || typeof a.alias !== 'string' || !a.alias.trim() || a.alias === a.model))
         throw new (RouterError as any)('invalid_policy', 'Invalid model aliases');
     if (new (Set as any)(p.model_aliases.map((a?: any): any => a.alias)).size !== p.model_aliases.length)
         throw new (RouterError as any)('invalid_policy', 'Aliases must be unique');
-    if (!Array.isArray(p.request_scoped_errors) || p.request_scoped_errors.some((e?: any): any => !Number.isInteger(e.status) || e.status < 100 || e.status > 599 || typeof e.match !== 'string' || Buffer.byteLength(e.match) > 16384 || !['relay', 'retry-next', 'cooldown'].includes(e.action)))
+    if (!Array.isArray(p.request_scoped_errors) || p.request_scoped_errors.some((e?: any): boolean => !Number.isInteger(e.status) || e.status < 100 || e.status > 599 || typeof e.match !== 'string' || Buffer.byteLength(e.match) > 16384 || !['relay', 'retry-next', 'cooldown'].includes(e.action)))
         throw new (RouterError as any)('invalid_policy', 'Invalid request scoped error rule');
     const protectedHeader: any = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|proxy-authenticate|keep-alive|x-router-.*|x-link-assistant-.*)$/i;
     const copyHeaders: any = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
@@ -39,10 +39,10 @@ export function validateAccountPolicy(policy: any = {}): any {
 }
 export function accountVisibleModels(account?: any, upstream?: any): any {
     const p: any = account.policy;
-    const excluded: any = (model?: any): any => p.excluded_models.some((pattern?: any): any => wildcardMatch(pattern, model));
+    const excluded: any = (model?: any): any => p.excluded_models.some((pattern?: any): boolean => wildcardMatch(pattern, model));
     if (excluded(upstream))
         return [];
-    const aliases: any = p.model_aliases.filter((alias?: any): any => alias.model === upstream);
+    const aliases: any = p.model_aliases.filter((alias?: any): boolean => alias.model === upstream);
     const models: any = aliases.map((alias?: any): any => alias.alias);
     if (!aliases.length || aliases.some((alias?: any): any => alias.fork))
         models.push(upstream);
@@ -66,7 +66,7 @@ export class AccountRouter {
     declare strategy: any;
     declare used: any;
     declare weights: any;
-    constructor({ config, clock = (): any => Math.floor(Date.now() / 1000) }: any) {
+    constructor({ config, clock = (): number => Math.floor(Date.now() / 1000) }: any) {
         this.config = config;
         this.clock = clock;
         this.cursor = 0;
@@ -87,13 +87,13 @@ export class AccountRouter {
             this.records.set(account.name, { ...account, policy: validateAccountPolicy(account.policy) });
         }
         for (const provider of config.providers as any)
-            if (![...this.records.values()].some((a?: any): any => a.provider === provider.name))
+            if (![...this.records.values()].some((a?: any): boolean => a.provider === provider.name))
                 this.records.set(provider.name, { name: provider.name, provider: provider.name, policy: validateAccountPolicy(), implicit: true });
     }
     async load(): Promise<any> {
         for (const account of this.records.values() as any)
             if (account.home) {
-                const policy: any = await readOptional(`${account.home}/routing-policy.json`);
+                const policy: string = await readOptional(`${account.home}/routing-policy.json`);
                 if (policy)
                     account.policy = validateAccountPolicy(JSON.parse(policy as any));
             }
@@ -106,7 +106,7 @@ export class AccountRouter {
                     this.limits.set(name, state);
         return this;
     }
-    async persist(): Promise<any> {
+    async persist(): Promise<void> {
         if (this.config.storage_policy === 'memory')
             return;
         const providers: any = [...new (Set as any)([...this.records.values()].map((a?: any): any => a.provider))];
@@ -115,8 +115,8 @@ export class AccountRouter {
         const accounts: any = Object.fromEntries(this.limits);
         await atomicWrite(`${this.config.data_dir}/account-limits.json`, JSON.stringify({ provider: (providers as any)[0], accounts }));
     }
-    serves(name?: any, model?: any, excluded: any = []): any {
-        const a: any = this.records.get(name), state: any = this.limits.get(name) ?? {}, now: any = this.clock();
+    serves(name?: any, model?: any, excluded: any = []): boolean {
+        const a: any = this.records.get(name), state: any = this.limits.get(name) ?? {}, now: number = this.clock();
         if (!a || a.enabled === false || excluded.includes(name) || (a.request_limit != null && (this.used.get(name) ?? 0) >= a.request_limit))
             return false;
         if (state.pause && (state.pause.until_unix == null || cooldownActive(state.pause.until_unix, now)))
@@ -142,20 +142,20 @@ export class AccountRouter {
     order(candidates?: any, context: any = {}): any {
         const pin: any = context.pinnedAccount ?? context.pinned_account;
         const exclude: any = context.exclude ?? [];
-        const eligible: any = candidates.filter((c?: any): any => this.serves(c.account, c.model, exclude));
+        const eligible: any = candidates.filter((c?: any): boolean => this.serves(c.account, c.model, exclude));
         if (pin) {
             if (!this.records.has(pin))
                 throw new (RouterError as any)('unknown_pinned_account', `Unknown account '${pin}'`, 404);
-            const selected: any = eligible.filter((c?: any): any => c.account === pin);
+            const selected: any = eligible.filter((c?: any): boolean => c.account === pin);
             if (!selected.length)
                 throw new (RouterError as any)('pinned_account_unavailable', `Pinned account '${pin}' is unavailable`, 503);
             return selected;
         }
         const bound: any = this.bound(context);
         if (bound) {
-            const preferred: any = eligible.filter((c?: any): any => c.account === bound);
+            const preferred: any = eligible.filter((c?: any): boolean => c.account === bound);
             if (preferred.length)
-                return [...preferred, ...eligible.filter((c?: any): any => c.account !== bound)];
+                return [...preferred, ...eligible.filter((c?: any): boolean => c.account !== bound)];
             const account: any = this.records.get(bound);
             const hasPolicy: any = account && JSON.stringify(account.policy) !== JSON.stringify(validateAccountPolicy());
             if (!this.config.account_failover && !hasPolicy)
@@ -164,15 +164,15 @@ export class AccountRouter {
         if (!eligible.length)
             throw new (RouterError as any)('no_healthy_accounts', 'No healthy accounts', 503);
         if (bound || exclude.length) {
-            const start: any = this.failoverCursor++ % eligible.length;
+            const start: number = this.failoverCursor++ % eligible.length;
             return [...eligible.slice(start), ...eligible.slice(0, start)];
         }
         if (this.strategy === 'round-robin') {
-            const start: any = this.cursor++ % eligible.length;
+            const start: number = this.cursor++ % eligible.length;
             return [...eligible.slice(start), ...eligible.slice(0, start)];
         }
         if (this.strategy === 'least-used')
-            return eligible.slice().sort((a?: any, b?: any): any => {
+            return eligible.slice().sort((a?: any, b?: any): number => {
                 const left: any = this.records.get(a.account), right: any = this.records.get(b.account), l: any = this.used.get(a.account) ?? 0, r: any = this.used.get(b.account) ?? 0;
                 if (left.request_limit != null && right.request_limit != null)
                     return l * right.request_limit - r * left.request_limit || l - r;
@@ -183,7 +183,7 @@ export class AccountRouter {
                 return l - r;
             });
         if (this.strategy === 'weighted-round-robin') {
-            const active: any = eligible.filter((c?: any): any => this.records.get(c.account).policy.weight > 0);
+            const active: any = eligible.filter((c?: any): boolean => this.records.get(c.account).policy.weight > 0);
             if (!active.length)
                 throw new (RouterError as any)('no_healthy_accounts', 'No positive-weight accounts', 503);
             let total: any = 0, selected: any = (active as any)[0], largest: any = -Infinity;
@@ -205,11 +205,11 @@ export class AccountRouter {
                 if (!seen.has(name))
                     this.weights.set(name, 0);
             this.weights.set(selected.account, largest - total);
-            return [selected, ...active.filter((c?: any): any => c !== selected)];
+            return [selected, ...active.filter((c?: any): boolean => c !== selected)];
         }
         return eligible;
     }
-    recordUse(candidate?: any, context: any = {}): any {
+    recordUse(candidate?: any, context: any = {}): void {
         if (!this.serves(candidate.account, candidate.model, context.exclude))
             throw new (RouterError as any)('account_unavailable', 'Account became unavailable', 503);
         this.used.set(candidate.account, (this.used.get(candidate.account) ?? 0) + 1);
@@ -222,7 +222,7 @@ export class AccountRouter {
         const account: any = this.records.get(candidate.account);
         if (!account)
             return;
-        const rule: any = account.policy.request_scoped_errors.find((rule?: any): any => rule.status === status && message.includes(rule.match));
+        const rule: any = account.policy.request_scoped_errors.find((rule?: any): boolean => rule.status === status && message.includes(rule.match));
         if (rule?.action === 'relay' || rule?.action === 'retry-next')
             return rule.action;
         if (status != null && ![401, 403, 408, 429, 500, 502, 503, 504].includes(status) && rule?.action !== 'cooldown')
@@ -234,8 +234,8 @@ export class AccountRouter {
             seconds = Math.ceil((Date.parse(retryAfter) - this.clock() * 1000) / 1000);
         if (!Number.isFinite(seconds) || seconds < 0)
             seconds = this.config.account_cooldown_seconds;
-        const until: any = this.clock() + Math.min(seconds, this.config.account_max_cooldown_seconds);
-        return serialized(this, async (): Promise<any> => {
+        const until: number = this.clock() + Math.min(seconds, this.config.account_max_cooldown_seconds);
+        return serialized(this, async (): Promise<string> => {
             const state: any = this.limits.get(candidate.account) ?? { model_cooldowns: {} };
             if (scope === 'model') {
                 const key: any = candidate.model.toLowerCase();
@@ -251,7 +251,7 @@ export class AccountRouter {
             return 'cooldown';
         });
     }
-    async reportSuccess(candidate?: any): Promise<any> { const state: any = this.limits.get(candidate.account); if (state) {
+    async reportSuccess(candidate?: any): Promise<void> { const state: any = this.limits.get(candidate.account); if (state) {
         state.last_error = null;
     } }
     setStrategy(value?: any): any {
@@ -271,7 +271,7 @@ export class AccountRouter {
             for (const [name, state] of this.limits as any) {
                 if (account != null && account !== name)
                     continue;
-                const active: any = Object.entries(state.model_cooldowns ?? {}).filter(([, until]: any): any => until > this.clock());
+                const active: any = Object.entries(state.model_cooldowns ?? {}).filter(([, until]: any): boolean => until > this.clock());
                 state.model_cooldowns = Object.fromEntries(active);
                 if (state.cooldown_until_unix != null && state.cooldown_until_unix <= this.clock()) {
                     delete state.cooldown_until_unix;

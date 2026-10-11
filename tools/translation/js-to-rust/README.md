@@ -75,9 +75,13 @@ explicit `any` counts and output asset hashes are recorded in
 `generated/native-typescript/manifest.json`.
 
 JavaScript and TypeScript share the runtime language, so this target uses
-identity lowering. JSDoc primitive parameter contracts become types; dynamic
-parameters, returns, locals and discovered class fields have explicit `any`
-draft annotations. Class fields added for typing use `declare` and emit no
+identity lowering. JSDoc primitive parameter contracts become types; unannotated dynamic parameters and discovered class fields retain explicit
+`any` draft annotations. The official compiler infers closed primitive/container
+return types and reliable const-local types. Nullable, undefined, evolving and
+object locals remain explicit gaps where a source invariant is unavailable.
+Public parameter contracts narrow only when JSDoc explicitly states a type;
+default expressions do not narrow the caller domain. Inferred counts and the
+remaining explicit `any` counts are recorded separately. Class fields added for typing use `declare` and emit no
 runtime property. Strict compilation checks every generated module without
 `ts-nocheck`, `ts-ignore` or `ts-expect-error`. Passing strict compilation does
 not mean those dynamic types have been inferred or proved.

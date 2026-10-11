@@ -1,8 +1,8 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=c94fc26b25e97c951679858dc2e488a51949a799cf0747f10c79c6626eefe46f; dynamic any annotations are explicit draft gaps.
+// Meta sha256=c3f326f92de7b39147cdff9a8f8c6de7b226b8cf5226a046512d7935133a61a6; dynamic any annotations are explicit draft gaps.
 import { createHash, randomUUID } from 'node:crypto';
 import { ProtocolError } from "./protocols.js";
-const TRANSITION_RESERVE_BYTES: any = 256;
+const TRANSITION_RESERVE_BYTES: number = 256;
 export class ResponsesStore {
     declare bytes: any;
     declare clock: any;
@@ -23,17 +23,17 @@ export class ResponsesStore {
         this.records = new (Map as any)();
         this.bytes = 0;
     }
-    key(namespace?: any, owner?: any, id?: any): any { return JSON.stringify([namespace, owner, id]); }
-    serializedBytes(record?: any): any { return Buffer.byteLength(JSON.stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
-    size(record?: any): any { return TRANSITION_RESERVE_BYTES + this.serializedBytes(record); }
-    transition(record?: any, fields?: any): any {
+    key(namespace?: any, owner?: any, id?: any): string { return JSON.stringify([namespace, owner, id]); }
+    serializedBytes(record?: any): number { return Buffer.byteLength(JSON.stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
+    size(record?: any): number { return TRANSITION_RESERVE_BYTES + this.serializedBytes(record); }
+    transition(record?: any, fields?: any): void {
         const next: any = { ...record, response: { ...record.response, ...fields } };
-        const bytes: any = this.serializedBytes(next);
+        const bytes: number = this.serializedBytes(next);
         if (bytes > record.bytes || bytes > this.maxRecordBytes)
             throw new (ProtocolError as any)('Response transition exceeds retention allocation', 507);
         record.response = next.response;
     }
-    sweep(): any {
+    sweep(): void {
         for (const [key, record] of this.records as any)
             if (record.expiresAt <= this.clock()) {
                 this.records.delete(key);
@@ -45,7 +45,7 @@ export class ResponsesStore {
         if (typeof response.id !== 'string' || !response.id || response.id.length > 512)
             throw new (ProtocolError as any)('Upstream returned an invalid response id', 502);
         this.sweep();
-        const key: any = this.key(namespace, owner, response.id), previous: any = this.records.get(key);
+        const key: string = this.key(namespace, owner, response.id), previous: any = this.records.get(key);
         if (update && !previous)
             throw new (ProtocolError as any)('Response not found', 404);
         if (previous && !update)
@@ -57,7 +57,7 @@ export class ResponsesStore {
         if (record.bytes > this.maxRecordBytes || record.bytes > this.maxBytes)
             throw new (ProtocolError as any)('Response exceeds retention storage limit', 507);
         while (this.records.size - (previous ? 1 : 0) >= this.maxRecords || this.bytes - (previous?.bytes ?? 0) + record.bytes > this.maxBytes) {
-            const evict: any = [...this.records].find(([k, r]: any): any => k !== key && !['in_progress', 'queued'].includes(r.response.status));
+            const evict: any = [...this.records].find(([k, r]: any): boolean => k !== key && !['in_progress', 'queued'].includes(r.response.status));
             if (!evict)
                 throw new (ProtocolError as any)('Response retention storage is full', 507);
             this.records.delete((evict as any)[0]);
@@ -77,7 +77,7 @@ export class ResponsesStore {
     }
     delete(namespace?: any, owner?: any, id?: any): any {
         this.get(namespace, owner, id);
-        const key: any = this.key(namespace, owner, id), record: any = this.records.get(key);
+        const key: string = this.key(namespace, owner, id), record: any = this.records.get(key);
         this.records.delete(key);
         this.bytes -= record.bytes;
         record.abort?.();
@@ -93,7 +93,7 @@ export class ResponsesStore {
         abort();
         return structuredClone(record.response);
     }
-    fail(namespace?: any, owner?: any, id?: any): any {
+    fail(namespace?: any, owner?: any, id?: any): void {
         const record: any = this.records.get(this.key(namespace, owner, id));
         if (!record || record.response.status === 'cancelled')
             return;
@@ -103,10 +103,10 @@ export class ResponsesStore {
     inputItems(namespace?: any, owner?: any, id?: any, query: any = new (URLSearchParams as any)()): any {
         this.get(namespace, owner, id);
         const record: any = this.records.get(this.key(namespace, owner, id));
-        const limit: any = query.has('limit') ? Number(query.get('limit')) : 20;
+        const limit: number = query.has('limit') ? Number(query.get('limit')) : 20;
         if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
             throw new (ProtocolError as any)('limit must be an integer from 1 to 100');
-        const order: any = query.get('order') ?? 'desc';
+        const order: string = query.get('order') ?? 'desc';
         if (!['asc', 'desc'].includes(order))
             throw new (ProtocolError as any)('order must be asc or desc');
         let items: any = structuredClone(record.input);
@@ -114,7 +114,7 @@ export class ResponsesStore {
             items.reverse();
         for (const key of ['after', 'before'] as any)
             if (query.has(key)) {
-                const index: any = items.findIndex((item?: any): any => item.id === query.get(key));
+                const index: any = items.findIndex((item?: any): boolean => item.id === query.get(key));
                 if (index < 0)
                     throw new (ProtocolError as any)('Input-item cursor not found');
                 items = key === 'after' ? items.slice(index + 1) : items.slice(0, index);
@@ -122,10 +122,10 @@ export class ResponsesStore {
         const data: any = items.slice(0, limit);
         return { object: 'list', data, first_id: (data as any)[0]?.id ?? null, last_id: data.at(-1)?.id ?? null, has_more: items.length > limit };
     }
-    close(): any { for (const record of this.records.values() as any)
+    close(): void { for (const record of this.records.values() as any)
         record.abort?.(); this.records.clear(); this.bytes = 0; }
 }
-export function responseOwner(claims?: any, credential?: any): any {
+export function responseOwner(claims?: any, credential?: any): string {
     const value: any = claims.client_kind && claims.principal_id ? ['principal', claims.client_kind, claims.principal_id] : claims.sub ?? claims.id ? ['token', claims.sub ?? claims.id] : credential ? ['credential', credential] : null;
     if (!value)
         throw new (ProtocolError as any)('A stable credential identity is required for Responses storage', 403);

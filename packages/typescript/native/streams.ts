@@ -1,8 +1,8 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=1927063402d3657716183fd8466bf57b5f1dd2e4c8236fa47a54143fa7669bb3; dynamic any annotations are explicit draft gaps.
+// Meta sha256=9b2058ecc9312e549667b1f062fca6de13f21c7937a4f434fce1d574b5a27353; dynamic any annotations are explicit draft gaps.
 import { canonicalResponse, normalizeUsage, ProtocolError } from "./protocols.js";
 const encoder: any = new (TextEncoder as any)();
-const frame: any = (data?: any, event?: any): any => `${event ? `event: ${event}\n` : ''}data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`;
+const frame: any = (data?: any, event?: any): string => `${event ? `event: ${event}\n` : ''}data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`;
 export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: any = {}): AsyncGenerator<any, any, any> {
     const reader: any = body.getReader(), decoder: any = new (TextDecoder as any)();
     let buffer: any = '', data: any = [], event: any = '';
@@ -37,7 +37,7 @@ export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: an
             while ((match = /\r\n|\n|\r/.exec(buffer))) {
                 if ((match as any)[0] === '\r' && match.index === buffer.length - 1 && !done)
                     break;
-                const line: any = buffer.slice(0, match.index);
+                const line: string = buffer.slice(0, match.index);
                 buffer = buffer.slice(match.index + (match as any)[0].length);
                 const parsed: any = consume(line);
                 if (parsed)
@@ -56,7 +56,7 @@ export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: an
         }
     }
     finally {
-        await reader.cancel().catch((): any => { });
+        await reader.cancel().catch((): void => { });
         reader.releaseLock();
     }
 }
@@ -207,12 +207,12 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
     const state: any = { id: undefined, text: '', tools: [], usage: normalizeUsage(), finish: 'stop' };
     const toolMap: any = new (Map as any)(), openToolBlocks: any = new (Set as any)();
     let stateBytes: any = 0, begun: any = false, finished: any = false, sequence: any = 0, activeBlock: any, nextBlock: any = 0, messageItem: any, outputIndex: any = 0;
-    const now: any = clock();
-    const responses: any = (type?: any, payload?: any): any => frame({ type, sequence_number: sequence++, ...payload }, type);
-    const chat: any = (delta?: any, finish_reason: any = null, usage?: any): any => frame({ id: state.id, object: 'chat.completion.chunk', created: Math.floor(now / 1000), model, choices: usage ? [] : [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) });
-    const closeBlock: any = (): any => { if (activeBlock === undefined)
-        return ''; const result: any = frame({ type: 'content_block_stop', index: activeBlock }, 'content_block_stop'); activeBlock = undefined; return result; };
-    const render: any = (e?: any): any => {
+    const now: number = clock();
+    const responses: any = (type?: any, payload?: any): string => frame({ type, sequence_number: sequence++, ...payload }, type);
+    const chat: any = (delta?: any, finish_reason: any = null, usage?: any): string => frame({ id: state.id, object: 'chat.completion.chunk', created: Math.floor(now / 1000), model, choices: usage ? [] : [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) });
+    const closeBlock: any = (): string => { if (activeBlock === undefined)
+        return ''; const result: string = frame({ type: 'content_block_stop', index: activeBlock }, 'content_block_stop'); activeBlock = undefined; return result; };
+    const render: any = (e?: any): string => {
         let out: any = '';
         stateBytes += encoder.encode(e.text ?? '').byteLength + (e.type === 'tool' ? 1024 : 0);
         if (stateBytes > maxStateBytes)
@@ -252,7 +252,7 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
             }
         }
         else if (e.type === 'tool') {
-            const index: any = state.tools.length, tool: any = { id: e.id ?? `call_${index}`, type: 'function', function: { name: e.name ?? '', arguments: '' } };
+            const index: number = state.tools.length, tool: any = { id: e.id ?? `call_${index}`, type: 'function', function: { name: e.name ?? '', arguments: '' } };
             state.tools.push(tool);
             const record: any = { index, tool, block: undefined, output_index: outputIndex++ };
             toolMap.set(e.index, record);
@@ -319,11 +319,11 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
                     out += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments });
                     out += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: 'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } });
                 }
-                const type: any = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response: any = canonicalResponse(state, target, model, now);
+                const type: string = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response: any = canonicalResponse(state, target, model, now);
                 const order: any = new (Map as any)([...toolMap.values()].map((r?: any): any => [`fc_${r.tool.id}`, r.output_index]));
                 if (messageItem)
                     order.set(messageItem.id, messageItem.output_index);
-                response.output.sort((a?: any, b?: any): any => order.get(a.id) - order.get(b.id));
+                response.output.sort((a?: any, b?: any): number => order.get(a.id) - order.get(b.id));
                 state.response = response;
                 out += responses(type, { response });
             }
@@ -332,13 +332,13 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
         return out;
     };
     return new (ReadableStream as any)({
-        async pull(controller?: any): Promise<any> {
+        async pull(controller?: any): Promise<void> {
             try {
                 while (!finished) {
                     const { value, done }: any = await events.next();
                     if (done)
                         break;
-                    const wasBegun: any = begun, output: any = render(value);
+                    const wasBegun: boolean = begun, output: string = render(value);
                     if (!wasBegun && begun)
                         await onStart?.({ ...canonicalResponse(state, target, model, now), status: 'in_progress', usage: null });
                     if (finished)
@@ -362,14 +362,14 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
                 await events.return?.();
             }
         },
-        async cancel(): Promise<any> { finished = true; await onCancel?.(); await events.return?.(); },
+        async cancel(): Promise<void> { finished = true; await onCancel?.(); await events.return?.(); },
     });
 }
 export function monitorNativeStream(body?: any, protocol?: any, { model, onStart, onComplete, onError, onCancel }: any = {}): any {
     const events: any = (decodeSSE(body) as any)[Symbol.asyncIterator]();
     let terminal: any = false, usage: any = normalizeUsage(), anthropicUsage: any = {}, response: any, started: any = false;
     return new (ReadableStream as any)({
-        async pull(controller?: any): Promise<any> {
+        async pull(controller?: any): Promise<void> {
             try {
                 const { value: f, done }: any = await events.next();
                 if (done) {
@@ -441,6 +441,6 @@ export function monitorNativeStream(body?: any, protocol?: any, { model, onStart
                 await events.return?.();
             }
         },
-        async cancel(): Promise<any> { await onCancel?.(); await events.return?.(); },
+        async cancel(): Promise<void> { await onCancel?.(); await events.return?.(); },
     });
 }

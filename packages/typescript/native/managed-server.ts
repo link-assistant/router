@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=88358aaffb40d5a78f084fb95b5386a4feaa5461552785eed331af042c092387; dynamic any annotations are explicit draft gaps.
+// Meta sha256=d38620a92c058015ec33d942b1119f7b602adef4994ab62aa6f2378e1eaf2eb2; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual } from 'node:crypto';
@@ -7,16 +7,16 @@ import { lstat, mkdir, chmod, open, readdir, rm } from 'node:fs/promises';
 import { resolve, join, dirname, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { atomicWrite, serialized, withNativeFileLock } from "./storage.js";
-const ENGINE: any = 'link-assistant-router/native-managed/v1', SELF: any = fileURLToPath(import.meta.url);
-const MAX_STATE: any = 1024 * 1024, children: any = new (Map as any)(), OWNER_BOOT: any = randomUUID();
+const ENGINE: string = 'link-assistant-router/native-managed/v1', SELF: string = fileURLToPath(import.meta.url);
+const MAX_STATE: number = 1024 * 1024, children: any = new (Map as any)(), OWNER_BOOT: string = randomUUID();
 const fail: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'managed_server' });
 const unsupported: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'unsupported' });
 const sleep: any = (ms?: any): any => new (Promise as any)((done?: any): any => setTimeout(done, ms));
 const out: any = (...lines: any[]): any => ({ output: lines });
-const nonce: any = (): any => randomBytes(32).toString('hex');
-const digest: any = (key?: any, text?: any): any => createHmac('sha256', key).update(text).digest('hex');
-const fingerprint: any = (value?: any): any => createHash('sha256').update(value).digest('hex');
-function equal(a?: any, b?: any): any { return typeof a === 'string' && typeof b === 'string' && a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b)); }
+const nonce: any = (): string => randomBytes(32).toString('hex');
+const digest: any = (key?: any, text?: any): string => createHmac('sha256', key).update(text).digest('hex');
+const fingerprint: any = (value?: any): string => createHash('sha256').update(value).digest('hex');
+function equal(a?: any, b?: any): boolean { return typeof a === 'string' && typeof b === 'string' && a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b)); }
 export const supportedManagedOperations: any = Object.freeze(Object.fromEntries(['start', 'stop', 'status', 'use', 'claim', 'reap', 'remove'].map((op?: any): any => [`server.${op}`, {
         status: 'partial', limitations: ['Native Node daemon and namespaced JSON registry, not Rust Docker container/volume; loopback HTTP only; no systemd, TLS trust import, local discovery, OAuth adoption, or Docker leases; native references use explicit acquisition and dead-owner reaping.'],
     }])));
@@ -28,7 +28,7 @@ catch (error: any) {
         return null;
     throw error;
 } }
-async function noLinks(path?: any): Promise<any> {
+async function noLinks(path?: any): Promise<void> {
     for (let current: any = resolve(path);;) {
         if ((await info(current))?.isSymbolicLink())
             throw fail('Native managed state contains a symlink');
@@ -63,11 +63,11 @@ async function readJSON(path?: any): Promise<any> {
 function paths(dataDir?: any): any {
     if (typeof dataDir !== 'string' || !dataDir)
         throw fail('Managed operation requires a resolved data directory');
-    const root: any = join(resolve(dataDir), 'native-managed');
+    const root: string = join(resolve(dataDir), 'native-managed');
     return { root, state: join(root, 'state.json'), selection: join(root, 'server.json'), volume: join(root, 'data') };
 }
-async function writeJSON(path?: any, value?: any): Promise<any> {
-    const text: any = JSON.stringify(value);
+async function writeJSON(path?: any, value?: any): Promise<void> {
+    const text: string = JSON.stringify(value);
     if (Buffer.byteLength(text) > MAX_STATE)
         throw fail('Native managed state exceeds 1 MiB');
     await noLinks(path);
@@ -87,13 +87,13 @@ function validateState(state?: any): any {
         typeof state.boot_id !== 'string' || !Number.isInteger(state.port) || state.port < 0 || state.port > 65535 ||
         !Number.isInteger(state.control_port) || state.control_port < 0 || state.control_port > 65535 ||
         (state.pid !== null && (!Number.isSafeInteger(state.pid) || state.pid <= 0)) || !Array.isArray(state.references) ||
-        state.references.length > 10000 || state.references.some((ref?: any): any => !Number.isSafeInteger(ref.pid) || ref.pid <= 0 || typeof ref.owner_boot !== 'string') ||
+        state.references.length > 10000 || state.references.some((ref?: any): boolean => !Number.isSafeInteger(ref.pid) || ref.pid <= 0 || typeof ref.owner_boot !== 'string') ||
         typeof state.claimed !== 'boolean' || typeof state.keep_running !== 'boolean' || !Number.isSafeInteger(state.created_at))
         throw fail('Native managed registry is invalid or belongs to another engine');
     return state;
 }
 const loadState: any = async (p?: any): Promise<any> => validateState(await readJSON(p.state));
-function alive(pid?: any): any {
+function alive(pid?: any): boolean {
     if (!Number.isSafeInteger(pid) || pid <= 0)
         return false;
     try {
@@ -108,7 +108,7 @@ function alive(pid?: any): any {
         throw error;
     }
 }
-export function normalizeManagedOrigin(value?: any): any {
+export function normalizeManagedOrigin(value?: any): string {
     let url: any;
     try {
         url = new (URL as any)(String(value).trim());
@@ -121,16 +121,16 @@ export function normalizeManagedOrigin(value?: any): any {
     return url.origin;
 }
 function request(url?: any, { method = 'GET', headers = {}, body, limit = 65536, timeout = 1200 }: any = {}): any {
-    return new (Promise as any)((done?: any, reject?: any): any => {
-        const call: any = httpRequest(url, { method, headers, agent: false }, (response?: any): any => {
+    return new (Promise as any)((done?: any, reject?: any): void => {
+        const call: any = httpRequest(url, { method, headers, agent: false }, (response?: any): void => {
             const chunks: any = [];
             let size: any = 0;
-            response.on('data', (bytes?: any): any => { size += bytes.length; if (size > limit)
+            response.on('data', (bytes?: any): void => { size += bytes.length; if (size > limit)
                 call.destroy(fail('Managed control response exceeds its budget'));
             else
                 chunks.push(bytes); });
             response.on('error', reject);
-            response.on('end', (): any => done({ status: response.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
+            response.on('end', (): void => done({ status: response.statusCode, text: Buffer.concat(chunks).toString('utf8') }));
         });
         call.setTimeout(timeout, (): any => call.destroy(fail('Managed control request timed out')));
         call.on('error', reject);
@@ -138,7 +138,7 @@ function request(url?: any, { method = 'GET', headers = {}, body, limit = 65536,
     });
 }
 async function proof(state?: any, action: any = 'health'): Promise<any> {
-    const challenge: any = nonce(), body: any = JSON.stringify({ challenge, boot_id: state.boot_id });
+    const challenge: string = nonce(), body: string = JSON.stringify({ challenge, boot_id: state.boot_id });
     const result: any = await request(`http://127.0.0.1:${state.control_port}/${action}`, { method: 'POST', headers: { authorization: `Bearer ${state.control_key}`, 'content-type': 'application/json' }, body });
     if (result.status !== 200)
         throw fail('Managed daemon ownership verification failed');
@@ -187,15 +187,15 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
     state.keep_running ||= keepRunning;
     await noLinks(p.volume);
     await validateTree(p.volume);
-    const executable: any = process.versions.bun ? 'node' : process.execPath;
+    const executable: string = process.versions.bun ? 'node' : process.execPath;
     const child: any = spawn(executable, [SELF, '--daemon'], { detached: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', SystemRoot: process.env.SystemRoot ?? '' } });
     let committed: any = false;
     try {
-        const ready: any = await new (Promise as any)((done?: any, reject?: any): any => {
-            const timer: any = setTimeout((): any => reject(fail('Managed daemon did not become ready within 10 seconds')), 10000);
-            const finish: any = (fn?: any): any => (value?: any): any => { clearTimeout(timer); child.off('error', onError); child.off('exit', onExit); child.off('message', onMessage); fn(value); };
-            const onError: any = finish(reject), onExit: any = finish((): any => reject(fail('Managed daemon exited before readiness')));
-            const onMessage: any = finish((message?: any): any => message?.ready ? done(message) : reject(fail('Managed daemon failed to start')));
+        const ready: any = await new (Promise as any)((done?: any, reject?: any): void => {
+            const timer: any = setTimeout((): void => reject(fail('Managed daemon did not become ready within 10 seconds')), 10000);
+            const finish: any = (fn?: any): any => (value?: any): void => { clearTimeout(timer); child.off('error', onError); child.off('exit', onExit); child.off('message', onMessage); fn(value); };
+            const onError: any = finish(reject), onExit: any = finish((): void => reject(fail('Managed daemon exited before readiness')));
+            const onMessage: any = finish((message?: any): void => message?.ready ? done(message) : reject(fail('Managed daemon failed to start')));
             child.once('error', onError);
             child.once('exit', onExit);
             child.once('message', onMessage);
@@ -209,7 +209,7 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
         child.send({ commit: true });
         committed = true;
         children.set(child.pid, child);
-        child.once('exit', (): any => children.delete(child.pid));
+        child.once('exit', (): boolean => children.delete(child.pid));
         child.disconnect();
         child.unref();
         return state;
@@ -219,12 +219,12 @@ async function start(p?: any, state?: any, config?: any, keepRunning?: any): Pro
             let timer: any;
             const exited: any = child.exitCode !== null || child.signalCode !== null ? Promise.resolve() : new (Promise as any)((done?: any): any => child.once('exit', done));
             if (child.connected) {
-                child.send({ abort: true }, (): any => { });
+                child.send({ abort: true }, (): void => { });
                 child.disconnect();
             }
             child.unref();
             try {
-                await Promise.race([exited, new (Promise as any)((_?: any, reject?: any): any => { timer = setTimeout((): any => reject(fail('Aborted managed daemon did not exit within 4 seconds')), 4000); })]);
+                await Promise.race([exited, new (Promise as any)((_?: any, reject?: any): void => { timer = setTimeout((): void => reject(fail('Aborted managed daemon did not exit within 4 seconds')), 4000); })]);
             }
             finally {
                 clearTimeout(timer);
@@ -238,7 +238,7 @@ async function stop(p?: any, state?: any): Promise<any> {
     if (state.pid && alive(state.pid)) {
         await verified(state);
         await proof(state, 'shutdown');
-        const deadline: any = Date.now() + 6000;
+        const deadline: number = Date.now() + 6000;
         while (alive(state.pid)) {
             if (Date.now() >= deadline)
                 throw fail('Owned managed daemon has not exited; registry was retained');
@@ -252,9 +252,9 @@ async function stop(p?: any, state?: any): Promise<any> {
     await writeJSON(p.state, state);
     return state;
 }
-async function validateTree(path?: any): Promise<any> {
+async function validateTree(path?: any): Promise<void> {
     let files: any = 0;
-    const visit: any = async (path?: any, depth?: any): Promise<any> => {
+    const visit: any = async (path?: any, depth?: any): Promise<void> => {
         if (++files > 10000 || depth > 32)
             throw unsupported('Native managed volume exceeds its 10000-entry / 32-level safety budget');
         await noLinks(path);
@@ -278,7 +278,7 @@ async function selection(p?: any, env?: any, state?: any): Promise<any> {
         return { source: 'persisted', url: normalizeManagedOrigin(saved.server), token_configured: typeof saved.token === 'string' };
     return { source: 'managed', url: state?.port ? `http://127.0.0.1:${state.port}` : null, token_configured: false };
 }
-export async function selectedManagedServer({ core, config = {}, env = {} }: any = {}): Promise<any> {
+export async function selectedManagedServer({ core, config = {}, env = {} }: any = {}): Promise<null | string> {
     config = core?.config ?? config;
     const configured: any = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;
     if (configured !== undefined)
@@ -300,10 +300,10 @@ async function status(p?: any, state?: any, env?: any): Promise<any> {
     }
     const selected: any = await selection(p, env, state);
     return { selection: selected, managed: { present: !!state, state: lifecycle, detail, container: 'native-node-daemon', volume: p.volume, url: state?.port ? `http://127.0.0.1:${state.port}` : null,
-            administrator_claimed: state?.claimed ?? false, users: state?.references.filter((ref?: any): any => alive(ref.pid)).length ?? 0, keep_running: state?.keep_running ?? false },
+            administrator_claimed: state?.claimed ?? false, users: state?.references.filter((ref?: any): boolean => alive(ref.pid)).length ?? 0, keep_running: state?.keep_running ?? false },
         output: [`effective server: ${selected.source}${selected.url ? `: ${selected.url}` : ''}`, `managed server: ${lifecycle}; engine=node`] };
 }
-function validateOptions(name?: any, options?: any, config?: any): any {
+function validateOptions(name?: any, options?: any, config?: any): void {
     const allowed: any = new (Set as any)(['data_dir', ...(name === 'server.use' ? ['server', 'management_server', 'token', 'token_stdin', 'clear', 'run_max_requests'] : name === 'server.reap' ? ['pid'] : name === 'server.remove' ? ['yes'] : [])]);
     for (const [key, value] of Object.entries(options) as any)
         if (value !== undefined && value !== false && !allowed.has(key))
@@ -322,7 +322,7 @@ export async function executeManagedOperation({ name, options = {}, invocation =
     validateOptions(name, options, config);
     const p: any = paths(options.data_dir ?? config.data_dir ?? config.dataDir);
     if (name === 'server.use') {
-        if (options.clear && Object.entries(options).some(([key, value]: any): any => !['clear', 'data_dir'].includes(key) && value !== undefined && value !== false))
+        if (options.clear && Object.entries(options).some(([key, value]: any): boolean => !['clear', 'data_dir'].includes(key) && value !== undefined && value !== false))
             throw fail('--clear cannot be combined with a server, token, or run budget');
         let selected: any;
         if (!options.clear) {
@@ -340,7 +340,7 @@ export async function executeManagedOperation({ name, options = {}, invocation =
                 throw fail('Server token must be a nonempty string');
             if (options.run_max_requests !== undefined && (!Number.isSafeInteger(Number(options.run_max_requests)) || Number(options.run_max_requests) <= 0))
                 throw fail('Run budget must be a positive integer');
-            const server: any = normalizeManagedOrigin(options.server), management: any = options.management_server === undefined ? undefined : normalizeManagedOrigin(options.management_server);
+            const server: string = normalizeManagedOrigin(options.server), management: any = options.management_server === undefined ? undefined : normalizeManagedOrigin(options.management_server);
             selected = { server, ...(management && management !== server ? { management_server: management } : {}), ...(token ? { token } : {}), ...(options.run_max_requests !== undefined ? { run_max_requests: Number(options.run_max_requests) } : {}) };
         }
         return locked(p, async (): Promise<any> => { if (options.clear) {
@@ -374,12 +374,12 @@ export async function executeManagedOperation({ name, options = {}, invocation =
             return out(state.bootstrap_token);
         }
         if (name === 'server.reap') {
-            const pid: any = Number(options.pid);
+            const pid: number = Number(options.pid);
             if (!state)
                 return out();
             if (alive(pid))
                 throw fail('Refusing to reap a live or reused owner PID');
-            state.references = state.references.filter((ref?: any): any => ref.pid !== pid);
+            state.references = state.references.filter((ref?: any): boolean => ref.pid !== pid);
             if (!state.references.length && !state.keep_running)
                 await stop(p, state);
             else
@@ -400,18 +400,18 @@ export async function acquireManagedReference({ core, config = {} }: any): Promi
     config = core?.config ?? config;
     validateOptions('server.start', {}, config);
     const p: any = paths(config.data_dir ?? config.dataDir);
-    return locked(p, async (): Promise<any> => { const state: any = await start(p, await loadState(p), config, false); if (!state.references.some((ref?: any): any => ref.pid === process.pid && ref.owner_boot === OWNER_BOOT))
+    return locked(p, async (): Promise<any> => { const state: any = await start(p, await loadState(p), config, false); if (!state.references.some((ref?: any): boolean => ref.pid === process.pid && ref.owner_boot === OWNER_BOOT))
         state.references.push({ pid: process.pid, owner_boot: OWNER_BOOT }); await writeJSON(p.state, state); return { pid: process.pid, url: `http://127.0.0.1:${state.port}` }; });
 }
-async function daemon(): Promise<any> {
+async function daemon(): Promise<void> {
     let runtime: any, control: any, committed: any = false, started: any = false;
-    const exit: any = async (): Promise<any> => { const timer: any = setTimeout((): any => process.exit(0), 3000); timer.unref(); await runtime?.close().catch((): any => { }); control?.close(); process.exit(0); };
-    const deadline: any = setTimeout((): any => exit(), 10000);
-    process.on('disconnect', (): any => { if (!committed)
+    const exit: any = async (): Promise<never> => { const timer: any = setTimeout((): never => process.exit(0), 3000); timer.unref(); await runtime?.close().catch((): void => { }); control?.close(); process.exit(0); };
+    const deadline: any = setTimeout((): Promise<never> => exit(), 10000);
+    process.on('disconnect', (): void => { if (!committed)
         exit(); });
     process.on('SIGTERM', exit);
     process.on('SIGINT', exit);
-    process.on('message', async (message?: any): Promise<any> => {
+    process.on('message', async (message?: any): Promise<void> => {
         if (message?.commit) {
             committed = true;
             clearTimeout(deadline);
@@ -431,7 +431,7 @@ async function daemon(): Promise<any> {
                 token = (await core.tokens.issue({ scope: 'admin', ttl_hours: 87600, label: 'native-managed-bootstrap' })).token;
             runtime = (await import("./server.js")).createNativeRouter({ core });
             await runtime.listen({ host: '127.0.0.1', port: 0 });
-            control = createServer(async (req?: any, res?: any): Promise<any> => {
+            control = createServer(async (req?: any, res?: any): Promise<void> => {
                 try {
                     if (req.method !== 'POST' || !['/health', '/shutdown'].includes(req.url) || !equal(req.headers.authorization, `Bearer ${state.control_key}`)) {
                         res.writeHead(403);
@@ -469,7 +469,7 @@ async function daemon(): Promise<any> {
             });
             control.requestTimeout = 2000;
             control.headersTimeout = 2000;
-            await new (Promise as any)((done?: any, reject?: any): any => { control.once('error', reject); control.listen(0, '127.0.0.1', done); });
+            await new (Promise as any)((done?: any, reject?: any): void => { control.once('error', reject); control.listen(0, '127.0.0.1', done); });
             process.send?.({ ready: true, pid: process.pid, boot_id: state.boot_id, port: runtime.address.port, control_port: control.address().port, bootstrap_token: token });
         }
         catch {

@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=bae59ef0bc7f20e894fbd3aa8d9bb8ed6bda775e2e3d01765ecc65d657b387a6; dynamic any annotations are explicit draft gaps.
+// Meta sha256=6ab3761b68e5006c32a3d251f9a8e3bf73f15979b85389d0b1f54c9da46966b1; dynamic any annotations are explicit draft gaps.
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { tokenBudgetPermits } from "../portable/policy.js";
 import { MemoryTokenStore } from "./storage.js";
@@ -14,7 +14,7 @@ export function ensureRealSecret(secret?: any): any {
         throw new (RouterError as any)('issuer_secret_unset', 'TOKEN_SECRET is required', 401);
     return secret;
 }
-const encode: any = (object?: any): any => Buffer.from(JSON.stringify(object)).toString('base64url');
+const encode: any = (object?: any): string => Buffer.from(JSON.stringify(object)).toString('base64url');
 const clients: any = new (Set as any)(['claude', 'codex', 'cursor', 'opencode', 'gemini', 'grok', 'qwen', 'agent']);
 const clientAliases: any = new (Map as any)([['claude-code', 'claude'], ['cursor-agent', 'cursor'], ['gemini-cli', 'gemini'], ['grok-cli', 'grok'], ['qwen-code', 'qwen']]);
 const number: any = (value?: any, name?: any, positive: any = false): any => {
@@ -30,7 +30,7 @@ const defaults: any = {
 };
 export function validateModelPolicy(policy: any = {}): any {
     const models: any = policy.allowed_models ?? [];
-    if (!Array.isArray(models) || models.some((model?: any): any => typeof model !== 'string' || !model.trim()) || new (Set as any)(models).size !== models.length)
+    if (!Array.isArray(models) || models.some((model?: any): boolean => typeof model !== 'string' || !model.trim()) || new (Set as any)(models).size !== models.length)
         throw new (RouterError as any)('invalid_argument', 'allowed model ids must be nonempty and unique');
     if (policy.allow_substitution ? !policy.substitution_source?.trim() : policy.substitution_source != null)
         throw new (RouterError as any)('invalid_argument', 'model substitution must name its configuration source');
@@ -41,22 +41,22 @@ export class TokenManager {
     declare leeway: any;
     declare secret: any;
     declare store: any;
-    constructor({ secret, store = new (MemoryTokenStore as any)(), clock = (): any => Math.floor(Date.now() / 1000), leeway = 60 }: any = {}) {
+    constructor({ secret, store = new (MemoryTokenStore as any)(), clock = (): number => Math.floor(Date.now() / 1000), leeway = 60 }: any = {}) {
         this.secret = secret;
         this.store = store;
         this.clock = clock;
         this.leeway = leeway;
     }
-    sign(claims?: any): any {
+    sign(claims?: any): string {
         ensureRealSecret(this.secret);
-        const body: any = `${encode({ typ: 'JWT', alg: 'HS256' })}.${encode(claims)}`;
+        const body: string = `${encode({ typ: 'JWT', alg: 'HS256' })}.${encode(claims)}`;
         return `la_sk_${body}.${createHmac('sha256', this.secret).update(body).digest('base64url')}`;
     }
     async issue(options: any = {}): Promise<any> {
         ensureRealSecret(this.secret);
         options = { ...options };
         if (options.client_kind != null) {
-            const name: any = String(options.client_kind).trim().toLowerCase();
+            const name: string = String(options.client_kind).trim().toLowerCase();
             options.client_kind = clientAliases.get(name) ?? name;
         }
         const ttl: any = number(options.ttl_hours ?? 24, 'ttl_hours', true);
@@ -71,12 +71,12 @@ export class TokenManager {
             throw new (RouterError as any)('invalid_argument', 'client_kind and principal_id must be paired');
         if (options.client_kind != null && (!clients.has(options.client_kind) || !options.principal_id?.trim() || options.account !== options.principal_id || options.scope === 'admin'))
             throw new (RouterError as any)('invalid_argument', 'invalid client/principal/account binding');
-        if (options.github_repos != null && (!Array.isArray(options.github_repos) || options.github_repos.some((repo?: any): any => typeof repo !== 'string' || !/^[^\s/]+\/[^\s/]+$/.test(repo))))
+        if (options.github_repos != null && (!Array.isArray(options.github_repos) || options.github_repos.some((repo?: any): boolean => typeof repo !== 'string' || !/^[^\s/]+\/[^\s/]+$/.test(repo))))
             throw new (RouterError as any)('invalid_argument', 'github repository scope must be owner/repo');
         if (typeof (options.label ?? '') !== 'string')
             throw new (RouterError as any)('invalid_argument', 'label must be a string');
         validateModelPolicy(options.model_policy);
-        const now: any = this.clock(), id: any = randomUUID();
+        const now: number = this.clock(), id: string = randomUUID();
         const claims: any = { sub: id, iat: now, exp: now + ttl * 3600, label: options.label ?? '' };
         for (const field of ['scope', 'github_repos', 'client_kind', 'principal_id'] as any)
             if ((options as any)[field] && (field !== 'github_repos' || (options as any)[field].length))
@@ -87,8 +87,8 @@ export class TokenManager {
                 (record as any)[field] = structuredClone((options as any)[field]);
         if (options.run_lease_seconds != null)
             record.run_lease_expires_at = now + options.run_lease_seconds;
-        const token: any = this.sign(claims);
-        await this.store.transaction((records?: any): any => {
+        const token: string = this.sign(claims);
+        await this.store.transaction((records?: any): void => {
             for (const [key, held] of records as any)
                 if (held.ephemeral && (held.revoked || held.expires_at <= now))
                     records.delete(key);
@@ -98,11 +98,11 @@ export class TokenManager {
     }
     async validate(token?: any, { admin = false, model, repository }: any = {}): Promise<any> {
         ensureRealSecret(this.secret);
-        const jwt: any = typeof token === 'string' ? token.replace(/^(la_sk_|at-)/, '') : '';
+        const jwt: string = typeof token === 'string' ? token.replace(/^(la_sk_|at-)/, '') : '';
         if (!token?.startsWith('la_sk_') && !token?.startsWith('at-'))
             throw new (RouterError as any)('invalid_prefix', 'Invalid Router token prefix', 401);
-        const parts: any = jwt.split('.');
-        if (parts.length !== 3 || parts.some((part?: any): any => !/^[A-Za-z0-9_-]+$/.test(part)))
+        const parts: Array<string> = jwt.split('.');
+        if (parts.length !== 3 || parts.some((part?: any): boolean => !/^[A-Za-z0-9_-]+$/.test(part)))
             throw new (RouterError as any)('invalid_token', 'Invalid token encoding', 401);
         let header: any, claims: any;
         try {
@@ -135,9 +135,9 @@ export class TokenManager {
         if (admin && claims.scope !== 'admin')
             throw new (RouterError as any)('admin_required', 'Administrative token required', 403);
         const repos: any = claims.github_repos ?? [];
-        if (!Array.isArray(repos) || repos.some((repo?: any): any => typeof repo !== 'string'))
+        if (!Array.isArray(repos) || repos.some((repo?: any): boolean => typeof repo !== 'string'))
             throw new (RouterError as any)('invalid_token', 'Invalid repository scope', 401);
-        if (repository && repos.length && !repos.some((repo?: any): any => repo.toLowerCase() === repository.toLowerCase()))
+        if (repository && repos.length && !repos.some((repo?: any): boolean => repo.toLowerCase() === repository.toLowerCase()))
             throw new (RouterError as any)('repository_not_allowed', 'Repository outside token scope', 403);
         if (model && !record)
             throw new (RouterError as any)('model_policy_unavailable', 'Durable model authority is unavailable', 403);
@@ -156,8 +156,8 @@ export class TokenManager {
             throw new (RouterError as any)('model_not_allowed', 'Model outside token scope', 403);
         return record.model_policy ?? {};
     }
-    async revoke(id?: any): Promise<any> { return this.store.transaction((records?: any): any => { const r: any = records.get(id); if (!r)
-        throw new (RouterError as any)('not_found', 'Token not found', 404); const changed: any = !r.revoked; r.revoked = true; return changed; }); }
+    async revoke(id?: any): Promise<any> { return this.store.transaction((records?: any): boolean => { const r: any = records.get(id); if (!r)
+        throw new (RouterError as any)('not_found', 'Token not found', 404); const changed: boolean = !r.revoked; r.revoked = true; return changed; }); }
     async expire(id?: any): Promise<any> { return this.store.transaction((records?: any): any => { const r: any = records.get(id); if (!r)
         throw new (RouterError as any)('not_found', 'Token not found', 404); r.revoked = true; r.expires_at = this.clock(); return r; }); }
     async rotate(id?: any, overrides: any = {}): Promise<any> {
@@ -176,11 +176,11 @@ export class TokenManager {
     }
     async admit(id?: any, reserve: any = 0): Promise<any> {
         number(reserve, 'reserve');
-        return this.store.transaction((records?: any): any => {
+        return this.store.transaction((records?: any): string => {
             const r: any = records.get(id);
             if (!r)
                 return 'admitted';
-            const now: any = this.clock();
+            const now: number = this.clock();
             if (r.revoked || (r.expires_at < now - this.leeway))
                 throw new (RouterError as any)('revoked', 'Token unavailable', 401);
             if (r.max_requests != null && r.used_requests >= r.max_requests)
@@ -206,15 +206,15 @@ export class TokenManager {
     async settle(id?: any, reserved?: any, actual?: any): Promise<any> {
         number(reserved, 'reserved');
         number(actual, 'actual');
-        return this.store.transaction((records?: any): any => { const r: any = records.get(id); if (r) {
+        return this.store.transaction((records?: any): void => { const r: any = records.get(id); if (r) {
             r.reserved_tokens = Math.max(0, (r.reserved_tokens ?? 0) - reserved);
             r.used_tokens = Math.min(Number.MAX_SAFE_INTEGER, (r.used_tokens ?? 0) + actual);
         } });
     }
-    async releaseStaleReservations(): Promise<any> { return this.store.transaction((records?: any): any => { let n: any = 0; for (const r of records.values() as any)
+    async releaseStaleReservations(): Promise<any> { return this.store.transaction((records?: any): number => { let n: any = 0; for (const r of records.values() as any)
         if (r.reserved_tokens) {
             r.reserved_tokens = 0;
             n++;
         } return n; }); }
 }
-export const codexTokenAlias: any = (token?: any): any => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;
+export const codexTokenAlias: any = (token?: any): null | string => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;

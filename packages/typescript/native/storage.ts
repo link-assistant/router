@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=18e282b7099a3f8ed4180c35d6afb0589d2265d9efef7ada7c6dd969bfc5802b; dynamic any annotations are explicit draft gaps.
+// Meta sha256=c1c2dfaf09b61d5baf29c17c553aeb0ad237dc18545be0398972dbc8ad899f51; dynamic any annotations are explicit draft gaps.
 import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -7,10 +7,10 @@ const queues: any = new (Map as any)();
 export async function serialized(key?: any, operation?: any): Promise<any> {
     const previous: any = queues.get(key) ?? Promise.resolve();
     let release: any;
-    const held: any = new (Promise as any)((resolve?: any): any => { release = resolve; });
-    const tail: any = previous.catch((): any => { }).then((): any => held);
+    const held: any = new (Promise as any)((resolve?: any): void => { release = resolve; });
+    const tail: any = previous.catch((): void => { }).then((): any => held);
     queues.set(key, tail);
-    await previous.catch((): any => { });
+    await previous.catch((): void => { });
     try {
         return await operation();
     }
@@ -20,9 +20,9 @@ export async function serialized(key?: any, operation?: any): Promise<any> {
             queues.delete(key);
     }
 }
-export async function atomicWrite(path?: any, text?: any): Promise<any> {
+export async function atomicWrite(path?: any, text?: any): Promise<void> {
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-    const temporary: any = `${path}.${randomUUID()}.tmp`;
+    const temporary: string = `${path}.${randomUUID()}.tmp`;
     let file: any;
     try {
         file = await open(temporary, 'wx', 0o600);
@@ -41,14 +41,14 @@ export async function atomicWrite(path?: any, text?: any): Promise<any> {
     }
     finally {
         await file?.close();
-        await unlink(temporary).catch((e?: any): any => { if (e.code !== 'ENOENT')
+        await unlink(temporary).catch((e?: any): void => { if (e.code !== 'ENOENT')
             throw e; });
     }
 }
 export async function withNativeFileLock(path?: any, operation?: any, timeout: any = 30000): Promise<any> {
-    const lock: any = `${path}.native-lock`;
+    const lock: string = `${path}.native-lock`;
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-    const started: any = Date.now();
+    const started: number = Date.now();
     for (;;) {
         try {
             await mkdir(lock, { mode: 0o700 });
@@ -93,7 +93,7 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
                     throw error;
             }
             if (dead) {
-                const reaper: any = `${lock}.reap`;
+                const reaper: string = `${lock}.reap`;
                 try {
                     await mkdir(reaper, { mode: 0o700 });
                     try {
@@ -140,7 +140,7 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
         await rm(lock, { recursive: true, force: true });
     }
 }
-export async function readOptional(path?: any, fallback: any = ''): Promise<any> {
+export async function readOptional(path?: any, fallback: any = ''): Promise<string> {
     try {
         return await readFile(path, 'utf8');
     }
@@ -150,20 +150,20 @@ export async function readOptional(path?: any, fallback: any = ''): Promise<any>
         throw error;
     }
 }
-function quote(text?: any): any {
+function quote(text?: any): string {
     if (!text.includes('"'))
         return `"${text}"`;
     if (!text.includes("'"))
         return `'${text}'`;
-    const delimiter: any = text.startsWith('"') ? "'" : '"';
+    const delimiter: string = text.startsWith('"') ? "'" : '"';
     const runs: any = text.match(new (RegExp as any)(`${delimiter}+`, 'g')) ?? [];
-    const count: any = Math.max(3, ...runs.map((run?: any): any => run.length + 1));
+    const count: number = Math.max(3, ...runs.map((run?: any): any => run.length + 1));
     return delimiter.repeat(count) + text + delimiter.repeat(count);
 }
 export function encodeLino(value?: any, level: any = 0): any {
     if (typeof value === 'string') {
         if (/[\x00-\x08\x0b-\x1f\x7f]/.test(value)) {
-            const escaped: any = value.replace(/[%\x00-\x08\x0b-\x1f\x7f]/g, (c?: any): any => `%${c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()}`);
+            const escaped: string = value.replace(/[%\x00-\x08\x0b-\x1f\x7f]/g, (c?: any): string => `%${c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()}`);
             return `(escaped ${quote(escaped)})`;
         }
         return quote(value);
@@ -175,7 +175,7 @@ export function encodeLino(value?: any, level: any = 0): any {
             throw new (Error as any)('Storage numbers must be safe integers');
         return String(value);
     }
-    const indent: any = '  '.repeat(level + 1), close: any = '  '.repeat(level);
+    const indent: string = '  '.repeat(level + 1), close: string = '  '.repeat(level);
     if (Array.isArray(value))
         return value.length ? `(\n${value.map((v?: any): any => indent + encodeLino(v, level + 1)).join('\n')}\n${close})` : '()';
     const entries: any = Object.entries(value);
@@ -183,7 +183,7 @@ export function encodeLino(value?: any, level: any = 0): any {
 }
 export function decodeLino(text?: any): any {
     let i: any = 0;
-    const skip: any = (): any => { while ((text as any)[i] === ' ' || (text as any)[i] === '\t' || (text as any)[i] === '\r')
+    const skip: any = (): void => { while ((text as any)[i] === ' ' || (text as any)[i] === '\t' || (text as any)[i] === '\r')
         i++; };
     function scalar(raw?: any, quoted: any = false): any {
         if (quoted)
@@ -193,7 +193,7 @@ export function decodeLino(text?: any): any {
         if (raw === 'true' || raw === 'false')
             return raw === 'true';
         if (/^-?\d+$/.test(raw)) {
-            const n: any = Number(raw);
+            const n: number = Number(raw);
             if (!Number.isSafeInteger(n))
                 throw new (Error as any)('Unsafe storage integer');
             return n;
@@ -225,7 +225,7 @@ export function decodeLino(text?: any): any {
             if (row.length)
                 rows.push(row);
             if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'escaped' && (rows as any)[0].length === 2) {
-                return ((rows as any)[0] as any)[1].replace(/(?:%[0-9A-Fa-f]{2})+/g, (run?: any): any => Buffer.from(run.replaceAll('%', ''), 'hex').toString('utf8'));
+                return ((rows as any)[0] as any)[1].replace(/(?:%[0-9A-Fa-f]{2})+/g, (run?: any): string => Buffer.from(run.replaceAll('%', ''), 'hex').toString('utf8'));
             }
             if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'o:') {
                 const object: any = Object.create(null);
@@ -237,7 +237,7 @@ export function decodeLino(text?: any): any {
                 }
                 return object;
             }
-            if (multiline && rows.every((r?: any): any => r.length === 2 && typeof (r as any)[0] === 'string')) {
+            if (multiline && rows.every((r?: any): boolean => r.length === 2 && typeof (r as any)[0] === 'string')) {
                 const object: any = Object.create(null);
                 for (const [key, v] of rows as any) {
                     if (Object.hasOwn(object, key))
@@ -286,7 +286,7 @@ export function decodeLino(text?: any): any {
             }
             throw new (Error as any)('Unclosed Lino string');
         }
-        const start: any = i;
+        const start: number = i;
         while (i < text.length && !/[\s()]/.test((text as any)[i]))
             i++;
         if (i === start)
@@ -302,7 +302,7 @@ export function decodeLino(text?: any): any {
         throw new (Error as any)('Trailing Links Notation data');
     return result;
 }
-const strings: any = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'sliding_window_seconds', 'run_lease_expires_at'];
+const strings: Array<string> = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'sliding_window_seconds', 'run_lease_expires_at'];
 export function encodeTokenRecords(records?: any): any {
     const values: any = records.slice().sort((a?: any, b?: any): any => a.id.localeCompare(b.id)).map((record?: any): any => {
         const value: any = { ...record };
@@ -373,7 +373,7 @@ export class TextTokenStore extends MemoryTokenStore {
         }));
     }
     async list(): Promise<any> { return decodeTokenRecords(await readOptional(this.path)); }
-    async get(id?: any): Promise<any> { return (await this.list()).find((r?: any): any => r.id === id) ?? null; }
+    async get(id?: any): Promise<any> { return (await this.list()).find((r?: any): boolean => r.id === id) ?? null; }
 }
 export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage }: any = {}): any {
     if (storage)

@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { inferenceProgram, returnHint, localHint, typeNode } from './native-inference.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walkFiles(root, `${directory}/${entry.name}`) : [`${directory}/${entry.name}`]).sort() : [];
@@ -17,10 +18,11 @@ export function sourceModules(root) {
   return [...walkFiles(root, 'packages/javascript/native'), ...walkFiles(root, 'packages/javascript/portable'), 'packages/javascript/index.js', 'packages/javascript/testing.js'].filter((path) => /\.(?:mjs|js)$/u.test(path)).sort();
 }
 
-function serialize(ts, sourceFile) {
+function serialize(ts, sourceFile, checker) {
   let count = 0;
   let functionIndex = 0;
   const annotations = [];
+  const locals = [];
   const encode = (node) => {
     if (ts.isJSDoc(node)) return null;
     if (ts.isFunctionLike(node) && node.parameters) {
@@ -31,8 +33,9 @@ function serialize(ts, sourceFile) {
         // called with null. Only explicit JSDoc primitive contracts narrow it.
         return 'any';
       });
-      annotations.push({ function: functionIndex++, parameters: params });
+      annotations.push({ function: functionIndex++, parameters: params, returns: returnHint(ts, checker, node) });
     }
+    if (ts.isVariableDeclaration(node)) locals.push(localHint(ts, checker, node));
     count++;
     const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
     if (children.length) return [node.kind, children];
@@ -43,13 +46,14 @@ function serialize(ts, sourceFile) {
     const leading = sourceFile.text.slice(node.pos, node.getStart(sourceFile));
     return [node.kind, text, /[\r\n]/u.test(leading) ? 1 : 0];
   };
-  return { tree: encode(sourceFile), annotations, nodes: count };
+  return { tree: encode(sourceFile), annotations, locals, nodes: count };
 }
 
-export function parseNativeJavaScript(ts, path, source) {
-  const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+export function parseNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
+  const file = inferredFile ?? ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.text !== source) throw new Error(`inference source snapshot differs for ${path}`);
   if (file.parseDiagnostics.length) throw new Error(`invalid authoritative JavaScript syntax in ${path}`);
-  return { schema: 'native-js-syntax-ast-v1', compiler: ts.version, path, sourceSha256: hash(source), ...serialize(ts, file) };
+  return { schema: 'native-js-syntax-ast-v1', compiler: ts.version, path, sourceSha256: hash(source), ...serialize(ts, file, checker) };
 }
 
 // Runtime structural fingerprint, independent of the source token AST emitter.
@@ -101,12 +105,17 @@ export function emitNativeTypeScript(ts, meta) {
   const any = () => f.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
   const primitive = (value) => f.createKeywordTypeNode(({ number: ts.SyntaxKind.NumberKeyword, string: ts.SyntaxKind.StringKeyword, boolean: ts.SyntaxKind.BooleanKeyword })[value] ?? ts.SyntaxKind.AnyKeyword);
   let functionIndex = 0;
+  let localIndex = 0;
+  let inferredReturns = 0;
+  let inferredLocals = 0;
   let explicitAny = 0;
   const namespaces = new Set(file.statements.filter(ts.isImportDeclaration).map((statement) => statement.importClause?.namedBindings).filter((binding) => binding && ts.isNamespaceImport(binding)).map((binding) => binding.name.text));
   const transform = (context) => {
     const visit = (node) => {
       const functionLike = ts.isFunctionLike(node) && node.parameters;
-      const hints = functionLike ? meta.annotations[functionIndex++]?.parameters ?? [] : [];
+      const hint = functionLike ? meta.annotations[functionIndex++] ?? {} : {};
+      const hints = hint.parameters ?? [];
+      const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
       let updated = ts.visitEachChild(node, visit, context);
       if (functionLike) {
         updated.parameters = f.createNodeArray(updated.parameters.map((parameter, index) => {
@@ -116,15 +125,21 @@ export function emitNativeTypeScript(ts, meta) {
           return f.updateParameterDeclaration(parameter, parameter.modifiers, parameter.dotDotDotToken, parameter.name, optional ? f.createToken(ts.SyntaxKind.QuestionToken) : parameter.questionToken, type, parameter.initializer);
         }));
         if (!ts.isConstructorDeclaration(updated) && !ts.isSetAccessorDeclaration(updated)) {
-          explicitAny++;
-          updated.type = updated.asteriskToken
+          if (hint.returns) { inferredReturns++; updated.type = typeNode(ts, hint.returns); }
+          else {
+            explicitAny++;
+            updated.type = updated.asteriskToken
             ? f.createTypeReferenceNode(updated.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) ? 'AsyncGenerator' : 'Generator', [any(), any(), any()])
             : updated.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AsyncKeyword) ? f.createTypeReferenceNode('Promise', [any()]) : any();
+          }
         }
       }
       if (ts.isVariableDeclaration(updated)) {
         const loop = ts.isVariableDeclarationList(node.parent) && (ts.isForOfStatement(node.parent.parent) || ts.isForInStatement(node.parent.parent));
-        if (!loop) { explicitAny++; updated = f.updateVariableDeclaration(updated, updated.name, updated.exclamationToken, any(), updated.initializer); }
+        if (!loop) {
+          if (local) inferredLocals++; else explicitAny++;
+          updated = f.updateVariableDeclaration(updated, updated.name, updated.exclamationToken, local ? typeNode(ts, local) : any(), updated.initializer);
+        }
       }
       if (ts.isForOfStatement(updated)) updated = f.updateForOfStatement(updated, updated.awaitModifier, updated.initializer, f.createAsExpression(updated.expression, any()), updated.statement);
       if (ts.isCatchClause(updated) && updated.variableDeclaration) updated = f.updateCatchClause(updated, f.updateVariableDeclaration(updated.variableDeclaration, updated.variableDeclaration.name, undefined, any(), undefined), updated.block);
@@ -162,7 +177,7 @@ export function emitNativeTypeScript(ts, meta) {
     explicitAny = 0;
     const countAny = (node) => { if (node.kind === ts.SyntaxKind.AnyKeyword) explicitAny++; ts.forEachChild(node, countAny); };
     countAny(typed);
-    return { text, explicitAny };
+    return { text, explicitAny, inferredReturns, inferredLocals };
   } finally { result.dispose(); }
 }
 
@@ -172,9 +187,10 @@ export function buildNativeTypeScript(sourceRoot) {
   if (!paths.some((path) => path.startsWith('packages/javascript/native/'))) throw new Error('native JavaScript source modules are missing');
   const artifacts = new Map();
   const rows = [];
+  const inference = inferenceProgram(ts, sourceRoot, paths);
   for (const path of paths) {
     const source = readFileSync(join(sourceRoot, path), 'utf8');
-    const meta = parseNativeJavaScript(ts, path, source);
+    const meta = parseNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
     const metaText = `${JSON.stringify(meta)}\n`;
     const reparsed = JSON.parse(metaText);
     const output = emitNativeTypeScript(ts, reparsed);
@@ -187,7 +203,7 @@ export function buildNativeTypeScript(sourceRoot) {
     if (sourceRuntime !== targetRuntime) throw new Error(`runtime AST identity differs for ${path}`);
     artifacts.set(metaPath, metaText);
     artifacts.set(target, targetText);
-    rows.push({ source: path, sourceSha256: hash(source), meta: metaPath, target, nodes: meta.nodes, explicitAny: output.explicitAny, metaSha256: hash(metaText), targetSha256: hash(targetText), runtimeASTSha256: hash(sourceRuntime), runtimeASTIdentity: 'verified after type erasure and relative module-extension normalization' });
+    rows.push({ source: path, sourceSha256: hash(source), meta: metaPath, target, nodes: meta.nodes, explicitAny: output.explicitAny, inferredReturns: output.inferredReturns, inferredLocals: output.inferredLocals, metaSha256: hash(metaText), targetSha256: hash(targetText), runtimeASTSha256: hash(sourceRuntime), runtimeASTIdentity: 'verified after type erasure and relative module-extension normalization' });
   }
   const sourcePackage = JSON.parse(readFileSync(join(sourceRoot, 'packages/javascript/package.json'), 'utf8'));
   artifacts.set('packages/typescript/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/native/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../../scripts/check-native-typescript.mjs --out-dir packages/typescript/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);

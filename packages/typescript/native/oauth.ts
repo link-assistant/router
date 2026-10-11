@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=f8c6fed3f5e21acca111c2314fb10bec3415963cf64a8e31eea6844445245502; dynamic any annotations are explicit draft gaps.
+// Meta sha256=34244735d7ed95920b3e2669d5ce3c64df0aa4a26b6fc5e17fbe6712dc40ef5d; dynamic any annotations are explicit draft gaps.
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { access, mkdir, open, realpath, rename, rm, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
@@ -7,25 +7,25 @@ import { constants } from 'node:fs';
 import { tokenExpired } from "../portable/policy.js";
 import { atomicWrite, decodeLino, encodeLino, serialized, withNativeFileLock } from "./storage.js";
 import { RouterError } from "./tokens.js";
-export const CLAUDE_CLIENT_ID: any = '9d1c250a-e61b-44d9-88ed-5944d1962f5e';
-export const CODEX_CLIENT_ID: any = 'app_EMoamEEZ73f0CkXaXp7hrann';
-export const CLAUDE_TOKEN_URL: any = 'https://platform.claude.com/v1/oauth/token';
-export const CODEX_TOKEN_URL: any = 'https://auth.openai.com/oauth/token';
-export const CLAUDE_AUTHORIZE_URL: any = 'https://claude.com/cai/oauth/authorize';
-export const CLAUDE_REDIRECT_URI: any = 'https://platform.claude.com/oauth/code/callback';
-export const CLAUDE_SCOPES: any = 'org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload';
-export const CLAUDE_INFERENCE_SCOPE: any = 'user:inference';
-export const CLAUDE_OAUTH_USER_AGENT: any = 'anthropic-sdk-typescript/0.112.1 userOAuthProvider';
-const PENDING_FILE: any = '.link-assistant-router-claude-login.json';
+export const CLAUDE_CLIENT_ID: string = '9d1c250a-e61b-44d9-88ed-5944d1962f5e';
+export const CODEX_CLIENT_ID: string = 'app_EMoamEEZ73f0CkXaXp7hrann';
+export const CLAUDE_TOKEN_URL: string = 'https://platform.claude.com/v1/oauth/token';
+export const CODEX_TOKEN_URL: string = 'https://auth.openai.com/oauth/token';
+export const CLAUDE_AUTHORIZE_URL: string = 'https://claude.com/cai/oauth/authorize';
+export const CLAUDE_REDIRECT_URI: string = 'https://platform.claude.com/oauth/code/callback';
+export const CLAUDE_SCOPES: string = 'org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload';
+export const CLAUDE_INFERENCE_SCOPE: string = 'user:inference';
+export const CLAUDE_OAUTH_USER_AGENT: string = 'anthropic-sdk-typescript/0.112.1 userOAuthProvider';
+const PENDING_FILE: string = '.link-assistant-router-claude-login.json';
 const files: any = { claude: ['.credentials.json', 'credentials.json', 'auth.json', 'oauth.json', 'config.json'], codex: ['auth.json'] };
 const flights: any = new (Map as any)();
 const uncertain: any = new (Map as any)();
-const nonempty: any = (value?: any): any => typeof value === 'string' && value.length ? value : null;
-const field: any = (object?: any, ...names: any[]): any => names.map((name?: any): any => object?.[name]).find((value?: any): any => value != null) ?? null;
+const nonempty: any = (value?: any): null | string => typeof value === 'string' && value.length ? value : null;
+const field: any = (object?: any, ...names: any[]): any => names.map((name?: any): any => object?.[name]).find((value?: any): boolean => value != null) ?? null;
 const fail: any = (code?: any, message?: any, status: any = 400): any => new (RouterError as any)(code, message, status);
-const CREDENTIAL_FILE_LIMIT: any = 4 * 1024 * 1024;
-const PENDING_FILE_LIMIT: any = 16 * 1024;
-async function boundedOAuthFile(path?: any, { maxBytes = CREDENTIAL_FILE_LIMIT, optional = false, code = 'credential_read_failed', status = 401 }: any = {}): Promise<any> {
+const CREDENTIAL_FILE_LIMIT: number = 4 * 1024 * 1024;
+const PENDING_FILE_LIMIT: number = 16 * 1024;
+async function boundedOAuthFile(path?: any, { maxBytes = CREDENTIAL_FILE_LIMIT, optional = false, code = 'credential_read_failed', status = 401 }: any = {}): Promise<null | string> {
     let handle: any;
     try {
         handle = await open(path, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
@@ -45,7 +45,7 @@ async function boundedOAuthFile(path?: any, { maxBytes = CREDENTIAL_FILE_LIMIT, 
         const decoder: any = new (TextDecoder as any)('utf-8', { fatal: true });
         let bytes: any = 0, text: any = '';
         for (;;) {
-            const length: any = Math.min(buffer.length, maxBytes - bytes + 1);
+            const length: number = Math.min(buffer.length, maxBytes - bytes + 1);
             const { bytesRead }: any = await handle.read(buffer, 0, length, null);
             if (!bytesRead)
                 break;
@@ -65,8 +65,8 @@ async function boundedOAuthFile(path?: any, { maxBytes = CREDENTIAL_FILE_LIMIT, 
         await handle.close();
     }
 }
-export function subscriptionProvider(value?: any): any {
-    const name: any = String(value).trim().toLowerCase();
+export function subscriptionProvider(value?: any): string {
+    const name: string = String(value).trim().toLowerCase();
     if (['claude', 'anthropic', 'claude-code'].includes(name))
         return 'claude';
     if (['codex', 'chatgpt', 'openai-codex'].includes(name))
@@ -94,7 +94,7 @@ function jwtHint(token?: any): any {
 }
 function scopesFrom(block?: any): any {
     const scopes: any = block?.scopes ?? [];
-    if (!Array.isArray(scopes) || scopes.some((value?: any): any => typeof value !== 'string'))
+    if (!Array.isArray(scopes) || scopes.some((value?: any): boolean => typeof value !== 'string'))
         throw fail('credential_invalid', 'Credential scopes must be strings');
     if (block?.scope != null && typeof block.scope !== 'string')
         throw fail('credential_invalid', 'Credential scope must be a string');
@@ -158,9 +158,9 @@ export function mergeCredentialDocument(provider?: any, document?: any, token?: 
     }
     return document;
 }
-export function credentialFingerprint(token?: any): any {
+export function credentialFingerprint(token?: any): string {
     const hash: any = createHash('sha256');
-    const string: any = (value?: any): any => {
+    const string: any = (value?: any): void => {
         if (value == null) {
             hash.update(Buffer.from([0]));
             return;
@@ -185,7 +185,7 @@ export function credentialFingerprint(token?: any): any {
     string(token.resource_url);
     return hash.digest('hex');
 }
-export function validateOAuthEndpoint(value?: any, { allowLoopback = false, expected }: any = {}): any {
+export function validateOAuthEndpoint(value?: any, { allowLoopback = false, expected }: any = {}): string {
     let url: any;
     try {
         url = new (URL as any)(value);
@@ -193,7 +193,7 @@ export function validateOAuthEndpoint(value?: any, { allowLoopback = false, expe
     catch {
         throw fail('invalid_oauth_endpoint', 'OAuth endpoint must be an absolute URL');
     }
-    const loopback: any = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    const loopback: boolean = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
     if (url.username || url.password || url.hash || url.search || !['https:', 'http:'].includes(url.protocol) || url.protocol === 'http:' && !(allowLoopback && loopback))
         throw fail('invalid_oauth_endpoint', 'OAuth endpoint must use HTTPS or an explicitly allowed loopback test endpoint');
     if (expected && url.href.replace(/\/$/, '') !== new (URL as any)(expected).href.replace(/\/$/, '') && !(allowLoopback && loopback))
@@ -220,7 +220,7 @@ export class CredentialFileStore {
     declare provider: any;
     declare recoveryPath: any;
     declare write: any;
-    constructor({ provider, home, path, dataDir, account = 'primary', origin = 'file', write = atomicWrite, clock = (): any => Math.floor(Date.now() / 1000) }: any) {
+    constructor({ provider, home, path, dataDir, account = 'primary', origin = 'file', write = atomicWrite, clock = (): number => Math.floor(Date.now() / 1000) }: any) {
         this.provider = subscriptionProvider(provider);
         if (!home && !path)
             throw fail('invalid_argument', 'An explicit credential home or path is required');
@@ -235,13 +235,13 @@ export class CredentialFileStore {
         this.origin = origin;
         this.write = write;
         this.clock = clock;
-        const digest: any = createHash('sha256').update(account).digest('hex');
+        const digest: string = createHash('sha256').update(account).digest('hex');
         this.recoveryPath = join(this.dataDir, 'refresh-recovery', `${this.provider}-${digest}.json`);
         this.lockPath = join(this.dataDir, 'refresh-recovery', `${this.provider}-${digest}.lock`);
     }
     async readPrimary(): Promise<any> {
         let lastError: any;
-        for (const candidate of this.path ? [this.path] : (files as any)[this.provider].map((name?: any): any => join(this.home, name)) as any) {
+        for (const candidate of this.path ? [this.path] : (files as any)[this.provider].map((name?: any): string => join(this.home, name)) as any) {
             let raw: any;
             raw = await boundedOAuthFile(candidate, { optional: true });
             if (raw == null)
@@ -284,10 +284,10 @@ export class CredentialFileStore {
         catch {
             throw fail('credential_recovery_invalid', 'Credential recovery record is unusable', 503);
         }
-        if (record.version !== 1 || record.provider !== this.provider || typeof record.token?.access_token !== 'string' || !record.token.access_token || ['account_id', 'resource_url'].some((field?: any): any => (record.token as any)[field] != null && typeof (record.token as any)[field] !== 'string') || record.token.refresh_token != null && typeof record.token.refresh_token !== 'string' || record.baseline_fingerprint != null && !/^[a-f0-9]{64}$/.test(record.baseline_fingerprint))
+        if (record.version !== 1 || record.provider !== this.provider || typeof record.token?.access_token !== 'string' || !record.token.access_token || ['account_id', 'resource_url'].some((field?: any): boolean => (record.token as any)[field] != null && typeof (record.token as any)[field] !== 'string') || record.token.refresh_token != null && typeof record.token.refresh_token !== 'string' || record.baseline_fingerprint != null && !/^[a-f0-9]{64}$/.test(record.baseline_fingerprint))
             throw fail('credential_recovery_invalid', 'Credential recovery record is unusable', 503);
         integer(record.token.expires_at_ms, 'Recovery expiry');
-        const primaryHash: any = primary ? credentialFingerprint(primary.token) : null, recoveredHash: any = credentialFingerprint(record.token);
+        const primaryHash: any = primary ? credentialFingerprint(primary.token) : null, recoveredHash: string = credentialFingerprint(record.token);
         if (primaryHash === recoveredHash || primaryHash != null && primaryHash !== record.baseline_fingerprint) {
             await unlink(this.recoveryPath);
             return primary;
@@ -301,13 +301,13 @@ export class CredentialFileStore {
         catch { }
         return { ...primary, token: record.token, recovered: true };
     }
-    async prepareRefresh(held?: any): Promise<any> {
+    async prepareRefresh(held?: any): Promise<void> {
         if (held.origin === 'external')
             throw fail('external_refresh_owner', 'Cannot spend an externally owned refresh chain', 401);
         if (!held.token.refresh_token)
             throw fail('no_refresh_token', 'Subscription credential has no refresh token', 401);
         await mkdir(dirname(this.recoveryPath), { recursive: true, mode: 0o700 });
-        const probe: any = `${this.recoveryPath}.${randomUUID()}.probe`;
+        const probe: string = `${this.recoveryPath}.${randomUUID()}.probe`;
         let file: any;
         try {
             file = await open(probe, 'wx', 0o600);
@@ -321,20 +321,20 @@ export class CredentialFileStore {
         }
         finally {
             await file?.close();
-            await unlink(probe).catch((error?: any): any => { if (error.code !== 'ENOENT')
+            await unlink(probe).catch((error?: any): void => { if (error.code !== 'ENOENT')
                 throw error; });
         }
     }
-    async persistPrimary(held?: any, token?: any): Promise<any> {
+    async persistPrimary(held?: any, token?: any): Promise<void> {
         if (held.origin === 'external')
             throw fail('external_refresh_owner', 'Cannot rewrite externally owned refresh credentials', 401);
         const document: any = mergeCredentialDocument(this.provider, held.document, token, this.clock() * 1000);
         await this.write(held.path, JSON.stringify(document, null, 2) + '\n');
     }
-    async persist(held?: any, token?: any): Promise<any> {
+    async persist(held?: any, token?: any): Promise<void> {
         try {
             await this.persistPrimary(held, token);
-            await unlink(this.recoveryPath).catch((error?: any): any => { if (error.code !== 'ENOENT')
+            await unlink(this.recoveryPath).catch((error?: any): void => { if (error.code !== 'ENOENT')
                 throw error; });
         }
         catch {
@@ -350,7 +350,7 @@ export class CredentialFileStore {
     async transaction(operation?: any): Promise<any> { return serialized(this.lockPath, (): any => withNativeFileLock(this.lockPath, operation, 5000)); }
 }
 async function boundedJSON(response?: any, code?: any, maxBytes: any = 1024 * 1024): Promise<any> {
-    const declared: any = Number(response.headers.get('content-length'));
+    const declared: number = Number(response.headers.get('content-length'));
     if (Number.isFinite(declared) && declared > maxBytes)
         throw fail(code, 'OAuth response exceeds the allowed size', 502);
     const reader: any = response.body?.getReader();
@@ -391,7 +391,7 @@ export class OAuthManager {
     declare endpoints: any;
     declare fetch: any;
     declare timeoutMs: any;
-    constructor({ fetch = globalThis.fetch, clock = (): any => Math.floor(Date.now() / 1000), endpoints = {}, allowLoopback = false, timeoutMs = 20000 }: any = {}) {
+    constructor({ fetch = globalThis.fetch, clock = (): number => Math.floor(Date.now() / 1000), endpoints = {}, allowLoopback = false, timeoutMs = 20000 }: any = {}) {
         if (typeof fetch !== 'function')
             throw fail('invalid_argument', 'OAuth requires a fetch implementation');
         this.fetch = fetch;
@@ -435,20 +435,20 @@ export class OAuthManager {
     async getFresh(store?: any, { force = false }: any = {}): Promise<any> {
         if (!(store instanceof CredentialFileStore))
             throw fail('invalid_argument', 'A native file credential store is required');
-        const key: any = store.lockPath;
+        const key: string = store.lockPath;
         if (flights.has(key))
             return structuredClone(await flights.get(key));
         const flight: any = store.transaction(async (): Promise<any> => {
             const held: any = await store.reload();
             if (!held)
                 throw fail('credentials_missing', 'Subscription credentials are absent', 401);
-            const fingerprint: any = credentialFingerprint(held.token);
+            const fingerprint: string = credentialFingerprint(held.token);
             if (uncertain.get(key) === fingerprint)
                 throw fail('oauth_exchange_uncertain', 'Previous OAuth exchange is uncertain; credential must advance before another grant is spent', 503);
             if (uncertain.has(key))
                 uncertain.delete(key);
-            const nowMs: any = this.clock() * 1000;
-            const due: any = force || held.token.expires_at_ms != null && tokenExpired(nowMs, held.token.expires_at_ms, -300000);
+            const nowMs: number = this.clock() * 1000;
+            const due: boolean = force || held.token.expires_at_ms != null && tokenExpired(nowMs, held.token.expires_at_ms, -300000);
             if (!due || !held.token.refresh_token && (held.token.expires_at_ms == null || !tokenExpired(nowMs, held.token.expires_at_ms, 0)))
                 return { ...held.token, scopes: held.scopes };
             await store.prepareRefresh(held);
@@ -490,8 +490,8 @@ export class OAuthManager {
 }
 export async function validateCredentialCatalog({ provider, token, fetch = globalThis.fetch, baseURL, allowLoopback = false, timeoutMs = 20000 }: any): Promise<any> {
     provider = subscriptionProvider(provider);
-    const official: any = provider === 'claude' ? 'https://api.anthropic.com' : 'https://chatgpt.com/backend-api/codex';
-    const base: any = validateOAuthEndpoint(baseURL ?? official, { allowLoopback, expected: official + '/' }).replace(/\/$/, '');
+    const official: string = provider === 'claude' ? 'https://api.anthropic.com' : 'https://chatgpt.com/backend-api/codex';
+    const base: string = validateOAuthEndpoint(baseURL ?? official, { allowLoopback, expected: official + '/' }).replace(/\/$/, '');
     const models: any = [], seen: any = new (Set as any)();
     let after: any = null;
     for (let page: any = 0; page < 16; page++) {
@@ -510,7 +510,7 @@ export async function validateCredentialCatalog({ provider, token, fetch = globa
             throw fail('catalog_rejected', 'Subscription catalog rejected the credential', 401);
         const data: any = await boundedJSON(response, 'catalog_invalid', 4 * 1024 * 1024);
         const rows: any = provider === 'codex' ? data.models ?? data.data : data.data;
-        if (!Array.isArray(rows) || rows.some((row?: any): any => !nonempty(row.id ?? row.slug)))
+        if (!Array.isArray(rows) || rows.some((row?: any): boolean => !nonempty(row.id ?? row.slug)))
             throw fail('catalog_invalid', 'Subscription catalog has no exact model identities', 502);
         for (const row of rows as any) {
             const id: any = row.id ?? row.slug;
@@ -530,8 +530,8 @@ export async function validateCredentialCatalog({ provider, token, fetch = globa
     }
     throw fail('catalog_invalid', 'Subscription catalog exceeded pagination limits', 502);
 }
-function loginMode(value: any = 'full'): any {
-    const normalized: any = String(value).trim().toLowerCase();
+function loginMode(value: any = 'full'): string {
+    const normalized: string = String(value).trim().toLowerCase();
     if (['', 'full', 'login', 'default'].includes(normalized))
         return 'full';
     if (['setup-token', 'setup_token', 'inference', 'narrow'].includes(normalized))
@@ -539,7 +539,7 @@ function loginMode(value: any = 'full'): any {
     throw fail('invalid_argument', 'Claude login mode must be full or setup-token');
 }
 function acceptedModels(value?: any): any {
-    if (!Array.isArray(value) || !value.length || value.some((model?: any): any => typeof model !== 'string' || !model))
+    if (!Array.isArray(value) || !value.length || value.some((model?: any): boolean => typeof model !== 'string' || !model))
         throw fail('catalog_unverified', 'Credential catalog acceptance requires exact nonempty model ids', 403);
     return [...new (Set as any)(value)];
 }
@@ -550,7 +550,7 @@ async function installAcceptedDocument({ provider, document, sourcePath, destina
         if (ifAbsent && previous)
             return { schema_version: 1, results: [{ provider, phase: 'preflight', outcome: 'already_present', transaction_id: null, previous_credential_safe: true }] };
         const destination: any = previous?.pointer ?? join(store.home, ((files as any)[store.provider] as any)[0]);
-        const transactionId: any = randomUUID().replaceAll('-', '');
+        const transactionId: string = randomUUID().replaceAll('-', '');
         let installed: any = structuredClone(document);
         if (follow)
             installed = { _link_assistant_router: { credential_source: await realpath(sourcePath), promotion_receipt: transactionId } };
@@ -563,7 +563,7 @@ async function installAcceptedDocument({ provider, document, sourcePath, destina
         return { schema_version: 1, results: [{ provider, phase: 'promotion', outcome: 'promoted', transaction_id: transactionId, previous_credential_safe: true }] };
     });
 }
-export async function importCredential({ provider, sourceHome, destinationHome, dataDir, ifAbsent = false, snapshot = false, fetch = globalThis.fetch, clock = (): any => Math.floor(Date.now() / 1000), validateCatalog = validateCredentialCatalog, catalogBaseURL, allowLoopback = false }: any = {}): Promise<any> {
+export async function importCredential({ provider, sourceHome, destinationHome, dataDir, ifAbsent = false, snapshot = false, fetch = globalThis.fetch, clock = (): number => Math.floor(Date.now() / 1000), validateCatalog = validateCredentialCatalog, catalogBaseURL, allowLoopback = false }: any = {}): Promise<any> {
     provider = subscriptionProvider(provider);
     if (!sourceHome || !destinationHome || !dataDir)
         throw fail('invalid_argument', 'Import requires explicit source, destination and Router data directories');
@@ -577,7 +577,7 @@ export async function importCredential({ provider, sourceHome, destinationHome, 
     const held: any = await source.readPrimary();
     if (!held)
         throw fail('credentials_missing', 'Credential import source has no usable file credential', 401);
-    if (existing?.path === held.path || await realpath(destinationHome).catch((): any => resolve(destinationHome)) === await realpath(sourceHome))
+    if (existing?.path === held.path || await realpath(destinationHome).catch((): string => resolve(destinationHome)) === await realpath(sourceHome))
         throw fail('invalid_argument', 'Credential import source and destination must differ');
     if (held.token.expires_at_ms != null && tokenExpired(clock() * 1000, held.token.expires_at_ms, 0))
         throw fail('credential_expired', 'Import requires a live access token; externally owned grants are not spent', 401);
@@ -592,8 +592,8 @@ export async function importCredential({ provider, sourceHome, destinationHome, 
             throw fail('credential_persistence_unavailable', 'Owning source credential must be writable for safe refresh-chain import', 503);
         }
     }
-    const stage: any = join(dataDir, 'auth-import-candidates', randomUUID().replaceAll('-', ''));
-    const stagePath: any = join(stage, provider, ((files as any)[provider] as any)[0]);
+    const stage: string = join(dataDir, 'auth-import-candidates', randomUUID().replaceAll('-', ''));
+    const stagePath: string = join(stage, provider, ((files as any)[provider] as any)[0]);
     await atomicWrite(stagePath, JSON.stringify(held.document, null, 2) + '\n');
     try {
         const models: any = acceptedModels(await validateCatalog({ provider, token: held.token, fetch, baseURL: catalogBaseURL, allowLoopback }));
@@ -615,7 +615,7 @@ export class ClaudeLogin {
     declare pendingClaimed: any;
     declare used: any;
     #pending;
-    constructor({ home, mode = 'full', manager = new (OAuthManager as any)(), authorizeURL = CLAUDE_AUTHORIZE_URL, allowLoopback = false, clock = (): any => Math.floor(Date.now() / 1000), pending }: any = {}) {
+    constructor({ home, mode = 'full', manager = new (OAuthManager as any)(), authorizeURL = CLAUDE_AUTHORIZE_URL, allowLoopback = false, clock = (): number => Math.floor(Date.now() / 1000), pending }: any = {}) {
         if (!home)
             throw fail('invalid_argument', 'Claude login requires an explicit credential home');
         this.home = resolve(home);
@@ -635,7 +635,7 @@ export class ClaudeLogin {
     static async resume(options: any = {}): Promise<any> {
         if (!options.home)
             throw fail('invalid_argument', 'Claude login requires an explicit credential home');
-        const path: any = join(resolve(options.home), PENDING_FILE), claimed: any = `${path}.${randomUUID()}.claimed`;
+        const path: string = join(resolve(options.home), PENDING_FILE), claimed: string = `${path}.${randomUUID()}.claimed`;
         try {
             await rename(path, claimed);
         }
@@ -653,14 +653,14 @@ export class ClaudeLogin {
         finally {
             await unlink(claimed);
         }
-        const now: any = (options.clock?.() ?? Math.floor(Date.now() / 1000)) * 1000;
+        const now: number = (options.clock?.() ?? Math.floor(Date.now() / 1000)) * 1000;
         if (!pending?.state || !pending.code_verifier || !Number.isSafeInteger(pending.expires_at) || pending.expires_at <= now)
             throw fail('pending_login_expired', 'Pending Claude authorization expired');
         const login: any = new (ClaudeLogin as any)({ ...options, pending });
         login.pendingClaimed = true;
         return login;
     }
-    authorizationURL(): any {
+    authorizationURL(): string {
         const url: any = new (URL as any)(this.authorizeURL);
         for (const [name, value] of Object.entries({ code: 'true', client_id: CLAUDE_CLIENT_ID, response_type: 'code', redirect_uri: CLAUDE_REDIRECT_URI,
             scope: this.mode === 'setup-token' ? CLAUDE_INFERENCE_SCOPE : CLAUDE_SCOPES,
@@ -702,7 +702,7 @@ export class ClaudeLogin {
         }
         const document: any = { claudeAiOauth: oauth };
         const parsed: any = parseCredentialDocument('claude', document);
-        const stage: any = join(dataDir, 'auth-import-candidates', randomUUID().replaceAll('-', ''));
+        const stage: string = join(dataDir, 'auth-import-candidates', randomUUID().replaceAll('-', ''));
         await atomicWrite(join(stage, 'claude', '.credentials.json'), JSON.stringify(document, null, 2) + '\n');
         let accepted: any = false;
         try {
@@ -721,14 +721,14 @@ export class ClaudeLogin {
         }
     }
 }
-export async function executeAuthOperation({ name, options = {}, core, config = core?.config ?? {}, env = {}, fetch = globalThis.fetch, clockSeconds = core?.clock ?? ((): any => Math.floor(Date.now() / 1000)), oauth = {} }: any = {}): Promise<any> {
+export async function executeAuthOperation({ name, options = {}, core, config = core?.config ?? {}, env = {}, fetch = globalThis.fetch, clockSeconds = core?.clock ?? ((): number => Math.floor(Date.now() / 1000)), oauth = {} }: any = {}): Promise<any> {
     if (!['auth.import', 'auth.claude', 'auth.codex'].includes(name))
         throw fail('native_unsupported', 'Native OAuth operation is not implemented', 501);
     if (options.router || options.url || options.target)
         throw fail('native_unsupported', 'Native local credential adoption does not support remote deployment targets', 501);
     if (options.all || options.resume || options.force || options.clear || options.port || options.agent || options.device)
         throw fail('native_unsupported', 'Native OAuth does not implement bulk, rotating transaction resume, forced adoption or credential withdrawal', 501);
-    const provider: any = subscriptionProvider(name === 'auth.import' ? options.provider : name.slice(5));
+    const provider: string = subscriptionProvider(name === 'auth.import' ? options.provider : name.slice(5));
     const home: any = options.home ?? (provider === 'claude' ? config.claude_code_home ?? env.CLAUDE_CODE_HOME : config.codex_home ?? env.CODEX_HOME);
     if (!home)
         throw fail('invalid_argument', 'Native OAuth requires an explicit destination credential home');

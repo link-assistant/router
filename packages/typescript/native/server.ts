@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=7860dfc6729bbfea06fad10b858113e28a443d0089a4fcbfa239f87a7bb27494; dynamic any annotations are explicit draft gaps.
+// Meta sha256=17af8716d60345d8e1399b37926a90dc617011b1ab0fffc24096fcd20c9c3cac; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { timingSafeEqual } from 'node:crypto';
@@ -16,9 +16,9 @@ export function redact(value?: any): any {
         return value;
     return Object.fromEntries(Object.entries(value).map(([key, v]: any): any => [key, redactedKeys.test(key) ? '[REDACTED]' : redact(v)]));
 }
-const equal: any = (a?: any, b?: any): any => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+const equal: any = (a?: any, b?: any): boolean => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const bearer: any = (headers?: any): any => { const a: any = headers.get('authorization'); return a?.match(/^Bearer\s+(.+)$/i)?.[1] ?? headers.get('x-api-key'); };
-const protocolOf: any = (candidate?: any): any => {
+const protocolOf: any = (candidate?: any): string => {
     const value: any = candidate.protocol ?? candidate.provider?.protocol ?? candidate.provider?.type ?? candidate.provider;
     if (['anthropic', 'messages'].includes(value))
         return 'anthropic';
@@ -29,7 +29,7 @@ const protocolOf: any = (candidate?: any): any => {
     throw new (ProtocolError as any)(`Unsupported upstream protocol ${typeof value === 'string' ? value : 'unknown'}`, 501);
 };
 const paths: any = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };
-const serviceOf: any = (path?: any): any => /^\/api\/services\/(openai|anthropic)\/v1(?:\/|$)/.exec(path)?.[1];
+const serviceOf: any = (path?: any): undefined | string => /^\/api\/services\/(openai|anthropic)\/v1(?:\/|$)/.exec(path)?.[1];
 function upstreamURL(base?: any, protocol?: any, endpointPath?: any): any {
     let u: any;
     try {
@@ -84,7 +84,7 @@ function relayHeaders(upstream?: any): any {
 async function boundedJSON(request?: any, maxBytes?: any): Promise<any> {
     if (!request.body)
         throw new (ProtocolError as any)('Request body is required');
-    const length: any = Number(request.headers.get('content-length'));
+    const length: number = Number(request.headers.get('content-length'));
     if (Number.isFinite(length) && length > maxBytes)
         throw new (ProtocolError as any)('Request body exceeds limit', 413);
     const reader: any = request.body.getReader();
@@ -157,7 +157,7 @@ export function createNativeRouter(options: any = {}): any {
         throw new (ProtocolError as any)(admin ? 'Administrator credential required' : 'Invalid or missing Router credential', 401);
     }
     function routingContext(request?: any, claims?: any): any {
-        const path: any = new (URL as any)(request.url).pathname, service: any = serviceOf(path);
+        const path: string = new (URL as any)(request.url).pathname, service: any = serviceOf(path);
         const client: any = typeof claims.client === 'string' ? claims.client : typeof claims.client_kind === 'string' ? claims.client_kind : undefined;
         const pin: any = service ? configuration().services?.[service]?.provider : undefined;
         if (pin !== undefined && (typeof pin !== 'string' || !pin))
@@ -201,7 +201,7 @@ export function createNativeRouter(options: any = {}): any {
         }
         const provider: any = /^\/api\/management\/providers\/([^/]+)$/.exec(path);
         if (provider && ['GET', 'DELETE'].includes(method)) {
-            const name: any = decodeURIComponent((provider as any)[1]);
+            const name: string = decodeURIComponent((provider as any)[1]);
             let result: any;
             if (method === 'GET')
                 result = core.showProvider ? await core.showProvider(name) : await core.providers?.get?.(name);
@@ -215,7 +215,7 @@ export function createNativeRouter(options: any = {}): any {
             return json({ accounts: redact(core.listAccounts ? await core.listAccounts() : await core.accounts?.list?.() ?? []) });
         const account: any = /^\/api\/management\/accounts\/([^/]+)\/(pause|resume|policy)$/.exec(path);
         if (account) {
-            const name: any = decodeURIComponent((account as any)[1]), action: any = (account as any)[2];
+            const name: string = decodeURIComponent((account as any)[1]), action: string = (account as any)[2];
             let result: any;
             if (action === 'policy' && method === 'GET') {
                 result = core.accounts?.getPolicy ? await core.accounts.getPolicy(name) : core.accounts?.records?.has(name) ? { account: name, policy: structuredClone(core.accounts.records.get(name).policy) } : undefined;
@@ -243,7 +243,7 @@ export function createNativeRouter(options: any = {}): any {
         if (path === '/api/management/usage' && method === 'GET')
             return json({ ...counters });
         if (path === '/api/management/logs/errors' && method === 'GET')
-            return json({ errors: logs.filter((l?: any): any => l.status >= 400) });
+            return json({ errors: logs.filter((l?: any): boolean => l.status >= 400) });
         throw new (ProtocolError as any)('Route not found', 404);
     }
     async function inference(request?: any, source?: any, body?: any): Promise<any> {
@@ -265,8 +265,8 @@ export function createNativeRouter(options: any = {}): any {
             if ((body as any)[key] !== undefined && (!Number.isSafeInteger((body as any)[key]) || (body as any)[key] < 1))
                 throw new (ProtocolError as any)(`${key} must be a positive integer`);
         const claims: any = await authorize(request, false, body.model);
-        const retain: any = source === 'responses' && body.store !== false;
-        const namespace: any = new (URL as any)(request.url).pathname.startsWith('/api/services/') ? '/api/services/openai/v1' : '/v1';
+        const retain: boolean = source === 'responses' && body.store !== false;
+        const namespace: string = new (URL as any)(request.url).pathname.startsWith('/api/services/') ? '/api/services/openai/v1' : '/v1';
         const owner: any = retain ? responseOwner(claims, bearer(request.headers)) : undefined;
         const responseInput: any = retain ? normalizeResponseInput(body) : undefined;
         let retainedId: any;
@@ -285,7 +285,7 @@ export function createNativeRouter(options: any = {}): any {
             }
         }
         let settled: any = false;
-        const settle: any = async (usage?: any): Promise<any> => {
+        const settle: any = async (usage?: any): Promise<void> => {
             if (settled)
                 return;
             if (tokenId && core.tokens?.settle)
@@ -298,7 +298,7 @@ export function createNativeRouter(options: any = {}): any {
         };
         let finalError: any;
         try {
-            const attemptLimit: any = configuration().account_failover === false ? 1 : Math.max(1, Math.min(10, maxAttempts));
+            const attemptLimit: number = configuration().account_failover === false ? 1 : Math.max(1, Math.min(10, maxAttempts));
             for (const rawCandidate of candidates.slice(0, attemptLimit) as any) {
                 let candidate: any = rawCandidate;
                 try {
@@ -320,10 +320,10 @@ export function createNativeRouter(options: any = {}): any {
                     finalError = error;
                     continue;
                 }
-                const controller: any = new (AbortController as any)(), abort: any = (): any => controller.abort(request.signal.reason);
+                const controller: any = new (AbortController as any)(), abort: any = (): void => controller.abort(request.signal.reason);
                 core.accounts?.recordUse?.(candidate, context);
                 request.signal.addEventListener('abort', abort, { once: true });
-                const timer: any = setTimeout((): any => controller.abort(new (Error as any)('Upstream timeout')), timeoutMs);
+                const timer: any = setTimeout((): void => controller.abort(new (Error as any)('Upstream timeout')), timeoutMs);
                 timer.unref?.();
                 let response: any;
                 try {
@@ -339,7 +339,7 @@ export function createNativeRouter(options: any = {}): any {
                     finalError = new (ProtocolError as any)('Upstream connection failed', 502);
                     continue;
                 }
-                const cleanup: any = (): any => { clearTimeout(timer); request.signal.removeEventListener('abort', abort); };
+                const cleanup: any = (): void => { clearTimeout(timer); request.signal.removeEventListener('abort', abort); };
                 if (!response.ok) {
                     cleanup();
                     const status: any = response.status;
@@ -362,11 +362,11 @@ export function createNativeRouter(options: any = {}): any {
                     let resourceCancelled: any = false;
                     const callbacks: any = {
                         clock, model: body.model,
-                        onStart: async (response?: any): Promise<any> => { if (retain) {
-                            responseStore.save(namespace, owner, response, responseInput, { abort: (): any => { resourceCancelled = true; controller.abort(new (Error as any)('Response cancelled')); } });
+                        onStart: async (response?: any): Promise<void> => { if (retain) {
+                            responseStore.save(namespace, owner, response, responseInput, { abort: (): void => { resourceCancelled = true; controller.abort(new (Error as any)('Response cancelled')); } });
                             retainedId = response.id;
                         } },
-                        onComplete: async (state?: any): Promise<any> => {
+                        onComplete: async (state?: any): Promise<void> => {
                             cleanup();
                             await settle(state.usage);
                             if (retain) {
@@ -376,10 +376,10 @@ export function createNativeRouter(options: any = {}): any {
                             }
                             await core.reportSuccess?.(candidate);
                         },
-                        onError: async (_error?: any, state?: any): Promise<any> => { cleanup(); if (retain && retainedId)
+                        onError: async (_error?: any, state?: any): Promise<void> => { cleanup(); if (retain && retainedId)
                             responseStore.fail(namespace, owner, retainedId); if (!resourceCancelled && !request.signal.aborted)
                             await core.reportFailure?.(candidate, { status: 502 }); await settle(state?.usage); },
-                        onCancel: async (): Promise<any> => { cleanup(); controller.abort(); if (retain && retainedId)
+                        onCancel: async (): Promise<void> => { cleanup(); controller.abort(); if (retain && retainedId)
                             responseStore.fail(namespace, owner, retainedId); await settle(); },
                     };
                     const stream: any = source === protocol ? monitorNativeStream(response.body, protocol, callbacks) : translateStream(response.body, protocol, source, body.model, callbacks);
@@ -411,7 +411,7 @@ export function createNativeRouter(options: any = {}): any {
         }
     }
     async function handle(request?: any): Promise<any> {
-        const path: any = new (URL as any)(request.url).pathname, source: any = serviceOf(path) === 'anthropic' || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
+        const path: string = new (URL as any)(request.url).pathname, source: string = serviceOf(path) === 'anthropic' || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
         const started: any = clock();
         counters.requests++;
         let response: any;
@@ -422,7 +422,7 @@ export function createNativeRouter(options: any = {}): any {
                 response = await management(request, path);
             else if (/^(?:\/v1|\/api\/services\/openai\/v1)\/responses\/[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
                 const match: any = /^(\/v1|\/api\/services\/openai\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
-                const claims: any = await authorize(request, false), owner: any = responseOwner(claims, bearer(request.headers)), id: any = decodeURIComponent((match as any)[2]);
+                const claims: any = await authorize(request, false), owner: string = responseOwner(claims, bearer(request.headers)), id: string = decodeURIComponent((match as any)[2]);
                 const existing: any = responseStore.get((match as any)[1], owner, id);
                 await authorize(request, false, existing.model);
                 if (!(match as any)[3] && request.method === 'GET')
@@ -441,10 +441,10 @@ export function createNativeRouter(options: any = {}): any {
                 response = json(projectModels(await models(request, claims), source, new (URL as any)(request.url).searchParams));
             }
             else if (/^(?:\/v1|\/api\/services\/(?:openai|anthropic)\/v1)\/models\/[^/]+$/.test(path) && request.method === 'GET') {
-                const id: any = decodeURIComponent(path.slice(path.lastIndexOf('/') + 1)), claims: any = await authorize(request, false);
+                const id: string = decodeURIComponent(path.slice(path.lastIndexOf('/') + 1)), claims: any = await authorize(request, false);
                 if (!id || id.length > 512 || /[\/\x00-\x1f\x7f]/.test(id))
                     throw new (ProtocolError as any)('Model not found', 404);
-                const model: any = (await models(request, claims)).find((m?: any): any => m.id === id);
+                const model: any = (await models(request, claims)).find((m?: any): boolean => m.id === id);
                 if (!model)
                     throw new (ProtocolError as any)('Model not found', 404);
                 const projected: any = (projectModels([model], source).data as any)[0];
@@ -471,10 +471,10 @@ export function createNativeRouter(options: any = {}): any {
         async listen({ host = configuration().host ?? '127.0.0.1', port = configuration().port ?? 3000 }: any = {}): Promise<any> {
             if (server)
                 throw new (Error as any)('Router is already listening');
-            server = createServer(async (incoming?: any, outgoing?: any): Promise<any> => {
+            server = createServer(async (incoming?: any, outgoing?: any): Promise<void> => {
                 const controller: any = new (AbortController as any)();
-                incoming.on('aborted', (): any => controller.abort());
-                outgoing.on('close', (): any => { if (!outgoing.writableEnded)
+                incoming.on('aborted', (): void => controller.abort());
+                outgoing.on('close', (): void => { if (!outgoing.writableEnded)
                     controller.abort(); });
                 try {
                     const headers: any = new (Headers as any)();
@@ -496,7 +496,7 @@ export function createNativeRouter(options: any = {}): any {
                 }
             });
             try {
-                await new (Promise as any)((resolve?: any, reject?: any): any => { server.once('error', reject); server.listen(port, host, (): any => { server.off('error', reject); resolve(); }); });
+                await new (Promise as any)((resolve?: any, reject?: any): void => { server.once('error', reject); server.listen(port, host, (): void => { server.off('error', reject); resolve(); }); });
             }
             catch (error: any) {
                 server = undefined;
@@ -504,9 +504,9 @@ export function createNativeRouter(options: any = {}): any {
             }
             return router;
         },
-        async close(): Promise<any> { responseStore.close?.(); if (!server)
+        async close(): Promise<void> { responseStore.close?.(); if (!server)
             return; const current: any = server; server = undefined; if (!current.listening)
-            return; await new (Promise as any)((resolve?: any, reject?: any): any => { current.close((error?: any): any => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
+            return; await new (Promise as any)((resolve?: any, reject?: any): void => { current.close((error?: any): void => error ? reject(error) : resolve()); current.closeIdleConnections?.(); }); },
     };
     return router;
 }

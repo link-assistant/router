@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=48ade2b0bf44cd3f301842b0bd72ce266a7b91b4f75b21844216b9c0414d59c2; dynamic any annotations are explicit draft gaps.
+// Meta sha256=3386aa0451e69c4c5fcee873795819bbe72a819f8884fadf45b88007a28dfb28; dynamic any annotations are explicit draft gaps.
 import { open, lstat, readdir, mkdir, mkdtemp, rename, chmod, rm } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve, join, dirname, parse } from 'node:path';
@@ -9,7 +9,7 @@ import { execFile } from 'node:child_process';
 import { isIP } from 'node:net';
 const exec: any = promisify(execFile);
 const tlsTasks: any = new (Map as any)();
-const MAX_BYTES: any = 256 * 1024 * 1024, MAX_FILES: any = 10000, MAX_DEPTH: any = 128;
+const MAX_BYTES: number = 256 * 1024 * 1024, MAX_FILES: number = 10000, MAX_DEPTH: number = 128;
 const unsupported: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'unsupported' });
 const bad: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'invalid_resource' });
 export const supportedResourceOperations: any = Object.freeze({
@@ -32,11 +32,11 @@ export function decodeLogLine(source?: any): any {
         }
     }
     let pos: any = 0;
-    const space: any = (): any => { while (/\s/.test((text as any)[pos] ?? '') && pos < text.length)
+    const space: any = (): void => { while (/\s/.test((text as any)[pos] ?? '') && pos < text.length)
         pos++; };
-    const expect: any = (char?: any): any => { if ((text as any)[pos++] !== char)
+    const expect: any = (char?: any): void => { if ((text as any)[pos++] !== char)
         throw bad('Malformed log record'); };
-    const quoted: any = (escaped?: any): any => {
+    const quoted: any = (escaped?: any): string => {
         expect('"');
         let value: any = '', closed: any = false;
         while (pos < text.length) {
@@ -56,7 +56,7 @@ export function decodeLogLine(source?: any): any {
         }
         if (!closed)
             throw bad('Malformed quoted record');
-        return escaped ? value === '%z' ? '' : value.replace(/%([0-9a-fA-F]{2})/g, (_?: any, hex?: any): any => String.fromCharCode(parseInt(hex, 16))) : value;
+        return escaped ? value === '%z' ? '' : value.replace(/%([0-9a-fA-F]{2})/g, (_?: any, hex?: any): string => String.fromCharCode(parseInt(hex, 16))) : value;
     };
     const value: any = (escaped: any = false, depth: any = 0): any => {
         if (depth > MAX_DEPTH)
@@ -65,7 +65,7 @@ export function decodeLogLine(source?: any): any {
         if ((text as any)[pos] === '"')
             return quoted(escaped);
         if ((text as any)[pos] !== '(') {
-            const start: any = pos;
+            const start: number = pos;
             while (pos < text.length && !/[\s()]/.test((text as any)[pos]))
                 pos++;
             const token: any = text.slice(start, pos);
@@ -73,7 +73,7 @@ export function decodeLogLine(source?: any): any {
                 return JSON.parse(token as any);
             if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(token))
                 throw bad('Malformed scalar record');
-            const number: any = Number(token);
+            const number: number = Number(token);
             if (!Number.isFinite(number))
                 throw bad('Invalid number');
             return number;
@@ -102,7 +102,7 @@ export function decodeLogLine(source?: any): any {
                 if (!marker)
                     expect(':');
                 space();
-                const name: any = quoted(marker === '#o');
+                const name: string = quoted(marker === '#o');
                 (object as any)[name] = value(marker === '#o', depth + 1);
                 space();
                 expect(')');
@@ -136,7 +136,7 @@ catch (error: any) {
         return null;
     throw error;
 } }
-async function noLinks(path?: any): Promise<any> {
+async function noLinks(path?: any): Promise<void> {
     let current: any = resolve(path), hops: any = 0;
     while (true) {
         const stat: any = await statOptional(current);
@@ -177,7 +177,7 @@ async function boundedFile(path?: any, budget?: any): Promise<any> {
         await handle.close();
     }
 }
-function utf8(bytes?: any, path?: any): any {
+function utf8(bytes?: any, path?: any): string {
     try {
         return new (TextDecoder as any)('utf-8', { fatal: true }).decode(bytes);
     }
@@ -194,13 +194,13 @@ async function readLogs(root?: any, token?: any): Promise<any> {
     for (const name of (await readdir(root)).sort() as any) {
         if (token !== undefined && !name.startsWith(token))
             continue;
-        const directory: any = join(root, name), stat: any = await lstat(directory);
+        const directory: string = join(root, name), stat: any = await lstat(directory);
         if (stat.isSymbolicLink())
             throw bad(`Request-log directory is a symlink: ${directory}`);
         if (!stat.isDirectory())
             continue;
         for (const filename of ['requests.lino', 'requests.jsonl'] as any) {
-            const path: any = join(directory, filename), info: any = await statOptional(path);
+            const path: string = join(directory, filename), info: any = await statOptional(path);
             if (!info)
                 continue;
             if (info.isSymbolicLink() || !info.isFile())
@@ -214,7 +214,7 @@ async function readLogs(root?: any, token?: any): Promise<any> {
     let unparsable: any = 0;
     for (const path of files.sort() as any) {
         const bytes: any = await boundedFile(path, budget);
-        const text: any = utf8(bytes, path);
+        const text: string = utf8(bytes, path);
         const records: any = [];
         for (const line of text.split(/\r?\n/) as any) {
             if (!line.trim())
@@ -229,7 +229,7 @@ async function readLogs(root?: any, token?: any): Promise<any> {
     }
     return { files: decoded, bytes: MAX_BYTES - budget.remaining, unparsable };
 }
-const terminates: any = (text?: any): any => ['message_stop', '[DONE]', 'response.completed', 'finishReason'].some((marker?: any): any => text.includes(marker));
+const terminates: any = (text?: any): boolean => ['message_stop', '[DONE]', 'response.completed', 'finishReason'].some((marker?: any): any => text.includes(marker));
 function encoding(header?: any): any { return (header ?? 'identity').split(',').map((s?: any): any => s.trim()).filter(Boolean).at(-1)?.toLowerCase() ?? 'identity'; }
 function base64Bytes(text?: any): any { return typeof text === 'string' && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text) ? Buffer.from(text, 'base64') : null; }
 function decompress(bytes?: any, kind?: any): any {
@@ -310,7 +310,7 @@ function exchanges(log?: any): any {
             else {
                 x.inspectable = true;
                 x.undecodable = 0;
-                x.error = decoded.split(/\r?\n/).some((line?: any): any => {
+                x.error = decoded.split(/\r?\n/).some((line?: any): boolean => {
                     const text: any = line.trim();
                     if (text.toLowerCase() === 'event: error')
                         return true;
@@ -335,7 +335,7 @@ function exchanges(log?: any): any {
         if (!x.evidence && x.requested)
             x.streamed = true;
     }
-    return [...map.values()].sort((a?: any, b?: any): any => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    return [...map.values()].sort((a?: any, b?: any): number => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 const incomplete: any = (x?: any): any => x.streamed && x.inspectable && x.complete === false;
 const unterminated: any = (x?: any): any => x.streamed && x.inspectable && x.outcome === undefined && !x.terminated;
@@ -359,7 +359,7 @@ function summary(log?: any, all?: any): any {
     return result;
 }
 function anomalies(all?: any): any {
-    const result: any = [], add: any = (kind?: any, detail?: any, test?: any, minimum: any = 1): any => {
+    const result: any = [], add: any = (kind?: any, detail?: any, test?: any, minimum: any = 1): void => {
         const ids: any = all.filter(test).map((x?: any): any => x.id);
         if (ids.length >= minimum)
             result.push({ kind, detail: typeof detail === 'function' ? detail(ids.length) : detail, correlation_ids: ids });
@@ -368,27 +368,27 @@ function anomalies(all?: any): any {
     add('no_terminal_record', 'a streamed exchange has no terminal record, so how it ended is unknown', unterminated);
     add('stream_carried_an_error', 'a streamed turn carried an error event while the status line said 200, so the transport reported success for a turn that failed', (x?: any): any => x.error);
     add('stream_not_verifiable', 'a streamed exchange was relayed under an encoding this router cannot decode, so its frames cannot be inspected for a terminator; how it ended is not knowable from the log', unverifiable);
-    add('repeated_authentication_failure', (n?: any): any => `${n} exchanges were refused with 401/403, which is misconfiguration rather than load`, (x?: any): any => [401, 403].includes(x.status), 2);
-    add('rate_limited', (n?: any): any => `${n} exchanges were rate limited`, (x?: any): any => x.status === 429);
-    add('undecodable_bodies', 'bodies are compressed or binary, so their contents cannot be inspected from the log; recorded so absence of evidence is not read as evidence', (x?: any): any => x.undecodable > 0);
+    add('repeated_authentication_failure', (n?: any): string => `${n} exchanges were refused with 401/403, which is misconfiguration rather than load`, (x?: any): boolean => [401, 403].includes(x.status), 2);
+    add('rate_limited', (n?: any): string => `${n} exchanges were rate limited`, (x?: any): boolean => x.status === 429);
+    add('undecodable_bodies', 'bodies are compressed or binary, so their contents cannot be inspected from the log; recorded so absence of evidence is not read as evidence', (x?: any): boolean => x.undecodable > 0);
     return result;
 }
 function show(log?: any, id?: any): any {
     const records: any = [];
     for (const file of log.files as any) {
-        const selected: any = file.filter((record?: any): any => record?.correlation_id === id);
-        const header: any = selected.find((record?: any): any => typeof record.headers?.['content-encoding'] === 'string')?.headers['content-encoding'];
+        const selected: any = file.filter((record?: any): boolean => record?.correlation_id === id);
+        const header: any = selected.find((record?: any): boolean => typeof record.headers?.['content-encoding'] === 'string')?.headers['content-encoding'];
         const stored: any = selected.map((record?: any): any => base64Bytes(record.body?.base64)).filter(Boolean);
         const decoded: any = decompress(Buffer.concat(stored), encoding(header));
-        const first: any = selected.findIndex((record?: any): any => typeof record.body?.base64 === 'string');
+        const first: any = selected.findIndex((record?: any): boolean => typeof record.body?.base64 === 'string');
         for (const [index, record] of selected.entries() as any)
             records.push(decoded && typeof record.body?.base64 === 'string' ? { ...record, body: index === first ? decoded : '[decoded with the first frame: only the whole stream decodes]' } : record);
     }
-    const output: any = records.length ? records.flatMap((record?: any): any => JSON.stringify(record, null, 2).split('\n')) : [`no records for correlation id ${id}`];
+    const output: Array<string> = records.length ? records.flatMap((record?: any): Array<string> => JSON.stringify(record, null, 2).split('\n')) : [`no records for correlation id ${id}`];
     return { correlation_id: id, records, output };
 }
 async function tlsGenerate(dataDir?: any, dns?: any): Promise<any> {
-    const directory: any = join(dataDir, 'tls'), cert: any = join(directory, 'cert.pem'), key: any = join(directory, 'key.pem');
+    const directory: string = join(dataDir, 'tls'), cert: string = join(directory, 'cert.pem'), key: string = join(directory, 'key.pem');
     await noLinks(directory);
     await noLinks(cert);
     await noLinks(key);
@@ -397,14 +397,14 @@ async function tlsGenerate(dataDir?: any, dns?: any): Promise<any> {
         return { output: [cert] };
     if ((certStat && !certStat.isFile()) || (keyStat && !keyStat.isFile()))
         throw bad('TLS certificate and key paths must be regular files');
-    const names: any = [...new (Set as any)(String(dns ?? 'localhost').split(',').map((s?: any): any => s.trim()).filter(Boolean).concat('localhost', '127.0.0.1'))];
-    if (names.length > 100 || names.some((name?: any): any => !isIP(name) && !/^(?:\*\.)?[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/.test(name)))
+    const names: Array<string> = [...new (Set as any)(String(dns ?? 'localhost').split(',').map((s?: any): string => s.trim()).filter(Boolean).concat('localhost', '127.0.0.1'))];
+    if (names.length > 100 || names.some((name?: any): boolean => !isIP(name) && !/^(?:\*\.)?[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/.test(name)))
         throw bad('TLS names must be DNS names or IP addresses (at most 100 names)');
     await mkdir(directory, { recursive: true, mode: 0o700 });
     await chmod(directory, 0o700);
-    const temporary: any = await mkdtemp(join(directory, '.generate-'));
+    const temporary: string = await mkdtemp(join(directory, '.generate-'));
     try {
-        await exec('openssl', ['req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes', '-sha256', '-days', '3650', '-subj', '/CN=rcgen self signed cert', '-addext', `subjectAltName=${names.map((name?: any): any => `${isIP(name) ? 'IP' : 'DNS'}:${name}`).join(',')}`, '-keyout', join(temporary, 'key.pem'), '-out', join(temporary, 'cert.pem')], { timeout: 10000, maxBuffer: 1024 * 1024, windowsHide: true });
+        await exec('openssl', ['req', '-x509', '-newkey', 'ec', '-pkeyopt', 'ec_paramgen_curve:P-256', '-nodes', '-sha256', '-days', '3650', '-subj', '/CN=rcgen self signed cert', '-addext', `subjectAltName=${names.map((name?: any): string => `${isIP(name) ? 'IP' : 'DNS'}:${name}`).join(',')}`, '-keyout', join(temporary, 'key.pem'), '-out', join(temporary, 'cert.pem')], { timeout: 10000, maxBuffer: 1024 * 1024, windowsHide: true });
         await chmod(join(temporary, 'key.pem'), 0o600);
         await chmod(join(temporary, 'cert.pem'), 0o600);
         await rename(join(temporary, 'cert.pem'), cert);
@@ -422,7 +422,7 @@ async function tlsGenerate(dataDir?: any, dns?: any): Promise<any> {
 }
 async function serializedTlsGenerate(dataDir?: any, dns?: any): Promise<any> {
     const before: any = tlsTasks.get(dataDir) ?? Promise.resolve();
-    const task: any = before.catch((): any => { }).then((): any => tlsGenerate(dataDir, dns));
+    const task: any = before.catch((): void => { }).then((): any => tlsGenerate(dataDir, dns));
     tlsTasks.set(dataDir, task);
     try {
         return await task;
@@ -446,10 +446,10 @@ export async function executeResourceOperation({ name, options = {}, config = {}
     if (name === 'tls.generate')
         return serializedTlsGenerate(resolve(dataDir), options.dns);
     if (name === 'tls.ca') {
-        const path: any = join(resolve(dataDir), 'tls', 'cert.pem');
+        const path: string = join(resolve(dataDir), 'tls', 'cert.pem');
         try {
             const bytes: any = await boundedFile(path, { remaining: 1024 * 1024, limit: 1024 * 1024 });
-            const output: any = utf8(bytes, path).split(/\r?\n/);
+            const output: Array<string> = utf8(bytes, path).split(/\r?\n/);
             if (output.at(-1) === '')
                 output.pop();
             return { output };
