@@ -120,7 +120,15 @@ try {
   for (const source of tracked) if (!seen.has(source)) throw new Error(`Missing tracked Rust source: ${source}`);
   for (const [kind, total] of Object.entries(totals)) if (translation.totals?.[kind] !== total) throw new Error(`Translation total mismatch: ${kind}`);
   // Run the deterministic translator's check mode to reject edited/stale generated artifacts.
-  await exec(process.execPath, ['scripts/translate-router.mjs','--check'], { cwd: root, timeout: 60_000, maxBuffer: 4_194_304 });
+  // The same-SHA CI translation jobs took 62–63 seconds; the old 60-second
+  // child budget incorrectly rejected fresh artifacts. Keep the exact check
+  // mandatory and bounded, with enough time to finish on a contended runner.
+  const translationTimeoutMs = 180_000, translationStarted = performance.now();
+  try {
+    await exec(process.execPath, ['scripts/translate-router.mjs','--check'], { cwd: root, timeout: translationTimeoutMs, maxBuffer: 4_194_304 });
+  } catch (error) {
+    throw new Error(`${error.message}; deterministic --check diagnostics: timeoutBudgetMs=${translationTimeoutMs}, elapsedMs=${Math.round(performance.now() - translationStarted)}, killed=${error.killed === true}, signal=${error.signal ?? 'none'}, code=${error.code ?? 'none'}`, { cause: error });
+  }
   if (translation.runtimeParity !== true || totals.carried || translation.sources.some(source => source.runtimeParity !== true))
     gaps.push(`translation: ${totals.carried} carried items; full runtime parity is unverified`);
 } catch (error) { errors.push(`Rust source inventory: ${error.message}`); }
