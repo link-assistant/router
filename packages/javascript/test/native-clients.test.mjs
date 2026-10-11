@@ -24,6 +24,8 @@ test('all eight rows survive a malformed JSON configuration and show the matchin
   assert.equal(claude.ownership_state,'ambiguous');assert.match(claude.unreadable,/invalid JSON/);
   assert.equal(list.data.find(row=>row.client==='agent').ownership_state,'unconfigured');assert(!JSON.stringify(list).includes('{broken'));
   const show=await router.execute('clients.show',{client:'claude'});assert.equal(show.success,false);assert.equal(show.data.client,'claude');
+  await put(clientPaths('qwen',{home}).config,{modelProviders:{openai:'foreign vendor shape'}});
+  const later=await router.execute('clients.list');assert.equal(later.data.length,8);assert.equal(later.data.find(row=>row.client==='qwen').ownership_state,'foreign');
 });
 test('Codex reads real TOML quoted keys inline tables and rejects malformed grammar',async t=>{
   const home=await root(t),paths=clientPaths('codex',{home});

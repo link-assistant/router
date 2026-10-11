@@ -18,7 +18,7 @@ function publicBase(paths,document,environment,env) {
     }
     case 'claude':return text(document.env?.ANTHROPIC_BASE_URL);
     case 'opencode':case 'agent':return text(document.provider?.['link-assistant']?.options?.baseURL);
-    case 'qwen':return text(document.modelProviders?.openai?.find(model=>model?.envKey==='LINK_ASSISTANT_TOKEN')?.baseUrl);
+    case 'qwen':return text((Array.isArray(document.modelProviders?.openai) ? document.modelProviders.openai : []).find(model=>model?.envKey==='LINK_ASSISTANT_TOKEN')?.baseUrl);
     case 'gemini':case 'grok':return text(env[paths.info.base]) ?? readClientEnvironment(environment,paths.info.base);
     default:return null;
   }
@@ -71,7 +71,7 @@ export async function nativeClientStatus(name,options={}) {
   } else if(['opencode','agent'].includes(info.client)) {
     if(expected && document.provider?.['link-assistant']?.options?.baseURL!==expected) conflicts.push('public-config:provider.link-assistant.options.baseURL');
   } else if(info.client==='qwen') {
-    if(expected && !document.modelProviders?.openai?.some(model=>model?.envKey==='LINK_ASSISTANT_TOKEN' && model?.baseUrl===expected)) conflicts.push('public-config:modelProviders.openai');
+    if(expected && !(Array.isArray(document.modelProviders?.openai) ? document.modelProviders.openai : []).some(model=>model?.envKey==='LINK_ASSISTANT_TOKEN' && model?.baseUrl===expected)) conflicts.push('public-config:modelProviders.openai');
   } else if(info.client==='claude') {
     const entries=claudeEntries(marker),users=Array.isArray(marker?.user_model_keys) ? marker.user_model_keys : [],publicEnv=document.env ?? {};
     if(expected && strip(publicEnv.ANTHROPIC_BASE_URL)!==strip(expected)) conflicts.push('public-config:ANTHROPIC_BASE_URL');
