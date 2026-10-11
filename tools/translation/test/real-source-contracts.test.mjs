@@ -193,3 +193,40 @@ test('actual stream failure message uses its checked Copy receiver and exact ori
     assert.throws(()=>translated.fixture_failure_message(tagged('Unrecognized')),TypeError);
   }
 });
+
+
+function assertFormatProvenance(id,result,expected) {
+  const {source,entry}=exactModule(id),declarations=new Map(result.meta.checkedSemanticProgram.program.declarations.$map);
+  const proofs=[];
+  const visit=node=>{
+    if(!node||typeof node!=='object')return;
+    if(node.formatProvenance)proofs.push(node.formatProvenance);
+    for(const [key,value] of Object.entries(node))if(!['type','formatProvenance'].includes(key)){
+      if(Array.isArray(value))value.forEach(visit);else visit(value);
+    }
+  };
+  for(const name of entry.bodyNames)visit(declarations.get(name).body);
+  assert.deepEqual(proofs.sort((a,b)=>a.sourceTemplateSpan.start-b.sourceTemplateSpan.start).map(proof=>{
+    assert.equal(proof.profile,'checked-primitive-format-v1');
+    return {template:source.slice(proof.sourceTemplateSpan.start,proof.sourceTemplateSpan.end),macro:source.slice(proof.sourceMacroSpan.start,proof.sourceMacroSpan.end),arguments:proof.explicitArgumentCount};
+  }),expected);
+}
+
+test('actual account resume message formats each original branch without interpreting captured braces',async()=>{
+  const {apis,result}=await checkedModule('format-resume_message');
+  assertFormatProvenance('format-resume_message',result,[{template:'"resumed {name}"',macro:'format!("resumed {name}")',arguments:0},{template:'"{name} was not paused"',macro:'format!("{name} was not paused")',arguments:0}]);
+  for(const api of apis){
+    for(const [name,paused,expected] of [['primary',true,'resumed primary'],['primary',false,'primary was not paused'],['Ω/😀',true,'resumed Ω/😀'],['Ω/😀',false,'Ω/😀 was not paused'],['',true,'resumed '],['',false,' was not paused'],['{name}',true,'resumed {name}'],['{name}',false,'{name} was not paused']])assert.equal(api.resume_message(name,paused),expected);
+    assert.throws(()=>api.resume_message('primary',1n),TypeError);
+  }
+});
+
+test('actual humanized duration preserves documented test boundaries and signed integer extremes',async()=>{
+  const {apis,result}=await checkedModule('format-humanize_minutes');
+  assertFormatProvenance('format-humanize_minutes',result,[{template:'"{minutes} minutes"',macro:'format!("{minutes} minutes")',arguments:0},{template:'"{hours} hours"',macro:'format!("{hours} hours")',arguments:0},{template:'"{} days"',macro:'format!("{} days", hours / 24)',arguments:1}]);
+  for(const api of apis){
+    for(const [minutes,expected] of [[-9223372036854775808n,'-9223372036854775808 minutes'],[-1n,'-1 minutes'],[0n,'0 minutes'],[45n,'45 minutes'],[89n,'89 minutes'],[90n,'1 hours'],[119n,'1 hours'],[120n,'2 hours'],[2819n,'46 hours'],[2820n,'47 hours'],[2879n,'47 hours'],[2880n,'2 days'],[4319n,'2 days'],[4320n,'3 days'],[9223372036854775807n,'6405119470038038 days']])assert.equal(api.humanize_minutes(minutes),expected);
+    assert.throws(()=>api.humanize_minutes(-9223372036854775809n),RangeError);
+    assert.throws(()=>api.humanize_minutes(9223372036854775808n),RangeError);
+  }
+});

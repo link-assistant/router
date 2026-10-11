@@ -300,6 +300,42 @@
       },
       "testSource": "src/stream_termination_tests.rs",
       "testName": null
+    },
+    {
+      "id": "format-resume_message",
+      "path": "src/accounts_cli.rs",
+      "sourceSha256": "3119369d8c1b4b1ac57d7ce1eb75ecdc8229ede1148eb8a0024a544da4583681",
+      "declarations": [
+        {
+          "name": "resume_message",
+          "term": "fn",
+          "start": 6163,
+          "end": 6338,
+          "sha256": "5987dee47297205fb17667e7fd6392020b50af65d42096694cfaed9944376e3b"
+        }
+      ],
+      "bodyNames": [
+        "resume_message"
+      ]
+    },
+    {
+      "id": "format-humanize_minutes",
+      "path": "src/auth_import.rs",
+      "sourceSha256": "0410916d8c67ba696216d47f221dc92b725c4d6f6c22e5fe6b46a3e6c815fef1",
+      "declarations": [
+        {
+          "name": "humanize_minutes",
+          "term": "fn",
+          "start": 35810,
+          "end": 36078,
+          "sha256": "4027e1b0ba99e41663435f6e92fd0e7b47a1d6cab773a5be8a16e8e0ccee754b"
+        }
+      ],
+      "bodyNames": [
+        "humanize_minutes"
+      ],
+      "testSource": "src/auth_import_tests.rs",
+      "testName": "durations_read_at_a_glance_at_each_threshold"
     }
   ],
   "obligations": [
@@ -318,6 +354,10 @@
     {
       "id": "output-limiter-streaming",
       "reason": "Only OutputTokenLimiter.new constructor is proved; mutating push, truncation and stream rewriting remain separate source obligations. Default derives are retained as layout metadata, not executed trait behavior."
+    },
+    {
+      "id": "format-full-runtime",
+      "reason": "Only primitive direct-literal formatting and the pinned pure helper functions are proved; dynamic formatting counts, arbitrary Display/Debug implementations, allocation failures and complete account/auth CLI behavior remain unresolved."
     }
   ],
   "executionEvidence": [
@@ -392,6 +432,24 @@
       "independentCases": 3,
       "domainGuards": 4,
       "derivedTraitMethodsExecuted": false
+    },
+    {
+      "id": "format-resume_message",
+      "productionBodies": [
+        "resume_message"
+      ],
+      "role": "new-source-format-named-capture",
+      "independentCases": 8,
+      "domainGuards": 1
+    },
+    {
+      "id": "format-humanize_minutes",
+      "productionBodies": [
+        "humanize_minutes"
+      ],
+      "role": "new-source-format-fixed-display",
+      "independentCases": 15,
+      "domainGuards": 2
     }
   ],
   "verificationMatrix": {
