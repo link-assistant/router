@@ -17,6 +17,9 @@ export async function verifyTypedTargets(result,verify) {
     execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,join(directory,'src/module.ts')],{stdio:'pipe'});
     cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});
     symlinkSync('../runtime',join(compiled,'src/runtime'),'dir');
-    for(const path of [join(directory,'src/module.mjs'),join(compiled,'src/module.js')])await verify((await import(pathToFileURL(path))).translated,result);
+    for(const path of [join(directory,'src/module.mjs'),join(compiled,'src/module.js')]) {
+      const module=await import(pathToFileURL(path));
+      await verify(module.translated,result,module);
+    }
   } finally {rmSync(directory,{recursive:true,force:true});}
 }
