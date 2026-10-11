@@ -14,6 +14,7 @@ import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
 import {annotateRuntimeTypes,translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
 const Parser=withPatternControlParser(DataRustParser),Checker=withPatternControlChecker(DataChecker),Emitter=withPatternControlEmitter(DataEmitter);
 const tagged=($,fields={})=>Object.freeze({$,...fields});
@@ -272,8 +273,20 @@ test('if-let preserves local nominal aliases and refuses mismatched standard con
     'enum Local { Some(u8), None } use std::option::Option::Some as Present; pub fn bad(value:Local)->u8{if let Present(v)=value{v}else{0}}',
     'use unknown::*; use std::option::Option as O; pub fn bad(value:O<u8>)->u8{if let Some(v)=value{v}else{0}}',
     'use unknown::*; use std::option::Option as O; pub fn bad(value:O<u8>)->u8{if let Option::Some(v)=value{v}else{0}}',
-    '#[cfg(any())] mod std {} pub fn bad(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{0}}',
+    '#[cfg(all())] mod std {} pub fn bad(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{0}}',
+    '#[cfg(unix)] mod std {} pub fn bad(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{0}}',
+    '#[cfg_attr(test,allow(dead_code))] mod std {} pub fn bad(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{0}}',
   ]){const refused=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.ok(refused.meta.refused.some(item=>item.name==='bad'),source);assert.equal(refused.meta.executable.some(item=>item.name==='bad'),false,source);}
+});
+
+test('proven inactive std module retains actual standard if-let owner in default and production profiles',async()=>{
+  const source='#[cfg(any())] mod std {} pub fn pick(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{9}}';
+  for(const compilationProfile of [null,PRODUCTION_PROFILE]) {
+    const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile});
+    assert.deepEqual(result.meta.refused,[]);assert.deepEqual(result.meta.moduleDiagnostics,[]);assert.equal(result.meta.runtimeParity,false);
+    assert.deepEqual(result.meta.executable.filter(item=>item.term==='fn').map(item=>item.name),['pick']);
+    for(const api of await defaultArtifacts(result,'src/lib.rs')){assert.equal(api.pick(some(5n)),5n);assert.equal(api.pick(none),9n);}
+  }
 });
 
 
