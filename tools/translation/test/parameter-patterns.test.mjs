@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
-import {roundTripProgram} from '../semantic-meta.mjs';
+import {roundTripProgram,parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const tuple=(...fields)=>Object.freeze({$:'Tuple',...Object.fromEntries(fields.map((value,index)=>['field'+index,value]))});
@@ -28,10 +28,21 @@ test('tuple and wildcard parameters retain written evidence and execute through 
 test('irrefutable source constructor parameters use their actual nominal record layouts',async()=>{
   const source='struct Wrap(u8); struct Pair {left:u8,right:u8} pub fn wrapped(Wrap(n):Wrap)->u8{n} pub fn record(Pair{left,right}:Pair)->u8{left+right}';
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
+  for(const name of ['wrapped','record']) {
+    const original=checked.declarations.get(name).sourceParameterPatterns;
+    assert.deepEqual(target.declarations.get(`rp_${Buffer.from(name).toString('hex')}`).sourceParameterPatterns,original);
+  }
+  // Per-source bulk generation selects and emits each checked project closure.
+  // This must follow executable dependencies, not frontend pattern evidence.
+  const perSource=translateSource(source,'src/lib.rs',{projectDeclarations:result.executableDeclarations,projectSourceScopes:result.sourceScopes});
+  assert.equal(perSource.ir.counts.executableFunctions,2);
+  const verify=api=>{
     assert.equal(api.wrapped(Object.freeze({$:'Wrap',field0:8n})),8n);assert.equal(api.record(Object.freeze({$:'Pair',left:2n,right:5n})),7n);
     assert.throws(()=>api.wrapped(Object.freeze({$:'Other',field0:8n})),TypeError);
-  });
+  };
+  await verifyTypedTargets(result,verify);
+  await verifyTypedTargets(perSource,verify);
 });
 test('parameter patterns refuse invalid bindings, refutable domains and unproved ownership',()=>{
   for(const source of [

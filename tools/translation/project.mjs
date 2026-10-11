@@ -17,6 +17,10 @@ import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './trans
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
 const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
+// Original parameter-pattern evidence uses frontend nodes, including ctor
+// syntax without checked declaration links. Keep it out of target renaming
+// and executable dependency discovery while preserving it in serialized meta.
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -79,7 +83,7 @@ function flatten(program) {
   const visit = node => {
     if (Array.isArray(node)) return node.map(visit);
     if (!node || typeof node !== 'object') return node;
-    const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key === 'copyCertificate' ? value : visit(value)]));
+    const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, sourceEvidence(key) ? value : visit(value)]));
     if (node.kind === 'data' && names.has(node.name)) result.name = names.get(node.name);
     if (['call', 'routerFutureCall'].includes(node.k)) result.fn = names.get(node.fn) ?? node.fn;
     if (node.k === 'ctor') result.data = names.get(node.data) ?? node.data;
@@ -98,7 +102,7 @@ function declarationProgram(program, root) {
     if (!node || typeof node !== 'object') return;
     const names = ['call', 'routerFutureCall'].includes(node.k) ? [node.fn] : node.k === 'ctor' ? [node.data] : node.kind === 'data' ? [node.name] : [];
     for (const name of names) include(name);
-    for (const [key,value] of Object.entries(node)) if(key!=='copyCertificate'){if (Array.isArray(value)) value.forEach(visit); else visit(value);}
+    for (const [key,value] of Object.entries(node)) if(!sourceEvidence(key)){if (Array.isArray(value)) value.forEach(visit); else visit(value);}
   };
   const include = name => {
     if (needed.has(name)) return;
