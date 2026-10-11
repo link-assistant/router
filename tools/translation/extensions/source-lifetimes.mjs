@@ -141,7 +141,7 @@ function origins(node,env,context,returns,depth=0) {
     const values=node.items.map(value=>read(value));
     // Rust checks a repeat operand against the expected element type even
     // when zero elements are stored. Retain that lifetime obligation.
-    if(node.items.length===0&&node.fixedArrayProof.syntax==='repeat')values.push(read(node.fixedArrayProof.repeatSeed));
+    if(node.items.length===0&&node.fixedArrayProof.syntax==='repeat')values.push(read(node.repeatSeed));
     return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
   }
   if(node.k==='routerSharedMethodReceiver') {

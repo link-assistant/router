@@ -42,6 +42,12 @@ test('literal repetitions retain original constant evaluation source proof',{tim
   await verifyTypedTargets(result,api=>{assert.deepEqual(api.COPIES,[7n,7n,7n]);assert.deepEqual(api.EMPTY,[]);});
 });
 
+test('ordered match renaming preserves a zero repeat operand borrow',{timeout:30_000},async()=>{
+  const result=project('pub fn good(value:&str,flag:bool)->[&str;0]{match flag{true if true=>[value;0],_=>[value;0]}}');
+  assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.deepEqual(api.good('Ω',true),[]);assert.deepEqual(api.good('Ω',false),[]);});
+});
+
 test('repeat count ownership and const evaluation categories remain actual source obligations',()=>{
   for(const source of [
     'pub fn bad()->[u8;2]{[1u8;3]}',
