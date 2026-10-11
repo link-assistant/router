@@ -136,7 +136,7 @@ test('owned escapes stored cursors custom owners arguments and const use remain 
   ]){const result=project(source);assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);}
 });
 
-test('a source type or unresolved import named str never receives the standard whitespace adapter',()=>{
+test('a source type or unresolved import named str never receives the standard whitespace adapter',{timeout:60_000},async()=>{
   for(const source of [
     'struct str{value:u8}impl str{fn split_whitespace(&self)->bool{self.value>0}}pub fn bad(value:&str)->bool{value.split_whitespace()}',
     'struct Local{value:u8}use Local as str;pub fn bad(value:&str)->Option<&str>{value.split_whitespace().next()}',
@@ -147,6 +147,9 @@ test('a source type or unresolved import named str never receives the standard w
     const result=project(source),refusal=result.meta.refused.find(item=>item.name==='bad');assert.ok(refusal,source);
     assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
   }
+  const control=project('fn str()->u8{0}pub fn first(value:&str)->Option<&str>{value.split_whitespace().next()}');
+  assert.deepEqual(control.meta.refused,[]);
+  await verifyTypedTargets(control,api=>{assert.deepEqual(api.first(' \u0085😀 word'),some('😀'));assert.deepEqual(api.first(' \t'),none);});
 });
 
 const findNode=(value,kind)=>{
