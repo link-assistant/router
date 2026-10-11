@@ -74,7 +74,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(!['ctor','bindOrCtor','routerRecordPattern'].includes(node.k))return node;
       const names=node.k==='bindOrCtor'?[node.name]:node.path;
       const actual=names?this.lookup(names,path,location):null;
-      const standard=names&&this.standardConstructor(names,type,path,env,location);
+      const standard=names&&typeof this.standardConstructor==='function'&&this.standardConstructor(names,type,path,env,location);
       const record=actual?.k==='data'&&actual.record&&actual.ctors.length===1?actual:null;
       const owner=actual?.k==='ctor'?actual.data:record?.fullName??(standard?type.name:null);
       const name=actual?.k==='ctor'?actual.name:record?.ctors[0].name??names?.at(-1);

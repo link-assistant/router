@@ -156,3 +156,16 @@ test('original upstream-path function translates unchanged through the independe
   // slash-boundary condition. No Rust execution or full project parity claim.
   for(const api of apis)for(const [path,expected] of [['/api/services/anthropic/v1/messages','/v1/messages'],['/api/services/bedrock/invoke','/invoke'],['/api/services/vertex/model:rawPredict','/model:rawPredict'],['/api/anthropic/v1/messages','/v1/messages'],['/api/latest/anthropic/v1/messages','/v1/messages'],['/v1/messages','/v1/messages'],['/api/anthropicx','x'],['/api/services/anthropic',''],['','']])assert.equal(api.resolve_upstream_path(path),expected);
 });
+
+
+test('standalone checker without standard constructor provenance keeps nominal owners and refuses prelude guessing',()=>{
+  class NominalOnlyChecker extends Checker {
+    constructor(...args){super(...args);this.standardConstructor=undefined;}
+  }
+  const nominal='enum Choice { A(u8), Empty } pub fn nominal(value: Choice) -> u8 { if let Choice::A(v) = value { v } else { 0 } }';
+  const parsed=new Parser(tokenizeRust(nominal+'\nfn main() {}')).file();
+  const checked=new NominalOnlyChecker('Rust',[]).program(parsed);
+  assert.equal(checked.declarations.get('nominal').body.patternControl.plan.test.data,'Choice');
+  const guessed=new Parser(tokenizeRust('pub fn guessed(value: Option<u8>) -> u8 { if let Some(v) = value { v } else { 0 } } fn main() {}')).file();
+  assert.throws(()=>new NominalOnlyChecker('Rust',[]).program(guessed),error=>error.kind==='type'&&/checked constructor owner/.test(error.reason));
+});
