@@ -1,6 +1,8 @@
 import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { rustLockPath, withAdvisoryFileLock } from './file-lock.mjs';
+import { encodeBinaryTokenRecords, readBinaryTokenRecords } from './doublets.mjs';
 
 const queues = new Map();
 export async function serialized(key, operation) {
@@ -21,8 +23,7 @@ export async function atomicWrite(path, text) {
     file = await open(temporary, 'wx', 0o600);
     await file.writeFile(text, 'utf8'); await file.sync(); await file.close(); file = null;
     await rename(temporary, path);
-    const directory = await open(dirname(path), 'r');
-    try { await directory.sync(); } finally { await directory.close(); }
+    await syncDirectory(dirname(path));
   } finally { await file?.close(); await unlink(temporary).catch(e => { if (e.code !== 'ENOENT') throw e; }); }
 }
 // Separate from Rust's advisory flock file: native writers coordinate via an
@@ -73,6 +74,34 @@ export async function withNativeFileLock(path, operation, timeout = 30000) {
 }
 export async function readOptional(path, fallback = '') {
   try { return await readFile(path, 'utf8'); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; }
+}
+const transactionPaths = path => ({rollback:join(dirname(path),`.${basename(path)}.router-rollback`),commit:join(dirname(path),`.${basename(path)}.router-commit`)});
+const removeOptional = async path => { try { await unlink(path); } catch (error) { if (error.code !== 'ENOENT') throw error; } };
+async function syncDirectory(path) {
+  if (process.platform === 'win32') return;
+  const directory = await open(path,'r'); try { await directory.sync(); } finally { await directory.close(); }
+}
+export async function recoverTransactionalWrite(path) {
+  const {rollback,commit} = transactionPaths(path);
+  const marker = await readOptional(commit,null);
+  if (marker != null) { await removeOptional(rollback); await syncDirectory(dirname(path)); await removeOptional(commit); await syncDirectory(dirname(path)); return; }
+  let previous;
+  try { previous = await readFile(rollback); } catch (error) { if (error.code === 'ENOENT') return; throw error; }
+  if (previous[0] === 0) await removeOptional(path);
+  else if (previous[0] === 1) await atomicWrite(path,previous.subarray(1));
+  else throw new Error('Invalid transactional rollback document');
+  await unlink(rollback); await syncDirectory(dirname(path));
+}
+export async function transactionalWrite(path,contents) {
+  await recoverTransactionalWrite(path);
+  const {rollback,commit} = transactionPaths(path);
+  let previous;
+  try { previous = Buffer.concat([Buffer.from([1]),await readFile(path)]); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; previous = Buffer.from([0]); }
+  await atomicWrite(rollback,previous);
+  try { await atomicWrite(path,contents); await atomicWrite(commit,'committed\n'); }
+  catch (error) { await removeOptional(commit); await syncDirectory(dirname(path)); await recoverTransactionalWrite(path); throw error; }
+  await recoverTransactionalWrite(path).catch(() => {});
 }
 
 function quote(text) {
@@ -217,19 +246,90 @@ export class TextTokenStore extends MemoryTokenStore {
   // Refresh under the native process lock before every mutation; read access
   // sees either complete projection because replacement is atomic.
   async transaction(operation) {
-    return serialized(this.path, () => withNativeFileLock(this.path, async () => {
+    return serialized(this.path, () => withAdvisoryFileLock(rustLockPath(this.path), async () => {
+      await recoverTransactionalWrite(this.path);
       const records = new Map(decodeTokenRecords(await readOptional(this.path)).map(r => [r.id, r]));
       const result = await operation(records);
-      await atomicWrite(this.path, encodeTokenRecords([...records.values()]));
+      await transactionalWrite(this.path, encodeTokenRecords([...records.values()]));
       this.records = records; return structuredClone(result);
     }));
   }
-  async list() { return decodeTokenRecords(await readOptional(this.path)); }
+  async list() { return withAdvisoryFileLock(rustLockPath(this.path),async () => { await recoverTransactionalWrite(this.path); return decodeTokenRecords(await readOptional(this.path)); }); }
   async get(id) { return (await this.list()).find(r => r.id === id) ?? null; }
+}
+export class BinaryTokenStore extends MemoryTokenStore {
+  constructor(path) { super(); this.path = path; }
+  async transaction(operation) {
+    return serialized(this.path,() => withAdvisoryFileLock(rustLockPath(this.path),async () => {
+      const records = new Map((await readBinaryTokenRecords(this.path)).map(record => [record.id,record]));
+      const result = await operation(records);
+      await atomicWrite(this.path,encodeBinaryTokenRecords([...records.values()]));
+      this.records = records; return structuredClone(result);
+    }));
+  }
+  async list() { return withAdvisoryFileLock(rustLockPath(this.path),() => readBinaryTokenRecords(this.path),{shared:true}); }
+  async get(id) { return (await this.list()).find(record => record.id === id) ?? null; }
+}
+export function mergeSaferRecord(current,other) {
+  current.revoked ||= other.revoked;
+  for (const field of ['used_requests','used_tokens','reserved_tokens']) current[field] = Math.max(current[field] ?? 0,other[field] ?? 0);
+  if ((other.rate_window_started_at ?? 0) > (current.rate_window_started_at ?? 0)) {
+    current.rate_window_started_at = other.rate_window_started_at; current.rate_window_requests = other.rate_window_requests;
+  } else if (other.rate_window_started_at === current.rate_window_started_at) current.rate_window_requests = Math.max(current.rate_window_requests ?? 0,other.rate_window_requests ?? 0);
+  return current;
+}
+export class DualTokenStore extends MemoryTokenStore {
+  constructor(dataDir) {
+    super(); this.path = join(dataDir,'tokens.transaction.lock'); this.journal = join(dataDir,'tokens.transaction.json');
+    this.text = new TextTokenStore(join(dataDir,'tokens.lino')); this.binary = new BinaryTokenStore(join(dataDir,'tokens.bin'));
+  }
+  async install(records) {
+    await this.text.transaction(current => { current.clear(); for (const record of records) current.set(record.id,record); });
+    const projection = await this.binary.list();
+    const canonical = rows => encodeTokenRecords(rows);
+    if (canonical(projection) !== canonical(records)) await this.binary.transaction(current => { current.clear(); for (const record of records) current.set(record.id,record); });
+    await removeOptional(this.journal); await syncDirectory(dirname(this.journal));
+  }
+  async recover() {
+    const source = await readOptional(this.journal,null);
+    if (source != null) {
+      const records = source.trimStart().startsWith('[') ? JSON.parse(source) : decodeLino(source);
+      if (!Array.isArray(records)) throw new Error('Invalid token transaction journal');
+      await this.install(records);
+    }
+  }
+  async mergedRecords() {
+    const records = new Map((await this.text.list()).map(record => [record.id,record]));
+    for (const record of await this.binary.list()) {
+      if (records.has(record.id)) mergeSaferRecord(records.get(record.id),record); else records.set(record.id,record);
+    }
+    return records;
+  }
+  async transaction(operation) {
+    return serialized(this.path,() => withAdvisoryFileLock(this.path,async () => {
+      await this.recover();
+      const records = await this.mergedRecords(), result = await operation(records);
+      const sorted = [...records.values()].sort((left,right) => Buffer.compare(Buffer.from(left.id),Buffer.from(right.id)));
+      await atomicWrite(this.journal,encodeLino(sorted)); await this.install(sorted);
+      this.records = records; return structuredClone(result);
+    }));
+  }
+  async list() {
+    const read = async () => {
+      const records = await this.text.list();
+      return records.length ? records : [...(await this.mergedRecords()).values()];
+    };
+    const result = await withAdvisoryFileLock(this.path,async () => (await readOptional(this.journal,null)) != null ? null : read(),{shared:true});
+    if (result != null) return result;
+    return withAdvisoryFileLock(this.path,async () => { await this.recover(); return read(); });
+  }
+  async get(id) { return (await this.list()).find(record => record.id === id) ?? null; }
 }
 export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage } = {}) {
   if (storage) return storage;
   if (['memory','mem','none'].includes(storage_policy)) return new MemoryTokenStore();
-  if (storage_policy === 'text') return new TextTokenStore(`${data_dir}/tokens.lino`);
-  throw Object.assign(new Error(`Native token storage '${storage_policy}' is not implemented; select text or memory explicitly`), { code: 'native_unsupported' });
+  if (['text','txt','lino'].includes(storage_policy)) return new TextTokenStore(`${data_dir}/tokens.lino`);
+  if (['binary','bin','link-cli','linkcli','clink'].includes(storage_policy)) return new BinaryTokenStore(`${data_dir}/tokens.bin`);
+  if (['both','dual'].includes(storage_policy)) return new DualTokenStore(data_dir);
+  throw Object.assign(new Error(`Unknown token storage policy '${storage_policy}'`),{code:'invalid_config'});
 }

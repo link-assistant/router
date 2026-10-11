@@ -102,7 +102,7 @@ test('text persistence survives reopening without storing JWT and coordinates in
   await second.revoke(issued.id); await rejectsCode(first.validate(issued.token),'revoked');
   const text = await readFile(path,'utf8'); assert.ok(!text.includes(issued.token)); assert.ok(text.includes('TokenRecord'));
   assert.equal((await stat(path)).mode & 0o777,0o600);
-  assert.throws(() => createTokenStore({storage_policy:'both'}),e => e.code === 'native_unsupported');
+  assert.equal(createTokenStore({storage_policy:'both',data_dir:directory}).constructor.name,'DualTokenStore');
 });
 test('provider store uses Rust AES-GCM nonce/ciphertext/tag shape and redacts keys',async t => {
   const directory = await temporary(t), c = await core({data_dir:directory,storage_policy:'text'});

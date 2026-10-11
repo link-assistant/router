@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
-import { atomicWrite, readOptional, serialized, withNativeFileLock } from './storage.mjs';
+import { transactionalWrite, recoverTransactionalWrite, readOptional, serialized } from './storage.mjs';
+import { rustLockPath, withAdvisoryFileLock } from './file-lock.mjs';
 import { RouterError, ensureRealSecret } from './tokens.mjs';
 
 export function parseLenv(text) {
@@ -26,17 +27,24 @@ export function normalizeProvider(record, env = process.env) {
   if (!['http:','https:'].includes(url.protocol) || url.username || url.password) throw new RouterError('invalid_provider','Provider base_url must be an HTTP URL without embedded credentials');
   const models = record.models ?? (record.default_model ? [record.default_model] : []);
   if (!Array.isArray(models) || models.some(m => typeof m !== 'string' || !m.trim())) throw new RouterError('invalid_provider','models must contain exact nonempty model ids');
-  const kind = record.kind ?? 'openai-compatible';
-  if (!['openai-compatible','openai','litellm','anthropic','codex','gemini','qwen','gonka'].includes(kind)) throw new RouterError('native_unsupported',`Native provider '${kind}' is not implemented`,501);
-  return { ...record, name, kind, base_url:base.replace(/\/+$/,''), models:[...new Set(models)], supported_clients:record.supported_clients ?? [], enabled:record.enabled !== false,
-    protocol:record.protocol ?? (kind === 'anthropic' ? 'anthropic' : kind === 'codex' ? 'responses' : 'openai'),
+  const aliases = {openai:'openai-compatible',litellm:'openai-compatible','open-a-i-compatible':'openai-compatible',openai_like:'openai-compatible',claude:'anthropic','zai-coding-plan':'z.ai-coding-plan','vertex-ai':'vertex'};
+  const rawKind = (record.kind ?? 'openai-compatible').toLowerCase();
+  const kind = aliases[rawKind] ?? rawKind;
+  if (!['openai-compatible','lefine','z.ai-coding-plan','anthropic','codex','gemini','qwen','gonka','vertex','bedrock'].includes(kind)) throw new RouterError('invalid_provider',`Unknown provider kind '${kind}'`);
+  const defaultClients = {anthropic:['claude'],codex:['codex'],gemini:['gemini'],qwen:['qwen'],lefine:['grok','opencode','qwen'],'z.ai-coding-plan':['claude','codex','opencode']};
+  const clients = ['lefine','z.ai-coding-plan'].includes(kind) ? [...defaultClients[kind],...(kind === 'z.ai-coding-plan' ? record.unsupported_clients ?? record.acknowledge_unsupported_clients ?? [] : [])] : record.supported_clients ?? defaultClients[kind] ?? [];
+  if (!Array.isArray(clients) || clients.some(client => typeof client !== 'string' || !client.trim())) throw new RouterError('invalid_provider','supported_clients must contain exact client names');
+  return { ...record, name, kind, base_url:base.replace(/\/+$/,''), models:[...new Set(models)], supported_clients:[...new Set(clients)].sort(), enabled:record.enabled !== false,
+    protocol:record.protocol ?? ({anthropic:'anthropic',codex:'responses',gemini:'gemini',vertex:'vertex',bedrock:'bedrock','z.ai-coding-plan':'anthropic'}[kind] ?? 'openai'),
     api_key:record.api_key ?? record.apiKey ?? (record.api_key_env ? env[record.api_key_env] : null) ?? null };
 }
 export function normalizeConfig(input = {}, env = process.env) {
   const config = { ...input };
   config.token_secret = input.token_secret ?? input.tokenSecret ?? env.TOKEN_SECRET;
   config.data_dir = resolve(input.data_dir ?? input.dataDir ?? env.DATA_DIR ?? '.router');
-  config.storage_policy = input.storage_policy ?? input.storagePolicy ?? env.STORAGE_POLICY ?? 'memory';
+  const rawStorage = input.storage_policy ?? input.storagePolicy ?? env.STORAGE_POLICY ?? 'both';
+  config.storage_policy = ({mem:'memory',none:'memory',txt:'text',lino:'text',bin:'binary','link-cli':'binary',linkcli:'binary',clink:'binary',dual:'both'}[rawStorage] ?? rawStorage);
+  if (!['memory','text','binary','both'].includes(config.storage_policy)) throw new RouterError('invalid_config','Unknown storage_policy');
   config.host = input.host ?? env.HOST ?? '127.0.0.1'; config.port = Number(input.port ?? env.PORT ?? 8080);
   if (!Number.isInteger(config.port) || config.port < 0 || config.port > 65535) throw new RouterError('invalid_config','port must be between 0 and 65535');
   config.account_strategy = input.account_strategy ?? env.ACCOUNT_STRATEGY ?? 'round-robin';
@@ -89,12 +97,14 @@ export function decryptProviderSecret(secret, tokenSecret) {
 const redact = r => { const { api_key, encrypted_api_key, ...safe } = r; return { ...safe, has_encrypted_api_key:!!encrypted_api_key }; };
 export class ProviderStore {
   constructor({ dataDir, secret, env = process.env, records = [], persistent = true }) { this.path = `${dataDir}/providers.lenv`; this.secret = secret; this.env = env; this.records = new Map(records.map(r => [r.name,r])); this.persistent = persistent; }
-  async load() {
+  async loadUnlocked() {
+    if (this.persistent) await recoverTransactionalWrite(this.path);
     const text = this.persistent ? await readOptional(this.path,null) : null;
     const map = text == null ? new Map(this.records) : new Map();
     for (const line of (text ?? '').split(/\r?\n/)) if (line.trim().startsWith('PROVIDER: ')) { const record = JSON.parse(line.trim().slice(10)); map.set(record.name,record); }
     return map;
   }
+  async load() { return this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),() => this.loadUnlocked()) : this.loadUnlocked(); }
   async resolve() {
     return [...(await this.load()).values()].filter(r => r.enabled !== false).map(r => normalizeProvider({ ...r,api_key:r.api_key ?? (r.api_key_env ? this.env[r.api_key_env] : null) ?? (r.encrypted_api_key ? decryptProviderSecret(r.encrypted_api_key,this.secret) : null) },this.env));
   }
@@ -102,7 +112,7 @@ export class ProviderStore {
   async get(name) { return (await this.list()).find(r => r.name === name) ?? null; }
   async mutate(operation) {
     const operationWithState = async () => {
-      const records = await this.load(); const result = await operation(records);
+      const records = await this.loadUnlocked(); const result = await operation(records);
       if (this.persistent) {
         for (const [name,held] of records) {
           const {api_key,...safe} = held;
@@ -110,19 +120,25 @@ export class ProviderStore {
           records.set(name,safe);
         }
         const sorted = [...records.values()].sort((a,b) => a.name.localeCompare(b.name));
-        await atomicWrite(this.path,'# Link.Assistant.Router provider store\n# Each PROVIDER value is JSON; inline API keys are encrypted.\n'+sorted.map(r => `PROVIDER: ${JSON.stringify(r)}`).join('\n')+'\n');
+        await transactionalWrite(this.path,'# Link.Assistant.Router provider store\n# Each PROVIDER value is JSON; inline API keys are encrypted.\n'+sorted.map(r => `PROVIDER: ${JSON.stringify(r)}`).join('\n')+'\n');
       }
       this.records = records; return result;
     };
-    return serialized(this.path,() => this.persistent ? withNativeFileLock(this.path,operationWithState) : operationWithState());
+    return serialized(this.path,() => this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),operationWithState) : operationWithState());
   }
   async upsert(input) {
     const normalized = normalizeProvider(input,this.env);
-    if (!['openai-compatible','openai','litellm'].includes(normalized.kind)) throw new RouterError('native_unsupported','Persisted native provider management supports openai-compatible providers',501);
+    if (!['openai-compatible','lefine','z.ai-coding-plan'].includes(normalized.kind)) throw new RouterError('invalid_provider','Subscription services are configured separately from persisted providers');
     const { api_key, protocol, ...record } = normalized;
-    record.kind = 'openai-compatible';
+    record.intermediary_risk_acknowledged = input.acknowledge_intermediary_risk ?? input.intermediary_risk_acknowledged ?? false;
+    record.unsupported_clients = input.acknowledge_unsupported_clients ?? input.unsupported_clients ?? [];
+    if (record.kind === 'z.ai-coding-plan' && (typeof record.subscriber_id !== 'string' || !record.subscriber_id.trim())) throw new RouterError('invalid_provider','z.ai Coding Plan requires one subscriber_id');
     if (api_key) record.encrypted_api_key = encryptProviderSecret(api_key,this.secret);
-    return this.mutate(records => { if (input.if_absent && records.has(record.name)) throw new RouterError('conflict','Provider already exists',409); records.set(record.name,record); return redact(record); });
+    return this.mutate(records => {
+      if (input.if_absent && records.has(record.name)) throw new RouterError('conflict','Provider already exists',409);
+      if (record.kind === 'z.ai-coding-plan' && record.enabled && [...records.values()].some(existing => existing.enabled && existing.kind === record.kind && existing.name !== record.name)) throw new RouterError('invalid_provider','Only one personal z.ai Coding Plan subscriber may be enabled');
+      records.set(record.name,record); return redact(record);
+    });
   }
   async remove(name) { return this.mutate(records => records.delete(name)); }
 }

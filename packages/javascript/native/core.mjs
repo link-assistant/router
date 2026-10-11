@@ -4,15 +4,19 @@ import { TokenManager, RouterError } from './tokens.mjs';
 import { AccountRouter } from './accounts.mjs';
 import { OAuthManager, CredentialFileStore, subscriptionProvider } from './oauth.mjs';
 import { modelCandidates, catalogModels } from './routing.mjs';
+import { AffinityStore } from './affinities.mjs';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
 
 export class RouterCore {
   constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {} }) {
-    this.config = config; this.clock = clock;
+    this.config = config; this.clock = clock; this.env = env; this.fetch = fetch; this.contexts = new Map();
     this.tokens = new TokenManager({secret:config.token_secret,store:createTokenStore({...config,storage}),clock});
     this.providers = new ProviderStore({dataDir:config.data_dir,secret:config.token_secret,env,records:config.providers,persistent:config.storage_policy !== 'memory'});
     this.accounts = new AccountRouter({config,clock});
     this.oauth = new OAuthManager({fetch,clock,...oauth});
     this.credentialStores = new Map();
+    this.affinities = new AffinityStore({dataDir:config.data_dir,persistent:config.storage_policy !== 'memory',clock});
   }
   async listProviders() { return this.providers.list(); }
   async showProvider(name) { return this.providers.get(name); }
@@ -45,6 +49,9 @@ export class RouterCore {
   async candidates(context = {}) {
     const providers = await this.providers.resolve();
     const ordered = this.accounts.order(modelCandidates(providers,this.accounts.records,context),context);
+    return this.attachCredentials(ordered,providers);
+  }
+  attachCredentials(ordered,providers) {
     for (const candidate of ordered) {
       const account = this.accounts.records.get(candidate.account), provider = providers.find(p => p.name === candidate.provider);
       const home = account?.credential_home ?? account?.oauth?.home ?? provider?.credential_home ?? provider?.oauth?.home ?? ((provider?.kind === 'anthropic' || provider?.kind === 'codex') ? account?.home : null);
@@ -57,6 +64,31 @@ export class RouterCore {
       }
     }
     return ordered;
+  }
+  async nativeCandidates(context = {}) {
+    const service = context.service;
+    const kinds = {openai:['openai-compatible','openai','litellm'],anthropic:['anthropic','claude'],codex:['codex'],
+      'codex-backend':['codex'],qwen:['qwen'],gemini:['gemini'],vertex:['vertex','vertex-ai'],bedrock:['bedrock']};
+    if (!kinds[service]) throw new RouterError('invalid_argument','Unknown native service');
+    const providers = (await this.providers.resolve()).filter(provider => kinds[service].includes(provider.kind));
+    const configured = this.config.services?.[service]?.provider ?? (service === 'openai' ? this.config.openai_compatible_provider_name : undefined);
+    const selected = providers.filter(provider => (!context.provider || context.provider === provider.name || context.provider === (provider.kind === 'anthropic' ? 'claude' : provider.kind)) &&
+      (!configured || provider.name === configured) && (!context.client || provider.supported_clients.includes(context.client)));
+    if (!selected.length) throw new RouterError('native_provider_unavailable','Native service provider is unavailable',503);
+    if (service === 'openai' && selected.length > 1 && !configured && !context.provider) throw new RouterError('provider_conflict','Native OpenAI service requires an exact provider selection',409);
+    let candidates;
+    if (context.model) candidates = modelCandidates(selected,this.accounts.records,{...context,provider:undefined});
+    else candidates = selected.flatMap(provider => [...this.accounts.records.values()].filter(account => account.provider === provider.name && account.enabled !== false).map(account => ({
+      provider:provider.name,kind:provider.kind,account:account.name,base_url:provider.base_url,baseUrl:provider.base_url,
+      api_key:account.api_key ?? provider.api_key,apiKey:account.api_key ?? provider.api_key,protocol:provider.protocol,
+      headers:{...account.policy.headers},supported_clients:provider.supported_clients,default_model:provider.default_model,
+    })));
+    for (const candidate of candidates) {
+      const subscription = !['openai-compatible','openai','litellm'].includes(candidate.kind);
+      candidate.provider_kind = candidate.kind === 'anthropic' ? 'claude' : ['openai','litellm'].includes(candidate.kind) ? 'openai-compatible' : candidate.kind;
+      candidate.destination_kind = subscription ? 'subscription' : 'stored_provider';
+    }
+    return this.attachCredentials(this.accounts.order(candidates,context),selected);
   }
   async prepareCandidate(candidate) {
     if (!this.accounts.serves(candidate.account,candidate.model)) throw new RouterError('account_unavailable','Account became unavailable',503);
@@ -74,6 +106,30 @@ export class RouterCore {
   async reportFailure(candidate, details) { return this.accounts.reportFailure(candidate,details); }
   async reportSuccess(candidate) { return this.accounts.reportSuccess(candidate); }
   async authenticate(token, options) { return this.tokens.validate(token,options); }
+  async withConfig(overrides = {},{env = this.env,cwd = process.cwd()} = {}) {
+    const input = {...this.config,...overrides};
+    if (overrides.data_dir != null || overrides.dataDir != null) input.data_dir = resolve(cwd,overrides.data_dir ?? overrides.dataDir);
+    if (overrides.home != null) input.home = resolve(cwd,overrides.home);
+    const config = await loadConfig({config:input,env});
+    const identity = createHash('sha256').update(JSON.stringify([config.data_dir,config.storage_policy,config.token_secret])).digest('hex');
+    const baseIdentity = createHash('sha256').update(JSON.stringify([this.config.data_dir,this.config.storage_policy,this.config.token_secret])).digest('hex');
+    if (identity !== baseIdentity) {
+      if (!this.contexts.has(identity)) this.contexts.set(identity,await createRouterCore({config,env,clock:this.clock,fetch:this.fetch}));
+      return this.contexts.get(identity).withConfig({}, {env,cwd});
+    }
+    const context = Object.assign(Object.create(Object.getPrototypeOf(this)),this,{config,env});
+    context.providers = Object.assign(Object.create(Object.getPrototypeOf(this.providers)),this.providers,{env});
+    Object.defineProperty(context.providers,'records',{get:() => this.providers.records,set:value => {this.providers.records=value;},enumerable:true});
+    context.accounts = Object.assign(Object.create(Object.getPrototypeOf(this.accounts)),this.accounts,{config});
+    for (const key of ['cursor','failoverCursor']) Object.defineProperty(context.accounts,key,{get:() => this.accounts[key],set:value => {this.accounts[key]=value;},enumerable:true});
+    if (overrides.account_strategy != null) context.accounts.setStrategy(config.account_strategy);
+    return context;
+  }
+}
+export async function createOperationContext(baseCore,{configOverrides = {},env,cwd = process.cwd(),signal} = {}) {
+  env = {...baseCore.env,...env};
+  const core = await baseCore.withConfig(configOverrides,{env,cwd});
+  return {core,config:core.config,env,cwd,signal};
 }
 export async function createRouterCore(options = {}) {
   const config = await loadConfig(options);
@@ -86,7 +142,8 @@ export async function createRouterCore(options = {}) {
 }
 export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';
 export { loadConfig, normalizeConfig, ProviderStore } from './config.mjs';
-export { MemoryTokenStore, TextTokenStore, createTokenStore } from './storage.mjs';
+export { MemoryTokenStore, TextTokenStore, BinaryTokenStore, DualTokenStore, createTokenStore } from './storage.mjs';
+export { AffinityStore } from './affinities.mjs';
 export { AccountRouter } from './accounts.mjs';
 
 export { OAuthManager, CredentialFileStore, ClaudeLogin, importCredential, executeAuthOperation } from './oauth.mjs';

@@ -336,7 +336,7 @@ function acceptedModels(value) {
   if (!Array.isArray(value) || !value.length || value.some(model => typeof model !== 'string' || !model)) throw fail('catalog_unverified','Credential catalog acceptance requires exact nonempty model ids',403);
   return [...new Set(value)];
 }
-async function installAcceptedDocument({provider,document,sourcePath,destinationHome,dataDir,ifAbsent = false,follow = false,snapshot = false}) {
+async function installAcceptedDocument({provider,document,sourcePath,destinationHome,dataDir,ifAbsent = false,follow = false,snapshot = false,beforePromote}) {
   const store = new CredentialFileStore({provider,home:destinationHome,dataDir});
   return store.transaction(async () => {
     const previous = await store.readPrimary();
@@ -349,6 +349,7 @@ async function installAcceptedDocument({provider,document,sourcePath,destination
       installed._link_assistant_router = {...installed._link_assistant_router,promotion_receipt:transactionId};
       if (snapshot) installed._link_assistant_router.refresh_owner = 'external';
     }
+    if (beforePromote) await beforePromote({provider,destination,transaction_id:transactionId});
     await atomicWrite(destination,JSON.stringify(installed,null,2)+'\n');
     return {schema_version:1,results:[{provider,phase:'promotion',outcome:'promoted',transaction_id:transactionId,previous_credential_safe:true}]};
   });
@@ -356,7 +357,7 @@ async function installAcceptedDocument({provider,document,sourcePath,destination
 
 // Non-destructive access-token validation followed by an atomic source reference
 // is a supported import path. Full Rust rotating-candidate resume is not claimed.
-export async function importCredential({provider,sourceHome,destinationHome,dataDir,ifAbsent = false,snapshot = false,fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1000),validateCatalog = validateCredentialCatalog,catalogBaseURL,allowLoopback = false} = {}) {
+export async function importCredential({provider,sourceHome,destinationHome,dataDir,ifAbsent = false,snapshot = false,owned = false,fetch = globalThis.fetch,clock = () => Math.floor(Date.now()/1000),validateCatalog = validateCredentialCatalog,catalogBaseURL,allowLoopback = false,beforePromote} = {}) {
   provider = subscriptionProvider(provider);
   if (!sourceHome || !destinationHome || !dataDir) throw fail('invalid_argument','Import requires explicit source, destination and Router data directories');
   const source = new CredentialFileStore({provider,home:sourceHome,dataDir:join(dataDir,'import-source'),clock});
@@ -382,7 +383,7 @@ export async function importCredential({provider,sourceHome,destinationHome,data
     // again, rather than installing the different chain link it now contains.
     const current = await source.readPrimary();
     if (!current || credentialFingerprint(current.token) !== credentialFingerprint(held.token)) throw fail('credential_changed','Credential changed during import; retry validation',409);
-    return await installAcceptedDocument({provider,document:held.document,sourcePath:held.path,destinationHome,dataDir,ifAbsent,follow:!snapshot,snapshot,models});
+    return await installAcceptedDocument({provider,document:held.document,sourcePath:held.path,destinationHome,dataDir,ifAbsent,follow:!snapshot && !owned,snapshot,models,beforePromote});
   } finally { await rm(stage,{recursive:true,force:true}); }
 }
 
@@ -405,7 +406,11 @@ export class ClaudeLogin {
     const path = join(resolve(options.home),PENDING_FILE), claimed = `${path}.${randomUUID()}.claimed`;
     try { await rename(path,claimed); } catch { throw fail('pending_login_missing','No pending Claude authorization; begin a code flow first',404); }
     let pending;
-    try { const raw = await boundedOAuthFile(claimed,{maxBytes:PENDING_FILE_LIMIT,code:'pending_login_invalid',status:400}); pending = raw.trim().startsWith('{') ? JSON.parse(raw) : decodeLino(raw); }
+    try {
+      const raw = await boundedOAuthFile(claimed,{maxBytes:PENDING_FILE_LIMIT,code:'pending_login_invalid',status:400});
+      if (raw === null) throw fail('pending_login_invalid','Pending Claude authorization is missing');
+      pending = raw.trim().startsWith('{') ? JSON.parse(raw) : decodeLino(raw);
+    }
     catch { throw fail('pending_login_invalid','Pending Claude authorization is invalid'); }
     finally { await unlink(claimed); }
     const now = (options.clock?.() ?? Math.floor(Date.now()/1000))*1000;
