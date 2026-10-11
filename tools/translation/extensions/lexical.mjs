@@ -3,6 +3,34 @@ import { tokenize } from '../vendor/meta-language/translation/lexer.js';
 import { TranslationError } from '../vendor/meta-language/translation/diagnostics.js';
 import {decodeRustCharacter} from './rust-character.mjs';
 import {decodeRustInteger} from './rust-number.mjs';
+import {types} from 'node:util';
+
+// Only this tokenizer creates the original-byte association. The returned
+// snapshot is immutable; copying an array cannot copy its private identity.
+const tokenSources=new WeakMap();
+function tokenSnapshot(tokens) {
+  if(!Array.isArray(tokens)||types.isProxy(tokens)||Object.getPrototypeOf(tokens)!==Array.prototype)throw new TypeError('source links: expected original tokenizer tokens');
+  const descriptors=Object.getOwnPropertyDescriptors(tokens),keys=Reflect.ownKeys(descriptors),length=descriptors.length?.value;
+  if(!Number.isSafeInteger(length)||keys.length!==length+1)throw new TypeError('source links: changed tokenizer array');
+  const result=[];
+  for(let index=0;index<length;index++) {
+    const descriptor=descriptors[index];if(!descriptor||!('value' in descriptor))throw new TypeError('source links: changed tokenizer array');
+    const token=descriptor.value;if(!token||types.isProxy(token)||Object.getPrototypeOf(token)!==Object.prototype)throw new TypeError('source links: changed tokenizer token');
+    const fields=Object.getOwnPropertyDescriptors(token),copy={};
+    for(const key of Reflect.ownKeys(fields)) {
+      const field=fields[key];if(typeof key!=='string'||!field.enumerable||!('value' in field)||!['string','number','boolean','undefined'].includes(typeof field.value)&&field.value!==null)throw new TypeError('source links: changed tokenizer token fields');
+      Object.defineProperty(copy,key,{value:field.value,enumerable:true});
+    }
+    result.push(Object.freeze(copy));
+  }
+  return Object.freeze(result);
+}
+export function capturedRustTokenSource(tokens) {
+  const captured=tokenSources.get(tokens);if(!captured)return null;
+  const actual=tokenSnapshot(tokens);
+  if(JSON.stringify(actual)!==JSON.stringify(captured.tokens))throw new TypeError('source links: tokenizer tokens changed before parsing');
+  return captured;
+}
 
 // Adapt written integer, character and string payloads to the pinned token
 // vocabulary. Every token is mapped back to original source coordinates;
@@ -64,9 +92,11 @@ export function tokenizeRust(source) {
   }
   // Preserve source qualification, including const fn. Eligibility is checked
   // by the semantic frontend rather than erased during lexical normalization.
-  return parsed.tokens.map(token => {
+  const tokens=parsed.tokens.map(token => {
     const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start),number=numbers.get(start);
     if(number&&number.end===end)return {...token,...number,start,end};
     return character&&character.end===end?{...token,kind:'rustChar',value:character.value,raw:character.raw,start,end}:{...token,start,end};
   });
+  tokenSources.set(tokens,Object.freeze({source,tokens:tokenSnapshot(tokens)}));
+  return tokens;
 }

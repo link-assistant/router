@@ -3,8 +3,10 @@
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {sourceItems} from '../rust-structure.mjs';
+import {capturedRustTokenSource} from './lexical.mjs';
 
 const parsed=new WeakMap(), linked=new WeakMap(), capturedContexts=new WeakMap(), checkedContexts=new WeakMap(), bound=new WeakMap();
+const parserSources=new WeakMap();
 const itemCache=new Map();let cachedCharacters=0;
 const mapEntries=Map.prototype.entries, mapGet=Map.prototype.get;
 const hash=text=>createHash('sha256').update(text).digest('hex');
@@ -45,10 +47,21 @@ export function metadataDigest(value) {
 }
 function freeze(value){if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 const signature=entry=>({name:entry.name,params:entry.params??[],ret:entry.ret??null,constant:Boolean(entry.constant),constFunction:Boolean(entry.constFunction),async:Boolean(entry.async)});
+const parsedSyntax=entry=>entry.k==='data'?entry:{signature:signature(entry),body:entry.body};
 function recordParsedDeclaration(parser,entry,record) {
-  const records=parsed.get(parser)??[];records.push({entry,body:entry.body,syntaxSha256:metadataDigest({params:entry.params,ret:entry.ret,body:entry.body}),...copyMetadata(record)});parsed.set(parser,records);return entry;
+  verifyParserTokens(parser);
+  const records=parsed.get(parser)??[];records.push({entry,body:entry.body,syntaxSha256:metadataDigest(parsedSyntax(entry)),...copyMetadata(record)});parsed.set(parser,records);return entry;
 }
 export function withCapturedSourceParser(Base) {return class extends Base {
+  constructor(tokens,...args) {
+    const capture=capturedRustTokenSource(tokens);
+    super(tokens,...args);if(capture)parserSources.set(this,capture);
+  }
+  items(root,items,...args) {
+    const start=items.length,result=super.items(root,items,...args);
+    for(const entry of items.slice(start))if(entry.k==='data'&&!entry.generated)recordParsedDeclaration(this,entry,{start:entry.span.start,end:entry.span.start,bodySpan:null});
+    return result;
+  }
   constItem(path) {
     const c=this.cursor,start=c.next(),name=c.identifier('const').value;
     c.expect(':','const');const ret=this.type();c.expect('=','const');const bodyStart=c.peek().start,body=this.expr(path),bodyEnd=c.tokens[c.index-1].end;
@@ -56,8 +69,8 @@ export function withCapturedSourceParser(Base) {return class extends Base {
     return recordParsedDeclaration(this,entry,{start:start.start,end:end.end,bodySpan:{start:bodyStart,end:bodyEnd}});
   }
   fn(path) {
-    const c=this.cursor,start=c.peek().start,frame={bodySpan:null};(this.sourceFunctionCaptures??=[]).push(frame);
-    try {const entry=super.fn(path);return recordParsedDeclaration(this,entry,{start,end:c.tokens[c.index-1].end,bodySpan:frame.bodySpan});}
+    const c=this.cursor,qualifier=c.is('fn')&&c.index>0&&c.tokens[c.index-1].value==='const'?c.tokens[c.index-1]:null,start=qualifier?.start??c.peek().start,frame={bodySpan:null};(this.sourceFunctionCaptures??=[]).push(frame);
+    try {const entry=super.fn(path);if(qualifier)entry.constFunction=true;return recordParsedDeclaration(this,entry,{start,end:c.tokens[c.index-1].end,bodySpan:frame.bodySpan});}
     finally {this.sourceFunctionCaptures.pop();}
   }
   block(...args) {
@@ -66,6 +79,22 @@ export function withCapturedSourceParser(Base) {return class extends Base {
     const body=super.block(...args);if(capture)frame.bodySpan.end=c.tokens[c.index-1].end;return body;
   }
 };}
+function verifyParserTokens(parser) {
+  const origin=parserSources.get(parser);if(!origin)return null;
+  // Host.type splits one original && token into exactly two positioned &
+  // tokens. No other replacement, insertion, deletion or field change is
+  // permitted by this source association, even after parser construction.
+  const actual=copyMetadata(ownData(ownData(parser,'cursor'),'tokens'));let index=0;
+  const equal=(left,right)=>left&&metadataDigest(left)===metadataDigest(right);
+  for(const expected of origin.tokens) {
+    const token=actual[index++];
+    if(equal(token,expected))continue;
+    const second=actual[index++];
+    if(expected.value!=='&&'||expected.end!==expected.start+2||!equal(token,{...expected,value:'&',end:expected.start+1})||!equal(second,{...expected,value:'&',start:expected.start+1}))fail('parser token stream differs from original tokenizer input');
+  }
+  if(index!==actual.length)fail('parser token stream differs from original tokenizer input');
+  return origin;
+}
 function originalItems(source,path=[],offset=0) {
   const result=[];
   for(const item of sourceItems(source).filter(item=>!item.comment)){
@@ -83,13 +112,26 @@ function indexedItems(source) {
   if(source.length<=262144){while(itemCache.size>=16||cachedCharacters+source.length>1048576){const key=itemCache.keys().next().value;cachedCharacters-=key.length;itemCache.delete(key);}itemCache.set(source,items);cachedCharacters+=source.length;}
   return items;
 }
+// Relocation changes coordinates, not source semantics. Raw certificates are
+// immutable evidence and never executable target-relative span containers.
+function relocatedSyntax(value,offset) {
+  if(Array.isArray(value))return value.map(item=>relocatedSyntax(item,offset));
+  if(!value||typeof value!=='object')return value;
+  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,['copyCertificate','constantEvaluationProof'].includes(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocatedSyntax(item,offset)]));
+}
+function verifyRelocatedSyntax(entry,semantic,offset) {
+  if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
+  if(metadataDigest(relocatedSyntax(copyMetadata(entry),offset))!==metadataDigest(semantic))fail('semantic declaration differs from the exact source relocation');
+}
 function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,scope=null,path=[]}) {
+  const origin=verifyParserTokens(parser);if(!origin)fail('requires original tokenizer source capture');
+  if(itemSpan?source.slice(itemSpan.start,itemSpan.end)!==origin.source:source!==origin.source)fail('original source bytes differ from tokenizer input');
   const record=parsed.get(parser)?.find(record=>record.entry===entry||record.body&&record.body===entry.body);
-  if(entry.k==='fn'&&!record)return false;
-  if(record&&record.syntaxSha256!==metadataDigest({params:entry.params,ret:entry.ret,body:entry.body}))fail('parser syntax changed before original source linking');
+  if(['fn','data'].includes(entry.k)&&!record)return false;
+  if(record&&record.syntaxSha256!==metadataDigest(parsedSyntax(entry)))fail('parser syntax changed before original source linking');
   const items=indexedItems(source),item=itemSpan?items.find(item=>item.start===itemSpan.start&&item.end===itemSpan.end):items.find(item=>item.name===entry.name&&item.path.join('.')===path.join('.')&&(!record||item.start<=record.start&&record.end<=item.end));
   if(!item||!['fn','const','struct','enum'].includes(item.term))return false;
-  const bodySpan=record?{start:record.bodySpan.start+offset,end:record.bodySpan.end+offset}:{start:item.start,end:item.end};
+  const bodySpan=record?.bodySpan?{start:record.bodySpan.start+offset,end:record.bodySpan.end+offset}:{start:item.start,end:item.end};
   if(bodySpan.start<item.start||bodySpan.end>item.end)return false;
   const evidence={schemaVersion:1,sourcePath,sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source),declarationSpan:{start:item.start,end:item.end},declarationSha256:hash(source.slice(item.start,item.end)),bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:0,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)};
   linked.set(semantic,freeze(evidence));return true;
@@ -97,9 +139,12 @@ function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,
 // Project parsing uses declaration-local tokens but links to the full original
 // file. globalOffset is the module offset; itemOffset relocates parser tokens.
 export function linkProjectDeclaration(parser,entry,semantic,{source,sourcePath,itemSpan,itemOffset,globalOffset,path,scope}) {
+  const origin=verifyParserTokens(parser);if(!origin)fail('requires original tokenizer source capture');
+  if(itemOffset!==itemSpan.start||source.slice(itemSpan.start,itemSpan.end)!==origin.source)fail('original project slice differs from tokenizer input');
+  verifyRelocatedSyntax(entry,semantic,itemOffset+globalOffset);
   const record=parsed.get(parser)?.find(record=>record.entry===entry||record.body&&record.body===entry.body);
-  const linkedRecord=record?{...record,start:record.start+itemOffset,end:record.end+itemOffset,bodySpan:{start:record.bodySpan.start+itemOffset,end:record.bodySpan.end+itemOffset}}:null;
-  const temporary={};if(linkedRecord)parsed.set(temporary,[{...linkedRecord,entry,body:entry.body}]);
+  const linkedRecord=record?{...record,start:record.start+itemOffset,end:record.end+itemOffset,bodySpan:record.bodySpan?{start:record.bodySpan.start+itemOffset,end:record.bodySpan.end+itemOffset}:null}:null;
+  const temporary={cursor:parser.cursor};parserSources.set(temporary,origin);if(linkedRecord)parsed.set(temporary,[{...linkedRecord,entry,body:entry.body}]);
   const result=attach(temporary,entry,semantic,{source,sourcePath,itemSpan,offset:0,path,scope});
   if(result){const evidence=linked.get(semantic);linked.set(semantic,freeze({...evidence,sourceOffset:globalOffset}));}
   return result;
@@ -112,6 +157,7 @@ export function relocateSourceLink(entry,semantic,{source,sourcePath,itemSpan,of
   const evidence=linked.get(entry);if(!evidence)return false;
   if(evidence.parsedSurfaceSha256!==metadataDigest(entry)||hash(source.slice(itemSpan.start,itemSpan.end))!==evidence.declarationSha256)fail('original declaration differs from parsed source');
   const shift=itemSpan.start-evidence.declarationSpan.start;
+  verifyRelocatedSyntax(entry,semantic,shift+offset);
   linked.set(semantic,freeze({...copyMetadata(evidence),sourcePath,sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source),declarationSpan:copyMetadata(itemSpan),bodySpan:{start:evidence.bodySpan.start+shift,end:evidence.bodySpan.end+shift},checkedSpan:copyMetadata(semantic.span),sourceOffset:offset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)}));
   return true;
 }

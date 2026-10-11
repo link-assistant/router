@@ -105,6 +105,16 @@ test('budgets and dependency cycles are refusals, not fabricated Rust panics',()
   assert.equal(run([terminating,entry('ROOT',call('recursive',[lit(true,BOOL)]),'const ROOT:u8=recursive(true);')]).status,'value');
   assert.equal(scalar(lit(1),'const ROOT:u8=1;',U8,{limits:{steps:100001}}).status,'unsupported');
 });
+test('bounded checked-IR normalization is separate from evaluated value cells',()=>{
+  const source='const ROOT:u8=1u8;',root=entry('ROOT',lit(1),source);
+  const result=run([{...root,normalizationFixture:Array(18000).fill(null)}],'ROOT',{limits:{valueCells:1}});
+  assert.equal(result.status,'value');assert.equal(result.proof.cost.valueCells,1);assert.ok(result.proof.cost.normalizationCells>18000);
+  assert.equal(result.proof.sourceLinksVerified,false);
+  assert.equal(result.proof.limits.normalizationCells,65536);assert.equal(result.proof.limits.normalizationBytes,1048576);
+  for(const normalizationFixture of [Array(66000).fill(null),'x'.repeat(1048577)])assert.equal(run([{...root,normalizationFixture}]).status,'budget-exhausted');
+  assert.equal(run([{...root,normalizationFixture:Array(20).fill(null)}],'ROOT',{limits:{normalizationCells:10}}).status,'budget-exhausted');
+  assert.equal(scalar(binary('add',lit(1),lit(2)),source,U8,{limits:{valueCells:1}}).status,'budget-exhausted');
+});
 
 test('string comparisons never acquire const trait permission or JavaScript lexical ordering',()=>{
   const STRING={kind:'string',rustOwnership:{kind:'borrowed',source:'str'}};

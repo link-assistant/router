@@ -7,14 +7,16 @@ import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
-import {copyMetadata,snapshotMap,bindCheckedSourceLinks,linkedSourceContext} from '../extensions/source-links.mjs';
+import {parseRust,checkProgram,HostRustParser} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
+import {copyMetadata,snapshotMap,bindCheckedSourceLinks,linkedSourceContext,linkParsedFile,linkProjectDeclaration,relocateSourceLink} from '../extensions/source-links.mjs';
 import {translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 
 const hash=text=>createHash('sha256').update(text).digest('hex');
+const relocated=(node,offset)=>Array.isArray(node)?node.map(item=>relocated(item,offset)):node&&typeof node==='object'?Object.fromEntries(Object.entries(node).map(([key,value])=>[key,key==='span'&&value?{start:value.start+offset,end:value.end+offset}:relocated(value,offset)])):node;
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function both(result,assertions) {
   const folder=mkdtempSync(join(tmpdir(),'router-constant-source-'));
@@ -89,4 +91,76 @@ test('metadata normalization invokes no getters, proxy traps or overridden Map m
   const proxy=new Proxy({}, {ownKeys(){reads++;return [];},getPrototypeOf(){reads++;return Object.prototype;}});assert.throws(()=>copyMetadata(proxy),/acyclic data/);
   const map=new Map();Object.defineProperty(map,'get',{value:()=>{reads++;return 'override';}});assert.throws(()=>snapshotMap(map),/unmodified native Map/);
   assert.throws(()=>copyMetadata([,]),/holes|hole/);assert.throws(()=>copyMetadata({[Symbol('evidence')]:1}),/symbol/);assert.equal(reads,0);
+});
+test('source links bind the actual tokenizer bytes and reject token replacement before or after parsing',()=>{
+  const original='const VALUE:u8=1u8;fn main(){}',changed=original.replace('1u8','2u8');
+  const parser=new HostRustParser(tokenizeRust(original)),surface=parser.file();
+  assert.throws(()=>linkParsedFile(parser,surface,changed),/bytes differ from tokenizer input/);
+  linkParsedFile(parser,surface,original);assert.equal(checkProgram(surface).declarations.get('VALUE').constantEvaluationProof.sourceLinksVerified,true);
+  for(const [before,after] of [
+    ['// first\n'+original,'// other\n'+original],
+    ['pub fn word()->&\'static str{r#"same"#}fn main(){}','pub fn word()->&\'static str{r##"same"##}fn main(){}'],
+  ]) {
+    const parser=new HostRustParser(tokenizeRust(before)),surface=parser.file();
+    assert.throws(()=>linkParsedFile(parser,surface,after),/bytes differ from tokenizer input/);
+  }
+  const copiedParser=new HostRustParser([...tokenizeRust(original)]),copiedSurface=copiedParser.file();
+  assert.throws(()=>linkParsedFile(copiedParser,copiedSurface,original),/original tokenizer source capture/);
+  const tokens=tokenizeRust(original);tokens.find(token=>token.kind==='number').value='2';
+  assert.throws(()=>new HostRustParser(tokens),/changed before parsing/);
+  const later=tokenizeRust(original),laterParser=new HostRustParser(later);later.find(token=>token.kind==='number').value='2';
+  assert.throws(()=>laterParser.file(),/token stream differs/);
+  const afterParser=new HostRustParser(tokenizeRust(original)),afterSurface=afterParser.file();
+  afterParser.cursor.tokens.find(token=>token.kind==='number').value='2';
+  assert.throws(()=>linkParsedFile(afterParser,afterSurface,original),/token stream differs/);
+  const references='pub fn takes(v:&&u8)->bool{true}fn main(){}';
+  const referenceParser=new HostRustParser(tokenizeRust(references)),referenceSurface=referenceParser.file();
+  linkParsedFile(referenceParser,referenceSurface,references);assert.ok(linkedSourceContext(referenceSurface));
+});
+test('project source associations require the exact original declaration slice and offset',()=>{
+  const declaration='pub const VALUE:u8=1u8;',prefix='// é 😀\n',source=prefix+declaration;
+  const parser=new HostRustParser(tokenizeRust(declaration));parser.visibility();const entry=parser.constItem([]);
+  const options={source,sourcePath:'src/original.rs',itemSpan:{start:prefix.length,end:source.length},itemOffset:prefix.length,globalOffset:0,path:[],scope:null};
+  assert.throws(()=>linkProjectDeclaration(parser,entry,entry,{...options,source:source.replace('1u8','2u8')}),/slice differs from tokenizer input/);
+  assert.throws(()=>linkProjectDeclaration(parser,entry,entry,{...options,itemOffset:0}),/slice differs from tokenizer input/);
+  assert.equal(linkProjectDeclaration(parser,entry,relocated(entry,prefix.length),options),true);
+  const data='struct Payload{value:u8}',dataParser=new HostRustParser(tokenizeRust(data)),items=[];
+  dataParser.items({main:null},items,[],()=>dataParser.cursor.atEnd());
+  assert.throws(()=>linkProjectDeclaration(dataParser,items[0],items[0],{source:data.replace('u8','i8'),sourcePath:'src/data.rs',itemSpan:{start:0,end:data.length},itemOffset:0,globalOffset:0,path:[],scope:null}),/slice differs from tokenizer input/);
+});
+test('genuine parsed declarations cannot certify arbitrary semantic replacements',()=>{
+  for(const declaration of ['pub const VALUE:u8=1u8;','struct Payload{value:u8}']) {
+    const parser=new HostRustParser(tokenizeRust(declaration)),items=[];parser.items({main:null},items,[],()=>parser.cursor.atEnd());const entry=items[0];
+    const changed=structuredClone(entry);if(changed.k==='fn')changed.body.value='2';else changed.ctors[0].fields[0].type.signed=true;
+    const options={source:declaration,sourcePath:'src/original.rs',itemSpan:{start:0,end:declaration.length},itemOffset:0,globalOffset:0,path:[],scope:null};
+    assert.throws(()=>linkProjectDeclaration(parser,entry,changed,options),/semantic declaration differs/);
+  }
+  const source='pub const VALUE:u8=1u8;fn main(){}',parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();linkParsedFile(parser,surface,source);
+  const entry=surface.items[0],itemSpan={start:0,end:'pub const VALUE:u8=1u8;'.length},changed=structuredClone(entry);changed.body.value='2';
+  assert.throws(()=>relocateSourceLink(entry,changed,{source,sourcePath:'src/original.rs',itemSpan}),/semantic declaration differs/);
+  const prefix='// é 😀\n',full=prefix+source,offsetSpan={start:prefix.length,end:prefix.length+itemSpan.end};
+  assert.equal(relocateSourceLink(entry,relocated(entry,prefix.length),{source:full,sourcePath:'src/original.rs',itemSpan:offsetSpan}),true);
+});
+test('source capture preserves actual declaration identity and written const qualification',()=>{
+  for(const [source,key,value] of [
+    ['pub fn value()->u8{1u8}fn main(){}','constFunction',true],
+    ['const VALUE:u8=1u8;fn main(){}','constant',false],
+    ['pub fn value()->u8{1u8}fn main(){}','async',true],
+    ['pub fn value()->u8{1u8}fn main(){}','name','renamed'],
+  ]) {
+    const parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();surface.items[0][key]=value;
+    assert.throws(()=>linkParsedFile(parser,surface,source),/parser syntax changed/);
+  }
+  const source='pub const fn value()->u8{1u8}const VALUE:u8=value();fn main(){}';
+  const parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();
+  linkParsedFile(parser,surface,source);assert.equal(checkProgram(surface).declarations.get('VALUE').constantEvaluationProof.sourceLinksVerified,true);
+});
+test('data source associations reject layout or attribute changes after the actual parse',()=>{
+  for(const source of ['#[derive(Clone)] struct Payload{value:u8}','enum Payload{Value(u8)}']) {
+    const parser=new HostRustParser(tokenizeRust(source)),items=[];parser.items({main:null},items,[],()=>parser.cursor.atEnd());
+    items[0].ctors[0].fields[0].type={...items[0].ctors[0].fields[0].type,signed:true};
+    assert.throws(()=>linkProjectDeclaration(parser,items[0],items[0],{source,sourcePath:'src/data.rs',itemSpan:{start:0,end:source.length},itemOffset:0,globalOffset:0,path:[],scope:null}),/parser syntax changed/);
+  }
+  const source='#[derive(Clone)] struct Payload{value:u8}fn main(){}',parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();
+  surface.items[0].deriveTraits=[...surface.items[0].deriveTraits,'Copy'];assert.throws(()=>linkParsedFile(parser,surface,source),/parser syntax changed/);
 });

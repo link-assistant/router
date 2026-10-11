@@ -10,7 +10,7 @@ export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVers
   arithmeticSha256:'3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b',
   timeSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/time.rs',
   timeSha256:'66088e332e93cdda1517f313b63eacc673d5a5042ba2a734ee2b31c707ee2173'});
-const DEFAULT_LIMITS=Object.freeze({steps:100000,callDepth:32,nodeDepth:128,valueCells:16000,serializedBytes:262144,sourceBytes:1048576});
+const DEFAULT_LIMITS=Object.freeze({steps:100000,callDepth:32,nodeDepth:128,valueCells:16000,serializedBytes:262144,sourceBytes:1048576,normalizationCells:65536,normalizationBytes:1048576});
 const TIME_OPERATIONS=new Map([['std_time_duration_from_secs','from_secs'],['std_time_duration_new','new']]);
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 class Refusal extends Error {
@@ -83,6 +83,7 @@ class Evaluator {
     this.sources=snapshotMap(option('sources')??new Map());this.contracts=snapshotMap(option('contracts')??new Map());this.sourceLinks=option('sourceLinks');
     this.limits={...DEFAULT_LIMITS,...copyMetadata(option('limits')??{})};
     for(const [name,value] of Object.entries(this.limits))if(!(name in DEFAULT_LIMITS)||!Number.isSafeInteger(value)||value<1||value>DEFAULT_LIMITS[name])refuse('constant evaluation limits must be positive bounded profile values');
+    this.normalizationCells=0;
     this.steps=0;this.cells=0;this.stack=[];this.eligible=new Set();this.eligibilityActive=new Set();this.resolution=new Map();this.layouts=new Map();this.trace=[];
   }
   step(node){if(++this.steps>this.limits.steps)throw new Refusal('budget-exhausted','constant evaluation step budget exhausted',node);}
@@ -97,7 +98,7 @@ class Evaluator {
     const linked=checkedSourceEvidence(this.sourceLinks,entry);
     if(linked){if(linked.targetProfileSha256!==metadataDigest(CONSTANT_EVALUATION_PROFILE))refuse('constant source links have a different target profile',entry);if(linked.sourceBytes>this.limits.sourceBytes)throw new Refusal('budget-exhausted','constant original source exceeds the source budget',entry);return {...linked,sourceAssociation:'private-parser-source-links-v1'};}
     const evidence=this.sources.get(entry.fullName);
-    const safe=evidence?copyMetadata(evidence,{cells:this.limits.valueCells,bytes:this.limits.sourceBytes}):null;
+    const safe=evidence?copyMetadata(evidence,{cells:this.limits.normalizationCells,bytes:Math.min(this.limits.sourceBytes,this.limits.normalizationBytes)}):null;
     const valid=range=>range&&Number.isSafeInteger(range.start)&&Number.isSafeInteger(range.end)&&range.start>=0&&range.end>=range.start&&range.end<=safe.source.length;
     if(!safe||typeof safe.source!=='string'||typeof safe.sourcePath!=='string'||!valid(safe.declarationSpan)||!valid(safe.bodySpan))refuse('constant evaluation requires original declaration and body source spans',entry);
     if(Buffer.byteLength(safe.source)>this.limits.sourceBytes)throw new Refusal('budget-exhausted','constant source evidence exceeds the source budget',entry);
@@ -105,11 +106,11 @@ class Evaluator {
     return {sourceAssociation:'unlinked checked-IR unit input',sourcePath:safe.sourcePath,sourceSha256:sha256(safe.source),declarationSpan:safe.declarationSpan,declarationSha256:sha256(safe.source.slice(entry.span.start,entry.span.end)),bodySpan:safe.bodySpan,bodySha256:sha256(safe.source.slice(safe.bodySpan.start,safe.bodySpan.end))};
   }
   safeEntry(name) {
-    if(!this.safeEntries.has(name)){const entry=this.program.declarations.get(name);if(entry)this.program.declarations.set(name,copyMetadata(entry,{cells:this.limits.valueCells,bytes:this.limits.serializedBytes}));this.safeEntries.add(name);}return this.program.declarations.get(name);
+    if(!this.safeEntries.has(name)){const entry=this.program.declarations.get(name);if(entry){const budget={cells:this.limits.normalizationCells,bytes:this.limits.normalizationBytes};this.program.declarations.set(name,copyMetadata(entry,{},0,new Set(),budget));this.normalizationCells=Math.max(this.normalizationCells,this.limits.normalizationCells-budget.cells);}this.safeEntries.add(name);}return this.program.declarations.get(name);
   }
   declaration(name) {
     const entry=this.safeEntry(name);
-    if(entry)this.serialize(entry);
+    if(entry)this.serialize(entry,true);
     if(!entry||entry.k!=='fn'||entry.fullName!==name||!entry.body||entry.async||(!entry.constant&&!entry.constFunction))refuse('constant call needs the actual resolved constant implementation: '+name,entry);
     return entry;
   }
@@ -122,7 +123,7 @@ class Evaluator {
   }
   layout(name) {
     const entry=this.safeEntry(name);
-    if(entry)this.serialize(entry);
+    if(entry)this.serialize(entry,true);
     if(entry?.k!=='data'||entry.fullName!==name||!Array.isArray(entry.ctors)||entry.ctors.some(ctor=>!Array.isArray(ctor.fields)||ctor.fields.some(field=>typeof field.name!=='string'||!field.type)))refuse('constant constructor requires a resolved checked data layout',entry);
     if(!this.layouts.has(name)){
       const standard=entry.standardGeneric;
@@ -131,14 +132,14 @@ class Evaluator {
         if(!variants||standard.arguments?.length!==(standard.kind==='Option'?1:2)||entry.ctors.length!==2||variants.some(([variant,index])=>{const ctor=entry.ctors.find(ctor=>ctor.name===variant);return !ctor||ctor.fields.length!==(index===null?0:1)||index!==null&&(ctor.fields[0].name!=='field0'||!sameType(ctor.fields[0].type,this.actualType(standard.arguments[index],entry.modulePath)));}))refuse('constant standard generic needs exact registered argument and constructor layouts',entry);
       }
       if(entry.generated&&!standard&&!(entry.tuple&&entry.generated==='router-tuple-type')&&!(name==='std.time.Duration'&&entry.generated==='router-time-contract'))refuse('constant generated data has no pinned layout profile',entry);
-      this.layouts.set(name,{name,checkedLayoutSha256:sha256(this.serialize({ctors:entry.ctors,standardGeneric:standard??null,tuple:entry.tuple??false})),...(entry.generated?{generated:entry.generated}:{source:this.source(entry)})});
+      this.layouts.set(name,{name,checkedLayoutSha256:sha256(this.serialize({ctors:entry.ctors,standardGeneric:standard??null,tuple:entry.tuple??false},true)),...(entry.generated?{generated:entry.generated}:{source:this.source(entry)})});
     }
     return entry;
   }
   eligibleDeclaration(name) {
     if(this.eligible.has(name)||this.eligibilityActive.has(name))return;
     const entry=this.declaration(name);this.eligibilityActive.add(name);
-    this.resolution.set(name,{name,source:this.source(entry),checkedBodySha256:sha256(this.serialize(entry.body))});
+    this.resolution.set(name,{name,source:this.source(entry),checkedBodySha256:sha256(this.serialize(entry.body,true))});
     if(!Array.isArray(entry.params)||entry.params.some(param=>param.guard||param.default||param.mutable))refuse('constant function parameters need plain immutable bindings',entry);
     this.eligibleNode(entry.body,0);this.eligibilityActive.delete(name);this.eligible.add(name);
   }
@@ -160,7 +161,7 @@ class Evaluator {
     const operands=children(node);if(!Array.isArray(operands))refuse('constant operands must be a checked array',node);
     for(const operand of operands)this.eligibleNode(operand,depth+1);
   }
-  serialize(value){const text=JSON.stringify(canonical(value,0,new Set(),{nodes:this.limits.valueCells,bytes:this.limits.serializedBytes}));if(Buffer.byteLength(text)>this.limits.serializedBytes)throw new Refusal('budget-exhausted','constant serialized evidence budget exhausted');return text;}
+  serialize(value,normalization=false){const cells=this.limits.normalizationCells,bytes=normalization?this.limits.normalizationBytes:this.limits.serializedBytes,budget={nodes:cells,bytes},text=JSON.stringify(canonical(value,0,new Set(),budget));this.normalizationCells=Math.max(this.normalizationCells,cells-budget.nodes);if(Buffer.byteLength(text)>bytes)throw new Refusal('budget-exhausted',normalization?'constant checked-IR normalization byte budget exhausted':'constant serialized evidence budget exhausted');return text;}
   noDrop(type,active=new Set()) {
     if(type?.rustReference?.kind==='shared'&&type.rustReference.pointee)return true;
     if(type?.rustOwnership?.kind==='owned')return false;
@@ -269,7 +270,7 @@ class Evaluator {
   }
   timeContract(node) {
     const raw=this.contracts.get(node.id),contract=raw?copyMetadata(raw):null,operation=TIME_OPERATIONS.get(node.id),parameters=operation==='new'?['u64','u32']:['u64'];
-    if(contract)this.serialize(contract);
+    if(contract)this.serialize(contract,true);
     if(!operation||contract?.id!==node.id||contract.constEligible!==true||contract.async!==false||contract.pure!==true||contract.kind!=='function'||contract.rustPath?.join('.')!=='std.time.Duration.'+operation||contract.params?.length!==parameters.length||!contract.params.every((type,index)=>type.kind==='fixed'&&type.rustPrimitiveName===parameters[index]&&type.signed===false&&type.bits===(index===0?64:32))||!sameType(this.actualType(contract.ret),node.type))refuse('constant host operation needs the explicitly pinned Duration constructor contract',node);
     const entry=this.layout(node.type?.name),fields=entry.ctors[0]?.fields;
     if(node.type?.kind!=='data'||node.type.name!=='std.time.Duration'||entry.generated!=='router-time-contract'||entry.ctors.length!==1||entry.ctors[0].name!=='Duration'||fields?.length!==2||fields[0].name!=='secs'||fields[0].type.rustPrimitiveName!=='u64'||fields[0].type.bits!==64||fields[0].type.signed!==false||fields[1].name!=='nanos'||fields[1].type.rustPrimitiveName!=='u32'||fields[1].type.bits!==32||fields[1].type.signed!==false)refuse('constant Duration requires the actual registered normalized ABI layout',node);
@@ -285,15 +286,15 @@ class Evaluator {
   run(name) {
     const entry=this.declaration(name);if(!entry.constant||entry.params?.length)refuse('constant evaluation entry must be an actual zero-argument constant',entry);
     this.eligibleDeclaration(name);const value=this.call(name,[],entry),resolution=[...this.resolution.values()].sort((a,b)=>ordinal(a.name,b.name));
-    const serializedValue=canonical(value.value),proof={schemaVersion:1,verified:true,scope:'this concrete checked constant root',entry:name,
+    const serializedValue=canonical(value.value,0,new Set(),{nodes:this.limits.valueCells,bytes:this.limits.serializedBytes}),proof={schemaVersion:1,verified:true,scope:'this concrete checked constant root',entry:name,
       sourceLinksVerified:resolution.every(item=>item.source.sourceAssociation==='private-parser-source-links-v1')&&[...this.layouts.values()].every(item=>!item.source||item.source.sourceAssociation==='private-parser-source-links-v1'),
       profile:CONSTANT_EVALUATION_PROFILE,profileSha256:sha256(this.serialize(CONSTANT_EVALUATION_PROFILE)),resolution,resolvedLayouts:[...this.layouts.values()].sort((a,b)=>ordinal(a.name,b.name)),
-      checkedIRSha256:sha256(this.serialize(resolution.map(item=>({name:item.name,body:this.program.declarations.get(item.name).body})))),
-      valueSha256:sha256(this.serialize(serializedValue)),trace:this.trace,cost:{steps:this.steps,valueCells:this.cells},limits:this.limits};
+      checkedIRSha256:sha256(this.serialize(resolution.map(item=>({name:item.name,body:this.program.declarations.get(item.name).body})),true)),
+      valueSha256:sha256(this.serialize(serializedValue)),trace:this.trace,cost:{steps:this.steps,valueCells:this.cells,normalizationCells:this.normalizationCells},limits:this.limits};
     this.serialize(proof);return frozen({status:'value',type:canonical(value.type),value:serializedValue,proof});
   }
 }
 export function evaluateCheckedConstant(program,name,options={}) {
   try{return new Evaluator(program,options).run(name);}
-  catch(error){if(error instanceof TypeError&&error.message.startsWith('source links:'))return frozen({status:'unsupported',diagnostic:{reason:error.message}});if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}
+  catch(error){if(error instanceof TypeError&&error.message.startsWith('source links:'))return frozen({status:error.message.includes('budget exhausted')?'budget-exhausted':'unsupported',diagnostic:{reason:error.message}});if(!(error instanceof Refusal))throw error;return frozen({status:error.status,diagnostic:{reason:error.message,...(error.span?{span:error.span}:{})}});}
 }
