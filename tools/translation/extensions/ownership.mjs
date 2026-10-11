@@ -71,6 +71,13 @@ export function assertRustOwnership(actual,expected,span,{declarations,resolveTy
 
 export function withOwnershipParser(Base=TextRustParser) {
   return class extends Base {
+    method(object,method,args,span) {
+      if(!['to_owned','as_str'].includes(method.value))return super.method(object,method,args,span);
+      if(args.length)throw typeError(`${method.value} expects no arguments`,span);
+      // Keep the written operation: the upstream scalar frontend erases both
+      // methods, although one creates an owned value and one borrows String.
+      return {k:'routerStringOwnership',operation:method.value,object,fallback:super.method(object,method,args,span),span};
+    }
     primary(path,options) {
       const c=this.cursor,first=c.peek(),constructor=['String','Vec'].includes(first.value)&&typeof this.builtinShadow==='function'&&!this.builtinShadow(first.value,path)&&c.is('::',1)&&c.is('new',2)&&c.is('(',3)&&c.is(')',4);
       const value=super.primary(path,options);
@@ -138,13 +145,17 @@ export function withOwnershipChecker(Base=TextChecker) {
     expectedOwnership(actual,expected,path,span) {
       assertRustOwnership(actual,expected,span,{declarations:this.items,resolveType:(type,scope,range)=>this.resolveType(type,scope??path,range)});
     }
-    qualifyOwnershipResult(node,value) {
+    qualifyOwnershipResult(node,value,expected,path) {
       let owner=ownership(value.type);
       if(node.k==='routerTextReference'&&['string','array'].includes(value.type.kind))throw unsupported('explicit ownership borrow','requires a checked lifetime and borrowing contract',node.span);
       if(['str','lit'].includes(node.k)&&typeof node.value==='string')owner=BORROWED_STR;
       if(node.sourceRustOwnership)owner=node.sourceRustOwnership;
-      if(value.formatProvenance||node.k==='toString')owner=OWNED_STRING;
+      if(value.formatProvenance)owner=OWNED_STRING;
       if(node.k==='routerBuiltinConversion'&&node.operation==='String::from')owner=OWNED_STRING;
+      if(node.k==='routerIteratorOperation'&&node.op==='collect'&&value.type.kind==='array') {
+        const target=node.explicit?this.resolveType(node.explicit,path,node.span):expected;
+        if(target?.kind==='array'&&ownership(target)?.kind==='owned'&&ownership(target)?.source==='Vec')owner=OWNED_VEC;
+      }
       if(value.k==='stringMap'&&['toLowerCase','toUpperCase'].includes(value.op)||value.k==='routerStringOperation'&&['to_ascii_lowercase','to_ascii_uppercase'].includes(value.op))owner=OWNED_STRING;
       if(value.k==='routerStringOperation'&&['trim','trim_start','trim_end'].includes(value.op)) {
         owner=BORROWED_STR;
@@ -153,6 +164,19 @@ export function withOwnershipChecker(Base=TextChecker) {
       }
       let operation=value;while(operation.k==='let')operation=operation.body;
       if(operation.k==='routerTextPattern'&&operation.sourceProfile==='checked-str-pattern-v1'&&['trim_start_matches','trim_end_matches','trim_matches'].includes(operation.op))owner=BORROWED_STR;
+      // Upstream may return its string argument unchanged. The outer written
+      // to_string still allocates String even when the receiver is a trim.
+      if(node.k==='toString') {
+        owner=OWNED_STRING;
+        value={...value,sourceOwnershipOperation:{profile:'checked-standard-string-ownership-v1',verified:true,operation:'to_string',receiverType:structuredClone(value.type),span:{...node.span}}};
+        if(value.type.rustReference) {
+          const reference=value.type.rustReference;
+          if(reference.kind!=='shared'||reference.pointee?.kind!=='string'||reference.pointee.rustReference||reference.pointee.rustOwnership?.source!=='String')throw unsupported('string Display autodereference','requires one actual checked standard String pointee',node.span);
+          const type={...value.type};delete type.rustReference;delete type.patternOwnershipRefusal;delete type.rustBorrowingUnresolved;
+          value={...value,type};
+        }
+      }
+      if(value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.verified&&['to_string','to_owned'].includes(value.sourceOwnershipOperation.operation))owner=OWNED_STRING;
       if(owner) {
         const type={...value.type,rustOwnership:owner};
         // A checked owned result is a new value, not the input's borrowed
@@ -164,7 +188,25 @@ export function withOwnershipChecker(Base=TextChecker) {
       return value;
     }
     expr(node,env,path,expected,allowLiteral=false) {
-      const value=this.qualifyOwnershipResult(node,super.expr(node,env,path,expected,allowLiteral));
+      if(node.k==='routerStringOwnership') {
+        const object=this.expr(node.object,env,path),owner=ownership(object.type);
+        // JSON and actual inherent methods keep their independently checked
+        // dispatch; an equal portable string representation is insufficient.
+        if(object.type.kind!=='string')return this.expr(node.fallback,env,path,expected,allowLiteral);
+        if(!owner||!['str','String'].includes(owner.source))throw unsupported('standard string ownership method','requires the actual checked str or String receiver',node.span);
+        const reference=object.type.rustReference;
+        if(reference&&(reference.kind!=='shared'||reference.pointee?.kind!=='string'||reference.pointee.rustReference||reference.pointee.rustOwnership?.source!=='String'))throw unsupported('string ownership autodereference','requires one actual shared standard String pointee',node.span);
+        const proof={profile:'checked-standard-string-ownership-v1',verified:true,operation:node.operation,receiverType:structuredClone(object.type),span:{...node.span}};
+        let value;
+        if(node.operation==='to_owned') {
+          value={k:'toString',arg:object,type:{kind:'string',rustSourceType:true,rustOwnership:OWNED_STRING},sourceOwnershipOperation:proof,span:node.span};
+        } else {
+          if(owner.source!=='String')throw typeError('String::as_str requires an actual String receiver',node.span);
+          value={...object,type:{kind:'string',rustSourceType:true,rustOwnership:BORROWED_STR,rustBorrowLifetime:{kind:'elided',source:'String::as_str',span:{...node.span}},...(owner.kind==='owned'?{rustBorrowingUnresolved:'borrow of owned String'}:{})},sourceOwnershipOperation:proof,sourceOwnershipReceiver:object,span:node.span};
+        }
+        this.expectedOwnership(value.type,expected,path,node.span);return value;
+      }
+      const value=this.qualifyOwnershipResult(node,super.expr(node,env,path,expected,allowLiteral),expected,path);
       this.expectedOwnership(value.type,expected,path,node.span);
       return value;
     }
