@@ -98,7 +98,7 @@ export function withFixedArrayChecker(Base) {
       if(wanted!==null&&typeKey(type)!==typeKey(expected))throw typeError('fixed-array repeat element type differs from the expected source type',node.span);
       let name;do{name=this.freshName('ml_fixed_array_repeat_');}while(env.has(name));
       const variable={k:'var',name,type:value.type,span:node.value.span};
-      const body={k:'array',items:Array.from({length:node.length},()=>({...variable})),type,span:node.span,fixedArrayProof:{profile:FIXED_ARRAY_PROFILE,verified:true,length:node.length,syntax:'repeat',evaluation:'non-const-operand-once-including-zero',sourceLength:node.sourceLength}};
+      const body={k:'array',items:Array.from({length:node.length},()=>({...variable})),type,span:node.span,fixedArrayProof:{profile:FIXED_ARRAY_PROFILE,verified:true,length:node.length,syntax:'repeat',evaluation:'non-const-operand-once-including-zero',sourceLength:node.sourceLength,repeatSeed:variable}};
       return {k:'let',name,value,body,type,mutable:false,span:node.span};
     }
     arrayLiteral(node,env,path,expected) {

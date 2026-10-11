@@ -17,14 +17,20 @@ test('non-const repeated operands evaluate once including zero in emitted JS and
   });
 });
 
+test('zero repetitions retain ordinary block evaluation and division panic timing',{timeout:30_000},async()=>{
+  const result=project('fn seed(value:u8)->u8{10/value} pub fn zero(value:u8)->[u8;0]{[{seed(value)};0]}');
+  assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.deepEqual(api.zero(2n),[]);assert.throws(()=>api.zero(0n));});
+});
+
 test('repeat copies nested values and retains actual borrowed string origins',{timeout:30_000},async()=>{
-  const source='pub fn nested(value:[u8;2])->[[u8;2];2]{[value;2]} pub fn text(value:&str)->[&str;2]{[value;2]} pub fn static_text()->[&\'static str;2]{["leaf";2]} pub fn hexadecimal()->[u8;2]{[3u8;0x2usize]}';
+  const source='pub fn nested(value:[u8;2])->[[u8;2];2]{[value;2]} pub fn text(value:&str)->[&str;2]{[value;2]} pub fn static_text()->[&\'static str;2]{["leaf";2]} pub fn zero_text(value:&str)->[&str;0]{[value;0]} pub fn zero_static_text()->[&\'static str;0]{["leaf";0]} pub fn hexadecimal()->[u8;2]{[3u8;0x2usize]}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{
     const input=[1n,2n],output=api.nested(input);input[0]=9n;
     assert.deepEqual(output,[[1n,2n],[1n,2n]]);assert.notEqual(output[0],output[1]);
     assert.ok(Object.isFrozen(output));assert.ok(Object.isFrozen(output[0]));
-    assert.deepEqual(api.text('Ω'),['Ω','Ω']);assert.deepEqual(api.static_text(),['leaf','leaf']);assert.deepEqual(api.hexadecimal(),[3n,3n]);
+    assert.deepEqual(api.text('Ω'),['Ω','Ω']);assert.deepEqual(api.static_text(),['leaf','leaf']);assert.deepEqual(api.zero_text('Ω'),[]);assert.deepEqual(api.zero_static_text(),[]);assert.deepEqual(api.hexadecimal(),[3n,3n]);
   });
 });
 
@@ -45,6 +51,8 @@ test('repeat count ownership and const evaluation categories remain actual sourc
     'pub fn bad()->Vec<u8>{[1u8;2]}',
     'pub fn bad()->[String;2]{[String::from("owned");2]}',
     'pub fn bad(value:&str)->[&\'static str;2]{[value;2]}',
+    'pub fn bad(value:&str)->[&\'static str;0]{[value;0]}',
+    'pub fn bad(value:[&str;0])->[[&\'static str;0];0]{[value;0]}',
     'const VALUE:u8=1; pub fn bad()->[u8;2]{[VALUE;2]}',
     'pub fn bad()->[u8;2]{[const{1u8};2]}',
     'pub fn bad()->[u8;2]{[return [1u8,2u8];2]}',

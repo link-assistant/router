@@ -1,1 +1,3 @@
 Draft bounded Copy-array repetition as checked meta-language let and array nodes, preserving exactly-once evaluation of non-const operands even for zero elements. Literal usize sizes, actual element ownership, immutable copies, and existing lifetime checks remain required; const-item/block evaluation-count rules and non-Copy repeated elements remain explicit obligations.
+
+Retain the repeat operand's expected lifetime constraint for zero elements, as required by Rust 1.89's unconditional element coercion in `check_expr_repeat`. Ordinary zero repetitions retain division panic timing. This future cohort draft has not yet been executed.

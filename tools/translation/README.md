@@ -54,6 +54,8 @@ one evaluation even for zero elements. Const-item/block operands have different
 [evaluation-count rules](https://doc.rust-lang.org/reference/expressions/array-expr.html#array-expressions)
 and retain refusals, as do general constant sizes, aggregate references and
 non-Copy elements. A source array does not implicitly become a `Vec` or borrowed slice.
+Zero repetitions retain the operand's expected element lifetime obligation,
+following the pinned [Rust 1.89 type checker](https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_hir_typeck/src/expr.rs#L1899-L1913).
 
 An unsupported construct retains its exact source and diagnostic. It supplies no
 callable stub. Unsupported dependencies carry their callers, and ambiguous or

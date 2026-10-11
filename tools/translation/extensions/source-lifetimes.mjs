@@ -139,6 +139,9 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified) {
     const values=node.items.map(value=>read(value));
+    // Rust checks a repeat operand against the expected element type even
+    // when zero elements are stored. Retain that lifetime obligation.
+    if(node.items.length===0&&node.fixedArrayProof.syntax==='repeat')values.push(read(node.fixedArrayProof.repeatSeed));
     return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
   }
   if(node.k==='routerSharedMethodReceiver') {
@@ -248,7 +251,7 @@ function origins(node,env,context,returns,depth=0) {
 
 function emptyBorrowValue(node,context) {
   if(!node)return false;
-  if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified)return true;
+  if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified&&node.fixedArrayProof.syntax!=='repeat')return true;
   if(['routerReturn','routerPanic','abort'].includes(node.k))return true;
   if(node.k==='let'||node.k==='routerDiscard')return emptyBorrowValue(node.body,context);
   if(node.k==='if')return emptyBorrowValue(node.then,context)&&emptyBorrowValue(node.else,context);
