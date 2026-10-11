@@ -6,7 +6,8 @@ import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
-import {regenerate} from '../bulk.mjs';
+import {regenerate,trackedSource} from '../bulk.mjs';
+import {fileURLToPath} from 'node:url';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const strict=result=>{const dir=mkdtempSync(join(tmpdir(),'router-host-types-'));try{writeRuntimeAssets(dir);writeFileSync(join(dir,'src/module.ts'),result.typescript);execFileSync(process.env.ROUTER_TRANSLATION_TSC ?? 'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(dir,'src/module.ts')],{encoding:'utf8'});}finally{rmSync(dir,{force:true,recursive:true});}};
@@ -54,4 +55,10 @@ test('user enum shapes, host namespace shadows and imported generic shadows neve
   'mod other {pub enum Option {None,Some(u8)}} use crate::other::Option;pub fn invented(x:Option<u8>)->bool{x.is_some_and(|v|v>0)}',
   'enum Option {None,Some(u8)} pub fn invented(x:Option<u8>)->bool{x.is_some_and(|v|v>0)}',
  ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,source);assert.ok(result.meta.refused.length,source);}
+});
+
+test('overlapping registered imports coalesce once across genuine source dependency closures',async()=>{
+ const root=fileURLToPath(new URL('../../../',import.meta.url));const path='src/request_routing.rs';
+ const source=trackedSource(root,path),checked=translateProject({entry:path,paths:[path],readSource:()=>source}),result=translateSource(source,path,{projectDeclarations:checked.executableDeclarations});assert.ok(result.ir.items.some(item=>item.name==='bounded_retry_after'&&item.status==='executable'));strict(result);await loadJavaScript(result.javascript);
+ const imported=result.javascript.match(/std_time_duration_from_secs as ml_host_std_time_duration_from_secs/g)??[];assert.equal(imported.length,1);
 });

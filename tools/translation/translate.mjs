@@ -17,6 +17,28 @@ export const tsType = (type, dataTypes = []) => {
   return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
 };
 
+// Different checked dependency closures can use overlapping host contracts.
+// Merge their generated named imports structurally, retaining module order and
+// every binding; string-set deduplication alone cannot merge partial groups.
+export function mergePreludeImports(preludes) {
+  const modules=new Map(),locals=new Map(),result=[];
+  for(const text of preludes){
+    if(!/^import\s*\{/u.test(text)){result.push(text);continue;}
+    const tokens=tokenize(text,'JavaScript').tokens;let at=2;const bindings=[];
+    while(tokens[at]?.value!=='}'){
+      const imported=tokens[at++];if(imported?.kind!=='identifier')throw new Error('invalid generated import binding');
+      let local=imported.value;if(tokens[at]?.value==='as'){at++;const name=tokens[at++];if(name?.kind!=='identifier')throw new Error('invalid generated import alias');local=name.value;}
+      bindings.push({imported:imported.value,local});if(tokens[at]?.value===',')at++;else if(tokens[at]?.value!=='}')throw new Error('invalid generated import separator');
+    }
+    at++;if(tokens[at++]?.value!=='from'||tokens[at]?.kind!=='string')throw new Error('invalid generated import module');const module=tokens[at++].value;
+    if(tokens[at++]?.value!==';'||tokens[at]?.kind!=='eof')throw new Error('invalid generated import terminator');
+    if(!modules.has(module)){modules.set(module,new Map());result.push({module});}
+    const entries=modules.get(module);
+    for(const binding of bindings){const previous=locals.get(binding.local);if(previous&&(previous.module!==module||previous.imported!==binding.imported))throw new Error('conflicting generated import alias '+binding.local);locals.set(binding.local,{module,...binding});entries.set(binding.local,binding.imported);}
+  }
+  return result.map(item=>typeof item==='string'?item:`import { ${[...modules.get(item.module)].map(([local,imported])=>imported===local?local:imported+' as '+local).join(', ')} } from ${JSON.stringify(item.module)};`);
+}
+
 function relocate(value, offset) {
   if (Array.isArray(value)) return value.map(item => relocate(item, offset));
   if (!value || typeof value !== 'object') return value;
@@ -173,7 +195,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   } while (changed);
   for (const item of items) { delete item.surface; delete item.supportTypes; }
   const executable = items.filter(item => item.status === 'executable');
-  const preludes = [...new Set(executable.flatMap(item => emissions.get(item.name).preludes))];
+  const preludes = mergePreludeImports([...new Set(executable.flatMap(item => emissions.get(item.name).preludes))]);
   const definitions = [...new Set(executable.flatMap(item => emissions.get(item.name).definitions))];
   const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
