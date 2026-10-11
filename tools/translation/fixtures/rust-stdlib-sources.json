@@ -53,6 +53,10 @@
     {
       "url": "https://doc.rust-lang.org/std/iter/trait.Iterator.html",
       "observation": "Iterator map and filter are lazy; take(0) does not advance the source; any and all stop as soon as the result is established; fold consumes in order."
+    },
+    {
+      "url": "https://doc.rust-lang.org/std/ops/struct.RangeInclusive.html",
+      "observation": "Inclusive integer ranges yield both endpoints, are empty when start exceeds end and can include the maximum integer without stepping past it."
     }
   ],
   "verification": "Node/Bun executable fixture outcomes and strict TypeScript checks; no local Rust compilation. Expected Rust outcomes follow these documented contracts and independently authored literals."

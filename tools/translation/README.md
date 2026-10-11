@@ -53,9 +53,11 @@ assignment, compound arithmetic, while/loop, unlabelled break/continue, statemen
 if/else and early returns. Slice indexing validates usize bounds and preserves
 out-of-bounds aborts. Unit functions return null. Lazy scalar slice iterators support map/filter/take,
 collect/count/sum/fold and short-circuit any/all with contextually checked scalar
-closures. For loops preserve enclosing returns and loop controls. Iterator
-locals, move captures, aggregate borrowing and ranges remain carried until
-ownership and range contracts exist. Slice inputs require dense own data
+closures. For loops preserve enclosing returns and loop controls. Bounded primitive integer ranges support exclusive and inclusive endpoints,
+including maximum inclusive endpoints without overflowing the iterator. Scalar
+array literals preserve order; repetition and fixed-length type contracts remain
+carried. Iterator locals, move captures and aggregate borrowing remain carried
+until ownership contracts exist. Slice inputs require dense own data
 elements; user accessors and iteration overrides do not supply Rust values.
 Value expressions containing
 nonlocal exits remain refused to prevent IIFE control-flow errors.

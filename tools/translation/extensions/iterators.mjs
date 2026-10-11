@@ -13,6 +13,15 @@ const span = (start, end) => ({ start: start.start, end: end.end });
 const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
 
 export class IteratorRustParser extends DataRustParser {
+  expr(path, options = {}) {
+    const start = super.expr(path, options);
+    const c = this.cursor;
+    if (!c.is('..') && !c.is('..=')) return start;
+    const inclusive = c.next().value === '..=';
+    const end = super.expr(path, options);
+    return { k: 'routerRange', start, end, inclusive, span: { start: start.span.start, end: end.span.end } };
+  }
+
   forStatement(path) {
     const c = this.cursor;
     const start = c.expect('for', 'iteration');
@@ -98,6 +107,11 @@ export class IteratorChecker extends DataChecker {
   expr(node, env, path, expected, allowLiteral = false) {
     env = this.contextEnvironment(node, env, expected);
     if (node.k === 'let' && this.expr(node.value, env, path, node.type ? this.resolveType(node.type, path, node.span) : undefined).type.kind === 'routerIterator') throw unsupported('stored iterator', 'consumption and escaping captures need an ownership contract', node.span);
+    if (node.k === 'routerRange') {
+      const [start, end] = this.operands(node.start, node.end, env, path, node.span);
+      if (start.type.kind !== 'fixed') throw unsupported('range domain', 'only bounded primitive integer ranges are lowered', node.span);
+      return { k: 'routerRange', start, end, inclusive: node.inclusive, type: { kind: 'routerIterator', element: start.type }, span: node.span };
+    }
     if (node.k === 'routerFor') {
       let object = this.expr(node.object, env, path);
       if (object.type.kind === 'array') object = this.expr({ k: 'routerIteratorOperation', op: 'iter', object: node.object, args: [], span: node.span }, env, path);
@@ -158,6 +172,7 @@ export class IteratorChecker extends DataChecker {
 }
 
 const HELPERS = {
+  range: 'function* ml_router_range(start, end, inclusive) { for (let value = start; value < end || inclusive && value === end;) { yield value; if (value === end) return; value += 1n; } }',
   iter: 'function ml_router_iter(values) { return Array.prototype.values.call(values); }',
   map: 'function* ml_router_map(values, transform) { for (const value of values) yield transform(value); }',
   filter: 'function* ml_router_filter(values, predicate) { for (const value of values) if (predicate(value)) yield value; }',
@@ -184,6 +199,7 @@ export class IteratorEmitter extends DataEmitter {
     return super.statements(node, unit);
   }
   expr(node) {
+    if (node.k === 'routerRange') { this.iteratorHelpers.add('range'); return `ml_router_range(${this.expr(node.start)}, ${this.expr(node.end)}, ${node.inclusive})`; }
     if (node.k === 'routerFor') return `(() => {\n${this.statements(node).join('\n')}\n})()`;
     if (node.k === 'routerLambda') {
       const params = [];

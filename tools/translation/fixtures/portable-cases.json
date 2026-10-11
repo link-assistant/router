@@ -1089,5 +1089,69 @@
         ]
       }
     ]
+  },
+  {
+    "name": "integer range endpoints include maximum without overflow or descending iterations",
+    "source": "pub fn total(start: i8, end: i8) -> i64 { let mut total: i64 = 0; for value in start..end { total += value as i64; } total } pub fn inclusive(start: u8, end: u8) -> usize { let mut n: usize = 0; for value in start..=end { n += 1; } n }",
+    "calls": [
+      {
+        "name": "total",
+        "args": [
+          "-2n",
+          "3n"
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "total",
+        "args": [
+          "3n",
+          "-2n"
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "inclusive",
+        "args": [
+          "254n",
+          "255n"
+        ],
+        "expected": "2n"
+      },
+      {
+        "name": "inclusive",
+        "args": [
+          "255n",
+          "255n"
+        ],
+        "expected": "1n"
+      },
+      {
+        "name": "inclusive",
+        "args": [
+          "2n",
+          "1n"
+        ],
+        "expected": "0n"
+      }
+    ]
+  },
+  {
+    "name": "scalar array literals preserve ordering indexing and iteration",
+    "source": "pub fn total() -> u8 { let values = [1u8, 2, 3]; values.iter().sum::<u8>() } pub fn first(v: u8) -> u8 { [v, 1u8][0] }",
+    "calls": [
+      {
+        "name": "total",
+        "args": [],
+        "expected": "6n"
+      },
+      {
+        "name": "first",
+        "args": [
+          "9n"
+        ],
+        "expected": "9n"
+      }
+    ]
   }
 ]

@@ -89,6 +89,16 @@ export class StringRustParser extends RustParser {
   primary(path, options) {
     const c = this.cursor;
     const first = c.peek();
+    if (c.eat('[')) {
+      const items = [];
+      while (!c.is(']')) {
+        items.push({ value: this.expr(path), spread: false });
+        if (c.is(';')) throw unsupported('array repetition', 'allocation counts require a bounded allocation contract', { start: first.start, end: c.peek().end });
+        if (!c.eat(',')) break;
+      }
+      c.expect(']', 'array literal');
+      return { k: 'array', items, span: { start: first.start, end: c.peek().start } };
+    }
     if (c.is('String') && c.is('::', 1) && c.is('new', 2) && c.is('(', 3) && c.is(')', 4)) {
       for (let at = 0; at < 5; at++) c.next();
       return { k: 'str', value: '', span: { start: first.start, end: c.peek().start } };
