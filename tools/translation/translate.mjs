@@ -268,9 +268,10 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_host_option_bind: ['{ $: string; field0?: any }','(...values: any[]) => any','string'],
     ml_host_bool_then:['boolean','() => T'],
     ml_host_result_ok:["Readonly<{ $: 'Ok'; field0: T }> | Readonly<{ $: 'Err'; field0: unknown }>"],
+    ml_host_option_map_or:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'U','(value: T) => U'],
     ml_host_option_map:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'(value: T) => U'],
   };
-  const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
+  const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U',ml_host_option_map_or:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
@@ -285,6 +286,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type, dataTypes) : helper?.[index] ?? 'any'}` });
       index++;
     }
+    if(name==='ml_host_option_map_or'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': U'});}
     const standardResult={ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'U'}[name];
     if(standardResult){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${standardResult}}>`});}
     if (returnTypes.has(name)) {

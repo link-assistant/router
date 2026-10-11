@@ -1,0 +1,3 @@
+Translate canonical standard Option.map_or through a checked typed plan and semantic IR. Evaluate the receiver and eager default in source order, then invoke the checked callback once only for Some; emit the same behavior in JavaScript and strict TypeScript. Require actual Option provenance, one checked result type with preserved Rust primitive identity, matching output ownership evidence, and ordinary non-const eligibility.
+
+Add independent boundary, panic and injected filesystem-effect fixtures. Data result types with conflated generic keys, erased Box identity, named lifetime binders and unproved borrow origins remain unsupported; this bounded operation alone does not establish whole-function coverage for the native Gemini parser or full Router parity.
