@@ -63,7 +63,7 @@ test('nested actual standard Option and Result layouts bind borrowed tuple scala
 });
 
 test('tuple binding retains existing typed Option propagation and early function exit',async()=>{
-  const {result}=compiled('pub fn propagated(value:Option<(&str,&str)>)->Option<&str>{let (left,_)=value?;Some(left)}');
+  const {result}=compiled("pub fn propagated(value:Option<(&'static str,&'static str)>)->Option<&'static str>{let (left,_)=value?;Some(left)}");
   for(const api of await artifacts(result)) {
     assert.deepEqual(api.propagated(some(tuple('Ω','ignored'))),some('Ω'));
     assert.deepEqual(api.propagated(none),none);
@@ -89,6 +89,7 @@ test('ordinary tuple destructuring checks immutable and actual product domains b
 
 test('source tuple patterns refuse forged ABI fields, refutable lets and unresolved ownership',()=>{
   for(const source of [
+    'fn bad(value:Option<(&str,&str)>)->Option<&str>{let (left,_)=value?;Some(left)}',
     'struct Pair(u8,bool); fn bad(value:Pair)->u8{let (n,_)=value;n}',
     'struct Pair{field0:u8,field1:bool} fn bad(value:Pair)->u8{let (n,_)=value;n}',
     'fn bad(value:(bool,u8))->u8{let (true,n)=value;n}',
