@@ -61,3 +61,16 @@ test('disabled login, unsupported providers, unknown code and malformed drivers 
   await assert.rejects(manager.begin({provider:'unknown'}),error=>error.status===400);await assert.rejects(manager.begin(),/pending authorization URL/);
   await assert.rejects(manager.submitCode('unknown','code'),error=>error.status===404);assert.equal(await manager.cancel('unknown'),false);
 });
+
+test('promotion fence rejects cancellation after the destination commit has begun',async t=> {
+  const {core}=await fixture(t),manager=new NativeLoginManager(core,{loginFactories:{claude:writeDriver},validateCatalog:async()=>['fixture']});t.after(()=>manager.dispose());
+  const session=await manager.begin(),original=manager.active.bind(manager);let checks=0,attempt;
+  manager.active=current=> {
+    original(current);
+    if (++checks===2) queueMicrotask(()=>{attempt=manager.cancel(current.id);attempt.catch(()=>{});});
+  };
+  const result=await manager.submitCode(session.login_id,'code');assert.equal(result.status,'authorized');
+  await assert.rejects(attempt,error=>error.status===409 && error.code==='login_promotion_in_progress');
+  assert.equal((await manager.status(session.login_id)).status,'authorized');
+  assert.equal((await new CredentialFileStore({provider:'claude',home:core.config.claude_code_home,dataDir:core.config.data_dir}).reload()).token.refresh_token,'owned-refresh');
+});

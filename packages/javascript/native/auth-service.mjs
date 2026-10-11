@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import * as oauthPrimitives from './oauth.mjs';
+import {CodexLogin} from './codex-login.mjs';
 
 const {CredentialFileStore,OAuthManager,ClaudeLogin,importCredential,validateCredentialCatalog} = oauthPrimitives;
 const fail = (code,message,status = 400) => Object.assign(new Error(message),{code,status});
@@ -81,7 +82,7 @@ export class NativeLoginManager {
     await this.sweep();
     if ([...this.sessions.values()].filter(session=>pending.has(session.status)).length >= this.maxSessions) throw fail('too_many_sessions',`too many pending logins (limit ${this.maxSessions}); cancel one first`,429);
     const factory = this.factories[provider] ?? (provider === 'claude' ? async options=>ClaudeLogin.begin(options)
-      : provider === 'codex' && oauthPrimitives.CodexLogin ? async options=>oauthPrimitives.CodexLogin.begin(options) : null);
+      : provider === 'codex' ? async options=>CodexLogin.begin(options) : null);
     if (!factory) throw fail('native_unsupported',`${provider} native login driver is unavailable`,501);
     const id = randomUUID(),stage = join(this.core.config.data_dir,'native-login-sessions',id),home = join(stage,provider);
     const session = {id,provider,stage,home,status:provider === 'claude' ? 'awaiting_code' : 'awaiting_device',expires:this.clock()+this.ttlSeconds,controller:new AbortController(),inFlight:false};
@@ -91,7 +92,7 @@ export class NativeLoginManager {
     try {
       const fetch = (url,options = {})=>this.fetch(url,{...options,signal:options.signal ? AbortSignal.any([options.signal,session.controller.signal]) : session.controller.signal});
       const manager = new OAuthManager({fetch,clock:this.clock,...this.oauth});
-      session.driver = await factory({provider,home,manager,clock:this.clock,signal:session.controller.signal,mode:body.mode,flow:body.flow,...this.oauth});
+      session.driver = await factory({provider,home,manager,clock:this.clock,signal:session.controller.signal,mode:body.mode,flow:body.flow,dataDir:this.core.config.data_dir,validateCatalog:this.validateCatalog,...this.oauth});
       if (this.sessions.get(id) !== session || session.controller.signal.aborted) throw fail('login_cancelled','login session cancelled',409);
       session.url = typeof session.driver.authorizationURL === 'function' ? session.driver.authorizationURL() : session.driver.url;
       session.userCode = session.driver.userCode ?? session.driver.user_code;
