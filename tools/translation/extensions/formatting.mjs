@@ -41,7 +41,7 @@ export class FormatRustParser extends TupleRustParser {
   }
   expressionMacro(token,path) {
     if(token.value!=='format')return super.expressionMacro(token,path);
-    const c=this.cursor,closing={'(':')','[':']','{':'}'}[c.peek().value];
+    const c=this.cursor,closing=c.peek().kind==='punct'?{'(':')','[':']','{':'}'}[c.peek().value]:null;
     if(!closing)throw this.fail('expected format macro delimiter');c.next();
     if(c.peek().kind!=='string')throw unsupported('format template syntax','requires a direct source string literal; expansion and grouped expressions remain unproven',c.peek());
     const template=this.expr(path);if(template.k!=='str')throw unsupported('format template','requires an actual string literal',template.span);

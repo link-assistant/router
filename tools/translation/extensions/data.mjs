@@ -1,6 +1,6 @@
 // Module-local algebraic layouts and immutable records. External crates and
 // derive-generated behavior remain explicit frontend refusals.
-import { FormatRustParser, FormatChecker, FormatEmitter } from './formatting.mjs';
+import { TextRustParser, TextChecker, TextEmitter } from './text.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { coerce } from '../vendor/meta-language/translation/check.js';
@@ -10,7 +10,7 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const metadata = attributes => ({ rustAttributes: attributes, deriveTraits: attributes.flatMap(attribute => attribute.kind === 'derive' ? attribute.traits : []) });
-export class DataRustParser extends FormatRustParser {
+export class DataRustParser extends TextRustParser {
   fieldType() {
     const c = this.cursor, start = c.index, type = this.type();
     return { type, rustTypeSyntax: c.tokens.slice(start, c.index).map(token => token.raw ?? token.value) };
@@ -172,7 +172,7 @@ export class DataRustParser extends FormatRustParser {
   }
 }
 
-export class DataChecker extends FormatChecker {
+export class DataChecker extends TextChecker {
   program(surface) {
     this.generatedConstructorHeads = new WeakSet();
     const visit = items => { for (const item of items) {
@@ -237,7 +237,7 @@ export class DataChecker extends FormatChecker {
   }
 }
 
-export class DataEmitter extends FormatEmitter {
+export class DataEmitter extends TextEmitter {
   ctorObject(entry, ctor, args) {
     if (!entry.record && ctor.ctorStyle !== 'named') return super.ctorObject(entry, ctor, args);
     return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${ctor.fields.map((field, index) => `, [${JSON.stringify(field.name)}]: ${args[index]}`).join('')} })`;

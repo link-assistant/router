@@ -1,14 +1,16 @@
 import { rustTokens } from '../rust-structure.mjs';
 import { tokenize } from '../vendor/meta-language/translation/lexer.js';
 import { TranslationError } from '../vendor/meta-language/translation/diagnostics.js';
+import {decodeRustCharacter} from './rust-character.mjs';
 
 // Normalize raw strings and Rust's ASCII whitespace line continuations into
 // the upstream string token vocabulary. Every token is mapped back to source
 // coordinates; original text remains exclusively in the structural meta IR.
 export function tokenizeRust(source) {
-  const replacements = [];
+  const replacements = [],characters=new Map();
   for (const token of rustTokens(source)) {
     if (token.type !== 'string') continue;
+    if(token.text.startsWith("'")){const value=decodeRustCharacter(token.text,{start:token.start,end:token.end});characters.set(token.start,{value,raw:token.text,end:token.end});replacements.push({start:token.start,end:token.end,text:'"\\u{'+value.codePointAt(0).toString(16)+'}"'});continue;}
     const raw = /^r(#{0,})"([\s\S]*)"\1$/u.exec(token.text);
     let replacement;
     if (raw) {
@@ -57,5 +59,8 @@ export function tokenizeRust(source) {
   }
   // Preserve source qualification, including const fn. Eligibility is checked
   // by the semantic frontend rather than erased during lexical normalization.
-  return parsed.tokens.map(token => ({ ...token, start: starts[token.start] ?? source.length, end: ends[token.end - 1] ?? source.length }));
+  return parsed.tokens.map(token => {
+    const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start);
+    return character&&character.end===end?{...token,kind:'rustChar',value:character.value,raw:character.raw,start,end}:{...token,start,end};
+  });
 }
