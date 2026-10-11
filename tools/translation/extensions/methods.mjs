@@ -20,7 +20,8 @@ export class MethodChecker extends EffectChecker {
   methodCall(entry,object,args,env,path,expected,span) {
     // Feed the original surface arguments into normal checking, preserving
     // receiver-first argument order without evaluating the receiver twice.
-    return super.application({k:'name',path:['crate',...entry.fullName.split('.')]},object?[object,...args]:args,env,path,expected,span);
+    const receiver=object&&entry.impl.receiver==='shared'?{k:'routerSharedMethodReceiver',method:entry.fullName,object,span:object.span??span}:object;
+    return super.application({k:'name',path:['crate',...entry.fullName.split('.')]},receiver?[receiver,...args]:args,env,path,expected,span);
   }
   application(head,args,env,path,expected,span) {
     if(head.k === 'name' && head.path.length > 1) {
@@ -32,6 +33,14 @@ export class MethodChecker extends EffectChecker {
   }
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='routerSharedMethodReceiver') {
+      const entry=this.items.get(node.method),source=entry?.impl?.sharedReceiverSource,parameter=entry?.params?.[0]?.type;
+      if(entry?.generated!=='router-checked-inherent-method'||entry.impl.receiver!=='shared'||source?.kind!=='shared'||source.tokens?.map(token=>token.value).join('')!=='&self'||parameter?.rustReference?.kind!=='shared'||parameter.rustReference.pointee?.kind!=='data')throw unsupported('inherent receiver autoborrow','requires the actual checked shared source receiver and nominal pointee',node.span);
+      const object=this.expr(node.object,env,path),pointee=parameter.rustReference.pointee,target=this.resolveType(entry.impl.type,entry.modulePath,node.span);
+      if(target.kind!=='data'||pointee.name!==target.name||object.type.kind!=='data'||object.type.name!==target.name)throw typeError('shared inherent receiver has a different actual nominal pointee',node.span);
+      if(object.type.rustReference&&(object.type.rustReference.kind!=='shared'||object.type.rustReference.pointee?.kind!=='data'||object.type.rustReference.pointee.name!==target.name||object.type.rustReference.pointee.rustReference))throw unsupported('inherent receiver autodereference','requires a separately checked nested reference coercion',node.span);
+      return {k:'routerSharedMethodReceiver',object,type:parameter,receiverProof:{kind:object.type.rustReference?'existing-shared-receiver':'inherent-shared-autoborrow',method:entry.fullName,pointee:target,source:structuredClone(source)},span:node.span};
+    }
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if (node.k === 'routerDispatchMethod' && node.object.k === 'routerDispatchMethod' && node.object.fallback?.k === 'routerStringView') {
         const subject = this.expr(node.object.object,env,path);

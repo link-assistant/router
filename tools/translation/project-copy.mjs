@@ -26,8 +26,8 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
     return {...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)};
   }));
-  return (qualifiedType,module,span)=>{
-    let type;try{type=checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}
+  const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
+  const certify=(type,span)=>{
     const owners=new Set(),seen=new Set();
     const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(declaration.file);for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
     const relevant=modules.filter(candidate=>owners.has(candidate.file)||[...owners].some(file=>{const owner=modules.find(candidate=>candidate.file===file);return candidate.path.every((name,index)=>owner.path[index]===name);}));
@@ -36,4 +36,11 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     const certificate=certifyCopyType(type,{declarations:checked,implementations,nominalTypes,macroProvenance:provenance,span});
     return certificate;
   };
+  const evidence=(qualifiedType,module,span)=>{const type=resolve(qualifiedType,module,span);return type?certify(type,span):null;};
+  evidence.fieldCertificates=(qualifiedType,module,span)=>{
+    const type=resolve(qualifiedType,module,span),entry=type?.kind==='data'?checked.get(type.name):null;
+    if(!entry)return [];
+    return entry.ctors.flatMap(ctor=>ctor.fields.map(field=>({ctor:ctor.name,field:field.name,copyCertificate:certify(field.type,span)}))).filter(field=>field.copyCertificate.verified);
+  };
+  return evidence;
 }

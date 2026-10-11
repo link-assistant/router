@@ -147,7 +147,7 @@ function lowerMethodTokens(method,typePath,mode,certificate=null) {
     const width=mode === 'copy' ? 1 : 2;
     if (mode === 'copy' ? tokens[open+1]?.value !== 'self' || ![',',')'].includes(tokens[open+2]?.value) : tokens[open+1]?.value !== '&' || tokens[open+2]?.value !== 'self') throw new TranslationError('syntax','receiver tokens differ from extracted signature',method.receiverSpan ?? method.span);
     const origin={start:tokens[open+1].start,end:tokens[open+width].end};
-    const explicit=[{kind:'identifier',value:freshName,raw:freshName,...origin,generated:true},{kind:'punct',value:':',raw:':',...origin,generated:true},...typeTokens(origin)];
+    const explicit=[{kind:'identifier',value:freshName,raw:freshName,...origin,generated:true},{kind:'punct',value:':',raw:':',...origin,generated:true},...(mode==='copy'?[]:[{...tokens[open+1]}]),...typeTokens(origin)];
     tokens.splice(open+1,width,...explicit);rewrites.push({kind:mode === 'copy' ? 'copy-receiver' : 'shared-receiver',span:origin,name:freshName,typePath:[...typePath],...(certificate ? {certificate:certificate.digest} : {})});
   }
   tokens=tokens.flatMap((token,index)=>{
@@ -156,8 +156,9 @@ function lowerMethodTokens(method,typePath,mode,certificate=null) {
     if (token.value === 'self' && tokens[index+1]?.value !== '::') return [{...token,value:freshName,raw:freshName,generated:true}];
     return [token];
   });
-  return {tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],
-    assumptions:mode === 'copy' ? certificate.obligations : ['Shared receivers pass immutable checked values; mutation, consuming receivers, trait dispatch and unsafe operations remain frontend refusals until their own semantics are checked.']};
+  const sharedReceiverSource=method.receiver==='shared'?{kind:'shared',span:{...method.receiverSpan},tokens:method.signatureTokens.filter(token=>token.start>=method.receiverSpan.start&&token.end<=method.receiverSpan.end).map(token=>({kind:token.type,value:token.text,span:{start:token.start,end:token.end}}))}:null;
+  return {tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],...(sharedReceiverSource?{sharedReceiverSource}:{}),
+    assumptions:mode === 'copy' ? certificate.obligations : ['Shared receiver syntax and pointee identity remain checked; scalar field reads require Copy evidence, and ownership, mutation, consuming receivers, trait dispatch and unsafe operations retain their own frontend obligations.']};
 }
 
 const frozen=value=>{if(value && typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;};
@@ -170,6 +171,11 @@ const checkedKey=type=>{
   if(type.kind==='data' && typeof type.name==='string' && type.name.length)return typeKey(type);
   return null;
 };
+export function validCopyCertificate(certificate,type) {
+  if(!certificate||certificate.version!==1||certificate.profile!=='checked-rust-copy-layout-v1'||!certificate.verified||certificate.diagnostics?.length||!checkedKey(type)||checkedKey(certificate.type)!==checkedKey(type))return false;
+  const {digest,...evidence}=certificate;
+  return typeof digest==='string'&&createHash('sha256').update(JSON.stringify(evidence)).digest('hex')===digest;
+}
 const ownershipSyntax=/^(?:Box|Vec|String|Arc|Rc|Cell|RefCell|UnsafeCell|Mutex|RwLock|Pin|ManuallyDrop|MaybeUninit)$/u;
 
 /**

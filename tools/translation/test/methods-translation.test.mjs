@@ -5,6 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {translateProject} from '../project.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateSource} from '../translate.mjs';
 import {trackedSource} from '../bulk.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
@@ -70,7 +71,7 @@ test('module-local Option instantiations with equal type spellings retain distin
 test('actual tracked production methods retain independent constructor and ref-update behavior',async()=>{
   const root=fileURLToPath(new URL('../../../',import.meta.url));
   const checked=async source=>{
-    const result=translateProject({entry:source,paths:[source],readSource:path=>trackedSource(root,path)});
+    const result=translateProject({entry:source,paths:[source],readSource:path=>trackedSource(root,path),compilationProfile:PRODUCTION_PROFILE});
     const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
     const methods=[...program.declarations.values()].filter(entry=>entry.impl);
     const exports=methods.map(entry=>`[${JSON.stringify(entry.impl.method)}]: ${entry.name}`).join(',');

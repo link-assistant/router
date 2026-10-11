@@ -4,12 +4,17 @@ import { TextRustParser, TextChecker, TextEmitter } from './text.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { coerce } from '../vendor/meta-language/translation/check.js';
-import { data } from '../vendor/meta-language/translation/types.js';
+import { data, rustFixedType } from '../vendor/meta-language/translation/types.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
+import {validCopyCertificate} from '../impl-resolver.mjs';
 
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const metadata = attributes => ({ rustAttributes: attributes, deriveTraits: attributes.flatMap(attribute => attribute.kind === 'derive' ? attribute.traits : []) });
+export const SHARED_FIXED_OPERATOR_PROFILE=Object.freeze({id:'rust-1.89-fixed-ref-binop',rust:'1.89.0',operators:Object.freeze(['plus','add','sub','mul','div','rem']),sources:Object.freeze([
+  Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/ops/arith.rs',sha256:'3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b',lines:Object.freeze([94,113,218,222,348,352,487,589])}),
+  Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/internal_macros.rs',sha256:'d6037f57c6077f9323e3f5c8c4dea7b6d796e1d73a4c40b262211909932796a9',lines:Object.freeze([21,60])}),
+])});
 export class DataRustParser extends TextRustParser {
   fieldType() {
     const c = this.cursor, start = c.index, type = this.type();
@@ -173,6 +178,64 @@ export class DataRustParser extends TextRustParser {
 }
 
 export class DataChecker extends TextChecker {
+  resolveType(type,path,span) {
+    const resolved=super.resolveType(type,path,span);
+    return {...resolved,...(type?.rustSharedFieldCopies?{rustSharedFieldCopies:type.rustSharedFieldCopies}:{}),...(type?.rustSharedReceiverSource?{rustSharedReceiverSource:type.rustSharedReceiverSource}:{})};
+  }
+
+  sharedAggregatePointee(type,span) {
+    if(!type.rustReference)return null;
+    const reference=type.rustReference,pointee=reference.pointee;
+    if(reference.kind!=='shared'||type.kind!=='data'||pointee?.kind!=='data'||pointee.name!==type.name||pointee.rustReference)throw unsupported('shared aggregate projection','requires one actual checked shared nominal pointee',span);
+    return pointee;
+  }
+
+  sharedFieldType(type,receiver,span) {
+    const result={...type,rustSourceType:true,patternOwnershipRefusal:'shared field place',rustReference:{kind:'shared',pointee:structuredClone(type),span:{...span},source:'shared-field-projection',sourceReceiverSpan:receiver.rustReference.span}};
+    if(type.rustOwnership?.kind==='owned')result.rustOwnership={kind:'borrowed',source:type.rustOwnership.source};
+    delete result.rustBorrowLifetime;
+    return result;
+  }
+
+  sharedFieldCopy(field,ctor,pointee,span) {
+    const type=field.type,syntax=field.rustTypeSyntax;
+    if(type.rustGenericIdentityUnresolved||!Array.isArray(syntax)||!syntax.length)return null;
+    if(type.rustReference?.kind==='shared'&&type.rustReference.pointee)return {kind:'source-shared-reference-copy',type:structuredClone(type)};
+    if(type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'&&syntax[0]==='&')return {kind:'source-borrowed-str-copy',type:structuredClone(type)};
+    const primitive=type.kind==='fixed'?rustFixedType(type.rustPrimitiveName):null;
+    if(primitive&&primitive.bits===type.bits&&primitive.signed===type.signed&&!type.patternOwnershipRefusal&&!type.rustOwnership)return {kind:'source-fixed-copy',primitive:type.rustPrimitiveName};
+    if(type.kind==='bool'&&syntax.length===1&&syntax[0]==='bool'||type.kind==='unit'&&syntax.join('')==='()'||type.kind==='float'&&syntax.length===1&&syntax[0]==='f64')return {kind:'source-scalar-copy',syntax:[...syntax]};
+    const evidence=pointee.rustSharedFieldCopies?.find(value=>value.ctor===ctor.name&&value.field===field.name);
+    if(evidence) {
+      if(!validCopyCertificate(evidence.copyCertificate,type))throw unsupported('shared field Copy certificate','requires matching verified layout evidence and an intact certificate',span);
+      return {kind:'source-layout-copy',copyCertificate:evidence.copyCertificate};
+    }
+    return null;
+  }
+
+  pattern(pattern,type,env,path,span) {
+    const checked=super.pattern(pattern,type,env,path,span),pointee=type.kind==='data'?this.sharedAggregatePointee(type,span):null;
+    if(!pointee||checked.k!=='ctor')return checked;
+    const entry=this.items.get(pointee.name),ctor=entry.ctors.find(ctor=>ctor.name===checked.ctor),bindings=[];
+    for(const [index,name]of checked.binds.entries())if(name) {
+      const field=ctor.fields[index],borrowed=this.sharedFieldType(field.type,type,span);
+      env.set(name,borrowed);bindings.push({name,field:field.name,type:borrowed});
+    }
+    return {...checked,sharedBindingProof:{kind:'shared-match-ergonomics',pointee,bindings,span}};
+  }
+
+  binary(node,env,path,expected,allowLiteral) {
+    if(this.language!=='Rust'||!['plus','add','sub','mul','div','rem'].includes(node.op))return super.binary(node,env,path,expected,allowLiteral);
+    const forwarded=surface=>{
+      const value=this.expr(surface,env,path,undefined,true),type=value.type;
+      if(type.kind!=='fixed'||!type.rustReference)return surface;
+      const reference=type.rustReference,pointee=reference.pointee,primitive=rustFixedType(type.rustPrimitiveName);
+      if(reference.kind!=='shared'||!primitive||pointee?.kind!=='fixed'||pointee.rustReference||pointee.patternOwnershipRefusal||pointee.rustGenericIdentityUnresolved||type.bits!==primitive.bits||type.signed!==primitive.signed||pointee.bits!==type.bits||pointee.signed!==type.signed||pointee.rustPrimitiveName!==type.rustPrimitiveName)throw unsupported('shared fixed operator forwarding','requires one actual standard fixed-integer reference and its Copy pointee',surface.span);
+      return {k:'routerPrimitiveDereference',value:surface,sourceFeature:'standard-fixed-operator-autoderef',operatorForwardingProof:{profile:SHARED_FIXED_OPERATOR_PROFILE.id,operator:node.op,primitive:type.rustPrimitiveName},span:surface.span};
+    };
+    return super.binary({...node,left:forwarded(node.left),right:forwarded(node.right)},env,path,expected,allowLiteral);
+  }
+
   program(surface) {
     this.generatedConstructorHeads = new WeakSet();
     const visit = items => { for (const item of items) {
@@ -231,7 +294,8 @@ export class DataChecker extends TextChecker {
       if (!entry?.record || entry.ctors.length !== 1) throw unsupported('field receiver', 'only known immutable struct fields have a resolved layout', node.span);
       const field = entry.ctors[0].fields.find(field => field.name === node.field);
       if (!field) throw typeError(`unknown field ${node.field} of ${entry.name}`, node.span);
-      return { k: 'routerField', object, field: field.name, type: field.type, span: node.span };
+      const pointee=this.sharedAggregatePointee(object.type,node.span),copy=pointee?this.sharedFieldCopy(field,entry.ctors[0],pointee,node.span):null;
+      return { k: 'routerField', object, field: field.name, type:pointee&&!copy?this.sharedFieldType(field.type,object.type,node.span):field.type,...(pointee?{sharedProjectionProof:{kind:copy?'copy-field-read':'borrowed-field-place',pointee,field:field.name,...(copy?{copy}:{}),span:node.span}}:{}),span: node.span };
     }
     return super.expr(node, env, path, expected, allowLiteral);
   }
@@ -244,6 +308,7 @@ export class DataEmitter extends TextEmitter {
   }
 
   expr(node) {
+    if(node.k==='routerSharedMethodReceiver')return this.expr(node.object);
     if (node.k === 'routerField') return `(${this.expr(node.object)}).${node.field}`;
     return super.expr(node);
   }
