@@ -1,0 +1,1 @@
+Verified the source-only reusable bulk translator in a separate tracked repository with local module globs and reexports, including independently executed JavaScript and strict-compiled TypeScript for per-file and whole-project outputs.
