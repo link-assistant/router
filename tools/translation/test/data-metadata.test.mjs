@@ -59,11 +59,12 @@ test('checked field metadata retains ownership syntax that portable type resolut
   const checked=checkProgram(parseRust(source));
   assert.deepEqual(checked.declarations.get('Plain').ctors[0].fields[0].rustTypeSyntax,['u8']);
   const owned=checked.declarations.get('Owned').ctors[0].fields[0];
-  assert.deepEqual(owned.type,{kind:'fixed',bits:8,signed:false});
+  assert.deepEqual(owned.type,{kind:'fixed',bits:8,signed:false,patternOwnershipRefusal:'ownership-bearing Box type'});
   assert.deepEqual(owned.rustTypeSyntax,['Box','<','u8','>']);
   assert.deepEqual(checked.declarations.get('Choice').ctors[0].fields[0].rustTypeSyntax,['Box','<','u16','>']);
   const reparsed=parseProgram(serializeProgram(checked));
   assert.deepEqual(reparsed.declarations.get('Owned').ctors[0].fields[0].rustTypeSyntax,owned.rustTypeSyntax);
+  assert.deepEqual(reparsed.declarations.get('Owned').ctors[0].fields[0].type,owned.type);
 });
 
 test('Default layout does not manufacture a default function or other derived trait behavior',async()=>{
