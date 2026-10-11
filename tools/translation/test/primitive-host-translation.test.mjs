@@ -23,7 +23,7 @@ async function artifacts(result,operation){
 const none=Object.freeze({$:'None'}),some=value=>Object.freeze({$:'Some',field0:value});
 const error=kind=>({$:'Err',field0:{$:'ParseIntError',kind:{$:kind}}});
 
-test('fixed parse and checked standard callbacks execute in unchanged JavaScript and strict compiled TypeScript', async()=>{
+test('fixed parse and checked standard callbacks execute in unchanged JavaScript and strict compiled TypeScript', {timeout:30_000}, async()=>{
   const result=project('pub fn parse(source:&str)->Result<u64,std::num::ParseIntError>{source.parse::<u64>()} pub fn signed(source:&str)->Result<i8,std::num::ParseIntError>{source.parse::<i8>()} pub fn inferred(source:&str)->Result<u16,std::num::ParseIntError>{source.parse()} pub fn ok(source:&str)->Option<u64>{source.parse::<u64>().ok()} pub fn map(value:Option<u8>)->Option<u16>{value.map(|v|v as u16)} pub fn lazy(flag:bool)->Option<u8>{flag.then(||panic!("called"))} pub fn kind(source:&str)->std::num::IntErrorKind{match source.parse::<u8>() {Ok(_) => std::num::IntErrorKind::Empty,Err(error) => error.kind()}}');
   await artifacts(result,api=>{
     for(const [input,expected] of [['23',{$:'Ok',field0:23n}],['+23',{$:'Ok',field0:23n}],['18446744073709551615',{$:'Ok',field0:18446744073709551615n}],['18446744073709551616',error('PosOverflow')],['-1',error('InvalidDigit')],['23x',error('InvalidDigit')],['',error('Empty')]])assert.deepEqual(api.parse(input),expected);
@@ -34,7 +34,7 @@ test('fixed parse and checked standard callbacks execute in unchanged JavaScript
   });
 });
 
-test('associated integer parsing keeps actual trait scope, radix panic and constructor owners', async()=>{
+test('associated integer parsing keeps actual trait scope, radix panic and constructor owners', {timeout:30_000}, async()=>{
   await artifacts(project('use std::str::FromStr; pub fn decimal(source:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(source)} pub fn radix(source:&str,base:u32)->Result<u8,std::num::ParseIntError>{u8::from_str_radix(source,base)}'),api=>{
     assert.deepEqual(api.decimal('255'),{$:'Ok',field0:255n});assert.deepEqual(api.radix('ff',16n),{$:'Ok',field0:255n});assert.deepEqual(api.radix('100',16n),error('PosOverflow'));assert.throws(()=>api.radix('1',1n),RangeError);
   });
@@ -49,7 +49,7 @@ test('associated integer parsing keeps actual trait scope, radix panic and const
   ])assert.equal(project(source).meta.executable.some(entry=>entry.name==='invented'),false,source);
 });
 
-test('original timeout helpers retain Rust Unicode whitespace and exact u64 parsing behavior', async()=>{
+test('original timeout helpers retain Rust Unicode whitespace and exact u64 parsing behavior', {timeout:30_000}, async()=>{
   const provenance=JSON.parse(readFileSync(new URL('../fixtures/real-source-provenance.json',import.meta.url))),entry=provenance.entries.find(item=>item.id==='timeout-parser');
   const original=readFileSync(new URL('../../../'+entry.path,import.meta.url),'utf8');
   const result=project(entry.declarations.map(declaration=>original.slice(declaration.start,declaration.end)).join('\n'));
@@ -60,7 +60,7 @@ test('original timeout helpers retain Rust Unicode whitespace and exact u64 pars
   });
 });
 
-test('original const limiter constructor retains derives and match body while saturation remains exact', async()=>{
+test('original const limiter constructor retains derives and match body while saturation remains exact', {timeout:30_000}, async()=>{
   const original=readFileSync(new URL('../../../src/output_limit.rs',import.meta.url),'utf8'),items=sourceItems(original);
   const declarations=items.filter(item=>['CHARS_PER_TOKEN','OutputTokenLimiter'].includes(item.name)&&['const','struct'].includes(item.term)).map(item=>original.slice(item.start,item.end));
   const methods=extractImplDeclarations(original).implementations.find(entry=>entry.typePath.join('.')==='OutputTokenLimiter').methods.filter(method=>['new','enabled','stopped'].includes(method.name));
@@ -74,7 +74,7 @@ test('original const limiter constructor retains derives and match body while sa
   });
 });
 
-test('const legality and infallible primitive conversions require source capabilities',async()=>{
+test('const legality and infallible primitive conversions require source capabilities',{timeout:30_000},async()=>{
   await artifacts(project('pub fn widen(value:u8)->u64{u64::from(value)} pub fn text(value:&str)->String{String::from(value)} pub const fn add(left:u8,right:u8)->u8{left.saturating_add(right)}'),api=>{assert.equal(api.widen(255n),255n);assert.equal(api.text('text'),'text');assert.equal(api.add(250n,9n),255n);});
   for(const source of [
     'pub const fn invented(value:&str)->String{String::from(value)}',

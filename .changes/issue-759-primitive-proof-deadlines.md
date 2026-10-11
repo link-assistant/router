@@ -1,0 +1,1 @@
+Give source-derived integer, timeout and limiter artifact proofs an explicit 30-second observation bound. Each case still requires unchanged emitted JavaScript, strict compiled TypeScript, literal behavior assertions and domain guards; this avoids Bun's default five-second cancellation of a competing TypeScript compiler job.
