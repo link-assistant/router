@@ -9,7 +9,9 @@ const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],
 test('non-const repeated operands evaluate once including zero in emitted JS and strict TS',{timeout:30_000},async()=>{
   const result=project('fn seed()->u8{let checked=std::fs::read_to_string("seed").is_ok();7} pub fn repeated()->[u8;3]{[seed();3]} pub fn zero()->[u8;0]{[seed();0]}');
   assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,(api,_result,{withEffectCapabilities})=>{
+  // Expose each target's actual copied runtime for this effect observation.
+  const runtime='\nexport {withEffectCapabilities} from "../runtime/effects.mjs";\n';
+  await verifyTypedTargets({...result,javascript:result.javascript+runtime,typescript:result.typescript+runtime},(api,_result,{withEffectCapabilities})=>{
     let calls=0;
     const capabilities={fs:{sync:{readFileSync(path){assert.equal(path,'seed');calls++;return new Uint8Array();}}}};
     assert.deepEqual(withEffectCapabilities(capabilities,()=>api.repeated()),[7n,7n,7n]);assert.equal(calls,1);
