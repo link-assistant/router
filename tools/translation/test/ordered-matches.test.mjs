@@ -56,3 +56,14 @@ test('guard-only coverage unproved macro owners primitive identities and control
     'pub const fn bad(v:Option<u8>)->bool{matches!(v,Some(_))}',
   ]){const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);}
 });
+
+
+test('guarded matches returning sized arrays preserve snapshots in both targets',{timeout:30_000},async()=>{
+  await both('fn pair(n:u8)->[u8;2]{[n,9]} pub fn choose(v:Option<u8>)->[u8;2]{match v{Some(n) if n>2=>pair(n),Some(n)=>[n,1],None=>[0,0]}}',api=>{
+    for(const [input,expected]of [[some(5n),[5n,9n]],[some(2n),[2n,1n]],[none,[0n,0n]]]) {
+      const output=api.choose(input);assert.deepEqual(output,expected);assert.equal(output.length,2);assert.ok(Object.isFrozen(output));
+      assert.throws(()=>{output[0]=255n;},TypeError);assert.deepEqual(api.choose(input),expected);
+    }
+    assert.throws(()=>api.choose(some(256n)),/outside|range|domain/i);
+  });
+});
