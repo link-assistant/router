@@ -116,6 +116,12 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
+  if(['routerStringSplit','routerStringSplitNext','routerAllocatingStringItem'].includes(node.k)){
+    if(node.csvStringProof?.profile!=='rust-1.89-literal-char-split-string-items'||node.csvStringProof.verified!==true)throw unsupported('CSV string borrow origin','requires its actual checked standard source profile',node.span);
+    const value=read(node.object);
+    if(node.k==='routerStringSplit')return uniformOrigins(node.type.element,at(value,[]),context);
+    return node.k==='routerStringSplitNext'&&borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
+  }
   if(['routerStringLines','routerStringWords','routerStringNext','routerStringJoin'].includes(node.k)) {
     if(node.stringIteratorProof?.profile!=='rust-1.89-borrowed-string-iterators'||node.stringIteratorProof.verified!==true)throw unsupported('string iterator borrow origin','requires its checked standard operation proof',node.span);
     if(node.k==='routerStringWords'&&(node.whitespaceIteratorProfile?.id!=='rust-1.89-split-whitespace-v1'||node.whitespaceIteratorProfile.sourceInputsVerified!==true))throw unsupported('whitespace iterator borrow origin','requires its original checked standard source profile',node.span);

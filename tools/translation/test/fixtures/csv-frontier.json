@@ -1,0 +1,54 @@
+{
+  "kind": "historical-complete-project-frontier",
+  "sourceHead": "d66268f68a2be984b321ebddc180b779d7dadebf",
+  "archiveSHA256": "b22fb401924b834adf328b6711ff035677e00fafb506afb5ddce26120ed5062e",
+  "scope": "canonical src/lib project; historical first refusals only, not new draft admission",
+  "records": [
+    {
+      "file": "src/config.rs",
+      "name": "config.parse_csv",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method split: outside the portable core",
+      "span": {
+        "start": 1201952,
+        "end": 1201973
+      }
+    },
+    {
+      "file": "src/storage/associative.rs",
+      "name": "storage.associative.split_repository_list",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "method split: outside the portable core",
+      "span": {
+        "start": 2965998,
+        "end": 2966019
+      }
+    },
+    {
+      "file": "src/stream_termination.rs",
+      "name": "stream_termination.ml_impl_63726174652e73747265616d5f7465726d696e6174696f6e2e53747265616d4469616c656374_66726f6d5f70617468",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method split: outside the portable core",
+      "span": {
+        "start": 3012261,
+        "end": 3012273
+      }
+    },
+    {
+      "file": "src/log_decode.rs",
+      "name": "log_decode.ml_impl_63726174652e6c6f675f6465636f64652e456e636f64696e67_7061727365",
+      "term": "method",
+      "kind": "unsupported",
+      "message": "method split: outside the portable core",
+      "span": {
+        "start": 1877988,
+        "end": 1878013
+      }
+    }
+  ],
+  "draftStatus": "unrun",
+  "runtimeParity": false
+}
