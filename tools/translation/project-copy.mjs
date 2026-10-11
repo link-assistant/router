@@ -3,7 +3,7 @@
 import {HostChecker,hostData} from './extensions/host-contracts.mjs';
 import {extractImplDeclarations,certifyCopyType} from './impl-resolver.mjs';
 import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
-import {nominalTypeIdentities,resolveNominalImplTarget} from './project-nominal.mjs';
+import {nominalTypeIdentities,resolveNominalImplTarget,implementationTargetPath} from './project-nominal.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 
 function tree(declarations){const items=[];for(const entry of declarations){let owner=items;for(const name of entry.path){let module=owner.find(item=>item.k==='module'&&item.name===name);if(!module){module={k:'module',name,items:[]};owner.push(module);}owner=module.items;}owner.push(entry.surface);}return items;}
@@ -20,7 +20,8 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   const nominalTypes=nominalTypeIdentities([...scopes.values()]);
   const implementations=modules.flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.map(implementation=>{
     const binding=aliases.get(module.file)?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
-    const path=binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath;
+    const actualTarget=implementationTargetPath(implementation,module);
+    const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
     return {...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)};
   }));

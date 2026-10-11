@@ -5,24 +5,28 @@ const nominalKinds=new Set(['struct','enum','union']);
 const descendants=(path,ancestor)=>ancestor.every((name,index)=>path[index]===name);
 const visible=(binding,path)=>binding.visibility?.kind==='public'||binding.visibility?.kind==='restricted'&&descendants(path,binding.visibility.path);
 export function nominalTypeIdentities(scopes){
-  const result=new Map();
+  const result=new Map(),ambiguous=new Set();
   for(const scope of scopes)for(const binding of scope.bindings){
     if(binding.namespace!=='type'||binding.status!=='resolved'||!nominalKinds.has(binding.kind)||binding.via!=='declaration'||!binding.target)continue;
     const identity={family:[...binding.target],kind:binding.kind,source:binding.source,span:binding.span};
+    if(ambiguous.has(key(identity.family)))continue;
     const previous=result.get(key(identity.family));
-    if(previous&&JSON.stringify(previous)!==JSON.stringify(identity)){result.delete(key(identity.family));continue;}
+    if(previous&&JSON.stringify(previous)!==JSON.stringify(identity)){result.delete(key(identity.family));ambiguous.add(key(identity.family));continue;}
     result.set(key(identity.family),identity);
   }
   return result;
 }
-function targetSegments(implementation,module){
+export function implementationTargetPath(implementation,module){
   const item=module.items.find(item=>item.term==='impl'&&item.start===implementation.span.start);
   if(!item)return null;
   const tokens=item.tokens.filter(token=>token.type!=='comment'),begin=tokens.findIndex(token=>token.text==='impl');
   if(begin<0)return null;
-  let at=begin+1,depth=0;
+  let at=begin+1,depth=0;const typeBinders=new Set();
   if(tokens[at]?.text==='<'){
-    for(;at<tokens.length;at++){if(tokens[at].text==='<')depth++;if(tokens[at].text==='>')depth--;if(tokens[at].text==='>>')depth-=2;if(depth===0){at++;break;}if(depth<0)return null;}
+    let parameterStart=true;
+    for(;at<tokens.length;at++){
+      if(depth===1&&parameterStart){if(tokens[at].type==='ident'&&tokens[at].text!=='const')typeBinders.add(tokens[at].text);parameterStart=false;}
+      if(depth===1&&tokens[at].text===',')parameterStart=true;if(tokens[at].text==='<')depth++;if(tokens[at].text==='>')depth--;if(tokens[at].text==='>>')depth-=2;if(depth===0){at++;break;}if(depth<0)return null;}
     if(depth!==0)return null;
   }
   let from=at,end=at;
@@ -40,7 +44,7 @@ function targetSegments(implementation,module){
     if(target[at]?.text==='::'){at++;continue;}
     break;
   }
-  if(!segments.length)return null;
+  if(!segments.length||typeBinders.has(segments[0]))return null;
   if(at<target.length){
     if(target[at]?.text!=='<')return null;
     depth=0;for(;at<target.length;at++){const token=target[at];if(token.text==='<')depth++;if(token.text==='>')depth--;if(token.text==='>>')depth-=2;if(depth===0){at++;break;}if(depth<0)return null;}
@@ -49,7 +53,7 @@ function targetSegments(implementation,module){
   return segments;
 }
 export function resolveNominalImplTarget(implementation,module,scopes,identities=nominalTypeIdentities(scopes)){
-  const segments=targetSegments(implementation,module);if(!segments)return null;
+  const segments=implementationTargetPath(implementation,module);if(!segments)return null;
   const lookup=new Map(scopes.map(scope=>[key(['crate',...scope.path]),scope]));
   let owner=lookup.get(key(['crate',...module.path])),at=0;
   if(segments[0]==='crate'){owner=lookup.get(key(['crate']));at++;}
