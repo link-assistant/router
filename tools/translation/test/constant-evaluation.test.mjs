@@ -88,6 +88,16 @@ test('actual pinned Duration constructor descriptors evaluate normalization and 
   assert.equal(run([duration,root],'ROOT',{contracts:forged}).status,'unsupported');
 });
 
+test('pinned Duration::from_millis keeps exact u64 normalization without scaling overflow',()=>{
+  const duration={...TIME_DATA[0].items[0].items[0],fullName:'std.time.Duration'},contracts=new Map(TIME_CONTRACTS.map(contract=>[contract.id,contract]));
+  for(const [input,secs,nanos] of [['0','0','0'],['25','0','25000000'],['50','0','50000000'],['20','0','20000000'],['1000','1','0'],['2569','2','569000000'],['18446744073709551615','18446744073709551','615000000']]) {
+    const root=entry('ROOT',{k:'routerHostCall',id:'std_time_duration_from_millis',args:[lit(input,U64)],type:DURATION},`const ROOT:Duration=Duration::from_millis(${input});`);
+    const result=run([duration,root],'ROOT',{contracts});assert.equal(result.status,'value');assert.equal(result.value.secs.$integer,secs);assert.equal(result.value.nanos.$integer,nanos);
+    assert.equal(result.proof.sourceLinksVerified,false);assert.equal(result.proof.trace.at(-1).id,'std_time_duration_from_millis');
+    const wrong=new Map(contracts),contract=wrong.get('std_time_duration_from_millis');wrong.set(contract.id,{...contract,constEligible:false});assert.equal(run([duration,root],'ROOT',{contracts:wrong}).status,'unsupported');
+  }
+});
+
 test('only exact value-preserving fixed casts are admitted; shifts stay unsupported',()=>{
   const U16=fixed(16),cast={k:'cast',arg:lit(255),from:U8,to:U16,type:U16,flavor:'exact'};
   assert.equal(scalar(cast,'const ROOT:u16=255u8 as u16;').value.$integer,'255');

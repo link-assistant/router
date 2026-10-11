@@ -85,7 +85,10 @@ function verifyParserTokens(parser) {
   // tokens. No other replacement, insertion, deletion or field change is
   // permitted by this source association, even after parser construction.
   const actual=copyMetadata(ownData(ownData(parser,'cursor'),'tokens'));let index=0;
-  const equal=(left,right)=>left&&metadataDigest(left)===metadataDigest(right);
+  // copyMetadata already validates descriptors, scalar domains and budgets.
+  // Token snapshots contain scalar fields only: compare those exact fields
+  // directly rather than serializing and hashing every token repeatedly.
+  const equal=(left,right)=>left&&Object.keys(left).length===Object.keys(right).length&&Object.keys(right).every(key=>Object.hasOwn(left,key)&&left[key]===right[key]);
   for(const expected of origin.tokens) {
     const token=actual[index++];
     if(equal(token,expected))continue;
@@ -106,11 +109,13 @@ function originalItems(source,path=[],offset=0) {
   }
   return result;
 }
-function indexedItems(source) {
-  let items=itemCache.get(source);if(items)return items;
-  items=originalItems(source);
-  if(source.length<=262144){while(itemCache.size>=16||cachedCharacters+source.length>1048576){const key=itemCache.keys().next().value;cachedCharacters-=key.length;itemCache.delete(key);}itemCache.set(source,items);cachedCharacters+=source.length;}
-  return items;
+function originalContext(source) {
+  let context=itemCache.get(source);if(context)return context;
+  // The key is the complete immutable string, not a caller-owned checksum or
+  // mutable source object. A changed byte necessarily creates another context.
+  context=freeze({items:originalItems(source),sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source)});
+  if(source.length<=262144){while(itemCache.size>=16||cachedCharacters+source.length>1048576){const key=itemCache.keys().next().value;cachedCharacters-=key.length;itemCache.delete(key);}itemCache.set(source,context);cachedCharacters+=source.length;}
+  return context;
 }
 // Relocation changes coordinates, not source semantics. Raw certificates are
 // immutable evidence and never executable target-relative span containers.
@@ -129,11 +134,11 @@ function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,
   const record=parsed.get(parser)?.find(record=>record.entry===entry||record.body&&record.body===entry.body);
   if(['fn','data'].includes(entry.k)&&!record)return false;
   if(record&&record.syntaxSha256!==metadataDigest(parsedSyntax(entry)))fail('parser syntax changed before original source linking');
-  const items=indexedItems(source),item=itemSpan?items.find(item=>item.start===itemSpan.start&&item.end===itemSpan.end):items.find(item=>item.name===entry.name&&item.path.join('.')===path.join('.')&&(!record||item.start<=record.start&&record.end<=item.end));
+  const context=originalContext(source),items=context.items,item=itemSpan?items.find(item=>item.start===itemSpan.start&&item.end===itemSpan.end):items.find(item=>item.name===entry.name&&item.path.join('.')===path.join('.')&&(!record||item.start<=record.start&&record.end<=item.end));
   if(!item||!['fn','const','struct','enum'].includes(item.term))return false;
   const bodySpan=record?.bodySpan?{start:record.bodySpan.start+offset,end:record.bodySpan.end+offset}:{start:item.start,end:item.end};
   if(bodySpan.start<item.start||bodySpan.end>item.end)return false;
-  const evidence={schemaVersion:1,sourcePath,sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source),declarationSpan:{start:item.start,end:item.end},declarationSha256:hash(source.slice(item.start,item.end)),bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:0,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)};
+  const evidence={schemaVersion:1,sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:{start:item.start,end:item.end},declarationSha256:hash(source.slice(item.start,item.end)),bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:0,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)};
   linked.set(semantic,freeze(evidence));return true;
 }
 // Project parsing uses declaration-local tokens but links to the full original
@@ -158,7 +163,8 @@ export function relocateSourceLink(entry,semantic,{source,sourcePath,itemSpan,of
   if(evidence.parsedSurfaceSha256!==metadataDigest(entry)||hash(source.slice(itemSpan.start,itemSpan.end))!==evidence.declarationSha256)fail('original declaration differs from parsed source');
   const shift=itemSpan.start-evidence.declarationSpan.start;
   verifyRelocatedSyntax(entry,semantic,shift+offset);
-  linked.set(semantic,freeze({...copyMetadata(evidence),sourcePath,sourceBytes:Buffer.byteLength(source),sourceSha256:hash(source),declarationSpan:copyMetadata(itemSpan),bodySpan:{start:evidence.bodySpan.start+shift,end:evidence.bodySpan.end+shift},checkedSpan:copyMetadata(semantic.span),sourceOffset:offset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)}));
+  const context=originalContext(source);
+  linked.set(semantic,freeze({...copyMetadata(evidence),sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:copyMetadata(itemSpan),bodySpan:{start:evidence.bodySpan.start+shift,end:evidence.bodySpan.end+shift},checkedSpan:copyMetadata(semantic.span),sourceOffset:offset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)}));
   return true;
 }
 export function linkedSourceContext(surface) {

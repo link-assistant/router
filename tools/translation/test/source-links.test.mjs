@@ -86,6 +86,29 @@ test('original STACK_BYTES and MAX_RETRY_AFTER receive independently pinned sour
     await both(result,pin.assert);
   }
 });
+test('three unchanged polling constants use pinned const Duration::from_millis',{timeout:60000},async()=>{
+  for(const pin of [
+    {path:'src/codex_loopback_bridge.rs',name:'POLL_INTERVAL',sourceSha:'6e93120f6cebbce644471086d38f2b1443eb2e0d8e7d25fdae23f7e9123c4b9e',span:[1558,1616],declarationSha:'ff3f1926098891ff576a03be741995ad34e963da1900667d81db063b0035acca',bodySha:'8721112d525e1e6c8f10115701f2caa5993537cd1095213a918ab485978c568d',nanos:25000000n},
+    {path:'src/login_pty.rs',name:'POLL_INTERVAL',sourceSha:'ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22',span:[1991,2049],declarationSha:'029a611a5d2eed5caf9a66114e45d465bba6bc8d61c0034f3370ad750c96044f',bodySha:'1d54ee699ce08f5572f1e35f770f92de0ca974308cff0babbb48c111c47ca5f5',nanos:50000000n},
+    {path:'src/durable_file.rs',name:'LOCK_POLL_INTERVAL',sourceSha:'970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0',span:[13448,13533],declarationSha:'2a432a643307b6540395ad3ffe7b52bf091fe32b359f3d62735d5d725060ac0d',bodySha:'9a4f0e5f1fda452e1e25755fc85437ae882627728e16b632159c370dd49c1198',nanos:20000000n},
+  ]) {
+    const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha);
+    const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});
+    const entry=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get(pin.name);assert.ok(entry,JSON.stringify(result.meta.refused));
+    const proof=entry.constantEvaluationProof,link=proof.resolution.find(entry=>entry.name===pin.name).source;
+    assert.equal(proof.sourceLinksVerified,true);assert.equal(link.sourceSha256,pin.sourceSha);assert.deepEqual(link.declarationSpan,{start:pin.span[0],end:pin.span[1]});assert.equal(link.declarationSha256,pin.declarationSha);assert.equal(link.bodySha256,pin.bodySha);
+    assert.ok(proof.trace.some(entry=>entry.kind==='host'&&entry.id==='std_time_duration_from_millis'));
+    await both(result,api=>assert.deepEqual(api[pin.name],{$:'Duration',secs:0n,nanos:pin.nanos}));
+  }
+});
+test('immutable source context reuse still observes changed bytes and mutable scope evidence',()=>{
+  const scope={tag:'first'},source='const VALUE:u8=1u8;fn main(){}';
+  const capture=text=>{const parser=new HostRustParser(tokenizeRust(text)),surface=parser.file();linkParsedFile(parser,surface,text,{scope});return checkProgram(surface).declarations.get('VALUE').constantEvaluationProof.resolution[0].source;};
+  const first=capture(source);scope.tag='second';const second=capture(source),changed=capture(source.replace('1u8','2u8'));
+  assert.equal(first.sourceSha256,second.sourceSha256);assert.notEqual(first.sourceScopeSha256,second.sourceScopeSha256);assert.equal(second.sourceSha256,hash(source));assert.equal(changed.sourceSha256,hash(source.replace('1u8','2u8')));assert.notEqual(second.bodySha256,changed.bodySha256);
+  let reads=0;const parser=new HostRustParser(tokenizeRust(source));Object.defineProperty(parser.cursor.tokens[0],'hidden',{get(){reads++;return 'secret';}});
+  assert.throws(()=>parser.file(),/accessor|hidden metadata/);assert.equal(reads,0);
+});
 test('metadata normalization invokes no getters, proxy traps or overridden Map methods',()=>{
   let reads=0;const hidden={};Object.defineProperty(hidden,'secret',{get(){reads++;return 'secret';}});assert.throws(()=>copyMetadata(hidden),/hidden metadata|accessor/);
   const proxy=new Proxy({}, {ownKeys(){reads++;return [];},getPrototypeOf(){reads++;return Object.prototype;}});assert.throws(()=>copyMetadata(proxy),/acyclic data/);

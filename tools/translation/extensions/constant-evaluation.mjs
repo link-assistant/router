@@ -11,7 +11,7 @@ export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVers
   timeSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/time.rs',
   timeSha256:'66088e332e93cdda1517f313b63eacc673d5a5042ba2a734ee2b31c707ee2173'});
 const DEFAULT_LIMITS=Object.freeze({steps:100000,callDepth:32,nodeDepth:128,valueCells:16000,serializedBytes:262144,sourceBytes:1048576,normalizationCells:65536,normalizationBytes:1048576});
-const TIME_OPERATIONS=new Map([['std_time_duration_from_secs','from_secs'],['std_time_duration_new','new']]);
+const TIME_OPERATIONS=new Map([['std_time_duration_from_secs','from_secs'],['std_time_duration_new','new'],['std_time_duration_from_millis','from_millis']]);
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 class Refusal extends Error {
   constructor(status,reason,node){super(reason);this.status=status;this.span=node?.span;}
@@ -278,7 +278,10 @@ class Evaluator {
   }
   time(node,args) {
     const {contract,operation}=this.timeContract(node);if(args.length!==contract.params.length||args.some((arg,index)=>!sameType(arg.type,contract.params[index])))refuse('constant Duration constructor argument identity mismatch',node);
-    const nanos=operation==='new'?args[1].value:0n,secs=args[0].value+nanos/1000000000n;
+    // Rust 1.89 core/time.rs:244 divides before scaling, so u64::MAX
+    // milliseconds is representable without an overflowing u64 intermediate.
+    const nanos=operation==='new'?args[1].value:operation==='from_millis'?args[0].value%1000n*1000000n:0n;
+    const secs=(operation==='from_millis'?args[0].value/1000n:args[0].value)+nanos/1000000000n;
     this.exactInteger(secs,contract.params[0],node,true);
     this.trace.push({kind:'host',id:node.id,sourceSha256:CONSTANT_EVALUATION_PROFILE.timeSha256,span:node.span});
     return this.cell(node.type,frozen({$:'Duration',secs,nanos:nanos%1000000000n}),node);
