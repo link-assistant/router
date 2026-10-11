@@ -29,18 +29,21 @@ export const JSON_DATA=freeze([
 ]);
 const assumptions=[
   'Registered overloads instantiate serde_json::Value only; arbitrary Deserialize/Serialize derives require separately checked layouts.',
-  'The pinned default feature profile has no preserve_order, arbitrary_precision or float_roundtrip; a different profile requires another capability.',
+  'The Map/Number layout profile has no preserve_order or arbitrary_precision; float_roundtrip is a separate numeric-decoder capability.',
   'Value is an immutable checked recursive algebraic value, not an untyped JavaScript object; mutable borrows remain frontend obligations.',
   'Numbers preserve i64/u64 BigInt and finite binary64 independently; invalid typed values abort rather than being coerced to JSON null.',
-  'Default decimal decoding follows the pinned source u64 accumulator and rounded binary64 scaling, including truncated overflowing fractional digits.',
   'Object keys follow Rust UTF-8 byte order, duplicate input keys retain their last value, and JSON strings contain Unicode scalar values.',
   'Rust differential execution remains gated on the full JavaScript checks; source-derived numeric and syntax fixtures do not establish whole-program parity.',
+];
+const parserAssumptions=[...assumptions,
+  'The registered decoder implements not(float_roundtrip): u64 accumulation, rounded binary64 scaling and truncated overflowing fractional digits.',
+  'Actual Cargo parser admission requires a private matching feature context; float_roundtrip lexical parsing and unknown profiles remain unimplemented.',
 ];
 const contract=(id,rustPath,params,ret,extra={})=>({id,jsExport:id,rustPath:rustPath.split('::'),async:false,params,ret,assumptions,...extra});
 const method=(id,owner,method,args,ret,extra={})=>contract(`serde_json_${id}`,`serde_json::${owner}::${method}`,[owner === 'Value'?VALUE:owner === 'Number'?NUMBER:owner === 'Error'?ERROR:MAP,...args],ret,{kind:'method',receiver:owner === 'Value'?VALUE:owner === 'Number'?NUMBER:owner === 'Error'?ERROR:MAP,...extra});
 export const JSON_CONTRACTS=freeze([
-  contract('serde_json_from_str','serde_json::from_str',[SOURCE_STR],result(VALUE),{kind:'function',instantiation:VALUE,rustSignature:'from_str::<Value>(&str) -> Result<Value, Error>'}),
-  contract('serde_json_from_slice','serde_json::from_slice',[BORROWED_BYTES],result(VALUE),{kind:'function',instantiation:VALUE,rustSignature:'from_slice::<Value>(&[u8]) -> Result<Value, Error>'}),
+  contract('serde_json_from_str','serde_json::from_str',[SOURCE_STR],result(VALUE),{kind:'function',instantiation:VALUE,rustSignature:'from_str::<Value>(&str) -> Result<Value, Error>',assumptions:parserAssumptions}),
+  contract('serde_json_from_slice','serde_json::from_slice',[BORROWED_BYTES],result(VALUE),{kind:'function',instantiation:VALUE,rustSignature:'from_slice::<Value>(&[u8]) -> Result<Value, Error>',assumptions:parserAssumptions}),
   ...['to_string','to_string_pretty','to_vec','to_vec_pretty'].map(name=>contract(`serde_json_${name}`,`serde_json::${name}`,[VALUE],result(name.startsWith('to_vec')?BYTES:SOURCE_STRING),{kind:'function',instantiation:VALUE})),
   method('value_get_string','Value','get',[SOURCE_STR],option(SHARED_VALUE),{overload:'string'}),
   method('value_get_usize','Value','get',[USIZE],option(SHARED_VALUE),{overload:'usize'}),

@@ -9,6 +9,7 @@ import { TranslationError } from './vendor/meta-language/translation/diagnostics
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
 import {relocateSourceLink} from './extensions/source-links.mjs';
+import {DEFAULT_JSON_PARSER_PROFILE,actualJsonCapabilityProfile} from './json-capabilities.mjs';
 
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
@@ -48,10 +49,11 @@ function relocate(value, offset) {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
-export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[] } = {}) {
+export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile } = {}) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
   const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
+  const jsonParserProfile=parserProfile??(matchingScopes.length?(sourceScope?.jsonParserProfile??actualJsonCapabilityProfile()):DEFAULT_JSON_PARSER_PROFILE);
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
   const emit = program => {
     const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] });
@@ -151,7 +153,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       const layout = item.surface;
       const constructors = layout.ctors.map(ctor => ({ k: 'fn', generated: 'router-data-constructor', name: `ml_make_${layout.name}_${ctor.name}`, params: ctor.fields.map((field, index) => ({ name: field.name ?? `field${index}`, type: field.type, span: layout.span })), ret: { kind: 'named', path: [layout.name] }, body: { k: 'app', fn: { k: 'name', path: [layout.name, ctor.name], span: layout.span }, args: ctor.fields.map((field, index) => ({ k: 'name', path: [field.name ?? `field${index}`], span: layout.span })), span: layout.span }, span: layout.span }));
       const support = [...new Map([layout, ...layoutClosure([layout]), ...item.supportTypes].map(type => [type.name, type])).values()];
-      const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...support, ...constructors], main: null }));
+      const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...support, ...constructors], main: null },{jsonParserProfile}));
       const emitted = emit(checked);
       item.status = 'executable';
       const own = checked.declarations.get(layout.name);
@@ -166,7 +168,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     try {
       const group = closure(item);
       const supportTypes = [...new Map([...group.flatMap(entry => entry.supportTypes), ...layoutClosure(group.map(entry => entry.surface))].map(type => [type.name, type])).values()];
-      const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...group.map(entry => entry.surface), ...supportTypes], main: null }));
+      const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...group.map(entry => entry.surface), ...supportTypes], main: null },{jsonParserProfile}));
       const emitted = emit(checked);
       item.status = 'executable';
       const own = checked.declarations.get(item.surface.name);
@@ -211,7 +213,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const executable = items.filter(item => item.status === 'executable');
   const preludes = mergePreludeImports([...new Set(executable.flatMap(item => emissions.get(item).preludes))]);
   const definitions = [...new Set(executable.flatMap(item => emissions.get(item).definitions))];
-  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, compilationProfile:sourceScope?.compilationProfile??null, configurationCondition:sourceScope?.configurationCondition??null, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'Concrete admitted constants require bounded checked evaluation with original parser source links; const fn runtime eligibility alone proves no all-input compile-time behavior', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
+  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, jsonParserProfile, compilationProfile:sourceScope?.compilationProfile??null, configurationCondition:sourceScope?.configurationCondition??null, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'Concrete admitted constants require bounded checked evaluation with original parser source links; const fn runtime eligibility alone proves no all-input compile-time behavior', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
   const body = [...preludes, ...definitions].join('\n\n');
   const entries = executable.map(item => item.name);

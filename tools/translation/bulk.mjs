@@ -8,6 +8,7 @@ import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
+import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
 export {trackedSource} from './source-corpus.mjs';
@@ -51,6 +52,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   // Standalone fixture roots without Cargo have no registered derive owner.
   // A real Cargo root must verify every consumed dependency input.
   const deriveProfile=deriveDependencyProfile({manifest:sourceCorpus?readSource('Cargo.toml'):existsSync(join(root,'Cargo.toml'))?readSource('Cargo.toml'):null,lock:sourceCorpus?readSource('Cargo.lock'):existsSync(join(root,'Cargo.lock'))?readSource('Cargo.lock'):null}),deriveDependencies=deriveProfile.proof;
+  const jsonParserProfile=actualJsonCapabilityProfile({manifest:sourceCorpus?readSource('Cargo.toml'):existsSync(join(root,'Cargo.toml'))?readSource('Cargo.toml'):null,lock:sourceCorpus?readSource('Cargo.lock'):existsSync(join(root,'Cargo.lock'))?readSource('Cargo.lock'):null,compilationProfile:profile});
   const paths = (corpusPaths??sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
   const expected = new Map();
   const assets = effectRuntimeAssets();
@@ -68,7 +70,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   const projects = [], projectDeclarations = [], projectSourceScopes=[];
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
-    const result = translateProject({ entry, paths, readSource,compilationProfile:profile,deriveDependencies });
+    const result = translateProject({ entry, paths, readSource,compilationProfile:profile,deriveDependencies,jsonParserProfile });
     result.meta.deriveDependencyProfile={available:!!deriveDependencies,digest:deriveDependencies?.digest??null,diagnostics:deriveProfile.diagnostics};
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
@@ -79,7 +81,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   for (const path of paths) {
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
     const source = readSource(path);
-    const result = translateSource(source, path, { projectDeclarations,projectSourceScopes });
+    const result = translateSource(source, path, { projectDeclarations,projectSourceScopes,jsonParserProfile });
     const stem = path.replace(/\.rs$/u, '');
     const targets = { meta: `${outputRoots[0]}/${stem}.meta.json`, javascript: `${outputRoots[1]}/${stem}.mjs`, typescript: `${outputRoots[2]}/${stem}.ts` };
     expected.set(targets.meta, json(result.ir));
@@ -118,6 +120,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   // not only descriptors containing their expected digests.
   implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-helper-paths.mjs','derive-builtin-default.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/extensions/slice-membership-runtime.d.mts');
+  implementation.push('tools/translation/json-capabilities.mjs');
+  implementation.push(...readdirSync(new URL('./source-profiles/json-capabilities/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/json-capabilities/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');

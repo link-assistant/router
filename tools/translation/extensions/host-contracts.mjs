@@ -34,6 +34,7 @@ import {configureParserSourceScope} from '../source-scopes.mjs';
 import {withSourceNamespaceParser} from './source-namespaces.mjs';
 import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSourceContext,bindCheckedSourceLinks} from './source-links.mjs';
 import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
+import {DEFAULT_JSON_PARSER_PROFILE,configureJsonCapabilities,assertJsonParserCapability} from '../json-capabilities.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -321,6 +322,7 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
     return this.resolveType(root(type),path,span);
   }
   hostCall(contracts,args,env,path,expected,range,instantiation) {
+    assertJsonParserCapability(this,contracts,range);
     const checked=[],errors=[];
     for(const contract of contracts) {
       if(contract.params.length!==args.length)continue;
@@ -616,5 +618,5 @@ export class HostEmitter extends EffectEmitter {
   }
 }
 export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
-export const checkProgram=surface=>new HostChecker(surface.language,surface.externals??[]).program(surface);
+export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});
