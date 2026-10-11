@@ -5,7 +5,7 @@ function qwenModels(document) {
   const providers=objectProperty(document,'modelProviders');providers.openai ??=[];
   if (!Array.isArray(providers.openai)) throw clientFailure('modelProviders.openai must be a JSON array');return providers.openai;
 }
-export async function setupClientJSON(paths,endpoint,catalog) {
+export async function setupClientJSON(paths,endpoint,catalog,{onWrite=async()=>{}}={}) {
   if (!['opencode','agent','qwen'].includes(paths.info.client)) throw clientFailure('Client does not use an OpenCode/Qwen JSON provider');
   if (!catalog.length) throw clientFailure('Router catalog contains no models from healthy subscriptions');
   const source=await optionalClientText(paths.config),document=clientObject(source);
@@ -31,9 +31,9 @@ export async function setupClientJSON(paths,endpoint,catalog) {
     marker=marker ?? {had_previous_provider:previous!==undefined,previous_provider:previous ?? null};
     Object.assign(marker,{managed_provider:managed,managed_model_ids:catalog.map(({id})=>id)});
   }
-  const result=await writeClientFile(paths.config,source,renderClientJSON(document));await writeClientMarker(paths.marker,marker);return result;
+  const result=await writeClientFile(paths.config,source,renderClientJSON(document));await onWrite(paths.config,result);await writeClientMarker(paths.marker,marker);await onWrite(paths.marker);return result;
 }
-export async function removeClientJSON(paths) {
+export async function removeClientJSON(paths,{onWrite=async()=>{}}={}) {
   const source=await optionalClientText(paths.config);if(source===null || !source.trim()) return {path:paths.config,backup:null,changed:false};
   const markerSource=await optionalClientText(paths.marker);if(markerSource===null || !markerSource.trim()) return {path:paths.config,backup:null,changed:false};
   const marker=clientObject(markerSource,'Ownership marker'),document=clientObject(source);let changed=false;
@@ -50,5 +50,5 @@ export async function removeClientJSON(paths) {
     }
   }
   const result=changed ? await writeClientFile(paths.config,source,renderClientJSON(document)) : {path:paths.config,backup:null,changed:false};
-  await removeClientFile(paths.marker);return result;
+  if(changed) await onWrite(paths.config);await removeClientFile(paths.marker);await onWrite(paths.marker);return result;
 }

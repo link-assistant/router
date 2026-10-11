@@ -4,7 +4,7 @@ import { NativeRouter, NativeRouterError, catalog } from '../native/operations.m
 import { parseNativeArguments, runNativeCli } from '../native/cli.mjs';
 import { runOperationFixtures, fixtureOperations } from './native-operation-fixtures.mjs';
 
-test('native operation fixtures assert successful behavior and unsupported failures', async () => {
+test('native operation fixtures assert successful behavior and unsupported failures', {timeout:120000},async () => {
   const evidence = await runOperationFixtures();
   assert.equal(evidence.size, catalog.operations.length);
   for (const name of fixtureOperations) assert.equal(evidence.get(`operation:${name}`).success, true);

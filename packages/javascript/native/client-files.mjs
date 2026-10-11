@@ -39,7 +39,7 @@ export async function optionalClientText(path) {
   if (!path) return null;
   try {return await readNativeText(path,{maxBytes:8*1024*1024});}catch(error) {if (error.code==='ENOENT') return null;throw clientFailure(`Could not read client configuration (${error.code ?? 'invalid file'})`);}
 }
-export async function preferredClientPath(canonical,legacy) {return await optionalClientText(canonical)!==null ? canonical : legacy;}
+export async function preferredClientPath(canonical,legacy) {return await optionalClientText(canonical)!==null || await optionalClientText(legacy)===null ? canonical : legacy;}
 export function clientObject(source,label='Client configuration') {
   if (source===null || !source.trim()) return {};
   let value;try {value=JSON.parse(source);}catch {throw clientFailure(`${label} contains invalid JSON`);}

@@ -35,7 +35,7 @@ export function parseNativeArguments(argv) {
     const equal = arg.indexOf('='), flag = arg.slice(2, equal < 0 ? undefined : equal);
     const option = flags.get(flag);
     if (!option) throw new Error(`Unknown ${operation.name} flag: --${flag}`);
-    if (option.secret) throw new Error(`--${flag} is secret; use the catalog environment variable or stdin transport`);
+    if (option.secret && !(operation.name.startsWith('logs.') && option.name==='token')) throw new Error(`--${flag} is secret; use the catalog environment variable or stdin transport`);
     let value;
     if (option.boolean) {
       if (equal < 0) value = true;

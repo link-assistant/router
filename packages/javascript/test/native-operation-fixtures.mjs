@@ -1,6 +1,6 @@
 /** Executable parity evidence. A fixture passes only after asserting observed behavior. */
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, mkdir, realpath, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, mkdir, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -10,7 +10,7 @@ export const fixtureOperations = Object.freeze([
   'auth.import', 'auth.claude', 'auth.codex', 'server.start', 'server.stop', 'server.status', 'server.use', 'server.claim', 'server.reap', 'server.remove',
   'version', 'contracts', 'logs.show', 'logs.summary', 'logs.anomalies', 'tls.ca', 'tls.generate', 'accounts.list', 'accounts.pause', 'accounts.resume', 'accounts.policy',
   'tokens.import', 'tokens.issue', 'tokens.list', 'tokens.show', 'tokens.revoke', 'tokens.expire', 'tokens.rotate', 'tokens.recover-admin',
-  'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status', 'clients.list','clients.show',
+  'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status', 'clients.list','clients.show','clients.setup','clients.remove',
 ]);
 export async function runOperationFixtures() {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'router-native-operation-fixtures-')));
@@ -90,11 +90,11 @@ export async function runOperationFixtures() {
     const requests = join(directory, 'requests', 'fixture'); await mkdir(requests, { recursive: true });
     const logPath = join(requests, 'requests.jsonl');
     await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 200 }) + '\n');
-    await record('logs.summary', {}, data => { assert.equal(data.exchanges, 1); assert.equal(data.records, 1); });
-    await record('logs.show', { correlationId: 'operation-log' }, data => { assert.equal(data.records[0].status, 200); });
-    await record('logs.anomalies', {}, data => { assert.deepEqual(data, []); });
+    await record('logs.summary', {token:'fixture'}, data => { assert.equal(data.exchanges, 1); assert.equal(data.records, 1); });
+    await record('logs.show', { correlationId: 'operation-log',token:'fixture' }, data => { assert.equal(data.records[0].status, 200); });
+    await record('logs.anomalies', {token:'fixture'}, data => { assert.deepEqual(data, []); });
     await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 429 }) + '\n');
-    const anomalies = await router.execute('logs.anomalies');
+    const anomalies = await router.execute('logs.anomalies',{token:'fixture'});
     assert.equal(anomalies.success, false); assert.equal(anomalies.exit_code, 1); assert.ok(anomalies.data.some(item => item.kind === 'rate_limited'));
     await record('tls.generate', { dns: 'native-fixture.local' }, data => { assert.ok(data.output[0].endsWith('/tls/cert.pem')); });
     await record('tls.ca', {}, data => { assert.ok(data.output.join('\n').includes('BEGIN CERTIFICATE')); });
@@ -139,6 +139,11 @@ export async function runOperationFixtures() {
     await record('server.remove', { yes: true }, async () => { assert.equal((await router.server.status()).data.managed.present, false); });
     await record('clients.list',{home:directory},rows=>{assert.equal(rows.length,8);assert.equal(rows.find(row=>row.client==='codex').ownership_state,'unconfigured');assert(rows.some(row=>row.client==='gemini' && row.unsupported));});
     await record('clients.show',{home:directory,client:'opencode'},row=>{assert.equal(row.client,'opencode');assert.equal(row.configured,false);assert.equal(row.config_path,join(directory,'.config/opencode/opencode.json'));});
+    const clientFetch=router.options.fetch;let clientTokenID;
+    router.options.fetch=async(url,options)=>{assert.equal(url,'https://client-fixture.invalid/api/models');assert.equal(options.headers['x-link-assistant-client'],'opencode');const core=await router.corePromise;const claims=await core.tokens.validate(options.headers.authorization.slice(7));assert.equal(claims.client_kind,'opencode');assert.equal(claims.principal_id,'primary');clientTokenID=claims.sub;return Response.json({data:[{id:'fixture-live-client-model',owned_by:'openai'}]});};
+    await record('clients.setup',{client:'opencode',home:directory,base_url:'https://client-fixture.invalid'},async data=>{assert(data.output.some(line=>line.startsWith('configured opencode')));const config=JSON.parse(await readFile(join(directory,'.config/opencode/opencode.json'),'utf8'));assert(Object.hasOwn(config.provider['link-assistant'].models,'fixture-live-client-model'));});
+    router.options.fetch=clientFetch;
+    await record('clients.remove',{client:'opencode',home:directory},async data=>{assert(data.output.some(line=>line.includes('Removed Router configuration')));assert.equal((await router.tokens.list({local:true})).data.find(record=>record.id===clientTokenID).revoked,true);});
     // Unsupported commands must fail closed with a complete versioned contract.
     for (const operation of catalog.operations.filter(operation => !fixtureOperations.includes(operation.name))) {
       const options = Object.fromEntries(operation.options.filter(option => option.required && !option.secret).map(option => [option.name, 'fixture']));

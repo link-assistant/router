@@ -10,6 +10,7 @@ import {nativeConfigOptions} from './config.mjs';
 import {parsePauseUntil} from './remote-operations.mjs';
 import {clientIntegrations} from './client-files.mjs';
 import {nativeClientStatus} from './client-status.mjs';
+import {setupNativeClient,removeNativeClient} from './client-setup.mjs';
 import { executeManagedOperation, supportedManagedOperations, selectedManagedTarget } from './managed-server.mjs';
 import { executeRemoteOperation, remoteStateFamilies } from './remote-operations.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -56,7 +57,7 @@ export const nativeOperationSupport = Object.freeze({
   'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
   'providers.list': 'partial', 'providers.show': 'partial', 'providers.add': 'partial', 'providers.remove': 'partial',
   'providers.import': 'partial', 'models.explain': 'partial', serve: 'partial', doctor: 'partial', 'auth.status': 'partial',
-  'clients.list':'partial','clients.show':'partial',
+  'clients.list':'partial','clients.show':'partial','clients.setup':'partial','clients.remove':'partial',
 });
 function normalizeOptions(operation, options) {
   const allowed = new Map(operation.options.map(option => [snake(option.name), option]));
@@ -65,7 +66,8 @@ function normalizeOptions(operation, options) {
     if (value === undefined || value === null) continue;
     const name = snake(key), option = allowed.get(name);
     if (!option) throw new NativeRouterError(`Unknown ${operation.name} option: ${key}`, { code: 'options' });
-    if (option.secret) throw new NativeRouterError(`${key} is secret; use invocation env or stdin`, { code: 'secret-argv' });
+    // logs --token-id selects a hashed directory, never a bearer credential.
+    if (option.secret && !(operation.name.startsWith('logs.') && name==='token')) throw new NativeRouterError(`${key} is secret; use invocation env or stdin`, { code: 'secret-argv' });
     if (option.boolean && typeof value !== 'boolean') throw new NativeRouterError(`${key} must be boolean`, { code: 'options' });
     normalized[name] = value;
   }
@@ -147,6 +149,10 @@ async function dispatch(router, name, options, invocation) {
     core = (await (await import('./core.mjs')).createOperationContext(baseCore,{configOverrides,env,cwd:invocation.cwd,signal:invocation.signal})).core;
   }
   if (invocation.signal?.aborted) throw new NativeRouterError('Operation cancelled',{code:'cancelled'});
+  if(['clients.setup','clients.remove'].includes(name)) {
+    localOnly(options,name==='clients.setup' ? ['client','token','token_stdin','base_url','management_server','ttl_hours'] : ['client','revoke_supplied','force']);
+    return (name==='clients.setup' ? setupNativeClient : removeNativeClient)({options,invocation,core,env,fetch:router.options.fetch});
+  }
   if (supportedManagedOperations[name]) return executeManagedOperation({ name, options, invocation, core, config: core.config, env, routerOptions: router.options });
   if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
     const accepted = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
