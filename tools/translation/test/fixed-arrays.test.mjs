@@ -107,7 +107,7 @@ test('runtime validation and monomorphic identities distinguish nested and zero 
   const u8={kind:'fixed',bits:8,signed:false},array=length=>({kind:'array',element:u8,rustFixedArray:{length},rustOwnership:{kind:'value',source:'array'}});
   assert.equal(sameType(array(2),array(3)),false);
   assert.notEqual(encodeMonomorphicType(array(0)),encodeMonomorphicType(array(2)));
-  const schema={schemaVersion:1,types:{Holder:{kind:'data',name:'Holder',ctors:[{name:'Holder',fields:[{name:'left',type:array(2)},{name:'right',type:array(3)}]}]}};
+  const schema={schemaVersion:1,types:{Holder:{kind:'data',name:'Holder',ctors:[{name:'Holder',fields:[{name:'left',type:array(2)},{name:'right',type:array(3)}]}]}}};
   const shared=[1n,2n];
   assert.throws(()=>validateRustValue({$:'Holder',left:shared,right:shared},{kind:'data',name:'Holder'},schema),/fixed-array length/);
   assert.equal(validateRustValue([],array(0),schema),true);
