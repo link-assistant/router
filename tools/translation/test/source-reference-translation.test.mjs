@@ -59,6 +59,12 @@ test('receiver and operand effects remain once each in original evaluation order
     assert.equal(result,7n);assert.deepEqual(calls,['receiver','operand']);
   });
 });
+test('runtime layout arguments omit compiler reference metadata while checked evidence retains it',{timeout:30_000},async()=>{
+  const source='pub fn reference(v:&Option<u8>)->&Option<u8>{v}',result=project(source);
+  assert.equal(result.javascript.includes('"rustReference"'),false);assert.equal(result.javascript.includes('"rustStandardGeneric"'),false);
+  assert.equal(checkProgram(parseRust(source+' fn main(){}')).declarations.get('reference').params[0].type.rustReference.pointee.kind,'data');
+  await both(result,api=>{for(const value of [Object.freeze({$:'None'}),Object.freeze({$:'Some',field0:9n})])assert.equal(api.reference(value),value);assert.throws(()=>api.reference(Object.freeze({$:'Some',field0:256n})),TypeError);});
+});
 test('dereference never grants value coercions aggregate Copy trait Deref or reference Ord semantics',()=>{
   for(const source of [
     'fn value(v:u64)->u64{v} pub fn bad(v:&u64)->u64{value(v)}',
@@ -80,6 +86,7 @@ test('dereference never grants value coercions aggregate Copy trait Deref or ref
     "pub fn bad<'a>(v:&'a u64)->u64{*v}",
     'pub fn bad(v:&u64)->u64{*(return 1)}',
     'struct u64{value:u8} pub fn bad(v:&u64)->u8{*v}',
+    `pub fn bad(v:${'&'.repeat(34)}u64)->u64{v}`,
   ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='bad'),false,source);assert.ok(result.meta.refused.some(entry=>entry.name==='bad'),source);}
   const fixed={kind:'fixed',bits:64,signed:false,rustPrimitiveName:'u64'},range={start:1,end:3};
   for(const type of [fixed,{...fixed,rustReference:{kind:'shared'}},{...fixed,rustReference:{kind:'mutable',pointee:fixed}},{...fixed,rustReference:{kind:'shared',pointee:{...fixed,rustGenericIdentityUnresolved:true}}},{...fixed,rustReference:{kind:'shared',pointee:{...fixed,rustPrimitiveName:'usize'}}}])assert.throws(()=>sharedFixedPointee(type,range),error=>error.kind==='unsupported'&&error.span.start===1);

@@ -25,6 +25,7 @@ import {configureParserSourceScope} from '../source-scopes.mjs';
 export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
+const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element)}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
 const nonlocalDefault=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonlocalDefault):nonlocalDefault(value))));
 const INHERENT_FIXED_COPY=new Set(['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul']);
 // Built-in shared primitive reads copy an immutable BigInt value. Trait Deref,
@@ -154,7 +155,10 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
       // Keep the existing borrowed-str value profile. Other references retain
       // their actual parsed pointee, including nested ownership qualifiers.
       if(c.is('str')){c.index=start;return super.type();}
-      const pointee=this.type(),tokens=c.tokens.slice(start,c.index);
+      const depth=this.referenceTypeDepth??0;if(depth>=32)throw unsupported('shared reference type nesting','exceeds the checked depth bound',first);
+      this.referenceTypeDepth=depth+1;let pointee;
+      try{pointee=this.type();}finally{this.referenceTypeDepth=depth;}
+      const tokens=c.tokens.slice(start,c.index);
       return {...pointee,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(pointee),span:span(tokens[0],tokens.at(-1)),tokens:tokens.map(token=>({value:token.value,kind:token.kind,span:{start:token.start,end:token.end}}))}};
     }
     if(first.kind==='identifier'){
@@ -384,7 +388,7 @@ export class HostEmitter extends EffectEmitter {
     const schema={schemaVersion:1,types:Object.fromEntries(Object.entries(types).sort(([a],[b])=>a.localeCompare(b)))};
     const key=createHash('sha256').update(JSON.stringify(schema)).digest('hex');this.schemas.set(key,schema);
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
-    return `ml_validate_rust_value(${value}, ${JSON.stringify(type)}, ${schemaName}, { refinements: ${refinementsName} })`;
+    return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
