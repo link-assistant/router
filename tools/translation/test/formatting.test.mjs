@@ -49,11 +49,15 @@ test('format arguments evaluate once in written order before positional reorderi
   await verifyTypedTargets(result,api=>assert.equal(api.repeat(3n),'33'));
 });
 
-test('captured lexical parameters take precedence over an imported source constant alias',async()=>{
-  const files={'src/lib.rs':'mod config; use crate::config::LABEL as value; pub fn print(value:u8)->String{format!("{value}")} pub fn constant()->String{format!("{value}")}','src/config.rs':'pub const LABEL:u8=7;'};
+test('captured lexical parameters take precedence over an imported source function alias',async()=>{
+  const files={'src/lib.rs':'mod config; use crate::config::label as value; pub fn print(value:u8)->String{format!("{value}")} pub fn module_value()->String{format!("{}",value())}','src/config.rs':'pub fn label()->u8{7}'};
   const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
   assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{assert.equal(api.print(3n),'3');assert.equal(api.constant(),'7');});
+  await verifyTypedTargets(result,api=>{assert.equal(api.print(3n),'3');assert.equal(api.module_value(),'7');});
+  const invalid={'src/lib.rs':'mod config; use crate::config::LABEL as value; pub fn print(value:u8)->String{format!("{value}")}','src/config.rs':'pub const LABEL:u8=7;'};
+  const refused=translateProject({entry:'src/lib.rs',paths:Object.keys(invalid),readSource:path=>invalid[path]});
+  assert.equal(refused.meta.executable.some(entry=>entry.name==='print'),false);
+  assert.match(refused.meta.refused.find(entry=>entry.name==='print').message,/source value alias\/local scope collision/);
 });
 
 test('unsupported formatting traits, source macros and malformed argument lists stay source-bearing refusals',()=>{

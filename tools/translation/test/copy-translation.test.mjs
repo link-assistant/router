@@ -46,14 +46,25 @@ test('unproven consuming, owned-field and trait implementation obligations stay 
   for(const source of ['struct Kind(u8);','#[derive(Clone,Copy)] struct Kind(Box<u8>);','#[derive(Clone,Copy)] struct Kind(Vec<u8>);','#[derive(Clone,Copy)] struct Kind(String);']){
     const result=project({'src/lib.rs':source+' impl Kind {fn read(self)->u8{1}} pub fn invented(v:Kind)->u8{v.read()}'});assert.equal(result.meta.executable.some(item=>item.name==='invented'),false,source);
   }
-  for(const extra of ['impl Drop for Kind {fn drop(&mut self){}}','impl Drop for Missing {fn drop(&mut self){}}','use custom::Copy;','macro_rules! Copy {()=>{}}']){
+  for(const extra of ['impl Drop for Kind {fn drop(&mut self){}}','impl Drop for Missing {fn drop(&mut self){}}','use custom::Copy;']){
     const result=project({'src/lib.rs':extra+' #[derive(Clone,Copy)] enum Kind{A} impl Kind {fn read(self)->u8{1}} pub fn invented(v:Kind)->u8{v.read()}'});assert.equal(result.meta.executable.some(item=>item.name==='invented'),false,extra);
   }
 });
 test('nested Copy proofs use the actual defining module derive scope',()=>{
-  for(const binding of ['use custom::Copy;','use custom::Clone;','use custom::*;','macro_rules! Copy {()=>{}}']){
+  for(const binding of ['use custom::Copy;','use custom::Clone;','use custom::*;']){
     const result=project({'src/lib.rs':'mod model; #[derive(Clone,Copy)] struct Outer {inner:model::Inner} impl Outer {fn read(self)->u8{self.inner.value}} pub fn invented(value:Outer)->u8{value.read()}', 'src/model.rs':binding+' #[derive(Clone,Copy)] pub struct Inner {pub value:u8}'});
     assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,binding);
+  }
+});
+test('bang Copy names preserve standard consuming and nested field Copy proofs',async()=>{
+  const fixtures=[
+    {'src/lib.rs':'macro_rules! Copy {()=>{false}} #[derive(Clone,Copy)] enum Kind{A} impl Kind{fn read(self)->u8{1}} pub fn run(value:Kind)->u8{value.read()}'},
+    {'src/lib.rs':'mod model; #[derive(Clone,Copy)] struct Outer{inner:model::Inner} impl Outer{fn read(self)->u8{self.inner.value}} pub fn run(value:Outer)->u8{value.read()}', 'src/model.rs':'macro_rules! Copy {()=>{false}} #[derive(Clone,Copy)] pub struct Inner{pub value:u8}'},
+  ];
+  for(const [index,files]of fixtures.entries()){
+    const result=project(files);
+    assert.equal(result.meta.checkedMethods.length,1);
+    await artifacts(result,api=>assert.equal(api.run(index===0?Object.freeze({$:'A'}):Object.freeze({$:'Outer',inner:Object.freeze({$:'Inner',value:7n})})),index===0?1n:7n));
   }
 });
 test('Copy runtime rejects proxies and accessors without observing their traps',()=>{

@@ -224,7 +224,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     if((['Some','None','Ok','Err'].includes(first.value)&&resolved.length===1&&this.unresolvedImportScope)||(['Option','Result'].includes(first.value)&&this.builtinShadow(first.value,path)&&resolved.every((part,index)=>part===segments[index])))throw unsupported('unproven standard constructor owner','requires actual source namespace resolution',first);
     if(fixed&&['from_str','from_str_radix'].includes(operation)&&c.is('(',offset)&&((owner.length===1&&!this.builtinShadow(owner[0],path))||(owner.length===3&&owner[0]==='std'&&owner[1]==='primitive'&&!this.builtinShadow('std',path)))) {
       if(this.shadowedEffectRoots?.has('std'))throw unsupported('shadowed integer error namespace','requires distinct checked standard type provenance',first);
-      if(operation==='from_str'&&this.resolve(['FromStr'],path).join('::')!=='std::str::FromStr')throw unsupported('FromStr trait call','requires the actual standard FromStr import',first);
+      if(operation==='from_str'&&this.resolveSourceNamespace(['FromStr'],path,'type').join('::')!=='std::str::FromStr')throw unsupported('FromStr trait call','requires the actual standard FromStr import',first);
       for(let index=0;index<offset;index++)c.next();c.expect('(','integer operation');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','integer operation');
       return {k:'routerIntegerAssociated',operation,args,instantiation:{...fixed,rustPrimitiveName:owner.at(-1)},span:span(first,c.peek())};
     }

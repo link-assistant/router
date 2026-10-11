@@ -35,11 +35,15 @@ test('fixed parse and checked standard callbacks execute in unchanged JavaScript
 });
 
 test('associated integer parsing keeps actual trait scope, radix panic and constructor owners', {timeout:30_000}, async()=>{
-  await artifacts(project('use std::str::FromStr; pub fn decimal(source:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(source)} pub fn radix(source:&str,base:u32)->Result<u8,std::num::ParseIntError>{u8::from_str_radix(source,base)}'),api=>{
+  await artifacts(project('use std::str::FromStr; fn FromStr()->u8{1} pub fn decimal(source:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(source)} pub fn radix(source:&str,base:u32)->Result<u8,std::num::ParseIntError>{u8::from_str_radix(source,base)}'),api=>{
     assert.deepEqual(api.decimal('255'),{$:'Ok',field0:255n});assert.deepEqual(api.radix('ff',16n),{$:'Ok',field0:255n});assert.deepEqual(api.radix('100',16n),error('PosOverflow'));assert.throws(()=>api.radix('1',1n),RangeError);
   });
   for(const source of [
     'pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(s)}',
+    'fn FromStr()->u8{1} pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(s)}',
+    'use custom::FromStr; pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(s)}',
+    'use std::str::FromStr; use custom::FromStr; pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(s)}',
+    'mod std{} use std::str::FromStr; pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{u8::from_str(s)}',
     'pub struct u8 {value:u8} pub fn invented(s:&str)->Result<u8,std::num::ParseIntError>{s.parse::<u8>()}',
     'pub enum Fake {None,Some(u8)} pub fn invented(value:Fake)->Option<u8>{value.map(|v|v)}',
     'pub enum Fake {Ok(u8),Err(u8)} pub fn invented(value:Fake)->Option<u8>{value.ok()}',
