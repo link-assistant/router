@@ -59,6 +59,8 @@ test('repeat count ownership and const evaluation categories remain actual sourc
     'pub fn bad(value:&str)->[&\'static str;2]{[value;2]}',
     'pub fn bad(value:&str)->[&\'static str;0]{[value;0]}',
     'pub fn bad(value:[&str;0])->[[&\'static str;0];0]{[value;0]}',
+    'pub fn bad(value:&str)->u8{let held:[&\'static str;0]=[value;0];0}',
+    'pub fn bad(value:&str)->u8{let held:[&\'static str;2]=[value;2];0}',
     'const VALUE:u8=1; pub fn bad()->[u8;2]{[VALUE;2]}',
     'pub fn bad()->[u8;2]{[const{1u8};2]}',
     'pub fn bad()->[u8;2]{[return [1u8,2u8];2]}',
