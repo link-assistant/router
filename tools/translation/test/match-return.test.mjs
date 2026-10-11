@@ -67,6 +67,16 @@ test('a returned match arm skips later effects while a normal arm preserves sour
   }
 });
 
+test('nested match alternatives keep subject guard helpers outside the scalar initializer target',async()=>{
+  const {result}=compiled('pub fn choose(value:Option<&str>)->Option<bool>{let flag:bool=match value{Some("go" | "yes")=>true,Some(_)=>false,None=>return None};Some(flag)}');
+  for(const api of await artifacts(result)) {
+    assert.deepEqual(api.choose(some('go')),some(true));assert.deepEqual(api.choose(some('yes')),some(true));
+    assert.deepEqual(api.choose(some('other')),some(false));assert.deepEqual(api.choose(none),none);
+    let reads=0;const proxy=new Proxy(some('go'),{get(){reads++;throw Error('get');},ownKeys(){reads++;throw Error('keys');},getOwnPropertyDescriptor(){reads++;throw Error('descriptor');},getPrototypeOf(){reads++;throw Error('prototype');}});
+    assert.throws(()=>api.choose(proxy),TypeError);assert.equal(reads,0);
+  }
+});
+
 test('control-valued match keeps a nontrivial subject once and guards algebraic inputs before projections',async()=>{
   const {result,checked}=compiled('pub fn trim(word:&str)->Option<bool>{let flag=match word.trim(){"yes"=>true,_=>return None};Some(flag)} pub fn algebraic(value:Option<bool>)->Option<bool>{let flag:bool=match value{Some(flag)=>flag,None=>return None};Some(flag)}');
   const flow=checked.declarations.get('trim').body.value.value;assert.equal(flow.k,'let');assert.equal(flow.value.k,'routerStringOperation');assert.equal(flow.value.op,'trim');

@@ -457,6 +457,12 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
       return super.statements(node,unit);
     }
     expr(node) {
+      // An expression helper may emit its own local statements (for example a
+      // guarded match subject). It cannot jump to a surrounding Rust join.
+      const previous=this.controlValueTarget;this.controlValueTarget=null;
+      try{return this.patternExpression(node);}finally{this.controlValueTarget=previous;}
+    }
+    patternExpression(node) {
       if(node.k==='routerControlInitializer')throw unsupported('return-valued match emission','requires statement lowering; a value IIFE would erase the function return',node.span);
       if(node.k==='routerPatternImmutable'){this.patternImmutability=true;return `ml_pattern_immutable(${this.expr(node.object)})`;}
       if(node.k==='routerPatternTag')return `(${this.expr(node.object)}.$ === ${JSON.stringify(node.ctor)})`;
