@@ -55,6 +55,19 @@ test('immutable Duration comparison is lexicographic across exact seconds and na
   const a=d(9007199254740992n,999999999n),b=d(9007199254740993n,0n);
   assert.equal(time.std_time_duration_lt(a,b),true);assert.equal(time.std_time_duration_le(a,a),true);assert.equal(time.std_time_duration_gt(b,a),true);assert.equal(time.std_time_duration_ge(b,b),true);assert.equal(time.std_time_duration_eq(a,d(9007199254740992n,999999999n)),true);assert.equal(time.std_time_duration_eq(a,b),false);
 });
+test('Ord min and max validate both Copy operands and retain pinned source tie identities',()=>{
+  const a=d(9007199254740992n,999999999n),b=d(9007199254740993n,0n),equal=d(9007199254740993n,0n);
+  assert.equal(time.std_time_duration_min(a,b),a);assert.equal(time.std_time_duration_min(b,a),a);
+  assert.equal(time.std_time_duration_max(a,b),b);assert.equal(time.std_time_duration_max(b,a),b);
+  assert.equal(time.std_time_duration_min(b,equal),b);assert.equal(time.std_time_duration_max(b,equal),equal);
+  assert.equal(time.std_time_duration_min(max,d(0n,0n)).secs,0n);
+  for(const name of ['min','max']){
+    const descriptor=timeContracts(['std','time','Duration',name])[0];assert.deepEqual(descriptor.trait,['std','cmp','Ord']);assert.equal(descriptor.constEligible,false);assert.equal(descriptor.pure,true);
+    for(const invalid of [{...a},d(0n,1000000000n),d(18446744073709551616n,0n)]){
+      assert.throws(()=>time[`std_time_duration_${name}`](a,invalid));assert.throws(()=>time[`std_time_duration_${name}`](invalid,a));
+    }
+  }
+});
 test('binary64 constructors round original IEEE rational seconds to nanoseconds with ties to even',()=>{
   const cases=[[0,d(0n,0n)],[-0,d(0n,0n)],[Number.MIN_VALUE,d(0n,0n)],[0.999e-9,d(0n,1n)],[2.7,d(2n,700000000n)],[0.999999999499,d(0n,999999999n)],[0.999999999501,d(1n,0n)],[42.999999999499,d(42n,999999999n)],[42.999999999501,d(43n,0n)],[1/1024,d(0n,976562n)],[3/1024,d(0n,2929688n)],[1+1/1024,d(1n,976562n)],[1+3/1024,d(1n,2929688n)],[2**64-2048,d(18446744073709549568n,0n)]];
   for(const [input,expected] of cases){assert.deepEqual(time.std_time_duration_try_from_secs_f64(input),{$:'Ok',field0:expected});assert.deepEqual(time.std_time_duration_from_secs_f64(input),expected);}

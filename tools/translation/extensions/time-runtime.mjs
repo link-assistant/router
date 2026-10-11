@@ -47,6 +47,8 @@ export const std_time_duration_lt=(left,right)=>total(left)<total(right);
 export const std_time_duration_le=(left,right)=>total(left)<=total(right);
 export const std_time_duration_gt=(left,right)=>total(left)>total(right);
 export const std_time_duration_ge=(left,right)=>total(left)>=total(right);
+export const std_time_duration_min=(left,right)=>total(left)<=total(right)?left:right;
+export const std_time_duration_max=(left,right)=>total(left)>total(right)?left:right;
 const float=value=>{if(typeof value!=='number')throw new TypeError('f64 requires a checked IEEE-754 value');return value;};
 export const std_time_duration_as_secs_f64=value=>{duration(value);return Number(value.secs)+Number(value.nanos)/1e9;};
 export const std_time_duration_div_duration_f64=(left,right)=>{duration(left);duration(right);return (Number(left.secs)*1e9+Number(left.nanos))/(Number(right.secs)*1e9+Number(right.nanos));};

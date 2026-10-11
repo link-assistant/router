@@ -10,6 +10,7 @@
     "license": "MIT OR Apache-2.0",
     "retrieval": "curl --fail --location --max-time 30 --max-filesize 200000; exact bytes read without Rust execution"
   },
+  "orderingSource": {"url":"https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/cmp.rs","sha256":"4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4","bytes":69754,"lines":2189,"license":"MIT OR Apache-2.0","methods":[{"trait":"std::cmp::Ord","name":"max","line":1010,"const":false,"tie":"second operand"},{"trait":"std::cmp::Ord","name":"min","line":1049,"const":false,"tie":"first operand"}],"durationOrdering":"Derived Ord on core/time.rs Duration fields secs then nanos; normalized invariant makes total nanoseconds comparison equivalent","proof":"Bounded official source read only; no Rust execution or production body promotion"},
   "sourceFunctions": [
     {"name":"new","line":194,"const":true},
     {"name":"from_secs","line":224,"const":true},

@@ -34,6 +34,7 @@ export const TIME_CONTRACTS=freeze([
   ...['saturating_add','saturating_sub'].map(name=>method(name,[DURATION],DURATION)),method('saturating_mul',[U32],DURATION),
   ...[['add','Add',DURATION],['sub','Sub',DURATION],['mul','Mul',U32],['div','Div',U32]].map(([name,trait,argument])=>method(name,[argument],DURATION,{constEligible:false,trait:['std','ops',trait]})),
   ...['eq','lt','le','gt','ge'].map(name=>method(name,[DURATION],BOOL,{constEligible:false,trait:['std','cmp',name==='eq'?'PartialEq':'PartialOrd']})),
+  ...['min','max'].map(name=>method(name,[DURATION],DURATION,{constEligible:false,trait:['std','cmp','Ord'],ownership:'checked immutable Copy values; selected operand identity retained',tieOperand:name==='min'?'self':'other'})),
   method('as_secs_f64',[],FLOAT),method('div_duration_f64',[DURATION],FLOAT),
   contract('try_from_secs_f64',[FLOAT],result,{constEligible:false}),contract('from_secs_f64',[FLOAT],DURATION,{constEligible:false}),...['mul_f64','div_f64'].map(name=>method(name,[FLOAT],DURATION,{constEligible:false})),
   contract('to_string',[FLOAT_ERROR],STRING,{kind:'method',owner:'TryFromFloatSecsError',constEligible:false,trait:['std','string','ToString']}),
