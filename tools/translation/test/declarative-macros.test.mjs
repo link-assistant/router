@@ -10,11 +10,16 @@ const compile=source=>compileDeclarativeMacro(source,{name:'example',owner:['fix
 const render=proof=>proof.trees.map(originalMacroTreeText).join(' ');
 
 test('bounded declarative rules retain source order groups repetitions and definition-site owner',()=>{
-  const definition=compile('macro_rules! example {()=>{}; ($($name:ident),+) => {$crate::call!($($name),*);};}');
+  const source='macro_rules! example {()=>{}; ($($name:ident),+) => {$crate::call!($($name),*);};}';
+  const definition=compile(source);
   const empty=expandDeclarativeMacro(definition,originalMacroTrees(''));assert.deepEqual(empty.trees,[]);
   const result=expandDeclarativeMacro(definition,originalMacroTrees('first,second'));
   assert.equal(isDeclarativeExpansion(result),true);assert.equal(isDeclarativeExpansion(structuredClone(result)),false);
   assert.equal(render(result),'fixture :: call ! (first , second) ;');
+  assert.equal(result.trees[0].sourceSyntax.sourceSha256,hash(source));
+  assert.equal(source.slice(result.trees[0].sourceSyntax.span.start,result.trees[0].sourceSyntax.span.end),'$crate');
+  const outputGroup=result.trees.find(tree=>tree.kind==='group');
+  assert.equal(source.slice(outputGroup.sourceSyntax.span.start,outputGroup.sourceSyntax.span.end),'($($name),*)');
   assert.equal(result.ownerVerified,false);assert.equal(result.namespaceComplete,false);assert.equal(result.generatedBehavior,false);
   assert.throws(()=>expandDeclarativeMacro(structuredClone(definition),originalMacroTrees('first')),/sealed/);
   assert.throws(()=>expandDeclarativeMacro(definition,structuredClone(originalMacroTrees('first'))),/original/);

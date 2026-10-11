@@ -10,6 +10,7 @@ const ident=tree=>tree?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(tree.te
 const fragments=new Set(['ident','tt','ty','meta','vis','block','expr']);
 const forbiddenTypes=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
 const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
+const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
 
 function plan(trees,mode,bindings,depth=0) {
   const result=[];
@@ -24,15 +25,15 @@ function plan(trees,mode,bindings,depth=0) {
         if(!['*','+','?'].includes(operator)||separator&&(!text(separator)||operator==='?'))throw new TypeError('Unproved declarative repetition separator or operator');
         const children=plan(next.children,mode,bindings,depth+1);
         if(mode==='matcher'&&!names(children).length)throw new TypeError('Declarative repetition requires consuming source captures');
-        result.push({kind:'repeat',children,separator,operator});continue;
+        result.push({kind:'repeat',children,separator,operator,sourceSyntax:syntax(tree,trees[at])});continue;
       }
       if(!ident(next))throw new TypeError('Declarative metavariable needs an original identifier');
       if(mode==='template') {
-        if(next.text==='crate'){result.push({kind:'crate-owner'});continue;}
+        if(next.text==='crate'){result.push({kind:'crate-owner',sourceSyntax:syntax(tree,next)});continue;}
         if(!bindings.has(next.text))throw new TypeError('Unbound declarative transcription variable');
         const binding=bindings.get(next.text);
         if(binding.depth&&binding.depth!==depth)throw new TypeError('Declarative capture repetition depth differs from transcription');
-        result.push({kind:'variable',name:next.text,depth:binding.depth});continue;
+        result.push({kind:'variable',name:next.text,depth:binding.depth,sourceSyntax:syntax(tree,next)});continue;
       }
       if(text(trees[++at])!==':'||!ident(trees[++at]))throw new TypeError('Declarative matcher requires an explicit fragment specifier');
       const fragment=trees[at].text;
@@ -52,9 +53,9 @@ function plan(trees,mode,bindings,depth=0) {
         if(follow&&!['=>',',',';'].includes(text(follow)))throw new TypeError('Declarative expression fragment has an unproved Rust follow set');
       }
       if(bindings.has(next.text))throw new TypeError('Duplicate declarative matcher variable');
-      bindings.set(next.text,{fragment,depth});result.push({kind:'capture',name:next.text,fragment,depth});continue;
+      bindings.set(next.text,{fragment,depth});result.push({kind:'capture',name:next.text,fragment,depth,sourceSyntax:syntax(tree,trees[at])});continue;
     }
-    result.push(tree.kind==='group'?{kind:'group',delimiter:tree.delimiter,children:plan(tree.children,mode,bindings,depth)}:{kind:'literal',tree});
+    result.push(tree.kind==='group'?{kind:'group',delimiter:tree.delimiter,children:plan(tree.children,mode,bindings,depth),sourceSyntax:syntax(tree)}:{kind:'literal',tree});
   }
   return result;
 }
@@ -232,8 +233,8 @@ function transcribe(nodes,captures,owner,budget,indices=[]) {
   for(const node of nodes) {
     if(--budget.output<0)throw new TypeError('Declarative output token budget exceeded');
     if(node.kind==='literal'){output.push(node.tree);continue;}
-    if(node.kind==='crate-owner'){output.push({kind:'owner',target:[...owner],verified:false,sourceFeature:'definition-site-dollar-crate'});continue;}
-    if(node.kind==='group'){output.push({kind:'group',delimiter:node.delimiter,children:transcribe(node.children,captures,owner,budget,indices)});continue;}
+    if(node.kind==='crate-owner'){output.push({kind:'owner',target:[...owner],verified:false,sourceFeature:'definition-site-dollar-crate',sourceSyntax:node.sourceSyntax});continue;}
+    if(node.kind==='group'){output.push({kind:'group',delimiter:node.delimiter,children:transcribe(node.children,captures,owner,budget,indices),sourceSyntax:node.sourceSyntax});continue;}
     if(node.kind==='variable') {
       if(node.depth>indices.length)throw new TypeError('Declarative capture repetition depth differs from transcription');
       const value=captureAt(captures,node.name,indices.slice(0,node.depth));
