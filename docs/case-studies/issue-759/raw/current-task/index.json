@@ -28634,8 +28634,119 @@
       ],
       "sourceHeadSha": "7845538045fce79d7fd7c450878778c69c6bb0d4",
       "status": "One successful timed804 producer, source and implementation integrity verified. Full seven-stage and CI checks pending."
+    },
+    {
+      "label": "cycle-6-complete-failure-and-repair",
+      "pack": "37968e4bc9527c7f102d85926971ae25183f464217b597c2721417c0a7fabc39.tar.gz",
+      "sha256": "37968e4bc9527c7f102d85926971ae25183f464217b597c2721417c0a7fabc39",
+      "storedBytes": 58141,
+      "members": [
+        {
+          "path": "router-759-cycle-6-complete-failure-inventory.json",
+          "bytes": 7138,
+          "sha256": "ad4665f1eee2e8a613b5008077f4e036fbae2ce54063ef621091bad41396d98c"
+        },
+        {
+          "path": "router-759-cycle-6-namespace-repair-bun.log",
+          "bytes": 2447,
+          "sha256": "4ab52bb54a337a711fd5084943da4314cb798c6cffcb7a182182f8dd8736d938"
+        },
+        {
+          "path": "router-759-cycle-6-namespace-repair-node.log",
+          "bytes": 4966,
+          "sha256": "4372a03e2c8306a2ac5b5b33a871eda1dc491287be68ef10d5cdd38d1a5f3699"
+        },
+        {
+          "path": "router-759-cycle-6-source-capture-baseline-mapping.json",
+          "bytes": 448,
+          "sha256": "245013c2d5cbc6a29e92de46e9da602b2f8c33b7caef276ced716596f1f7ec06"
+        },
+        {
+          "path": "router-759-cycle-6-source-capture-baseline.json",
+          "bytes": 777,
+          "sha256": "d40c7f23cb33127c0a32b1dc12f3f25152fd8429b14e958b3f85327c292dda2c"
+        },
+        {
+          "path": "router-759-cycle-6-source-capture-repair.json",
+          "bytes": 774,
+          "sha256": "244289dbbff65da10b4cfc92f778d92754813b2ca078f3e86b822461f0753837"
+        },
+        {
+          "path": "router-759-cycle-6-source-repair-bun.log",
+          "bytes": 6603,
+          "sha256": "658c159c1c8d7ac36c589195d6dd021bbbecd9019a44e0a6a8b4d8b8cab277b0"
+        },
+        {
+          "path": "router-759-cycle-6-source-repair-node.log",
+          "bytes": 13640,
+          "sha256": "7cbfb95bc020bf9ae31bfdbc12e3bbd34773a344bed8dd09ce21b2ec2aab088a"
+        },
+        {
+          "path": "router-759-final-preflight-d1105ae1.json",
+          "bytes": 1207,
+          "sha256": "7077cbd8570073d6dd54b80ce1bc86bf220162652f7aa79d75f9e75fb43288f3"
+        },
+        {
+          "path": "router-759-final-preflight-d1105ae1.log",
+          "bytes": 232446,
+          "sha256": "1b139c9f381375b4c7e477884bf233f291cf1e7975d471f163a70cc0e9f401ff"
+        },
+        {
+          "path": "router-759-native-repair-baseline-loopback.json",
+          "bytes": 523,
+          "sha256": "687042adb04d126aeee2b643b105b1e2a89b9ee68dc215e397bbd1d494801752"
+        },
+        {
+          "path": "router-759-native-repair-baseline-loopback.log",
+          "bytes": 1491,
+          "sha256": "7774da1b8d872402806a0d848baee071f72f7cb1a4caff8e2f80e57a7cb221e9"
+        },
+        {
+          "path": "router-759-native-repair-baseline.json",
+          "bytes": 513,
+          "sha256": "53c79d6f591728471372c5a8761548335f3452a0f53ee15d90e30050705f7543"
+        },
+        {
+          "path": "router-759-native-repair-baseline.log",
+          "bytes": 3647,
+          "sha256": "7b769e3518132df8d65e038cb5968816510bfd22332a90058d8a86303072d3c7"
+        },
+        {
+          "path": "router-759-native-repair-bun.json",
+          "bytes": 522,
+          "sha256": "0f38781ff45c0fbb6bd56fb7c7057f0c8788e79f6940322296e5707484152df7"
+        },
+        {
+          "path": "router-759-native-repair-bun.log",
+          "bytes": 858,
+          "sha256": "231db6143f2290f6606f9699618b2fb61ec7a5e842b6df3a6fccc62d9eac5f36"
+        },
+        {
+          "path": "router-759-native-repair-cohort.json",
+          "bytes": 2547,
+          "sha256": "11e585a0040447ef87d8d03d3521ef89d7afb940abe92c6dd2849c4460bb9a6a"
+        },
+        {
+          "path": "router-759-native-repair-focused.json",
+          "bytes": 1147,
+          "sha256": "34c631c0455d5d7c034293a66ef4d4780ac8dfc2123eedaf1614ee0260a5636c"
+        },
+        {
+          "path": "router-759-native-repair-node.json",
+          "bytes": 554,
+          "sha256": "3f04af0bca14a1385d0a2e46fb804c543750d559a4586efb5ab24a286d120951"
+        },
+        {
+          "path": "router-759-native-repair-node.log",
+          "bytes": 1487,
+          "sha256": "33b2c547d23868d6d2482880d8f71abe92389c0154a977b6db14bc3bbe9d88a7"
+        }
+      ],
+      "status": "Complete unpublished d1105ae1 seven-stage failure collection retained: four forward failures and one cached managed-control timeout affecting62 operation validations. Repair receipts remain separately identified; no successful replacement producer or publication claimed.",
+      "reviewedSourceHead": "d1105ae12c968d415652e35c77c2a9c448275ca9",
+      "archivedAtUtc": "2026-10-11T14:49:05.818732+00:00"
     }
   ],
-  "totalStoredPackBytes": 11270094,
-  "totalMembers": 5155
+  "totalStoredPackBytes": 11328235,
+  "totalMembers": 5175
 }
