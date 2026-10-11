@@ -108,7 +108,13 @@ test('procedural and item expansion scopes never grant complete glob evidence',(
     const result=resolve({'':'mod model; use model::*;',model:source});assert.equal(scope(result).unresolvedTypeScope,true,source);assert.equal(scope(result).unresolvedMacroScope,true,source);
   }
   const macroUse=resolve({'':'#[macro_use] mod model; use model::*;',model:'pub struct Plain;'});
-  assert.equal(scope(macroUse).unresolvedMacroScope,true);
+  assert.equal(scope(macroUse).unresolvedMacroScope,false,'the tracked child has no macros or uncertain expansion');
+  assert.equal(scope(macroUse).unresolvedTypeScope,false);assert.deepEqual(binding(macroUse,'Plain').target,['crate','model','Plain']);assert.equal(binding(macroUse,'Plain').status,'resolved');
+  assert.deepEqual(scope(macroUse).bindings.filter(binding=>binding.namespace==='macro'),[]);
+  for(const source of ['#[derive(Custom)] pub struct Record;','inject_items!();','pub fn register(){#[macro_export] macro_rules! format {($($t:tt)*)=>{String::from("custom")}}}']){
+    const uncertain=resolve({'':'#[macro_use] mod model; use model::*;',model:source});assert.equal(scope(uncertain).unresolvedMacroScope,true,source);
+  }
+  const missing=resolve({'':'#[macro_use] mod missing;'});assert.equal(scope(missing).unresolvedMacroScope,true);
 });
 
 test('conditional named declarations preserve their shadow names and unavailable bodies preserve macro uncertainty',()=>{
