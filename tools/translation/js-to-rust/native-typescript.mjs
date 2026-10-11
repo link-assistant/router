@@ -298,8 +298,10 @@ export function buildNativeTypeScript(sourceRoot) {
   artifacts.set('packages/typescript/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/native/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../../scripts/check-native-typescript.mjs --out-dir packages/typescript/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
   artifacts.set('packages/typescript/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'native/**/*.ts', 'portable/**/*.ts'] }, null, 2)}\n`);
   artifacts.set('packages/typescript/.gitignore', 'node_modules\n/dist/\n');
-  for (const path of ['packages/javascript/catalog.json', ...walkFiles(sourceRoot, 'packages/javascript/schemas')]) artifacts.set(path.replace('packages/javascript/', 'packages/typescript/'), readFileSync(join(sourceRoot, path)));
-  artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, modules: rows, assets: ['catalog.json', 'schemas'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
+  // Public embedded assets have byte-level HTTP contracts. Keep their exact
+  // payload alongside the independently checked TypeScript syntax targets.
+  for (const path of ['packages/javascript/catalog.json', ...walkFiles(sourceRoot, 'packages/javascript/schemas'), ...walkFiles(sourceRoot, 'packages/javascript/native/assets/admin')]) artifacts.set(path.replace('packages/javascript/', 'packages/typescript/'), readFileSync(join(sourceRoot, path)));
+  artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, modules: rows, assets: ['catalog.json', 'schemas', 'native/assets/admin'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
   return artifacts;
 }
 
@@ -340,6 +342,9 @@ export function compileNativeTypeScript(outputRoot, { sourceRoot = outputRoot, o
     writeFileSync(join(outDir, 'package.json'), '{"type":"module"}\n');
     cpSync(join(packageRoot, 'catalog.json'), join(outDir, 'catalog.json'));
     cpSync(join(packageRoot, 'schemas'), join(outDir, 'schemas'), { recursive: true });
+    for(const path of walkFiles(outputRoot,'packages/typescript/native/assets/admin').filter(path=>!path.endsWith('.ts'))) {
+      const target=join(outDir,path.slice('packages/typescript/'.length));mkdirSync(dirname(target),{recursive:true});cpSync(join(outputRoot,path),target);
+    }
     if (!existsSync(join(outDir, 'node_modules'))) symlinkSync(dependencyRoot, join(outDir, 'node_modules'), 'dir');
   }
   return { files: files.length, compiler: ts.version };

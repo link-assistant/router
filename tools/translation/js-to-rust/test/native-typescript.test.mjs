@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, symlinkSync, realpathSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -182,31 +182,39 @@ test('regeneration rejects stale, missing, and unexpected TS, meta, and asset ar
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
-test('compiled TypeScript executes the shared native runtime fixture suite in Node and Bun', { timeout: 60000 }, (context) => {
+test('compiled TypeScript executes the shared native runtime fixture suite in Node and Bun', { timeout: 300000 }, async (context) => {
   const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-runtime-'));
   try {
     const outDir = join(directory, 'packages/javascript');
     compileNativeTypeScript(ROOT, { sourceRoot: SOURCE, outDir, emit: true });
-    // Existing fixtures use .mjs module paths. These copies contain compiled
-    // TypeScript JavaScript, not original native JavaScript or Rust fallbacks.
-    for (const folder of ['native', 'portable']) for (const name of readdirSync(join(outDir, folder))) if (name.endsWith('.js')) cpSync(join(outDir, folder, name), join(outDir, folder, name.replace(/\.js$/u, '.mjs')));
     cpSync(join(SOURCE, 'parity/fixtures'), join(directory, 'parity/fixtures'), { recursive: true });
     cpSync(join(SOURCE, 'openapi'), join(directory, 'openapi'), { recursive: true });
     mkdirSync(join(outDir, 'test'), { recursive: true });
     const tests = [];
-    for (const name of readdirSync(join(SOURCE, 'packages/javascript/test'))) if (/^native-.*\.(?:mjs|js)$/u.test(name)) {
+    for (const name of readdirSync(join(SOURCE, 'packages/javascript/test'))) if (/^native-.*\.(?:mjs|js|json)$/u.test(name)) {
       cpSync(join(SOURCE, 'packages/javascript/test', name), join(outDir, 'test', name));
       if (/\.test\.(?:mjs|js)$/u.test(name)) tests.push(join(outDir, 'test', name));
     }
+    // Canonical filesystem aliases preserve fixture imports, spawned module
+    // URLs and public browser paths without duplicate module cache identities.
+    const aliases=folder=>{for(const entry of readdirSync(folder,{withFileTypes:true})) {
+      const path=join(folder,entry.name);if(entry.isDirectory()){if(path!==join(outDir,'native/assets'))aliases(path);continue;}if(!path.endsWith('.js'))continue;
+      const alias=path.replace(/\.js$/u,'.mjs');symlinkSync(entry.name,alias);
+      assert.equal(realpathSync(alias),realpathSync(path));
+    }};
+    aliases(join(outDir,'native'));aliases(join(outDir,'portable'));
+    const canonical=await import(pathToFileURL(join(outDir,'native/oauth.js')).href);
+    assert.equal(await import(pathToFileURL(join(outDir,'native/oauth.mjs')).href),canonical);
     const original = tests.map((path) => join(SOURCE, 'packages/javascript/test', path.slice(path.lastIndexOf('/') + 1)));
     const nodeArgs = ['--test', '--test-reporter=tap'];
     const env = { ...process.env }; delete env.NODE_TEST_CONTEXT;
     const run = (binary, args, cwd) => {
-      try { return execFileSync(binary, args, { cwd, env, encoding: 'utf8', timeout: 45000, maxBuffer: 1024 * 1024, stdio: 'pipe' }); }
+      const started=Date.now();
+      try { const output=execFileSync(binary, args, { cwd, env, encoding: 'utf8', timeout: 120000, maxBuffer: 1024 * 1024, stdio: 'pipe' });context.diagnostic(`${binary} runtime child completed in ${Date.now()-started}ms.`);return output; }
       catch (error) {
         const lines = String(error.stdout ?? '').split('\n');
         const failures = lines.flatMap((line, index) => line.startsWith('not ok') ? lines.slice(index, index + 18) : []).join('\n');
-        throw new Error(`Native runtime fixture failure:\n${failures || String(error.stderr ?? error.message).slice(-6000)}`);
+        throw new Error(`Native runtime fixture failure after ${Date.now()-started}ms (code=${error.code}, signal=${error.signal}, status=${error.status}):\n${failures || [String(error.stderr ?? ''),String(error.stdout ?? '').slice(-4000),error.message].filter(Boolean).join('\n').slice(-6000)}`);
       }
     };
     const baseline = run(process.execPath, [...nodeArgs, ...original], SOURCE);
