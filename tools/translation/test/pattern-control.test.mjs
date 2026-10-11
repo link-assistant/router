@@ -134,6 +134,16 @@ test('let-else evaluates its matched receiver exactly once before either continu
   for(const api of apis){assert.equal(api.once(some(4n)),4n);assert.equal(api.fixture_count(),1);assert.equal(api.once(none),9n);assert.equal(api.fixture_count(),2);}
 });
 
+test('ordinary tuple let evaluates its receiver exactly once before scalar projections',async()=>{
+  const preparsed=check('fn shape(value:(&str,&str))->(&str,&str){value}'),product=preparsed.declarations.get('shape').ret;
+  const externals=[{k:'fn',name:'fixture_read',params:[{name:'value',type:product}],ret:product}];
+  const fixture='let fixture_reads = 0; function fixture_read(value) { fixture_reads += 1; return value; } function fixture_count() { return fixture_reads; }';
+  const {apis,program}=await compile('pub fn once(value:(&str,&str))->bool{let (a,b)=fixture_read(value);a==b}',{externals,fixture});
+  assert.equal(program.declarations.get('once').body.value.fn,'fixture_read');
+  assert.equal(program.declarations.get('once').body.patternControl.kind,'tuple-let');
+  for(const api of apis){assert.equal(api.once(tagged('Tuple',{field0:'Ω',field1:'Ω'})),true);assert.equal(api.fixture_count(),1);assert.equal(api.once(tagged('Tuple',{field0:'Ω',field1:'ω'})),false);assert.equal(api.fixture_count(),2);}
+});
+
 test('aggregate moves, aliases, references, generic patterns and guards remain explicit refusals',()=>{
   for(const source of [
     'fn aggregate(value: Option<Option<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }',

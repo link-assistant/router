@@ -85,13 +85,18 @@ export function withPatternControlParser(Base=ControlRustParser) {
         if(['(','[','{'].includes(value))depth++;
         if([')',']','}'].includes(value))depth--;
       }
-      if(!hasElse)return super.letStatement(path);
+      if(!hasElse&&!c.is('(',1))return super.letStatement(path);
       if(c.is('mut',1))return super.letStatement(path);
       const first=c.next(),pattern=this.controlPattern(path,first);
       const annotation=c.eat(':')?this.type():undefined;
       c.expect('=','let-else initializer');
       const begin=c.index,subject=this.expr(path);
-      if(!c.is('else')){c.index=checkpoint;return super.letStatement(path);}
+      if(!c.is('else')) {
+        if(!c.tokens[checkpoint+1]||c.tokens[checkpoint+1].value!=='('){c.index=checkpoint;return super.letStatement(path);}
+        if(annotation)throw unsupported('tuple binding annotation','requires a separately checked annotated pattern contract',range(first,c.peek()));
+        c.expect(';','tuple binding');
+        return {k:'routerLetPattern',pattern,subject,span:range(first,c.peek())};
+      }
       if(annotation)throw unsupported('let-else type annotation','requires a separate checked pattern annotation contract',range(first,c.peek()));
       const initializer=c.tokens.slice(begin,c.index);
       if(initializer.at(-1)?.value==='}')throw unsupported('let-else brace initializer','Rust requires parentheses around an initializer ending in a brace',subject.span);
@@ -217,6 +222,24 @@ export function withPatternControlChecker(Base=ControlChecker) {
       throw typeError('unchecked pattern test plan',subject.span);
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='routerLetPattern') {
+        env=this.contextEnvironment(node,env,expected);
+        if(containsExit(node.subject))throw unsupported('tuple binding subject control','nonlocal exits cannot be emitted through a subject value',node.subject.span);
+        const subject=this.expr(node.subject,env,path);
+        this.patternDomain(subject.type,node.span);
+        const pattern=this.patternOwner(node.pattern,subject.type,path,env);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
+        if(plan.refutable)throw typeError('ordinary tuple let requires an irrefutable checked pattern',node.span);
+        for(const binding of plan.bindings)if(!scalar(binding.type))throw unsupported('tuple aggregate binding','only immutable scalar bindings have a checked ownership contract',binding.span??node.span);
+        let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
+        const variable={k:'var',name:temporary,type:subject.type,span:node.span};
+        let inner=new Map(env);
+        for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        let body=this.expr(node.body,inner,path,expected,allowLiteral);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        if(subject.type.kind==='data')body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL},body,type:body.type,span:node.span};
+        return {k:'let',name:temporary,value:subject,body,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'tuple-let'}};
+      }
       if(node.k==='routerLetElse') {
         env=this.contextEnvironment(node,env,expected);
         if(!diverges(node.else))throw unsupported('let-else divergence','the failure block must have a checked unconditional return, break or continue',node.else.span??node.span);
