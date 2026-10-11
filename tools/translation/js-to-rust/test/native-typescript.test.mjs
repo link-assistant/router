@@ -76,6 +76,32 @@ test('independent runtime fixture preserves optional chains, receivers, getters,
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
+test('strict types preserve required destructuring and JavaScript property-key coercion', async () => {
+  const ts = loadTypeScript(SOURCE);
+  const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-keys-'));
+  const source = `export function destructured(prefix, { value }) { return String(prefix) + value; }
+export function keys(value) { const record = { undefined: 4, null: 5, true: 6 }; return [record[value], record[undefined], record[null], record[true], record?.[undefined]]; }
+export function missing() { const absent = null; return absent?.[undefined]; }`;
+  try {
+    const path = join(directory, 'fixture.mjs'); writeFileSync(path, source);
+    const inference = inferenceProgram(ts, directory, ['fixture.mjs']);
+    const meta = JSON.parse(JSON.stringify(parseNativeJavaScript(ts, 'fixture.mjs', source, { file: inference.program.getSourceFile(path), checker: inference.checker })));
+    const output = emitNativeTypeScript(ts, meta);
+    assert.match(output.text, /destructured\(prefix: any, \{ value \}: any\)/u);
+    const typed = join(directory, 'fixture.ts'); writeFileSync(typed, output.text);
+    const program = ts.createProgram([typed], { strict: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext });
+    assert.deepEqual(ts.getPreEmitDiagnostics(program).map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')), []);
+    const erased = ts.transpileModule(output.text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+    assert.deepEqual(runtimeAST(ts, erased), runtimeAST(ts, source));
+    writeFileSync(join(directory, 'target.mjs'), erased);
+    const runtime = await import(pathToFileURL(join(directory, 'target.mjs')).href);
+    assert.equal(runtime.destructured('a', { value: 2 }), 'a2');
+    assert.throws(() => runtime.destructured('a'), TypeError);
+    assert.deepEqual(runtime.keys(true), [6, 4, 5, 6, 4]);
+    assert.equal(runtime.missing(), undefined);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
 test('every native JavaScript module has a structured syntax AST and executable TS draft', () => {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/generated/native-typescript/manifest.json'), 'utf8'));
   assert.deepEqual(manifest.modules.map((row) => row.source), sourceModules(SOURCE));

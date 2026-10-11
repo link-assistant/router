@@ -74,3 +74,12 @@ export function localHint(ts, checker, node) {
   // Nullable reads also need a source invariant before narrowing their callers.
   return reliable(hint) ? hint : null;
 }
+
+export function dynamicIndex(ts, checker, node) {
+  if (!checker) return false;
+  const valid = type => type.isUnion?.() ? type.types.every(valid) : Boolean(type.flags & (ts.TypeFlags.Any | ts.TypeFlags.StringLike | ts.TypeFlags.NumberLike | ts.TypeFlags.ESSymbolLike | ts.TypeFlags.Never));
+  // JavaScript converts null/undefined/boolean/object keys to property keys.
+  // A TS assertion preserves that runtime conversion without claiming a
+  // statically proven string/symbol contract for the original expression.
+  return !valid(checker.getTypeAtLocation(node.argumentExpression));
+}

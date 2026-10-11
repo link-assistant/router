@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { inferenceProgram, returnHint, localHint, typeNode } from './native-inference.mjs';
+import { inferenceProgram, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walkFiles(root, `${directory}/${entry.name}`) : [`${directory}/${entry.name}`]).sort() : [];
@@ -23,6 +23,7 @@ function serialize(ts, sourceFile, checker) {
   let functionIndex = 0;
   const annotations = [];
   const locals = [];
+  const indices = [];
   const encode = (node) => {
     if (ts.isJSDoc(node)) return null;
     if (ts.isFunctionLike(node) && node.parameters) {
@@ -36,6 +37,7 @@ function serialize(ts, sourceFile, checker) {
       annotations.push({ function: functionIndex++, parameters: params, returns: returnHint(ts, checker, node) });
     }
     if (ts.isVariableDeclaration(node)) locals.push(localHint(ts, checker, node));
+    if (ts.isElementAccessExpression(node)) indices.push(dynamicIndex(ts, checker, node));
     count++;
     const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
     if (children.length) return [node.kind, children];
@@ -46,7 +48,7 @@ function serialize(ts, sourceFile, checker) {
     const leading = sourceFile.text.slice(node.pos, node.getStart(sourceFile));
     return [node.kind, text, /[\r\n]/u.test(leading) ? 1 : 0];
   };
-  return { tree: encode(sourceFile), annotations, locals, nodes: count };
+  return { tree: encode(sourceFile), annotations, locals, indices, nodes: count };
 }
 
 export function parseNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
@@ -106,6 +108,7 @@ export function emitNativeTypeScript(ts, meta) {
   const primitive = (value) => f.createKeywordTypeNode(({ number: ts.SyntaxKind.NumberKeyword, string: ts.SyntaxKind.StringKeyword, boolean: ts.SyntaxKind.BooleanKeyword })[value] ?? ts.SyntaxKind.AnyKeyword);
   let functionIndex = 0;
   let localIndex = 0;
+  let indexIndex = 0;
   let inferredReturns = 0;
   let inferredLocals = 0;
   let explicitAny = 0;
@@ -116,12 +119,14 @@ export function emitNativeTypeScript(ts, meta) {
       const hint = functionLike ? meta.annotations[functionIndex++] ?? {} : {};
       const hints = hint.parameters ?? [];
       const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
+      const keyDynamic = ts.isElementAccessExpression(node) ? meta.indices?.[indexIndex++] : false;
       let updated = ts.visitEachChild(node, visit, context);
       if (functionLike) {
         updated.parameters = f.createNodeArray(updated.parameters.map((parameter, index) => {
           const type = parameter.dotDotDotToken ? f.createArrayTypeNode(any()) : primitive(hints[index]);
           if (!hints[index] || hints[index] === 'any') explicitAny++;
-          const optional = hints[index] === 'any' && !parameter.initializer && !parameter.dotDotDotToken && ts.isIdentifier(parameter.name) && !ts.isSetAccessorDeclaration(node) && !ts.isConstructorDeclaration(node);
+          const laterRequired = updated.parameters.slice(index + 1).some((later, laterIndex) => !later.initializer && !later.dotDotDotToken && (!ts.isIdentifier(later.name) || hints[index + laterIndex + 1] !== 'any'));
+          const optional = !laterRequired && hints[index] === 'any' && !parameter.initializer && !parameter.dotDotDotToken && ts.isIdentifier(parameter.name) && !ts.isSetAccessorDeclaration(node) && !ts.isConstructorDeclaration(node);
           return f.updateParameterDeclaration(parameter, parameter.modifiers, parameter.dotDotDotToken, parameter.name, optional ? f.createToken(ts.SyntaxKind.QuestionToken) : parameter.questionToken, type, parameter.initializer);
         }));
         if (!ts.isConstructorDeclaration(updated) && !ts.isSetAccessorDeclaration(updated)) {
@@ -146,6 +151,9 @@ export function emitNativeTypeScript(ts, meta) {
       if (ts.isNewExpression(updated)) updated = f.updateNewExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), undefined, updated.arguments);
       // Grouping the receiver of an optional-chain continuation would stop
       // short circuiting: (x?.headers)[key] differs from x?.headers[key].
+      if (keyDynamic) updated = ts.isElementAccessChain(updated)
+        ? f.updateElementAccessChain(updated, updated.expression, updated.questionDotToken, f.createAsExpression(updated.argumentExpression, any()))
+        : f.updateElementAccessExpression(updated, updated.expression, f.createAsExpression(updated.argumentExpression, any()));
       if (ts.isElementAccessExpression(updated) && !ts.isElementAccessChain(updated)) updated = f.updateElementAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.argumentExpression);
       if (ts.isPropertyAccessExpression(updated) && ts.isIdentifier(updated.expression) && namespaces.has(updated.expression.text)) updated = f.updatePropertyAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.name);
       if (ts.isCallExpression(updated) && updated.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(updated.arguments[0]) && updated.arguments[0].text.startsWith('.')) updated = f.updateCallExpression(updated, updated.expression, updated.typeArguments, [f.createStringLiteral(updated.arguments[0].text.replace(/\.mjs$/u, '.js')), ...updated.arguments.slice(1)]);
