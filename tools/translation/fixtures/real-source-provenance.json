@@ -375,7 +375,8 @@
         "status_of"
       ],
       "role": "new-json",
-      "independentCases": 9
+      "independentCases": 9,
+      "domainGuards": 1
     },
     {
       "id": "bounded-retry",
@@ -383,7 +384,8 @@
         "bounded_retry_after"
       ],
       "role": "new-duration",
-      "independentCases": 6
+      "independentCases": 6,
+      "domainGuards": 1
     },
     {
       "id": "in-band-failure",
