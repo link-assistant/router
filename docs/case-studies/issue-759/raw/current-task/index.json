@@ -28398,8 +28398,199 @@
           "sha256": "ecfb431d49485fedc2f81e1dadeceb0f6f596122711e5fba877683d4247aadb1"
         }
       ]
+    },
+    {
+      "label": "cycle-6-source-cohort",
+      "pack": "f0186a93237f18f3f4c666305eeeda41a94976248e295a1d4b4e624cc10df504.tar.gz",
+      "sha256": "f0186a93237f18f3f4c666305eeeda41a94976248e295a1d4b4e624cc10df504",
+      "storedBytes": 41147,
+      "members": [
+        {
+          "path": "router-759-ctfe-areas-diagnostic.json",
+          "bytes": 800,
+          "sha256": "1f9d2872b7ce316e93c9cc7f09fa74e2c0c2b038694d27713f9fe66c083485af"
+        },
+        {
+          "path": "router-759-ctfe-areas-final-diagnostic.json",
+          "bytes": 242,
+          "sha256": "19058d8ec468153c538631e15e55b65fc79865d72dc175ae09bac6393fe30712"
+        },
+        {
+          "path": "router-759-ctfe-areas-metadata-counts.json",
+          "bytes": 844,
+          "sha256": "3541d943e175b742be632c127d5f8d5e02f434236c8cbcbf5e1c1d23ca096fbd"
+        },
+        {
+          "path": "router-759-ctfe-coherent-bun.log",
+          "bytes": 7499,
+          "sha256": "77dcf1247d291b20def029a0a8d3bf26734d8b8dc1dc7b35a187cce25ee108a9"
+        },
+        {
+          "path": "router-759-ctfe-coherent-node.log",
+          "bytes": 12695,
+          "sha256": "a7c67e64e7a99f1059719c9e3f334f6ca2833b09d5b9245b7813fae73cd18728"
+        },
+        {
+          "path": "router-759-ctfe-final-bounded-bun.log",
+          "bytes": 7533,
+          "sha256": "315cb7902108c12cfbf3e4a879eaa2f60dbef94ef47dd94d9dd62ddc18b50c8d"
+        },
+        {
+          "path": "router-759-ctfe-final-bounded-node.log",
+          "bytes": 13975,
+          "sha256": "55d778a22b09c51c678362449d2ec5a731f3da9a452149d37727c039371ef89c"
+        },
+        {
+          "path": "router-759-ctfe-final-eight-bun.log",
+          "bytes": 8019,
+          "sha256": "1551c8daae0a35db3627046bc5bf7f445aff83d58fa6d5dee80ddb5900bab9d6"
+        },
+        {
+          "path": "router-759-ctfe-final-eight-node.log",
+          "bytes": 13852,
+          "sha256": "a1e255c4c0441737444518778802194d37f100c23d3751d4d4c48c534f09323f"
+        },
+        {
+          "path": "router-759-ctfe-final-green-bun.log",
+          "bytes": 6308,
+          "sha256": "7320f742bb67245e5fbec56bfb727cf84e567828b4c27c1ffad7ef2e0607b954"
+        },
+        {
+          "path": "router-759-ctfe-final-green-node.log",
+          "bytes": 12980,
+          "sha256": "0e5db2c21acfab6683ff694dfe8fa3fd330c1752715132c9e6094218f268a2bb"
+        },
+        {
+          "path": "router-759-ctfe-token-capture-bun.log",
+          "bytes": 2163,
+          "sha256": "2f8ab2db32958c0ef26d74f36c7d8a4f245d9c4eaf6839007b115bafda9870c7"
+        },
+        {
+          "path": "router-759-ctfe-token-capture-node.log",
+          "bytes": 4515,
+          "sha256": "a00c39cf15dc895a09966db818ddc1a724c23823855c3ce2466425b8ac1e27ca"
+        },
+        {
+          "path": "router-759-cycle-6-coordination.json",
+          "bytes": 4287,
+          "sha256": "47e4183cc489f3949c29b819f1d5679d27aefd2c1159d35c6d71ab84f2b46996"
+        },
+        {
+          "path": "router-759-cycle-6-ctfe-coherent-failures.json",
+          "bytes": 1980,
+          "sha256": "c92ae347593fda512b7d3aaf0116ab3217e87e557488eb1f4c5212b69ccbe48d"
+        },
+        {
+          "path": "router-759-cycle-6-namespace-initial-failures.json",
+          "bytes": 10661,
+          "sha256": "6f22d3086997671496ca46361b3b208b72df8eefb82dfd0b1ab051f5199ac4bd"
+        },
+        {
+          "path": "router-759-cycle-6-namespace-retry-failures.json",
+          "bytes": 4270,
+          "sha256": "0221753368d5c230a630d032884b2934e8b9ab3ffe1878b63bd7700bf6bf0427"
+        },
+        {
+          "path": "router-759-cycle-6-prior-inventory-summary.json",
+          "bytes": 37759,
+          "sha256": "ab943075e681d98d2429ffe44c65f62925c9647a23887f5387daccd7c719ef4e"
+        },
+        {
+          "path": "router-759-namespace-lexical-async-bun.log",
+          "bytes": 1376,
+          "sha256": "2b61ca8578515830098dfa0d60044605362fd9201724744e91540b0c5191177f"
+        },
+        {
+          "path": "router-759-namespace-lexical-async-node.log",
+          "bytes": 2837,
+          "sha256": "d6bfc1566b1fc8f285706b490aebbe1a89d9ff2dfceef7bd06b125ad6f9435a8"
+        },
+        {
+          "path": "router-759-namespace-lexical-bun.log",
+          "bytes": 3627,
+          "sha256": "6b5f982a7008a6c66b529e6762def0e9260f6c572034db36a68f8d76e9c2e542"
+        },
+        {
+          "path": "router-759-namespace-lexical-node.log",
+          "bytes": 7444,
+          "sha256": "35d42fc4c4bc7fec1a0f3487f372f9a26fb77b4bcc2b859c6824837636a41b4a"
+        },
+        {
+          "path": "router-759-next-macro-pure-bun.log",
+          "bytes": 3615,
+          "sha256": "d2433f0c41fe7355bf0591446a445176e6e48c6be6c33fc45a172034f7b8fde5"
+        },
+        {
+          "path": "router-759-next-macro-pure-node.log",
+          "bytes": 7622,
+          "sha256": "be8c2f55a0335f0eff75d0f3b235f072eb167429ccc850c3a80d1119eb4b12aa"
+        },
+        {
+          "path": "router-759-next-namespaces-compiler-bun.log",
+          "bytes": 11878,
+          "sha256": "ae4c7ef4846f147c0f68bd9f5735a3af48191a1cbcd4b8e5380b7fa51334a1c6"
+        },
+        {
+          "path": "router-759-next-namespaces-compiler-node.log",
+          "bytes": 14375,
+          "sha256": "307997f5399b7d876b2731257208082f6f889ef3c586d4c5e44613df26e151ce"
+        },
+        {
+          "path": "router-759-next-namespaces-final-bun.log",
+          "bytes": 1244,
+          "sha256": "2bf636a3cfdcda350b1947b6e3f574f8ece0d13fbbc497202ed8650d8f0de692"
+        },
+        {
+          "path": "router-759-next-namespaces-final-node.log",
+          "bytes": 2397,
+          "sha256": "098e979b29071c3503c6981e08ae94bbd72dbedb1ea7544183ffae4058971a1f"
+        },
+        {
+          "path": "router-759-next-namespaces-retry-bun.log",
+          "bytes": 13044,
+          "sha256": "9c2b7c2c9bc27a13604e041e0009d2618de143e70513463bdd101e4e5f642a9f"
+        },
+        {
+          "path": "router-759-next-namespaces-retry-node.log",
+          "bytes": 17101,
+          "sha256": "d3fd9c2f09895831587f3954a0beb6b6349a739ba37a14e3643eeec9d2027dae"
+        },
+        {
+          "path": "router-759-root-next-literal-pattern-bun-final.log",
+          "bytes": 11235,
+          "sha256": "ab3366f42b593b11f5d013ecdf36fad5799ea9795ef463d25ee8d1b234142bf0"
+        },
+        {
+          "path": "router-759-root-next-literal-pattern-node-final.log",
+          "bytes": 23417,
+          "sha256": "91d7f1404d32c5c45869cee29ce5220ae0bc8481bdd9f8702af6ae6affa321dc"
+        },
+        {
+          "path": "router-759-root-next-literal-pattern-node-initial.log",
+          "bytes": 2010,
+          "sha256": "7bd9be3fb4a6e43cb90394aa44f670bc0bd006d2f664f3554f6b06e458b9a9e6"
+        },
+        {
+          "path": "router-759-root-next-literal-pattern-receipt.json",
+          "bytes": 1525,
+          "sha256": "cabd159b8bd0c41f9ea06d1af539391037aaf7afd8e4cdf1f9ae1460d2581225"
+        },
+        {
+          "path": "router-759-source-links-bun-initial.log",
+          "bytes": 1749,
+          "sha256": "21b2041292fd049503cf77315c57529bdd1da91206ea24e0d4b9a1558ed9171a"
+        },
+        {
+          "path": "router-759-source-links-node-initial.log",
+          "bytes": 3598,
+          "sha256": "f284d629fca6073ca9f203c310838abec7ddc486c28207f0b579eb0da905d735"
+        }
+      ],
+      "status": "Final related eight-file scope passed57/57 in Node and Bun; preceding failures retained. No successful cycle-six producer or publication yet.",
+      "reviewedSourceHead": "195ccce1c",
+      "archivedAtUtc": "2026-10-11T14:02:42.481169+00:00"
     }
   ],
-  "totalStoredPackBytes": 11222556,
-  "totalMembers": 5112
+  "totalStoredPackBytes": 11263703,
+  "totalMembers": 5148
 }

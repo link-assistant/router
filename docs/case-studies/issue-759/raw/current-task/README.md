@@ -1,6 +1,6 @@
 # Current task verification evidence
 
-This supplement preserves the exact completed CI collections for Router draft PR #761 cycles 1–5, plus retained local producer and full-stage stdout/stderr receipts. It adds evidence to the dated historical collection; it does not overwrite its population, closure counts, or unknown measurements. Cycle six is still being implemented and is not included as completed evidence.
+This supplement preserves the exact completed CI collections for Router draft PR #761 cycles 1–5, plus retained local producer and full-stage stdout/stderr receipts. It adds evidence to the dated historical collection; it does not overwrite its population, closure counts, or unknown measurements. Cycle six remains unpublished. Its separate source-cohort pack retains the final 57/57 Node and Bun focused checks and earlier failures; bulk producer/full-stage verification are still pending.
 
 | Publication cycle | Exact published head | Terminal workflows | Successful / failed / skipped jobs | Runs with unexpected failure evidence |
 | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@ All five collections contain all 10 terminal workflows and 122 jobs for their ex
 
 [index.json](index.json) lists every pack member, original byte length, SHA256, published head, original final report, and log-object mapping. Each cycle retains its original `logs-manifest.json`, run/job inventories, failed-job annotations and compressed content-addressed log objects. All 4,900 log references were decoded and matched to their recorded SHA256 and length during archival. The local pack includes unsuccessful producers and stale-output verification as well as the successful cycle-five producer and full-stage receipts; failed runs are not replaced by later green checks.
 
-Six deterministic content-addressed tar/gzip packs store 5,112 original files using 11,222,556 bytes. Each pack was reopened and every member matched to its index SHA256 without writing extracted copies. The whole case-study file allocation after this supplement is 477,257,728 bytes, below the 500,000,000-byte cap. These are observations at archival time, not a promise that future additions will fit. Packs keep existing gzip objects intact and avoid thousands of additional filesystem allocations.
+Seven deterministic content-addressed tar/gzip packs store 5,148 original files using 11,263,703 bytes. Each pack was reopened and every member matched to its index SHA256 without writing extracted copies. The whole case-study file allocation after this supplement is 477,310,976 bytes, below the 500,000,000-byte cap. These are observations at archival time, not a promise that future additions will fit. Packs keep existing gzip objects intact and avoid thousands of additional filesystem allocations.
 
 To inspect a pack, first verify its file SHA256 against `index.json`, then use `tar -tzf <pack>` or extract only the required member into a task-owned temporary directory. Paths are relative and no symlinks are stored. The per-cycle original log manifest maps a GitHub job log's virtual ZIP path to its compressed object member.
 
