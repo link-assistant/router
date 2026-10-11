@@ -1,0 +1,161 @@
+{
+  "schema": "locked-json-macro-source-candidate-v1",
+  "rust": "1.89.0",
+  "edition": "2024",
+  "manifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "packages": [
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "archive": "serde_json-1.0.151.crate",
+      "bytes": 156556,
+      "sha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+      "url": "https://static.crates.io/crates/serde_json/serde_json-1.0.151.crate",
+      "members": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 3118,
+          "sha256": "00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 14369,
+          "sha256": "34a1ddabdcf4759d9a6c64a2e851372546d635d1a578ad902d962fef3c45de58"
+        },
+        {
+          "path": "src/macros.rs",
+          "bytes": 10361,
+          "sha256": "94dda91c847e819a95e64d655eb066dfa44ed69712064016c3fe862c34ef92e6"
+        },
+        {
+          "path": "src/value/mod.rs",
+          "bytes": 30963,
+          "sha256": "6331d59ea362a74b6cd3d302d08114a63a73a384ff56fef737de29edea2f8d91"
+        },
+        {
+          "path": "src/value/ser.rs",
+          "bytes": 28223,
+          "sha256": "11f2b7daa1eba826d4086d5497f73729478dd7647bff77deccde5e47b0f126f2"
+        },
+        {
+          "path": "src/value/from.rs",
+          "bytes": 6357,
+          "sha256": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613"
+        },
+        {
+          "path": "src/map.rs",
+          "bytes": 35057,
+          "sha256": "b5a2fd1ee865e6cfd83ef2da0a2e1057f892465ac7ede8a78a11354a60526f33"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "path": "LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        }
+      ]
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "archive": "serde_core-1.0.229.crate",
+      "bytes": 63100,
+      "sha256": "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48",
+      "url": "https://static.crates.io/crates/serde_core/serde_core-1.0.229.crate",
+      "members": [
+        {
+          "path": "Cargo.toml",
+          "bytes": 1950,
+          "sha256": "c6049e170e4f7c2b48749fefab59db583bfac4e466cde6d0c53e4f49bc5044f7"
+        },
+        {
+          "path": "src/lib.rs",
+          "bytes": 4351,
+          "sha256": "4e5c396d38ff5d9abf45b826a67ec3444654ed0802d057f46400ebe26f5879f8"
+        },
+        {
+          "path": "src/ser/mod.rs",
+          "bytes": 65231,
+          "sha256": "ec097d92c8545356961e977a4c9650361cadd1d3a243d805ae7b0e0e589ae803"
+        },
+        {
+          "path": "src/ser/impls.rs",
+          "bytes": 29535,
+          "sha256": "5ee7efc439345e8665da0bd79bc06c02a0506e5fd0f3a4cf11af0c7197eaa643"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "path": "LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        }
+      ]
+    }
+  ],
+  "directDependency": {
+    "name": "serde_json",
+    "version": "1.0",
+    "defaultFeatures": true,
+    "features": []
+  },
+  "sourceFeatureExpansion": {
+    "serde_jsonDefault": [
+      "std"
+    ],
+    "serde_jsonStd": [
+      "memchr/std",
+      "serde_core/std"
+    ]
+  },
+  "unifiedFeatureClosureVerified": false,
+  "conditionedRuntimeProfile": {
+    "enabled": [
+      "std"
+    ],
+    "disabled": [
+      "preserve_order",
+      "arbitrary_precision",
+      "float_roundtrip"
+    ]
+  },
+  "inputSubset": [
+    "literal null/bool/string",
+    "unique literal-string object keys",
+    "JSON arrays of supported elements",
+    "checked i64/u64 scalar expressions",
+    "actual borrowed str expressions",
+    "canonical immutable serde_json::Value expressions with separately checked serialization obligations"
+  ],
+  "unsupported": [
+    "custom Serialize/Into/traits",
+    "nonliteral or duplicate object keys",
+    "scalar float/char/u128/usize coercions",
+    "unproved effectful interpolation",
+    "unknown macro binding or cfg/procedural scope",
+    "unified feature profile not established",
+    "unqualified generated Into<String> method owner not established"
+  ],
+  "outstandingOwnerObligations": [
+    "per-call resolved serde_json::json bang owner and import aliases",
+    "json_internal $crate nested calls and generated Value/Map owner closure",
+    "mixed-site unqualified key .into() trait lookup and alloc String From<&str>",
+    "full transitive Cargo feature selection for default Map ordering",
+    "bounded checked expression lowering including nonlocal ? flow",
+    "canonical Value Serialize branch closure and reference forwarding"
+  ],
+  "sourceInputsVerified": false,
+  "namespaceAuthority": false,
+  "expansionAuthority": false,
+  "runtimeParity": false,
+  "generatedTraitBehavior": false,
+  "rustExecution": false
+}

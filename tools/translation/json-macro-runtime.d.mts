@@ -1,0 +1,12 @@
+export type JsonNumber = Readonly<{$:'PosInt'|'NegInt';field0:bigint}> | Readonly<{$:'Float';field0:number}>;
+export type JsonMapEntry = Readonly<{$:'MapEntry';key:string;value:JsonValue}>;
+export type JsonValue = Readonly<{$:'Null'}> | Readonly<{$:'Bool';field0:boolean}> | Readonly<{$:'String';field0:string}> | Readonly<{$:'Number';field0:JsonNumber}> | Readonly<{$:'Array';field0:readonly JsonValue[]}> | Readonly<{$:'Object';field0:Readonly<{$:'Map';entries:readonly JsonMapEntry[]}>}>;
+export const JSON_MACRO_RUNTIME_AUTHORITY: Readonly<{namespaceAuthority:false;expansionAuthority:false;runtimeParity:false;generatedTraitBehavior:false}>;
+export function json_macro_null(): JsonValue;
+export function json_macro_bool(value: boolean): JsonValue;
+export function json_macro_string(value: string): JsonValue;
+export function json_macro_i64(value: bigint): JsonValue;
+export function json_macro_u64(value: bigint): JsonValue;
+export function json_macro_value(value: JsonValue): JsonValue;
+export function json_macro_array(values: readonly JsonValue[]): JsonValue;
+export function json_macro_object(entries: readonly (readonly [string,JsonValue])[]): JsonValue;
