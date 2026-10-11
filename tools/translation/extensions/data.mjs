@@ -106,7 +106,17 @@ export class DataRustParser extends ControlRustParser {
           fields.push({ ...this.fieldType(), rustAttributes: fieldAttributes }); if (!c.eat(',')) break;
         }
         c.expect(')', 'variant');
-      } else if (c.is('{')) throw unsupported('struct variant', 'named variants require separate construction and pattern lowering', span(variant, c.peek()));
+      } else if (c.eat('{')) {
+        ctorStyle = 'named';
+        while (!c.is('}')) {
+          const fieldAttributes = this.attributes(), field = c.identifier('variant field');
+          if (fields.some(entry => entry.name === field.value)) throw typeError(`duplicate variant field ${field.value}`, field);
+          c.expect(':', 'variant field');
+          fields.push({ name: field.value, ...this.fieldType(), rustAttributes: fieldAttributes });
+          if (!c.eat(',')) break;
+        }
+        c.expect('}', 'variant');
+      }
       else if (c.is('=')) throw unsupported('explicit discriminant', 'discriminant values require a separately checked capability', span(variant, c.peek()));
       ctors.push({ name: variant.value, fields, ctorStyle, rustAttributes: attributes }); if (!c.eat(',')) break;
     }
@@ -158,6 +168,23 @@ export class DataRustParser extends ControlRustParser {
 }
 
 export class DataChecker extends ControlChecker {
+  program(surface) {
+    this.generatedConstructorHeads = new WeakSet();
+    const visit = items => { for (const item of items) {
+      if (item.k === 'module') visit(item.items);
+      if (item.generated === 'router-data-constructor' && item.body?.k === 'app') this.generatedConstructorHeads.add(item.body.fn);
+    } }; visit(surface.items);
+    return super.program(surface);
+  }
+
+  application(head, args, env, path, expected, range) {
+    const owner = head.k === 'name' ? this.lookup(head.path, path, range) : null;
+    const entry = owner?.k === 'ctor' ? this.items.get(owner.data) : owner;
+    const ctor = owner?.k === 'ctor' ? entry?.ctors.find(ctor => ctor.name === owner.name) : entry?.record && entry.ctors.length === 1 ? entry.ctors[0] : null;
+    if (ctor?.ctorStyle === 'named' && !this.generatedConstructorHeads.has(head)) throw typeError('named source constructors require a record expression', range);
+    return super.application(head, args, env, path, expected, range);
+  }
+
   walk(items, path, visit) {
     for (const item of items) {
       if (item.k === 'module') { this.walk(item.items, [...path, item.name], visit); continue; }
@@ -176,9 +203,10 @@ export class DataChecker extends ControlChecker {
   expr(node, env, path, expected, allowLiteral = false) {
     env = this.contextEnvironment(node, env, expected);
     if (node.k === 'routerRecord') {
-      const entry = this.lookup(node.path, path, node.span);
-      if (!entry || entry.k !== 'data' || !entry.record || entry.ctors.length !== 1) throw typeError(`unknown record layout ${node.path.join('::')}`, node.span);
-      const ctor = entry.ctors[0];
+      const owner = this.lookup(node.path, path, node.span);
+      const entry = owner?.k === 'ctor' ? this.items.get(owner.data) : owner;
+      const ctor = owner?.k === 'ctor' ? entry?.ctors.find(ctor => ctor.name === owner.name) : entry?.record && entry.ctors.length === 1 ? entry.ctors[0] : null;
+      if (entry?.k !== 'data' || !ctor || !['named', 'unit'].includes(ctor.ctorStyle)) throw typeError(`record construction requires an actual source record or variant ${node.path.join('::')}`, node.span);
       if (node.fields.length !== ctor.fields.length || node.fields.some(field => !ctor.fields.some(declared => declared.name === field.name))) throw typeError(`record ${entry.name} has missing or unexpected fields`, node.span);
       const bindings = node.fields.map(field => {
         const declared = ctor.fields.find(candidate => candidate.name === field.name);
@@ -206,7 +234,7 @@ export class DataChecker extends ControlChecker {
 
 export class DataEmitter extends ControlEmitter {
   ctorObject(entry, ctor, args) {
-    if (!entry.record) return super.ctorObject(entry, ctor, args);
+    if (!entry.record && ctor.ctorStyle !== 'named') return super.ctorObject(entry, ctor, args);
     return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${ctor.fields.map((field, index) => `, [${JSON.stringify(field.name)}]: ${args[index]}`).join('')} })`;
   }
 

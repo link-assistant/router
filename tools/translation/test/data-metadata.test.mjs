@@ -88,6 +88,9 @@ test('Default is confined to item data layout and unknown field attributes stay 
   for(const source of ['#[derive(Default)] fn bad() {} fn main() {}','struct Record { #[derive(Default)] value: u8 } fn main() {}','#![derive(Default)] struct Record; fn main() {}','struct Record { #[serde(default)] value: u8 } fn main() {}','enum Choice { #[default] A } fn main() {}'])assert.throws(()=>parseRust(source),error=>error.kind==='unsupported');
 });
 
-test('named enum variants and explicit discriminants await separate semantic lowering',()=>{
-  for(const source of ['enum Choice { A { value: u8 } } fn main() {}','enum Choice { A = 1 } fn main() {}'])assert.throws(()=>parseRust(source),error=>error.kind==='unsupported');
+test('named enum variants retain actual field syntax and explicit discriminants remain refused',()=>{
+  const checked=checkProgram(parseRust('enum Choice { A { #[allow(unused)] value: u8 } } fn main() {}'));
+  const ctor=checked.declarations.get('Choice').ctors[0];
+  assert.equal(ctor.ctorStyle,'named');assert.deepEqual(ctor.fields[0].rustTypeSyntax,['u8']);assert.equal(ctor.fields[0].rustAttributes[0].name,'allow');
+  assert.throws(()=>parseRust('enum Choice { A = 1 } fn main() {}'),error=>error.kind==='unsupported');
 });
