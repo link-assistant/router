@@ -8,3 +8,7 @@ The draft includes runtime, JavaScript/strict-TypeScript and whole-original-file
 fixtures for four Router predicates. These checks are unrun and no emitted-body
 recovery, complete namespace closure or full Router parity is claimed. Publisher
 integration requires the coordinated focused checks and combined gate.
+
+Add an unrun slice inherent-priority regression against a visible false-returning
+by-value trait method, plus actual source module-scope snapshot assertions for
+Vec/fixed-array receiver adjustments. Keep all prior trait/refusal boundaries.

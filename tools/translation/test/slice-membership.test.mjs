@@ -32,8 +32,22 @@ test('source profile verifies exact pinned sources and distinguishes array owner
 });
 
 test('actual slice Vec fixed-array and shared-needle membership executes both targets without substring coercion',async()=>{
-  const result=project('pub fn slice(v:&[&str],n:&str)->bool{v.contains(&n)} pub fn owned_vec(v:Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn borrowed_vec(v:&Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn fixed(v:[&str;2],n:&str)->bool{v.contains(&n)} pub fn borrowed_fixed(v:&[&str;2],n:&str)->bool{v.contains(&n)} pub fn shared_needle(v:&[&str],n:&&str)->bool{v.contains(n)} pub fn temporary(v:&[&str],n:&str)->bool{v.contains(&n.to_ascii_lowercase().as_str())} pub fn substring(v:&str,n:&str)->bool{v.contains(n)}');
+  const source='pub fn slice(v:&[&str],n:&str)->bool{v.contains(&n)} pub fn owned_vec(v:Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn borrowed_vec(v:&Vec<&str>,n:&str)->bool{v.contains(&n)} pub fn fixed(v:[&str;2],n:&str)->bool{v.contains(&n)} pub fn borrowed_fixed(v:&[&str;2],n:&str)->bool{v.contains(&n)} pub fn shared_needle(v:&[&str],n:&&str)->bool{v.contains(n)} pub fn temporary(v:&[&str],n:&str)->bool{v.contains(&n.to_ascii_lowercase().as_str())} pub fn substring(v:&str,n:&str)->bool{v.contains(n)}';
+  const result=project(source);
   assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.runtimeParity,false);
+  const scope=result.sourceScopes.find(entry=>entry.scope.file==='src/lib.rs').scope;
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
+  const memberships=[];
+  const collect=value=>{if(!value||typeof value!=='object')return;if(value.k==='routerSliceContains')memberships.push(value);for(const [key,child]of Object.entries(value))if(!['type','membershipProof'].includes(key))Array.isArray(child)?child.forEach(collect):collect(child);};
+  for(const entry of checked.declarations.values())if(entry.k==='fn')collect(entry.body);
+  const adjusted=memberships.filter(value=>value.membershipProof.receiver.kind!=='slice');assert.equal(adjusted.length,4);
+  for(const {membershipProof:{sourceMethodScope}}of adjusted){
+    assert.equal(sourceMethodScope.source,'src/lib.rs');assert.deepEqual(sourceMethodScope.module,scope.path);
+    assert.equal(sourceMethodScope.unresolvedTypeScope,false);assert.equal(sourceMethodScope.unresolvedAttributeMacroScope,false);
+    assert.deepEqual(sourceMethodScope.bindings.map(binding=>[binding.name,binding.namespace,binding.kind,binding.status,binding.target]),scope.bindings.map(binding=>[binding.name,binding.namespace,binding.kind,binding.status,binding.target]));
+    assert.ok(sourceMethodScope.bindings.every(binding=>binding.namespace==='value'&&binding.kind==='fn'&&binding.status==='resolved'));
+    for(const binding of sourceMethodScope.bindings)assert.match(source.slice(binding.sourceSpan.start,binding.sourceSpan.end),new RegExp('pub fn '+binding.name+'\\('));
+  }
   await verifyTypedTargets(result,api=>{
     for(const name of ['slice','owned_vec','borrowed_vec','fixed','borrowed_fixed','shared_needle']){
       assert.equal(api[name](Object.freeze(['é','🦀']),'🦀'),true);assert.equal(api[name](Object.freeze(['é','🦀']),'é'),false);
@@ -45,6 +59,21 @@ test('actual slice Vec fixed-array and shared-needle membership executes both ta
     const proxy=new Proxy(['x'],{get(){reads++;throw new Error('proxy must not run');},getPrototypeOf(){reads++;throw new Error('proxy must not run');}});
     for(const name of ['slice','owned_vec','borrowed_vec','fixed','borrowed_fixed','shared_needle'])for(const value of [getter,proxy])assert.throws(()=>api[name](value,'x'),TypeError);
     assert.equal(reads,0);
+  });
+});
+
+test('slice inherent membership wins over a same-candidate by-value trait method',async()=>{
+  const source='trait PretendContains{fn contains(self,n:&&str)->bool;} impl PretendContains for &[&str]{fn contains(self,n:&&str)->bool{false}} pub fn inherent(v:&[&str],n:&str)->bool{v.contains(&n)}';
+  const result=project(source);
+  assert.ok(result.meta.executable.some(entry=>entry.name==='inherent'&&entry.term==='fn'));
+  assert.ok(result.meta.refused.length,'the fixture trait body is not promoted to a standard implementation');
+  assert.equal(result.meta.runtimeParity,false);
+  const scope=result.sourceScopes.find(entry=>entry.scope.file==='src/lib.rs').scope;
+  assert.ok(scope.bindings.some(binding=>binding.namespace==='type'&&binding.kind==='trait'&&binding.name==='PretendContains'));
+  await verifyTypedTargets(result,api=>{
+    assert.equal(api.inherent(Object.freeze(['present']),'present'),true,'slice inherent contains must win over the visible false-returning trait');
+    assert.equal(api.inherent(Object.freeze(['present']),'absent'),false);
+    assert.equal(api.inherent(Object.freeze([]),'present'),false);
   });
 });
 

@@ -42,7 +42,7 @@
   ],
   "compressedSourceBytes": 95996,
   "originalSourceBytes": 495489,
-  "plannedTestCases": 8,
+  "plannedTestCases": 9,
   "plannedOriginalWholeFiles": 3,
   "plannedOriginalFunctions": 4,
   "plannedOriginalLiteralOutcomesPerTarget": 55,
@@ -62,5 +62,6 @@
       "bytes": 9723,
       "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
     }
-  ]
+  ],
+  "pendingReceiverLookupRegression": "A same-candidate by-value trait on &[&str] returns false; emitted inherent slice membership must return true for a present element. Trait body remains carried. Vec/fixed-array trait refusals remain."
 }
