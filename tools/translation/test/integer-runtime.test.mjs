@@ -14,6 +14,10 @@ test('integer instantiations register actual typed errors and collision-free Res
   assert.equal(program.declarations.get('std.num.ParseIntError').ctors[0].fields[0].type.name,'std.num.IntErrorKind');
   assert.equal(factory.contracts[0].constEligible,false);assert.equal(factory.contracts[2].constEligible,true);
   const repeated=integerContracts(fixed(64),program.declarations);assert.equal(repeated.data.length,0);
+  const result=program.declarations.get(factory.ret.path[0]);
+  assert.deepEqual(result.standardGeneric,{kind:'Result',arguments:[factory.type,INTEGER_TYPES.error]});
+  const unproven=new Map(program.declarations);unproven.set(factory.ret.path[0],{...result,standardGeneric:undefined});
+  assert.throws(()=>integerContracts(fixed(64),unproven),/Conflicting checked integer Result provenance/);
   const signed=integerContracts(fixed(64,true),program.declarations);assert.notEqual(signed.ret.path[0],factory.ret.path[0]);assert.equal(signed.data.length,1);
   for(const input of ['18446744073709551615','18446744073709551616','+',''])assert.equal(validateRustValue(createIntegerRuntime(factory.type).rust_integer_parse(input),factory.ret,schema),true);
   assert.equal(validateRustValue({$:'ParseIntError',kind:{$:'Zero'}},INTEGER_TYPES.error,schema),true);

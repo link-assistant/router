@@ -3,7 +3,7 @@ import {BOOL,STRING,UNIT,FLOAT,fixed,array} from '../vendor/meta-language/transl
 import {monomorphicTypeName} from '../monomorphic.mjs';
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};
 const field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
-const declaration=(name,ctors)=>({k:'data',name,ctors,span,generated:'router-json-contract'});
+const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-json-contract',...(standardGeneric?{standardGeneric}:{})});
 function freeze(value){if(value && typeof value === 'object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;}
 export const JSON_TYPES=freeze({value:named('serde_json','Value'),number:named('serde_json','Number'),map:named('serde_json','Map_String_Value'),entry:named('serde_json','MapEntry'),error:named('serde_json','Error'),category:named('serde_json','error','Category')});
 const {value:VALUE,number:NUMBER,map:MAP,entry:ENTRY,error:ERROR,category:CATEGORY}=JSON_TYPES;
@@ -21,8 +21,8 @@ export const JSON_DATA=freeze([
     declaration('Error',[{name:'JsonError',fields:[field('category',CATEGORY),field('line',U64),field('column',U64),field('message',STRING)]}]),
     {k:'module',name:'error',span,generated:'router-json-contract',items:[declaration('Category',['Io','Syntax','Data','Eof'].map(name=>ctor(name)))]},
   ]},
-  ...optionTypes.map(type=>declaration(monomorphicTypeName('Option',[type]),[ctor('None'),ctor('Some',type)])),
-  ...resultTypes.map(type=>declaration(monomorphicTypeName('Result',[type,ERROR]),[ctor('Ok',type),ctor('Err',ERROR)])),
+  ...optionTypes.map(type=>declaration(monomorphicTypeName('Option',[type]),[ctor('None'),ctor('Some',type)],{kind:'Option',arguments:[type]})),
+  ...resultTypes.map(type=>declaration(monomorphicTypeName('Result',[type,ERROR]),[ctor('Ok',type),ctor('Err',ERROR)],{kind:'Result',arguments:[type,ERROR]})),
 ]);
 const assumptions=[
   'Registered overloads instantiate serde_json::Value only; arbitrary Deserialize/Serialize derives require separately checked layouts.',

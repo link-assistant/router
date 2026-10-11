@@ -30,9 +30,9 @@ export function vectorContracts(elementType,declarations,{span={start:0,end:0}}=
   const optionName=monomorphicTypeName('Option',[element]),option={kind:'named',path:[optionName]};
   const ctors=[{name:'None',fields:[]},{name:'Some',fields:[{name:'field0',type:element}]}];
   const existing=schema.types[optionName];
-  if(declarations.has(optionName) && !existing)throw new TypeError(`Conflicting checked Option declaration: ${optionName}`);
+  if(declarations.has(optionName) && (!existing || declarations.get(optionName).standardGeneric?.kind !== 'Option'))throw new TypeError(`Conflicting checked Option provenance: ${optionName}`);
   if(existing && JSON.stringify(existing.ctors) !== JSON.stringify(ctors))throw new TypeError(`Conflicting checked Option layout: ${optionName}`);
-  const data=existing?[]:[{k:'data',name:optionName,ctors,span,generated:'router-vector-contract'}];
+  const data=existing?[]:[{k:'data',name:optionName,ctors,span,generated:'router-vector-contract',standardGeneric:{kind:'Option',arguments:[element]}}];
   const contracts=['get','first','last'].map(method=>({
     id:`rust_vec_${method}_${encodeMonomorphicType(element)}`,jsExport:`rust_vec_${method}`,
     rustPath:['std','vec','Vec',method],rustAliases:[['std','primitive','slice',method]],

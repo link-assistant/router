@@ -6,7 +6,7 @@ const freeze=value=>{if(value && typeof value === 'object'){for(const item of Ob
 export const INTEGER_TYPES=freeze({error:named('std','num','ParseIntError'),kind:named('std','num','IntErrorKind')});
 const kindCtors=['Empty','InvalidDigit','PosOverflow','NegOverflow','Zero'].map(name=>({name,fields:[]}));
 const errorCtors=[{name:'ParseIntError',fields:[{name:'kind',type:INTEGER_TYPES.kind}]}];
-const declaration=(name,ctors)=>({k:'data',name,ctors,span,generated:'router-integer-contract'});
+const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-integer-contract',...(standardGeneric?{standardGeneric}:{})});
 export const INTEGER_DATA=freeze([{k:'module',name:'std',span,items:[{k:'module',name:'num',span,items:[declaration('IntErrorKind',kindCtors),declaration('ParseIntError',errorCtors)]}]}]);
 export const INTEGER_ERROR_CONTRACTS=freeze([
   {id:'std_num_parse_int_error_kind',jsExport:'std_num_parse_int_error_kind',rustPath:['std','num','ParseIntError','kind'],kind:'method',receiver:INTEGER_TYPES.error,params:[INTEGER_TYPES.error],ret:INTEGER_TYPES.kind,async:false,pure:true,constEligible:true,constSince:'1.82.0',borrow:{receiver:'shared',result:'shared-field'}},
@@ -35,9 +35,9 @@ export function integerContracts(type,declarations=new Map()) {
   const ctors=[{name:'Ok',fields:[{name:'field0',type:fixed}]},{name:'Err',fields:[{name:'field0',type:{kind:'data',name:'std.num.ParseIntError'}}]}];
   const existing=schema.types[name];
   if(existing && JSON.stringify(existing.ctors) !== JSON.stringify(ctors))throw new TypeError(`Conflicting checked integer Result layout: ${name}`);
-  if(declarations.has(name) && !existing)throw new TypeError(`Conflicting checked integer Result declaration: ${name}`);
+  if(declarations.has(name) && (!existing || declarations.get(name).standardGeneric?.kind !== 'Result'))throw new TypeError(`Conflicting checked integer Result provenance: ${name}`);
   const data=missing.length?[{k:'module',name:'std',span,items:[{k:'module',name:'num',span,items:missing}]}]:[];
-  if(!existing)data.push(declaration(name,ctors));
+  if(!existing)data.push(declaration(name,ctors,{kind:'Result',arguments:[fixed,INTEGER_TYPES.error]}));
   const owner=`${fixed.signed?'i':'u'}${fixed.bits}`,encoding=encodeMonomorphicType(fixed),STRING={kind:'string'};
   const aliases=method=>[['std','primitive',owner,method],...(fixed.bits === 64?[[fixed.signed?'isize':'usize',method],['std','primitive',fixed.signed?'isize':'usize',method]]:[])];
   const base={ret,async:false,pure:true,instantiation:fixed,runtimeInstantiation:{factory:'createIntegerRuntime',type:fixed},assumptions};

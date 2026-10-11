@@ -3,7 +3,7 @@ import {BOOL,STRING,FLOAT,fixed} from '../vendor/meta-language/translation/types
 import {monomorphicTypeName} from '../monomorphic.mjs';
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};
 function freeze(value){if(value && typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
-const declaration=(name,ctors)=>({k:'data',name,ctors,span,generated:'router-time-contract'}),field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
+const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-time-contract',...(standardGeneric?{standardGeneric}:{})}),field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
 export const TIME_TYPES=freeze({duration:named('std','time','Duration'),floatError:named('std','time','TryFromFloatSecsError'),floatErrorKind:named('std','time','TryFromFloatSecsErrorKind')});
 const {duration:DURATION,floatError:FLOAT_ERROR,floatErrorKind:FLOAT_ERROR_KIND}=TIME_TYPES,U64=fixed(64,false),U32=fixed(32,false),U128=fixed(128,false);
 const option=named(monomorphicTypeName('Option',[DURATION])),result=named(monomorphicTypeName('Result',[DURATION,FLOAT_ERROR]));
@@ -13,8 +13,8 @@ export const TIME_DATA=freeze([
     declaration('TryFromFloatSecsError',[{name:'TryFromFloatSecsError',fields:[field('kind',FLOAT_ERROR_KIND)]}]),
     declaration('TryFromFloatSecsErrorKind',[ctor('Negative'),ctor('OverflowOrNan')]),
   ]}]},
-  declaration(monomorphicTypeName('Option',[DURATION]),[ctor('None'),ctor('Some',DURATION)]),
-  declaration(monomorphicTypeName('Result',[DURATION,FLOAT_ERROR]),[ctor('Ok',DURATION),ctor('Err',FLOAT_ERROR)]),
+  declaration(monomorphicTypeName('Option',[DURATION]),[ctor('None'),ctor('Some',DURATION)],{kind:'Option',arguments:[DURATION]}),
+  declaration(monomorphicTypeName('Result',[DURATION,FLOAT_ERROR]),[ctor('Ok',DURATION),ctor('Err',FLOAT_ERROR)],{kind:'Result',arguments:[DURATION,FLOAT_ERROR]}),
 ]);
 const assumptions=[
   'Pinned pure semantic profile: Rust 1.89.0 core/time.rs, stable functions only; clocks and Tokio sleep require separate checked effects.',

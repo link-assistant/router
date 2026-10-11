@@ -23,6 +23,10 @@ test('generic readers resolve actual primitive, nested and recursive Option layo
   const fresh=vectorContracts({kind:'array',element:fixed()},new Map());
   const declaration=check(structuredClone(fresh.data)).declarations.get(fresh.option.path[0]);
   assert.equal(declaration.ctors[1].fields[0].type.kind,'array');
+  assert.deepEqual(declaration.standardGeneric,{kind:'Option',arguments:[fresh.element]});
+  const unproven=new Map([[fresh.option.path[0],{...declaration,standardGeneric:undefined}]]);
+  assert.throws(()=>vectorContracts({kind:'array',element:fixed()},unproven),/Conflicting checked Option provenance/);
+  assert.equal(vectorContracts({kind:'array',element:fixed()},new Map([[fresh.option.path[0],declaration]])).data.length,0);
   assert.notEqual(fresh.option.path[0],vectorContracts(fixed(),new Map()).option.path[0]);
   assert.ok(Object.isFrozen(factory.contracts[0].params));
   const conflicted=new Map([[fresh.option.path[0],{k:'data',ctors:[{name:'None',fields:[]}]}]]);
