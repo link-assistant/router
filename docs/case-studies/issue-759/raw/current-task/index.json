@@ -40740,8 +40740,55 @@
       "headSha": "7bfc51aa447c8929f7b88540986b18f50554ef3d",
       "status": "All ten workflows terminal; sixty executable jobs and ten acceptance43 suites pass. Four strict inventories retain442gaps/0errors; six strict jobs externally cancelled at20minutes, remaining unverified. All failures retained, no Rust.",
       "archivedAtUtc": "2026-10-11T18:50:25.423999+00:00"
+    },
+    {
+      "label": "cycle-8-combined-producer",
+      "cycle": 8,
+      "pack": "3bd4799491504a827a5b0938ba2d41327271a96468e9b692c11b93b742351e20.tar.gz",
+      "sha256": "3bd4799491504a827a5b0938ba2d41327271a96468e9b692c11b93b742351e20",
+      "storedBytes": 9492,
+      "members": [
+        {
+          "path": "cycle-8-combined-producer/router-759-census-current.py",
+          "bytes": 4429,
+          "sha256": "72eabf0bf34cc84097b2fcaf453cc3b6d770aaa621a1b2d1cab953e806a1bd78"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-census-d66268f68.json",
+          "bytes": 39362,
+          "sha256": "fc7164911ea09130d31ff68d800757aab551833e02ccf69463ee2e74be573bc6"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-generated-d66268f68-integrity.json",
+          "bytes": 4333,
+          "sha256": "9030ef755f0846aeeef9244bb3f752c8fc1b834cbb2a23928b9e22637620f863"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-generation-d66268f68-time.log",
+          "bytes": 777,
+          "sha256": "e33abe60d3ee7da09ab66a208ae940ff313cb21c33c3a632f2dfe2d77b680486"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-generation-d66268f68.json",
+          "bytes": 773,
+          "sha256": "9e51f4d000acfffe09a2a673113d025695e02951d7f051dfaf581c5665c87ef6"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-generation-d66268f68.log",
+          "bytes": 1072,
+          "sha256": "24cf59977a4ee1bce290603fae5931cc5e4bf412e14f32daffeb9ca625457e12"
+        },
+        {
+          "path": "cycle-8-combined-producer/router-759-verify-current-integrity.py",
+          "bytes": 1878,
+          "sha256": "bb7293f52e01f7087d129015735349a417ceabed1ff93746cfd416c257bf3216"
+        }
+      ],
+      "headSha": "5d4b97cff52013506aabf8680467cb0a00ff2919",
+      "status": "Producer passed; full frozen verification pending; runtime parity false.",
+      "archivedAtUtc": "2026-10-11T19:19:09.408935+00:00"
     }
   ],
-  "totalStoredPackBytes": 17317808,
-  "totalMembers": 7322
+  "totalStoredPackBytes": 17327300,
+  "totalMembers": 7329
 }
