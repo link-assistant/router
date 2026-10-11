@@ -59,7 +59,8 @@ export class HostRustParser extends MethodRustParser {
     const value=super.expressionMacro(token,path);return ['format','vec'].includes(token.value)?{k:'routerConstObligation',value,constEligible:false,sourceFeature:token.value+'!',span:value.span}:value;
   }
   pattern(path,aliases) {
-    const first=this.cursor.peek(),segments=[first.value];let offset=1;while(this.cursor.is('::',offset)&&this.cursor.peek(offset+1).kind==='identifier'){segments.push(this.cursor.peek(offset+1).value);offset+=2;}
+    const first=this.cursor.peek();if(first.kind!=='identifier')return super.pattern(path,aliases);
+    const segments=[first.value];let offset=1;while(this.cursor.is('::',offset)&&this.cursor.peek(offset+1).kind==='identifier'){segments.push(this.cursor.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path);
     if(['Some','None','Ok','Err'].includes(first.value)&&resolved.length===1&&this.unresolvedImportScope)throw unsupported('unproven standard pattern owner','requires actual source namespace resolution',first);
     const pattern=super.pattern(path,aliases),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);

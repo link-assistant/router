@@ -7,6 +7,8 @@ import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
+import {HostRustParser} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function execute(result,assertions){
@@ -51,4 +53,8 @@ test('explicit standard constructor imports and source reexports retain both nam
   const files={'src/lib.rs':'mod bridge; use crate::bridge::{Present,Absent,Success}; pub fn create(value:u8)->Option<u8>{Present(value)} pub fn read(value:Option<u8>)->u8{match value{Present(item)=>item,Absent=>9}} pub fn result(value:u8)->Result<u8,u16>{Success(value)}','src/bridge.rs':'pub use std::option::Option::{Some as Present,None as Absent}; pub use std::result::Result::Ok as Success;'};
   const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});await execute(result,api=>{assert.deepEqual(api.create(4n),some(4n));assert.equal(api.read(some(7n)),7n);assert.equal(api.read(none),9n);assert.deepEqual(api.result(2n),{$:'Ok',field0:2n});});
   const scope=result.meta.bindingEvidence.scopes.find(scope=>scope.file==='src/lib.rs');for(const name of ['Present','Absent','Success'])assert.deepEqual(scope.bindings.filter(binding=>binding.name===name).map(binding=>binding.namespace).sort(),['type','value']);
+});
+
+test('literal pattern text never becomes an unresolved standard constructor name',()=>{
+  for(const value of ['Some','None','Ok','Err']){const parser=new HostRustParser(tokenizeRust(JSON.stringify(value)));parser.unresolvedImportScope=true;const pattern=parser.pattern([],new Map());assert.equal(pattern.k,'strLit');assert.equal(pattern.value,value);}
 });
