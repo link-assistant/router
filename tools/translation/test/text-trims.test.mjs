@@ -5,7 +5,13 @@ import {translateSource,sha256} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {parseRust as parseData,checkProgram as checkData} from '../extensions/data.mjs';
 const none=Object.freeze({$:'None'}),some=value=>Object.freeze({$:'Some',field0:value});
+test('independent Data frontend preserves its existing checked string strip contract',()=>{
+  const program=checkData(parseData('pub fn strip(value:&str)->Option<&str>{value.strip_prefix("/")} fn main(){}'));
+  assert.equal(program.declarations.get('strip').body.k,'routerStrip');
+  assert.equal(program.declarations.get(program.declarations.get('strip').ret.name).standardGeneric.kind,'Option');
+});
 async function translate(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>item.diagnostic)));

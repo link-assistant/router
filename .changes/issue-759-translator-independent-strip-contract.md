@@ -1,0 +1,1 @@
+Preserved the independent Data frontend's existing checked string prefix/suffix contract when the default Host frontend's canonical Option instantiator is absent. The expanded character Pattern contract continues to require its consumed Host capability; no original-source proof or readiness check is weakened.

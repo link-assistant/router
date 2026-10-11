@@ -31,6 +31,10 @@ export class TextRustParser extends FormatRustParser {
   }
   method(object,name,args,span) {
     if(!METHODS.has(name.value))return super.method(object,name,args,span);
+    // The independent Data frontend retains its existing checked string-only
+    // strip contract. The default Host frontend supplies the canonical Option
+    // instantiator needed by this expanded string/character Pattern profile.
+    if(STRIPS.has(name.value)&&typeof this.registeredGenericKind!=='function')return super.method(object,name,args,span);
     if(args.length!==METHODS.get(name.value))throw typeError(`${name.value} expects ${METHODS.get(name.value)} arguments`,span);
     const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:STRING,rustTypeSyntax:['&','str']})),span):null;
     return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),span};
