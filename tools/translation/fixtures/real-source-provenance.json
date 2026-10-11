@@ -224,6 +224,44 @@
       },
       "testSource": null,
       "testName": null
+    },
+    {
+      "id": "output-limiter-constructor",
+      "path": "src/output_limit.rs",
+      "sourceSha256": "b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0",
+      "declarations": [
+        {
+          "name": "CHARS_PER_TOKEN",
+          "term": "const",
+          "start": 1119,
+          "end": 1150,
+          "sha256": "ad2066976cce2e497b4a09c3c19ad7298dbb0d687fb3ed04534b73d3c59651d0"
+        },
+        {
+          "name": "OutputTokenLimiter",
+          "term": "struct",
+          "start": 1201,
+          "end": 1383,
+          "sha256": "a6d1d68e34081491333e82e1d52388dfea8d9dfa11504eb1ea24d63b6a159362"
+        }
+      ],
+      "methodPins": [
+        {
+          "owner": "OutputTokenLimiter",
+          "name": "new",
+          "start": 1490,
+          "end": 1769,
+          "sha256": "dd06c0eceebf1744b4134bd7b45311da31f7560cd1c78eef68e0022a61043d78"
+        }
+      ],
+      "bodyNames": [],
+      "carrier": {
+        "name": "fixture_limiter",
+        "source": "pub fn fixture_limiter(limit: Option<u64>) -> OutputTokenLimiter { OutputTokenLimiter::new(limit) }",
+        "purpose": "One-call test entry only; not a production body or Rust replacement."
+      },
+      "testSource": "src/output_limit_tests.rs",
+      "testName": "limiter_without_a_cap_passes_text_through"
     }
   ],
   "obligations": [
@@ -236,12 +274,12 @@
       "reason": "Value pointer and Option string equality"
     },
     {
-      "id": "timeout-parser",
-      "reason": "Duration import, parse::<u64> method turbofish and closure chaining"
-    },
-    {
       "id": "stream-termination",
       "reason": "Transport FailureKind.of and block_is_terminal remain unresolved (dyn errors/characters/mutable buffers). The independently proven of_in_band production method is recorded separately."
+    },
+    {
+      "id": "output-limiter-streaming",
+      "reason": "Only OutputTokenLimiter.new constructor is proved; mutating push, truncation and stream rewriting remain separate source obligations. Default derives are retained as layout metadata, not executed trait behavior."
     }
   ],
   "executionEvidence": [
@@ -286,6 +324,25 @@
       "role": "new-shared-vector-json",
       "independentCases": 10,
       "domainGuards": 1
+    },
+    {
+      "id": "timeout-parser",
+      "productionBodies": [
+        "parse_timeout_secs",
+        "parse_upstream_read_timeout"
+      ],
+      "role": "new-fixed-integer-option-duration",
+      "independentCases": 16
+    },
+    {
+      "id": "output-limiter-constructor",
+      "productionBodies": [
+        "OutputTokenLimiter.new"
+      ],
+      "role": "new-const-fixed-saturation-method",
+      "fixtureCarriers": 1,
+      "independentCases": 6,
+      "derivedTraitMethodsExecuted": false
     }
   ],
   "verificationMatrix": {

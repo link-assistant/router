@@ -131,3 +131,35 @@ test('actual Claude first-block identity reader uses only the first checked vect
   assert.throws(()=>translated.first_block_is_identity(Object.freeze([{text:identity}])),TypeError);
   }
 });
+
+test('actual timeout parsers preserve zero-disable, fallback and full u64 seconds',async()=>{
+  const {apis}=await checkedModule('timeout-parser');
+  for(const translated of apis){
+  const none=tagged('None'),some=value=>tagged('Some',{field0:value}),duration=seconds=>tagged('Duration',{secs:seconds,nanos:0n});
+  for(const [input,fallback,expected] of [[none,10n,some(duration(10n))],[some('0'),10n,none],[some(' 3 '),10n,some(duration(3n))],[some('\u00853'),10n,some(duration(3n))],[some('\uFEFF3'),10n,some(duration(10n))],[some('not-a-number'),10n,some(duration(10n))],[some('-1'),10n,some(duration(10n))],[some(''),10n,some(duration(10n))],[none,0n,none],[some('9007199254740993'),10n,some(duration(9007199254740993n))],[some('18446744073709551615'),10n,some(duration(18446744073709551615n))],[some('18446744073709551616'),10n,some(duration(10n))]])assert.deepEqual(translated.parse_timeout_secs(input,fallback),expected);
+  assert.equal(translated.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS,120n);
+  assert.deepEqual(translated.parse_upstream_read_timeout(none),some(duration(120n)));
+  assert.deepEqual(translated.parse_upstream_read_timeout(some('30')),some(duration(30n)));
+  assert.deepEqual(translated.parse_upstream_read_timeout(some('0')),none);
+  assert.deepEqual(translated.parse_upstream_read_timeout(some('not-a-number')),some(duration(120n)));
+  }
+});
+
+test('actual output limiter constructor saturates token budgets and preserves uncapped zero distinction',async()=>{
+  const {apis,result}=await checkedModule('output-limiter-constructor');
+  const declarations=new Map(result.meta.checkedSemanticProgram.program.declarations.$map),record=declarations.get('OutputTokenLimiter');
+  assert.ok(record,'original output limiter must have a checked declaration');
+  assert.deepEqual(record.deriveTraits,['Clone','Debug','Default']);
+  assert.equal(record.ctors[0].ctorStyle,'named');
+  assert.deepEqual(record.ctors[0].fields.map(field=>field.name),['remaining','stopped']);
+  assert.deepEqual(record.ctors[0].fields[1].type,{kind:'bool'});
+  const option=declarations.get(record.ctors[0].fields[0].type.name);
+  assert.equal(option.standardGeneric.kind,'Option');
+  assert.deepEqual(option.ctors.find(ctor=>ctor.name==='Some').fields[0].type,{kind:'fixed',signed:false,bits:64,rustPrimitiveName:'u64'});
+  assert.ok(![...declarations.values()].some(entry=>entry.k==='fn'&&entry.name==='default'),'layout evidence must not synthesize a Default implementation');
+  const none=tagged('None'),some=value=>tagged('Some',{field0:value}),limiter=remaining=>tagged('OutputTokenLimiter',{remaining,stopped:false});
+  for(const translated of apis){
+  assert.equal(translated.CHARS_PER_TOKEN,4n);
+  for(const [limit,remaining] of [[none,none],[some(0n),some(0n)],[some(2n),some(8n)],[some(4611686018427387903n),some(18446744073709551612n)],[some(4611686018427387904n),some(18446744073709551615n)],[some(18446744073709551615n),some(18446744073709551615n)]])assert.deepEqual(translated.fixture_limiter(limit),limiter(remaining));
+  }
+});
