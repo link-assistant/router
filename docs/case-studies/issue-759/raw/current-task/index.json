@@ -35586,8 +35586,40 @@
       "headSha": "26a94e8f9bec500c0a15e1fba4896a5b49951695",
       "status": "Focused repair37/37 Node and37/37 Bun passed; fresh bulk generation and complete frozen all-seven verification remain pending.",
       "archivedAtUtc": "2026-10-11T17:29:02.723331+00:00"
+    },
+    {
+      "label": "cycle-7-typed-try-fresh-producer",
+      "cycle": 7,
+      "pack": "fdd5a6edbd947ce1139f4b84d0d07d3634d24b5cae1493e4da50750d7ef7ea59.tar.gz",
+      "sha256": "fdd5a6edbd947ce1139f4b84d0d07d3634d24b5cae1493e4da50750d7ef7ea59",
+      "storedBytes": 1962,
+      "members": [
+        {
+          "path": "cycle-7-typed-try-fresh-producer/router-759-generated-6fb19e06d-integrity.json",
+          "bytes": 4330,
+          "sha256": "c313f40d0ce91a1893f61ed716ef7dd96cab1f466672957320bbff8baa0a4048"
+        },
+        {
+          "path": "cycle-7-typed-try-fresh-producer/router-759-generation-6fb19e06d-time.log",
+          "bytes": 777,
+          "sha256": "752bad0ce77f3cc61edbc169320e3eb168ab0f56a23ed0ebd87480b027729532"
+        },
+        {
+          "path": "cycle-7-typed-try-fresh-producer/router-759-generation-6fb19e06d.json",
+          "bytes": 774,
+          "sha256": "24e5878da078f1ec502c07f5dcc7249adf78d844eba7c83fbff7c52c20bec07e"
+        },
+        {
+          "path": "cycle-7-typed-try-fresh-producer/router-759-generation-6fb19e06d.log",
+          "bytes": 1071,
+          "sha256": "e701dafc1b3a0a443321afd1408991df21c9903f65b34bdfd283d1ef5a3ac709"
+        }
+      ],
+      "headSha": "19a84830a6684cf81f346e515f81d7bce109e013",
+      "status": "Single justified fresh producer passed284.336s;804source/86implementation pins0errors; all-seven verification pending.",
+      "archivedAtUtc": "2026-10-11T17:35:03.773627+00:00"
     }
   ],
-  "totalStoredPackBytes": 14478848,
-  "totalMembers": 6296
+  "totalStoredPackBytes": 14480810,
+  "totalMembers": 6300
 }
