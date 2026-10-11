@@ -52,6 +52,17 @@ async function* normalizedEvents(body, protocol) {
         if (t.function?.arguments) yield { type: 'arguments', index, text: t.function.arguments };
       }
       if (c.finish_reason) { if (!['stop', 'length', 'tool_calls'].includes(c.finish_reason)) throw new ProtocolError(`Cannot translate finish reason ${c.finish_reason}`, 502); finish = c.finish_reason; }
+    } else if (protocol === 'gemini') {
+      const value = p.response ?? p, candidate = value.candidates?.[0];
+      if (!started) {started = true;id = value.responseId;yield {type:'start',id};}
+      if (value.candidates?.length > 1) throw new ProtocolError('Cannot translate multiple Gemini candidates',502);
+      for (const part of candidate?.content?.parts ?? []) {
+        if (part.text !== undefined) {if(part.thought || part.thoughtSignature)throw new ProtocolError('Gemini thought metadata cannot be represented',502);yield {type:'text',text:part.text};}
+        else if (part.functionCall) {const call=part.functionCall,index=tools.size,tool={id:call.id ?? `call_${index}`,name:call.name,index};tools.set(index,tool);yield {type:'tool',...tool};yield {type:'arguments',index,text:JSON.stringify(call.args ?? {})};}
+        else throw new ProtocolError('Gemini output part cannot be represented',502);
+      }
+      if(value.usageMetadata){usage=normalizeUsage(value.usageMetadata,'gemini');yield {type:'usage',usage};}
+      if(candidate?.finishReason){if(!['STOP','MAX_TOKENS'].includes(candidate.finishReason))throw new ProtocolError('Gemini stream reported an unsupported finish reason',502);finish=candidate.finishReason === 'MAX_TOKENS'?'length':tools.size?'tool_calls':'stop';ended=true;}
     } else if (protocol === 'anthropic') {
       if (type === 'message_start') { started = true; id = p.message.id; usage = normalizeUsage(p.message.usage, protocol); yield { type: 'start', id }; yield { type: 'usage', usage }; }
       else if (type === 'content_block_start') {
@@ -100,11 +111,12 @@ export function translateStream(body, source, target, model, { clock = Date.now,
       begun = true; state.id = e.id ?? `native_${Math.floor(now / 1000)}`;
       if (target === 'chat') out += chat({ role: 'assistant', content: '' });
       else if (target === 'anthropic') out += frame({ type: 'message_start', message: { id: state.id, type: 'message', role: 'assistant', model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } }, 'message_start');
-      else { const response = { ...canonicalResponse(state, target, model, now), status: 'in_progress', usage: null }; out += responses('response.created', { response }); out += responses('response.in_progress', { response }); }
+      else if (target !== 'gemini') { const response = { ...canonicalResponse(state, target, model, now), status: 'in_progress', usage: null }; out += responses('response.created', { response }); out += responses('response.in_progress', { response }); }
     }
     if (e.type === 'text') {
       state.text += e.text;
       if (target === 'chat') out += chat({ content: e.text });
+      else if (target === 'gemini') out += frame({candidates:[{index:0,content:{role:'model',parts:[{text:e.text}]}}],modelVersion:model});
       else if (target === 'anthropic') {
         if (activeBlock === undefined) { activeBlock = nextBlock++; out += frame({ type: 'content_block_start', index: activeBlock, content_block: { type: 'text', text: '' } }, 'content_block_start'); }
         out += frame({ type: 'content_block_delta', index: activeBlock, delta: { type: 'text_delta', text: e.text } }, 'content_block_delta');
@@ -117,18 +129,19 @@ export function translateStream(body, source, target, model, { clock = Date.now,
       const record = { index, tool, block: undefined, output_index: outputIndex++ }; toolMap.set(e.index, record);
       if (target === 'chat') out += chat({ tool_calls: [{ index, ...tool }] });
       else if (target === 'anthropic') { out += closeBlock(); record.block = nextBlock++; openToolBlocks.add(record.block); out += frame({ type: 'content_block_start', index: record.block, content_block: { type: 'tool_use', id: tool.id, name: tool.function.name, input: {} } }, 'content_block_start'); }
-      else out += responses('response.output_item.added', { output_index: record.output_index, item: { id: `fc_${tool.id}`, type: 'function_call', status: 'in_progress', call_id: tool.id, name: tool.function.name, arguments: '' } });
+      else if (target !== 'gemini') out += responses('response.output_item.added', { output_index: record.output_index, item: { id: `fc_${tool.id}`, type: 'function_call', status: 'in_progress', call_id: tool.id, name: tool.function.name, arguments: '' } });
     } else if (e.type === 'arguments') {
       const r = toolMap.get(e.index); if (!r) throw new ProtocolError('Tool arguments arrived without a tool call', 502);
       r.tool.function.arguments += e.text;
       if (target === 'chat') out += chat({ tool_calls: [{ index: r.index, function: { arguments: e.text } }] });
       else if (target === 'anthropic') out += frame({ type: 'content_block_delta', index: r.block, delta: { type: 'input_json_delta', partial_json: e.text } }, 'content_block_delta');
-      else out += responses('response.function_call_arguments.delta', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, delta: e.text });
+      else if (target !== 'gemini') out += responses('response.function_call_arguments.delta', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, delta: e.text });
     } else if (e.type === 'usage') state.usage = e.usage;
     else if (e.type === 'finish') {
       state.finish = e.finish; state.usage = e.usage;
       for (const tool of state.tools) { if (!tool.function.arguments) tool.function.arguments = '{}'; try { JSON.parse(tool.function.arguments); } catch { throw new ProtocolError('Upstream streamed invalid tool arguments', 502); } }
       if (target === 'chat') { out += chat({}, state.finish); const u = canonicalResponse(state, 'chat', model, now).usage; out += chat({}, null, u); out += frame('[DONE]'); }
+      else if (target === 'gemini') out += frame(canonicalResponse({...state,text:''},'gemini',model,now));
       else if (target === 'anthropic') { out += closeBlock(); for (const index of openToolBlocks) out += frame({ type: 'content_block_stop', index }, 'content_block_stop'); const message = canonicalResponse(state, 'anthropic', model, now); out += frame({ type: 'message_delta', delta: { stop_reason: message.stop_reason, stop_sequence: message.stop_sequence }, usage: message.usage }, 'message_delta'); out += frame({ type: 'message_stop' }, 'message_stop'); }
       else {
         if (messageItem) { out += responses('response.output_text.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, text: state.text }); const item = { id: messageItem.id, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] }; out += responses('response.content_part.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: item.content[0] }); out += responses('response.output_item.done', { output_index: messageItem.output_index, item }); }
@@ -180,11 +193,13 @@ export function monitorNativeStream(body, protocol, { model, onStart, onComplete
         if (f.data === '[DONE]') terminal = true;
         else {
           let p; try { p = JSON.parse(f.data); } catch { throw new ProtocolError('Malformed upstream SSE JSON', 502); }
+          if (protocol === 'gemini') p = p.response ?? p;
           if (p.error || p.type === 'error' || p.type === 'response.failed') throw new ProtocolError('Upstream stream reported failure', 502);
           if (model) {
             if (p.model) p.model = model;
             if (p.message?.model) p.message.model = model;
             if (p.response?.model) p.response.model = model;
+            if (p.modelVersion) p.modelVersion = model;
             frameData = JSON.stringify(p);
           }
           if (p.usage) {
@@ -193,11 +208,16 @@ export function monitorNativeStream(body, protocol, { model, onStart, onComplete
           }
           if (p.message?.usage) { anthropicUsage = p.message.usage; usage = normalizeUsage(p.message.usage, protocol); }
           if (p.response?.usage) usage = normalizeUsage(p.response.usage, protocol);
+          if (p.usageMetadata) usage = normalizeUsage(p.usageMetadata,'gemini');
           if (p.response?.id) {
             response = p.response;
             if (!started) { started = true; await onStart?.({ ...response, status: 'in_progress', usage: null }); }
           }
           if (p.type === 'message_stop' || ['response.completed', 'response.incomplete'].includes(p.type)) terminal = true;
+          if (protocol === 'gemini' && p.candidates?.some(candidate => candidate.finishReason)) {
+            if (p.candidates.some(candidate => !['STOP','MAX_TOKENS'].includes(candidate.finishReason))) throw new ProtocolError('Gemini stream reported an unsupported finish reason',502);
+            terminal = true;frameData = JSON.stringify(p);
+          }
         }
         if (terminal) await onComplete?.({ usage, response });
         controller.enqueue(encoder.encode(frame(frameData, f.event)));

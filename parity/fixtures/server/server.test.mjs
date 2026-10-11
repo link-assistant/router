@@ -52,8 +52,8 @@ test('authentication, model discovery, administrative mutation and redaction', a
   assert.equal((await router.fetch(new Request('http://router/v1/models'))).status, 401);
   const listed = await router.fetch(new Request('http://router/v1/models', { headers: { authorization: 'Bearer client-secret' } })); assert.equal((await listed.json()).data[0].id, 'alias');
   assert.equal((await router.fetch(request('/api/management/tokens', {}))).status, 401);
-  const token = await router.fetch(request('/api/management/tokens/client', { label: 'cli', scope: 'admin' }, { authorization: 'Bearer admin-secret' })); assert.equal(token.status, 201); assert.equal(issued.scope, '');
-  const providers = await router.fetch(new Request('http://router/api/management/providers', { headers: { authorization: 'Bearer admin-secret' } })); assert.equal((await providers.json()).providers[0].api_key, '[REDACTED]');
+  const token = await router.fetch(request('/api/management/tokens/client', { label: 'cli', client_kind:'claude', scope: 'admin' }, { authorization: 'Bearer admin-secret' })); assert.equal(token.status, 200); assert.equal(issued.scope, '');
+  const providers = await router.fetch(new Request('http://router/api/management/providers', { headers: { authorization: 'Bearer admin-secret' } })); assert.equal((await providers.json()).data[0].api_key, '[REDACTED]');
 });
 test('token admission denial prevents upstream and token usage settles by sub', async () => {
   let called = 0, actual;

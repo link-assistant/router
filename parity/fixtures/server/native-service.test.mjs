@@ -6,8 +6,8 @@ import {NativeAffinityStore,nativeURL,nativeRequestHeaders,nativeResponseHeaders
 import {HTTP_ROUTES,matchHTTPRoute} from '../../../packages/javascript/native/http-route-contract.mjs';
 
 const req = (path,method='GET',body,token='alice',headers={}) => new Request(`http://router${path}`,{method,headers:{authorization:`Bearer ${token}`,...headers},...(body === undefined ? {} : {body:typeof body === 'string' ? body : JSON.stringify(body)})});
-const candidate = {provider:'vendor',account:'primary',protocol:'chat',base_url:'http://localhost:1/v1',api_key:'vendor-secret'};
-const core = (extra={}) => ({config:{},nativeCandidates:async () => [candidate],tokens:{validate:token => ({sub:token,client_kind:'claude-code'})},...extra});
+const candidate = {provider:'vendor',account:'primary',protocol:'chat',provider_kind:'openai-compatible',base_url:'http://localhost:1/v1',api_key:'vendor-secret'};
+const core = (extra={}) => ({config:{},nativeCandidates:async () => [candidate],tokens:{validate:token => ({sub:token,client_kind:'claude',principal_id:token})},...extra});
 test('canonical route matcher accepts declared methods and rejects unlisted vendor operations',() => {
   assert.equal(HTTP_ROUTES.length,368);
   assert.ok(matchHTTPRoute('GET','/api/services/anthropic/v1/skills/s/versions/1/content'));

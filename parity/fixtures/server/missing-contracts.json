@@ -2,18 +2,26 @@
   "source": "src/server_router.rs, src/native_service*.rs, src/gemini/native.rs",
   "status": "partial",
   "missing": [
-    "durable response/native resource affinity",
-    "native byte-transparent resource APIs and filtering",
-    "service client entitlement and paired Codex carrier",
-    "chat completion/conversation upstream lifecycles",
-    "Gemini request/response/SSE including Code Assist envelope",
-    "Bedrock and Vertex routes",
-    "background and previous/conversation response execution",
-    "WebSocket inference and sideband sessions",
-    "HTTPS and self-signed certificate lifecycle",
-    "admin bootstrap/login/emergency-auth/observability",
-    "listener isolation/management middleware",
+    "all canonical routes require independent fixtures before promotion",
+    "native resources: Codex plugin references/privateaccountbindings/remotecontrol/history-notes semantics and list pagination",
+    "conversation item-list creation records and resource deletion cascades",
+    "Gemini thinking, exact image/media/schema alias/error contracts and full provider entitlement matrix",
+    "Bedrock/Vertex exact retry/cooldown/settlement and complete route fixtures",
+    "background/previous response durable capture and stream resume",
+    "WebSocket sideband exact URL rewriting, close/abort/error/subprotocol fixtures and budget settlement edgecases",
+    "listener isolation/management middleware, full CORS and HEAD methods",
+    "admin bootstrap/login/emergency-auth/observability callbacks depend on core services",
     "ActivityPub/GitHub forwarding",
-    "retry/cooldown/settlement malformed and abort contracts"
+    "foreground Responses durable state and disconnect retention semantics"
+  ],
+  "implemented_subsets": [
+    "canonical 368-method route matcher",
+    "opaque vendor byte/header/query/status relay",
+    "bound-client owner and exact destination checks with core affinity interface",
+    "native files/batches/skills/MCP and conversation/chat/background response affinity dispatch",
+    "Gemini strict JSON function/system/generation bridges, six additional SSE directions, Code Assist native route",
+    "native TLS listener and generated self-signed certificates",
+    "native Responses/Realtime WebSocket tunnel, bounded RFC6455 inspection, model/budget checks",
+    "canonical management token/provider wire wrappers and rotation routes"
   ]
 }

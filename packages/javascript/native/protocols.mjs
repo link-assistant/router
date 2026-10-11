@@ -1,4 +1,5 @@
-/** Stateless, fail-closed JSON adapters for the three inference dialects. */
+import {chatToGemini,geminiToChat,geminiCanonical,canonicalGemini} from './gemini-protocol.mjs';
+/** Stateless, fail-closed JSON adapters for inference dialects. */
 export class ProtocolError extends Error {
   constructor(message, status = 400) { super(message); this.status = status; this.code = 'unsupported_translation'; }
 }
@@ -32,6 +33,7 @@ function anthropicParts(content) {
 }
 export function requestToChat(body, source) {
   if (source === 'chat') return copy(body);
+  if (source === 'gemini') return geminiToChat(body);
   const out = { model: body.model, messages: [], stream: body.stream ?? false };
   for (const key of ['temperature', 'top_p', 'parallel_tool_calls']) if (body[key] !== undefined) out[key] = copy(body[key]);
   if (source === 'anthropic') {
@@ -90,6 +92,7 @@ export function translateRequest(body, source, target, model = body.model) {
   if (source === target) return { ...copy(body), model };
   const chat = requestToChat(body, source); chat.model = model;
   if (target === 'chat') return chat;
+  if (target === 'gemini') return chatToGemini(chat);
   if (chat.n && chat.n !== 1) throw new ProtocolError('Only n=1 can be translated');
   for (const key of ['response_format', 'audio', 'modalities', 'logprobs', 'logit_bias', 'frequency_penalty', 'presence_penalty', 'seed', 'reasoning', 'reasoning_effort']) {
     if (chat[key] != null && chat[key] !== false) throw new ProtocolError(`${key} requires a native Chat upstream`);
@@ -145,16 +148,17 @@ export function translateRequest(body, source, target, model = body.model) {
   throw new ProtocolError(`Unsupported upstream protocol ${target}`, 501);
 }
 export function normalizeUsage(usage = {}, protocol = 'chat') {
-  const rawInput = usage.input_tokens ?? usage.prompt_tokens ?? 0;
-  const output = usage.output_tokens ?? usage.completion_tokens ?? 0;
-  const cached = usage.cache_read_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? 0;
+  const rawInput = usage.input_tokens ?? usage.prompt_tokens ?? usage.promptTokenCount ?? 0;
+  const output = usage.output_tokens ?? usage.completion_tokens ?? usage.candidatesTokenCount ?? 0;
+  const cached = usage.cache_read_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? usage.cachedContentTokenCount ?? 0;
   const created = usage.cache_creation_input_tokens ?? 0;
   const input = rawInput + (protocol === 'anthropic' ? cached + created : 0);
-  const normalized = { input, output, cached, created, total: usage.total_tokens ?? input + output };
+  const normalized = { input, output, cached, created, total: usage.total_tokens ?? usage.totalTokenCount ?? input + output };
   if (Object.values(normalized).some(value => !Number.isSafeInteger(value) || value < 0)) throw new ProtocolError('Upstream returned invalid token usage', 502);
   return normalized;
 }
 export function responseToCanonical(body, protocol) {
+  if (protocol === 'gemini') return geminiCanonical(body,normalizeUsage);
   const result = { id: body.id, model: body.model, text: '', tools: [], usage: normalizeUsage(body.usage, protocol), finish: 'stop' };
   if (protocol === 'chat') {
     const choice = body.choices?.[0];
@@ -191,6 +195,7 @@ export function responseToCanonical(body, protocol) {
   return result;
 }
 export function canonicalResponse(r, protocol, model = r.model, now = Date.now()) {
+  if (protocol === 'gemini') return canonicalGemini(r,model);
   const created = Math.floor(now / 1000), id = r.id ?? `native_${created}`;
   const u = r.usage;
   if (protocol === 'chat') return { id, object: 'chat.completion', created, model, choices: [{ index: 0, message: { role: 'assistant', content: r.text || (r.tools.length ? null : ''), ...(r.tools.length ? { tool_calls: r.tools } : {}) }, finish_reason: r.finish }], usage: { prompt_tokens: u.input, completion_tokens: u.output, total_tokens: u.total, prompt_tokens_details: { cached_tokens: u.cached } } };
@@ -198,6 +203,7 @@ export function canonicalResponse(r, protocol, model = r.model, now = Date.now()
   return { id: id.startsWith('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status: r.finish === 'length' ? 'incomplete' : 'completed', error: null, incomplete_details: r.finish === 'length' ? { reason: 'max_output_tokens' } : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...r.tools.map(t => ({ id: `fc_${t.id}`, type: 'function_call', status: 'completed', call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
 }
 export function translateResponse(body, source, target, model, now) {
+  if (source === target && source === 'gemini') return {...copy(body.response ?? body),modelVersion:model};
   try { return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), target, model, now); }
   catch (error) { if (error instanceof ProtocolError) error.status = 502; throw error; }
 }

@@ -39,11 +39,11 @@ export function nativeURL(base, service, pathname, search = '') {
   if (service === 'codex' && pathname === '/api/services/codex/v1/live') { tail = '/v1/realtime/calls'; search += `${search ? '&' : '?'}intent=quicksilver&architecture=avas`; }
   url.pathname = root + tail; url.search = search; return url;
 }
-const destination = c => ({provider:typeof c.provider === 'string' ? c.provider : c.provider?.name,account:typeof c.account === 'string' ? c.account : c.account?.name,protocol:c.protocol,base_url:c.baseUrl ?? c.base_url ?? c.provider?.base_url});
-const sameDestination = (a,b) => ['provider','account','protocol','base_url'].every(key => a[key] === b[key]);
+const destination = c => ({provider:c.destination_kind === 'subscription' ? c.provider_kind : typeof c.provider === 'string' ? c.provider : c.provider?.name,account:typeof c.account === 'string' ? c.account : c.account?.name,protocol:c.protocol === 'chat' ? 'openai' : c.protocol,base_url:c.baseUrl ?? c.base_url ?? c.provider?.base_url,account_id:c.account_id,provider_kind:c.provider_kind ?? c.kind,destination_kind:c.destination_kind});
+const sameDestination = (a,b) => ['provider','account','protocol','base_url','account_id','provider_kind','destination_kind'].every(key => a[key] === b[key]);
 export class NativeAffinityStore {
   constructor({maxRecords=10000} = {}) { this.records = new Map(); this.maxRecords = maxRecords; }
-  key(namespace,owner,id) { return JSON.stringify([namespace,owner,id]); }
+  key(namespace,owner,id) { return JSON.stringify([namespace,typeof owner === 'object' ? [owner.client_kind,owner.principal_id] : owner,id]); }
   get(namespace,owner,id) { return structuredClone(this.records.get(this.key(namespace,owner,id)) ?? null); }
   set(namespace,owner,id,record) {
     const key = this.key(namespace,owner,id), previous = this.records.get(key);
@@ -52,7 +52,7 @@ export class NativeAffinityStore {
     this.records.set(key,{...structuredClone(record),namespace,owner,id});
   }
   delete(namespace,owner,id) { this.records.delete(this.key(namespace,owner,id)); }
-  list(namespace,owner,parent_id) { return [...this.records.values()].filter(r => r.namespace === namespace && r.owner === owner && (parent_id === undefined || r.parent_id === parent_id)).map(r => structuredClone(r)); }
+  list(namespace,owner,parent_id) { return [...this.records.values()].filter(r => r.namespace === namespace && this.key(namespace,r.owner,'') === this.key(namespace,owner,'') && (parent_id === undefined || r.parent_id === parent_id)).map(r => structuredClone(r)); }
 }
 function resourceFor(path, method, headers) {
   const roots = [
@@ -81,9 +81,10 @@ function resourceFor(path, method, headers) {
 /** Opaque vendor operations: preserve bytes and bind owner resources to an exact account. */
 export function createNativeService({core,authorize,routingContext,fetch:upstreamFetch=globalThis.fetch,maxBodyBytes=4*1024*1024,maxResponseBytes=32*1024*1024,timeoutMs=120000,affinities=core.affinities ?? new NativeAffinityStore()}) {
   async function select(request, claims, service, document, exact) {
-    const context = {...routingContext(request,claims),service,model:document?.model,protocol:service === 'anthropic' ? 'anthropic' : 'chat'};
+    const pathModel = /\/publishers\/anthropic\/models\/([^/:]+)(?:\/count-tokens)?:(?:rawPredict|streamRawPredict)$/.exec(new URL(request.url).pathname)?.[1];
+    const context = {...routingContext(request,claims),service,model:document?.model ?? (pathModel ? decodeURIComponent(pathModel) : undefined),protocol:['anthropic','bedrock','vertex'].includes(service) ? 'anthropic' : 'chat'};
     const candidates = core.nativeCandidates ? await core.nativeCandidates(context) : context.model ? await core.candidates(context) : [];
-    const raw = candidates.find(c => !exact || sameDestination(exact,destination(c)));
+    const raw = candidates.find(c => !exact || ['provider','account','base_url'].every(key => exact[key] === destination(c)[key]));
     if (!raw) throw new ProtocolError(exact ? 'The native resource exact account is unavailable' : 'Native service provider is unavailable',503);
     const candidate = core.prepareCandidate ? await core.prepareCandidate(raw) : raw;
     if (exact && !sameDestination(exact,destination(candidate))) throw new ProtocolError('Native resource account changed',503);
@@ -91,22 +92,40 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
   }
   return {
     affinities,
+    async websocketTarget(request) {
+      const url=new URL(request.url),path=url.pathname,service=/^\/api\/services\/(openai|codex|qwen)\//.exec(path)?.[1];
+      if(!service || !matchHTTPRoute('GET',path) || !/\/(?:responses|realtime|live)(?:\/[^/]+)?$/.test(path))throw new ProtocolError('Route not found',404);
+      const claims=await authorize(request,false),client=claims.client_kind ?? claims.client;
+      if(!client || !claims.principal_id)throw new ProtocolError('Native services require a client and principal bound Router token',403);
+      if(service === 'qwen')throw new ProtocolError('Qwen does not support Responses WebSocket transport',501);
+      if(service === 'codex' && client !== 'codex')throw new ProtocolError('Codex service requires a Codex-bound Router token',403);
+      const owner={client_kind:claims.client_kind,principal_id:claims.principal_id};
+      let exact;
+      const calls=url.searchParams.getAll('call_id');if(calls.length > 1 || calls.length === 1 && !calls[0])throw new ProtocolError('Exactly one nonempty Realtime call_id is allowed');
+      const liveId=/\/live\/([^/]+)$/.exec(path)?.[1],id=liveId ? decodeURIComponent(liveId):calls[0];
+      if(id){const namespace=`/api/services/${service}/v1/realtime/calls`,record=await affinities.get(namespace,owner,id);if(!record)throw new ProtocolError('Realtime call not found',404);exact=record.destination;}
+      const candidate=await select(request,claims,service,{model:url.searchParams.get('model') ?? undefined},exact),selected=destination(candidate);
+      if(service === 'openai' && selected.provider_kind !== 'openai-compatible')throw new ProtocolError('Selected provider does not implement native OpenAI resource APIs',503);
+      return {url:nativeURL(selected.base_url,service,path,url.search),headers:nativeRequestHeaders(request.headers,candidate),claims};
+    },
     async fetch(request) {
       const url = new URL(request.url), path = url.pathname;
       if (!matchHTTPRoute(request.method,path)) throw new ProtocolError('Route not found',404);
-      const serviceMatch = /^\/api\/services\/(openai|anthropic|codex|qwen)(?:\/|$)/.exec(path);
+      const serviceMatch = /^\/api\/services\/(openai|anthropic|codex|qwen|bedrock|vertex)(?:\/|$)/.exec(path);
       const service = path.startsWith('/api/services/codex/backend-api/') ? 'codex-backend' : serviceMatch?.[1] ?? 'openai';
       const claims = await authorize(request,false);
       const client = claims.client_kind ?? claims.client;
-      if (service === 'anthropic' && client !== 'claude-code' || service.startsWith('codex') && client !== 'codex') throw new ProtocolError('Native service requires a credential bound to its official client',403);
+      if (!client || !claims.principal_id) throw new ProtocolError('Native services require a client and principal bound Router token',403);
+      if (service === 'anthropic' && client !== 'claude' || service.startsWith('codex') && client !== 'codex') throw new ProtocolError('Native service requires a credential bound to its official client',403);
       if (service === 'codex-backend' && !request.headers.get('authorization')?.startsWith('Bearer at-')) throw new ProtocolError('Codex backend requires the paired Router-issued at- token',401);
       if (path === '/api/services/openai/v1/realtime/client_secrets') throw new ProtocolError('Router does not expose upstream Realtime client secrets',501);
       if (service === 'qwen' && path.includes('/conversations')) throw new ProtocolError('Qwen does not support Conversations',501);
-      const owner = responseOwner(claims,request.headers.get('authorization') ?? request.headers.get('x-api-key'));
+      const owner = claims.client_kind && claims.principal_id ? {client_kind:claims.client_kind,principal_id:claims.principal_id} : responseOwner(claims,request.headers.get('authorization') ?? request.headers.get('x-api-key'));
       const bytes = await boundedBytes(request,maxBodyBytes);
       let document; try { document = bytes.length ? JSON.parse(Buffer.from(bytes).toString('utf8')) : undefined; } catch { /* opaque multipart/binary bodies are forwarded */ }
       if (request.method === 'POST' && /\/(?:responses\/(?:compact|input_tokens)|images\/generations|audio\/speech|alpha\/search)$/.test(path) && (!document || typeof document !== 'object' || Array.isArray(document))) throw new ProtocolError('The native service request body must be a JSON object');
       if (document?.model) await authorize(request,false,document.model);
+      if (['bedrock','vertex'].includes(service) && (!document || !Array.isArray(document.messages))) throw new ProtocolError('messages must be an array');
       for (const batch of document?.requests ?? []) if (batch.params?.model) await authorize(request,false,batch.params.model);
       const resource = resourceFor(path,request.method,request.headers);
       let exact;
@@ -118,6 +137,7 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       const listed = resource?.list ? await affinities.list(resource.namespace,owner,resource.parent) : [];
       for (const record of listed) bind(record);
       const candidate = await select(request,claims,service,document,exact), selected = destination(candidate);
+      if (service === 'openai' && selected.provider_kind !== 'openai-compatible') throw new ProtocolError('Selected provider does not implement native OpenAI resource APIs',503);
       const controller = new AbortController(), abort = () => controller.abort(request.signal.reason);
       request.signal.addEventListener('abort',abort,{once:true});
       const timer = setTimeout(() => controller.abort(new Error('Native upstream timeout')),timeoutMs); timer.unref?.();

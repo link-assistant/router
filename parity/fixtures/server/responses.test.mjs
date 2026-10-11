@@ -77,8 +77,10 @@ test('cancelling an active native response aborts upstream and keeps cancelled o
   assert.equal((await (await router.fetch(make('/v1/responses/resp_one'))).json()).status, 'cancelled');
   assert.equal(failures, 0);
 });
-test('HTTPS configuration is rejected before an HTTP listener can start', () => {
-  for (const tls of [{ tls_self_signed: true }, { tls_cert: 'cert.pem' }, { tls_key: 'key.pem' }, { listeners: [{ protocol: 'https' }] }]) assert.throws(() => createNativeRouter({ core: { ...core(), config: tls } }), /HTTPS listeners/);
+test('incomplete HTTPS configuration fails before a plaintext listener can start', async () => {
+  for (const tls of [{ tls_self_signed: true }, { tls_cert: 'cert.pem' }, { tls_key: 'key.pem' }, { listeners: [{ protocol: 'https' }] }]) {
+    const router=createNativeRouter({core:{...core(),config:tls}});await assert.rejects(router.listen({port:0}),/TLS requires|TLS requires a data/);assert.equal(router.address,undefined);
+  }
 });
 test('deleting an active stream aborts it and cannot resurrect the response', async () => {
   let aborted = false;

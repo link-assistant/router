@@ -1,10 +1,15 @@
 import { createServer } from 'node:http';
+import {createServer as createHTTPSServer} from 'node:https';
+import {lstat,readFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import { Readable } from 'node:stream';
 import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
 import { createNativeService } from './native-service.mjs';
+import {managementOperation} from './http-management.mjs';
+import {relayWebSocket} from './websocket-relay.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -21,15 +26,16 @@ const protocolOf = candidate => {
   if (['anthropic', 'messages'].includes(value)) return 'anthropic';
   if (['responses', 'openai-responses', 'codex'].includes(value)) return 'responses';
   if (['chat', 'openai', 'openai-compatible', 'openai_compatible'].includes(value)) return 'chat';
+  if (['gemini','vertex'].includes(value)) return 'gemini';
   throw new ProtocolError(`Unsupported upstream protocol ${typeof value === 'string' ? value : 'unknown'}`, 501);
 };
 const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };
-const serviceOf = path => /^\/api\/services\/(openai|anthropic|codex|qwen|gemini|vertex)(?:\/|$)/.exec(path)?.[1];
+const serviceOf = path => /^\/api\/services\/(openai|anthropic|codex|qwen|gemini|vertex|bedrock)(?:\/|$)/.exec(path)?.[1];
 function upstreamURL(base, protocol, endpointPath) {
   let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash) throw new ProtocolError('Provider base URL must be an HTTP(S) URL without credentials, query or fragment', 500);
   if (endpointPath !== undefined) {
-    if (typeof endpointPath !== 'string' || !/^\/[a-zA-Z0-9/_-]+$/.test(endpointPath) || endpointPath.startsWith('//')) throw new ProtocolError('Provider endpoint path is invalid', 500);
+    if (typeof endpointPath !== 'string' || !/^\/[a-zA-Z0-9/:_-]+$/.test(endpointPath) || endpointPath.startsWith('//')) throw new ProtocolError('Provider endpoint path is invalid', 500);
     u.pathname = `${u.pathname.replace(/\/$/, '')}${endpointPath}`;
   } else u.pathname = `${u.pathname.replace(/\/$/, '')}${/\/v1$/.test(u.pathname.replace(/\/$/, '')) ? '/' : '/v1/'}${paths[protocol]}`;
   return u;
@@ -77,7 +83,7 @@ export function createNativeRouter(options = {}) {
   const { core, authenticate, fetch: upstreamFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxResponseBytes = 32 * 1024 * 1024, timeoutMs = 120_000, maxAttempts = 3 } = options;
   if (!core) throw new TypeError('createNativeRouter requires core; use startNativeServer to create one from configuration');
   const tlsConfig = { ...core.config, ...options };
-  if (tlsConfig.tls_self_signed || tlsConfig.tls_cert || tlsConfig.tls_key || tlsConfig.tlsSelfSigned || tlsConfig.tlsCert || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener => listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:'))) throw new ProtocolError('Native HTTPS listeners are not implemented; configure an HTTP listener behind TLS termination', 501);
+  const useTLS=Boolean(tlsConfig.tls_self_signed || tlsConfig.tlsSelfSigned || tlsConfig.tls_cert || tlsConfig.tlsCert || tlsConfig.tls_key || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener=>listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:')));
   const responseStore = options.responseStore ?? new ResponsesStore({ clock, ...options.responseStoreOptions });
   const logs = []; const counters = { requests: 0, failures: 0, upstream_attempts: 0, input_tokens: 0, output_tokens: 0 };
   let server;
@@ -85,7 +91,7 @@ export function createNativeRouter(options = {}) {
   const errorResponse = (error, protocol) => {
     const status = error.status ?? 500;
     const message = status >= 500 && !(error instanceof ProtocolError) ? 'Router request failed' : error.message;
-    return json(protocol === 'anthropic' ? { type: 'error', error: { type: status === 401 ? 'authentication_error' : status === 429 ? 'rate_limit_error' : 'api_error', message } } : { error: { message, type: status === 401 ? 'authentication_error' : status === 400 ? 'invalid_request_error' : 'api_error', code: error.code ?? null } }, status);
+    return json(protocol === 'gemini' ? {error:{code:status,message,status:({400:'INVALID_ARGUMENT',401:'PERMISSION_DENIED',403:'PERMISSION_DENIED',404:'NOT_FOUND',429:'RESOURCE_EXHAUSTED',503:'UNAVAILABLE'})[status] ?? 'INTERNAL'}} : protocol === 'anthropic' ? { type: 'error', error: { type: status === 401 ? 'authentication_error' : status === 429 ? 'rate_limit_error' : 'api_error', message } } : { error: { message, type: status === 401 ? 'authentication_error' : status === 400 ? 'invalid_request_error' : 'api_error', code: error.code ?? null } }, status);
   };
   async function authorize(request, admin, model) {
     if (authenticate) {
@@ -123,18 +129,39 @@ export function createNativeRouter(options = {}) {
     return filtered;
   }
   async function management(request, path) {
-    await authorize(request, true);
-    const method = request.method, body = ['POST', 'PATCH'].includes(method) ? await boundedJSON(request, maxBodyBytes) : undefined;
-    if (path === '/api/management/tokens' && method === 'GET') return json({ tokens: redact(await core.tokens.list()) });
-    if (['/api/management/tokens', '/api/management/tokens/client'].includes(path) && method === 'POST') return json(await core.tokens.issue(path.endsWith('/client') ? { ...body, scope: '', admin: false } : body), 201);
-    if (path === '/api/management/tokens/revoke' && method === 'POST') return json({ revoked: await core.tokens.revoke(body.id ?? body.token_id) });
+    const open=['/api/management/admin/status','/api/management/admin/bootstrap','/api/management/admin/bootstrap/confirm'].includes(path);
+    if(open) {const result=await managementOperation(core,request,path,request.body ? await boundedJSON(request,maxBodyBytes) : {});if(result === undefined)throw new ProtocolError('Route not found',404);return json(result);}
+    if(path.startsWith('/api/management/login') && configuration().login?.enabled === false)throw new ProtocolError('Route not found',404);
+    const adminClaims = await authorize(request, true);
+    const method = request.method, body = ['POST', 'PATCH'].includes(method) ? request.body ? await boundedJSON(request, maxBodyBytes) : {} : undefined;
+    const delegated=await managementOperation(core,request,path,body);if(delegated !== undefined)return json(delegated);
+    if (path === '/api/management/tokens' && method === 'GET') return json({ data: redact(await core.tokens.list()) });
+    if (['/api/management/tokens', '/api/management/tokens/client'].includes(path) && method === 'POST') {
+      const client = path.endsWith('/client');
+      const input = {...body,...(body.allowed_models ? {model_policy:{allowed_models:body.allowed_models,allow_substitution:body.allow_model_substitution ?? false,substitution_source:body.model_substitution_source ?? null}}:{}),...(client ? {scope:'',admin:false,account:'primary',principal_id:'primary'}:{})};
+      if (client && !body.client_kind) throw new ProtocolError('client_kind is required');
+      if (body.run_lease && !body.ephemeral) throw new ProtocolError('run_lease requires an ephemeral wrapper credential');
+      if(body.sliding_expiry)input.sliding_window_seconds=(body.ttl_hours ?? 24)*3600;
+      if(body.run_lease)input.run_lease_seconds=body.run_lease_seconds ?? 120;
+      const result = await core.tokens.issue(input);
+      return json({token:typeof result === 'string' ? result : result.token,ttl_hours:body.ttl_hours ?? 24,label:result.record?.label ?? body.label ?? '',...(client ? {client_kind:result.record?.client_kind ?? body.client_kind,principal_id:'primary',model_policy:result.record?.model_policy ?? input.model_policy ?? {}} : {account:body.account ?? null,max_requests:body.max_requests ?? null,max_tokens:body.max_tokens ?? null,rate_limit_per_minute:body.rate_limit_per_minute ?? null,scope:body.scope ?? ''})});
+    }
+    if (path === '/api/management/tokens/revoke' && method === 'POST') {const id=body.id ?? body.token_id;await core.tokens.revoke(id);return json({revoked:id});}
+    if (['/api/management/tokens/rotate','/api/management/tokens/rotate-client'].includes(path) && method === 'POST') {
+      const own = path.endsWith('/rotate'),id=own ? adminClaims.sub ?? adminClaims.id : body.id;
+      if(!id)throw new ProtocolError('Rotation requires an admin-scoped token; the flat admin key has no subject to revoke');
+      const held=await core.tokens.get(id);if(!held)throw new ProtocolError('Token not found',404);
+      if(!own && held.scope === 'admin')throw new ProtocolError('Use /api/management/tokens/rotate to rotate an admin credential');
+      const result=await core.tokens.rotate(id,body);return json({token:typeof result === 'string' ? result : result.token,revoked:id,...(own ? {ttl_hours:body.ttl_hours ?? 24,label:result.record?.label ?? body.label ?? held.label,scope:'admin'}:{})});
+    }
     if (path === '/api/management/providers' && method === 'GET') {
       const list = core.listProviders ? await core.listProviders() : core.providers?.list ? await core.providers.list() : configuration().providers ?? [];
-      return json({ providers: redact(list) });
+      return json({ data: redact(list) });
     }
     if (path === '/api/management/providers' && method === 'POST') {
       const result = core.upsertProvider ? await core.upsertProvider(body) : core.providers?.upsert ? await core.providers.upsert(body) : undefined;
       if (result === undefined) throw new ProtocolError('Provider mutation is not supported by this core', 501);
+      if(result == null)throw new ProtocolError('Provider not found',404);
       return json(redact(result));
     }
     const provider = /^\/api\/management\/providers\/([^/]+)$/.exec(path);
@@ -143,7 +170,8 @@ export function createNativeRouter(options = {}) {
       if (method === 'GET') result = core.showProvider ? await core.showProvider(name) : await core.providers?.get?.(name);
       else result = core.removeProvider ? await core.removeProvider(name) : await core.providers?.remove?.(name);
       if (result === undefined) throw new ProtocolError('Provider operation is not supported by this core', 501);
-      return json(redact(result));
+      if(result == null)throw new ProtocolError('Provider not found',404);
+      return json(method === 'DELETE' ? {deleted:name} : redact(result));
     }
     if (path === '/api/management/accounts' && method === 'GET') return json({ accounts: redact(core.listAccounts ? await core.listAccounts() : await core.accounts?.list?.() ?? []) });
     const account = /^\/api\/management\/accounts\/([^/]+)\/(pause|resume|policy)$/.exec(path);
@@ -154,7 +182,7 @@ export function createNativeRouter(options = {}) {
       }
       else if (method === 'POST') result = core.accountAction ? await core.accountAction(name, action, body) : await core.accounts?.[action === 'policy' ? 'setPolicy' : action]?.(name, body);
       if (result === undefined) throw new ProtocolError('Account operation is not supported by this core', 501);
-      return json(redact(result));
+      return json(redact(action === 'policy' ? result.policy ?? result : result));
     }
     if (path === '/api/management/routing' && method === 'PATCH') {
       const result = core.updateRouting ? await core.updateRouting(body) : undefined;
@@ -173,7 +201,8 @@ export function createNativeRouter(options = {}) {
   }
   async function inference(request, source, body) {
     if (typeof body.model !== 'string' || !body.model.trim()) throw new ProtocolError('model must be a nonempty string');
-    if (source !== 'responses' && !Array.isArray(body.messages)) throw new ProtocolError('messages must be an array');
+    if (['chat','anthropic'].includes(source) && !Array.isArray(body.messages)) throw new ProtocolError('messages must be an array');
+    if (source === 'gemini' && !Array.isArray(body.contents)) throw new ProtocolError('contents must be an array');
     if (source === 'responses' && typeof body.input !== 'string' && !Array.isArray(body.input)) throw new ProtocolError('input must be a string or array');
     if (body.stream !== undefined && typeof body.stream !== 'boolean') throw new ProtocolError('stream must be a boolean');
     if (source === 'responses') {
@@ -183,7 +212,7 @@ export function createNativeRouter(options = {}) {
     for (const key of ['max_tokens', 'max_completion_tokens', 'max_output_tokens']) if (body[key] !== undefined && (!Number.isSafeInteger(body[key]) || body[key] < 1)) throw new ProtocolError(`${key} must be a positive integer`);
     const claims = await authorize(request, false, body.model);
     const retain = source === 'responses' && body.store !== false;
-    const namespace = new URL(request.url).pathname.startsWith('/api/services/') ? '/api/services/openai/v1' : '/v1';
+    const namespace = new URL(request.url).pathname.match(/^\/api\/services\/(?:openai|codex|qwen)\/v1/)?.[0] ?? '/v1';
     const owner = retain ? responseOwner(claims, bearer(request.headers)) : undefined;
     const responseInput = retain ? normalizeResponseInput(body) : undefined;
     let retainedId;
@@ -220,7 +249,20 @@ export function createNativeRouter(options = {}) {
         let response;
         try {
           counters.upstream_attempts++;
-          response = await upstreamFetch(upstreamURL(candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url, protocol, candidate.endpointPath), { method: 'POST', headers: upstreamHeaders(candidate, protocol, request), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
+          let endpoint;
+          if (protocol === 'gemini') {
+            const base = candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url;
+            const {model:_model,stream:_stream,...native} = payload;
+            if (candidate.auth_type === 'oauth' || candidate.code_assist) {
+              endpoint = upstreamURL(base,protocol,`/v1internal:${body.stream ? 'streamGenerateContent' : 'generateContent'}`);
+              if(body.stream)endpoint.search='?alt=sse';
+              payload={model:(candidate.model ?? body.model).replace(/^models\//,''),request:native,...(candidate.project ? {project:candidate.project}:{})};
+            } else {
+              endpoint=new URL(base);endpoint.pathname=`${endpoint.pathname.replace(/\/$/,'')}${endpoint.pathname.endsWith('/v1beta') ? '' : '/v1beta'}/models/${encodeURIComponent((candidate.model ?? body.model).replace(/^models\//,''))}:${body.stream ? 'streamGenerateContent':'generateContent'}`;
+              if(body.stream)endpoint.search='?alt=sse';payload=native;
+            }
+          } else endpoint = upstreamURL(candidate.baseUrl ?? candidate.base_url ?? candidate.provider?.base_url, protocol, candidate.endpointPath);
+          response = await upstreamFetch(endpoint, { method: 'POST', headers: upstreamHeaders(candidate, protocol, request), body: JSON.stringify(payload), signal: controller.signal, redirect: 'error' });
         } catch (error) {
           clearTimeout(timer); request.signal.removeEventListener('abort', abort);
           if (request.signal.aborted) throw new ProtocolError('Client disconnected', 499);
@@ -261,7 +303,7 @@ export function createNativeRouter(options = {}) {
         catch (error) { throw new ProtocolError(error.status === 413 ? 'Upstream response exceeds limit' : 'Upstream returned malformed JSON', 502); }
         finally { cleanup(); }
         const result = translateResponse(raw, protocol, source, body.model, clock());
-        const usage = normalizeUsage(raw.usage, protocol);
+        const usage = normalizeUsage(protocol === 'gemini' ? (raw.response ?? raw).usageMetadata : raw.usage, protocol);
         await core.reportSuccess?.(candidate); await settle(usage);
         if (retain) responseStore.save(namespace, owner, result, responseInput);
         return json(result, response.status, headers);
@@ -270,12 +312,30 @@ export function createNativeRouter(options = {}) {
     } catch (error) { await settle(); throw error; }
   }
   async function handle(request) {
-    const path = new URL(request.url).pathname, source = serviceOf(path) === 'anthropic' || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
+    const path = new URL(request.url).pathname, service = serviceOf(path), source = service === 'gemini' || service === 'vertex' && !path.includes('/publishers/anthropic/') ? 'gemini' : service === 'anthropic' || service === 'bedrock' || path.includes('/publishers/anthropic/') || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
     const started = clock(); counters.requests++;
     let response;
     try {
       if (['/health', '/api/health'].includes(path) && request.method === 'GET') response = new Response('ok', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+      else if(path === '/api/run-lease' && request.method === 'POST') {
+        const claims=await authorize(request,false);if(!core.tokens?.renewRunLease)throw new ProtocolError('This credential has no renewable live run lease',409);
+        response=json({run_lease_expires_at:await core.tokens.renewRunLease(claims.sub ?? claims.id)});
+      }
       else if (path.startsWith('/api/management/')) response = await management(request, path);
+      else if (path.startsWith('/api/services/gemini/v1beta/models') && request.method === 'GET') {
+        const claims=await authorize(request,false), entries=await models(request,claims);
+        const project = model => Object.fromEntries(Object.entries({name:model.id,...(model.raw ?? model)}).filter(([key])=>['name','baseModelId','version','displayName','description','inputTokenLimit','outputTokenLimit','supportedGenerationMethods','temperature','maxTemperature','topP','topK'].includes(key)));
+        if(path === '/api/services/gemini/v1beta/models')response=json({models:entries.map(project)});
+        else {const id=decodeURIComponent(path.slice('/api/services/gemini/v1beta/models/'.length));const found=entries.find(m=>m.id.replace(/^models\//,'') === id);if(!found)throw new ProtocolError('Model not found',404);response=json(project(found));}
+      }
+      else if ((service === 'gemini' || service === 'vertex' && !path.includes('/publishers/anthropic/')) && request.method === 'POST') {
+        const match=/\/models\/([^/]+):(generateContent|streamGenerateContent)$/.exec(path);if(!match)throw new ProtocolError('Route not found',404);
+        response=await inference(request,'gemini',{...await boundedJSON(request,maxBodyBytes),model:decodeURIComponent(match[1]),stream:match[2] === 'streamGenerateContent'});
+      }
+      else if (service === 'bedrock' || service === 'vertex' && path.includes('/publishers/anthropic/')) {
+        if(service === 'vertex' && !/\/publishers\/anthropic\/models\/[^/:]+(?:(?::(?:rawPredict|streamRawPredict))|(?:\/count-tokens:rawPredict))$/.test(path))throw new ProtocolError('Route not found',404);
+        response=await nativeService.fetch(request);
+      }
       else if (/^(?:\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/(?!compact$|input_tokens$)[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
         const match = /^(\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
         const claims = await authorize(request, false), owner = responseOwner(claims, bearer(request.headers)), id = decodeURIComponent(match[2]);
@@ -315,14 +375,34 @@ export function createNativeRouter(options = {}) {
     core, responseStore, fetch: handle, get address() { return server?.address(); },
     async listen({ host = configuration().host ?? '127.0.0.1', port = configuration().port ?? 3000 } = {}) {
       if (server) throw new Error('Router is already listening');
-      server = createServer(async (incoming, outgoing) => {
+      let secureOptions;
+      if (useTLS) {
+        const certPath=tlsConfig.tls_cert ?? tlsConfig.tlsCert,keyPath=tlsConfig.tls_key ?? tlsConfig.tlsKey;
+        let certificate=certPath,key=keyPath;
+        if(tlsConfig.tls_self_signed || tlsConfig.tlsSelfSigned) {
+          if(certPath || keyPath)throw new ProtocolError('Self-signed TLS and explicit certificate paths cannot both be configured',500);
+          if(!tlsConfig.data_dir)throw new ProtocolError('Self-signed TLS requires a data directory',500);
+          await (await import('./resources.mjs')).executeResourceOperation({name:'tls.generate',options:{dns:tlsConfig.tls_dns_names ?? host},config:tlsConfig});
+          certificate=join(tlsConfig.data_dir,'tls','cert.pem');key=join(tlsConfig.data_dir,'tls','key.pem');
+        }
+        if(!certificate || !key)throw new ProtocolError('TLS requires both certificate and key paths',500);
+        const pem = async path => {const stat=await lstat(path);if(!stat.isFile() || stat.isSymbolicLink() || stat.size > 1024*1024)throw new ProtocolError('TLS PEM must be a regular file of at most 1 MiB',500);return readFile(path);};
+        secureOptions={cert:await pem(certificate),key:await pem(key)};
+      }
+      const serve = async (incoming, outgoing) => {
         const controller = new AbortController(); incoming.on('aborted', () => controller.abort()); outgoing.on('close', () => { if (!outgoing.writableEnded) controller.abort(); });
         try {
           const headers = new Headers(); for (const [key, value] of Object.entries(incoming.headers)) if (value !== undefined) headers.set(key, Array.isArray(value) ? value.join(', ') : value);
-          const request = new Request(`http://${host.includes(':') ? `[${host}]` : host}:${server.address().port}${incoming.url}`, { method: incoming.method, headers, signal: controller.signal, ...(['GET', 'HEAD'].includes(incoming.method) ? {} : { body: Readable.toWeb(incoming), duplex: 'half' }) });
+          const request = new Request(`${useTLS ? 'https':'http'}://${host.includes(':') ? `[${host}]` : host}:${server.address().port}${incoming.url}`, { method: incoming.method, headers, signal: controller.signal, ...(['GET', 'HEAD'].includes(incoming.method) ? {} : { body: Readable.toWeb(incoming), duplex: 'half' }) });
           const result = await handle(request); outgoing.writeHead(result.status, Object.fromEntries(result.headers));
           if (!result.body) outgoing.end(); else Readable.fromWeb(result.body).on('error', () => outgoing.destroy()).pipe(outgoing);
         } catch { if (!outgoing.headersSent) outgoing.writeHead(500, JSON_HEADERS); outgoing.end(JSON.stringify({ error: { message: 'Router request failed' } })); }
+      };
+      server=useTLS ? createHTTPSServer(secureOptions,serve) : createServer(serve);
+      server.on('upgrade',(incoming,socket,head)=>{
+        const headers=new Headers();for(const [name,value] of Object.entries(incoming.headers))if(value !== undefined)headers.set(name,Array.isArray(value)?value.join(', '):value);
+        const request=new Request(`${useTLS?'https':'http'}://${host.includes(':')?`[${host}]`:host}:${server.address().port}${incoming.url}`,{headers});
+        relayWebSocket(incoming,socket,head,{target:()=>nativeService.websocketTarget(request),authorize:model=>authorize(request,false,model),core,maxMessageBytes:maxBodyBytes,timeoutMs:Math.min(timeoutMs,15000)}).catch(()=>socket.destroy());
       });
       try { await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, () => { server.off('error', reject); resolve(); }); }); }
       catch (error) { server = undefined; throw error; }
