@@ -1,0 +1,1 @@
+- Add generic checked immutable Vec and slice readers for automated Rust-to-meta translation. Instantiate exact Option element layouts and validate dense arrays, BigInt position bounds and registered data refinements while preserving borrowed element identity and refusing mutable or ownership-transferring operations.
