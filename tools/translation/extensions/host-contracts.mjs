@@ -34,16 +34,36 @@ export function hostData() {
   }};
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
-const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr']));
+const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends MethodRustParser {
   resolve(segments,path) {
     const resolved=super.resolve(segments,path);
     if(this.shadowedImportedBindings?.has(segments[0]) && resolved.length===segments.length && resolved.every((part,index)=>part===segments[index]))return ['crate','ml_unresolved_source_import',...segments];
     return resolved;
   }
+  registeredGenericKind(segments,path=this.modulePath,sourceName=segments[0]) {
+    const target=this.resolve(segments,path),kind=target.join('::')==='std::option::Option'?'Option':target.join('::')==='std::result::Result'?'Result':null;
+    if(!kind)return null;
+    // Explicit aliases are resolved external identities, even when another
+    // unknown glob exists. A raw std prefix needs an unshadowed crate scope.
+    const alias=this.aliases.get(path.join('.'))?.has(sourceName);
+    if(!alias&&(this.unresolvedImportScope||this.shadowedEffectRoots?.has('std')||this.shadowedPreludeTypes?.has('std')))return null;
+    return kind;
+  }
+  builtinShadow(name,path=this.modulePath) {
+    if(this.authorizedGenericKind===name||['Option','Result'].includes(name)&&this.registeredGenericKind([name],path)===name)return false;
+    return super.builtinShadow(name,path);
+  }
   expressionMacro(token,path) {
     if(this.unresolvedMacroScope || this.unresolvedImportScope || this.shadowedBuiltinMacros?.has(token.value))throw unsupported(`macro ${token.value}!`,'requires actual source macro expansion and binding resolution',token);
     const value=super.expressionMacro(token,path);return ['format','vec'].includes(token.value)?{k:'routerConstObligation',value,constEligible:false,sourceFeature:token.value+'!',span:value.span}:value;
+  }
+  pattern(path,aliases) {
+    const first=this.cursor.peek(),segments=[first.value];let offset=1;while(this.cursor.is('::',offset)&&this.cursor.peek(offset+1).kind==='identifier'){segments.push(this.cursor.peek(offset+1).value);offset+=2;}
+    const resolved=this.resolve(segments,path);
+    if(['Some','None','Ok','Err'].includes(first.value)&&resolved.length===1&&this.unresolvedImportScope)throw unsupported('unproven standard pattern owner','requires actual source namespace resolution',first);
+    const pattern=super.pattern(path,aliases),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);
+    return pattern.k==='ctor'&&kind?{...pattern,registeredGenericOwner:kind}:pattern;
   }
   methodInstantiation(name) {
     if(name.value!=='parse')return super.methodInstantiation(name);
@@ -59,6 +79,15 @@ export class HostRustParser extends MethodRustParser {
     return this.instantiatedMethod(object,name,args,null,range);
   }
   type(){
+    const c=this.cursor,first=c.peek();
+    if(first.kind==='identifier'){
+      const segments=[first.value];let offset=1;while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
+      const kind=this.registeredGenericKind(segments);
+      if(kind&&(c.is('<',offset)||c.is('::',offset)&&c.is('<',offset+1))){
+        for(let index=0;index<offset;index++)c.next();c.eat('::');c.expect('<','registered standard generic');const types=[this.type()];if(kind==='Result'){c.expect(',','Result');types.push(this.type());}c.expect('>','registered standard generic');
+        const previous=this.authorizedGenericKind;this.authorizedGenericKind=kind;try{return this.genericType(kind,types,span(first,c.peek()));}finally{this.authorizedGenericKind=previous;}
+      }
+    }
     const primitive=rustFixedType(this.cursor.peek().value);if(primitive&&!this.builtinShadow(this.cursor.peek().value)){const token=this.cursor.next();return {...primitive,rustPrimitiveName:token.value};}
     if(this.cursor.is('f64')&&!this.builtinShadow('f64')){this.cursor.next();return FLOAT;}
     const start=this.cursor.peek(),type=super.type();
@@ -87,6 +116,12 @@ export class HostRustParser extends MethodRustParser {
     const c=this.cursor,first=c.peek();if(first.kind!=='identifier')return super.primary(path,options);
     let offset=1;const segments=[first.value];while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path),owner=segments.slice(0,-1),operation=segments.at(-1),fixed=rustFixedType(owner.at(-1));
+    const constructor=resolved.at(-1),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);
+    if(kind&&(kind==='Option'?['Some','None']:['Ok','Err']).includes(constructor)){
+      for(let index=0;index<offset;index++)c.next();const args=[];if(c.eat('(')){while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','registered standard constructor');}
+      return {k:'routerRegisteredConstructor',kind,constructor,args,span:span(first,c.peek())};
+    }
+    if((['Some','None','Ok','Err'].includes(first.value)&&resolved.length===1&&this.unresolvedImportScope)||(['Option','Result'].includes(first.value)&&this.builtinShadow(first.value,path)&&resolved.every((part,index)=>part===segments[index])))throw unsupported('unproven standard constructor owner','requires actual source namespace resolution',first);
     if(fixed&&['from_str','from_str_radix'].includes(operation)&&c.is('(',offset)&&((owner.length===1&&!this.builtinShadow(owner[0],path))||(owner.length===3&&owner[0]==='std'&&owner[1]==='primitive'&&!this.builtinShadow('std',path)))) {
       if(this.shadowedEffectRoots?.has('std'))throw unsupported('shadowed integer error namespace','requires distinct checked standard type provenance',first);
       if(operation==='from_str'&&this.resolve(['FromStr'],path).join('::')!=='std::str::FromStr')throw unsupported('FromStr trait call','requires the actual standard FromStr import',first);
@@ -109,6 +144,14 @@ export class HostRustParser extends MethodRustParser {
 }
 export class HostChecker extends MethodChecker {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);}
+  normalisePattern(pattern,type,span) {
+    if(pattern.registeredGenericOwner){
+      const entry=type.kind==='data'?this.items.get(type.name):null;
+      if(entry?.standardGeneric?.kind!==pattern.registeredGenericOwner)throw typeError('registered pattern owner differs from its checked generic layout',span);
+      return super.normalisePattern({...pattern,path:[type.name,pattern.path.at(-1)]},type,span);
+    }
+    return super.normalisePattern(pattern,type,span);
+  }
   hostLambda(node,types,env,path,expected) {
     if(node.k==='routerLambda')return this.lambda(node,types,env,path,expected);
     if(node.k!=='name')throw unsupported('callback value','only checked closures or resolved function items are supported',node.span);
@@ -141,6 +184,11 @@ export class HostChecker extends MethodChecker {
   }
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='routerRegisteredConstructor'){
+      const entry=expected?.kind==='data'?this.items.get(expected.name):null;
+      if(entry?.standardGeneric?.kind!==node.kind)throw unsupported('registered standard constructor instantiation','requires the actual expected standard generic layout',node.span);
+      return super.expr({k:'app',fn:{k:'name',path:[expected.name,node.constructor],span:node.span},args:node.args,span:node.span},env,path,expected,allowLiteral);
+    }
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k)) {
       const value=this.expr(node.value,env,path,node.k==='routerConstObligation'?expected:undefined);
       if(node.operation==='String::from'&&value.type.kind!=='string')throw typeError('String::from requires the actual checked standard string conversion',node.span);
