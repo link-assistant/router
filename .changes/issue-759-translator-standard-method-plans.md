@@ -1,0 +1,1 @@
+Add reusable checked type plans for Option.map, Result.ok and bool.then. Plans require standard generic provenance, resolved constructor fields and matching type arguments; callback checking and canonical Option instantiation remain explicit frontend steps with no Rust body substitution.
