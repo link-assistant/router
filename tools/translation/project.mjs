@@ -10,6 +10,7 @@ import {EFFECT_CONTRACTS} from './extensions/effects-contracts.mjs';
 import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,HOST_CONTRACTS,hostData as effectData } from './extensions/host-contracts.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
+import {admittedHostData} from './extensions/source-namespaces.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
@@ -212,7 +213,7 @@ export function translateProject(options) {
   // Every surviving body must check. Remove an actual failing declaration,
   // then recheck all callers; no parsed signature is a callable implementation.
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
-    try { checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...tree(active), ...effectData().filter(item => !tree(active).some(entry => entry.name === item.name))], main: null })); break; }
+    try { checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null })); break; }
     catch (error) {
       if (!(error instanceof TranslationError)) throw error;
       const owner = active.find(declaration => error.span && declaration.globalSpan.start <= error.span.start && error.span.start <= declaration.globalSpan.end);

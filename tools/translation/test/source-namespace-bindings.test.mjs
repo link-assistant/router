@@ -55,3 +55,11 @@ test('local or parameter collisions carry before they can become module value ca
   for(const declaration of [{params:[{name:'Option'}],body:{k:'unit'}},{params:[],body:{k:'let',name:'Some',body:{k:'unit'}}},{params:[],body:{k:'routerLambda',params:[{name:'None'}],body:{k:'unit'}}}])assert.throws(()=>parser.sourceDeclarationNamespace(declaration,[]),/lexical shadowing/u);
   parser.resolve(['Option'],[]);const result=parser.sourceDeclarationNamespace({params:[{name:'value'}],body:{k:'name',path:['crate','Option']}},[]);assert.equal(result.sourceNamespaceEvidence.source,'src/lib.rs');assert.equal(result.sourceNamespaceEvidence.bindings.find(binding=>binding.name==='Option').namespace,'value');
 });
+
+
+test('host modules coexist with source values while actual type and module owners remain exclusions',async()=>{
+  const {admittedHostData}=await import('../extensions/source-namespaces.mjs');
+  const host={k:'module',name:'std',items:[]};
+  for(const k of ['fn','const'])assert.deepEqual(admittedHostData([host],[{k,name:'std'}]),[host]);
+  for(const k of ['module','data'])assert.deepEqual(admittedHostData([host],[{k,name:'std'}]),[]);
+});

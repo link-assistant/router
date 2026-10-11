@@ -237,7 +237,7 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
         if(valid){standard=true;for(const fieldType of fieldTypes)if(!visit(fieldType,location))valid=false;}
       }
     } else {
-      if(!provenance || !Array.isArray(provenance.importedNames) || !Array.isArray(provenance.shadowedNames) || provenance.unresolvedImportScope!==false || [...provenance.importedNames,...provenance.shadowedNames].some(name=>['Copy','Clone'].includes(name)))valid=refuse('Copy derive requires resolved unshadowed standard trait provenance',location);
+      if(!provenance || provenance.macroSubnamespace!==undefined&&provenance.macroSubnamespace!=='attribute' || !Array.isArray(provenance.importedNames) || !Array.isArray(provenance.shadowedNames) || provenance.unresolvedImportScope!==false || [...provenance.importedNames,...provenance.shadowedNames].some(name=>['Copy','Clone'].includes(name)))valid=refuse('Copy derive requires resolved unshadowed standard trait provenance',location);
       if(!['Copy','Clone'].every(trait=>entry.deriveTraits?.includes(trait) && entry.rustAttributes?.some(attribute=>attribute.kind==='derive' && attribute.traits?.includes(trait))))valid=refuse('source declaration has no checked Copy and Clone derives',location);
       for(const ctor of entry.ctors) {
         if(!Array.isArray(ctor.fields)){valid=refuse('Copy constructor layout is unchecked',location);continue;}
@@ -249,7 +249,7 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
       }
     }
     active.delete(key);
-    if(valid){proofs.push({kind:standard?'standard-generic':'source-derived',type:current,derive:standard?null:'Copy',constructors:entry.ctors.map(ctor=>({name:ctor.name,fields:ctor.fields.map(field=>({name:field.name,type:field.type,...(field.rustTypeSyntax?{rustTypeSyntax:field.rustTypeSyntax}:{})}))}))});done.add(key);}
+    if(valid){proofs.push({kind:standard?'standard-generic':'source-derived',type:current,derive:standard?null:'Copy',...(!standard&&provenance?.macroSubnamespace==='attribute'?{attributeMacroProvenance:structuredClone(provenance)}:{}),constructors:entry.ctors.map(ctor=>({name:ctor.name,fields:ctor.fields.map(field=>({name:field.name,type:field.type,...(field.rustTypeSyntax?{rustTypeSyntax:field.rustTypeSyntax}:{})}))}))});done.add(key);}
     return valid;
   }
   visit(type);return certificate();

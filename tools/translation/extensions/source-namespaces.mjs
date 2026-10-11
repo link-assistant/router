@@ -70,3 +70,9 @@ export function withSourceNamespaceParser(Base) {
     controlPattern(...args){return this.inSourcePattern(()=>super.controlPattern(...args));}
   };
 }
+
+// A value-only source name cannot remove a registered module/type owner.
+// Preserve legacy conservative exclusion for non-module support declarations.
+export function admittedHostData(support,sourceItems) {
+  return support.filter(item=>!sourceItems.some(source=>source.name===item.name&&(item.k!=='module'||['module','data'].includes(source.k))));
+}

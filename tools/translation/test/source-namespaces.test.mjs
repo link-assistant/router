@@ -11,11 +11,11 @@ const some=value=>({$:'Some',field0:value}),none={$:'None'};
 const hash=source=>createHash('sha256').update(source).digest('hex');
 
 test('actual value-only names preserve prelude types and their own callable bodies in both targets',async()=>{
-  const source='fn Option()->u8{7} fn Result()->u8{8} fn Vec()->u8{9} fn String()->u8{10} pub fn value()->u8{Option()+Result()+Vec()+String()} pub fn maybe(value:Option<u8>)->Option<u8>{value} pub fn answer(value:Result<u8,u16>)->Result<u8,u16>{value} pub fn bytes(value:Vec<u8>)->Vec<u8>{value} pub fn owned(value:String)->String{value}';
+  const source='fn Option()->u8{7} fn Result()->u8{8} fn Vec()->u8{9} fn String()->u8{10} pub fn sum()->u8{Option()+Result()+Vec()+String()} pub fn maybe(value:Option<u8>)->Option<u8>{value} pub fn answer(value:Result<u8,u16>)->Result<u8,u16>{value} pub fn bytes(value:Vec<u8>)->Vec<u8>{value} pub fn owned(value:String)->String{value}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{assert.equal(api.value(),34n);assert.deepEqual(api.maybe(some(3n)),some(3n));assert.deepEqual(api.maybe(none),none);assert.deepEqual(api.answer({$:'Err',field0:300n}),{$:'Err',field0:300n});assert.deepEqual(api.bytes([1n,2n]),[1n,2n]);assert.equal(api.owned('text'),'text');assert.throws(()=>api.maybe(some(256n)),RangeError);});
+  await verifyTypedTargets(result,api=>{assert.equal(api.sum(),34n);assert.deepEqual(api.maybe(some(3n)),some(3n));assert.deepEqual(api.maybe(none),none);assert.deepEqual(api.answer({$:'Err',field0:300n}),{$:'Err',field0:300n});assert.deepEqual(api.bytes([1n,2n]),[1n,2n]);assert.equal(api.owned('text'),'text');assert.throws(()=>api.maybe(some(256n)),{name:'TypeError',message:/machine-integer value out of range/u});});
   const local=translateSource(source,'src/lib.rs',{projectDeclarations:result.executableDeclarations,projectSourceScopes:result.sourceScopes});assert.equal(local.ir.counts.executableFunctions,9);
-  await verifyTypedTargets(local,api=>{assert.equal(api.value(),34n);assert.deepEqual(api.maybe(some(5n)),some(5n));});
+  await verifyTypedTargets(local,api=>{assert.equal(api.sum(),34n);assert.deepEqual(api.maybe(some(5n)),some(5n));});
 });
 
 test('standard type aliases and qualified owners remain independent from actual same-spelled value functions',async()=>{
@@ -42,6 +42,8 @@ test('ambiguous lexical value collisions carry before any module alias call is e
 test('actual type shadows unknown imports and procedural expansion never acquire standard source identity',()=>{
   for(const source of [
     'mod Option{} pub fn bad(value:Option<u8>)->Option<u8>{value}',
+    'mod std{} pub fn bad(value:std::option::Option<u8>)->std::option::Option<u8>{value}',
+    'type std=u8; pub fn bad(value:std::option::Option<u8>)->std::option::Option<u8>{value}',
     'struct String{value:u8} pub fn bad()->String{String::from("x")}',
     'use unknown::Option; pub fn bad(value:Option<u8>)->Option<u8>{value}',
     'use unknown::*; fn std()->u8{7} pub fn bad(value:std::option::Option<u8>)->std::option::Option<u8>{value}',
