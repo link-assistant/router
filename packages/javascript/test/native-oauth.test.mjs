@@ -212,6 +212,12 @@ test('catalogFor isolates pinned account aliases and exact client compatibility 
   const core = await createRouterCore({env:{},clock,config:{data_dir:home,storage_policy:'memory',providers:[{name:'local',base_url:'http://127.0.0.1:1/v1',models:['model-a'],supported_clients:['codex']}],accounts:[{name:'one',provider:'local',policy:{model_aliases:[{model:'model-a',alias:'only-one',fork:true}]}},{name:'two',provider:'local',policy:{model_aliases:[{model:'model-a',alias:'only-two',fork:true}]}}]}});
   const pinned = await core.catalogFor({client:'codex',pinnedAccount:'one'});
   assert.ok(pinned.some(row => row.id === 'only-one')); assert.ok(!pinned.some(row => row.id === 'only-two'));
+  assert.deepEqual(await core.catalogFor({client:'codex',pinned_account:'one'}),pinned);
+  await rejectCode(core.catalogFor({client:'codex',pinnedAccount:'missing'}),'unknown_pinned_account');
+  const principal=await core.catalogFor({client:'codex',principalAccount:'primary'});
+  assert.ok(principal.some(row=>row.id==='only-one'));assert.ok(principal.some(row=>row.id==='only-two'));
+  assert.deepEqual((await core.candidates({client:'codex',model:'only-one',pinnedAccount:'one'})).map(row=>row.account),['one']);
+  assert.deepEqual((await core.nativeCandidates({service:'openai',client:'codex',pinnedAccount:'two'})).map(row=>row.account),['two']);
   assert.deepEqual(await core.catalogFor({client:'claude'}),[]); assert.equal(core.accounts.cursor,0);
 });
 

@@ -1,7 +1,7 @@
 import { loadConfig, ProviderStore,nativeConfigEnvironment } from './config.mjs';
 import { createTokenStore } from './storage.mjs';
 import { TokenManager, RouterError } from './tokens.mjs';
-import { AccountRouter,principalAccountName,principalAccountScope,principalOrderContext } from './accounts.mjs';
+import { AccountRouter,principalAccountName,principalAccountScope } from './accounts.mjs';
 import { OAuthManager, CredentialFileStore, subscriptionProvider,subscriptionHome,subscriptionBaseURL } from './oauth.mjs';
 import { modelCandidates, catalogModels } from './routing.mjs';
 import { AffinityStore } from './affinities.mjs';
@@ -58,16 +58,17 @@ export class RouterCore {
   async resetCooldowns() { return this.accounts.resetCooldowns(); }
   async resetCooldown(name,model) { return this.accounts.resetCooldowns(name,model); }
   async models() { return catalogModels(await this.providers.resolve(),this.accounts.records); }
-  async catalogFor({client,pinnedAccount,provider} = {}) {
+  async catalogFor(context = {}) {
+    const {client,provider}=context,pinnedAccount=context.pinnedAccount ?? context.pinned_account;
     const providers = (await this.providers.resolve()).filter(record => (!provider || record.name === provider) && (!client || record.supported_clients.includes(client)));
-    const accounts = principalAccountScope(this.accounts.records,providers,{client,pinnedAccount});
-    if (pinnedAccount && !accounts.size && !client) throw new RouterError('unknown_pinned_account','Pinned account does not exist',404);
+    const accounts = principalAccountScope(this.accounts.records,providers,context);
+    if (pinnedAccount && !this.accounts.records.has(pinnedAccount)) throw new RouterError('unknown_pinned_account','Pinned account does not exist',404);
     return catalogModels(providers,accounts);
   }
   async candidates(context = {}) {
     const providers = await this.providers.resolve();
     const scoped=principalAccountScope(this.accounts.records,providers,context);
-    const ordered = this.accounts.order(modelCandidates(providers,scoped,context),principalOrderContext(context));
+    const ordered = this.accounts.order(modelCandidates(providers,scoped,context),context);
     return this.attachCredentials(ordered,providers);
   }
   attachCredentials(ordered,providers) {
@@ -98,7 +99,7 @@ export class RouterCore {
     if (!selected.length) throw new RouterError('native_provider_unavailable','Native service provider is unavailable',503);
     if (service === 'openai' && selected.length > 1 && !configured && !context.provider) throw new RouterError('provider_conflict','Native OpenAI service requires an exact provider selection',409);
     const scoped=principalAccountScope(this.accounts.records,selected,context);
-    if(!scoped.size && (context.pinnedAccount ?? context.pinned_account))throw new RouterError('pinned_account_unavailable','The bound subscription account is unavailable',503);
+    if(!scoped.size && (context.pinnedAccount ?? context.pinned_account ?? context.principalAccount))throw new RouterError('pinned_account_unavailable','The bound subscription account is unavailable',503);
     let candidates;
     if (context.model) candidates = modelCandidates(selected,scoped,{...context,provider:undefined});
     else candidates = selected.flatMap(provider => [...scoped.values()].filter(account => account.provider === provider.name && account.enabled !== false).map(account => ({
@@ -111,7 +112,7 @@ export class RouterCore {
       candidate.provider_kind = candidate.kind === 'anthropic' ? 'claude' : ['openai','litellm'].includes(candidate.kind) ? 'openai-compatible' : candidate.kind;
       candidate.destination_kind = subscription ? 'subscription' : 'stored_provider';
     }
-    return this.attachCredentials(this.accounts.order(candidates,principalOrderContext(context)),selected);
+    return this.attachCredentials(this.accounts.order(candidates,context),selected);
   }
   async prepareCandidate(candidate) {
     if (!this.accounts.serves(candidate.account,candidate.model)) throw new RouterError('account_unavailable','Account became unavailable',503);

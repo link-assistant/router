@@ -139,7 +139,7 @@ export function createNativeRouter(options = {}) {
     const client = typeof claims.client === 'string' ? claims.client : typeof claims.client_kind === 'string' ? claims.client_kind : undefined;
     const pin = service ? configuration().services?.[service]?.provider : undefined;
     if (pin !== undefined && (typeof pin !== 'string' || !pin)) throw new ProtocolError('Configured service provider pin is invalid', 500);
-    return { client, pinnedAccount: claims.account ?? undefined, provider: pin, service, path };
+    return { client, principalAccount: claims.account ?? undefined, provider: pin, service, path };
   }
   const nativeService = createNativeService({core,authorize,routingContext,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs,affinities:options.affinities ?? core.affinities});
   async function models(request, claims) {
@@ -148,7 +148,7 @@ export function createNativeRouter(options = {}) {
     const value = core.catalogFor ? await core.catalogFor(context) : core.models ? await core.models() : configuration().models ?? [];
     const list = Array.isArray(value) ? value : value?.data ?? Object.keys(value ?? {});
     const allowed = claims.record?.model_policy?.allowed_models ?? [];
-    const filtered = list.map(m => typeof m === 'string' ? { id: m, object: 'model', created: 0, owned_by: 'router' } : { object: 'model', created: 0, owned_by: m.provider ?? 'router', ...m, id: m.id ?? m.name }).filter(m => (!allowed.length || allowed.includes(m.id)) && (!context.client || m.supported_clients?.includes(context.client)) && (!context.provider || (m.provider ?? m.owned_by) === context.provider) && (!context.pinnedAccount || core.catalogFor || m.account === context.pinnedAccount));
+    const filtered = list.map(m => typeof m === 'string' ? { id: m, object: 'model', created: 0, owned_by: 'router' } : { object: 'model', created: 0, owned_by: m.provider ?? 'router', ...m, id: m.id ?? m.name }).filter(m => (!allowed.length || allowed.includes(m.id)) && (!context.client || m.supported_clients?.includes(context.client)) && (!context.provider || (m.provider ?? m.owned_by) === context.provider) && (!context.principalAccount || core.catalogFor || m.account === context.principalAccount));
     const seen = new Set();
     for (const m of filtered) { if (seen.has(m.id)) throw new ProtocolError(`Exact model id '${m.id}' is advertised more than once`, 409); seen.add(m.id); }
     return filtered;
@@ -269,7 +269,7 @@ export function createNativeRouter(options = {}) {
     let finalError,finalResponse;
     try {
       const retryOverride=core.accounts?.records?.get(candidates[0].account)?.policy?.request_retry;
-      const attemptLimit = context.pinnedAccount || retryOverride===0 || configuration().account_failover === false && !(retryOverride>0) ? 1 : retryOverride!=null?retryOverride+1:Math.max(1, Math.min(100, maxAttempts));
+      const attemptLimit = context.pinnedAccount || context.principalAccount && candidates[0].auth_type==='oauth' || retryOverride===0 || configuration().account_failover === false && !(retryOverride>0) ? 1 : retryOverride!=null?retryOverride+1:Math.max(1, Math.min(100, maxAttempts));
       for (const rawCandidate of candidates.slice(0, attemptLimit)) {
         let candidate = rawCandidate;
         try { candidate = core.prepareCandidate ? await core.prepareCandidate(rawCandidate) : rawCandidate; }

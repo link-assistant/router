@@ -14,12 +14,11 @@ export function requestErrorAction(policy,status,body) {
 const subscriptionKinds=new Set(['anthropic','claude','codex','gemini','qwen','vertex','vertex-ai','bedrock']);
 const storedKinds=new Set(['openai-compatible','openai','litellm','lefine','z.ai-coding-plan']);
 export function principalAccountName(account,provider) {return account.implicit && subscriptionKinds.has(provider?.kind)?'primary':account.name;}
-/** Token principals pin subscription pools; stored provider records have no subscriber account. */
+/** Explicit internal pins select physical accounts; token principals select subscription accounts. */
 export function principalAccountScope(records,providers,context={}) {
-  const pin=context.pinnedAccount ?? context.pinned_account,byProvider=new Map(providers.map(provider=>[provider.name,provider]));
-  return new Map([...records].filter(([,account])=>{const provider=byProvider.get(account.provider);return provider && (!pin || context.client && storedKinds.has(provider.kind) || (context.client?principalAccountName(account,provider):account.name)===pin);}));
+  const pin=context.pinnedAccount ?? context.pinned_account,principal=context.principalAccount,byProvider=new Map(providers.map(provider=>[provider.name,provider]));
+  return new Map([...records].filter(([,account])=>{const provider=byProvider.get(account.provider);return provider && (pin?account.name===pin:!principal || storedKinds.has(provider.kind) || principalAccountName(account,provider)===principal);}));
 }
-export const principalOrderContext = context => context.client && (context.pinnedAccount ?? context.pinned_account)?{...context,pinnedAccount:undefined,pinned_account:undefined}:context;
 export function wildcardMatch(pattern, value) {
   const regex = pattern.split('').map(c => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\^$.[\]{}()+|]/g,'\\$&')).join('');
   return new RegExp(`^${regex}$`).test(value);
