@@ -14,11 +14,11 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
   const tokens=[];
   for(const token of rustTokens(source)) {
     if(token.type==='comment') {
-      if(token.text.startsWith('//!')||token.text.startsWith('/*!')||token.text.startsWith('/**'))throw new TypeError('Declarative macro inner/block documentation requires a separate lexical proof');
-      if(token.text.startsWith('///')&&!token.text.startsWith('////')) {
+      if(token.text.startsWith('/*!')||token.text.startsWith('/**'))throw new TypeError('Declarative macro block documentation requires a separate lexical proof');
+      if(token.text.startsWith('//!')||token.text.startsWith('///')&&!token.text.startsWith('////')) {
         const value=token.text.slice(3);
         if(/[\u0000-\u001f]/u.test(value))throw new TypeError('Declarative macro documentation escape profile exceeded');
-        for(const text of ['#','[','doc','=',JSON.stringify(value),']'])tokens.push({kind:'token',text,type:text.startsWith('"')?'string':'generated-doc',span:{start:token.start,end:token.end},sourceSha256,sourceFeature:'original-line-doc-comment'});
+        for(const text of ['#',...(token.text.startsWith('//!')?['!']:[]),'[','doc','=',JSON.stringify(value),']'])tokens.push({kind:'token',text,type:text.startsWith('"')?'string':'generated-doc',span:{start:token.start,end:token.end},sourceSha256,sourceFeature:'original-line-doc-comment'});
       }
       continue;
     }

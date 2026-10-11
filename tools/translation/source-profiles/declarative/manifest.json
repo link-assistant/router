@@ -97,16 +97,70 @@
       "archive": "rust-1.89-library_std_src_thread_mod.rs.gz",
       "archiveBytes": 20895,
       "archiveSha256": "1925b6da6bc19388830d5f0c09fb591bafd0f3fcea1e0b2a8fc1b83ca875c6e3"
+    },
+    {
+      "path": "library/std/Cargo.toml",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/Cargo.toml",
+      "bytes": 5699,
+      "sha256": "d719817f5c1d6de1e88f9cdea6a499d8c6e5f25d06937fc19bf6c292ad52896d",
+      "archive": "rust-1.89-library_std_Cargo.toml.gz",
+      "archiveBytes": 1814,
+      "archiveSha256": "07b4e9455a0a6a6b414954e2ce1472248a93fb6f57160105f423fd948f3db886"
+    },
+    {
+      "path": "library/Cargo.lock",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/Cargo.lock",
+      "bytes": 10857,
+      "sha256": "9649746aa908c1bcb22ecc1d40f51ef5830cb4834ef2c31d8997fce3bd101684",
+      "archive": "rust-1.89-library_Cargo.lock.gz",
+      "archiveBytes": 2559,
+      "archiveSha256": "5676ed531a06a4f63741f49b5c6c0dc912f59f157b4fc2a9f4f2ae5017e087ea"
     }
   ],
   "license": "Tokio MIT; Rust MIT OR Apache-2.0",
   "namespaceComplete": false,
   "generatedBehavior": false,
   "outstandingClosure": [
-    "Actual cfg_if dependency owner, selection and exhaustive branch proof",
+    "Pinned std cfg_if 1.0.1 owner, actual nested-repetition expansion and exhaustive branch proof",
     "Actual Tokio extern/alias binding and standard thread_local call-site owner",
-    "Checked block/expr fragment parsing and forwarding",
+    "Checked remaining block/expr fragment grammar and actual nested forward expansion",
     "Builtin generated attribute owner proof",
     "Source-sealed recursive nested expansion and scope confinement proof"
-  ]
+  ],
+  "standardCfgIf": {
+    "name": "cfg-if",
+    "version": "1.0.1",
+    "archive": "cfg-if-1.0.1.crate",
+    "bytes": 8683,
+    "sha256": "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268",
+    "url": "https://static.crates.io/crates/cfg-if/cfg-if-1.0.1.crate",
+    "members": [
+      {
+        "path": "src/lib.rs",
+        "bytes": 5250,
+        "sha256": "95a7a9e1e0ff8f12028ebe278bde9e427a0a049fd7fd098b17c513a4d811a12b"
+      },
+      {
+        "path": "Cargo.toml",
+        "bytes": 1217,
+        "sha256": "12cbe2bc73befa821815ffcd4b686f56f97e52ac919cb90ea47e70d43739c7c1"
+      },
+      {
+        "path": "LICENSE-MIT",
+        "bytes": 1057,
+        "sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+      },
+      {
+        "path": "LICENSE-APACHE",
+        "bytes": 10847,
+        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+      }
+    ]
+  },
+  "rustLicense": {
+    "path": "LICENSE-RUST-MIT",
+    "bytes": 1068,
+    "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+    "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-MIT"
+  }
 }

@@ -2,11 +2,12 @@
 // generated type layout or runtime implementation is inferred by this engine.
 import {createHash} from 'node:crypto';
 import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
+import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
 const ident=tree=>tree?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(tree.text);
-const fragments=new Set(['ident','tt','ty','meta','vis']);
+const fragments=new Set(['ident','tt','ty','meta','vis','block','expr']);
 const forbiddenTypes=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
 const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
 
@@ -43,6 +44,10 @@ function plan(trees,mode,bindings,depth=0) {
         const capture=text(follow)==='$'&&ident(trees[at+2])&&text(trees[at+3])===':'&&['ident','ty'].includes(text(trees[at+4]));
         const typeStart=follow?.kind==='group'&&['(','['].includes(follow.delimiter)||['&','*','!','::','<'].includes(text(follow));
         if(follow&&!capture&&!typeStart&&text(follow)!==','&&!(ident(follow)&&follow.text!=='priv'))throw new TypeError('Declarative visibility fragment has an unproved Rust follow set');
+      }
+      if(fragment==='expr') {
+        const follow=trees[at+1];
+        if(follow&&!['=>',',',';'].includes(text(follow)))throw new TypeError('Declarative expression fragment has an unproved Rust follow set');
       }
       if(bindings.has(next.text))throw new TypeError('Duplicate declarative matcher variable');
       bindings.set(next.text,{fragment,depth});result.push({kind:'capture',name:next.text,fragment,depth});continue;
@@ -109,6 +114,9 @@ function boundedType(trees,start,depth=0) {
 }
 function fragmentEnd(fragment,trees,start) {
   if(opaque(trees[start],fragment))return start+1;
+  // A checked Block AST is a Rust expression. Retain its opaque AST rather
+  // than exposing its interior to literal matching when forwarded as Expr.
+  if(fragment==='expr'&&opaque(trees[start],'block'))return start+1;
   const forwarded=trees[start];
   if(forwarded?.kind==='fragment') {
     if(['ident','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1)return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;
@@ -117,6 +125,8 @@ function fragmentEnd(fragment,trees,start) {
   if(fragment==='tt')return start<trees.length?start+1:null;
   if(fragment==='ident')return ident(trees[start])?start+1:null;
   if(fragment==='ty')return boundedType(trees,start);
+  if(fragment==='block')return boundedMacroBlock(trees[start],boundedType)?start+1:null;
+  if(fragment==='expr')return boundedMacroExpression(trees,start,boundedType);
   if(fragment==='vis') {
     if(text(trees[start])!=='pub')return start;
     const restriction=trees[start+1];

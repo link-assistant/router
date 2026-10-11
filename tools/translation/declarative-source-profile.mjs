@@ -31,7 +31,7 @@ function readMembers(archive) {
   if(longName)throw new TypeError('Unconsumed declarative archive name');return members;
 }
 
-export function createDeclarativeSourceProof({manifest,lock,tokioArchive,standardArchives}={}) {
+export function createDeclarativeSourceProof({manifest,lock,tokioArchive,standardArchives,standardCfgIfArchive,rustLicense}={}) {
   const profile=DECLARATIVE_SOURCE_PROFILE;
   if(typeof manifest!=='string'||typeof lock!=='string'||hash(manifest)!==profile.manifestSha256||hash(lock)!==profile.lockSha256)throw new TypeError('Declarative source dependencies differ from the audited manifest/lock');
   const entry=profile.tokio,sections=lock.split('[[package]]').filter(section=>section.includes('name = "tokio"\nversion = "'+entry.version+'"'));
@@ -51,12 +51,23 @@ export function createDeclarativeSourceProof({manifest,lock,tokioArchive,standar
     if(bytes.length!==member.bytes||hash(bytes)!==member.sha256)throw new TypeError('Declarative standard original source checksum mismatch');
     sources.set('rust/'+member.path,bytes.toString('utf8'));
   }
-  const evidence={schema:profile.schema,manifestSha256:hash(manifest),lockSha256:hash(lock),sourceProfileSha256:hash(manifestBytes),tokio:entry,standard:profile.standard,rust:profile.rust,ownerVerified:false,namespaceComplete:false,generatedBehavior:false,outstandingClosure:profile.outstandingClosure};
+  const cfg=profile.standardCfgIf,stdLock=sources.get('rust/library/Cargo.lock'),stdManifest=sources.get('rust/library/std/Cargo.toml');
+  const cfgSections=stdLock.split('[[package]]').filter(section=>section.includes('name = "cfg-if"\nversion = "'+cfg.version+'"'));
+  if(cfgSections.length!==1||!cfgSections[0].includes('source = "registry+https://github.com/rust-lang/crates.io-index"')||!cfgSections[0].includes('checksum = "'+cfg.sha256+'"')||!stdManifest.includes("cfg-if = { version = \"1.0\", features = ['rustc-dep-of-std'] }"))throw new TypeError('Declarative standard cfg_if owner differs from actual standard manifest/lock');
+  if(!Buffer.isBuffer(standardCfgIfArchive)||standardCfgIfArchive.length!==cfg.bytes||hash(standardCfgIfArchive)!==cfg.sha256)throw new TypeError('Declarative standard cfg_if archive checksum mismatch');
+  const cfgMembers=readMembers(standardCfgIfArchive);
+  for(const member of cfg.members) {
+    const bytes=cfgMembers.get(cfg.name+'-'+cfg.version+'/'+member.path);
+    if(!bytes||bytes.length!==member.bytes||hash(bytes)!==member.sha256)throw new TypeError('Declarative standard cfg_if source checksum mismatch');
+    sources.set('cfg-if/'+member.path,bytes.toString('utf8'));
+  }
+  if(!Buffer.isBuffer(rustLicense)||rustLicense.length!==profile.rustLicense.bytes||hash(rustLicense)!==profile.rustLicense.sha256)throw new TypeError('Declarative Rust source license checksum mismatch');
+  const evidence={schema:profile.schema,manifestSha256:hash(manifest),lockSha256:hash(lock),sourceProfileSha256:hash(manifestBytes),tokio:entry,standard:profile.standard,standardCfgIf:cfg,rust:profile.rust,ownerVerified:false,namespaceComplete:false,generatedBehavior:false,outstandingClosure:profile.outstandingClosure};
   const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,sources);return proof;
 }
 export function loadDeclarativeSourceProof({manifest,lock}) {
   const profile=DECLARATIVE_SOURCE_PROFILE;
-  return createDeclarativeSourceProof({manifest,lock,tokioArchive:readFileSync(new URL(profile.tokio.archive,directory)),standardArchives:new Map(profile.standard.map(member=>[member.path,readFileSync(new URL(member.archive,directory))]))});
+  return createDeclarativeSourceProof({manifest,lock,tokioArchive:readFileSync(new URL(profile.tokio.archive,directory)),standardArchives:new Map(profile.standard.map(member=>[member.path,readFileSync(new URL(member.archive,directory))])),standardCfgIfArchive:readFileSync(new URL(profile.standardCfgIf.archive,directory)),rustLicense:readFileSync(new URL(profile.rustLicense.path,directory))});
 }
 export function taskLocalSourceDefinitions(proof) {
   const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
@@ -64,3 +75,10 @@ export function taskLocalSourceDefinitions(proof) {
   return new Map(['task_local','__task_local_inner'].map(name=>[name,compileDeclarativeMacro(source,{name,owner:['tokio']})]));
 }
 export function isDeclarativeSourceProof(value){return !!value&&proofs.has(value);}
+export function standardThreadLocalSourceDefinitions(proof) {
+  const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
+  return new Map([
+    ['thread_local',compileDeclarativeMacro(sources.get('rust/library/std/src/thread/local.rs'),{name:'thread_local',owner:['std']})],
+    ...['no_threads','native','os'].map(branch=>[branch,compileDeclarativeMacro(sources.get('rust/library/std/src/sys/thread_local/'+(branch==='native'?'native/mod.rs':branch+'.rs')),{name:'thread_local_inner',owner:['std']})]),
+  ]);
+}

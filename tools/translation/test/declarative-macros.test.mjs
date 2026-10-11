@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,isDeclarativeExpansion,declarativeNamespaceObservation} from '../declarative-macros.mjs';
 import {originalMacroTrees,originalMacroInvocation,originalMacroTreeText} from '../macro-token-trees.mjs';
-import {loadDeclarativeSourceProof,taskLocalSourceDefinitions,isDeclarativeSourceProof} from '../declarative-source-profile.mjs';
+import {loadDeclarativeSourceProof,taskLocalSourceDefinitions,standardThreadLocalSourceDefinitions,isDeclarativeSourceProof} from '../declarative-source-profile.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const compile=source=>compileDeclarativeMacro(source,{name:'example',owner:['fixture']});
 const render=proof=>proof.trees.map(originalMacroTreeText).join(' ');
@@ -38,7 +38,7 @@ test('ambiguity capture arity unsupported fragments and recursive resource exces
   for(const source of [
     'macro_rules! example {($($($name:ident)*)*)=>{};}',
     'macro_rules! example {($name:ident,$name:ident)=>{};}',
-    'macro_rules! example {($value:expr)=>{};}',
+    'macro_rules! example {($value:expr unexpected)=>{};}',
     'macro_rules! example {($type:ty trailing)=>{};}',
     'macro_rules! example {($visibility:vis ;)=>{};}',
     'macro_rules! example {($visibility:vis priv)=>{};}',
@@ -54,6 +54,53 @@ test('ambiguity capture arity unsupported fragments and recursive resource exces
   let current=expandDeclarativeMacro(cycle,originalMacroTrees('same'));
   for(let at=0;at<32;at++)current=expandDeclarativeMacro(cycle,declarativeSubInput(current));
   assert.throws(()=>expandDeclarativeMacro(cycle,declarativeSubInput(current)),/depth budget/);
+});
+
+test('checked block expressions retain opacity and refuse unsupported statements or expression grammar',()=>{
+  const block=compile('macro_rules! example {($value:block)=>{$value};}');
+  const receiver=compile('macro_rules! example {($value:expr)=>{$value};}');
+  const first=expandDeclarativeMacro(block,originalMacroTrees('{ const VALUE:u8=7; call(VALUE) }'));
+  const forwarded=expandDeclarativeMacro(receiver,declarativeSubInput(first));
+  assert.equal(forwarded.trees[0].fragment,'expr');assert.equal(forwarded.trees[0].trees[0].fragment,'block');
+  for(const source of ['{ let value=1;value }','{ unknown!() }','{ #[unknown] const VALUE:u8=7;VALUE }','{ const VALUE:u8=;VALUE }','{ VALUE+1 }']) {
+    assert.throws(()=>expandDeclarativeMacro(block,originalMacroTrees(source)),/does not match/);
+  }
+  assert.throws(()=>expandDeclarativeMacro(receiver,originalMacroTrees('unsafe {7}')),/does not match/);
+  assert.throws(()=>expandDeclarativeMacro(receiver,originalMacroTrees('function::<u8>()')),/does not match/);
+});
+
+function invocationPath(trees,name,prefix=[]) {
+  for(let at=0;at<trees.length;at++) {
+    if(trees[at].text===name&&trees[at+1]?.text==='!'&&trees[at+2]?.kind==='group')return [...prefix,at+2];
+    if(trees[at].kind==='group') {
+      const nested=invocationPath(trees[at].children,name,[...prefix,at]);if(nested)return nested;
+    }
+  }
+  return null;
+}
+
+test('original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim',()=>{
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  assert.equal(proof.standardCfgIf.version,'1.0.1');
+  assert.equal(proof.standardCfgIf.sha256,'9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268');
+  const definitions=standardThreadLocalSourceDefinitions(proof);
+  assert.throws(()=>standardThreadLocalSourceDefinitions(structuredClone(proof)),/Unsealed/);
+  for(const initializer of ['const {7}','{ call(None) }']) {
+    const front=expandDeclarativeMacro(definitions.get('thread_local'),originalMacroTrees('pub static KEY:u8='+initializer+';'));
+    const path=invocationPath(front.trees,'thread_local_inner');assert.ok(path);
+    for(const branch of ['no_threads','native','os']) {
+      const declaration=expandDeclarativeMacro(definitions.get(branch),declarativeSubInput(front,path));
+      assert.deepEqual(declarativeNamespaceObservation(declaration).declarations.map(value=>[value.term,value.name]),[['const','KEY']]);
+      const keyPath=invocationPath(declaration.trees,'thread_local_inner');assert.ok(keyPath);
+      let key=expandDeclarativeMacro(definitions.get(branch),declarativeSubInput(declaration,keyPath));
+      if(branch==='os'&&initializer.startsWith('const')) {
+        const recursivePath=invocationPath(key.trees,'thread_local_inner');assert.ok(recursivePath);
+        key=expandDeclarativeMacro(definitions.get(branch),declarativeSubInput(key,recursivePath));
+        assert.match(render(key),/INIT_EXPR/);
+      }
+      assert.equal(key.ownerVerified,false);assert.equal(key.namespaceComplete,false);assert.equal(key.generatedBehavior,false);
+    }
+  }
 });
 
 test('all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission',()=>{
