@@ -32,11 +32,19 @@ export class RouterCore {
   async showProvider(name) { return this.providers.get(name); }
   async upsertProvider(input) {
     const result = await this.providers.upsert(input);
+    this.activateProviderAccount(input);
+    return result;
+  }
+  async installProvider(input) {
+    const result = await this.providers.install(input);
+    if (result.outcome !== 'already_present') this.activateProviderAccount(result.record);
+    return result;
+  }
+  activateProviderAccount(input) {
     if (![...this.accounts.records.values()].some(a => a.provider === input.name)) {
       const fresh = new AccountRouter({config:{...this.config,accounts:[],providers:[input]},clock:this.clock});
       for (const [name,account] of fresh.records) this.accounts.records.set(name,account);
     }
-    return result;
   }
   async removeProvider(name) { return this.providers.remove(name); }
   async listAccounts() { return this.accounts.list(); }

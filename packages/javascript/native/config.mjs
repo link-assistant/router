@@ -143,10 +143,10 @@ export class ProviderStore {
   }
   async list() { return [...(await this.load()).values()].map(redact).sort((a,b) => a.name.localeCompare(b.name)); }
   async get(name) { return (await this.list()).find(r => r.name === name) ?? null; }
-  async mutate(operation) {
+  async mutate(operation,{skipWriteWhen=()=>false}={}) {
     const operationWithState = async () => {
       const records = await this.loadUnlocked(); const result = await operation(records);
-      if (this.persistent) {
+      if (this.persistent && !skipWriteWhen(result)) {
         for (const [name,held] of records) {
           const {api_key,...safe} = held;
           if (api_key) safe.encrypted_api_key = encryptProviderSecret(api_key,this.secret);
@@ -159,14 +159,35 @@ export class ProviderStore {
     };
     return serialized(this.path,() => this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),operationWithState) : operationWithState());
   }
-  async upsert(input) {
-    const normalized = normalizeProvider(input,this.env);
+  stage(input) {
+    const normalized = normalizeProvider({...input,name:typeof input.name === 'string' ? input.name.trim() : input.name},this.env);
     if (!['openai-compatible','lefine','z.ai-coding-plan'].includes(normalized.kind)) throw new RouterError('invalid_provider','Subscription services are configured separately from persisted providers');
-    const { api_key, protocol, ...record } = normalized;
+    const { api_key, apiKey, protocol, if_absent, acknowledge_intermediary_risk, acknowledge_unsupported_clients, ...record } = normalized;
     record.intermediary_risk_acknowledged = input.acknowledge_intermediary_risk ?? input.intermediary_risk_acknowledged ?? false;
     record.unsupported_clients = input.acknowledge_unsupported_clients ?? input.unsupported_clients ?? [];
     if (record.kind === 'z.ai-coding-plan' && (typeof record.subscriber_id !== 'string' || !record.subscriber_id.trim())) throw new RouterError('invalid_provider','z.ai Coding Plan requires one subscriber_id');
+    if (record.kind === 'openai-compatible') {
+      const canonical = new Set(['codex','claude','gemini','qwen','grok','opencode','agent','cursor-agent']);
+      if (record.supported_clients.some(client => !canonical.has(client))) throw new RouterError('invalid_provider','supported_clients must use canonical client names');
+      if (record.name === 'z.ai') throw new RouterError('invalid_provider',"Provider name z.ai is reserved for the Coding Plan namespace");
+      if (record.subscriber_id || record.intermediary_risk_acknowledged || record.unsupported_clients.length) throw new RouterError('invalid_provider','Subscriber/risk settings require a Coding Plan provider');
+    }
     if (api_key) record.encrypted_api_key = encryptProviderSecret(api_key,this.secret);
+    return record;
+  }
+  async install(input) {
+    // Stage every candidate before looking up IfAbsent, then decide under the store lock.
+    const record = this.stage(input);
+    return this.mutate(records => {
+      const prior = records.get(record.name);
+      if (input.if_absent && prior) return {outcome:'already_present',record:redact(prior)};
+      if (record.kind === 'z.ai-coding-plan' && record.enabled && [...records.values()].some(existing => existing.enabled && existing.kind === record.kind && existing.name !== record.name)) throw new RouterError('invalid_provider','Only one personal z.ai Coding Plan subscriber may be enabled');
+      records.set(record.name,record);
+      return {outcome:prior ? 'replaced' : 'created',record:redact(record)};
+    },{skipWriteWhen:result=>result.outcome === 'already_present'});
+  }
+  async upsert(input) {
+    const record = this.stage(input);
     return this.mutate(records => {
       if (input.if_absent && records.has(record.name)) throw new RouterError('conflict','Provider already exists',409);
       if (record.kind === 'z.ai-coding-plan' && record.enabled && [...records.values()].some(existing => existing.enabled && existing.kind === record.kind && existing.name !== record.name)) throw new RouterError('invalid_provider','Only one personal z.ai Coding Plan subscriber may be enabled');

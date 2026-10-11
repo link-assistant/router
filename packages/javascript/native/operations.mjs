@@ -7,6 +7,8 @@ import { executeAuthOperation } from './oauth.mjs';
 import {CodexLogin} from './codex-login.mjs';
 import {nativeCredentialStatus} from './auth-service.mjs';
 import {nativeConfigOptions} from './config.mjs';
+import {parseProviderImport} from './provider-manifest.mjs';
+import {provisionLocalProvider,importLocalProviders} from './provider-provision.mjs';
 import {parsePauseUntil} from './remote-operations.mjs';
 import {clientIntegrations} from './client-files.mjs';
 import {nativeClientStatus} from './client-status.mjs';
@@ -245,31 +247,24 @@ async function dispatch(router, name, options, invocation) {
     }
     if (name === 'providers.add') {
       localOnly(options, ['name', 'kind', 'base_url', 'model', 'models', 'supported_clients', 'api_key_env', 'api_key_stdin', 'enabled', 'if_absent']);
-      if (options.kind && options.kind !== 'openai-compatible') unsupported('Native provider provisioning currently supports openai-compatible only; specialized provider validation is incomplete');
-      const existing = (await providers.list()).find(provider => provider.name === options.name);
-      if (existing && options.if_absent) return { ...redactedProvider(existing), outcome: 'already_present' };
       const models = Array.isArray(options.models) ? options.models : options.models ? [options.models] : options.model ? [options.model] : [];
       const apiKey = options.api_key_stdin ? String(invocation.stdin ?? '').trim() : undefined;
       if (options.api_key_stdin && !apiKey) throw new NativeRouterError('api-key-stdin requires nonempty stdin', { code: 'options' });
-      const provider = { name: options.name, kind: 'openai-compatible', base_url: options.base_url, models,
-        default_model: options.model ?? models[0], supported_clients: options.supported_clients ?? [],
+      const provider = { name: options.name, kind: options.kind ?? 'openai-compatible', base_url: options.base_url, models,
+        default_model: options.model, if_absent:options.if_absent ?? false, supported_clients: options.supported_clients ?? [],
         api_key_env: options.api_key_env, ...(apiKey ? { api_key: apiKey } : {}), enabled: options.enabled ?? true };
-      if (core.upsertProvider) await core.upsertProvider(provider); else await providers.upsert(provider);
-      return { ...redactedProvider(provider), outcome: existing ? 'replaced' : 'created' };
+      return provisionLocalProvider(core,provider);
     }
     if (name === 'providers.import') {
       localOnly(options, ['path']);
-      const imported = JSON.parse(await readNativeText(options.path,{cwd:invocation.cwd}));
-      const records = Array.isArray(imported) ? imported : imported.providers;
-      if (!Array.isArray(records)) throw new NativeRouterError('Import requires an array or {providers: []}', { code: 'options' });
-      // Validate the entire input before writing any record.
-      for (const record of records) {
-        if (record.kind && record.kind !== 'openai-compatible') unsupported('Import of specialized provider kinds is incomplete');
-        if (typeof record.name !== 'string' || !record.name || !['http:', 'https:'].includes(new URL(record.base_url).protocol))
-          throw new NativeRouterError('Invalid imported provider', { code: 'options' });
+      const records = parseProviderImport(await readNativeText(options.path,{cwd:invocation.cwd}));
+      const report = await importLocalProviders(core,records);
+      const data = output(JSON.stringify(report,null,2));
+      if (!report.complete) {
+        const error=new NativeRouterError('Provider import stopped after a rejected candidate',{code:'provider_acceptance'});
+        error.exitCode=1;error.data=data;throw error;
       }
-      for (const record of records) { if (core.upsertProvider) await core.upsertProvider(record); else await providers.upsert(record); }
-      return output(`Imported ${records.length} providers`);
+      return data;
     }
   }
   if (name === 'serve') {
