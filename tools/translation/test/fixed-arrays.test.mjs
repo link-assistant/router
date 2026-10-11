@@ -81,6 +81,8 @@ test('source length, ownership and unsupported array operands cannot be erased',
     'pub fn bad(flag:bool)->[u8;2]{if flag{[1u8,2u8]}else{[1u8]}}',
     'pub fn bad(flag:bool)->usize{let value=if flag{[1u8,2u8]}else{[1u8]};value.len()}',
     'pub fn bad()->[[u8;2];2]{[[1u8,2u8],[3u8]]}',
+    'pub fn bad(value:&str)->[&\'static str;1]{[value]}',
+    'pub fn bad(value:[&str;1])->[&\'static str;1]{value}',
   ]) {
     const result=project(source);
     assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);

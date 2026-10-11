@@ -115,6 +115,10 @@ function origins(node,env,context,returns,depth=0) {
     if(!node.arrayBorrowProof?.verified)throw unsupported('shared array lifetime origin','requires the checked source promotion or constant-extension proof',node.span);
     return uniformOrigins(node.type,new Set(['static']),context);
   }
+  if(node.k==='array'&&node.type?.rustFixedArray&&node.fixedArrayProof?.verified) {
+    const values=node.items.map(value=>read(value));
+    return borrowed?union(...values.map(value=>prefix(value,['element']))):new Set();
+  }
   if(node.k==='routerSharedMethodReceiver') {
     const proof=node.receiverProof;
     const existing=proof?.kind==='existing-shared-receiver'&&proof.source?.kind==='shared'&&proof.source.tokens?.[0]?.value==='&'&&node.object.type?.rustReference?.kind==='shared';
@@ -218,6 +222,7 @@ function origins(node,env,context,returns,depth=0) {
 
 function emptyBorrowValue(node,context) {
   if(!node)return false;
+  if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified)return true;
   if(['routerReturn','routerPanic','abort'].includes(node.k))return true;
   if(node.k==='let'||node.k==='routerDiscard')return emptyBorrowValue(node.body,context);
   if(node.k==='if')return emptyBorrowValue(node.then,context)&&emptyBorrowValue(node.else,context);

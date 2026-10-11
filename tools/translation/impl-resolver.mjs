@@ -112,7 +112,12 @@ export function extractImplDeclarations(source,{sourcePath=null,modulePath=[]}={
       if (members[at]?.text !== '(') {refuse('method declaration has no parameter group',range([members[at]]));at=nextItem(members,start);continue;}
       const paramsAt=at,paramsEnd=closing(members,at),params=members.slice(paramsAt+1,paramsEnd),receiver=receiverOf(params);
       at=paramsEnd+1;const returnStart=at;
-      while (at < members.length && !['{',';'].includes(members[at].text)) at++;
+      while (at < members.length && !['{',';'].includes(members[at].text)) {
+        // A sized return type contains its own semicolon. Only the top-level
+        // terminator separates a method declaration from its concrete body.
+        if(['(','['].includes(members[at].text))at=closing(members,at)+1;
+        else at++;
+      }
       if (members[at]?.text !== '{') {refuse('implementation method needs a concrete body',range(members.slice(start,at+1)));at++;continue;}
       const open=at,end=closing(members,at),all=members.slice(start,end+1),bodyTokens=members.slice(open,end+1);
       if (receiver.receiver === 'mutable' || receiver.receiver === 'value') methodObligations.push(refuse('mutable or consuming receiver requires checked ownership and alias semantics',range(receiver.tokens),{method:nameToken.text}));
