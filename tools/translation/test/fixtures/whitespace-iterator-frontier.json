@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "originalFiles": [
+    {
+      "path": "src/deploy/runtime.rs",
+      "sha256": "f532645841e7f32dc2d9f01cdeb9b75eae721f593e29b1a866065269bd09ad04",
+      "name": "compact",
+      "span": {
+        "start": 5026,
+        "end": 5120
+      },
+      "declarationSha256": "c747693acdba045e2dc28b1f3f5d686f4c144d30d2875e9877ebf7a09988d654",
+      "scope": "complete unchanged original file as declared entry, not a canonical full-crate runtime proof",
+      "candidateRuntimeAuthority": false
+    },
+    {
+      "path": "src/managed_server/diagnostics.rs",
+      "sha256": "8b74e9081a33ab636000211f7e1c5b9e4191d72af5cc477700cc79d9690e4312",
+      "name": "compact",
+      "span": {
+        "start": 54,
+        "end": 355
+      },
+      "declarationSha256": "a1e588ac17007bfa52666a38a16c46f1335bc82b3c4f17b5ab9c084e98fec9f1",
+      "scope": "complete unchanged original file as declared entry, not a canonical full-crate runtime proof",
+      "candidateRuntimeAuthority": false
+    },
+    {
+      "path": "src/clients/util.rs",
+      "sha256": "647a97ca7c978d16b437517a396903879072ce0935abc6b78088a4b3a6f935d3",
+      "name": "compact_body",
+      "span": {
+        "start": 2378,
+        "end": 2676
+      },
+      "declarationSha256": "fef675cae636d9f1f4254e3fbce6f3015ea9855c45990d94e03bfbc2908f7218",
+      "scope": "complete unchanged original file as declared entry, not a canonical full-crate runtime proof",
+      "candidateRuntimeAuthority": false
+    }
+  ],
+  "canonicalCrateGainsVerified": false,
+  "producerRuns": 0,
+  "rustBuilds": 0,
+  "fixtureStatus": "authored source-only; unrun"
+}

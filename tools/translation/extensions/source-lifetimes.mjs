@@ -116,10 +116,11 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
-  if(['routerStringLines','routerStringNext','routerStringJoin'].includes(node.k)) {
+  if(['routerStringLines','routerStringWords','routerStringNext','routerStringJoin'].includes(node.k)) {
     if(node.stringIteratorProof?.profile!=='rust-1.89-borrowed-string-iterators'||node.stringIteratorProof.verified!==true)throw unsupported('string iterator borrow origin','requires its checked standard operation proof',node.span);
+    if(node.k==='routerStringWords'&&(node.whitespaceIteratorProfile?.id!=='rust-1.89-split-whitespace-v1'||node.whitespaceIteratorProfile.sourceInputsVerified!==true))throw unsupported('whitespace iterator borrow origin','requires its original checked standard source profile',node.span);
     const value=read(node.object);
-    if(node.k==='routerStringLines')return uniformOrigins(node.type.element,at(value,[]),context);
+    if(['routerStringLines','routerStringWords'].includes(node.k))return uniformOrigins(node.type.element,at(value,[]),context);
     if(node.k==='routerStringNext')return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
     read(node.separator);return new Set(); // join allocates an owned String.
   }

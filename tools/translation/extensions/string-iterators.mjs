@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {WHITESPACE_ITERATOR_PROFILE} from './whitespace-profile.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const root=new URL('../source-profiles/string-iterators/',import.meta.url);
@@ -23,15 +24,15 @@ function proof(operation,span,extra={}) {return {profile:STRING_ITERATOR_PROFILE
 export function checkStringIteratorOperation(checker,node,object,env,path) {
   const count=node.operation==='join'?1:0;
   if(node.args.length!==count)throw typeError(`${node.operation} expects ${count} arguments`,node.span);
-  if(node.operation==='lines') {
+  if(['lines','split_whitespace'].includes(node.operation)) {
     requireBorrowedString(object.type,node.span);
     const element=structuredClone(object.type);
-    return {k:'routerStringLines',object,type:{kind:'routerIterator',element},stringIteratorProof:proof('lines',node.span),constEligible:false,span:node.span};
+    return {k:node.operation==='lines'?'routerStringLines':'routerStringWords',object,type:{kind:'routerIterator',element},stringIteratorProof:proof(node.operation,node.span),...(node.operation==='split_whitespace'?{whitespaceIteratorProfile:WHITESPACE_ITERATOR_PROFILE}:{}),constEligible:false,span:node.span};
   }
   if(node.operation==='next') {
     // An immediate fresh cursor cannot be aliased or consumed twice. Stored
     // iterators and arbitrary adapters remain outside this first contract.
-    if(object.k!=='routerStringLines'||object.stringIteratorProof?.profile!==STRING_ITERATOR_PROFILE.id||object.stringIteratorProof.verified!==true)throw unsupported('Iterator::next','only an immediate fresh checked str.lines cursor has a linear consumption proof',node.span);
+    if(!['routerStringLines','routerStringWords'].includes(object.k)||object.stringIteratorProof?.profile!==STRING_ITERATOR_PROFILE.id||object.stringIteratorProof.verified!==true)throw unsupported('Iterator::next','only an immediate fresh checked standard str cursor has a linear consumption proof',node.span);
     requireBorrowedString(object.type.element,node.span);
     if(!checker.instantiations?.option)throw unsupported('Iterator::next result','requires a canonical checked standard Option declaration',node.span);
     return {k:'routerStringNext',object,type:checker.instantiations.option(object.type.element,node.span),stringIteratorProof:proof('next',node.span,{consumption:'fresh-cursor-once'}),constEligible:false,span:node.span};
