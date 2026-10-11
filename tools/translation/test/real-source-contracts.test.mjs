@@ -163,3 +163,33 @@ test('actual output limiter constructor saturates token budgets and preserves un
   for(const [limit,remaining] of [[none,none],[some(0n),some(0n)],[some(2n),some(8n)],[some(4611686018427387903n),some(18446744073709551612n)],[some(4611686018427387904n),some(18446744073709551615n)],[some(18446744073709551615n),some(18446744073709551615n)]])assert.deepEqual(translated.fixture_limiter(limit),limiter(remaining));
   }
 });
+
+
+test('actual stream failure message uses its checked Copy receiver and exact original strings',async()=>{
+  const {apis,result}=await checkedModule('failure-message');
+  const declarations=new Map(result.meta.checkedSemanticProgram.program.declarations.$map);
+  assert.deepEqual(declarations.get('FailureKind').deriveTraits,['Debug','Clone','Copy','PartialEq','Eq']);
+  const method=[...declarations.values()].find(entry=>entry.impl?.method==='message');
+  assert.ok(method,'the original by-value method must supply checked executable evidence');
+  assert.equal(method.constFunction,true);
+  assert.equal(method.impl.receiver,'value');
+  const certificate=method.impl.copyCertificate,{digest,...evidence}=certificate;
+  assert.equal(certificate.profile,'checked-rust-copy-layout-v1');
+  assert.equal(certificate.verified,true);
+  assert.deepEqual(certificate.type,{kind:'data',name:'FailureKind'});
+  assert.deepEqual(certificate.diagnostics,[]);
+  assert.equal(hash(JSON.stringify(evidence)),digest);
+  assert.equal(method.impl.rewrites[0].kind,'copy-receiver');
+  assert.equal(method.impl.rewrites[0].certificate,digest);
+  for(const translated of apis){
+    for(const [kind,expected] of [['Stalled','upstream stream stalled past the idle timeout before completion'],['Interrupted','upstream stream was interrupted before completion'],['Truncated','upstream stream ended before completion']])assert.equal(translated.fixture_failure_message(tagged(kind)),expected);
+    assert.equal(translated.INCOMPLETE_STREAM_MESSAGE,'upstream stream ended before completion');
+    assert.throws(()=>translated.fixture_failure_message({$:'Stalled'}),TypeError);
+    let reads=0;
+    const accessor=Object.freeze(Object.defineProperty({},'$',{get(){reads++;return 'Stalled';}}));
+    assert.throws(()=>translated.fixture_failure_message(accessor),TypeError);assert.equal(reads,0);
+    const proxy=new Proxy(tagged('Stalled'),{get(target,key){reads++;return Reflect.get(target,key);}});
+    assert.throws(()=>translated.fixture_failure_message(proxy),TypeError);assert.equal(reads,0);
+    assert.throws(()=>translated.fixture_failure_message(tagged('Unrecognized')),TypeError);
+  }
+});

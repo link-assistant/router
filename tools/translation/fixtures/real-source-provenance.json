@@ -262,6 +262,44 @@
       },
       "testSource": "src/output_limit_tests.rs",
       "testName": "limiter_without_a_cap_passes_text_through"
+    },
+    {
+      "id": "failure-message",
+      "path": "src/stream_termination.rs",
+      "sourceSha256": "96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a",
+      "declarations": [
+        {
+          "name": "INCOMPLETE_STREAM_MESSAGE",
+          "term": "const",
+          "start": 1404,
+          "end": 1490,
+          "sha256": "9e3001cac239a5b3454d5062dfa75d1d123999e10d5747436e6dc4232ce8c818"
+        },
+        {
+          "name": "FailureKind",
+          "term": "enum",
+          "start": 2712,
+          "end": 3027,
+          "sha256": "1870f60a10520b31301b1accfc8c3992c4370184880910424edd9496d5554309"
+        }
+      ],
+      "methodPins": [
+        {
+          "owner": "FailureKind",
+          "name": "message",
+          "start": 4705,
+          "end": 5022,
+          "sha256": "89a44712e038d20ed53c142ea07c2e6020ba4278b4c052fcb99f13061206d76a"
+        }
+      ],
+      "bodyNames": [],
+      "carrier": {
+        "name": "fixture_failure_message",
+        "source": "pub fn fixture_failure_message(kind: FailureKind) -> &'static str { kind.message() }",
+        "purpose": "One-call test entry only; not a production body or Rust replacement."
+      },
+      "testSource": "src/stream_termination_tests.rs",
+      "testName": null
     }
   ],
   "obligations": [
@@ -342,6 +380,17 @@
       "role": "new-const-fixed-saturation-method",
       "fixtureCarriers": 1,
       "independentCases": 6,
+      "derivedTraitMethodsExecuted": false
+    },
+    {
+      "id": "failure-message",
+      "productionBodies": [
+        "FailureKind.message"
+      ],
+      "role": "new-const-derived-copy-method",
+      "fixtureCarriers": 1,
+      "independentCases": 3,
+      "domainGuards": 4,
       "derivedTraitMethodsExecuted": false
     }
   ],
