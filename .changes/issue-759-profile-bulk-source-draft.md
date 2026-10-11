@@ -26,3 +26,7 @@ When a source module excludes a registered host namespace, its dependent
 support types are excluded transitively; actual source refusals keep their
 own location. Checked inline source functions called Some execute their
 original body and preserve integer overflow checks.
+The first repaired 25-file run has 244 passing and one failing case under both
+engines. Its new source-location assertion exposes declaration-local parser
+coordinates; those now relocate once into the complete original file's UTF-16
+coordinates, including inline and external modules. This repair awaits rerun.

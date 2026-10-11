@@ -215,7 +215,14 @@ export function translateProject(options) {
         linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
         declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: semantic });
         captureGenericDeclarations(declarations,parser,module,{start:base,end:module.offset+item.end},base);
-      } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
+      } catch (error) {
+        if (!(error instanceof TranslationError)) throw error;
+        const refusal=diagnostic(error);
+        // This parser consumed the original declaration slice. Its UTF-16
+        // cursor coordinates become whole-file coordinates exactly once.
+        if(refusal.span)refusal.span={start:item.start+refusal.span.start,end:item.start+refusal.span.end};
+        refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...refusal });
+      }
     }
   }
   const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes);

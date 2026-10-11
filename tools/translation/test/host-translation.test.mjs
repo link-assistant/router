@@ -22,6 +22,16 @@ test('registered JSON paths and function-item callbacks execute checked typed bo
  assert.equal(api.classify(tagged('Null')),false);
  assert.equal(api.classify(map([['chat',map([['type',tagged('Bool',{field0:true})]])]])),false);
 });
+
+test('declaration parsing refusals keep exact whole-file UTF-16 locations in external and inline modules',()=>{
+ const files={'src/lib.rs':'pub mod child; pub mod inline {pub mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}} pub fn bad(x:&std::time::Duration)->&std::time::Duration{x}}','src/child.rs':'// Original leading astral character: \u{1d7d8}\n\npub mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}}\npub fn bad(x:&std::time::Duration)->&std::time::Duration{x}'};
+ const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
+ for(const [file,source]of Object.entries(files)){
+  const refusal=result.meta.refused.find(entry=>entry.file===file&&entry.name==='bad');assert.ok(refusal?.message.includes('shadowed host type namespace'));
+  const first=source.indexOf('std::time::Duration',source.indexOf('pub fn bad'));
+  assert.equal(refusal.span.start,first);assert.ok(refusal.span.end<=source.length);assert.ok(source.slice(refusal.span.start,refusal.span.end).startsWith('std::time::Duration'));
+ }
+});
 test('registered JSON refinements validate parameters even when no JSON operation is called',async()=>{
  const result=project('pub fn identity(value:&serde_json::Value)->&serde_json::Value { value }');assert.deepEqual(result.meta.refused,[]);strict(result);
  const api=(await loadJavaScript(result.javascript)).translated;
