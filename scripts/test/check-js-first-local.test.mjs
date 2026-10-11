@@ -56,3 +56,20 @@ test('large tracked path inventories remain fingerprinted beyond the default sub
     assert.throws(() => verifyStamp(stampPath), /different commit/);
   } finally { process.chdir(previous); fs.rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('the full translation stage runs every fixture with bounded test-file concurrency',()=>{
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-concurrency-'));
+  try {
+    const files=Array.from({length:4},(_,index)=>path.join(directory,`${index}.test.mjs`)),trace=path.join(directory,'trace.jsonl');
+    for(const file of files)fs.writeFileSync(file,`import test from 'node:test'; import {appendFileSync} from 'node:fs'; test('bounded worker',async()=>{const record=event=>appendFileSync(${JSON.stringify(trace)},JSON.stringify({event,pid:process.pid})+${JSON.stringify(String.fromCharCode(10))});record('start');await new Promise(resolve=>setTimeout(resolve,100));record('end');});`);
+    const command=stages.find(([name])=>name==='translation')[1][0].split(' ');
+    assert.equal(command.shift(),'node');assert.equal(command.pop(),'tools/translation/test/*.test.mjs');
+    const environment={...process.env};delete environment.NODE_TEST_CONTEXT;
+    execFileSync(process.execPath,[...command,...files],{encoding:'utf8',timeout:10000,env:environment});
+    const active=new Set();let started=0,peak=0;
+    for(const {event,pid} of fs.readFileSync(trace,'utf8').trim().split('\n').map(line=>JSON.parse(line))) {
+      if(event==='start'){active.add(pid);started++;peak=Math.max(peak,active.size);}else{assert.ok(active.delete(pid));}
+    }
+    assert.equal(started,4);assert.equal(active.size,0);assert.ok(peak<=2);
+  } finally {fs.rmSync(directory,{recursive:true,force:true});}
+});
