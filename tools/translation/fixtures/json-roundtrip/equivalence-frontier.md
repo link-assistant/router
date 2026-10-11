@@ -146,3 +146,25 @@ order for each32/64 variant and all source declaration spans/hashes. Its two
 authored cases are UNRUN. Table arithmetic and carry inequalities alone do not
 certify loop equivalence, bounded branch dispatch or hi64/sticky extraction;
 those proof fields remain false and cannot grant parser admission.
+
+## Mechanically extracted source recurrence unit
+
+The next isolated draft adds a reusable bounded parser/interpreter that extracts
+original functions, then serializes their literal operator, binder, statement,
+match and mutable-limb loop IR. It mechanically selects scalar::mul/imul,
+small::imul and u64_to_hi64_1/2 from pinned math.rs; five authored cases are UNRUN.
+No source function body is replaced with hand-written multiplication or sticky
+logic in this unit. Source spans/hashes and IR are retained. Both Limb/Wide
+interpretations are projected separately, with ordinary fixed unsigned cast,
+nonoverflow addition/product and leading-zeros arithmetic assumptions stated.
+Debug assertion conditions constrain the projection; their actual macro owners
+remain unproved. AsCast/AsPrimitive macro-generated cast behavior remains a
+source-owner frontier, not resolved merely by the helper's spelling.
+
+This unit does not yet lower the source slice-trait forwarding, vector slice
+selection/enumeration, long_mul/uneven dispatch or pow5 loops. Those remain
+explicit obligations, as do arbitrary borrow aliasing, general Karatsuba,
+allocation/abort and custom architecture/compiler configuration. The private
+source wrapper cannot be cloned to grant authority. It provides actual source
+recurrence progress and independently stated mathematical outputs, without
+authorizing the parser or claiming production Router function execution.
