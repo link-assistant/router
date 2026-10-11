@@ -150,6 +150,18 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
         for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;
         if(uncertain.type || uncertain.macro || uncertain.conditional)diagnostic(scope,'attribute scope requires compilation-condition or procedural expansion evidence',span);
+        // An exact self alias binds the actual crate in the type namespace.
+        // Real external dependency identities are never inferred here.
+        // https://doc.rust-lang.org/reference/items/extern-crates.html
+        if(tokens[head.at]?.text==='extern'&&tokens[head.at+1]?.text==='crate'){
+          const reference=tokens[head.at+2],hasAlias=tokens[head.at+3]?.text==='as',alias=hasAlias?tokens[head.at+4]:reference,end=head.at+(hasAlias?5:3);
+          if(!identifier(reference)||!identifier(alias)||tokens[end]?.text!==';'||end+1!==tokens.length||['crate','self','super','Self'].includes(alias.text)||reference.text==='self'&&(!hasAlias||reference.rawIdentifier))throw new Error('extern crate declaration requires an exact source crate reference and alias');
+          const own=reference.text==='self'&&!reference.rawIdentifier;
+          if(own&&!scopes.has('crate'))throw new Error('self crate alias requires an actual tracked crate root');
+          if(alias.text!=='_')add(scope,{...item,term:'mod'},alias.text,'type',head.visibility,{target:own&&!uncertain.type&&!uncertain.conditional?['crate']:null,status:own&&!uncertain.type&&!uncertain.conditional?'resolved':'unresolved',externCrateBinding:true,externCrateSelf:own,externPrelude:scope.path.length===0});
+          if(!own)diagnostic(scope,'external crate dependency identity remains unresolved',span,{name:alias.text,dependency:reference.text});
+          continue;
+        }
         if(item.term==='use') {for(const [index,leaf] of leaves(tokens,head.at+1).entries())tasks.push({...leaf,scope,visibility:head.visibility,span,id:`${module.file}:${item.start}:${index}`,conditional:uncertain.type || uncertain.conditional});continue;}
         let keyword=head.at;
         while(!tokens[keyword]?.rawIdentifier) {
@@ -223,6 +235,11 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     }
     scope.bindings=collapse(scope.seeds);
   }
+  // Rust 2018 root extern aliases enter every module's extern prelude.
+  // Local declarations and imports retain higher namespace priority.
+  const externPrelude=collapse((scopes.get('crate')?.seeds??[]).filter(binding=>binding.externCrateBinding));
+  for(const scope of scopes.values())if(scope.path.length)for(const binding of externPrelude)scope.seeds.push({...binding,priority:0,via:'extern-prelude',origin:`extern-prelude:${binding.name}`});
+  for(const scope of scopes.values())scope.bindings=collapse(scope.seeds);
   for(const [path,table] of externalModules) {
     if(typeof path!=='string' || path.split('::')[0]==='crate' || !Array.isArray(table.bindings) || typeof table.complete!=='boolean' || table.kind!==undefined && !['mod','enum','trait'].includes(table.kind))throw new TypeError('External module tables require an explicit completeness assertion and source container kind');
     const bindings=table.bindings.map(binding=>{
@@ -245,6 +262,8 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     owner=task.externalOnly?null:scopes.get(key(canonical(requester)));
     const local=owner?.bindings.filter(binding=>binding.name===segments[0] && binding.namespace==='type');
     if(task.externalOnly || !local?.length) {
+      const alias=externPrelude.find(binding=>binding.name===segments[0]);
+      if(alias){if(alias.status!=='resolved')return {error:'extern prelude crate alias identity remains unresolved'};return selfChecked(task,walk(containers.get(key(alias.target)),segments,1,requester));}
       let match;
       for(let length=segments.length;length>0;length--)if(externalModules.has(key(segments.slice(0,length)))){match=length;break;}
       if(match){owner=containers.get(key(segments.slice(0,match)));at=match;if(at===segments.length)return {bindings:[{name:segments.at(-1),namespace:'type',target:segments,kind:owner.kind,status:'resolved',visibility:{kind:'public'},source:'registered-external-table',span:null}],container:owner};}
@@ -318,5 +337,5 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     if(result.error || task.conditional || !task.glob && result.bindings?.some(binding=>binding.status!=='resolved') || task.glob && (!result.container || result.container===task.scope || result.container.unknownType || result.container.unknownMacro))diagnostic(task.scope,result.error??'use scope completeness, target or compilation condition remains unresolved',task.span,{name:task.name??null,glob:!!task.glob});
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
-  return frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro})),diagnostics}));
+  return frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro})),diagnostics}));
 }
