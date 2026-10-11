@@ -139,3 +139,10 @@ low11bits1024, so it witnesses positive bigint fallback. These are still UNRUN.
 Zero/all-zero direct truncated inputs are an explicit rejected precondition;
 the source reader selects concise parsing for zero rather than entering bhcomp
 with a trimmed-empty digit slice. No new parser admission follows this evidence.
+
+A private original-source arithmetic verifier now checks100 power entries (72
+small scalar powers and28 large limb arrays), including actual14-entry dispatch
+order for each32/64 variant and all source declaration spans/hashes. Its two
+authored cases are UNRUN. Table arithmetic and carry inequalities alone do not
+certify loop equivalence, bounded branch dispatch or hi64/sticky extraction;
+those proof fields remain false and cannot grant parser admission.

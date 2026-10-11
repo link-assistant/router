@@ -129,6 +129,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...files(fileURLToPath(new URL('./source-profiles/json-macro/',import.meta.url))).map(path=>path.slice(translatorRoot.length+1)).sort());
   implementation.push('tools/translation/json-roundtrip-capabilities.mjs');
   implementation.push('tools/translation/json-roundtrip-cached-powers.mjs');
+  implementation.push('tools/translation/json-roundtrip-limb-arithmetic.mjs');
   implementation.push(...files(fileURLToPath(new URL('./source-profiles/json-roundtrip/',import.meta.url))).map(path=>path.slice(translatorRoot.length+1)).sort());
   implementation.push(...['exact-binary64.d.mts','json-roundtrip-runtime.d.mts','json-roundtrip-numbers.d.mts'].map(name=>`tools/translation/extensions/${name}`));
   implementation.push(...['json-roundtrip-lexical.d.mts','json-roundtrip-NOTICE.md','json-roundtrip-LICENSE-MIT.txt','json-roundtrip-LICENSE-APACHE.txt'].map(name=>`tools/translation/extensions/${name}`));
