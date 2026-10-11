@@ -144,9 +144,24 @@ test('ordinary tuple let evaluates its receiver exactly once before scalar proje
   for(const api of apis){assert.equal(api.once(tagged('Tuple',{field0:'Ω',field1:'Ω'})),true);assert.equal(api.fixture_count(),1);assert.equal(api.once(tagged('Tuple',{field0:'Ω',field1:'ω'})),false);assert.equal(api.fixture_count(),2);}
 });
 
+test('nested immutable Copy Option binders execute both targets and reject hostile payloads',{timeout:30_000},async()=>{
+  const source='fn aggregate(value: Option<Option<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }';
+  const {apis,program}=await compile(source);
+  const plan=program.declarations.get('aggregate').body.patternControl.plan;
+  assert.equal(plan.bindings.length,1);assert.equal(plan.bindings[0].type.kind,'data');
+  const layout=program.declarations.get(plan.bindings[0].type.name);assert.equal(layout.standardGeneric.kind,'Option');
+  assert.equal(layout.ctors.find(ctor=>ctor.name==='Some').fields[0].type.kind,'fixed');
+  for(const api of apis){
+    assert.equal(api.aggregate(some(some(255n))),0n);assert.equal(api.aggregate(some(none)),0n);assert.equal(api.aggregate(none),1n);
+    let reads=0;const proxy=new Proxy(some(3n),{get(){reads++;throw Error('get');},ownKeys(){reads++;throw Error('keys');},getOwnPropertyDescriptor(){reads++;throw Error('descriptor');},getPrototypeOf(){reads++;throw Error('prototype');}});
+    assert.throws(()=>api.aggregate(some(proxy)),TypeError);assert.equal(reads,0);
+    assert.throws(()=>api.aggregate(some(Object.freeze({$:'Some',get field0(){reads++;return 3n;}}))),TypeError);assert.equal(reads,0);
+    assert.throws(()=>api.aggregate(some(some(256n))),TypeError);
+  }
+});
+
 test('aggregate moves, aliases, references, generic patterns and guards remain explicit refusals',()=>{
   for(const source of [
-    'fn aggregate(value: Option<Option<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }',
     'fn aggregate(value: Option<Vec<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }',
     'fn conversion(value: &str) -> u8 { let owned: String = value.to_string(); if let text = owned { 0 } else { 1 } }',
     'fn annotated(value: Option<&str>) -> u8 { let owned: Option<String> = value; if let Some(text) = owned { 0 } else { 1 } }',

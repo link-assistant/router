@@ -131,7 +131,16 @@ export class EffectChecker extends IteratorChecker {
 const FUTURE = `function ml_router_future(operation) { let started = false; let pending; return { then(resolve, reject) { if (!started) { started = true; pending = globalThis.Promise.resolve().then(operation); } return (pending ?? globalThis.Promise.reject(new Error('future polling invariant'))).then(resolve, reject); } }; }
 function ml_router_defer(operation, args) { return ml_router_future(() => operation(...args)); }`;
 const TRY = `const ml_router_try_return = Symbol('checked Rust early return');
-function ml_router_try(value, option) { if (value.$ === (option ? 'Some' : 'Ok')) return value.field0; throw { [ml_router_try_return]: true, value: option ? Object.freeze({ $: 'None' }) : Object.freeze({ $: 'Err', field0: value.field0 }) }; }
+function ml_router_try(value, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+    if (value.$ === 'None') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'None' }) };
+  } else {
+    if (value.$ === 'Ok') return value.field0;
+    if (value.$ === 'Err') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'Err', field0: value.field0 }) };
+  }
+  throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
+}
 function ml_router_propagated(error) { return error && error[ml_router_try_return] === true; }`;
 export class EffectEmitter extends IteratorEmitter {
   constructor(program,state) {super(program,state);this.effects=new Set();this.effectHelpers=new Set();for(const name of ['ml_router_future','ml_router_defer','ml_router_try','ml_router_try_return','ml_router_propagated'])state.reserved.add(name);for(const contract of EFFECT_CONTRACTS)state.reserved.add(`ml_effect_${contract.id}`);}
