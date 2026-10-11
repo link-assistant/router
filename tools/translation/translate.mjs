@@ -50,7 +50,7 @@ function relocate(value, offset) {
 
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[] } = {}) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
-  const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash);
+  const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
   const emit = program => {

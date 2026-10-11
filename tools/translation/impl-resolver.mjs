@@ -1,6 +1,7 @@
 // Source-coordinate implementation extraction for checked method lowering.
 // Extraction is structural evidence; only later checked bodies are executable.
 import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
 import {fixedArrayCopyCells,FIXED_ARRAY_PROFILE} from './extensions/fixed-arrays.mjs';
 import {fixedArrayLength} from './checked-types.mjs';
@@ -74,11 +75,11 @@ function receiverOf(tokens) {
   return {receiver:spelling.startsWith('&') ? spelling.includes('mut') ? 'mutable' : 'shared' : 'value',tokens:first,unsupported:true};
 }
 const conditional = attributes => attributes.filter(attribute=>['cfg','cfg_attr','async_trait'].includes(attribute.name));
-export function extractImplDeclarations(source,{sourcePath=null,modulePath=[]}={}) {
+export function extractImplDeclarations(source,{sourcePath=null,modulePath=[],sourceView,compilationProfile=null}={}) {
   const implementations=[],diagnostics=[];
   const refuse=(message,span,extra={})=>{const value={kind:'unsupported',message,span,sourcePath,...extra};diagnostics.push(value);return value;};
   let items;
-  try {items=sourceItems(source);} catch (error) {return {implementations,diagnostics:[{kind:'syntax',message:error.message,span:error.span ?? null,sourcePath}]};}
+  try {items=sourceView===undefined?sourceItems(source):originalSourceModuleItems({source,file:sourcePath,path:modulePath,sourceView,compilationProfile});} catch (error) {return {implementations,diagnostics:[{kind:'syntax',message:error.message,span:error.span ?? null,sourcePath}]};}
   for (const item of items.filter(item=>item.term === 'impl')) {
     const tokens=significant(item.tokens),head=prefix(tokens,0),implAt=tokens.findIndex(token=>token.text === 'impl');
     if (implAt < 0) continue;

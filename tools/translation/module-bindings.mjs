@@ -4,6 +4,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // https://doc.rust-lang.org/reference/visibility-and-privacy.html
 // https://doc.rust-lang.org/reference/names/namespaces.html
 import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
@@ -150,9 +151,10 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
   for(const module of modules) {
     const scope=scopes.get(key(canonical(module.path)));
     let items;
-    try {items=module.items??sourceItems(module.source);} catch(error){scope.baseType=scope.baseMacro=scope.baseBang=scope.baseAttribute=true;diagnostic(scope,error.message,{start:0,end:module.source.length});continue;}
-    const innerConditions=(module.allItems??items).filter(item=>tokensOf(item)[0]?.text==='#'&&tokensOf(item)[1]?.text==='!').map(item=>itemConfiguration(tokensOf(item),profile));
-    scope.configurationCondition=module.configurationCondition??(innerConditions.some(item=>item.status==='inactive')?'inactive':innerConditions.some(item=>item.status==='unknown')?'unknown':'active');
+    try {items=Object.hasOwn(module,'sourceView')?originalSourceModuleItems(module):module.items??sourceItems(module.source);} catch(error){scope.baseType=scope.baseMacro=scope.baseBang=scope.baseAttribute=true;diagnostic(scope,error.message,{start:0,end:module.source.length});continue;}
+    const innerConditions=(Object.hasOwn(module,'sourceView')?items:module.allItems??items).filter(item=>tokensOf(item)[0]?.text==='#'&&tokensOf(item)[1]?.text==='!').map(item=>itemConfiguration(tokensOf(item),profile));
+    const configured=module.configurationCondition??(innerConditions.some(item=>item.status==='inactive')?'inactive':innerConditions.some(item=>item.status==='unknown')?'unknown':'active');
+    scope.configurationCondition=module.sourceView?.configurationCondition==='inactive'?'inactive':module.sourceView?.configurationCondition==='unknown'&&configured!=='inactive'?'unknown':configured;
     if(scope.configurationCondition!=='active'){
       if(scope.configurationCondition==='inactive')continue;
       scope.baseType=scope.baseMacro=scope.baseBang=scope.baseAttribute=true;
@@ -163,7 +165,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       const condition=itemConfiguration(tokensOf(item),profile);if(condition.status==='inactive')continue;
       const span={start:item.start,end:item.end};
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'))continue;
-      const innerLint=inertInnerLintItem(item,module.source);
+      const innerLint=inertInnerLintItem(item,module.source,module.sourceView);
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';

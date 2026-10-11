@@ -2,7 +2,7 @@
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
 import {implementationTargetPath} from './project-nominal.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const owners=new WeakMap();
@@ -33,7 +33,7 @@ export function bindNonCopyTraitOwner(implementation,module,scopes) {
   if(!ancestors.some(scope=>scope.file===module.file)||ancestors.some(scope=>scope.unresolvedTypeScope!==false||scope.configurationCondition!=='active'))return implementation;
   // Bare std can resolve to a source module. Accept only the extern owner.
   if(ancestors.some(scope=>scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='std'&&(binding.status!=='resolved'||binding.kind!=='mod'||JSON.stringify(binding.target)!=='["std"]'))))return implementation;
-  const original=sourceItems(module.source).find(item=>item.term==='impl'&&item.start===implementation.span.start&&item.end===implementation.span.end);
+  const original=originalSourceModuleItems(module).find(item=>item.term==='impl'&&item.start===implementation.span.start&&item.end===implementation.span.end);
   if(!original)return implementation;
   const tokens=original.tokens.filter(token=>token.type!=='comment'&&token.end<=implementation.headerSpan.end).map(token=>token.text);
   const begin=tokens.indexOf('impl'),end=tokens.indexOf('for',begin+1);

@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
 import {inertInnerLintItem} from './tool-attributes.mjs';
@@ -54,7 +55,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   if(!isDeriveDependencyProof(dependencies)||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Derive context requires sealed dependencies and original tracked modules');
   const profile=compilationProfile(profileInput),external=new Map(externalModules);
   for(const table of external.values())if(table.bindings?.some(binding=>binding.deriveDependencyDigest||['serde','schemars'].includes(binding.target?.[0])))throw new TypeError('Derive dependency paths require privately verified registry inputs, not caller external aliases');
-  modules=modules.map(module=>({...module,items:sourceItems(module.source).filter(item=>!item.comment&&itemConfiguration(item.tokens,profile).status!=='inactive')}));
+  modules=modules.map(module=>({...module,items:originalSourceModuleItems(module).filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive')}));
   for(const [path,table]of deriveExternalModules(dependencies)) {
     const existing=external.get(path);
     if(existing?.bindings.some(binding=>table.bindings.some(derived=>derived.namespace===binding.namespace&&derived.name===binding.name)))throw new TypeError('Registered derive namespace collides with another external table');
@@ -67,7 +68,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   for(const module of modules) {
     const scope=scopes.get(key(['crate',...module.path])),inputs=new Map();
     for(const candidate of module.items.filter(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='derive')))try{inputs.set(candidate.start,inspectDeriveInput(candidate,profile));}catch{}
-    attributeClosure.set(module.file,scope.configurationCondition==='active'&&module.items.every(candidate=>{
+    attributeClosure.set(moduleScopeKey(module),scope.configurationCondition==='active'&&module.items.every(candidate=>{
       const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
       if(inputs.has(candidate.start))return inputs.get(candidate.start).derives.every(invocation=>standardOwner(invocation.path,scope)||actualOwner(invocation.path,scope,scopes,external,dependencies));
       return condition.attributes.every(attribute=>['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module.source);
@@ -76,13 +77,13 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   const root=scopes.get('crate');
   // A root derive cannot bootstrap its own proof from a spelling. Its entire
   // original attribute footprint must independently match locked owners first.
-  const coreOwner=root&&root.configurationCondition==='active'&&(!root.unresolvedAttributeMacroScope||attributeClosure.get(root.file))&&!root.bindings.some(binding=>binding.namespace==='type'&&binding.name==='core')&&!root.unresolvedImports.some(entry=>entry.glob||entry.name==='core');
+  const coreOwner=root&&root.configurationCondition==='active'&&(!root.unresolvedAttributeMacroScope||attributeClosure.get(moduleScopeKey(root)))&&!root.bindings.some(binding=>binding.namespace==='type'&&binding.name==='core')&&!root.unresolvedImports.some(entry=>entry.glob||entry.name==='core');
   const byId=new Map(),diagnostics=[],moduleHashes=[];
   for(const module of modules) {
     if(typeof module.source!=='string'||typeof module.file!=='string')throw new TypeError('Missing original derive source');
     const sourceSha256=hash(module.source);moduleHashes.push({source:module.file,module:[...module.path],sha256:sourceSha256});
     const scope=scopes.get(key(['crate',...module.path]));
-    const attributesClosed=attributeClosure.get(module.file);
+    const attributesClosed=attributeClosure.get(moduleScopeKey(module));
     for(const item of (module.items??sourceItems(module.source)).filter(item=>['struct','enum'].includes(item.term))) {
       if(!item.tokens.some(token=>token.text==='derive'))continue;
       try {

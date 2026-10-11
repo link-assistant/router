@@ -1,4 +1,5 @@
 import {itemConfiguration} from './cfg-profile.mjs';
+import {moduleScopeKey} from './source-module-views.mjs';
 // A layout-only prepass supplies evidence; final project checking still owns
 // every method body and its dependencies. Failed layouts never supply Copy.
 import {HostChecker,hostData} from './extensions/host-contracts.mjs';
@@ -22,8 +23,8 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   if(!program)return ()=>null;
   const checked=new Map([...program.declarations].map(([name,entry])=>[name,entry.standardGeneric?{...entry,standardGeneric:{...entry.standardGeneric,arguments:entry.standardGeneric.arguments.map(type=>checker.resolveType(type,entry.modulePath,entry.span))}}:entry]));
   const nominalTypes=nominalTypeIdentities([...scopes.values()],modules);
-  const implementations=modules.filter(module=>module.configurationCondition!=='inactive').flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.filter(implementation=>itemConfiguration((module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start)?.tokens??[],module.compilationProfile).status!=='inactive').map(implementation=>{
-    const binding=aliases.get(module.file)?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
+  const implementations=modules.filter(module=>module.configurationCondition!=='inactive').flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path,sourceView:module.sourceView,compilationProfile:module.compilationProfile}).implementations.filter(implementation=>itemConfiguration((module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start)?.tokens??[],module.compilationProfile).status!=='inactive').map(implementation=>{
+    const binding=aliases.get(moduleScopeKey(module))?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
     const actualTarget=implementationTargetPath(implementation,module);
     const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
@@ -32,10 +33,11 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
   const certify=(type,span)=>{
     const owners=new Set(),seen=new Set();
-    const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(declaration.file);for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
-    const relevant=modules.filter(candidate=>owners.has(candidate.file)||[...owners].some(file=>{const owner=modules.find(candidate=>candidate.file===file);return candidate.path.every((name,index)=>owner.path[index]===name);}));
+    const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(moduleScopeKey({file:declaration.file,path:declaration.path}));for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
+    const ownerModules=modules.filter(module=>owners.has(moduleScopeKey(module)));
+    const relevant=modules.filter(candidate=>ownerModules.some(owner=>candidate.path.every((name,index)=>owner.path[index]===name)));
     const evidence=relevant.map(module=>macroProvenance(module.source));
-    const provenance=relevant.every(module=>scopes.has(module.file))?attributeMacroProvenance(relevant.map(module=>scopes.get(module.file))):{shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:relevant.some(module=>macroProvenance(module.source).unresolvedImportScope)};
+    const provenance=relevant.every(module=>scopes.has(moduleScopeKey(module)))?attributeMacroProvenance(relevant.map(module=>scopes.get(moduleScopeKey(module)))):{shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:relevant.some(module=>macroProvenance(module.source).unresolvedImportScope)};
     const certificate=certifyCopyType(type,{declarations:checked,implementations,nominalTypes,macroProvenance:provenance,span});
     return certificate;
   };

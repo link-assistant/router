@@ -2,7 +2,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
-import { sourceItems } from './rust-structure.mjs';
+import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {externalModuleBindings} from './registered-bindings.mjs';
 import {COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
@@ -36,16 +36,20 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], visited = new Set();
   let offset = 0;
-  const visit = (file, path, directory, parentCondition='active') => {
+  const visit = (file, path, directory, parentCondition='active',original=null,sourceView=null) => {
     const key = path.join('.');
     if (visited.has(key)) throw new Error(`duplicate module path ${key}`);
     visited.add(key);
-    const source = readSource(file);
-    const module = { file, path, directory, source, offset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
-    offset += source.length + 1;
+    const source = original?.source??readSource(file);
+    const fileOffset=original?.offset??offset;
+    if(!original)offset += source.length + 1;
+    const module = { file, path, directory, source, offset:fileOffset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
     modules.push(module);
     try {
-      module.allItems=sourceItems(source).filter(item=>!item.comment);
+      const capture=original?.capture??captureSourceModuleViews({source,sourcePath:file,compilationProfile:profile});
+      module.sourceView=sourceView??capture.views[0];
+      original={source,offset:fileOffset,capture};
+      module.allItems=originalSourceModuleItems(module);
       const inner=module.allItems.filter(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!').map(item=>itemConfiguration(item.tokens,profile));
       module.configurationCondition=parentCondition==='inactive'||inner.some(item=>item.status==='inactive')?'inactive':parentCondition==='unknown'||inner.some(item=>item.status==='unknown')?'unknown':'active';
       module.items=module.allItems.filter(item=>{
@@ -53,11 +57,20 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
         if(module.configurationCondition==='inactive'||condition.status==='inactive'){module.inactiveItems.push({span:{start:item.start,end:item.end},condition});return false;}return true;
       });
     }
-    catch (error) { diagnostics.push({ file, ...diagnostic(error) }); return; }
+    catch (error) { module.configurationCondition='unknown';diagnostics.push({ file, ...diagnostic(error) }); return; }
     for (const item of module.items.filter(item => item.term === 'mod')) {
       const condition=itemConfiguration(item.tokens,profile);
       const prefix=condition.status==='active'&&condition.attributes.length&&condition.attributes.every(attribute=>attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')?condition.attributes.at(-1).span.end:item.start;
       const text = source.slice(prefix, item.end);
+      const childView=original.capture.views.find(view=>view.declaration?.span.start===item.start&&view.declaration?.span.end===item.end);
+      if(childView){
+        const supported=condition.attributes.every(attribute=>attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]');
+        if(!supported){diagnostics.push({file,module:[...path,childView.modulePath.at(-1)],kind:'module',message:'Original inline module attribute owner or expansion remains unresolved',span:{start:item.start,end:item.end}});continue;}
+        const name=childView.modulePath.at(-1),childPath=[...path,name];
+        edges.push({from:file,to:file,module:childPath,kind:'original-inline-module',span:{start:item.start,end:item.end},sourceViewDigest:childView.digest,...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
+        const inherited=module.configurationCondition==='inactive'||condition.status==='inactive'?'inactive':module.configurationCondition==='unknown'||condition.status==='unknown'?'unknown':'active';
+        visit(file,childPath,posix.join(directory,name),inherited,original,childView);continue;
+      }
       const plain = /^\s*(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
       if (!plain) { diagnostics.push({ file, module: [...path, item.name], kind: 'module', message: 'module attributes or inline body require separate compilation-condition lowering', span: { start: item.start, end: item.end } }); continue; }
       const name = plain[1];
@@ -134,19 +147,19 @@ export function translateProject(options) {
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
-  const scopes=new Map(bindingEvidence.scopes.map(scope=>[scope.file,scope]));
-  const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(module.file),bindingEvidence.scopes,module.path);
+  const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
+  const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   for (const module of graph.modules) {
     if(module.configurationCondition==='unknown'){refused.push({file:module.file,term:'module',kind:'unsupported',message:'unknown crate compilation condition',span:{start:0,end:module.source.length}});continue;}
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
     const configured=configureSourceScope(new MethodRustParser([]),module),aliases=configured.aliases;
     for (const item of module.items.filter(item => item.term === 'use')) {
-      const scope=scopes.get(module.file),own=scope.unresolvedImports.filter(entry=>entry.span?.start===item.start&&entry.span?.end===item.end);
+      const scope=scopes.get(moduleScopeKey(module)),own=scope.unresolvedImports.filter(entry=>entry.span?.start===item.start&&entry.span?.end===item.end);
       imports.push({file:module.file,module:module.path,span:{start:item.start,end:item.end},aliases:Object.fromEntries(aliases.get(module.path.join('.'))??[]),diagnostics:own});
       for(const entry of own)refused.push({file:module.file,name:item.name,term:'use',kind:entry.kind,message:entry.message,span:entry.span});
     }
-    moduleAliases.set(module.file, aliases);
+    moduleAliases.set(moduleScopeKey(module), aliases);
     for (const item of module.items.filter(item => ['fn', 'const', 'enum', 'struct'].includes(item.term) && item.name !== 'main')) {
       try {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
@@ -176,7 +189,7 @@ export function translateProject(options) {
         if (!parser.cursor.atEnd()) throw new TranslationError('syntax', 'unconsumed declaration tokens', parser.cursor.peek());
         const base = module.offset + item.start;
         const semantic=relocate(surface,base);
-        linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(module.file),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+        linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
         declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: semantic });
         for (const type of parser.genericTypes.values()) if (!declarations.some(candidate => candidate.name === type.name && candidate.path.length === 0)) declarations.push({ file: module.file, path: [], name: type.name, term: 'generated-type', globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(type, base) });
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
@@ -185,12 +198,12 @@ export function translateProject(options) {
   const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes);
   for (const module of graph.modules) {
     if(module.configurationCondition!=='active')continue;
-    const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path});
+    const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path,sourceView:module.sourceView,compilationProfile:module.compilationProfile});
     for (const implementation of extracted.implementations) {
       const original=(module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start);
       if(original&&itemConfiguration(original.tokens,graph.compilationProfile).status==='inactive')continue;
       for (const method of implementation.methods) {
-        const aliases = moduleAliases.get(module.file)?.get(module.path.join('.'));
+        const aliases = moduleAliases.get(moduleScopeKey(module))?.get(module.path.join('.'));
         const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
         const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
         const display = [...qualifiedType.slice(1),method.name].join('.');
@@ -202,7 +215,7 @@ export function translateProject(options) {
           parser.modulePath = module.path;
           configureSourceScope(parser,module);
           // Methods inherit the module's checked import aliases.
-          parser.aliases = moduleAliases.get(module.file) ?? new Map();
+          parser.aliases = moduleAliases.get(moduleScopeKey(module)) ?? new Map();
           parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
           parser.attributes(); parser.visibility();
           const qualifier=parser.cursor.is('const')?parser.cursor.next():null,fn=parser.fn(module.path);
@@ -259,7 +272,7 @@ export function translateProject(options) {
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
-  const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(module.file),scopes:bindingEvidence.scopes}));
+  const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes}));
   const executableDeclarations = entries.map(entry => ({ source: entry.file, sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source), name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));
     const emitted = emitJavaScript(program, options);

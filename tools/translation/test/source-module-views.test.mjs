@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
-import {captureSourceModuleViews,isSourceModuleView,originalModuleViewItems,originalModuleViewParent,SOURCE_MODULE_VIEW_PROFILE} from '../source-module-views.mjs';
+import {captureSourceModuleViews,isSourceModuleView,originalModuleViewItems,originalModuleViewParent,originalSourceModuleItems,moduleScopeKey,SOURCE_MODULE_VIEW_PROFILE} from '../source-module-views.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const capture=(source,profile=null)=>captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile});
 const viewAt=(result,path)=>result.views.find(view=>JSON.stringify(view.modulePath)===JSON.stringify(path));
@@ -77,4 +77,19 @@ test('source module traversal bounds source bytes items depth and module count',
   assert.throws(()=>capture(deep),/module\/depth bound/);
   const wide=Array.from({length:SOURCE_MODULE_VIEW_PROFILE.maxModules},(_,index)=>`mod child${index} {}`).join(' ');
   assert.throws(()=>capture(wide),/module\/depth bound/);
+});
+
+test('module consumers validate original file path profile and relative view identity',()=>{
+  const source='mod child {pub const VALUE:u8=1;}',result=capture(source),sourceView=viewAt(result,['child']);
+  const module={file:'src/lib.rs',source,path:['external','child'],sourceView,compilationProfile:null};
+  assert.equal(originalSourceModuleItems(module)[0].name,'VALUE');
+  for(const changes of [{file:'src/other.rs'},{path:['external','sibling']},{source:source+' '},{sourceView:structuredClone(sourceView)},{compilationProfile:{flags:{test:false}}}])assert.throws(()=>originalSourceModuleItems({...module,...changes}),/match|changed|unsealed/);
+  assert.notEqual(moduleScopeKey(module),moduleScopeKey({...module,path:['child']}));
+});
+
+test('view-aware original consumers ignore invented caller item lists',()=>{
+  const source='mod child {pub const VALUE:u8=1;}',sourceView=viewAt(capture(source),['child']);
+  const module={file:'src/lib.rs',source,path:['child'],sourceView,items:[],allItems:[]};
+  assert.equal(originalSourceModuleItems(module).length,1);
+  assert.equal(originalSourceModuleItems({source:'pub const ROOT:u8=2;'}).length,1);
 });

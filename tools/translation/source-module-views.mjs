@@ -73,3 +73,13 @@ export function originalModuleViewItems(view,source){
 export function originalModuleViewParent(view){
   const state=states.get(view);if(!state)throw new TypeError('Original module view is unsealed');return state.parent;
 }
+export const moduleScopeKey=module=>JSON.stringify([module.file,module.path]);
+// Consumers retain the complete file. A view selects only its original items;
+// no rewritten fragment can masquerade as a separate original source file.
+export function originalSourceModuleItems(module){
+  if(!module||typeof module.source!=='string')throw new TypeError('Original tracked module source is required');
+  if(!Object.hasOwn(module,'sourceView'))return sourceItems(module.source).filter(item=>!item.comment);
+  const view=module.sourceView;
+  if(!isSourceModuleView(view)||module.file!==view.sourcePath||!Array.isArray(module.path)||view.modulePath.length>module.path.length||!view.modulePath.every((name,index)=>module.path[module.path.length-view.modulePath.length+index]===name)||JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(view.compilationProfile))throw new TypeError('Original source module view does not match its tracked module');
+  return originalModuleViewItems(view,module.source);
+}

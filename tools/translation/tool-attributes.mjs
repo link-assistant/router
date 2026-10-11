@@ -3,12 +3,13 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems,originalModuleViewItems,moduleScopeKey} from './source-module-views.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap();
-const id=(module,item,attribute)=>`${module.file}:${item.start}:${item.end}:${attribute.span.start}:${attribute.span.end}`;
+const id=(module,item,attribute)=>`${moduleScopeKey(module)}:${item.start}:${item.end}:${attribute.span.start}:${attribute.span.end}`;
 const scopeKey=path=>['crate',...path].join('::');
 export const TOOL_ATTRIBUTE_PROFILE=freeze({id:'rust-1.89-original-rustfmt-skip',rust:'1.89.0',path:['rustfmt','skip'],sources:[
   {url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_resolve/src/macros.rs',archive:'rust-resolve-macros-1.89.0.rs.gz',bytes:49779,sha256:'301b413a2fe0c2aaee658165993272a9fa39f4aca6cc22b0ca38d08ef80b405e',archiveSha256:'f8b07424cafe525fb9ab14238a7c71c2cde9b2d3b52ab6dffb1b1b0224a5a697'},
@@ -23,9 +24,9 @@ for(const entry of TOOL_ATTRIBUTE_PROFILE.sources){
 }
 // A bounded subset of the actual builtin lint-list grammar. No procedural
 // attribute, tool input, reason expression or macro invocation is admitted.
-export function inertInnerLintItem(item,source){
+export function inertInnerLintItem(item,source,sourceView=null){
   if(item.tokens[0]?.text!=='#'||item.tokens[1]?.text!=='!')return null;
-  const actual=sourceItems(source).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
+  const actual=(sourceView?originalModuleViewItems(sourceView,source):sourceItems(source)).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
   if(!actual||actual.tokens[0]?.text!=='#'||actual.tokens[1]?.text!=='!')return null;
   const tokens=actual.tokens.filter(token=>token.type!=='comment'),condition=itemConfiguration(tokens,null);
   if(condition.status!=='active'||!condition.attributes.length||condition.attributes.at(-1).span.end!==tokens.at(-1)?.end)return null;
@@ -57,8 +58,8 @@ function originalHeader(item,condition){
 function sourceModules(modules,profile){
   return modules.map(module=>{
     if(typeof module.file!=='string'||typeof module.source!=='string'||!Array.isArray(module.path))throw new TypeError('Tool attributes require original tracked modules');
-    const allItems=sourceItems(module.source).filter(item=>!item.comment);
-    return {file:module.file,source:module.source,path:[...module.path],allItems,items:allItems.filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive'),compilationProfile:profile};
+    const allItems=originalSourceModuleItems(module);
+    return {...module,path:[...module.path],allItems,items:allItems.filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive'),compilationProfile:profile};
   });
 }
 export function createToolAttributeContext({modules,externalModules=new Map(),deriveContext=null,compilationProfile:input=null}={}){
