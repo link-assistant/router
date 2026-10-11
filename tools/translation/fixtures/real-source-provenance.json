@@ -193,6 +193,37 @@
       ],
       "testSource": null,
       "testName": null
+    },
+    {
+      "id": "in-band-failure",
+      "path": "src/stream_termination.rs",
+      "sourceSha256": "96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a",
+      "declarations": [
+        {
+          "name": "FailureKind",
+          "term": "enum",
+          "start": 2712,
+          "end": 3027,
+          "sha256": "1870f60a10520b31301b1accfc8c3992c4370184880910424edd9496d5554309"
+        }
+      ],
+      "methodPins": [
+        {
+          "owner": "FailureKind",
+          "name": "of_in_band",
+          "start": 4228,
+          "end": 4699,
+          "sha256": "4f4cccd9bbcdaf5434191f9046b3d6ec6f2fba8e651813aa5b0b5d4086996e6d"
+        }
+      ],
+      "bodyNames": [],
+      "carrier": {
+        "name": "fixture_classifier",
+        "source": "pub fn fixture_classifier(event: &serde_json::Value) -> Option<FailureKind> { FailureKind::of_in_band(event) }",
+        "purpose": "One-call test entry only; not a production body or Rust replacement."
+      },
+      "testSource": null,
+      "testName": null
     }
   ],
   "obligations": [
@@ -205,10 +236,6 @@
       "reason": "Value import and Option<Vec<Value>>::cloned/unwrap_or_default"
     },
     {
-      "id": "login-status",
-      "reason": "Value method function reference and Option chaining"
-    },
-    {
       "id": "telegram-private",
       "reason": "Value pointer and Option string equality"
     },
@@ -217,12 +244,43 @@
       "reason": "Duration import, parse::<u64> method turbofish and closure chaining"
     },
     {
-      "id": "bounded-retry",
-      "reason": "Duration constant evaluation and Ord::min"
+      "id": "stream-termination",
+      "reason": "Transport FailureKind.of and block_is_terminal remain unresolved (dyn errors/characters/mutable buffers). The independently proven of_in_band production method is recorded separately."
+    }
+  ],
+  "executionEvidence": [
+    {
+      "id": "identity-token",
+      "productionBodies": [
+        "is_oauth_credential"
+      ],
+      "role": "baseline",
+      "independentCases": 6
     },
     {
-      "id": "stream-termination",
-      "reason": "Character literals, mutable String buffers, closure iteration and dyn transport errors are unresolved; no source substitution or passing body count."
+      "id": "login-status",
+      "productionBodies": [
+        "status_of"
+      ],
+      "role": "new-json",
+      "independentCases": 9
+    },
+    {
+      "id": "bounded-retry",
+      "productionBodies": [
+        "bounded_retry_after"
+      ],
+      "role": "new-duration",
+      "independentCases": 6
+    },
+    {
+      "id": "in-band-failure",
+      "productionBodies": [
+        "FailureKind.of_in_band"
+      ],
+      "role": "new-json-method",
+      "fixtureCarriers": 1,
+      "independentCases": 12
     }
   ]
 }
