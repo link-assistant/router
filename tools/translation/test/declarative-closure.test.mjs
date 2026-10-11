@@ -44,7 +44,9 @@ test('all pinned Router task-local chains retain call-site standard owner and ge
     const closure=inspectDeclarativeExpansionClosure({dependencies:proof,root:front,expansions:[front,inner]});
     assert.equal(isDeclarativeClosureEvidence(closure),true);assert.equal(isDeclarativeClosureEvidence(structuredClone(closure)),false);
     assert.equal(closure.frames[0].calls[0].hygiene,'definition-site-dollar-crate');
-    assert.deepEqual(closure.frames[1].calls.find(call=>call.writtenPath.join('::')==='std::thread_local').children,[]);
+    const standard=closure.frames[1].calls.find(call=>call.writtenPath.join('::')==='std::thread_local');
+    assert.deepEqual(standard.children,[]);assert.equal(standard.hygiene,'template-call-site-path');
+    assert.equal(standard.sourceSyntax.sourceSha256,closure.frames[1].origin.sourceSha256);
     assert.ok(closure.obligations.some(entry=>entry.kind==='unexpanded-call'));
     assert.equal(closure.ownerVerified,false);assert.equal(closure.generatedBehavior,false);assert.ok(Object.values(closure.dimensions).every(value=>value===false));
     assert.throws(()=>inspectDeclarativeExpansionClosure({dependencies:proof,root:inner,expansions:[front,inner]}),/disconnected/);

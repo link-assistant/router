@@ -45,7 +45,7 @@ function inspectTrees(trees,path=[],local=false,rows={calls:[],attributes:[],dec
       const segments=tree.kind==='owner'?[...tree.target]:[text(tree)];let end=at+1;
       while(text(trees[end])==='::'&&identifier(trees[end+1])){segments.push(text(trees[end+1]));end+=2;}
       if(text(trees[end])==='!'&&trees[end+1]?.kind==='group') {
-        rows.calls.push({path:[...path,end+1],writtenPath:segments,local,hygiene:tree.kind==='owner'?'definition-site-dollar-crate':tree.kind==='fragment'?'forwarded-call-site':'definition-site-written-path',sourceSyntax:tree.sourceSyntax??null,ownerResolved:false});
+        rows.calls.push({path:[...path,end+1],writtenPath:segments,local,hygiene:tree.kind==='owner'?'definition-site-dollar-crate':tree.kind==='fragment'?'forwarded-call-site':'template-call-site-path',sourceSyntax:tree.sourceSyntax??(tree.sourceSha256&&tree.span?{sourceSha256:tree.sourceSha256,span:tree.span}:null),ownerResolved:false});
         at=end+1;continue;
       }
     }
