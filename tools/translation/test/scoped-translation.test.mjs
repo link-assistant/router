@@ -11,13 +11,13 @@ import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
 const options=result=>({projectDeclarations:result.executableDeclarations,projectSourceScopes:result.sourceScopes});
 function strict(result){const directory=mkdtempSync(join(tmpdir(),'router-scoped-meta-'));try{writeRuntimeAssets(directory);const path=join(directory,'src/module.ts');writeFileSync(path,result.typescript);execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',path],{encoding:'utf8'});}finally{rmSync(directory,{recursive:true,force:true});}}
-test('local globs and reexports select checked source bodies in project and per-file translation',async()=>{
+test('local globs and reexports select checked source bodies in project and per-file translation',{timeout:30_000},async()=>{
   const files={'src/lib.rs':'mod model; mod bridge; use crate::bridge::*; pub fn run(value:u8)->u8{increment(value)}','src/model.rs':'pub fn increment(value:u8)->u8{value+1}','src/bridge.rs':'pub use crate::model::increment;'};
   const result=project(files);assert.deepEqual(result.meta.refused,[]);strict(result);assert.equal((await loadJavaScript(result.javascript)).translated.run(7n),8n);
   const local=translateSource(files['src/lib.rs'],'src/lib.rs',options(result));assert.equal(local.ir.counts.executableFunctions,1);strict(local);assert.equal((await loadJavaScript(local.javascript)).translated.run(7n),8n);
   const raw=translateSource(files['src/lib.rs'],'src/lib.rs');assert.equal(raw.ir.counts.executableFunctions,0,'standalone unknown glob remains refused');
 });
-test('source function and type owners outrank standard prelude shortcuts through globs',async()=>{
+test('source function and type owners outrank standard prelude shortcuts through globs',{timeout:30_000},async()=>{
   const files={'src/lib.rs':'mod model; use crate::model::*; pub fn run(value:u8)->Option<u8>{Some(value)} pub fn text()->u8{String::new()}','src/model.rs':'pub fn Some(value:u8)->Option<u8>{Option::Some(value+1)} pub struct String; impl String {pub fn new()->u8{9}}'};
   const result=project(files);assert.deepEqual(result.meta.refused,[]);strict(result);
   for(const output of [result,translateSource(files['src/lib.rs'],'src/lib.rs',options(result))]){const api=(await loadJavaScript(output.javascript)).translated;assert.deepEqual(api.run(1n),{$:'Some',field0:2n});assert.equal(api.text(),9n);strict(output);}
@@ -35,7 +35,7 @@ test('scope and declaration closures never supply stale source text at equal spa
   const changed=files['src/lib.rs'].replace('value()','other()');assert.equal(changed.length,files['src/lib.rs'].length);
   const stale=translateSource(changed,'src/lib.rs',options(result));assert.equal(stale.ir.counts.executableFunctions,0);
 });
-test('complete tracked repository generation consumes local bindings and repeats deterministically',async()=>{
+test('complete tracked repository generation consumes local bindings and repeats deterministically',{timeout:30_000},async()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-scoped-repo-'));
   const files={'src/lib.rs':'mod model; use crate::model::*; pub fn run(value:u8)->u8{next(value)}','src/model.rs':'pub fn next(value:u8)->u8{value+1}'};
   try{
