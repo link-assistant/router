@@ -116,5 +116,5 @@ test('plain return call and binding boundaries cannot fabricate owned or borrowe
     'fn bad()->&str{String::new()}',
     'fn bad()->&[u8]{Vec::new()}',
     'fn bad()->Vec<u8>{[1,2]}',
-  ])assert.throws(()=>checked(source),/distinct Rust owned and borrowed|ownership borrow|escaping owned string borrow|Rust source reference depth|ownership source qualifier is missing/,source);
+  ])assert.throws(()=>checked(source),/distinct Rust owned and borrowed|ownership borrow|escaping owned string borrow|Rust source reference depth|ownership source qualifier is missing|source array literal cannot fabricate Vec or slice conversion/,source);
 });

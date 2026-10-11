@@ -35,6 +35,9 @@ test('fixed arrays retain exact size through meta and both targets copy value bo
 pub fn pair(value:[u8;2])->[u8;2]{value}
 pub fn nested(value:[[u8;2];2])->[[u8;2];2]{value}
 pub fn empty()->[u8;0]{[]}
+pub fn empty_words()->[&'static str;0]{[]}
+pub fn borrowed(value:&str)->[&str;2]{[value,value]}
+pub fn nested_words()->[[&'static str;1];2]{[["left"],["right"]]}
 pub fn hex()->[u8;0x2usize]{[3u8,4u8]}
 struct Holder{values:[u8;2]}
 pub fn from_holder(value:Holder)->[u8;2]{value.values}`;
@@ -55,7 +58,8 @@ pub fn from_holder(value:Holder)->[u8;2]{value.values}`;
     assert.notEqual(nested[0],nested[1]);assert.ok(Object.isFrozen(nested[0]));
     const field=[5n,6n],fromHolder=api.from_holder({$:'Holder',values:field});
     field[0]=7n;assert.deepEqual(fromHolder,[5n,6n]);assert.ok(Object.isFrozen(fromHolder));
-    assert.deepEqual(api.empty(),[]);assert.deepEqual(api.hex(),[3n,4n]);assert.deepEqual(api.WORDS,['a','b','c']);
+    assert.deepEqual(api.empty(),[]);assert.deepEqual(api.empty_words(),[]);assert.deepEqual(api.borrowed('leaf'),['leaf','leaf']);
+    assert.deepEqual(api.nested_words(),[['left'],['right']]);assert.deepEqual(api.hex(),[3n,4n]);assert.deepEqual(api.WORDS,['a','b','c']);
     for(const wrong of [[1n],[1n,2n,3n],[1n,256n],[1,2]])assert.throws(()=>api.pair(wrong),TypeError);
   });
 });
