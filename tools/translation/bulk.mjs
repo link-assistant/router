@@ -98,6 +98,7 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   // not only descriptors containing their expected digests.
   implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
+  implementation.push(...['rust-marker-1.89.0.rs.gz','rust-fmt-1.89.0.rs.gz','rust-path-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/copy-standard/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/derive/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/derive/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
