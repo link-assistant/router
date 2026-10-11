@@ -9,6 +9,7 @@ import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
+import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function artifacts(result,operation){
   assert.deepEqual(result.meta.refused,[]);
@@ -89,4 +90,9 @@ test('const legality and infallible primitive conversions require source capabil
     'pub fn invented(value:usize)->u64{u64::from(value)}',
     'pub fn invented(value:u32)->usize{usize::from(value)}',
   ])assert.equal(project(source).meta.executable.some(entry=>entry.name==='invented'),false,source);
+});
+
+test('String conversion preserves owning provenance in checked expression metadata',()=>{
+  const checked=checkProgram(parseRust('pub fn owned()->String{String::from("x")} fn main(){}'));
+  assert.ok(JSON.stringify(checked.declarations.get('owned').body).includes('owned String conversion'));
 });
