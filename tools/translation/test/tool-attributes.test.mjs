@@ -45,7 +45,7 @@ test('parser consumption requires original token capture and exact attribute spa
   assert.throws(()=>configureToolAttributes(new HostRustParser(structuredClone(tokenizeRust(source))),proof,original,item,source),/tokenizer source/);
   assert.throws(()=>configureToolAttributes(new HostRustParser(tokenizeRust(source+' ')),proof,original,item,source+' '),/mismatched/);
   const changed=new HostRustParser(tokenizeRust(source));configureToolAttributes(changed,proof,original,item,source);changed.cursor.tokens[2]={...changed.cursor.tokens[2],value:'other'};
-  assert.throws(()=>changed.attributes(),/token span mismatch/);
+  assert.throws(()=>changed.attributes(),error=>error instanceof TypeError&&/tokenizer tokens changed before parsing/.test(error.message));
 });
 
 test('tool shadows, disabled preludes, unknown expansion and non-profile inputs stay refused',()=>{
@@ -56,12 +56,19 @@ test('tool shadows, disabled preludes, unknown expansion and non-profile inputs 
     '#![no_implicit_prelude] #[rustfmt::skip] pub fn bad()->u8{7}',
     '#[unknown] pub struct Carrier; #[rustfmt::skip] pub fn bad()->u8{7}',
     'make_items!(); #[rustfmt::skip] pub fn bad()->u8{7}',
-    '#[cfg(unix)] mod uncertain; #[rustfmt::skip] pub fn bad()->u8{7}',
+    '#[cfg(unix)] mod rustfmt; #[rustfmt::skip] pub fn bad()->u8{7}',
     '#[rustfmt::skip()] pub fn bad()->u8{7}',
     '#[rustfmt::other] pub fn bad()->u8{7}',
   ]){const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);assert.equal(context(source).certificates.length,0,source);}
   const orphan={file:'src/child.rs',path:['child'],source:'#[rustfmt::skip] pub fn bad()->u8{7}'};
   assert.equal(createToolAttributeContext({modules:[orphan]}).certificates.length,0);
+});
+
+test('an unrelated conditional module cannot shadow the independently resolved tool prefix',{timeout:30_000},async()=>{
+  const source='#[cfg(unix)] mod uncertain; #[rustfmt::skip] pub fn good()->u8{7}',result=project(source);
+  assert.equal(result.meta.toolAttributeFootprints.certificates.length,1);assert.equal(result.meta.bindingEvidence.scopes[0].bindings.find(binding=>binding.name==='uncertain').status,'unresolved');
+  assert.ok(result.meta.executable.some(item=>item.name==='good'));assert.ok(result.meta.moduleDiagnostics.length);
+  await verifyTypedTargets(result,api=>assert.equal(api.good(),7n));
 });
 
 test('inner lint scope uses original bounded builtin syntax and retains conflicting macro owners',()=>{
