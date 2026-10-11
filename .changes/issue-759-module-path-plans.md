@@ -1,4 +1,4 @@
-Source-only, untested draft of reusable tracked Rust module-file selection.
+Add reusable tracked Rust module-file selection through original source views.
 The unchanged Rust 1.89 module resolver and keyword source are pinned with
 their source archives, checksums and licenses. Original module declarations and complete files select
 ordinary external candidates or literal path overrides, including physical
@@ -13,5 +13,7 @@ diagnostics. Invalid or reserved raw module names, plain strict/reserved names
 and non-ASCII default filesystem names refuse before file selection. Weak
 keywords remain identifiers; the name profile conservatively intersects the
 2021 and 2024 editions. Producer fingerprints cover the helper
-and every pinned profile input. No tests, compiler, corpus producer, Rust
-build or executable-gain check has run on this source-only draft.
+and every pinned profile input. The final focused group passes all 163 tests in Node and Bun, including
+strict TypeScript execution and all five original deploy path declarations.
+Initial failures and complete repair attempts are retained in the case study.
+Corpus regeneration and native parity remain pending; no local Rust build ran.

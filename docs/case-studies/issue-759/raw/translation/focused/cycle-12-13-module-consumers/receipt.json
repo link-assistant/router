@@ -1,0 +1,305 @@
+{
+  "schema": "focused-module-consumer-validation-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "baselinePublishedHead": "fdee2507643f6c10bf091d24e63d4e2c6f062b74",
+  "initialSourceHead": "eefb025faff2f84e7aa9fb0a348ef7ec0badd69b",
+  "verifiedSourceHead": "bdf937ecf30e65b5720a7c2563299f6a27200bfd",
+  "scope": "Private complete-file inline views, actual module-file selection, module namespaces/reexports/visibility, derive/tool/Copy consumers and affected lifetime regressions. Final 19-file group: 163 passed, zero failed/skipped in each engine. Strict TypeScript compilation/execution is exercised by typed-target fixtures; this is not full corpus or native domain parity.",
+  "attempts": [
+    {
+      "phase": "initial",
+      "engine": "node",
+      "status": "FAIL",
+      "sourceHead": "eefb025faff2f84e7aa9fb0a348ef7ec0badd69b",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 151,
+        "pass": 149,
+        "fail": 2,
+        "skipped": 0,
+        "todo": 0
+      },
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedSeconds": 26.78,
+      "measurement": {
+        "timeFormat": "time -l",
+        "resourceCollection": "BLOCKED_BY_SANDBOX; no valid RSS/footprint observation claimed"
+      },
+      "note": "149/151; parent reexport resolution and changed tool-module identity failed; time -l also encountered blocked kern.clockrate sysctl",
+      "rawLog": {
+        "archive": "initial-node.log.gz",
+        "rawBytes": 37013,
+        "rawSha256": "bc2551f5a9b3639d90382976a6bc8b8fdc841ced3376141e50a796c56b30e538",
+        "archiveBytes": 8085,
+        "archiveSha256": "c4ad1ffc892ae5b0a5f13b1373e6f6796eb3339bffbad4337ef5e0a028d29a9c"
+      },
+      "harnessReceipt": {
+        "archive": "initial-node.json.gz",
+        "rawBytes": 1852,
+        "rawSha256": "10bd4322ed62405e9ebf36f7776e22191ceb97f6de3f6165a571ea9b9ea78524",
+        "archiveBytes": 650,
+        "archiveSha256": "51da743ab3d01dc251344dd14c4c0ad3a06c83902bf7ffe09fc5ad6852ed71c6"
+      }
+    },
+    {
+      "phase": "initial",
+      "engine": "bun",
+      "status": "FAIL",
+      "sourceHead": "eefb025faff2f84e7aa9fb0a348ef7ec0badd69b",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 151,
+        "pass": 149,
+        "fail": 2,
+        "skipped": 0,
+        "todo": null
+      },
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedSeconds": 23.177,
+      "measurement": {
+        "timeFormat": "time -l",
+        "resourceCollection": "BLOCKED_BY_SANDBOX; no valid RSS/footprint observation claimed"
+      },
+      "note": "149/151; parent reexport resolution and changed tool-module identity failed; time -l also encountered blocked kern.clockrate sysctl",
+      "rawLog": {
+        "archive": "initial-bun.log.gz",
+        "rawBytes": 19515,
+        "rawSha256": "f4ac451a228b2bcb1864283af9f199450eb73555e3048e901e95827db27ae502",
+        "archiveBytes": 6731,
+        "archiveSha256": "c2e8d666a3e09189a2c1d3d69f00b39b3013b1390caf0c9d9b72e301e867fe27"
+      },
+      "harnessReceipt": {
+        "archive": "initial-bun.json.gz",
+        "rawBytes": 1854,
+        "rawSha256": "7d4d72faa2efcd51dfdf665689986ed9cf9b32cb602fe074534b86a983f56773",
+        "archiveBytes": 649,
+        "archiveSha256": "5cc9dbfa4a041c3c2fdc66e47763b2733c19114dd55d704c88f43f7b58c29451"
+      }
+    },
+    {
+      "phase": "retry",
+      "engine": "node",
+      "status": "FAIL",
+      "sourceHead": "eefb025faff2f84e7aa9fb0a348ef7ec0badd69b",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "exitCode": 1,
+      "timedOut": false,
+      "elapsedSeconds": 6.644,
+      "measurement": {
+        "timeFormat": "time -l",
+        "resourceCollection": "BLOCKED_BY_SANDBOX; no valid RSS/footprint observation claimed"
+      },
+      "note": "All 30 subtests pass; measurement wrapper exited 1 after sandbox denied kern.clockrate sysctl; uncommitted repair bytes separately archived",
+      "rawLog": {
+        "archive": "retry-node.log.gz",
+        "rawBytes": 6836,
+        "rawSha256": "d29ec29febb283973d205831a0ddd433cffc7954272c139ec64cde6971a91e08",
+        "archiveBytes": 1811,
+        "archiveSha256": "4020c8964fa427c55f959b46368eaa5afc7e02ac1aecfd54ec140573ed39744d"
+      },
+      "harnessReceipt": {
+        "archive": "retry-node.json.gz",
+        "rawBytes": 1014,
+        "rawSha256": "d041145407069e87bea2923096709895c22385677d0ebdfc4d1d4a9853daca8c",
+        "archiveBytes": 525,
+        "archiveSha256": "0b4d422d453ffc8d04b2012d807d7987b68da739d7be2b5d02257498e659cf0f"
+      }
+    },
+    {
+      "phase": "retry2",
+      "engine": "node",
+      "status": "PASS",
+      "sourceHead": "bdf937ecf30e65b5720a7c2563299f6a27200bfd",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 4.816,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 171671552,
+        "rssScope": "all terminated child processes of this harness, including git and engine version; no peak-footprint measurement"
+      },
+      "note": null,
+      "rawLog": {
+        "archive": "retry2-node.log.gz",
+        "rawBytes": 6749,
+        "rawSha256": "edb2acb5a00d26a071b53b190f5c8ec371f8514e8ea3271ed59fec9b73beb8e2",
+        "archiveBytes": 1769,
+        "archiveSha256": "80c751522615199bb80d8049f756401bf2b9de00ac8ba0f81ae883cfc13b7e4b"
+      },
+      "harnessReceipt": {
+        "archive": "retry2-node.json.gz",
+        "rawBytes": 1240,
+        "rawSha256": "86991abc7d6bba069423123ad94d8573fc3487d39ab363e2181da71d8e7ff618",
+        "archiveBytes": 650,
+        "archiveSha256": "022f20cac1d2934b320862c3e76d8fd699453038449cb0ea47c3f4690436965f"
+      }
+    },
+    {
+      "phase": "retry",
+      "engine": "bun",
+      "status": "PASS",
+      "sourceHead": "bdf937ecf30e65b5720a7c2563299f6a27200bfd",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 4.084,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 175128576,
+        "rssScope": "all terminated child processes of this harness, including git and engine version; no peak-footprint measurement"
+      },
+      "note": null,
+      "rawLog": {
+        "archive": "retry-bun.log.gz",
+        "rawBytes": 3256,
+        "rawSha256": "b1023a813c31db488e10949ed37209565a9052dd312676c5a37cc534db8c3776",
+        "archiveBytes": 1415,
+        "archiveSha256": "4bbdc936d2598c8a586579cedaea0903b83c7bbdc781a33a673f91ed7127eb4f"
+      },
+      "harnessReceipt": {
+        "archive": "retry-bun.json.gz",
+        "rawBytes": 1239,
+        "rawSha256": "149a908fe30b90a62861ea46c54b91c3decbcd00d557ea9e42dea9360a7a334b",
+        "archiveBytes": 647,
+        "archiveSha256": "f292f25fa29ca1f58b803f54482d505e32f7fd1f4e017be4c661822c3254ae17"
+      }
+    },
+    {
+      "phase": "final",
+      "engine": "node",
+      "status": "PASS",
+      "sourceHead": "bdf937ecf30e65b5720a7c2563299f6a27200bfd",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 163,
+        "pass": 163,
+        "fail": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 30.973,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 206012416,
+        "rssScope": "all terminated child processes of this harness, including git and engine version; no peak-footprint measurement"
+      },
+      "note": null,
+      "rawLog": {
+        "archive": "final-node.log.gz",
+        "rawBytes": 36747,
+        "rawSha256": "7d44c8bcb970031fc114055020d8e1b997746437047a474ae268d80e762025d9",
+        "archiveBytes": 7764,
+        "archiveSha256": "3c25a3236a7a9db5c635876d0feaec44dc100a8701012fad1175676a9e2e8723"
+      },
+      "harnessReceipt": {
+        "archive": "final-node.json.gz",
+        "rawBytes": 2138,
+        "rawSha256": "f22100b401e7838a6d250ae68ad3a96b6eefa8785f7fb8ca8b5c2a119917eaeb",
+        "archiveBytes": 771,
+        "archiveSha256": "25eae4f9ea39630235038cd0668af955b76527794d9de174e9ffd6027cdfa70e"
+      }
+    },
+    {
+      "phase": "final",
+      "engine": "bun",
+      "status": "PASS",
+      "sourceHead": "bdf937ecf30e65b5720a7c2563299f6a27200bfd",
+      "sourceHeadUnchanged": true,
+      "counts": {
+        "tests": 163,
+        "pass": 163,
+        "fail": 0,
+        "skipped": 0,
+        "todo": null
+      },
+      "exitCode": 0,
+      "timedOut": false,
+      "elapsedSeconds": 20.36,
+      "measurement": {
+        "timeFormat": "posix",
+        "ownedChildrenMaxRssBytes": 331857920,
+        "rssScope": "all terminated child processes of this harness, including git and engine version; no peak-footprint measurement"
+      },
+      "note": null,
+      "rawLog": {
+        "archive": "final-bun.log.gz",
+        "rawBytes": 17560,
+        "rawSha256": "8c409ff49edba67957a47157abd5d625af7871cbc654e48e70c7e6b177120042",
+        "archiveBytes": 5993,
+        "archiveSha256": "2ecb748f11a79191eaf67c505d40e218a8fbe04b6e76404378496132d63cc155"
+      },
+      "harnessReceipt": {
+        "archive": "final-bun.json.gz",
+        "rawBytes": 2138,
+        "rawSha256": "6a587522343b2f7d7b6ac5eb57d3aef3f44eefc008f55ee00f7389eb498a329d",
+        "archiveBytes": 766,
+        "archiveSha256": "892c4e9ba79ec2754b147f566f8bb4cedcf70179119f4f397f174b7e087e6bdf"
+      }
+    }
+  ],
+  "repairWorkingTreeDiff": {
+    "archive": "uncommitted-repair.patch.gz",
+    "rawBytes": 13968,
+    "rawSha256": "62bec53def3da80790b17275660feb2818534448cf20f1138c5bcc64e338ddc0",
+    "archiveBytes": 4364,
+    "archiveSha256": "8691009228b83fc1697b2e5c39d6d294ecbab2e1cc7b69b53c07d147013b7052"
+  },
+  "repairWorkingTreeManifest": {
+    "archive": "uncommitted-repair-worktree.json.gz",
+    "rawBytes": 1262,
+    "rawSha256": "2c0dbfebd7e01f1b182b222df98baa0cd142ae926ad75e1a559024e7b585c57e",
+    "archiveBytes": 627,
+    "archiveSha256": "5a8c40e69d7ab7f4f1e8af69d444cb7cf0b4526a90e7c4a2b416ea737d69ae01"
+  },
+  "finalHarness": {
+    "archive": "final-focused-harness.py.gz",
+    "rawBytes": 4514,
+    "rawSha256": "e60e1319672f3003daa75f9ec98fe3b8e0a2e45c746650cfd3bf15a11394f102",
+    "archiveBytes": 1892,
+    "archiveSha256": "ae2d0334af3c2f93cf77a9f4fc8bea8f4accc2e5d8f3de5149eedd0a30a3bc7a"
+  },
+  "originalSources": {
+    "src/auth_diagnostics.rs": "4adfdd83495f6cadeb33c3c17658134c4e6a3a7947cb1c733f92bde63dd9690a",
+    "src/deploy.rs": "0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a"
+  },
+  "unchangedOriginalFixtures": {
+    "reasonConstants": 18,
+    "deployLiteralPathDeclarations": 5
+  },
+  "sourcePlanAuthority": {
+    "namespace": false,
+    "attributeExpansion": false,
+    "runtime": false
+  },
+  "producerRuns": 0,
+  "fullGateRuns": 0,
+  "localRustBuilds": 0,
+  "nativeRuntimeParity": false,
+  "strictParityGapsCleared": 0
+}
