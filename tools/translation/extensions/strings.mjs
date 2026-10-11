@@ -248,7 +248,7 @@ export class StringEmitter extends JavaScriptEmitter {
     const emitted = super.file();
     const helpers = {
       strip: `function ml_router_strip(value, search, suffix) {\n  const matches = suffix ? value.endsWith(search) : value.startsWith(search);\n  if (!matches) return Object.freeze({ $: 'None' });\n  const text = suffix ? value.slice(0, value.length - search.length) : value.slice(search.length);\n  return Object.freeze({ $: 'Some', field0: text });\n}`,
-      unwrap: `function ml_router_unwrap(value, fallback, option) {\n  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;\n}`,
+      unwrap: `function ml_router_unwrap(value, fallback, option) {\n  if (option) {\n    if (value.$ === 'Some') return value.field0;\n  } else if (value.$ === 'Ok') return value.field0;\n  return fallback;\n}`,
       unexpected: `function ml_router_unexpected(value) {\n  throw new TypeError(\`unexpected constructor \${value.$}\`);\n}`,
       array: `function ml_router_array(values, validate) {\n  if (!Array.isArray(values)) return false;\n  for (let index = 0; index < values.length; index++) {\n    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));\n    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;\n  }\n  return true;\n}`,
     };

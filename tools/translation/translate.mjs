@@ -249,7 +249,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_at: ['ReadonlyArray<T>', 'number | bigint'],
     ml_forall: ['any[]', '(value: any) => boolean'],
     ml_router_strip: ['string', 'string', 'boolean'],
-    ml_router_unwrap: ['any', 'any', 'boolean'],
+    ml_router_unwrap: ["Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>", 'T', 'boolean'],
     ml_router_unexpected: ['any'],
     ml_router_array: ['ReadonlyArray<any>', '(value: any) => boolean'],
     ml_router_iter: ['ReadonlyArray<T>','boolean'],
@@ -278,7 +278,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_host_option_map:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'(value: T) => U'],
   };
   const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U',ml_host_option_map_or:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
-  Object.assign(generics,{ml_router_find_map:'T, U',ml_router_filter_map:'T, U',ml_router_find:'T',ml_router_flatten:'T',ml_router_try:'T, E'});
+  Object.assign(generics,{ml_router_find_map:'T, U',ml_router_filter_map:'T, U',ml_router_find:'T',ml_router_flatten:'T',ml_router_try:'T, E',ml_router_unwrap:'T'});
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
@@ -305,6 +305,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       index++;
     }
     if(name==='ml_host_option_map_or'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': U'});}
+    if(name==='ml_router_unwrap'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': T'});}
     if(name==='ml_router_try'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': T'});}
     if(['ml_router_find_map','ml_router_find','ml_router_filter_map','ml_router_flatten'].includes(name)) {
       const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')'),element=name==='ml_router_find_map'||name==='ml_router_filter_map'?'U':'T';
