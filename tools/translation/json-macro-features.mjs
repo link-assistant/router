@@ -7,7 +7,7 @@ import {freezeMacroTree} from './macro-token-trees.mjs';
 import {isJsonMacroSourceProof} from './json-macro-sources.mjs';
 const root=new URL('./source-profiles/json-macro/features/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='ab2e0ba454cc27efff9354fa5e86213bcabbec35789ef2ef6cc7b84dbb5c4c93')throw new TypeError('JSON feature source profile changed');
+if(hash(bytes)!=='a2c8d8a3e73ff7bafd7a27214270aa1be07bf4f51539b48560974172cc6ad982')throw new TypeError('JSON feature source profile changed');
 export const JSON_MACRO_FEATURE_INPUTS=freezeMacroTree(JSON.parse(bytes));
 const proofs=new WeakSet();
 export function proveJsonMacroFeatures(dependencies,{includeDev=false}={}) {

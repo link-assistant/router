@@ -24,3 +24,4 @@
   "runtimeParity": false,
   "generatedTraitBehavior": false,
   "scope": "13 original incoming serde_json manifest nodes plus exact serde_core serializer-owner std activation; not a full Cargo dependency graph"
+}
