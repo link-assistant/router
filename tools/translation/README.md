@@ -119,7 +119,7 @@ code suffices for regeneration; copying existing generated corpora is optional.
 With Node, Bun and the repository’s TypeScript tooling available:
 
 ```sh
-node --test tools/translation/test/*.test.mjs
+node --test --test-concurrency=2 tools/translation/test/*.test.mjs
 bun test tools/translation/test/*.test.mjs
 node scripts/translate-router.mjs --check
 node tools/translation/check-typescript-fixtures.mjs
@@ -127,6 +127,10 @@ tsc -p tools/translation/tsconfig.json
 ```
 
 Set `ROUTER_TRANSLATION_TSC` to a compiler path when `tsc` is not on `PATH`.
+Run these commands sequentially: several behavioral fixtures invoke TypeScript
+compilers, and the Node file limit bounds the number of concurrent fixture
+workers. The complete local gate and CI use the same two-worker limit for the
+forward translator suite.
 Independent fixtures check values, overflow, laziness, effect order, domain
 rejection, source spans, malformed semantic IR and deterministic regeneration.
 Original-source tests pin Rust body hashes and expected observations; temporary
