@@ -177,7 +177,7 @@ const ownershipSyntax=/^(?:Box|Vec|String|Arc|Rc|Cell|RefCell|UnsafeCell|Mutex|R
  * derives. The caller supplies the complete relevant implementation set with
  * canonical resolvedType targets. This is not an ownership or alias checker.
  */
-export function certifyCopyType(type,{declarations,implementations,macroProvenance,span={start:0,end:0}}={}) {
+export function certifyCopyType(type,{declarations,implementations,macroProvenance,nominalTypes=new Map(),span={start:0,end:0}}={}) {
   const diagnostics=[],proofs=[],active=new Set(),done=new Set();
   const refuse=(message,location=span)=>{diagnostics.push({kind:'unsupported',message,span:location});return false;};
   const certificate=()=>seal({version:1,profile:'checked-rust-copy-layout-v1',type:type??null,verified:diagnostics.length===0,proofs,diagnostics,
@@ -190,7 +190,16 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
     for(const implementation of implementations) {
       const trait=implementation.traitPath!=null || implementation.diagnostics?.some(diagnostic=>/trait implementation/u.test(diagnostic.message));
       const target=checkedKey(implementation.resolvedType);
-      if(trait && !target) {valid=refuse('unresolved trait implementation target prevents Copy certification',implementation.headerSpan??span);continue;}
+      if(trait && !target) {
+        const nominal=implementation.resolvedNominalTarget,identity=nominal?.version===1?nominalTypes.get(JSON.stringify(nominal.family)):null;
+        const entry=current.kind==='data'?declarations.get(current.name):null;
+        const currentFamily=entry?.standardGeneric?.kind==='Option'?['std','option','Option']:entry?.standardGeneric?.kind==='Result'?['std','result','Result']:entry?['crate',...entry.fullName.split('.')]:null;
+        if(identity && ['struct','enum','union'].includes(identity.kind) && JSON.stringify(identity.family)===JSON.stringify(nominal.family)){
+          if(current.kind!=='data'||currentFamily&&JSON.stringify(currentFamily)!==JSON.stringify(identity.family)){proofs.push({kind:'unequal-nominal-implementation-target',type:current,target:nominal});continue;}
+          valid=refuse('matching nominal trait implementation prevents derived Copy certification',implementation.headerSpan??span);continue;
+        }
+        valid=refuse('unresolved trait implementation target prevents Copy certification',implementation.headerSpan??span);continue;
+      }
       if(target!==key)continue;
       if(trait)valid=refuse('manual trait or Drop implementation is outside the derived Copy profile',implementation.headerSpan??span);
       if(implementation.attributes?.some(attribute=>['cfg','cfg_attr'].includes(attribute.name)) || implementation.diagnostics?.some(diagnostic=>/unsafe implementation/u.test(diagnostic.message)))valid=refuse('conditional or unsafe implementation prevents Copy certification',implementation.headerSpan??span);
