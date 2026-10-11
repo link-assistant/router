@@ -22,12 +22,13 @@ function check(source,externals=[]) {
   const surface=new Parser(tokenizeRust(source+'\nfn main() {}')).file();surface.externals=externals;
   return new Checker('Rust',externals).program(surface);
 }
-async function compile(source,{externals=[],fixture=''}={}) {
+async function compile(source,{externals=[],fixture='',repeatedEmitter=false}={}) {
   const checked=check(source,externals),serialized=serializeProgram(checked),program=parseProgram(serialized);
   assert.equal(serializeProgram(program),serialized);
   // Explicit fixture linkage supplies the external name; the pinned emitter
   // otherwise requires every call target to have a local declaration.
-  class FixtureEmitter extends Emitter {
+  const SelectedEmitter=repeatedEmitter?withPatternControlEmitter(Emitter):Emitter;
+  class FixtureEmitter extends SelectedEmitter {
     expr(node) {
       if(node.k==='call'&&externals.some(entry=>entry.name===node.fn))return `${node.fn}(${node.args.map(arg=>this.expr(arg)).join(', ')})`;
       return super.expr(node);
@@ -168,4 +169,11 @@ test('standalone checker without standard constructor provenance keeps nominal o
   assert.equal(checked.declarations.get('nominal').body.patternControl.plan.test.data,'Choice');
   const guessed=new Parser(tokenizeRust('pub fn guessed(value: Option<u8>) -> u8 { if let Some(v) = value { v } else { 0 } } fn main() {}')).file();
   assert.throws(()=>new NominalOnlyChecker('Rust',[]).program(guessed),error=>error.kind==='type'&&/checked constructor owner/.test(error.reason));
+});
+
+
+test('repeated emitter adaptation keeps the exact immutable import idempotent',async()=>{
+  const {apis,runtime}=await compile('pub fn repeat(value: Option<u8>) -> u8 { if let Some(v) = value { v } else { 0 } }',{repeatedEmitter:true});
+  assert.equal(runtime.split('import { assertImmutableCopy as ml_pattern_immutable }').length-1,1);
+  for(const api of apis){assert.equal(api.repeat(some(2n)),2n);assert.equal(api.repeat(none),0n);}
 });

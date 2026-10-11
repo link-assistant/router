@@ -195,6 +195,7 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
       if(!this.patternImmutability)return result;
       const path=(this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs');
       const dependency=`import { assertImmutableCopy as ml_pattern_immutable } from ${JSON.stringify(path)};`;
+      if(result.preludes.includes(dependency))return result;
       return {...result,preludes:[dependency,...result.preludes],text:dependency+'\n'+result.text};
     }
     expr(node) {
