@@ -143,6 +143,14 @@ not installed dependencies. A different manifest or lock leaves these derive
 namespaces unresolved with an explicit unsupported-profile diagnostic; it
 does not grant the registered derive owners or stop unrelated translation.
 
+The future binary64 literal draft verifies `source-profiles/floating-standard`
+before lexical adaptation. Its bounded decimal-to-binary converter uses exact
+integer ratios and one ties-to-even rounding, retaining the written token and
+result bits. It supports binary64 literals only; binary32, overflowing literal
+lint profiles and floating constant evaluation remain unsupported. The two
+original compressed Rust 1.89 source inputs total about 15 KB. This draft awaits
+compiler and behavioral verification and supplies no additional runtime claim.
+
 With Node, Bun and the repository’s TypeScript tooling available:
 
 ```sh

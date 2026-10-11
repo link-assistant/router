@@ -14,6 +14,7 @@ import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
 import {planStandardMethod,completeStandardMethod} from './standard-method-plans.mjs';
 import {rustFixedType} from '../checked-types.mjs';
+import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -216,6 +217,10 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     tree([]);c.expect(';','use');
   }
   primary(path,options) {
+    if(this.cursor.peek().kind==='rustFloat') {
+      const token=this.cursor.next();
+      return {k:'num',value:token.value,type:FLOAT,sourceFloatLiteral:{profile:RUST_FLOAT_LITERAL_PROFILE.id,raw:token.raw,bits:token.floatBits,suffix:token.suffix},span:{start:token.start,end:token.end}};
+    }
     const c=this.cursor,first=c.peek();if(first.kind!=='identifier'){
       const value=super.primary(path,options);
       return first.kind==='number'&&rustFixedType(first.suffix)&&value.k==='num'?{...value,type:{...value.type,rustPrimitiveName:first.suffix}}:value;
@@ -335,6 +340,13 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='num'&&node.sourceFloatLiteral) {
+      const source=node.sourceFloatLiteral,decoded=decodeRustFloat(source.raw,node.span);
+      if(source.profile!==RUST_FLOAT_LITERAL_PROFILE.id||source.bits!==decoded.floatBits||source.suffix!==decoded.suffix||node.value!==decoded.value||node.type?.kind!=='float')throw typeError('floating literal differs from its original checked source token',node.span);
+      if(expected?.rustReference||expected?.patternOwnershipRefusal)throw unsupported('floating reference literal','requires actual checked borrowing or promotion',node.span);
+      const value=super.expr(node,env,path,expected,allowLiteral);
+      return {...value,sourceFloatLiteral:{...source,verified:true}};
+    }
     if(node.k==='routerSharedArrayLiteral')return this.sharedArrayBorrow(node,env,path,expected);
     if(node.k==='routerPrimitiveDereference') {
       if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);

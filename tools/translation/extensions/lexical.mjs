@@ -3,6 +3,7 @@ import { tokenize } from '../vendor/meta-language/translation/lexer.js';
 import { TranslationError } from '../vendor/meta-language/translation/diagnostics.js';
 import {decodeRustCharacter} from './rust-character.mjs';
 import {decodeRustInteger} from './rust-number.mjs';
+import {decodeRustFloat,isRustFloatToken} from './rust-float.mjs';
 import {types} from 'node:util';
 
 // Only this tokenizer creates the original-byte association. The returned
@@ -37,9 +38,18 @@ export function capturedRustTokenSource(tokens) {
 // the structural meta IR preserves the original source text.
 export function tokenizeRust(source) {
   const replacements = [],characters=new Map(),numbers=new Map();
-  for (const token of rustTokens(source)) {
+  const originalTokens=rustTokens(source);
+  for (let index=0;index<originalTokens.length;index++) {
+    let token=originalTokens[index];
     if(token.type==='number'){
-      numbers.set(token.start,{...decodeRustInteger(token.text,{start:token.start,end:token.end}),end:token.end});
+      // Rust's trailing decimal point cannot precede '.', '_' or XID_Start.
+      // Consume only an adjacent actual dot; ranges and method calls stay intact.
+      const next=originalTokens[index+1],after=source[next?.end];
+      if(/^[0-9][0-9_]*$/u.test(token.text)&&next?.text==='.'&&next.start===token.end&&after!=='.'&&after!=='_'&&!/[\p{ID_Start}]/u.test(after??'')) {
+        token={...token,text:token.text+'.',end:next.end};index++;
+      }
+      const decode=isRustFloatToken(token.text)?decodeRustFloat:decodeRustInteger;
+      numbers.set(token.start,{...decode(token.text,{start:token.start,end:token.end}),end:token.end});
       replacements.push({start:token.start,end:token.end,text:'0'});continue;
     }
     if (token.type !== 'string') continue;
