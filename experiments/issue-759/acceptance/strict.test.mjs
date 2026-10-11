@@ -7,10 +7,10 @@ import { repository, temporary } from './helpers.mjs';
 
 const run = script => new Promise(resolve => {
   // The complete checker contains separately bounded native TS evidence and
-  // deterministic translation (180 seconds each), plus native lifecycle/HTTP
-  // fixtures. An actual 181-second timeout rejected the third tamper case.
-  // Keep those inner limits and rejection assertions; bound the whole sequence.
-  const started = performance.now(), timeout = 420_000;
+  // deterministic translation (180 and 360 seconds), plus native lifecycle/HTTP
+  // fixtures. Bound the entire sequence with a further 60 seconds for fixtures.
+  // The actual strict checker and every rejection assertion remain mandatory.
+  const started = performance.now(), timeout = 600_000;
   execFile(process.execPath, [script, '--strict'], { timeout, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr + (error?.killed ? `\nChecker exceeded acceptance deadline (budget=${timeout}ms, elapsed=${Math.round(performance.now()-started)}ms).` : '') }));
 });
 async function isolatedChecker(t, edit) {
