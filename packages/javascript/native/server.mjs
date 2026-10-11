@@ -269,7 +269,8 @@ export function createNativeRouter(options = {}) {
     let finalError,finalResponse;
     try {
       const retryOverride=core.accounts?.records?.get(candidates[0].account)?.policy?.request_retry;
-      const attemptLimit = context.pinnedAccount || context.principalAccount && candidates[0].auth_type==='oauth' || retryOverride===0 || configuration().account_failover === false && !(retryOverride>0) ? 1 : retryOverride!=null?retryOverride+1:Math.max(1, Math.min(100, maxAttempts));
+      const principalBound=context.principalAccount && !['openai-compatible','openai','litellm','lefine','z.ai-coding-plan'].includes(candidates[0].kind ?? candidates[0].provider_kind);
+      const attemptLimit = context.pinnedAccount || principalBound || retryOverride===0 || configuration().account_failover === false && !(retryOverride>0) ? 1 : retryOverride!=null?retryOverride+1:Math.max(1, Math.min(100, maxAttempts));
       for (const rawCandidate of candidates.slice(0, attemptLimit)) {
         let candidate = rawCandidate;
         try { candidate = core.prepareCandidate ? await core.prepareCandidate(rawCandidate) : rawCandidate; }
