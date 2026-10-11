@@ -35,7 +35,7 @@ test('unknown and true predicates retain transformation obligations without host
   ]){const result=condition(source,profile);assert.equal(result.status,'unknown');assert.equal(isAbsentConditionalAttribute(result.attributes[0]),false);assert.ok(result.diagnostics.length);}
 });
 test('syntax is checked before a false predicate can remove any attribute',()=>{
-  for(const input of ['test','test derive(Custom)','test,,derive(Custom)','test,derive(Custom) trailing','test,path=other','test,path=concat!("a.rs")','test,::owner','test,owner::','test,fn','test,unsafe(42)','test,r#gen','test,allow([)]']){
+  for(const input of ['test','all(test,unix)','test derive(Custom)','test,,derive(Custom)','test,derive(Custom) trailing','test,path=other','test,path=concat!("a.rs")','test,::owner','test,owner::','test,fn','test,unsafe(42)','test,r#gen','test,allow([)]']){
     const result=condition(`#[cfg_attr(${input})] struct Visible;`);
     assert.equal(result.status,'unknown',input);assert.equal(isAbsentConditionalAttribute(result.attributes[0]),false,input);
   }

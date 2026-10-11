@@ -48,15 +48,15 @@ function argument(tokens){
 }
 export function inspectConditionalAttribute(body){
   if(!Array.isArray(body)||body.length>8192||text(body[0])!=='cfg_attr'||text(body[1])!=='('||groupEnd(body,1)!==body.length-1)throw new TypeError('cfg_attr requires one bounded parenthesized original input');
-  const tokens=body.slice(2,-1),parts=[];let start=0;
+  const tokens=body.slice(2,-1),parts=[];let start=0,separators=0;
   for(let at=0;at<tokens.length;at++){
     const value=text(tokens[at]);
     if(Object.hasOwn(pairs,value)){at=groupEnd(tokens,at);continue;}
     if([')',']','}'].includes(value))throw new TypeError('Conditional attribute has an unmatched delimiter');
-    if(value===','){parts.push(tokens.slice(start,at));start=at+1;if(parts.length>257)throw new TypeError('Conditional attribute input count exceeds its bound');}
+    if(value===','){parts.push(tokens.slice(start,at));separators++;start=at+1;if(parts.length>257)throw new TypeError('Conditional attribute input count exceeds its bound');}
   }
   if(start<tokens.length)parts.push(tokens.slice(start));
-  if(!parts.length||!parts[0].length||!tokens.some(token=>text(token)===','))throw new TypeError('cfg_attr requires a predicate followed by a comma');
+  if(!parts.length||!parts[0].length||!separators)throw new TypeError('cfg_attr requires a predicate followed by a comma');
   const attributes=parts.slice(1);
   for(const entry of attributes){if(!entry.length)throw new TypeError('Conditional attribute has an empty input');argument(entry);}
   return {predicate:parts[0],attributes:attributes.map(entry=>({tokens:entry.map(text),span:{start:entry[0].start,end:entry.at(-1).end}}))};
