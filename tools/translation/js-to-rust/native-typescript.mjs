@@ -24,8 +24,22 @@ function serialize(ts, sourceFile, checker) {
   const annotations = [];
   const locals = [];
   const indices = [];
+  const gaps=[];
+  const occurrences=new Map();
+  const globalGaps=new Set();
+  const loopBindings=new Set();
+  const reassignedBindings=new Set();
+  if(checker) {
+    const collect=node=>{
+      if(ts.isForInStatement(node) && ts.isVariableDeclarationList(node.initializer))for(const declaration of node.initializer.declarations)if(ts.isIdentifier(declaration.name)){const symbol=checker.getSymbolAtLocation(declaration.name);if(symbol)loopBindings.add(symbol);}
+      if(ts.isBinaryExpression(node) && ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left)){const symbol=checker.getSymbolAtLocation(node.left);if(symbol)reassignedBindings.add(symbol);}
+      ts.forEachChild(node,collect);
+    };
+    collect(sourceFile);
+  }
   const encode = (node) => {
     if (ts.isJSDoc(node)) return null;
+    const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
     if (ts.isFunctionLike(node) && node.parameters) {
       const params = node.parameters.map((parameter) => {
         const doc = ts.getJSDocType(parameter);
@@ -34,10 +48,44 @@ function serialize(ts, sourceFile, checker) {
         // called with null. Only explicit JSDoc primitive contracts narrow it.
         return 'any';
       });
-      annotations.push({ function: functionIndex++, parameters: params, returns: returnHint(ts, checker, node) });
+      let thisContext = false;
+      if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) {
+        const receiver = child => {
+          if (child !== node && (ts.isFunctionLike(child) && !ts.isArrowFunction(child) || ts.isClassDeclaration(child) || ts.isClassExpression(child))) return;
+          if (child.kind === ts.SyntaxKind.ThisKeyword) thisContext = true;
+          ts.forEachChild(child, receiver);
+        };
+        receiver(node);
+      }
+      annotations.push({ function: functionIndex++, parameters: params, returns: returnHint(ts, checker, node), ...(thisContext ? { thisContext: true } : {}) });
     }
     if (ts.isVariableDeclaration(node)) locals.push(localHint(ts, checker, node));
     if (ts.isElementAccessExpression(node)) indices.push(dynamicIndex(ts, checker, node));
+    const gap={};
+    if(checker) {
+      const propertyName=node.parent && (ts.isPropertyAccessExpression(node.parent)&&node.parent.name===node || ts.isPropertyAssignment(node.parent)&&node.parent.name===node || ts.isBindingElement(node.parent)&&node.parent.propertyName===node);
+      if(ts.isIdentifier(node) && !propertyName && ts.isInExpressionContext(node) && !ts.isDeclarationName(node) && !checker.getSymbolAtLocation(node)) globalGaps.add(node.text);
+      if(ts.isIdentifier(node) && !propertyName && !ts.isDeclarationName(node) && loopBindings.has(checker.getSymbolAtLocation(node)))gap.loopBinding=true;
+      if(ts.isCallExpression(node) && !ts.isOptionalChain(node) && ![ts.SyntaxKind.ImportKeyword,ts.SyntaxKind.SuperKeyword].includes(node.expression.kind)) {
+        const signature=checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
+        const formal=signature?.declaration?.parameters;
+        const rest=formal?formal.at(-1)?.dotDotDotToken:parameters.at(-1)?.declarations?.some(declaration=>declaration.dotDotDotToken);
+        // The JS checker can infer extra parameters from callers. The emitted
+        // declaration still has the original formal list, so compare that list.
+        if(node.arguments.length>(formal?.length??parameters.length) && !rest || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text==='bind') gap.call=true;
+      }
+      if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+        const symbol=checker.getSymbolAtLocation(node.expression);
+        if(symbol?.declarations?.some(declaration=>declaration.getSourceFile().isDeclarationFile))gap.globalProperty=true;
+      }
+      if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && reassignedBindings.has(checker.getSymbolAtLocation(node.expression)) && checker.getTypeAtLocation(node.expression).flags&ts.TypeFlags.Any)gap.globalProperty=true;
+      if(ts.isBinaryExpression(node)) {
+        if(ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left))gap.assignment=true;
+        if(node.operatorToken.kind===ts.SyntaxKind.PlusToken && [node.left,node.right].some(value=>checker.getTypeAtLocation(value).flags & ts.TypeFlags.BooleanLike))gap.coercion=true;
+        if([node.left,node.right].some(value=>ts.isStringLiteralLike(value)&&value.text==='unknown') && [node.left,node.right].some(ts.isTypeOfExpression))gap.coercion=true;
+      }
+    }
+    if(Object.keys(gap).length)gaps.push({kind:node.kind,occurrence,...gap});
     count++;
     const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
     if (children.length) return [node.kind, children];
@@ -48,7 +96,8 @@ function serialize(ts, sourceFile, checker) {
     const leading = sourceFile.text.slice(node.pos, node.getStart(sourceFile));
     return [node.kind, text, /[\r\n]/u.test(leading) ? 1 : 0];
   };
-  return { tree: encode(sourceFile), annotations, locals, indices, nodes: count };
+  const tree=encode(sourceFile);
+  return { tree, annotations, locals, indices, gaps, globalGaps:[...globalGaps].sort(), nodes: count };
 }
 
 export function parseNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
@@ -112,15 +161,24 @@ export function emitNativeTypeScript(ts, meta) {
   let inferredReturns = 0;
   let inferredLocals = 0;
   let explicitAny = 0;
+  const occurrences=new Map();
+  const plans=new Map((meta.gaps??[]).map(gap=>[`${gap.kind}:${gap.occurrence}`,gap]));
   const namespaces = new Set(file.statements.filter(ts.isImportDeclaration).map((statement) => statement.importClause?.namedBindings).filter((binding) => binding && ts.isNamespaceImport(binding)).map((binding) => binding.name.text));
   const transform = (context) => {
     const visit = (node) => {
+      const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
+      const gap=plans.get(`${node.kind}:${occurrence}`)??{};
       const functionLike = ts.isFunctionLike(node) && node.parameters;
       const hint = functionLike ? meta.annotations[functionIndex++] ?? {} : {};
       const hints = hint.parameters ?? [];
       const local = ts.isVariableDeclaration(node) ? meta.locals?.[localIndex++] : null;
       const keyDynamic = ts.isElementAccessExpression(node) ? meta.indices?.[indexIndex++] : false;
       let updated = ts.visitEachChild(node, visit, context);
+      // A var introduced in for-in is function-scoped in JavaScript and can
+      // subsequently hold any value, including undefined before the loop.
+      // The non-null marker only suppresses TS's definite-assignment premise;
+      // the outer explicit any records that no value domain is proved here.
+      if(gap.loopBinding && ts.isIdentifier(updated))updated=f.createParenthesizedExpression(f.createAsExpression(f.createNonNullExpression(updated),any()));
       if (functionLike) {
         updated.parameters = f.createNodeArray(updated.parameters.map((parameter, index) => {
           const type = parameter.dotDotDotToken ? f.createArrayTypeNode(any()) : primitive(hints[index]);
@@ -129,6 +187,10 @@ export function emitNativeTypeScript(ts, meta) {
           const optional = !laterRequired && hints[index] === 'any' && !parameter.initializer && !parameter.dotDotDotToken && ts.isIdentifier(parameter.name) && !ts.isSetAccessorDeclaration(node) && !ts.isConstructorDeclaration(node);
           return f.updateParameterDeclaration(parameter, parameter.modifiers, parameter.dotDotDotToken, parameter.name, optional ? f.createToken(ts.SyntaxKind.QuestionToken) : parameter.questionToken, type, parameter.initializer);
         }));
+        if (hint.thisContext && (ts.isFunctionDeclaration(updated) || ts.isFunctionExpression(updated))) {
+          explicitAny++;
+          updated.parameters = f.createNodeArray([f.createParameterDeclaration(undefined, undefined, 'this', undefined, any(), undefined), ...updated.parameters]);
+        }
         if (!ts.isConstructorDeclaration(updated) && !ts.isSetAccessorDeclaration(updated)) {
           if (hint.returns) { inferredReturns++; updated.type = typeNode(ts, hint.returns); }
           else {
@@ -157,6 +219,19 @@ export function emitNativeTypeScript(ts, meta) {
       if (ts.isElementAccessExpression(updated) && !ts.isElementAccessChain(updated)) updated = f.updateElementAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.argumentExpression);
       if (ts.isPropertyAccessExpression(updated) && ts.isIdentifier(updated.expression) && namespaces.has(updated.expression.text)) updated = f.updatePropertyAccessExpression(updated, f.createParenthesizedExpression(f.createAsExpression(updated.expression, any())), updated.name);
       if (ts.isCallExpression(updated) && updated.expression.kind === ts.SyntaxKind.ImportKeyword && ts.isStringLiteral(updated.arguments[0]) && updated.arguments[0].text.startsWith('.')) updated = f.updateCallExpression(updated, updated.expression, updated.typeArguments, [f.createStringLiteral(updated.arguments[0].text.replace(/\.mjs$/u, '.js')), ...updated.arguments.slice(1)]);
+      if(gap.call && ts.isCallExpression(updated)) {
+        const callable=expression=>ts.isParenthesizedExpression(expression)?f.updateParenthesizedExpression(expression,callable(expression.expression))
+          : ts.isBinaryExpression(expression)&&expression.operatorToken.kind===ts.SyntaxKind.CommaToken?f.updateBinaryExpression(expression,f.createParenthesizedExpression(f.createAsExpression(expression.left,any())),expression.operatorToken,callable(expression.right))
+            : f.createParenthesizedExpression(f.createAsExpression(expression,any()));
+        updated=f.updateCallExpression(updated,callable(updated.expression),updated.typeArguments,updated.arguments);
+      }
+      if(gap.globalProperty && ts.isPropertyAccessExpression(updated))updated=ts.isPropertyAccessChain(updated)
+        ? f.updatePropertyAccessChain(updated,f.createParenthesizedExpression(f.createAsExpression(updated.expression,any())),updated.questionDotToken,updated.name)
+        : f.updatePropertyAccessExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.expression,any())),updated.name);
+      if(ts.isBinaryExpression(updated)) {
+        if(gap.assignment)updated=f.updateBinaryExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.left,any())),updated.operatorToken,updated.right);
+        if(gap.coercion)updated=f.updateBinaryExpression(updated,f.createParenthesizedExpression(f.createAsExpression(updated.left,any())),updated.operatorToken,f.createParenthesizedExpression(f.createAsExpression(updated.right,any())));
+      }
       if (ts.isCallExpression(updated) && ts.isPropertyAccessExpression(updated.expression) && updated.expression.expression.kind === ts.SyntaxKind.Identifier && updated.expression.expression.text === 'JSON' && updated.expression.name.text === 'parse') updated = f.updateCallExpression(updated, updated.expression, updated.typeArguments, updated.arguments.map((argument) => f.createAsExpression(argument, any())));
       if ((ts.isImportDeclaration(updated) || ts.isExportDeclaration(updated)) && updated.moduleSpecifier && ts.isStringLiteral(updated.moduleSpecifier) && updated.moduleSpecifier.text.startsWith('.')) {
         updated.moduleSpecifier = f.createStringLiteral(updated.moduleSpecifier.text.replace(/\.mjs$/u, '.js'));
@@ -176,7 +251,11 @@ export function emitNativeTypeScript(ts, meta) {
       }
       return updated;
     };
-    return (root) => ts.visitNode(root, visit);
+    return (root) => {
+      const transformed=ts.visitNode(root,visit);
+      const declarations=(meta.globalGaps??[]).map(name=>f.createVariableStatement([f.createModifier(ts.SyntaxKind.DeclareKeyword)],f.createVariableDeclarationList([f.createVariableDeclaration(name,undefined,any())],ts.NodeFlags.Const)));
+      return f.updateSourceFile(transformed,[...declarations,...transformed.statements]);
+    };
   };
   const result = ts.transform(file, [transform]);
   try {
@@ -207,7 +286,9 @@ export function buildNativeTypeScript(sourceRoot) {
     const targetText = `// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256=${hash(metaText)}; dynamic any annotations are explicit draft gaps.\n${output.text}`;
     const erased = ts.transpileModule(output.text, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, verbatimModuleSyntax: true, useDefineForClassFields: false }, fileName: target }).outputText;
     const sourceRuntime = JSON.stringify(runtimeAST(ts, source, { rewriteImports: true }));
-    const targetRuntime = JSON.stringify(runtimeAST(ts, erased));
+    let targetRuntime;
+    try {targetRuntime=JSON.stringify(runtimeAST(ts,erased));}
+    catch(cause){throw new Error(`Invalid erased TypeScript runtime for ${path}`,{cause});}
     if (sourceRuntime !== targetRuntime) throw new Error(`runtime AST identity differs for ${path}`);
     artifacts.set(metaPath, metaText);
     artifacts.set(target, targetText);

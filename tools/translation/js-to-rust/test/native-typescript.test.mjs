@@ -102,6 +102,44 @@ export function missing() { const absent = null; return absent?.[undefined]; }`;
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
+test('ordinary functions preserve dynamic receivers and arrow lexical receivers under strict types',async()=>{
+  const ts=loadTypeScript(SOURCE),directory=mkdtempSync(join(tmpdir(),'router-native-ts-this-'));
+  const source=`function Counter(value) { this.value = value; }
+Counter.prototype.read = function(extra) { const arrow = () => this.value; function nested() { return this.value; } return [arrow() + extra, nested.call({value:9})]; };
+export function run() { return new Counter(4).read(3); }`;
+  try {
+    const meta=JSON.parse(JSON.stringify(parseNativeJavaScript(ts,'fixture.mjs',source)));
+    assert.equal(meta.annotations.filter(hint=>hint.thisContext).length,3);
+    const output=emitNativeTypeScript(ts,meta),typed=join(directory,'fixture.ts');writeFileSync(typed,output.text);
+    const program=ts.createProgram([typed],{strict:true,noEmit:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext});
+    assert.deepEqual(ts.getPreEmitDiagnostics(program).map(d=>ts.flattenDiagnosticMessageText(d.messageText,'\n')),[]);
+    const erased=ts.transpileModule(output.text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+    assert.deepEqual(runtimeAST(ts,erased),runtimeAST(ts,source));
+    writeFileSync(join(directory,'target.mjs'),erased);
+    assert.deepEqual((await import(pathToFileURL(join(directory,'target.mjs')).href)).run(),[7,9]);
+  } finally {rmSync(directory,{recursive:true,force:true});}
+});
+
+test('structured dynamic gap plans preserve extra arguments, comma calls, coercion and undeclared host probing',async()=>{
+  const ts=loadTypeScript(SOURCE),directory=mkdtempSync(join(tmpdir(),'router-native-ts-gaps-'));
+  const source=`export function run() { function count(value) { return arguments.length; }
+    let observed; for(var key in {entry:1}) observed=key; key=false;
+    return [count(1,2,3),(0,count)(4,5),count.bind()(6),1+true,typeof __ROUTER_MISSING_HOST_FEATURE__,key,observed]; }`;
+  try {
+    const path=join(directory,'fixture.mjs');writeFileSync(path,source);
+    const inference=inferenceProgram(ts,directory,['fixture.mjs']);
+    const meta=JSON.parse(JSON.stringify(parseNativeJavaScript(ts,'fixture.mjs',source,{file:inference.program.getSourceFile(path),checker:inference.checker})));
+    assert.deepEqual(meta.globalGaps,['__ROUTER_MISSING_HOST_FEATURE__']);assert.ok(meta.gaps.some(gap=>gap.call));assert.ok(meta.gaps.some(gap=>gap.coercion));
+    const output=emitNativeTypeScript(ts,meta),typed=join(directory,'fixture.ts');writeFileSync(typed,output.text);
+    const program=ts.createProgram([typed],{strict:true,noEmit:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext});
+    assert.deepEqual(ts.getPreEmitDiagnostics(program).map(d=>ts.flattenDiagnosticMessageText(d.messageText,'\n')),[]);
+    const erased=ts.transpileModule(output.text,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+    assert.deepEqual(runtimeAST(ts,erased),runtimeAST(ts,source));
+    writeFileSync(join(directory,'target.mjs'),erased);
+    assert.deepEqual((await import(pathToFileURL(join(directory,'target.mjs')).href)).run(),[3,2,1,2,'undefined',false,'entry']);
+  } finally {rmSync(directory,{recursive:true,force:true});}
+});
+
 test('every native JavaScript module has a structured syntax AST and executable TS draft', () => {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/generated/native-typescript/manifest.json'), 'utf8'));
   assert.deepEqual(manifest.modules.map((row) => row.source), sourceModules(SOURCE));

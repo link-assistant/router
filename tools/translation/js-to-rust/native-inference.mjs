@@ -62,7 +62,9 @@ export function inferenceProgram(ts, root, paths) {
 export function returnHint(ts, checker, node) {
   if (!checker || ts.isConstructorDeclaration(node) || ts.isSetAccessorDeclaration(node) || node.asteriskToken) return null;
   const signature = checker.getSignatureFromDeclaration(node);
-  return signature ? describeType(ts, checker, checker.getReturnTypeOfSignature(signature)) : null;
+  const hint=signature ? describeType(ts, checker, checker.getReturnTypeOfSignature(signature)) : null;
+  const stable=value=>value && (value.kind==='primitive' ? value.name!=='never' : value.kind==='union' ? value.members.every(stable) : stable(value.element));
+  return stable(hint) ? hint : null;
 }
 
 export function localHint(ts, checker, node) {
