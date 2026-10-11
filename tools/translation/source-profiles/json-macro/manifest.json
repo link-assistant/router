@@ -57,6 +57,11 @@
           "path": "LICENSE-APACHE",
           "bytes": 9723,
           "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "src/number.rs",
+          "bytes": 25285,
+          "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
         }
       ]
     },
@@ -123,9 +128,9 @@
     ],
     "disabled": [
       "preserve_order",
-      "arbitrary_precision",
-      "float_roundtrip"
-    ]
+      "arbitrary_precision"
+    ],
+    "float_roundtrip": "compatible with literal/scalar/Value construction; default numeric deserialization not certified"
   },
   "inputSubset": [
     "literal null/bool/string",

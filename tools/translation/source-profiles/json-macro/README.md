@@ -1,37 +1,42 @@
-These original, licensed archives are portable compiler source inputs for a
-candidate `serde_json::json!` profile. They are not installed dependencies.
-`manifest.json` pins the actual Router manifest/lock, archive checksums, selected
-source members and licenses. A mismatch yields an unsupported-profile result;
-it cannot establish another repository's dependency or feature selection.
+These original, licensed inputs belong to the portable compiler source profile
+for locked serde_json 1.0.151. They are never installed or built. The root
+manifest pins Router's actual Cargo.toml/Cargo.lock, original crates.io archive
+checksums, selected macro/serializer/Number/Map members and licenses. An unrelated
+repository produces an explicit unsupported dependency-profile diagnostic.
 
-The source-only draft has no shared frontend, source-scope, runtime-asset or
-producer integration. Existing immutable JSON Value/Number/Map adapters remain
-the ABI; the new runtime exports are candidate constructors and guarded copies.
-Their authored standalone carrier is not a translated production function.
+The checked frontend draft uses a private per-translation context derived from
+original module bytes and actual separate namespace bindings. Each invocation
+retains original tokens/spans and its exact resolved bang owner. The public
+source and syntax candidate APIs cannot grant lowering by caller-provided flags.
+Unknown type/attribute/bang scopes, roots, traits or macro owners remain refused.
+The standard directory pins the actual Rust 1.89 Into/From/prelude/String/str
+sources and reexports needed by the original mixed-site literal-key .into().
 
-The first planner subset has null/bool/string literals, arrays, unique literal
-string object keys and scalar interpolation candidates. Original interpolation
-tokens, source order and `?` obligations remain explicit. Canonical Value copy
-is available as an adapter, but recognizing a checked Value serialization owner
-is still a frontend prerequisite. Scalar floats and arbitrary Serialize impls
-are outside this subset. Duplicate keys are refused here, although upstream
-JSON macro construction overwrites a duplicate key; this is a deliberate subset.
+The features directory retains original normalized package manifests and
+licenses from the checksum-locked incoming serde_json dependency subgraph plus serde_core/std
+serializer-owner activation.
+Activation uses registered default production dependencies, conservatively
+unions target conditions and rejects command-line root feature overrides. The
+locked jsonschema packages enable float_roundtrip. This construction/Value-copy
+profile accommodates that feature without authorizing default numeric parsing;
+preserve_order and arbitrary_precision still reject this profile. Feature-source
+facts and activation are independently authored, pending focused verification.
 
-Before production admission, a consumer must prove the actual caller bang
-binding (including aliases, custom packages, imports, cfg and macro uncertainty),
-`$crate` nested macro/path closure, and original checked interpolation/effects.
-The object template's unqualified `($key).into()` also needs genuine mixed-site
-method/trait-owner resolution. No field-name or macro-name spelling proves it.
-Cargo's direct default dependency is insufficient to prove transitive feature
-unification; Map ordering and numeric feature choices remain conditional.
+The first checked subset is null/bool/string literals, nested unique literal-key
+objects, actual source i64/u64/borrowed-str inputs and canonical immutable Value
+serialization. Existing checked Option/Result propagation retains its original
+nonlocal semantics. Only registered Value get/as_str readers may appear inside
+interpolation; arbitrary calls, effects, custom Serialize/Into, scalar floats,
+dynamic keys, duplicate keys and const use are refused. Macro array syntax is
+parsed for evidence but currently refused because the nested alloc::vec! boxed
+intrinsic/slice conversion owner closure is not certified. Canonical existing
+Value arrays remain covered by their separately pinned Serialize branches.
 
-Future integration must include all consumed helper/runtime source files and
-these manifest/archive bytes in the producer's implementation fingerprints and
-the relocated source-only bundle. It must register runtime assets and signatures
-only after checked dispatch is assigned. None of that integration is included.
-
-All owner, namespace, expansion, generated-trait and runtime-parity grants are
-false. Twelve authored cases in `json-macro-frontier.test.mjs` and
-`json-macro-runtime.test.mjs` remain unrun while the other worker owns the
-compiler window. The pinned unchanged bridge file contains independent expected
-tool-choice cases; no original body has been executed or admitted by this draft.
+New helpers/runtime signatures, runtime assets and all consumed source input
+bytes are included in the draft producer fingerprint and portable source bundle.
+Global namespace/expansion authority, generated trait behavior and runtime parity
+remain false. Only a private parser-issued, checked invocation may obtain the
+bounded lowering contract. These hooks and all 19 authored cases are UNRUN; the
+whole unchanged bridge child file plus an authored closed root carrier supplies
+12 independent expected tool-choice outcomes for the next serial JS/strict-TS
+window. No production function or corpus admission is claimed before that run.

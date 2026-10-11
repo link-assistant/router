@@ -1,4 +1,4 @@
-export type JsonNumber = Readonly<{$:'PosInt'|'NegInt';field0:bigint}> | Readonly<{$:'Float';field0:number}>;
+export type JsonNumber = Readonly<{$:'PosInt';field0:bigint}> | Readonly<{$:'NegInt';field0:bigint}> | Readonly<{$:'Float';field0:number}>;
 export type JsonMapEntry = Readonly<{$:'MapEntry';key:string;value:JsonValue}>;
 export type JsonValue = Readonly<{$:'Null'}> | Readonly<{$:'Bool';field0:boolean}> | Readonly<{$:'String';field0:string}> | Readonly<{$:'Number';field0:JsonNumber}> | Readonly<{$:'Array';field0:readonly JsonValue[]}> | Readonly<{$:'Object';field0:Readonly<{$:'Map';entries:readonly JsonMapEntry[]}>}>;
 export const JSON_MACRO_RUNTIME_AUTHORITY: Readonly<{namespaceAuthority:false;expansionAuthority:false;runtimeParity:false;generatedTraitBehavior:false}>;

@@ -8,7 +8,7 @@ import {freezeMacroTree} from './macro-token-trees.mjs';
 const root=new URL('./source-profiles/json-macro/',import.meta.url);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const profileBytes=readFileSync(new URL('manifest.json',root));
-if(hash(profileBytes)!=='1d33ee95f633ee2dd90859e15552eccdf0f83d6d1d69a43a2ac8c61210ad3dbe')throw new TypeError('JSON macro source profile changed');
+if(hash(profileBytes)!=='2963718935802c6d879b5195f0b8e57942b9cfa8744ad560dc0b2fda288b2614')throw new TypeError('JSON macro source profile changed');
 export const JSON_MACRO_SOURCE_PROFILE=freezeMacroTree(JSON.parse(profileBytes));
 const proofs=new WeakMap(),definitions=new WeakMap();
 

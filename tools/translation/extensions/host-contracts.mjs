@@ -44,6 +44,8 @@ import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSo
 import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
 import {DEFAULT_JSON_PARSER_PROFILE,configureJsonCapabilities,assertJsonParserCapability} from '../json-capabilities.mjs';
 import {withDeclarationRefusalCollection,checkCollectedDeclarationTypes} from './declaration-refusals.mjs';
+import {withJsonMacroParser,withJsonMacroChecker,withJsonMacroEmitter} from './json-macros.mjs';
+import {configureJsonMacroParser} from '../json-macro-context.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -108,7 +110,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser)))))) {
+export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
   attributes(options={}) {
@@ -313,7 +315,7 @@ export class HostRustParser extends withNamedLifetimeParser(withCapturedSourcePa
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withDeclarationRefusalCollection(withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))) {
+export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -573,7 +575,7 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
     return program;
   }
 }
-export class HostEmitter extends EffectEmitter {
+export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
@@ -696,7 +698,7 @@ export class HostEmitter extends EffectEmitter {
     return {...result,preludes,text:[...preludes,...result.definitions].join('\n\n')};
   }
 }
-export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
+export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope,jsonMacroContext,jsonMacroModule}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);if(jsonMacroContext)configureJsonMacroParser(parser,jsonMacroContext,jsonMacroModule);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
 export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
 export const checkProjectProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE,collectIndependentBodies=false}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checkCollectedDeclarationTypes(checker,surface,{collectIndependentBodies});program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});
