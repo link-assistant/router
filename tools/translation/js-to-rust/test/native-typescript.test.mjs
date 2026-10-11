@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { cpSync, symlinkSync, realpathSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -143,6 +144,9 @@ test('structured dynamic gap plans preserve extra arguments, comma calls, coerci
 test('every native JavaScript module has a structured syntax AST and executable TS draft', () => {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/translation/js-to-rust/generated/native-typescript/manifest.json'), 'utf8'));
   assert.deepEqual(manifest.modules.map((row) => row.source), sourceModules(SOURCE));
+  assert.deepEqual(manifest.inferenceInputs.map(row=>row.path), ['packages/javascript/package.json', ...readdirSync(join(SOURCE,'packages/javascript')).filter(name=>name.endsWith('.d.ts')).sort().map(name=>`packages/javascript/${name}`)]);
+  for(const row of manifest.inferenceInputs) { assert.equal(row.sha256,createHash('sha256').update(readFileSync(join(SOURCE,row.path))).digest('hex')); assert.equal(typeof row.resolvedByCompiler,'boolean'); }
+  assert.ok(manifest.inferenceInputs.some(row=>row.role==='public-declaration'&&row.resolvedByCompiler));
   for (const row of manifest.modules) {
     const meta = JSON.parse(readFileSync(join(ROOT, row.meta), 'utf8'));
     assert.equal(meta.schema, 'native-js-syntax-ast-v1');

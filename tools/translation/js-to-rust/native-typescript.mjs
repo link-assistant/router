@@ -294,6 +294,11 @@ export function buildNativeTypeScript(sourceRoot) {
     artifacts.set(target, targetText);
     rows.push({ source: path, sourceSha256: hash(source), meta: metaPath, target, nodes: meta.nodes, explicitAny: output.explicitAny, inferredReturns: output.inferredReturns, inferredLocals: output.inferredLocals, metaSha256: hash(metaText), targetSha256: hash(targetText), runtimeASTSha256: hash(sourceRuntime), runtimeASTIdentity: 'verified after type erasure and relative module-extension normalization' });
   }
+  // Package resolution and public declarations influence inference even when
+  // every JavaScript source hash is unchanged. Record the complete public
+  // declaration context so isolated source snapshots can reproduce it.
+  const loadedDeclarations = new Set(inference.program.getSourceFiles().filter(file => file.isDeclarationFile).map(file => resolve(file.fileName)));
+  const inferenceInputs = ['packages/javascript/package.json', ...readdirSync(join(sourceRoot, 'packages/javascript')).filter(name => name.endsWith('.d.ts')).sort().map(name => `packages/javascript/${name}`)].map(path => ({ path, sha256: hash(readFileSync(join(sourceRoot, path))), role: path.endsWith('.d.ts') ? 'public-declaration' : 'package-resolution', resolvedByCompiler: path.endsWith('.d.ts') ? loadedDeclarations.has(resolve(sourceRoot, path)) : true }));
   const sourcePackage = JSON.parse(readFileSync(join(sourceRoot, 'packages/javascript/package.json'), 'utf8'));
   artifacts.set('packages/typescript/package.json', `${JSON.stringify({ name: '@link-assistant/router-typescript-draft', version: sourcePackage.version, private: true, type: 'module', engines: sourcePackage.engines, exports: { '.': './dist/index.js', './native': './dist/native/index.js', './testing': './dist/testing.js' }, scripts: { build: 'node ../../scripts/check-native-typescript.mjs --out-dir packages/typescript/dist' }, dependencies: sourcePackage.dependencies, devDependencies: sourcePackage.devDependencies }, null, 2)}\n`);
   artifacts.set('packages/typescript/tsconfig.native.json', `${JSON.stringify({ compilerOptions: { strict: true, target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext', skipLibCheck: true, useDefineForClassFields: false, verbatimModuleSyntax: true, outDir: 'dist', rootDir: '.', declaration: true }, include: ['index.ts', 'testing.ts', 'native/**/*.ts', 'portable/**/*.ts'] }, null, 2)}\n`);
@@ -301,7 +306,7 @@ export function buildNativeTypeScript(sourceRoot) {
   // Public embedded assets have byte-level HTTP contracts. Keep their exact
   // payload alongside the independently checked TypeScript syntax targets.
   for (const path of ['packages/javascript/catalog.json', ...walkFiles(sourceRoot, 'packages/javascript/schemas'), ...walkFiles(sourceRoot, 'packages/javascript/native/assets/admin')]) artifacts.set(path.replace('packages/javascript/', 'packages/typescript/'), readFileSync(join(sourceRoot, path)));
-  artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, modules: rows, assets: ['catalog.json', 'schemas', 'native/assets/admin'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
+  artifacts.set('tools/translation/js-to-rust/generated/native-typescript/manifest.json', `${JSON.stringify({ schema: 'native-js-syntax-ast-v1', compiler: ts.version, target: 'complete-native-package-typescript-draft', lowering: 'identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations', fullNativeRustTranslation: false, inferenceInputs, modules: rows, assets: ['catalog.json', 'schemas', 'native/assets/admin'], outputs: [...artifacts].map(([path, value]) => ({ path, bytes: Buffer.byteLength(value), sha256: hash(value) })) }, null, 2)}\n`);
   return artifacts;
 }
 

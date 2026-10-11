@@ -4,6 +4,32 @@
   "target": "complete-native-package-typescript-draft",
   "lowering": "identity runtime semantics; syntax-token AST serialization and explicit draft dynamic type annotations",
   "fullNativeRustTranslation": false,
+  "inferenceInputs": [
+    {
+      "path": "packages/javascript/package.json",
+      "sha256": "f1118a438fe409b1e19245889e1bdd9dcb0f4bc38e726755a6f1c543c9d207e2",
+      "role": "package-resolution",
+      "resolvedByCompiler": true
+    },
+    {
+      "path": "packages/javascript/index.d.ts",
+      "sha256": "21033ef5f92e8d97698cd2838d8b23a2b76531c5ffbf1af2d7e971c3f4ecd58c",
+      "role": "public-declaration",
+      "resolvedByCompiler": true
+    },
+    {
+      "path": "packages/javascript/native.d.ts",
+      "sha256": "1677b1d96cdad74b9ea8bfbe92855d5c7d8a777cdddf532575d6cc7f143d7bf0",
+      "role": "public-declaration",
+      "resolvedByCompiler": true
+    },
+    {
+      "path": "packages/javascript/testing.d.ts",
+      "sha256": "35d6c5c11973ad421f2bf5d174783d0ec20b0da9dc2bc96f3812dd374e8ef213",
+      "role": "public-declaration",
+      "resolvedByCompiler": false
+    }
+  ],
   "modules": [
     {
       "source": "packages/javascript/index.js",
@@ -781,11 +807,11 @@
       "meta": "tools/translation/js-to-rust/generated/native-typescript/testing.js.meta.json",
       "target": "packages/typescript/testing.ts",
       "nodes": 1574,
-      "explicitAny": 50,
+      "explicitAny": 49,
       "inferredReturns": 5,
       "inferredLocals": 5,
-      "metaSha256": "31aa325582c41b007335d177687ef485d7f7c2e9eb5b68694c4ca459f4a5a635",
-      "targetSha256": "21ef295340d7cdf049f7ad87ca1bc82de751750f7a4bd8cdf8aec5d4860c0fb0",
+      "metaSha256": "2ad7817d7969af6c0ca407cbadc347e5adc42bccf117eff467a148875f3c1257",
+      "targetSha256": "6af9d84c81bb7dd7408b7da5c6c86af82f298959a5e835272a6f77578200f33f",
       "runtimeASTSha256": "3f06eb2ed4252597e10b065c1763d11be17f552fdc652bd42ff0f338f0b7721c",
       "runtimeASTIdentity": "verified after type erasure and relative module-extension normalization"
     }
@@ -1348,13 +1374,13 @@
     },
     {
       "path": "tools/translation/js-to-rust/generated/native-typescript/testing.js.meta.json",
-      "bytes": 20549,
-      "sha256": "31aa325582c41b007335d177687ef485d7f7c2e9eb5b68694c4ca459f4a5a635"
+      "bytes": 20508,
+      "sha256": "2ad7817d7969af6c0ca407cbadc347e5adc42bccf117eff467a148875f3c1257"
     },
     {
       "path": "packages/typescript/testing.ts",
-      "bytes": 5422,
-      "sha256": "21ef295340d7cdf049f7ad87ca1bc82de751750f7a4bd8cdf8aec5d4860c0fb0"
+      "bytes": 5413,
+      "sha256": "6af9d84c81bb7dd7408b7da5c6c86af82f298959a5e835272a6f77578200f33f"
     },
     {
       "path": "packages/typescript/package.json",

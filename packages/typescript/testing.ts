@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=31aa325582c41b007335d177687ef485d7f7c2e9eb5b68694c4ca459f4a5a635; dynamic any annotations are explicit draft gaps.
+// Meta sha256=2ad7817d7969af6c0ca407cbadc347e5adc42bccf117eff467a148875f3c1257; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -52,7 +52,7 @@ export async function verifyContracts({ router = new (Router as any)(), areas = 
     if (!linux) {
         if (output)
             args.push('--output', resolve(output));
-        return (await (router.verify as any)({ arguments: args }, { deadlineMs, cwd: repository, env })).data;
+        return (await router.verify({ arguments: args }, { deadlineMs, cwd: repository, env })).data;
     }
     const response: any = await runProcess('bash', [join(repository, 'scripts/verify-contracts-in-linux.sh'), '--client-versions', clientVersions, ...args], { env, deadlineMs, cwd: repository });
     const path: string = join(repository, 'target/verification-linux/result.json');
