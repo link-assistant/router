@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
+import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
@@ -76,6 +77,7 @@ export function hostData() {
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser)) {
+  tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
     if(!this.compilationProfile)return super.attributes(options);
@@ -232,9 +234,9 @@ export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwne
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker)) {
-  constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);}
-  resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
+export class HostChecker extends withSourceLifetimeChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker))) {
+  constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
+  resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
     if(pattern.registeredGenericOwner){
       const entry=type.kind==='data'?this.items.get(type.name):null;
@@ -276,6 +278,7 @@ export class HostChecker extends withNestedMatchPatternsChecker(withSourceOwners
   }
   expr(node,env,path,expected,allowLiteral=false) {
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
+    if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value)??value;
     this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
