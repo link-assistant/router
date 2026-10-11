@@ -2,9 +2,9 @@
 // or overwritten: it identifies a different executable and storage owner.
 import { spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
-import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual, X509Certificate } from 'node:crypto';
 import { lstat, mkdir, chmod, open, readdir, rm } from 'node:fs/promises';
-import { resolve, join, dirname, parse } from 'node:path';
+import { resolve, join, dirname, parse, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { atomicWrite, serialized, withNativeFileLock } from './storage.mjs';
 
@@ -44,6 +44,29 @@ function paths(dataDir) {
   if (typeof dataDir !== 'string' || !dataDir) throw fail('Managed operation requires a resolved data directory');
   const root = join(resolve(dataDir),'native-managed');
   return {root,state:join(root,'state.json'),selection:join(root,'server.json'),volume:join(root,'data')};
+}
+function selectionPath(p,env) {
+  const nonempty = value=>typeof value === 'string' && value.trim() ? value : undefined;
+  const root = nonempty(env.XDG_CONFIG_HOME) ?? (nonempty(env.HOME) ? join(env.HOME,'.config') : nonempty(env.APPDATA));
+  if (!root) return p.selection;
+  if (!isAbsolute(root)) throw fail('Managed server state directory must be absolute');
+  return join(root,'link-assistant-router','server.json');
+}
+function certificatePath(selection,name) {
+  if (typeof name !== 'string' || !/^ca-[a-f0-9]{64}\.pem$/.test(name)) throw fail('Persisted Router CA name is invalid');
+  return join(dirname(selection),'server-trust',name);
+}
+async function importCertificate(source,selection,cwd) {
+  const path = resolve(cwd,source);await noLinks(path);const file = await open(path,'r');let bytes;
+  try {
+    const stat = await file.stat();if (!stat.isFile() || stat.size > MAX_STATE) throw fail('CA certificate requires a regular PEM file within 1 MiB');
+    const buffer = Buffer.alloc(MAX_STATE+1),{bytesRead} = await file.read(buffer,0,buffer.length,0);
+    if (bytesRead > MAX_STATE) throw fail('CA certificate exceeds 1 MiB');bytes = buffer.subarray(0,bytesRead);
+  } finally {await file.close();}
+  const pem = new TextDecoder('utf-8',{fatal:true}).decode(bytes),blocks = pem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g);
+  if (!blocks?.length) throw fail('CA bundle contains no certificates');for (const block of blocks) new X509Certificate(block);
+  const name = `ca-${createHash('sha256').update(bytes).digest('hex')}.pem`,destination = certificatePath(selection,name);
+  await noLinks(destination);await mkdir(dirname(destination),{recursive:true,mode:0o700});await chmod(dirname(destination),0o700);await atomicWrite(destination,bytes);await chmod(destination,0o600);return name;
 }
 async function writeJSON(path,value) {
   const text = JSON.stringify(value); if (Buffer.byteLength(text) > MAX_STATE) throw fail('Native managed state exceeds 1 MiB');
@@ -175,7 +198,7 @@ async function validateTree(path) {
 async function selection(p,env,state) {
   const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;
   if (configured !== undefined) return {source:'environment',url:normalizeManagedOrigin(configured),token_configured:!!(env.LINK_ASSISTANT_ROUTER_TOKEN ?? env.LINK_ASSISTANT_TOKEN)};
-  const saved = await readJSON(p.selection);
+  const saved = await readJSON(selectionPath(p,env));
   if (saved) return {source:'persisted',url:normalizeManagedOrigin(saved.server),token_configured:typeof saved.token === 'string'};
   return {source:'managed',url:state?.port ? `http://127.0.0.1:${state.port}` : null,token_configured:false};
 }
@@ -186,8 +209,48 @@ export async function selectedManagedServer({core,config = {},env = {}} = {}) {
   config = core?.config ?? config;
   const configured = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;
   if (configured !== undefined) return normalizeManagedOrigin(configured);
-  const p = paths(config.data_dir ?? config.dataDir), saved = await readJSON(p.selection);
+  const p = paths(config.data_dir ?? config.dataDir), saved = await readJSON(selectionPath(p,env));
   return saved ? normalizeManagedOrigin(saved.server) : null;
+}
+
+/** Resolve a state command's selected deployment without touching local stores. */
+export async function selectedManagedTarget({name,options = {},config = {},env = {},cwd = process.cwd()} = {}) {
+  if (options.local === true) return null;
+  if (options.managed === true) {
+    const error = fail(`--managed starts a disposable router for with/configure; ${name} cannot use one. Pass --local or --server instead.`);
+    error.exitCode = 2; throw error;
+  }
+  const p = paths(resolve(cwd,options.data_dir ?? config.data_dir ?? config.dataDir ?? env.DATA_DIR ?? '.router'));
+  let saved;
+  try {
+    saved = await readJSON(selectionPath(p,env));
+    if (saved) {
+      if (typeof saved !== 'object' || Array.isArray(saved)) throw fail('Invalid persisted server selection');
+      normalizeManagedOrigin(saved.server);
+      if (saved.management_server !== undefined) normalizeManagedOrigin(saved.management_server);
+    }
+  }
+  catch (error) { if (options.server === undefined) throw error; saved = undefined; }
+  const environmentServer = env.LINK_ASSISTANT_ROUTER_URL ?? env.ROUTER_URL;
+  const supplied = options.server ?? environmentServer ?? saved?.server;
+  if (supplied === undefined) {
+    if (options.management_server !== undefined) throw fail('A management server requires an inference server selection');
+    return null;
+  }
+  const server = normalizeManagedOrigin(supplied);
+  const source = options.server !== undefined ? 'flag' : environmentServer !== undefined ? 'environment' : 'persisted configuration';
+  const management = options.management_server ?? (options.server !== undefined ? server
+    : environmentServer !== undefined ? env.LINK_ASSISTANT_ROUTER_MANAGEMENT_URL ?? env.ROUTER_MANAGEMENT_URL ?? server
+      : saved.management_server ?? server);
+  const managementServer = normalizeManagedOrigin(management);
+  const same = saved && normalizeManagedOrigin(saved.server) === server;
+  const token = env.LINK_ASSISTANT_ROUTER_TOKEN ?? env.LINK_ASSISTANT_TOKEN ?? (same ? saved.token : undefined);
+  if (token !== undefined && (typeof token !== 'string' || !token.trim() || /[\r\n]/.test(token))) throw fail('Selected router credential is invalid');
+  const savedManagement = saved ? normalizeManagedOrigin(saved.management_server ?? saved.server) : null;
+  return {server,managementServer,source,...(token ? {token} : {}),
+    ...(same && saved.ca_cert ? {caCert:certificatePath(selectionPath(p,env),saved.ca_cert)} : {}),
+    ...(savedManagement === managementServer && (saved.management_ca_cert || same && saved.ca_cert)
+      ? {managementCaCert:certificatePath(selectionPath(p,env),saved.management_ca_cert ?? saved.ca_cert)} : {})};
 }
 async function status(p,state,env) {
   let lifecycle = state ? 'stopped' : 'absent', detail = null;
@@ -200,7 +263,7 @@ async function status(p,state,env) {
     output:[`effective server: ${selected.source}${selected.url ? `: ${selected.url}` : ''}`,`managed server: ${lifecycle}; engine=node` ]};
 }
 function validateOptions(name,options,config) {
-  const allowed = new Set(['data_dir',...(name === 'server.use' ? ['server','management_server','token','token_stdin','clear','run_max_requests'] : name === 'server.reap' ? ['pid'] : name === 'server.remove' ? ['yes'] : [])]);
+  const allowed = new Set(['data_dir',...(name === 'server.use' ? ['server','management_server','token','token_stdin','clear','run_max_requests','ca_cert','management_ca_cert'] : name === 'server.reap' ? ['pid'] : name === 'server.remove' ? ['yes'] : [])]);
   for (const [key,value] of Object.entries(options)) if (value !== undefined && value !== false && !allowed.has(key)) throw unsupported(`Native ${name} does not support ${key}`);
   if (Object.entries(config).some(([key,value])=>value && /^(tls|https|listeners|systemd)/i.test(key))) throw unsupported('Native managed daemons support one loopback HTTP listener only');
   if (name === 'server.remove' && options.yes !== true) throw fail('Removing the native managed volume destroys its saved credentials and requires --yes');
@@ -211,6 +274,7 @@ export async function executeManagedOperation({name,options = {},invocation = {}
   config = core?.config ?? config; validateOptions(name,options,config);
   const p = paths(options.data_dir ?? config.data_dir ?? config.dataDir);
   if (name === 'server.use') {
+    p.selection = selectionPath(p,env);
     if (options.clear && Object.entries(options).some(([key,value])=>!['clear','data_dir'].includes(key) && value !== undefined && value !== false)) throw fail('--clear cannot be combined with a server, token, or run budget');
     let selected;
     if (!options.clear) {
@@ -222,7 +286,15 @@ export async function executeManagedOperation({name,options = {},invocation = {}
       const server = normalizeManagedOrigin(options.server), management = options.management_server === undefined ? undefined : normalizeManagedOrigin(options.management_server);
       selected = {server,...(management && management !== server ? {management_server:management} : {}),...(token ? {token} : {}),...(options.run_max_requests !== undefined ? {run_max_requests:Number(options.run_max_requests)} : {})};
     }
-    return locked(p,async()=> {if (options.clear) {await noLinks(p.selection); await rm(p.selection,{force:true}); return out(`cleared persisted server selection at ${p.selection}`);} await writeJSON(p.selection,selected); return out(`saved server selection in ${p.selection} (token ${selected.token ? 'set' : 'unset'})`);});
+    return locked(p,async()=> {
+      if (!options.clear) {
+        const previous = await readJSON(p.selection).catch(()=>null),same = previous?.server && normalizeManagedOrigin(previous.server) === selected.server;
+        const sameManagement = previous?.server && normalizeManagedOrigin(previous.management_server ?? previous.server) === (selected.management_server ?? selected.server);
+        selected.ca_cert = options.ca_cert ? await importCertificate(options.ca_cert,p.selection,invocation.cwd ?? process.cwd()) : same ? previous.ca_cert : undefined;
+        selected.management_ca_cert = options.management_ca_cert ? await importCertificate(options.management_ca_cert,p.selection,invocation.cwd ?? process.cwd()) : sameManagement ? previous.management_ca_cert : undefined;
+        if (!selected.management_server && !selected.management_ca_cert) selected.management_ca_cert = selected.ca_cert;
+      }
+      if (options.clear) {await noLinks(p.selection); await rm(p.selection,{force:true}); return out(`cleared persisted server selection at ${p.selection}`);} await writeJSON(p.selection,selected); return out(`saved server selection in ${p.selection} (token ${selected.token ? 'set' : 'unset'})`);});
   }
   return locked(p,async()=> {
     let state = await loadState(p);

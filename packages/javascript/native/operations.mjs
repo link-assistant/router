@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';
 import { executeAuthOperation } from './oauth.mjs';
-import { executeManagedOperation, supportedManagedOperations, selectedManagedServer } from './managed-server.mjs';
+import { executeManagedOperation, supportedManagedOperations, selectedManagedTarget } from './managed-server.mjs';
+import { executeRemoteOperation, remoteStateFamilies } from './remote-operations.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
 
 export const catalog = JSON.parse(readFileSync(new URL('../catalog.json', import.meta.url), 'utf8'));
@@ -108,12 +109,18 @@ async function runtimeFor(router) {
 async function dispatch(router, name, options, invocation) {
   if (name === 'version') { localOnly(options); return { version, source_commit: 'unknown' }; }
   if (name === 'contracts') { localOnly(options); return catalog; }
+  const env = {...(router.options.env ?? process.env),...(invocation.env ?? {})};
+  if (remoteStateFamilies.has(name.split('.')[0])) {
+    const target = await selectedManagedTarget({name,options,config:router.options.config,env,cwd:invocation.cwd});
+    if (target) return executeRemoteOperation({name,options,invocation,target,fetch:router.options.fetch});
+  }
   if (!nativeOperationSupport[name]) unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
+  // Local invocation contexts are applied by the core rather than silently
+  // changing process-global environment or working directory.
+  for (const key of ['env','cwd','deadlineMs','maxOutputBytes']) if (invocation[key] !== undefined)
+    unsupported(`Native local per-invocation ${key} requires the operation context`);
   const core = await runtimeFor(router);
-  const env = router.options.env ?? process.env;
   if (supportedManagedOperations[name]) return executeManagedOperation({ name, options, invocation, core, config: core.config, env, routerOptions: router.options });
-  if (options.local !== true && await selectedManagedServer({ core, config: core.config ?? {}, env }))
-    unsupported('Native remote delegation is not implemented; use local:true to explicitly operate on local state or use the Rust wrapper');
   if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
     const accepted = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
       : name === 'auth.claude' ? ['home', 'code', 'flow', 'mode', 'from_claude_home'] : ['home', 'from_codex_home'];
@@ -315,7 +322,6 @@ export class NativeRouter {
     const operation = catalog.operations.find(operation => operation.name === name);
     if (!operation) return operationResult('cli-error', output(), [`Unknown operation: ${name}`], 2);
     try {
-      for (const key of ['env', 'cwd', 'deadlineMs', 'maxOutputBytes']) if (invocation[key] !== undefined) unsupported(`Native per-invocation ${key} is not implemented; configure the runtime at construction`);
       if (invocation.signal?.aborted) throw new NativeRouterError('Operation cancelled', { code: 'cancelled' });
       const normalized = normalizeOptions(operation, options);
       const data = await dispatch(this, name, normalized, invocation);
