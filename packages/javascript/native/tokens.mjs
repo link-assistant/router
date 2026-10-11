@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { tokenBudgetPermits } from '../portable/policy.mjs';
 import { MemoryTokenStore } from './storage.mjs';
+import { isSyntheticTokenId,diagnosticReason,firstAuthenticationOutcome } from './emergency-auth.mjs';
 
 export class RouterError extends Error {
   constructor(code, message, status = 400) { super(message); this.name = 'RouterError'; this.code = code; this.status = status; }
@@ -29,8 +30,8 @@ export function validateModelPolicy(policy = {}) {
   return policy;
 }
 export class TokenManager {
-  constructor({ secret, store = new MemoryTokenStore(), clock = () => Math.floor(Date.now()/1000), leeway = 60 } = {}) {
-    this.secret = secret; this.store = store; this.clock = clock; this.leeway = leeway;
+  constructor({ secret, store = new MemoryTokenStore(), clock = () => Math.floor(Date.now()/1000), leeway = 60,emergency,diagnostics } = {}) {
+    this.secret = secret; this.store = store; this.clock = clock; this.leeway = leeway;this.emergency=emergency;this.diagnostics=diagnostics;
   }
   sign(claims) {
     ensureRealSecret(this.secret);
@@ -94,8 +95,21 @@ export class TokenManager {
     return { ...claims, account: record?.account ?? null, record, is_admin:claims.scope === 'admin' };
   }
   async list() { return (await this.store.list()).sort((a,b) => a.issued_at-b.issued_at || a.id.localeCompare(b.id)); }
+  async authenticateIncoming(token,options = {}) {
+    const count=firstAuthenticationOutcome();
+    if (typeof token !== 'string' || !token) {
+      const error=new RouterError('missing_credential','Router credential is required',401);
+      if (count) this.diagnostics?.record('missing_credential');throw error;
+    }
+    let claims,error;
+    try {claims=await this.validate(token,options);} catch (failure) {error=failure;}
+    if (!options.admin && this.emergency?.isActive()) return this.emergency.admit(token,options.headers ?? {},error ? diagnosticReason(error) : 'none',count);
+    if (error) {if (count) this.diagnostics?.record(diagnosticReason(error),token);throw error;}
+    return claims;
+  }
   async get(id) { return this.store.get(id); }
   async authorizeModel(id, model) {
+    if (isSyntheticTokenId(id)) return {};
     const record = await this.get(id);
     if (!record) throw new RouterError('model_policy_unavailable','Durable model authority is unavailable',403);
     if (record.model_policy?.allowed_models?.length && !record.model_policy.allowed_models.includes(model)) throw new RouterError('model_not_allowed','Model outside token scope',403);
@@ -116,6 +130,7 @@ export class TokenManager {
     await this.revoke(id); return replacement;
   }
   async admit(id, reserve = 0) {
+    if (isSyntheticTokenId(id)) return 'admitted';
     number(reserve, 'reserve');
     return this.store.transaction(records => {
       const r = records.get(id); if (!r) return 'admitted';
@@ -134,16 +149,18 @@ export class TokenManager {
     });
   }
   async settle(id, reserved, actual) {
+    if (isSyntheticTokenId(id)) return;
     number(reserved,'reserved'); number(actual,'actual');
     return this.store.transaction(records => { const r = records.get(id); if (r) { r.reserved_tokens = Math.max(0,(r.reserved_tokens ?? 0)-reserved); r.used_tokens = Math.min(Number.MAX_SAFE_INTEGER,(r.used_tokens ?? 0)+actual); } });
   }
   async releaseStaleReservations() { return this.store.transaction(records => { let n = 0; for (const r of records.values()) if (r.reserved_tokens) { r.reserved_tokens = 0; n++; } return n; }); }
   async enforceRequestBudget(id,reserve = 0) {
     const verdict = await this.admit(id,reserve);
-    if (verdict !== 'admitted') throw new RouterError(verdict,'Router token budget is exhausted',429);
+    if (verdict !== 'admitted') {const error=new RouterError(verdict,'Router token budget is exhausted',429);this.diagnostics?.record(diagnosticReason(error));throw error;}
   }
   async recordUsage(id,tokens) { return this.settle(id,0,tokens); }
   async renewRunLease(id) {
+    if (isSyntheticTokenId(id)) return this.clock()+120;
     return this.store.transaction(records => {
       const record = records.get(id), now = this.clock();
       if (!record?.ephemeral || record.revoked || record.expires_at <= now || record.run_lease_expires_at == null) throw new RouterError('invalid_token','Run lease is absent, revoked, expired as a token, or not ephemeral',401);

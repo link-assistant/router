@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { transactionalWrite, recoverTransactionalWrite, readOptional, serialized } from './storage.mjs';
 import { rustLockPath, withAdvisoryFileLock } from './file-lock.mjs';
 import { RouterError, ensureRealSecret } from './tokens.mjs';
+import { normalizeEmergencyConfig } from './emergency-auth.mjs';
 
 export function parseLenv(text) {
   const values = Object.create(null);
@@ -28,11 +29,13 @@ export const nativeConfigOptions = new Set(['token_secret','data_dir','storage_p
   'account_failover','account_cooldown_seconds','account_max_cooldown_seconds','session_affinity_ttl_seconds',
   'token_admin_key','admin_key','allow_anonymous_admin','disable_login_api','login_max_sessions','login_session_ttl_secs',
   'claude_code_home','claude_home','codex_home','gemini_home','qwen_home','home','openai_compatible_provider_name',
-  'management_allow_remote','management_lockout_failures','management_lockout_secs','management_lockout_exempt_loopback']);
+  'management_allow_remote','management_lockout_failures','management_lockout_secs','management_lockout_exempt_loopback',
+  'emergency_accept_any_token','emergency_allow_non_loopback','emergency_duration_minutes']);
 export const nativeConfigEnvironment = {TOKEN_SECRET:'token_secret',DATA_DIR:'data_dir',STORAGE_POLICY:'storage_policy',HOST:'host',PORT:'port',
   ACCOUNT_STRATEGY:'account_strategy',ACCOUNT_FAILOVER:'account_failover',ACCOUNT_COOLDOWN_SECONDS:'account_cooldown_seconds',
   SESSION_AFFINITY_TTL_SECONDS:'session_affinity_ttl_seconds',TOKEN_ADMIN_KEY:'token_admin_key',CLAUDE_CODE_HOME:'claude_code_home',CODEX_HOME:'codex_home',GEMINI_HOME:'gemini_home',QWEN_HOME:'qwen_home',
-  MANAGEMENT_ALLOW_REMOTE:'management_allow_remote',MANAGEMENT_LOCKOUT_FAILURES:'management_lockout_failures',MANAGEMENT_LOCKOUT_SECS:'management_lockout_secs',MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK:'management_lockout_exempt_loopback'};
+  MANAGEMENT_ALLOW_REMOTE:'management_allow_remote',MANAGEMENT_LOCKOUT_FAILURES:'management_lockout_failures',MANAGEMENT_LOCKOUT_SECS:'management_lockout_secs',MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK:'management_lockout_exempt_loopback',
+  EMERGENCY_ACCEPT_ANY_TOKEN:'emergency_accept_any_token',EMERGENCY_ALLOW_NON_LOOPBACK:'emergency_allow_non_loopback',EMERGENCY_DURATION_MINUTES:'emergency_duration_minutes'};
 export function normalizeProvider(record, env = process.env) {
   const name = record.name ?? record.provider_name ?? record.provider;
   if (typeof name !== 'string' || !/^[A-Za-z0-9._-]+$/.test(name)) throw new RouterError('invalid_provider','Provider name must contain ASCII letters, digits, dash, underscore or dot');
@@ -80,6 +83,7 @@ export function normalizeConfig(input = {}, env = process.env) {
   config.token_admin_key = input.token_admin_key ?? input.admin_key ?? env.TOKEN_ADMIN_KEY ?? null;
   config.allow_anonymous_admin = bool(input.allow_anonymous_admin ?? false);
   config.disable_login_api = bool(input.disable_login_api ?? false);
+  config.emergency = normalizeEmergencyConfig(input,env);
   config.management = {
     allow_remote:bool(input.management_allow_remote ?? input.management?.allow_remote ?? env.MANAGEMENT_ALLOW_REMOTE ?? false),
     exempt_loopback:bool(input.management_lockout_exempt_loopback ?? input.management?.exempt_loopback ?? env.MANAGEMENT_LOCKOUT_EXEMPT_LOOPBACK ?? true),
