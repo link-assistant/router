@@ -44,6 +44,14 @@ callables, and supported data declarations export constructor factories.
 TypeScript uses explicit parameter types, readonly arrays and recursive tagged
 union aliases for checked layouts.
 
+Literal source `[T; N]` arrays retain their exact size in semantic meta, runtime
+guards and TypeScript's readonly length type. The checked subset admits scalar,
+borrowed `str` and nested fixed arrays with Copy elements; value boundaries take
+immutable snapshots so JavaScript aliases cannot mutate a returned Rust value.
+Lengths are bounded at 4,096 and total cells at 16,000. Repeat expressions,
+general constant sizes, aggregate references and non-Copy elements retain
+refusals. A source array does not implicitly become a `Vec` or borrowed slice.
+
 An unsupported construct retains its exact source and diagnostic. It supplies no
 callable stub. Unsupported dependencies carry their callers, and ambiguous or
 conditional declarations require resolution before emission. Every draft and

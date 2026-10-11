@@ -17,14 +17,16 @@ import {sourceItems} from '../rust-structure.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
-async function both(result,assertions) {
+async function both(result,assertions,consumer=null) {
   assert.deepEqual(result.meta.refused,[]);
   const folder=mkdtempSync(join(tmpdir(),'router-fixed-array-'));
   try {
     writeRuntimeAssets(folder);
     const js=join(folder,'src/fixture.mjs'),ts=join(folder,'src/fixture.ts');
     writeFileSync(js,result.javascript);writeFileSync(ts,result.typescript);
-    try {execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(folder,'compiled'),ts],{encoding:'utf8',timeout:30_000});}
+    const inputs=[ts];
+    if(consumer){const path=join(folder,'src/consumer.ts');writeFileSync(path,consumer);inputs.push(path);}
+    try {execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(folder,'compiled'),...inputs],{encoding:'utf8',timeout:30_000});}
     catch(error){throw new Error(error.stdout+error.stderr,{cause:error});}
     for(const path of [js,join(folder,'compiled/fixture.js')])await assertions((await import(pathToFileURL(path).href)).translated);
   } finally {rmSync(folder,{recursive:true,force:true});}
@@ -61,7 +63,17 @@ pub fn from_holder(value:Holder)->[u8;2]{value.values}`;
     assert.deepEqual(api.empty(),[]);assert.deepEqual(api.empty_words(),[]);assert.deepEqual(api.borrowed('leaf'),['leaf','leaf']);
     assert.deepEqual(api.nested_words(),[['left'],['right']]);assert.deepEqual(api.hex(),[3n,4n]);assert.deepEqual(api.WORDS,['a','b','c']);
     for(const wrong of [[1n],[1n,2n,3n],[1n,256n],[1,2]])assert.throws(()=>api.pair(wrong),TypeError);
-  });
+  },`import {translated} from './fixture.js';
+const length:2=translated.pair([1n,2n] as const).length;
+const empty:0=translated.empty().length;
+const words:3=translated.WORDS.length;
+// @ts-expect-error wrong source array size
+translated.pair([1n,2n,3n] as const);
+// @ts-expect-error wrong nested source array size
+translated.nested([[1n,2n],[3n]] as const);
+// @ts-expect-error returned source size remains literal
+const wrong:3=translated.pair([1n,2n] as const).length;
+void [length,empty,words,wrong];`);
 });
 
 test('source length, ownership and unsupported array operands cannot be erased',()=>{
