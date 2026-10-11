@@ -9,7 +9,7 @@ function ml_router_unwrap(value, fallback, option) {
 
 function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
-function unquote(value) {
+function rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465(value) {
   if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_unwrap(ml_host_option_bind((() => {
     const ml_text_33 = value;
@@ -20,29 +20,5 @@ function unquote(value) {
   return (ml_text_35.endsWith(ml_text_36)?Object.freeze({ $: 'Some', field0: ml_text_35.slice(0,ml_text_35.length-ml_text_36.length) }):Object.freeze({ $: 'None' })); }, "and_then"), value, true);
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-  num: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["unquote"]: unquote };
+export const translated = { ["unquote"]: rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465 };
 export const provenance = {"sourcePath":"src/provider_import.rs","sourceSha256":"20277b79472978275b615a15b0b8dd99f785cc18a1030337d9f11889d9d045b6","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":6,"preserved":7,"runtimeParity":false};

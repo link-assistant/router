@@ -45,6 +45,8 @@ function* ml_router_flatten<T>(values: Iterable<ReadonlyArray<T>>): IterableIter
 
 function ml_router_find<T>(values: Iterable<T>, predicate: (value: T) => boolean): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }
 
+function ml_host_bool_then_some<T>(value: boolean, argument: T): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
+
 function ml_host_bool_then<T>(value: boolean, callback: () => T): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
 
 function ml_host_result_ok<T>(value: Readonly<{ $: 'Ok'; field0: T }> | Readonly<{ $: 'Err'; field0: unknown }>): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }

@@ -10,18 +10,6 @@ const ml_host_value_schema_bd4e6dafd5789d745fe132717d8ecdaf27b27ccd24179091dc70f
 
 const ml_host_value_refinements_bd4e6dafd5789d745fe132717d8ecdaf27b27ccd24179091dc70f7038744fe46 = new Map([]);
 
-import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
-
-import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
-
-function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
-
-function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
-
-const ml_host_value_schema_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb = {"schemaVersion":1,"types":{"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479","ctors":[{"name":"EnrollmentIdentity","fields":[{"name":"principal_id","type":{"kind":"string"}},{"name":"account_name","type":{"kind":"string"}},{"name":"server_id","type":{"kind":"string"}},{"name":"environment_id","type":{"kind":"string"}},{"name":"installation_id","type":{"kind":"string"}}]}]},"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e745265636f7264":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e745265636f7264","ctors":[{"name":"EnrollmentRecord","fields":[{"name":"identity","type":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479"}},{"name":"upstream_token","type":{"kind":"string"}},{"name":"upstream_base_url","type":{"kind":"string"}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
-
-const ml_host_value_refinements_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb = new Map([]);
-
 function rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958() {
   return "la_rc_";
 }
@@ -84,17 +72,6 @@ const serde_json = {
 
   },
 };
-
-function rp_636f6465785f72656d6f74655f636f6e74726f6c2e76616c69646174655f7265636f7264(record) {
-  ml_validate_rust_value(record, {"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e745265636f7264"}, ml_host_value_schema_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb, { refinements: ml_host_value_refinements_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb });
-  const identity = (record).identity;
-  const values = ml_copy_fixed_array([(identity).principal_id, (identity).account_name, (identity).server_id, (identity).environment_id, (identity).installation_id, (record).upstream_token, (record).upstream_base_url], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":7}});
-  if ((ml_router_any(ml_router_iter(ml_copy_fixed_array(values, {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":7}}), false), (value) => { return ((value.length === 0) || (BigInt(new TextEncoder().encode(value).length) > 8192n)); }) || ((record).expires_at <= 0n))) {
-    return Object.freeze({ $: 'Err', field0: Object.freeze({ $: 'Invalid' }) });
-  } else {
-  }
-  return Object.freeze({ $: 'Ok', field0: null });
-}
 
 function rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54() {
   return "/api/services/codex/backend-api/wham/remote/control/";
@@ -165,5 +142,5 @@ function rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e
   return ml_text_1.startsWith(ml_text_2);
 }
 
-export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["validate_record"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e76616c69646174655f7265636f7264, ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468 };
-export const provenance = {"sourcePath":"src/codex_remote_control.rs","sourceSha256":"43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0","executable":16,"executableFunctions":2,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":55,"preserved":72,"runtimeParity":false};
+export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468 };
+export const provenance = {"sourcePath":"src/codex_remote_control.rs","sourceSha256":"43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0","executable":15,"executableFunctions":1,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":56,"preserved":72,"runtimeParity":false};

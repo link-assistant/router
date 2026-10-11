@@ -33,6 +33,8 @@ function* ml_router_flatten(values) { for (const value of values) { ml_assert_im
 
 function ml_router_find(values, predicate) { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }
 
+function ml_host_bool_then_some(value, argument) { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
+
 function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
 
 function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }

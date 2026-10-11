@@ -2,6 +2,15 @@
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../runtime/time-runtime.mjs";
 
+import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
+
+function ml_router_unwrap(value, fallback, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
+}
+
 function rp_6465706c6f792e434f4e5441494e4552() {
   return "router-deploy";
 }
@@ -38,5 +47,10 @@ function rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c() {
   return "deploy";
 }
 
-export const translated = { ["CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["RELAY"]: rp_6465706c6f792e52454c4159(), ["NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["LABEL"]: rp_6465706c6f792e4c4142454c(), ["DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c() };
-export const provenance = {"sourcePath":"src/deploy.rs","sourceSha256":"0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a","executable":9,"executableFunctions":0,"executableConstants":9,"executableTypes":0,"executableConstructors":0,"carried":27,"preserved":37,"runtimeParity":false};
+function rp_6465706c6f792e66697273745f6c696e65(text) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  return (ml_router_unwrap(ml_str_next(ml_str_lines(text)), "", true)).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
+}
+
+export const translated = { ["CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["RELAY"]: rp_6465706c6f792e52454c4159(), ["NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["LABEL"]: rp_6465706c6f792e4c4142454c(), ["DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["first_line"]: rp_6465706c6f792e66697273745f6c696e65 };
+export const provenance = {"sourcePath":"src/deploy.rs","sourceSha256":"0acc07b144b6b63a32e337d38c4d74685b04c83d0f202b193ba999f160f9435a","executable":10,"executableFunctions":1,"executableConstants":9,"executableTypes":0,"executableConstructors":0,"carried":26,"preserved":37,"runtimeParity":false};

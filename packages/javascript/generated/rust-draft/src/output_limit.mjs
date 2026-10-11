@@ -16,6 +16,22 @@ const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777
 
 function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
+import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
+
+function* ml_router_filter_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }
+
+function ml_router_collect(values) { return Object.freeze(Array.from(values)); }
+
+function ml_host_bool_then_some(value, argument) { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map(value, callback) { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map_or(value, defaultValue, callback) { return value.$ === 'Some' ? callback(value.field0) : defaultValue; }
+
 function rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e() {
   return 4n;
 }
@@ -67,5 +83,19 @@ function rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374
   })()); }, "is_some_and") || ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "choices"), (ml_host_callback_7_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_7_0); }, "and_then"), (choices) => { return !(choices.length === 0); }, "is_some_and")) || ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "candidates"), () => { return ml_host_serde_json_value_pointer(event, "/response/candidates"); }, "or_else"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"), (candidates) => { return !(candidates.length === 0); }, "is_some_and"));
 }
 
-export const translated = { ["CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["OutputTokenLimiter"]: ml_make_OutputTokenLimiter_OutputTokenLimiter, ["event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74 };
-export const provenance = {"sourcePath":"src/output_limit.rs","sourceSha256":"b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0","executable":3,"executableFunctions":1,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":10,"preserved":14,"runtimeParity":false};
+function rp_6f75747075745f6c696d69742e646174615f7061796c6f6164(block) {
+  if (!(typeof block === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(block))) throw new TypeError('argument outside supported Rust value domain');
+  const payload = ml_str_join(ml_router_collect(ml_router_filter_map(ml_str_lines(block), (line) => { return ml_host_option_map((() => {
+    const ml_text_79 = (() => {
+      const ml_text_77 = line;
+      const ml_text_78 = "\r";
+      return (()=>{let text=ml_text_77;if(ml_text_78.length===0)return text;while(text.endsWith(ml_text_78))text=text.slice(0,text.length-ml_text_78.length);return text;})();
+    })();
+    const ml_text_80 = "data:";
+    return (ml_text_79.startsWith(ml_text_80)?Object.freeze({ $: 'Some', field0: ml_text_79.slice(ml_text_80.length) }):Object.freeze({ $: 'None' }));
+  })(), (ml_standard_callback_80_0) => { return (ml_standard_callback_80_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+  return ml_host_bool_then_some(!(payload.length === 0), payload);
+}
+
+export const translated = { ["CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["OutputTokenLimiter"]: ml_make_OutputTokenLimiter_OutputTokenLimiter, ["event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["data_payload"]: rp_6f75747075745f6c696d69742e646174615f7061796c6f6164 };
+export const provenance = {"sourcePath":"src/output_limit.rs","sourceSha256":"b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0","executable":4,"executableFunctions":2,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":9,"preserved":14,"runtimeParity":false};

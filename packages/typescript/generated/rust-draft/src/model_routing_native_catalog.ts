@@ -43,8 +43,23 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function MAX_ANTHROPIC_PAGE(): bigint {
+function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(): bigint {
   return 1000n;
+}
+
+function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745(): bigint {
+  return 20n;
+}
+
+function ml_make_AnthropicPage_AnthropicPage(start: bigint, end: bigint, has_more: boolean): Readonly<{ readonly "$": "AnthropicPage"; readonly "start": bigint; readonly "end": bigint; readonly "has_more": boolean }> {
+  if (typeof start !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(start, 0n, 18446744073709551615n, "u64 argument start out of range");
+  if (!(typeof start === 'bigint' && start >= 0n && start <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof end !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(end, 0n, 18446744073709551615n, "u64 argument end out of range");
+  if (!(typeof end === 'bigint' && end >= 0n && end <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof has_more === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "AnthropicPage", ["start"]: start, ["end"]: end, ["has_more"]: has_more });
 }
 
 const std = {
@@ -71,20 +86,5 @@ const serde_json = {
   },
 };
 
-function DEFAULT_ANTHROPIC_PAGE(): bigint {
-  return 20n;
-}
-
-function ml_make_AnthropicPage_AnthropicPage(start: bigint, end: bigint, has_more: boolean): Readonly<{ readonly "$": "AnthropicPage"; readonly "start": bigint; readonly "end": bigint; readonly "has_more": boolean }> {
-  if (typeof start !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
-  ml_fixed(start, 0n, 18446744073709551615n, "u64 argument start out of range");
-  if (!(typeof start === 'bigint' && start >= 0n && start <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  if (typeof end !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
-  ml_fixed(end, 0n, 18446744073709551615n, "u64 argument end out of range");
-  if (!(typeof end === 'bigint' && end >= 0n && end <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof has_more === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "AnthropicPage", ["start"]: start, ["end"]: end, ["has_more"]: has_more });
-}
-
-export const translated: { "MAX_ANTHROPIC_PAGE": bigint; "DEFAULT_ANTHROPIC_PAGE": bigint; "AnthropicPage": (start: bigint, end: bigint, has_more: boolean) => Readonly<{ readonly "$": "AnthropicPage"; readonly "start": bigint; readonly "end": bigint; readonly "has_more": boolean }> } = { ["MAX_ANTHROPIC_PAGE"]: MAX_ANTHROPIC_PAGE(), ["DEFAULT_ANTHROPIC_PAGE"]: DEFAULT_ANTHROPIC_PAGE(), ["AnthropicPage"]: ml_make_AnthropicPage_AnthropicPage };
+export const translated: { "MAX_ANTHROPIC_PAGE": bigint; "DEFAULT_ANTHROPIC_PAGE": bigint; "AnthropicPage": (start: bigint, end: bigint, has_more: boolean) => Readonly<{ readonly "$": "AnthropicPage"; readonly "start": bigint; readonly "end": bigint; readonly "has_more": boolean }> } = { ["MAX_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(), ["DEFAULT_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745(), ["AnthropicPage"]: ml_make_AnthropicPage_AnthropicPage };
 export const provenance = {"sourcePath":"src/model_routing_native_catalog.rs","sourceSha256":"0c34dad3d0f588ea5344408e954045ffbb5fc484d04e7729859b51e06aeb0732","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":19,"preserved":22,"runtimeParity":false};

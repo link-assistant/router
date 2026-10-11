@@ -30,9 +30,9 @@ const serde_json = {
   },
 };
 
-function LAST_WORKING_MODEL() {
+function rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c() {
   return "router-last-working-model";
 }
 
-export const translated = { ["ClaudeModelSelection"]: ml_make_ClaudeModelSelection_ClaudeModelSelection, ["LAST_WORKING_MODEL"]: LAST_WORKING_MODEL() };
+export const translated = { ["ClaudeModelSelection"]: ml_make_ClaudeModelSelection_ClaudeModelSelection, ["LAST_WORKING_MODEL"]: rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c() };
 export const provenance = {"sourcePath":"src/with_command_claude_settings.rs","sourceSha256":"a4319f22c0031d6a8c4fb17c90d161ae815f7a8f4b733cbb56e5863711bcbdaf","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":16,"preserved":19,"runtimeParity":false};

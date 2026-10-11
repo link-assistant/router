@@ -22,6 +22,7 @@ type MLData_526f75746572526573756c745f31375f727573745f6f776e65645f7665635f75385f
 type MLData_526f75746572526573756c745f33375f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633313337356637323735373337343566366637373665363536343566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 type MLData_72705f3532366637353734363537323466373037343639366636653566333533343566373236353636363537323635366536333635356637333638363137323635363435663665363136643635363435663337333333363335333733323336333433363335333536363336363133373333333636363336363535663335333633363331333636333337333533363335 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
 type MLData_72705f3532366637353734363537323466373037343639366636653566333633393566373236353636363537323635366536333635356637333638363137323635363435663732373537333734356636663737366536353634356637363635363335663665363136643635363435663337333333363335333733323336333433363335333536363336363133373333333636363336363535663335333633363331333636333337333533363335 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<MLData_72705f3733363537323634363535663661373336663665326535363631366337353635> }>;
 type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
@@ -63,6 +64,22 @@ function ml_host_option_bind<T,U>(value: Readonly<{$:'None'}>|Readonly<{$:'Some'
 function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: ()=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, mode:'or_else'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
 function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>boolean, mode:'is_some_and'): boolean;
 function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
+
+import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
+
+function* ml_router_filter_map<T, U>(values: Iterable<T>, transform: (value: T) => Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>): IterableIterator<U> { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }
+
+function ml_router_collect<T>(values: Iterable<T>) { return Object.freeze(Array.from(values)); }
+
+function ml_host_bool_then_some<T>(value: boolean, argument: T): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_bool_then<T>(value: boolean, callback: () => T): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_result_ok<T>(value: Readonly<{ $: 'Ok'; field0: T }> | Readonly<{ $: 'Err'; field0: unknown }>): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map<T, U>(value: Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>, callback: (value: T) => U): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}> { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map_or<T, U>(value: Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>, defaultValue: U, callback: (value: T) => U): U { return value.$ === 'Some' ? callback(value.field0) : defaultValue; }
 
 function rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(): bigint {
   return 4n;
@@ -115,5 +132,19 @@ function rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374
   })()); }, "is_some_and") || ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "choices"), (ml_host_callback_7_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_7_0); }, "and_then"), (choices) => { return !(choices.length === 0); }, "is_some_and")) || ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "candidates"), () => { return ml_host_serde_json_value_pointer(event, "/response/candidates"); }, "or_else"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"), (candidates) => { return !(candidates.length === 0); }, "is_some_and"));
 }
 
-export const translated: { "CHARS_PER_TOKEN": bigint; "OutputTokenLimiter": (remaining: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>, stopped: boolean) => Readonly<{ readonly "$": "OutputTokenLimiter"; readonly "remaining": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>; readonly "stopped": boolean }>; "event_contains_assistant_content": (event: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => boolean } = { ["CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["OutputTokenLimiter"]: ml_make_OutputTokenLimiter_OutputTokenLimiter, ["event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74 };
-export const provenance = {"sourcePath":"src/output_limit.rs","sourceSha256":"b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0","executable":3,"executableFunctions":1,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":10,"preserved":14,"runtimeParity":false};
+function rp_6f75747075745f6c696d69742e646174615f7061796c6f6164(block: string): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
+  if (!(typeof block === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(block))) throw new TypeError('argument outside supported Rust value domain');
+  const payload = ml_str_join(ml_router_collect(ml_router_filter_map(ml_str_lines(block), (line) => { return ml_host_option_map((() => {
+    const ml_text_79 = (() => {
+      const ml_text_77 = line;
+      const ml_text_78 = "\r";
+      return (()=>{let text=ml_text_77;if(ml_text_78.length===0)return text;while(text.endsWith(ml_text_78))text=text.slice(0,text.length-ml_text_78.length);return text;})();
+    })();
+    const ml_text_80 = "data:";
+    return (ml_text_79.startsWith(ml_text_80)?Object.freeze({ $: 'Some', field0: ml_text_79.slice(ml_text_80.length) }):Object.freeze({ $: 'None' }));
+  })(), (ml_standard_callback_80_0) => { return (ml_standard_callback_80_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+  return ml_host_bool_then_some(!(payload.length === 0), payload);
+}
+
+export const translated: { "CHARS_PER_TOKEN": bigint; "OutputTokenLimiter": (remaining: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>, stopped: boolean) => Readonly<{ readonly "$": "OutputTokenLimiter"; readonly "remaining": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>; readonly "stopped": boolean }>; "event_contains_assistant_content": (event: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => boolean; "data_payload": (block: string) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> } = { ["CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["OutputTokenLimiter"]: ml_make_OutputTokenLimiter_OutputTokenLimiter, ["event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["data_payload"]: rp_6f75747075745f6c696d69742e646174615f7061796c6f6164 };
+export const provenance = {"sourcePath":"src/output_limit.rs","sourceSha256":"b165be6e33444a5811b33e52567de74ca144e7208a24c161b231bd332cf899e0","executable":4,"executableFunctions":2,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":9,"preserved":14,"runtimeParity":false};
