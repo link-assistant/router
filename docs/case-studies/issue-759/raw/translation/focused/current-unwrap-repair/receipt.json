@@ -1,0 +1,73 @@
+{
+  "schema": "focused-translation-repair-receipt-v1",
+  "baseline": "1c780434e2fb1fb942dfb93088434f8a93308549",
+  "sourceCommit": "38a07fd4d11d0a3e81dbfb1f163d5618a406af4e",
+  "scope": "FOCUSED_PASS_NOT_FULL_GATE",
+  "initialCases": 3,
+  "finalCases": 43,
+  "finalFiles": 9,
+  "reason": "Retain generic standard Option/Result unwrap payload types; preserve eager fallback behavior. Initial failures reproduce TS7006 including retained original login-provider semantic meta; final checks execute emitted JS and independently strict-compiled TS. Cached semantic meta is emitter-regression input, not fresh source admission.",
+  "originalRustChanged": false,
+  "producerRuns": 0,
+  "fullGateRuns": 0,
+  "rustRuns": 0,
+  "compilerConcurrency": "Root exclusive; Node then Bun serial, bounded180s per final engine",
+  "members": [
+    {
+      "file": "initial-node.log.gz",
+      "rawBytes": 4932,
+      "rawSha256": "cf0e9c952bf00610f849942b470769556b506a9a72802e2276ac51b0145399d7",
+      "compressedBytes": 958,
+      "compressedSha256": "f338bfedaa0915793a910d41a981b0b7aa39fa02cb9198b17bfcc462d14186a4",
+      "engine": "node",
+      "phase": "initial",
+      "exitCode": 1,
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0,
+      "elapsedSeconds": 1.705
+    },
+    {
+      "file": "initial-bun.log.gz",
+      "rawBytes": 7277,
+      "rawSha256": "483c34a9e24091660b6dd64578e5abbe18c38bbf77bff7eddd420534cc8ff082",
+      "compressedBytes": 1175,
+      "compressedSha256": "9881f3373f511ff07c68e04b59100d27fdef2e09592590b27c053ec45c9ed926",
+      "engine": "bun",
+      "phase": "initial",
+      "exitCode": 1,
+      "passed": 0,
+      "failed": 3,
+      "skipped": 0,
+      "elapsedSeconds": 1.172
+    },
+    {
+      "file": "final-node.log.gz",
+      "rawBytes": 9615,
+      "rawSha256": "b813312cb18741900ae0c23bc08816301215e8a99f269b4eb035d022a5544564",
+      "compressedBytes": 2309,
+      "compressedSha256": "76e74f7caaab68c2b117e252c374a4d5395224921817d44534ef883f68709e94",
+      "engine": "node",
+      "phase": "final",
+      "exitCode": 0,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedSeconds": 13.045
+    },
+    {
+      "file": "final-bun.log.gz",
+      "rawBytes": 4856,
+      "rawSha256": "f0252f1021d1f17ead466617abb39fcffb4442bc482de719b4662d1c5abf14cc",
+      "compressedBytes": 1887,
+      "compressedSha256": "859be1403e705fb01cdeb686a5d9ffa7e895d4503905068073fca9f428cea537",
+      "engine": "bun",
+      "phase": "final",
+      "exitCode": 0,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedSeconds": 9.407
+    }
+  ]
+}
