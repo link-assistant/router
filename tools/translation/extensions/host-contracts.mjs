@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 // They never supply a repository function body or waive a body obligation.
 import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
+import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
@@ -74,7 +75,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withNestedMatchPatternsParser(MethodRustParser) {
+export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser)) {
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
     if(!this.compilationProfile)return super.attributes(options);
@@ -143,6 +144,10 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
     const value=this.unary(path,{});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
   }
   type(){
+    const c=this.cursor,start=c.index,type=this.hostTypeSyntax();
+    return this.qualifyOwnershipType?.(type,c.tokens.slice(start,c.index))??type;
+  }
+  hostTypeSyntax(){
     const c=this.cursor;
     // && is one lexer token, but two borrows only in a source type position.
     // Split its coordinates here; boolean expression tokens remain untouched.
@@ -156,8 +161,9 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
       // their actual parsed pointee, including nested ownership qualifiers.
       if(c.is('str')){c.index=start;return super.type();}
       const depth=this.referenceTypeDepth??0;if(depth>=32)throw unsupported('shared reference type nesting','exceeds the checked depth bound',first);
-      this.referenceTypeDepth=depth+1;let pointee;
-      try{pointee=this.type();}finally{this.referenceTypeDepth=depth;}
+      const ownershipDepth=this.ownershipReferenceDepth??0;
+      this.referenceTypeDepth=depth+1;this.ownershipReferenceDepth=ownershipDepth+1;let pointee;
+      try{pointee=this.type();}finally{this.referenceTypeDepth=depth;this.ownershipReferenceDepth=ownershipDepth;}
       const tokens=c.tokens.slice(start,c.index);
       return {...pointee,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(pointee),span:span(tokens[0],tokens.at(-1)),tokens:tokens.map(token=>({value:token.value,kind:token.kind,span:{start:token.start,end:token.end}}))}};
     }
@@ -226,7 +232,7 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
+export class HostChecker extends withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker)) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -269,7 +275,9 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
   expr(node,env,path,expected,allowLiteral=false) {
-    const value=this.hostExpression(node,env,path,expected,allowLiteral);
+    let value=this.hostExpression(node,env,path,expected,allowLiteral);
+    value=this.qualifyOwnershipResult?.(node,value)??value;
+    this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
     return value;
   }
