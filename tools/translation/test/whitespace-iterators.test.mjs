@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import {WHITESPACE_ITERATOR_PROFILE} from '../extensions/whitespace-profile.mjs';
+import {whitespaceSourceArtifacts} from '../extensions/whitespace-source.mjs';
 import {RUST_WHITESPACE_CODE_UNITS,isRustWhitespaceCodeUnit} from '../extensions/whitespace-data.mjs';
 import {stringWhitespace,stringNext} from '../extensions/string-iterator-runtime.mjs';
 import {translateProject} from '../project.mjs';
@@ -50,6 +51,13 @@ test('original implementation closure and exhaustive Rust whitespace property ag
     assert.equal(isRustWhitespaceCodeUnit(scalar),whitespace,`scalar ${scalar}`);
   }
   assert.deepEqual(RUST_WHITESPACE_CODE_UNITS,expected);assert.deepEqual(profile.whitespaceScalarCodes,expected);
+});
+
+test('original Rust property lifts through reparsed meta to reproducible generated table bytes',()=>{
+  const artifacts=whitespaceSourceArtifacts();assert.deepEqual(artifacts.codes,RUST_WHITESPACE_CODE_UNITS);
+  assert.equal(artifacts.meta.namespaceAuthority,false);assert.equal(artifacts.meta.runtimeAuthority,false);
+  assert.equal(readFileSync(new URL('../extensions/whitespace-data.mjs',import.meta.url),'utf8'),artifacts.javascript);
+  assert.equal(readFileSync(new URL('../source-profiles/whitespace-iterators/white-space.meta.json',import.meta.url),'utf8'),artifacts.metaJson);
 });
 
 test('every pinned separator yields nonempty borrowed words and excludes BOM and obsolete whitespace',()=>{

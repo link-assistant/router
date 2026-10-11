@@ -23,6 +23,14 @@ Run the same command with `--check` to reject stale, missing or unexpected outpu
 without writing files. Regeneration runs JavaScript; it requires no Rust build,
 network request or package installation.
 
+The source-only whitespace iterator draft includes a reproducible table lift:
+`node tools/translation/generate-whitespace-data.mjs --check` verifies the original
+Rust 1.89 archive inputs, lifts the Unicode property into data meta, reparses it
+and compares the emitted JavaScript table and meta artifact. Omit `--check` to
+write those two artifacts. This bounded property lift uses no Rust build or host
+whitespace regex; it grants no crate namespace or complete runtime authority.
+The expected artifacts and 14 focused cases are authored but still unrun.
+
 The executable path is Rust syntax → checked semantic meta representation →
 serialization and reparsing → JavaScript and TypeScript emission. The copied
 upstream parser, checker and emitter remain pinned and hash checked. Generic
