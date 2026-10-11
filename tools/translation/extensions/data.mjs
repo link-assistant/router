@@ -1,6 +1,6 @@
 // Module-local algebraic layouts and immutable records. External crates and
 // derive-generated behavior remain explicit frontend refusals.
-import { ControlRustParser, ControlChecker, ControlEmitter } from './control.mjs';
+import { TupleRustParser, TupleChecker, TupleEmitter } from './tuples.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { coerce } from '../vendor/meta-language/translation/check.js';
@@ -10,7 +10,7 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const metadata = attributes => ({ rustAttributes: attributes, deriveTraits: attributes.flatMap(attribute => attribute.kind === 'derive' ? attribute.traits : []) });
-export class DataRustParser extends ControlRustParser {
+export class DataRustParser extends TupleRustParser {
   fieldType() {
     const c = this.cursor, start = c.index, type = this.type();
     return { type, rustTypeSyntax: c.tokens.slice(start, c.index).map(token => token.raw ?? token.value) };
@@ -155,6 +155,11 @@ export class DataRustParser extends ControlRustParser {
       const first = c.peek();
       if (c.eat('[')) { const index = this.expr(path); c.expect(']', 'index'); value = { k: 'routerIndex', object: value, index, span: span(first, c.peek()) }; continue; }
       if (c.eat('.')) {
+        if (c.peek().kind === 'number' && !c.peek().suffix && /^\d+$/u.test(c.peek().value)) {
+          const index = Number(c.next().value);
+          if (!Number.isSafeInteger(index)) throw unsupported('tuple index', 'requires a bounded literal tuple field', span(first, c.peek()));
+          value = { k: 'routerTupleField', object: value, index, span: span(first, c.peek()) }; continue;
+        }
         const name = c.identifier('field or method');
         if (!c.eat('(')) { value = { k: 'routerField', object: value, field: name.value, span: span(first, name) }; continue; }
         const args = [];
@@ -167,7 +172,7 @@ export class DataRustParser extends ControlRustParser {
   }
 }
 
-export class DataChecker extends ControlChecker {
+export class DataChecker extends TupleChecker {
   program(surface) {
     this.generatedConstructorHeads = new WeakSet();
     const visit = items => { for (const item of items) {
@@ -232,7 +237,7 @@ export class DataChecker extends ControlChecker {
   }
 }
 
-export class DataEmitter extends ControlEmitter {
+export class DataEmitter extends TupleEmitter {
   ctorObject(entry, ctor, args) {
     if (!entry.record && ctor.ctorStyle !== 'named') return super.ctorObject(entry, ctor, args);
     return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${ctor.fields.map((field, index) => `, [${JSON.stringify(field.name)}]: ${args[index]}`).join('')} })`;

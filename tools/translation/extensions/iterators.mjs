@@ -72,6 +72,11 @@ export class IteratorRustParser extends DataRustParser {
       const start = c.peek();
       if (c.eat('[')) { const index = this.expr(path); c.expect(']', 'index'); value = { k: 'routerIndex', object: value, index, span: span(start, c.peek()) }; continue; }
       if (c.eat('.')) {
+        if (c.peek().kind === 'number' && !c.peek().suffix && /^\d+$/u.test(c.peek().value)) {
+          const index = Number(c.next().value);
+          if (!Number.isSafeInteger(index)) throw unsupported('tuple index', 'requires a bounded literal tuple field', span(start, c.peek()));
+          value = { k: 'routerTupleField', object: value, index, span: span(start, c.peek()) }; continue;
+        }
         const name = c.identifier('field or method');
         if (name.value === 'await' && !c.is('(')) { value = this.awaitExpression(value, span(start, c.peek())); continue; }
         let explicit = null;
