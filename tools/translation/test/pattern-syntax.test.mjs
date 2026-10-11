@@ -9,7 +9,7 @@ const span={start:0,end:0},fixed=(bits=64,signed=false)=>({kind:'fixed',bits,sig
 const declarations=new Checker('Rust',[]).program({language:'Rust',items:[
   {k:'data',name:'Choice',span,ctors:[{name:'A',fields:[{name:'field0',type:fixed()}]},{name:'B',fields:[{name:'field0',type:fixed()}]}]},
   {k:'data',name:'Record',span,ctors:[{name:'Record',fields:[{name:'flag',type:{kind:'bool'}},{name:'choice',type:data('Choice')}]}]},
-  {k:'data',name:'Pair',span,ctors:[{name:'Pair',fields:[{name:'field0',type:{kind:'string'}},{name:'field1',type:data('Choice')}]}]},
+  {k:'data',name:'Pair',span,tuple:true,ctors:[{name:'Pair',fields:[{name:'field0',type:{kind:'string'}},{name:'field1',type:data('Choice')}]}]},
 ]}).declarations;
 const parse=(source,options={})=>{const cursor=new TokenCursor(tokenizeRust(source),'Rust'),pattern=parseBindingPattern(cursor,options);assert.equal(cursor.atEnd(),true);return pattern;};
 const plan=(source,type,options={})=>planPattern(parse(source,options),type,{declarations});

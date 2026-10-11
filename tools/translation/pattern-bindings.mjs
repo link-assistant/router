@@ -72,7 +72,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
       });
       if(!node.rest && names.size !== fields.length)throw typeError(`record pattern names ${names.size} of ${fields.length} fields without rest`,location);
     } else {
-      if(tuple && !entry.tuple && !fields.every((field,index)=>field.name === `field${index}`))throw unsupported('tuple pattern','named-field layout requires a record pattern',location);
+      if(tuple && entry.tuple !== true)throw unsupported('tuple pattern','requires an actual checked tuple layout, not a tuple-struct or another algebraic constructor',location);
       if(!tuple && !fields.every((field,index)=>field.name === `field${index}`))throw unsupported('tuple constructor pattern','named-field layout requires a record pattern',location);
       const patterns=tuple?node.items:node.args ?? node.patterns ?? node.binds?.map(name=>({k:'bind',name})) ?? [];
       if(!Array.isArray(patterns) || patterns.length !== fields.length)throw typeError(`${name} pattern names ${patterns?.length ?? 0} of ${fields.length} fields`,location);

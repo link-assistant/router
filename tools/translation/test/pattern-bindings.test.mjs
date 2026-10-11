@@ -9,7 +9,8 @@ const field=(name,type)=>({name,type}),bind=name=>({k:'bind',name});
 const surface=[
   declaration('Config',[{name:'Config',fields:[field('name',STRING),field('limit',fixed(64,false))]}]),
   declaration('OptionI32',[{name:'None',fields:[]},{name:'Some',fields:[field('field0',fixed(32,true))]}]),
-  declaration('Pair',[{name:'Pair',fields:[field('field0',STRING),field('field1',named('OptionI32'))]}]),
+  {...declaration('Pair',[{name:'Pair',fields:[field('field0',STRING),field('field1',named('OptionI32'))]}]),tuple:true},
+  declaration('TupleStruct',[{name:'TupleStruct',fields:[field('field0',STRING),field('field1',named('OptionI32'))]}]),
   declaration('Tree',[{name:'Leaf',fields:[field('field0',STRING)]},{name:'Branch',fields:[field('field0',fixed(8,false)),field('field1',named('Tree'))]}]),
   declaration('Choice',[{name:'A',fields:[field('field0',fixed(32,true))]},{name:'B',fields:[field('field0',fixed(32,true))]}]),
   declaration('Different',[{name:'A',fields:[field('left',STRING)]},{name:'B',fields:[field('right',STRING)]}]),
@@ -37,7 +38,7 @@ test('single-constructor record plans preserve actual named field layouts and ex
   assert.throws(()=>plan({k:'routerRecordPattern',fields:[{name:'limit'},{name:'limit'}],rest:true},data('Config')),/duplicate record/);
   assert.throws(()=>plan({k:'routerTuplePattern',items:[bind('name'),bind('limit')]},data('Config')),error=>error.kind === 'unsupported');
 });
-test('nested tuple-struct and Option plans test the variant before projecting its fields',()=>{
+test('nested checked tuple and Option plans test the variant before projecting its fields',()=>{
   const checked=plan({k:'routerTuplePattern',items:[bind('label'),{k:'ctor',path:['OptionI32','Some'],args:[bind('number')]}]},data('Pair'));
   assert.equal(checked.refutable,true);assert.deepEqual(checked.bindings.map(binding=>binding.projection),[['field0'],['field1','field0']]);
   assert.deepEqual(bindings(checked,{$:'Pair',field0:'kept',field1:{$:'Some',field0:12n}}),{label:'kept',number:12n});
@@ -46,6 +47,8 @@ test('nested tuple-struct and Option plans test the variant before projecting it
   assert.equal(bindings(literal,{$:'Leaf',field0:'safe'}),null);
   assert.deepEqual(bindings(literal,{$:'Branch',field0:7n,field1:{$:'Leaf',field0:'matched'}}),{text:'matched'});
   assert.equal(bindings(literal,{$:'Branch',field0:8n,field1:{$:'Leaf',field0:'no'}}),null);
+  assert.throws(()=>plan({k:'routerTuplePattern',items:[bind('label'),bind('option')]},data('TupleStruct')),/actual checked tuple layout/);
+  assert.equal(plan({k:'ctor',path:['TupleStruct'],args:[bind('label'),bind('option')]},data('TupleStruct')).refutable,false);
 });
 test('upstream normalised and compiled constructor vocabularies retain exact binding projections',()=>{
   const surface=plan({k:'ctor',path:['Some'],args:[bind('answer')]},data('OptionI32'));
