@@ -136,6 +136,19 @@ test('owned escapes stored cursors custom owners arguments and const use remain 
   ]){const result=project(source);assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);}
 });
 
+test('a source type or unresolved import named str never receives the standard whitespace adapter',()=>{
+  for(const source of [
+    'struct str{value:u8}impl str{fn split_whitespace(&self)->bool{self.value>0}}pub fn bad(value:&str)->bool{value.split_whitespace()}',
+    'struct Local{value:u8}use Local as str;pub fn bad(value:&str)->Option<&str>{value.split_whitespace().next()}',
+    'use unknown::str;pub fn bad(value:&str)->Option<&str>{value.split_whitespace().next()}',
+    'use unknown::*;pub fn bad(value:&str)->Option<&str>{value.split_whitespace().next()}',
+    'struct str{value:u8}pub fn bad(value:&\'static str)->Option<&\'static str>{value.split_whitespace().next()}',
+  ]){
+    const result=project(source),refusal=result.meta.refused.find(item=>item.name==='bad');assert.ok(refusal,source);
+    assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
+  }
+});
+
 const findNode=(value,kind)=>{
   if(!value||typeof value!=='object')return null;if(value.k===kind)return value;
   for(const child of Object.values(value)){const found=findNode(child,kind);if(found)return found;}return null;

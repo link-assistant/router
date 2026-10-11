@@ -95,6 +95,12 @@ export function withOwnershipParser(Base=TextRustParser) {
     }
     type() {
       const c=this.cursor,start=c.index,first=c.peek(),borrow=first.value==='&';
+      let pointee=1;
+      if(borrow&&c.peek(pointee).value==="'")pointee+=2;
+      // The vendor's &str shortcut runs before named-type lookup. Rust allows
+      // a source type/import named str; its spelling cannot certify the
+      // standard unsized primitive or grant standard string operations.
+      if(borrow&&c.peek(pointee).value==='str'&&typeof this.builtinShadow==='function'&&this.builtinShadow('str',this.modulePath))throw unsupported('shadowed borrowed str type','requires actual standard primitive identity in the source type namespace',location(first,c.peek(pointee)));
       const previous=this.ownershipReferenceDepth??0;
       if(borrow)this.ownershipReferenceDepth=previous+1;
       let type;

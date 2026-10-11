@@ -29,7 +29,9 @@ Rust 1.89 archive inputs, lifts the Unicode property into data meta, reparses it
 and compares the emitted JavaScript table and meta artifact. Omit `--check` to
 write those two artifacts. This bounded property lift uses no Rust build or host
 whitespace regex; it grants no crate namespace or complete runtime authority.
-The expected artifacts and 14 focused cases are authored but still unrun.
+The expected artifacts and 15 focused cases are authored but still unrun.
+The borrowed `str` identity guard also refuses source type/import shadows and
+unresolved type scopes before the inherited parser can apply its shortcut.
 
 The executable path is Rust syntax → checked semantic meta representation →
 serialization and reparsing → JavaScript and TypeScript emission. The copied
