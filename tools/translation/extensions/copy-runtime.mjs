@@ -1,5 +1,5 @@
-// Typed layout guards run first. This checks the alias-safety obligation of
-// the narrow derived-Copy profile without invoking user accessors or proxies.
+// Immutable guards run before typed layout guards, rejecting proxies and
+// accessors before any record inspection in the derived-Copy profile.
 import {types} from 'node:util';
 export function assertImmutableCopy(value){
   const active=new Set(),done=new Set();

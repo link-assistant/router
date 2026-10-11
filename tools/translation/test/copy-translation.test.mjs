@@ -50,6 +50,12 @@ test('unproven consuming, owned-field and trait implementation obligations stay 
     const result=project({'src/lib.rs':extra+' #[derive(Clone,Copy)] enum Kind{A} impl Kind {fn read(self)->u8{1}} pub fn invented(v:Kind)->u8{v.read()}'});assert.equal(result.meta.executable.some(item=>item.name==='invented'),false,extra);
   }
 });
+test('nested Copy proofs use the actual defining module derive scope',()=>{
+  for(const binding of ['use custom::Copy;','use custom::Clone;','use custom::*;','macro_rules! Copy {()=>{}}']){
+    const result=project({'src/lib.rs':'mod model; #[derive(Clone,Copy)] struct Outer {inner:model::Inner} impl Outer {fn read(self)->u8{self.inner.value}} pub fn invented(value:Outer)->u8{value.read()}', 'src/model.rs':binding+' #[derive(Clone,Copy)] pub struct Inner {pub value:u8}'});
+    assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,binding);
+  }
+});
 test('Copy runtime rejects proxies and accessors without observing their traps',()=>{
   let observed=0;const proxy=new Proxy(Object.freeze({$:'A'}),{ownKeys(){observed++;return ['$'];}});assert.throws(()=>assertImmutableCopy(proxy),TypeError);assert.equal(observed,0);
   const getter=Object.freeze(Object.defineProperty({},'value',{get(){observed++;return 1n;}}));assert.throws(()=>assertImmutableCopy(getter),TypeError);assert.equal(observed,0);

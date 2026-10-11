@@ -24,7 +24,11 @@ export function projectCopyEvidence(declarations,modules,aliases){
   }));
   return (qualifiedType,module,span)=>{
     let type;try{type=checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}
-    const provenance=macroProvenance(module.source);
+    const owners=new Set(),seen=new Set();
+    const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(declaration.file);for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
+    const relevant=modules.filter(candidate=>owners.has(candidate.file)||[...owners].some(file=>{const owner=modules.find(candidate=>candidate.file===file);return candidate.path.every((name,index)=>owner.path[index]===name);}));
+    const evidence=relevant.map(module=>macroProvenance(module.source));
+    const provenance={shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:evidence.some(value=>value.unresolvedImportScope)};
     const certificate=certifyCopyType(type,{declarations:checked,implementations,macroProvenance:provenance,span});
     return certificate.verified?certificate:null;
   };
