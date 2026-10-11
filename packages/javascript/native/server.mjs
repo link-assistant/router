@@ -27,6 +27,13 @@ export function redact(value) {
   return Object.fromEntries(Object.entries(value).map(([key, v]) => [key, redactedKeys.test(key) ? '[REDACTED]' : redact(v)]));
 }
 const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+function socketPeer(peer) {
+  if(typeof peer !== 'string' || !isIP(peer))return undefined;
+  if(isIP(peer) === 4)return peer;
+  const normalized=new URL(`http://[${peer}]/`).hostname.slice(1,-1),mapped=/^::ffff:([a-f0-9]+):([a-f0-9]+)$/i.exec(normalized);
+  if(!mapped)return normalized;
+  const high=parseInt(mapped[1],16),low=parseInt(mapped[2],16);return `${high>>>8}.${high&255}.${low>>>8}.${low&255}`;
+}
 const bearer = headers => { const a = headers.get('authorization'); return a?.match(/^Bearer\s+(.+)$/i)?.[1] ?? headers.get('x-api-key'); };
 const protocolOf = candidate => {
   const value = candidate.protocol ?? candidate.provider?.protocol ?? candidate.provider?.type ?? candidate.provider;
@@ -111,6 +118,7 @@ export function createNativeRouter(options = {}) {
       return claims;
     }
     const token = bearer(request.headers), config = configuration();
+    if(core.authenticate)return core.authenticate(token,{admin,model,repository:request.headers.get('x-router-repository') ?? undefined});
     const adminKey = config.admin_token ?? config.adminToken ?? config.api?.admin_token;
     if (adminKey && equal(token, adminKey)) return { admin: true };
     const clientKey = config.api_key ?? config.apiKey ?? config.client_token;
@@ -144,7 +152,7 @@ export function createNativeRouter(options = {}) {
     if(path.startsWith('/api/management/login') && configuration().login?.enabled === false)throw new ProtocolError('Route not found',404);
     let adminClaims;
     try {adminClaims = await authorize(request, true);}catch(error){error.managementAuthenticationFailure=true;throw error;}
-    core.managementAccess?.success(peers.get(request) ?? options.peer);
+    core.managementAccess?.success(socketPeer(peers.get(request) ?? options.peer));
     const method = request.method, body = ['POST', 'PATCH'].includes(method) ? request.body ? await boundedJSON(request, maxBodyBytes) : {} : undefined;
     const delegated=await managementOperation(core,request,path,body);if(delegated !== undefined)return json(delegated);
     if (path === '/api/management/tokens' && method === 'GET') return json({ data: redact(await core.tokens.list()) });
@@ -342,7 +350,7 @@ export function createNativeRouter(options = {}) {
       if(listenerKind === 'admin' && !managementPath || listenerKind === 'inference-only' && (managementPath || privateService || adapter) || listenerKind === 'github-adapter' && !adapter || listenerKind === 'combined' && adapter)throw new ProtocolError('Route not found',404);
       if(configuration().enable_openai_api === false && ['openai','codex','qwen','gemini'].includes(service) || configuration().enable_anthropic_api === false && (service === 'anthropic' || service === 'bedrock' || path.includes('/publishers/anthropic/')))throw new ProtocolError('Route not found',404);
       if(managementPath) {
-        const peer=(peers.get(request) ?? options.peer)?.replace(/^::ffff:/,'');
+        const peer=socketPeer(peers.get(request) ?? options.peer);
         if(!peer || !isIP(peer))throw new ProtocolError('management requires socket peer metadata',403);
         const config=core.managementAccess?.config?.() ?? {allow_remote:configuration().management?.allow_remote};
         if(listenerKind !== 'admin' && !config.allow_remote && peer !== '::1' && !peer.startsWith('127.'))throw new ProtocolError('remote management requires MANAGEMENT_ALLOW_REMOTE / --management-allow-remote or the admin listener',403);
@@ -412,14 +420,14 @@ export function createNativeRouter(options = {}) {
     } catch (error) {
       counters.failures++;
       if(error.managementAuthenticationFailure || path === '/api/management/admin/bootstrap/confirm' && error.status === 401) {
-        const peer=(peers.get(request) ?? options.peer)?.replace(/^::ffff:/,'');
+        const peer=socketPeer(peers.get(request) ?? options.peer);
         await core.managementAccess?.failure(peer);
         const retryAfter=core.managementAccess?.check(peer);if(retryAfter){error=new ProtocolError('management authentication temporarily locked for this client IP',429);error.retryAfter=retryAfter;}
       }
       response=path.startsWith('/api/services/github/') || adapter ? json({message:error.message},error.status ?? 500) : errorResponse(error,source);
       if(error.retryAfter)response.headers.set('retry-after',String(error.retryAfter));
     }
-    if(path === '/api/management/admin/bootstrap/confirm' && response.ok)core.managementAccess?.success((peers.get(request) ?? options.peer)?.replace(/^::ffff:/,''));
+    if(path === '/api/management/admin/bootstrap/confirm' && response.ok)core.managementAccess?.success(socketPeer(peers.get(request) ?? options.peer));
     if(listenerKind === 'admin')hardenAdmin(response);
     if(head){await response.body?.cancel();response=new Response(null,{status:response.status,headers:response.headers});}
     logs.push({ time: started, method: incomingMethod, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
