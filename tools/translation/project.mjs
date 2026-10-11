@@ -3,6 +3,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
+import {planTrackedModulePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {externalModuleBindings} from './registered-bindings.mjs';
 import {COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
@@ -36,19 +37,20 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], visited = new Set();
   let offset = 0;
-  const visit = (file, path, directory, parentCondition='active',original=null,sourceView=null) => {
+  const visit = (file, path, directory, parentCondition='active',original=null,sourceView=null,pathDirectory=posix.dirname(file),ancestors=[]) => {
+    if(modules.length>=MODULE_PATH_PROFILE.limits.modules){diagnostics.push({file,module:path,kind:'module',message:'Tracked module graph exceeds its bounded module count'});return;}
     const key = path.join('.');
     if (visited.has(key)) throw new Error(`duplicate module path ${key}`);
     visited.add(key);
     const source = original?.source??readSource(file);
     const fileOffset=original?.offset??offset;
     if(!original)offset += source.length + 1;
-    const module = { file, path, directory, source, offset:fileOffset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
+    const module = { file, path, directory, pathDirectory, source, offset:fileOffset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
     modules.push(module);
     try {
       const capture=original?.capture??captureSourceModuleViews({source,sourcePath:file,compilationProfile:profile});
       module.sourceView=sourceView??capture.views[0];
-      original={source,offset:fileOffset,capture};
+      original={source,offset:fileOffset,capture,ancestors:original?.ancestors??[...ancestors,file]};
       module.allItems=originalSourceModuleItems(module);
       const inner=module.allItems.filter(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!').map(item=>itemConfiguration(item.tokens,profile));
       module.configurationCondition=parentCondition==='inactive'||inner.some(item=>item.status==='inactive')?'inactive':parentCondition==='unknown'||inner.some(item=>item.status==='unknown')?'unknown':'active';
@@ -60,25 +62,27 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     catch (error) { module.configurationCondition='unknown';diagnostics.push({ file, ...diagnostic(error) }); return; }
     for (const item of module.items.filter(item => item.term === 'mod')) {
       const condition=itemConfiguration(item.tokens,profile);
-      const prefix=condition.status==='active'&&condition.attributes.length&&condition.attributes.every(attribute=>attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')?condition.attributes.at(-1).span.end:item.start;
-      const text = source.slice(prefix, item.end);
       const childView=original.capture.views.find(view=>view.declaration?.span.start===item.start&&view.declaration?.span.end===item.end);
+      let plan=null;
+      if(condition.status==='active'){
+        try{plan=planTrackedModulePath(module,item,paths);if(!isTrackedModulePathPlan(plan))throw new TypeError('Original tracked module plan is unsealed');}
+        catch(error){diagnostics.push({file,module:[...path,childView?.modulePath.at(-1)??item.name],kind:'module',message:error.message,span:{start:item.start,end:item.end}});continue;}
+      }
       if(childView){
         const supported=condition.attributes.every(attribute=>attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]');
-        if(!supported){diagnostics.push({file,module:[...path,childView.modulePath.at(-1)],kind:'module',message:'Original inline module attribute owner or expansion remains unresolved',span:{start:item.start,end:item.end}});continue;}
+        if(!plan&&!supported){diagnostics.push({file,module:[...path,childView.modulePath.at(-1)],kind:'module',message:'Original inline module attribute owner or expansion remains unresolved',span:{start:item.start,end:item.end}});continue;}
         const name=childView.modulePath.at(-1),childPath=[...path,name];
-        edges.push({from:file,to:file,module:childPath,kind:'original-inline-module',span:{start:item.start,end:item.end},sourceViewDigest:childView.digest,...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
+        if(plan&&(!plan.inline||plan.name!==name))throw new TypeError('Tracked module header differs from its original inline view');
+        edges.push({from:file,to:file,module:childPath,kind:'original-inline-module',span:{start:item.start,end:item.end},sourceViewDigest:childView.digest,...(plan?{pathSelection:plan}:{}),...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
         const inherited=module.configurationCondition==='inactive'||condition.status==='inactive'?'inactive':module.configurationCondition==='unknown'||condition.status==='unknown'?'unknown':'active';
-        visit(file,childPath,posix.join(directory,name),inherited,original,childView);continue;
+        const childDirectory=plan?.directory??posix.join(directory,name);
+        visit(file,childPath,childDirectory,inherited,original,childView,plan?.pathDirectory??childDirectory);continue;
       }
-      const plain = /^\s*(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
-      if (!plain) { diagnostics.push({ file, module: [...path, item.name], kind: 'module', message: 'module attributes or inline body require separate compilation-condition lowering', span: { start: item.start, end: item.end } }); continue; }
-      const name = plain[1];
-      const candidates = [posix.normalize(`${directory}/${name}.rs`), posix.normalize(`${directory}/${name}/mod.rs`)].filter(candidate => tracked.has(candidate));
-      if (candidates.length !== 1) { diagnostics.push({ file, module: [...path, name], kind: 'module', message: candidates.length ? 'ambiguous module files' : 'missing tracked module file', candidates, span: { start: item.start, end: item.end } }); continue; }
-      const target = candidates[0];
-      edges.push({ from: file, to: target, module: [...path, name], ...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{}) });
-      visit(target, [...path, name], target.endsWith('/mod.rs') ? posix.dirname(target) : target.slice(0, -3),module.configurationCondition);
+      if(!plan||plan.inline){diagnostics.push({file,module:[...path,item.name],kind:'module',message:'External module compilation condition or original header remains unresolved',span:{start:item.start,end:item.end}});continue;}
+      const name=plan.name,target=plan.target;
+      if(original.ancestors.includes(target)){diagnostics.push({file,module:[...path,name],kind:'module',message:'Circular tracked module files require compiler rejection',cycle:[...original.ancestors,target],span:{start:item.start,end:item.end}});continue;}
+      edges.push({from:file,to:target,module:[...path,name],pathSelection:plan,...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
+      visit(target,[...path,name],plan.directory,module.configurationCondition,null,null,plan.pathDirectory,original.ancestors);
     }
   };
   visit(entry, [], posix.dirname(entry));
