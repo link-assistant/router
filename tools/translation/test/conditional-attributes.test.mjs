@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {itemConfiguration,isAbsentConditionalAttribute,compilationProfile,PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {itemConfiguration,isAbsentConditionalAttribute,isInertConditionalAttribute,compilationProfile,PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {CONDITIONAL_ATTRIBUTE_PROFILE} from '../conditional-attributes.mjs';
 import {rustTokens,sourceItems} from '../rust-structure.mjs';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
@@ -28,10 +28,10 @@ test('false conditional attributes retain original syntax and require private ab
 });
 test('unknown and true predicates retain transformation obligations without host selection',()=>{
   for(const [source,profile] of [
-    ['#[cfg_attr(unix,allow(dead_code))] fn value(){}',PRODUCTION_PROFILE],
+    ['#[cfg_attr(unix,custom::attribute)] fn value(){}',PRODUCTION_PROFILE],
     ['#[cfg_attr(test,derive(Custom))] struct Value;',compilationProfile({flags:{test:true}})],
-    ['#[cfg_attr(not(test),allow(dead_code))] fn value(){}',PRODUCTION_PROFILE],
-    ['#[cfg_attr(test,allow(dead_code))] fn value(){}',null],
+    ['#[cfg_attr(not(test),custom::attribute)] fn value(){}',PRODUCTION_PROFILE],
+    ['#[cfg_attr(test,derive(Custom))] fn value(){}',null],
   ]){const result=condition(source,profile);assert.equal(result.status,'unknown');assert.equal(isAbsentConditionalAttribute(result.attributes[0]),false);assert.ok(result.diagnostics.length);}
 });
 test('syntax is checked before a false predicate can remove any attribute',()=>{
@@ -94,6 +94,33 @@ test('whole unchanged production files pin actual conditional attributes and the
   const lifecycle=pins.files.find(pin=>pin.path==='src/client_lifecycle/active.rs'),active=trackedSource(root,lifecycle.path);
   const inner=sourceItems(active).find(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!');assert.ok(inner);
   assert.equal(itemConfiguration(inner.tokens,compilationProfile({flags:{test:false,unix:true,windows:false}})).status,'active');
-  assert.equal(itemConfiguration(inner.tokens,PRODUCTION_PROFILE).status,'unknown');
-  assert.equal(itemConfiguration(inner.tokens,compilationProfile({flags:{test:false,unix:false,windows:true}})).status,'unknown');
+  assert.equal(itemConfiguration(inner.tokens,PRODUCTION_PROFILE).status,'active');
+  assert.equal(itemConfiguration(inner.tokens,PRODUCTION_PROFILE).attributes[0].evaluation.predicate.value,null);
+  assert.equal(itemConfiguration(inner.tokens,compilationProfile({flags:{test:false,unix:false,windows:true}})).status,'active');
+});
+test('checked exact dead_code lint alternatives retain unknown and true predicates without item authority',()=>{
+  for(const profile of [null,PRODUCTION_PROFILE,compilationProfile({flags:{windows:true}})]){
+    const proof=condition('#[cfg_attr(windows,allow(dead_code),allow(dead_code,))] fn amount()->u8{7}',profile),attribute=proof.attributes[0];
+    assert.equal(proof.status,'active');assert.equal(attribute.evaluation.expansion,'inert-lint-alternatives');
+    assert.equal(isAbsentConditionalAttribute(attribute),false);assert.equal(isInertConditionalAttribute(attribute),true);
+    assert.equal(isInertConditionalAttribute(structuredClone(attribute)),false);
+    assert.equal(attribute.evaluation.configurationSelected,profile?.flags.windows===true);
+    assert.equal(attribute.evaluation.predicate.value,profile?.flags.windows===true?true:null);
+  }
+  for(const input of ['allow(other_lint)','warn(dead_code)','allow(dead_code, reason="unchecked")','custom::allow(dead_code)','allow(dead_code),derive(Custom)'])assert.equal(condition(`#[cfg_attr(windows,${input})] struct Value;`).status,'unknown',input);
+  for(const predicate of ['custom(windows)','true','false','not(windows,)'])assert.equal(condition(`#[cfg_attr(${predicate},allow(dead_code))] struct Value;`).status,'unknown',predicate);
+});
+test('unknown conditional lint module headers keep their tracked child and checked source body',async()=>{
+  const files={'src/lib.rs':'#[cfg_attr(windows,allow(dead_code))] mod child; pub fn amount()->u8{child::amount()}','src/child.rs':'#![cfg_attr(target_os="linux",allow(dead_code))]\npub fn amount()->u8{7}'};
+  const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
+  assert.equal(result.sourceScopes.every(scope=>scope.configurationCondition==='active'&&!scope.scope.unresolvedTypeScope),true);
+  assert.equal(result.meta.moduleEdges.length,1);assert.equal(result.meta.sources.length,2);
+  assert.equal(result.meta.configurationEvidence.some(module=>module.items.some(item=>item.attributes.some(attribute=>attribute.evaluation?.predicate?.value===null&&attribute.evaluation.expansion==='inert-lint-alternatives'))),true);
+  await verifyTypedTargets(result,api=>assert.equal(api.amount(),7n));
+});
+test('inert conditional field and container lints keep derive inputs distinct from absence',()=>{
+  const source='#[derive(Clone,Copy)] #[cfg_attr(windows,allow(dead_code))] struct Value{#[cfg_attr(target_os="linux",allow(dead_code))] amount:u8}';
+  const input=inspectDeriveInput(sourceItems(source).find(item=>item.term==='struct'),PRODUCTION_PROFILE);
+  assert.equal(input.absentConditionalAttributes.length,0);assert.equal(input.inertConditionalAttributes.length,2);
+  assert.deepEqual(input.derives.map(entry=>entry.path),[['Clone'],['Copy']]);assert.equal(input.generatedImplBehavior,false);
 });

@@ -1,4 +1,4 @@
-import {itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {itemConfiguration,isInertConditionalAttribute,isAbsentConditionalAttribute} from './cfg-profile.mjs';
 import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
 import {inspectBuiltinDefaultVariant} from './derive-builtin-default.mjs';
 
@@ -63,7 +63,7 @@ export function inspectDeriveInput(item,profile) {
   if(!item||!['struct','enum'].includes(item.term)||!Array.isArray(item.tokens))throw new TypeError('Derive footprint requires an original data declaration');
   const condition=itemConfiguration(item.tokens,profile);
   if(condition.status!=='active')throw new TypeError('Derive footprint requires an active original compilation condition');
-  const tokens=item.tokens.filter(token=>token.type!=='comment'),attributes=[],derives=[],absentConditionalAttributes=[];let depth=0,header=true,keyword=-1;
+  const tokens=item.tokens.filter(token=>token.type!=='comment'),attributes=[],derives=[],absentConditionalAttributes=[],inertConditionalAttributes=[];let depth=0,header=true,keyword=-1;
   for(let at=0;at<tokens.length;at++) {
     const token=tokens[at];
     if(token.type==='punct'&&token.text==='#') {
@@ -73,8 +73,8 @@ export function inspectDeriveInput(item,profile) {
       const attribute={name,position,span:{start:token.start,end:tokens[end].end},tokens:tokens.slice(at,end+1).map(token=>token.text)};
       if(name==='cfg_attr'){
         const original=itemConfiguration(tokens.slice(at,end+1),profile).attributes[0];
-        if(!isAbsentConditionalAttribute(original))throw new TypeError('Active or unknown conditional derive attribute remains unproved');
-        absentConditionalAttributes.push({...attribute,original});at=end;continue;
+        if(!isInertConditionalAttribute(original))throw new TypeError('Active or unknown conditional derive attribute remains unproved');
+        (isAbsentConditionalAttribute(original)?absentConditionalAttributes:inertConditionalAttributes).push({...attribute,original});at=end;continue;
       }
       if(name==='derive') {
         if(!header||body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered nested derive input');
@@ -103,7 +103,7 @@ export function inspectDeriveInput(item,profile) {
     // still owns any source-specific helper/type validation not checked here.
     if(siblings.some(other=>other.span.end===attribute.span.start&&other.helpers.some(a=>attribute.helpers.some(b=>a.key===b.key&&a.key!=='alias'))))throw new TypeError('Duplicate adjacent helper metadata');
   }
-  const input={kind:item.term,name:item.name,condition,attributes,derives,absentConditionalAttributes,generatedImplBehavior:false};
+  const input={kind:item.term,name:item.name,condition,attributes,derives,absentConditionalAttributes,inertConditionalAttributes,generatedImplBehavior:false};
   const builtinDefault=inspectBuiltinDefaultVariant(item,input);
   return {...input,...(builtinDefault?{builtinDefault}:{})};
 }

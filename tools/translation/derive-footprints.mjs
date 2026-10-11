@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {resolveModuleBindings} from './module-bindings.mjs';
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
@@ -71,7 +71,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
     attributeClosure.set(moduleScopeKey(module),scope.configurationCondition==='active'&&module.items.every(candidate=>{
       const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
       if(inputs.has(candidate.start))return inputs.get(candidate.start).derives.every(invocation=>standardOwner(invocation.path,scope)||actualOwner(invocation.path,scope,scopes,external,dependencies));
-      return condition.attributes.every(attribute=>isAbsentConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isAbsentConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module);
+      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   const root=scopes.get('crate');

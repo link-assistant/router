@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {posix} from 'node:path';
-import {itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
 
@@ -87,7 +87,7 @@ export function planTrackedModulePath(module,item,paths){
   if(configuration.status!=='active')fail('module compilation condition is unresolved or inactive');
   const attributes=configuration.attributes.filter(attribute=>attribute.name==='path');
   if(attributes.length>1)fail('duplicate path attributes retain a semantic obligation');
-  if(configuration.attributes.some(attribute=>!isAbsentConditionalAttribute(attribute)&&!['cfg','path'].includes(attribute.name)&&!(attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))fail('enclosing module attribute owner or expansion is unresolved');
+  if(configuration.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!['cfg','path'].includes(attribute.name)&&!(attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))fail('enclosing module attribute owner or expansion is unresolved');
   const parsed=header(original,configuration),override=attributes.length?literal(attributes[0]):null;
   if(!parsed.inline&&override===null&&!asciiIdentifier.test(parsed.name))fail('default external module name requires the ASCII filesystem identifier profile');
   let target=null,directory,childPathDirectory,candidates=[];

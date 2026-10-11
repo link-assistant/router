@@ -1,5 +1,6 @@
 // Validate original cfg_attr syntax before proving a false predicate absent.
-// Active expansions require separate checked attribute-owner consumers.
+// Only the separately pinned exact allow(dead_code) builtin is inert under
+// both branches. Other active expansions require checked owner consumers.
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
@@ -59,5 +60,6 @@ export function inspectConditionalAttribute(body){
   if(!parts.length||!parts[0].length||!separators)throw new TypeError('cfg_attr requires a predicate followed by a comma');
   const attributes=parts.slice(1);
   for(const entry of attributes){if(!entry.length)throw new TypeError('Conditional attribute has an empty input');argument(entry);}
-  return {predicate:parts[0],attributes:attributes.map(entry=>({tokens:entry.map(text),span:{start:entry[0].start,end:entry.at(-1).end}}))};
+  const inertDeadCodeLint=attributes.length>0&&attributes.every(entry=>['allow(dead_code)','allow(dead_code,)'].includes(entry.map(text).join('')));
+  return {predicate:parts[0],inertDeadCodeLint,attributes:attributes.map(entry=>({tokens:entry.map(text),span:{start:entry[0].start,end:entry.at(-1).end}}))};
 }

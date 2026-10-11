@@ -1,4 +1,4 @@
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
@@ -74,7 +74,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
         catch(error){diagnostics.push({file,module:[...path,childView?.modulePath.at(-1)??item.name],kind:'module',message:error.message,span:{start:item.start,end:item.end}});continue;}
       }
       if(childView){
-        const supported=condition.attributes.every(attribute=>isAbsentConditionalAttribute(attribute)||attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]');
+        const supported=condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]');
         if(!plan&&!supported){diagnostics.push({file,module:[...path,childView.modulePath.at(-1)],kind:'module',message:'Original inline module attribute owner or expansion remains unresolved',span:{start:item.start,end:item.end}});continue;}
         const name=childView.modulePath.at(-1),childPath=[...path,name];
         if(plan&&(!plan.inline||plan.name!==name))throw new TypeError('Tracked module header differs from its original inline view');

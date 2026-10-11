@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,originalModuleViewItems,moduleScopeKey} from './source-module-views.mjs';
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -31,7 +31,7 @@ export function inertInnerLintItem(item,source,sourceView=null,profile=null){
   const tokens=actual.tokens.filter(token=>token.type!=='comment'),condition=itemConfiguration(tokens,profile);
   if(condition.status!=='active'||!condition.attributes.length||condition.attributes.at(-1).span.end!==tokens.at(-1)?.end)return null;
   const ident=/^[\p{L}_][\p{L}\p{N}_]*$/u;
-  const attributes=condition.attributes.filter(attribute=>!isAbsentConditionalAttribute(attribute));
+  const attributes=condition.attributes.filter(attribute=>!isInertConditionalAttribute(attribute));
   for(const attribute of attributes){
     const body=attribute.tokens.slice(3,-1);
     if(!['allow','warn','deny','forbid'].includes(body[0])||body[1]!=='('||body.at(-1)!==')')return null;

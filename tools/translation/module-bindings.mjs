@@ -1,4 +1,4 @@
-import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 // Rust 2018+ binding evidence, not body translation or macro expansion.
 // https://doc.rust-lang.org/reference/items/use-declarations.html
 // https://doc.rust-lang.org/reference/visibility-and-privacy.html
@@ -103,7 +103,7 @@ function nestedExportUncertainty(tokens,start,profile) {
     if(tokens[at].type!=='punct'||tokens[at].text!=='#'||tokens[bracket]?.text!=='[')continue;
     const end=close(tokens,bracket),body=tokens.slice(bracket+1,end);
     const original=itemConfiguration(tokens.slice(at,end+1),profile).attributes[0];
-    if(isAbsentConditionalAttribute(original)){at=end;continue;}
+    if(isInertConditionalAttribute(original)){at=end;continue;}
     if(body.some(token=>identifier(token)&&token.text==='macro_export')||uncertainty([{name:body[0]?.text,tokens:body.map(token=>token.text)}]).macro)return {start:tokens[at].start,end:tokens[end].end};
     at=end;
   }
@@ -166,7 +166,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     for(const item of items.filter(item=>!item.comment)) {
       const condition=itemConfiguration(tokensOf(item),profile);if(condition.status==='inactive')continue;
       const span={start:item.start,end:item.end};
-      if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'||isAbsentConditionalAttribute(attribute)))continue;
+      if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'||isInertConditionalAttribute(attribute)))continue;
       const innerLint=inertInnerLintItem(item,module.source,module.sourceView,profile);
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
       try {
@@ -174,7 +174,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
         const nestedExport=nestedExportUncertainty(tokens,head.at,profile);
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
-        const effectiveAttributes=head.attributes.filter(attribute=>!isAbsentConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
+        const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
         if(deriveCertificate) {
           // Only the original invocation is narrowed. The sealed expansion

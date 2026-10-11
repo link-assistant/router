@@ -1,9 +1,12 @@
 // Explicit three-valued compilation conditions. No host, OS or Cargo feature
-// is inferred. Only validated false cfg_attr predicates prove absence.
+// is inferred. Validated false predicates prove absence; exact builtin lint
+// alternatives retain their predicate without changing source declarations.
 import {tokenizeRust} from './extensions/lexical.mjs';
 import {inspectConditionalAttribute,CONDITIONAL_ATTRIBUTE_PROFILE} from './conditional-attributes.mjs';
 const absentAttributes=new WeakSet();
 export const isAbsentConditionalAttribute=attribute=>!!attribute&&absentAttributes.has(attribute);
+const inertAttributes=new WeakSet();
+export const isInertConditionalAttribute=attribute=>!!attribute&&(absentAttributes.has(attribute)||inertAttributes.has(attribute));
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const identifier=/^[\p{L}_][\p{L}\p{N}_]*$/u;
 function record(value){if(!value||typeof value!=='object'||Array.isArray(value)||Object.getOwnPropertySymbols(value).length)throw new TypeError('configuration entries must be plain records');const result=Object.create(null);for(const [name,property] of Object.entries(Object.getOwnPropertyDescriptors(value))){if(!('value' in property)||!identifier.test(name))throw new TypeError('configuration entries need identifier keys and data properties');result[name]=property.value;}return result;}
@@ -28,7 +31,7 @@ export function evaluateConfiguration(tokens,profile){
     }
     if(text(tokens[at])==='='){at++;const literal=text(tokens[at++]),decoded=tokenizeRust(literal??'').filter(token=>token.kind!=='eof');if(decoded.length!==1||decoded[0].kind!=='string')throw new Error('configuration value needs a Rust string literal');const value=decoded[0].value;if(known?.values[name]?.includes(value))return true;return known?.closedKeys.includes(name)?false:null;}
     // Boolean cfg literals are outside this pinned Rust 1.89 profile.
-    if(['true','false'].includes(name))return null;
+    if(['true','false'].includes(name))throw new Error('boolean cfg literals require a separately checked Rust feature profile');
     return known&&Object.hasOwn(known.flags,name)?known.flags[name]:null;
   }
   try{const value=predicate(0);if(at!==tokens.length)throw new Error('unconsumed configuration tokens');return freeze({value,span:range(tokens),diagnostics:[]});}
@@ -44,11 +47,14 @@ export function itemConfiguration(tokens,profile){
     if(name==='cfg_attr'){
       try{
         const input=inspectConditionalAttribute(tokens.slice(body,end)),predicate=evaluateConfiguration(input.predicate,profile);
-        evaluation={value:predicate.value===false?true:null,predicate,expansion:predicate.value===false?'absent':'unresolved',inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,diagnostics:predicate.value===false?[]:[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]};
+        const inert=predicate.diagnostics.length===0&&input.inertDeadCodeLint;
+        const expansion=predicate.value===false?'absent':inert?'inert-lint-alternatives':'unresolved';
+        evaluation={value:expansion==='unresolved'?null:true,predicate,expansion,inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,configurationSelected:predicate.value!==null,diagnostics:expansion==='unresolved'?[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]:[]};
       }catch(error){evaluation={value:null,diagnostics:[{message:error.message,span:range(tokens.slice(begin,at))}]};}
     }
     const attribute={name,span:range(tokens.slice(begin,at)),tokens:tokens.slice(begin,at).map(text),evaluation};
     if(name==='cfg_attr'&&evaluation.expansion==='absent')absentAttributes.add(attribute);
+    if(name==='cfg_attr'&&evaluation.expansion==='inert-lint-alternatives')inertAttributes.add(attribute);
     attributes.push(attribute);
   }
   const conditions=attributes.filter(attribute=>attribute.evaluation),status=conditions.some(attribute=>attribute.evaluation.value===false)?'inactive':conditions.some(attribute=>attribute.evaluation.value===null)?'unknown':'active';
