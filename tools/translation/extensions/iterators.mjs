@@ -117,7 +117,16 @@ export class IteratorRustParser extends DataRustParser {
   methodInstantiation(name) {
     const c=this.cursor;
     if(!['collect','sum'].includes(name.value))throw unsupported('method turbofish','only checked generic operation instantiations are supported',name);
-    c.expect('<','method type');const type=this.type();c.expect('>','method type');return type;
+    c.expect('<','method type');
+    // This single written hole is constrained by the checked Iterator::Item.
+    // It grants no generic inference for parameter types or custom collections.
+    if(name.value==='collect'&&c.is('Vec')&&c.is('<',1)&&c.is('_',2)&&c.is('>',3)) {
+      const start=c.peek();
+      if(this.builtinShadow('Vec'))throw unsupported('shadowed Vec generic','the standard prelude type requires actual resolution',start);
+      c.next();c.next();c.next();c.expect('>','Vec');c.expect('>','method type');
+      return {kind:'array',element:{kind:'routerIteratorElementInference'},rustSourceType:true,rustOwnership:{kind:'owned',source:'Vec'},iteratorCollectInference:{profile:'checked-standard-vec-item-inference-v1',span:span(start,c.peek())}};
+    }
+    const type=this.type();c.expect('>','method type');return type;
   }
   instantiatedMethod(object,name,args,explicit,range) {throw unsupported(`generic method ${name.value}`,'requires a checked monomorphic operation',range);}
   postfix(path, options) {
@@ -221,7 +230,8 @@ export class IteratorChecker extends DataChecker {
     const op = node.op;
     const count = { map: 1, filter: 1, take: 1, any: 1, all: 1, fold: 2,find_map:1,filter_map:1,find:1 }[op] ?? 0;
     if (node.args.length !== count) throw typeError(`${op} expects ${count} arguments`, node.span);
-    const wanted = node.explicit ? this.resolveType(node.explicit, path, node.span) : expected;
+    const inferElement=node.op==='collect'&&node.explicit?.kind==='array'&&node.explicit.element?.kind==='routerIteratorElementInference'&&node.explicit.iteratorCollectInference?.profile==='checked-standard-vec-item-inference-v1'&&node.explicit.rustOwnership?.kind==='owned'&&node.explicit.rustOwnership.source==='Vec';
+    const wanted = node.explicit&&!inferElement ? this.resolveType(node.explicit, path, node.span) : expected;
     const itemExpected = op === 'collect' && wanted?.kind === 'array' ? { kind: 'routerIterator', element: wanted.element } : expected?.kind === 'routerIterator' ? expected : undefined;
     const object = this.expr(node.object, env, path, itemExpected);
     if (op === 'iter' || op === 'into_iter') {
@@ -266,9 +276,9 @@ export class IteratorChecker extends DataChecker {
       return { k: 'routerIteratorOperation', op, object, args: [limit], type: object.type, span: node.span };
     }
     if (op === 'collect') {
-      const type = array(element);
+      const type = inferElement?{...array(element),rustSourceType:true,rustOwnership:{kind:'owned',source:'Vec'}}:array(element);
       if (wanted && !sameType(type, wanted)) throw typeError('collect element does not match its expected array type', node.span);
-      return { k: 'routerIteratorOperation', op, object, args: [], type, span: node.span };
+      return { k: 'routerIteratorOperation', op, object, args: [], type,...(inferElement?{iteratorCollectInference:{profile:'checked-standard-vec-item-inference-v1',itemType:structuredClone(element),span:node.span}}:{}), span: node.span };
     }
     if (op === 'count') {
       if(wanted?.patternOwnershipRefusal||wanted?.rustPrimitiveName&&wanted.rustPrimitiveName!=='usize')throw typeError('Iterator::count returns actual by-value usize, not an equal-width Rust primitive or reference',node.span);

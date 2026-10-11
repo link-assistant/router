@@ -46,12 +46,16 @@ function standard(type,kind,context,required=false) {
 // Equal runtime widths do not prove the same Rust primitive identity. This
 // operation has one U, shared by the eager default and callback result.
 const owner=type=>type.rustOwnership??(type.kind==='string'&&type.patternOwnershipRefusal?.startsWith('owned String')?{kind:'owned',source:'String'}:null);
+// The source parser also copies String's descriptive marker onto its generic
+// container. Actual ownership lives in the registered per-use argument, which
+// is compared recursively below; a container marker is not a shared reference.
+const stringContainerSummary=type=>type.kind==='data'&&type.patternOwnershipRefusal==='ownership-bearing String type'&&['Option','Result'].includes(type.rustStandardGeneric?.kind)&&type.rustStandardGeneric.arguments?.some(argument=>argument.kind==='string'&&!argument.rustReference&&owner(argument)?.kind==='owned'&&owner(argument)?.source==='String');
 function sameOutput(left,right) {
   if(typeKey(left)!==typeKey(right)||left.rustGenericIdentityUnresolved||right.rustGenericIdentityUnresolved)return false;
   const a=owner(left),b=owner(right);
   if(a?.kind!==b?.kind||a?.source!==b?.source)return false;
   if(left.rustReference||right.rustReference){if(left.rustReference?.kind!=='shared'||right.rustReference?.kind!=='shared'||!left.rustReference.pointee||!right.rustReference.pointee||!sameOutput(left.rustReference.pointee,right.rustReference.pointee))return false;}
-  else if(!(left.kind==='string'&&a?.kind==='owned')&&left.patternOwnershipRefusal!==right.patternOwnershipRefusal)return false;
+  else if(!(left.kind==='string'&&a?.kind==='owned')&&(stringContainerSummary(left)?undefined:left.patternOwnershipRefusal)!==(stringContainerSummary(right)?undefined:right.patternOwnershipRefusal))return false;
   if(left.kind==='fixed'&&left.rustPrimitiveName!==right.rustPrimitiveName)return false;
   if(left.kind==='array'&&!sameOutput(left.element,right.element))return false;
   const x=left.rustStandardGeneric,y=right.rustStandardGeneric;

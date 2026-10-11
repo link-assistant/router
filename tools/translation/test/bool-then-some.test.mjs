@@ -47,7 +47,7 @@ test('receiver and eager argument effects occur once in source order in both typ
       const api=(await import(pathToFileURL(path).href)).translated;
       for(const [receiverExists,valueExists,expected]of [[false,true,none],[true,false,some(false)],[true,true,some(true)]]){
         const calls=[],env={get(key){calls.push(key);return (key==='receiver'?receiverExists:valueExists)?'present':undefined;}};
-        assert.deepEqual(effects.withEffectCapabilities({env},()=>api.ordered('receiver','argument')),expected);assert.deepEqual(calls,['receiver','argument']);
+        assert.deepEqual(effects.withEffectCapabilities({environment:env},()=>api.ordered('receiver','argument')),expected);assert.deepEqual(calls,['receiver','argument']);
       }
     }
   }finally{rmSync(directory,{recursive:true,force:true});}
@@ -57,6 +57,8 @@ test('owned String and borrowed str payloads keep distinct checked Option owners
   const source='pub fn owned(c:bool,value:String)->std::option::Option<String>{c.then_some(value)}pub fn borrowed(c:bool,value:&str)->std::option::Option<&str>{c.then_some(value)}enum Option{Other}use std::option::Option as Maybe;pub fn aliased(c:bool,value:String)->Maybe<String>{c.then_some(value)}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{for(const name of ['owned','borrowed','aliased']){assert.deepEqual(api[name](false,'😀'),none);assert.deepEqual(api[name](true,'😀'),some('😀'));}});
+  const prelude=project('pub fn owned(c:bool,value:String)->Option<String>{c.then_some(value)}');assert.deepEqual(prelude.meta.refused,[]);
+  await verifyTypedTargets(prelude,api=>{assert.deepEqual(api.owned(false,'😀'),none);assert.deepEqual(api.owned(true,'😀'),some('😀'));});
 });
 
 test('custom owners erased or escaping borrows aggregate moves and const calls remain carried',()=>{
@@ -67,6 +69,8 @@ test('custom owners erased or escaping borrows aggregate moves and const calls r
     'pub fn bad(c:bool,n:usize)->Option<u64>{c.then_some(n)}',
     'pub fn bad(c:bool,n:&u8)->Option<u8>{c.then_some(n)}',
     'pub fn bad(c:bool,n:Box<u8>)->Option<u8>{c.then_some(n)}',
+    'pub fn bad(c:bool,n:String)->Option<&\'static str>{c.then_some(n)}',
+    'pub fn bad(c:bool,n:String)->&Option<String>{c.then_some(n)}',
     'pub fn bad(c:bool,n:Vec<u8>)->Option<Vec<u8>>{c.then_some(n)}',
     'pub fn bad(value:&str)->Option<&\'static str>{false.then_some(value)}',
     'pub fn bad(value:String)->Option<&str>{true.then_some(value.as_str())}',
@@ -75,8 +79,10 @@ test('custom owners erased or escaping borrows aggregate moves and const calls r
   ]){const result=project(source);assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);}
 });
 
-test('source functions cannot collide with the standard eager helper binder',{timeout:60_000},async()=>{
-  const result=project('fn ml_host_bool_then_some(value:u8)->u8{value+1}pub fn selected(c:bool,value:u8)->Option<u8>{c.then_some(ml_host_bool_then_some(value))}');assert.deepEqual(result.meta.refused,[]);
+test('reserved source helper collisions stay carried while ordinary eager calls execute',{timeout:60_000},async()=>{
+  const collision=project('fn ml_host_bool_then_some(value:u8)->u8{value+1}pub fn selected(c:bool,value:u8)->Option<u8>{c.then_some(ml_host_bool_then_some(value))}');
+  assert.ok(collision.meta.refused.some(item=>item.name==='ml_host_bool_then_some'&&item.message.includes('reserved identifier')));assert.equal(collision.meta.executable.some(item=>item.name==='selected'),false);
+  const result=project('fn next_value(value:u8)->u8{value+1}pub fn selected(c:bool,value:u8)->Option<u8>{c.then_some(next_value(value))}');assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.deepEqual(api.selected(true,8n),some(9n));assert.deepEqual(api.selected(false,8n),none);assert.throws(()=>api.selected(false,255n),RangeError);});
 });
 

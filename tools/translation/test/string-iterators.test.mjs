@@ -106,6 +106,10 @@ test('unknown owners mutable or stored cursors escapes and const use remain carr
     'pub fn bad(value:&[u8])->String{value.join(",")}',
     'pub const fn bad(value:&str)->Option<&str>{value.lines().next()}',
     'mod str{} pub fn bad(value:&str)->String{value.lines().map(str::trim).collect::<Vec<_>>().join(",")}',
+    'enum Vec{Other}pub fn bad(value:&str)->String{value.lines().collect::<Vec<_>>().join(",")}',
+    'pub fn bad(value:&str)->Vec<u64>{value.lines().collect::<Vec<_>>()}',
+    'pub fn bad(value:&str)->Vec<&\'static str>{value.lines().collect::<Vec<_>>()}',
+    'pub fn bad(value:&str)->Vec<_>{value.lines().collect()}',
   ]){const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);}
 });
 
@@ -114,12 +118,18 @@ const pins=[
   ['src/storage.rs','d301981bd64c7b8726fbe89e13c7d580a66e7219ca5137c70aee0930f30e3050','sanitize_codec_error',19640,19916,'31e14e85b6f0b9ec999ccf5766b242adcc48e36e628b0b71454be97a50c4bbab'],
   ['src/responses.rs','5d00fae1c3f24e678c460381c58f0bc746435910655109d8d4ce2609a01ffea0','extract_sse_data',30721,31000,'ea95ad29548df0bb2ef72ebfdb44fff1fb88e8967e999e283b1509a8b5aa89fa'],
 ];
-for(const [path,sourceHash,name,start,end,declarationHash]of pins)test(`complete unchanged ${path} preserves ${name} source bytes and executes both typed targets`,{timeout:60_000},async()=>{
+for(const [path,sourceHash,name,start,end,declarationHash]of pins)test(`complete unchanged ${path} preserves ${name} source bytes and its actual namespace admission`,{timeout:60_000},async()=>{
   const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),sourceHash);
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);assert.deepEqual([item.start,item.end],[start,end]);assert.equal(hash(source.slice(start,end)),declarationHash);
   // Feed the entire original file to the ordinary compiler. Other carried
   // declarations remain visible; no import, attribute or body is replaced.
   const result=translateProject({entry:path,paths:[path],readSource:()=>source});
+  // Missing original module/import evidence cannot be waived to execute a
+  // convenient isolated function. These whole files stay explicitly carried.
+  if(path==='src/storage.rs'||path==='src/responses.rs'){
+    const expected=path==='src/storage.rs'?'unknown type String':'shadowed Vec generic: the standard prelude type requires actual resolution';
+    const refusal=result.meta.refused.find(item=>item.name===name);assert.ok(refusal,name);assert.equal(refusal.message,expected);assert.equal(result.meta.executable.some(item=>item.name===name),false);assert.equal(result.meta.runtimeParity,false);return;
+  }
   const checked=result.meta.executable.find(item=>item.term==='fn'&&item.name===name);assert.ok(checked,name);assert.deepEqual(checked.span,{start,end});assert.equal(result.meta.runtimeParity,false);
   await verifyTypedTargets(result,api=>{
     if(name==='first_line')for(const [value,expected]of [['',''],[' a\r\nb','a'],['\nrest',''],['\r',''],['😀\nnext','😀']])assert.equal(api.first_line(value),expected);

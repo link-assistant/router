@@ -160,7 +160,8 @@ export function withOwnershipChecker(Base=TextChecker) {
       if(value.formatProvenance)owner=OWNED_STRING;
       if(node.k==='routerBuiltinConversion'&&node.operation==='String::from')owner=OWNED_STRING;
       if(node.k==='routerIteratorOperation'&&node.op==='collect'&&value.type.kind==='array') {
-        const target=node.explicit?this.resolveType(node.explicit,path,node.span):expected;
+        const inferred=value.iteratorCollectInference?.profile==='checked-standard-vec-item-inference-v1';
+        const target=inferred?value.type:node.explicit?this.resolveType(node.explicit,path,node.span):expected;
         if(target?.kind==='array'&&ownership(target)?.kind==='owned'&&ownership(target)?.source==='Vec')owner=OWNED_VEC;
       }
       if(value.k==='stringMap'&&['toLowerCase','toUpperCase'].includes(value.op)||value.k==='routerStringOperation'&&['to_ascii_lowercase','to_ascii_uppercase'].includes(value.op))owner=OWNED_STRING;
