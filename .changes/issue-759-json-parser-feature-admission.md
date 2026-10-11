@@ -16,3 +16,10 @@ Eight meaningful authored cases cover the actual feature closure, both parse
 routes and aliases, exact rational midpoint evidence, standalone JS/strict-TS,
 unchanged numeric construction, unavailable profiles, forged contexts and
 project-to-per-file propagation. Focused checks pending at source-draft time.
+
+Final clean source 82ed1b313: all 28 cases across four files pass in Node
+(9.407 seconds) and Bun (6.46 seconds), including strict compiled TypeScript
+and the relocated portable source bundle. Complete initial/final logs and source
+hashes are reopened-verified in the small compressed focused evidence archive.
+Actual root float_roundtrip parsing remains refused; no lexical decoder or
+whole-program runtime parity is claimed.
