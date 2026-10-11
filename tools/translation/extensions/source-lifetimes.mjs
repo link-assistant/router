@@ -204,7 +204,12 @@ function origins(node,env,context,returns,depth=0) {
     return borrowed?new Set([UNKNOWN]):new Set();
   }
   if(['routerOptionCallback','routerStandardMethod'].includes(node.k)) {
-    const subject=read(node.value),payload=project(subject,['argument',0]),fallback=node.defaultValue?read(node.defaultValue):new Set();
+    const subject=read(node.value);
+    if(node.operation==='bool_then_some'){
+      const argument=read(node.argument);
+      return borrowed?prefix(argument,['argument',0]):new Set();
+    }
+    const payload=project(subject,['argument',0]),fallback=node.defaultValue?read(node.defaultValue):new Set();
     const callback=node.callback;
     const called=callback?origins(callback.binding,env,{...context,lambdaInputs:Array.from({length:callback.arity},()=>payload)},returns,depth+1):new Set();
     if(!borrowed)return new Set();

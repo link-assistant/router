@@ -273,12 +273,14 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_validate_duration: ['any'],
     ml_host_option_bind: ['{ $: string; field0?: any }','(...values: any[]) => any','string'],
     ml_host_bool_then:['boolean','() => T'],
+    ml_host_bool_then_some:['boolean','T'],
     ml_host_result_ok:["Readonly<{ $: 'Ok'; field0: T }> | Readonly<{ $: 'Err'; field0: unknown }>"],
     ml_host_option_map_or:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'U','(value: T) => U'],
     ml_host_option_map:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'(value: T) => U'],
   };
   const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U',ml_host_option_map_or:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   Object.assign(generics,{ml_router_find_map:'T, U',ml_router_filter_map:'T, U',ml_router_find:'T',ml_router_flatten:'T',ml_router_try:'T, E',ml_router_unwrap:'T'});
+  generics.ml_host_bool_then_some='T';
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
@@ -311,7 +313,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')'),element=name==='ml_router_find_map'||name==='ml_router_filter_map'?'U':'T';
       annotations.push({offset:close.end,text:['ml_router_filter_map','ml_router_flatten'].includes(name)?`: IterableIterator<${element}>`:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${element}}>`});
     }
-    const standardResult={ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'U'}[name];
+    const standardResult={ml_host_bool_then_some:'T',ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'U'}[name];
     if(standardResult){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${standardResult}}>`});}
     if (returnTypes.has(name)) {
       const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
