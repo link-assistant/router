@@ -17,10 +17,10 @@ import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './trans
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
 const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
-// Original parameter-pattern evidence uses frontend nodes, including ctor
+// Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -98,19 +98,22 @@ function flatten(program) {
 
 function declarationProgram(program, root) {
   const needed = new Set();
-  const visit = node => {
+  const visit = (node, path) => {
     if (!node || typeof node !== 'object') return;
-    const names = ['call', 'routerFutureCall'].includes(node.k) ? [node.fn] : node.k === 'ctor' ? [node.data] : node.kind === 'data' ? [node.name] : [];
-    for (const name of names) include(name);
-    for (const [key,value] of Object.entries(node)) if(!sourceEvidence(key)){if (Array.isArray(value)) value.forEach(visit); else visit(value);}
+    const link = ['call', 'routerFutureCall'].includes(node.k) ? 'fn' : node.k === 'ctor' ? 'data' : node.kind === 'data' ? 'name' : null;
+    if (link) include(node[link], `${path}.${link}`);
+    for (const [key,value] of Object.entries(node)) if(!sourceEvidence(key)) {
+      if (Array.isArray(value)) value.forEach((item,index)=>visit(item,`${path}.${key}[${index}]`));
+      else visit(value,`${path}.${key}`);
+    }
   };
-  const include = name => {
+  const include = (name, path) => {
     if (needed.has(name)) return;
     const declaration = program.declarations.get(name);
-    if (!declaration) throw new Error(`missing checked project dependency ${name}`);
-    needed.add(name); visit(declaration);
+    if (!declaration) throw new Error(`missing checked project dependency ${name} at ${path} (root ${root})`);
+    needed.add(name); visit(declaration, `declarations[${JSON.stringify(name)}]`);
   };
-  include(root);
+  include(root, 'root');
   const declarations = new Map([...program.declarations].filter(([name]) => needed.has(name)));
   return roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
 }

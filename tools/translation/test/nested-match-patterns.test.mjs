@@ -6,8 +6,11 @@ import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {translateProject} from '../project.mjs';
+import {translateSource} from '../translate.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
 const none=Object.freeze({$:'None'}),some=field0=>Object.freeze({$:'Some',field0});
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function both(result,assertions) {
@@ -26,8 +29,19 @@ test('nested alternatives retain first-arm priority scalar captures and exhausti
   await both(result,api=>{for(const [input,output]of [[some('a'),1n],[some('b'),8n],[some('|'),8n],[none,3n],[some('other'),4n],[some('else'),5n]])assert.equal(api.selected(input,8n),output);assert.equal(api.all(none),0n);assert.equal(api.all(some(true)),1n);assert.equal(api.all(some(false)),1n);});
 });
 test('constructor products distribute source alternatives and retain identical scalar projections',{timeout:30_000},async()=>{
-  const result=project('enum Choice{Pick(u8,u8),Empty} pub fn product(value:Choice)->u8{match value{Choice::Pick(1 | 2,3 | 4)=>9,Choice::Pick(_,_)=>0,Choice::Empty=>1}} pub fn captured(value:Choice,offset:u8)->u8{match value{Choice::Pick(0 | 2,n) | Choice::Pick(3,n)=>n+offset,Choice::Pick(_,_)=>0,Choice::Empty=>1}}');
-  await both(result,api=>{for(let a=0;a<4;a++)for(let b=2;b<6;b++){const value=Object.freeze({$:'Pick',field0:BigInt(a),field1:BigInt(b)});assert.equal(api.product(value),(a===1||a===2)&&(b===3||b===4)?9n:0n);assert.equal(api.captured(value,3n),a!==1?BigInt(b)+3n:0n);}assert.equal(api.product(Object.freeze({$:'Empty'})),1n);});
+  const source='enum Choice{Pick(u8,u8),Empty} pub fn product(value:Choice)->u8{match value{Choice::Pick(1 | 2,3 | 4)=>9,Choice::Pick(_,_)=>0,Choice::Empty=>1}} pub fn captured(value:Choice,offset:u8)->u8{match value{Choice::Pick(0 | 2,n) | Choice::Pick(3,n)=>n+offset,Choice::Pick(_,_)=>0,Choice::Empty=>1}}';
+  const result=project(source),checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
+  const patterns=node=>!node||typeof node!=='object'?[]:Object.entries(node).flatMap(([key,value])=>key==='sourcePattern'?[value]:patterns(value));
+  for(const name of ['product','captured']) {
+    const original=patterns(checked.declarations.get(name));assert.ok(original.length>0);
+    assert.deepEqual(patterns(target.declarations.get(`rp_${Buffer.from(name).toString('hex')}`)),original);
+  }
+  // Bulk generation emits each checked dependency closure independently.
+  // Raw source constructors remain evidence; typed constructor plans still link.
+  const perSource=translateSource(source,'src/lib.rs',{projectDeclarations:result.executableDeclarations,projectSourceScopes:result.sourceScopes});
+  assert.equal(perSource.ir.counts.executableFunctions,2);
+  const verify=api=>{for(let a=0;a<4;a++)for(let b=2;b<6;b++){const value=Object.freeze({$:'Pick',field0:BigInt(a),field1:BigInt(b)});assert.equal(api.product(value),(a===1||a===2)&&(b===3||b===4)?9n:0n);assert.equal(api.captured(value,3n),a!==1?BigInt(b)+3n:0n);}assert.equal(api.product(Object.freeze({$:'Empty'})),1n);};
+  await both(result,verify);await verifyTypedTargets(perSource,verify);
 });
 test('nested alternatives preserve labelled match joins and real function returns',{timeout:30_000},async()=>{
   const source='pub fn choose(value:Option<&str>)->Option<bool>{let flag:bool=match value{Some("go" | "yes")=>true,Some(_)=>false,None=>return None};Some(flag)}';
