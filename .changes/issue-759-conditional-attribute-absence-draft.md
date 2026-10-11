@@ -10,8 +10,10 @@ lint predicates stay unknown in the evidence. Other active and unknown
 transformations, unsupported syntax and sibling procedural attributes retain
 their existing obligations.
 
-The source-only draft includes twelve pending tests with four JavaScript and
-strict TypeScript runtime fixtures, plus whole unchanged production source
-pins for token_admin and client_lifecycle/active. The real non-test request
-derive excludes the conditional Serialize invocation. No compiler tests,
-producer, full gate or Rust build have run for this draft yet.
+All 246 focused tests across thirty affected files pass under both Node and
+Bun, including the twelve new cases with four JavaScript and strict TypeScript
+runtime fixtures and whole unchanged token_admin and client_lifecycle/active
+source pins. The real non-test request derive excludes the conditional
+Serialize invocation. Complete initial loader failures and the delimiter-map
+syntax repair are archived alongside both final clean runs. Actual corpus
+regeneration, the full gate and native parity remain pending. No Rust build ran.
