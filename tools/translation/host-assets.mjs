@@ -5,6 +5,8 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
+  files.set('utf16-fixed-f64-runtime.mjs',readFileSync(new URL('./extensions/utf16-fixed-f64-runtime.mjs',import.meta.url),'utf8'));
+  files.set('utf16-fixed-f64-runtime.d.mts','export declare function encodeUtf16(value: string): IterableIterator<bigint>;\nexport declare function fixedToF64(value: bigint, source: string): number;\n');
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.mjs',readFileSync(new URL('./extensions/iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.d.mts','export declare function assertImmutableIterator(value: unknown): true;\n');

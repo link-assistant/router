@@ -17,6 +17,7 @@ import {rustFixedType} from '../checked-types.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
+import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow} from './utf16-fixed-f64.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -151,6 +152,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(name.value==='encode_utf16')return {k:'routerUtf16Encode',object,args,span:range};
     if(name.value!=='parse')return super.method(object,name,args,range);
     return this.instantiatedMethod(object,name,args,null,range);
   }
@@ -158,6 +160,14 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     if(this.cursor.is('&')&&this.cursor.is('[',1)) {
       const c=this.cursor,start=c.index,first=c.next(),value=this.unary(path,{}),tokens=c.tokens.slice(start,c.index);
       return {k:'routerSharedArrayLiteral',value,span:{start:first.start,end:tokens.at(-1).end},sourceArrayBorrow:{tokens:tokens.map(token=>({kind:token.kind,value:token.value,span:{start:token.start,end:token.end}}))}};
+    }
+    if(this.cursor.is('&')&&!this.cursor.is('mut',1)) {
+      const first=this.cursor.peek(),value=super.unary(path,options);
+      // Preserve only written borrows of actual allocation candidates. Their
+      // authority is checked later against an ordinary scalar-returning call.
+      const operand=value.k==='routerTextReference'?value.value:null;
+      if(operand&&(operand.k==='toString'||operand.k==='routerStringOwnership'&&operand.operation==='to_owned'||operand.k==='routerBuiltinConversion'&&operand.operation==='String::from'||operand.k==='routerOwnedString'))return {...value,sourceAmpersand:{value:'&',span:{start:first.start,end:first.end}}};
+      return value;
     }
     const first=this.cursor.peek();if(!this.cursor.eat('*'))return super.unary(path,options);
     const value=this.unary(path,{});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
@@ -335,6 +345,10 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
     return checked[0];
   }
   application(head,args,env,path,expected,range) {
+    if(args.some(arg=>arg.k==='routerTextReference'&&arg.sourceAmpersand)) {
+      const entry=head.k==='name'?this.lookup(head.path,path,range):null;
+      args=prepareTemporaryStringCall(this,entry,args,env,path,range);
+    }
     const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
@@ -359,6 +373,18 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
       if(expected?.rustReference||expected?.patternOwnershipRefusal)throw unsupported('floating reference literal','requires actual checked borrowing or promotion',node.span);
       const value=super.expr(node,env,path,expected,allowLiteral);
       return {...value,sourceFloatLiteral:{...source,verified:true}};
+    }
+    if(node.k==='routerPreparedStringCallBorrow')return consumeTemporaryStringCallBorrow(node);
+    if(node.k==='routerTemporaryStringBorrow')throw unsupported('temporary String source borrow','only an actual checked ordinary scalar-returning &str call may consume it',node.span);
+    if(node.k==='routerUtf16Encode') {
+      const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'encode_utf16','shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      if(node.args.length)throw typeError('str::encode_utf16 takes no arguments',node.span);
+      return checkedUtf16Iterator(object,node.span);
+    }
+    if(node.k==='cast') {
+      const target=this.resolveType(node.to,path,node.span);
+      if(target.kind==='float')return checkedFixedF64Cast(this.expr(node.arg,env,path),target,node.span);
     }
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
     if(node.k==='routerPrimitiveFloatCall') {
@@ -499,6 +525,9 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='routerUtf16Iterator'){this.utf16Runtime=true;return `ml_encode_utf16(${this.expr(node.object)})`;}
+    if(node.k==='routerFixedF64Cast'){this.fixedF64Runtime=true;return `ml_fixed_to_f64(${this.expr(node.object)}, ${JSON.stringify(node.sourceType.rustPrimitiveName)})`;}
+    if(node.k==='routerTemporaryStringCallBorrow')return this.expr(node.object);
     if(node.k==='array'&&node.type?.rustFixedArray) {
       this.fixedArrays=true;
       return `ml_copy_fixed_array([${node.items.map(item=>this.expr(item)).join(', ')}], ${JSON.stringify(runtimeValueType(node.type))})`;
@@ -528,6 +557,7 @@ export class HostEmitter extends EffectEmitter {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
+    if(this.utf16Runtime||this.fixedF64Runtime)preludes.unshift(`import { ${[...(this.utf16Runtime?['encodeUtf16 as ml_encode_utf16']:[]),...(this.fixedF64Runtime?['fixedToF64 as ml_fixed_to_f64']:[])].join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'utf16-fixed-f64-runtime.mjs'))};`);
     if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);

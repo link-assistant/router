@@ -103,6 +103,11 @@ function origins(node,env,context,returns,depth=0) {
   if(depth>256)throw unsupported('borrow origin traversal','requires a bounded checked expression graph',context.entry.span);
   const read=(value,scope=env)=>origins(value,scope,context,returns,depth+1);
   const borrowed=hasBorrow(node.type,context);
+  if(node.k==='routerTemporaryStringCallBorrow') {
+    read(node.object);
+    if(node.temporaryStringBorrowProof?.verified!==true||node.temporaryStringBorrowProof.profile!=='rust-1.89-utf16-fixed-f64'||node.temporaryStringBorrowProof.origin!=='call-local-temporary')throw unsupported('temporary String borrow origin','requires the checked nonescaping scalar-call argument',node.span);
+    return borrowed?uniformOrigins(node.type,new Set([UNKNOWN]),context):new Set();
+  }
   if(node.sourceOwnershipOperation?.operation==='as_str') {
     const proof=node.sourceOwnershipOperation,receiver=node.sourceOwnershipReceiver;
     if(proof.profile!=='checked-standard-string-ownership-v1'||proof.verified!==true||!receiver?.type)throw unsupported('String::as_str borrow origin','requires its checked source receiver and registered ownership proof',node.span);
