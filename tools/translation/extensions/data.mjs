@@ -9,6 +9,7 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 import {validCopyCertificate} from '../impl-resolver.mjs';
 import {withStandardStringEqualityChecker} from './standard-string-equality.mjs';
 import {readCertifiedDeriveAttribute} from '../derive-layout.mjs';
+import {readCertifiedToolAttribute} from '../tool-attribute-layout.mjs';
 
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -26,7 +27,7 @@ export class DataRustParser extends TextRustParser {
   attributes({ allowDefault = false } = {}) {
     const c = this.cursor, attributes = [];
     while (c.is('#') && c.is('[', 1)) {
-      const certified=readCertifiedDeriveAttribute(this,{allowDefault});
+      const certified=readCertifiedDeriveAttribute(this,{allowDefault})??readCertifiedToolAttribute(this);
       if(certified){attributes.push(certified);continue;}
       const index = c.index, start = c.next();
       if (c.is('derive', 1)) {

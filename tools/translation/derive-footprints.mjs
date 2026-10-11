@@ -4,6 +4,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
+import {inertInnerLintItem} from './tool-attributes.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -11,7 +12,8 @@ const contexts=new WeakMap(),certificates=new WeakMap();
 const key=path=>path.join('::');
 const invocationId=(file,item)=>file+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
-function originalDeclarationHeader(item,condition) {
+function originalDeclarationHeader(item,condition,source) {
+  if(inertInnerLintItem(item,source))return true;
   const tokens=item.tokens.filter(token=>token.type!=='comment'),end=condition.attributes.at(-1)?.span.end??item.start;
   let at=tokens.findIndex(token=>token.start>=end);
   if(tokens[at]?.text==='pub') {
@@ -67,7 +69,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
     attributeClosure.set(module.file,scope.configurationCondition==='active'&&module.items.every(candidate=>{
       const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
       if(inputs.has(candidate.start))return inputs.get(candidate.start).derives.every(invocation=>standardOwner(invocation.path,scope)||actualOwner(invocation.path,scope,scopes,external,dependencies));
-      return condition.attributes.every(attribute=>['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&originalDeclarationHeader(candidate,condition);
+      return condition.attributes.every(attribute=>['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module.source);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   const root=scopes.get('crate');

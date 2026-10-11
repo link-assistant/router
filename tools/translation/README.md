@@ -1,5 +1,12 @@
 # Bulk Rust draft translation
 
+The source-only tool-attribute draft verifies original Rust 1.89 resolver bytes
+before proving an unshadowed `rustfmt::skip` owner in active ancestor scopes.
+Bounded builtin inner lint lists retain their original syntax. Unknown expansion,
+tool imports/shadows, disabled preludes and macro-bearing input stay refused.
+This profile preserves attribute metadata and does not implement formatting or
+procedural behavior; its focused verification is pending.
+
 Run `node scripts/translate-router.mjs` to regenerate every tracked `.rs` file,
 including production sources, tests, benchmarks, scripts and archived examples.
 Run the same command with `--check` to reject stale, missing or unexpected outputs

@@ -19,13 +19,15 @@ import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './trans
 import {linkProjectDeclaration} from './extensions/source-links.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
+import {createToolAttributeContext} from './tool-attributes.mjs';
+import {configureToolAttributes} from './tool-attribute-layout.mjs';
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
-const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
+const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -128,7 +130,9 @@ export function translateProject(options) {
   const registeredTypes=[['std','option','Option'],['std','result','Result'],['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
   const externalModules=externalModuleBindings({data:effectData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...registeredTypes.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),...COPY_NAMESPACE_BINDINGS,{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},{name:'json',namespace:'macro',target:['serde_json','json'],kind:'macro'}]});
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
-  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:deriveContext?deriveFootprintExternalModules(deriveContext):externalModules,deriveContext,compilationProfile:graph.compilationProfile});
+  const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
+  const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
+  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[scope.file,scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(module.file),bindingEvidence.scopes,module.path);
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
@@ -147,6 +151,7 @@ export function translateProject(options) {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
         parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
         configureSourceScope(parser,module);
+        configureToolAttributes(parser,toolContext,module,item,module.source.slice(item.start,item.end));
         parser.aliases = aliases;
         parser.modulePath = module.path;
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
@@ -160,11 +165,12 @@ export function translateProject(options) {
           if (items.length !== 1 || items[0].k !== 'data') throw new TranslationError('syntax', 'expected one original data declaration', parser.cursor.peek());
           surface = items[0];
         } else {
-          parser.attributes(); parser.visibility();
+          const attributes=parser.attributes(); parser.visibility();
           if (parser.cursor.is('const') && parser.cursor.is('fn', 1)) { const qualifier=parser.cursor.next(),fn=parser.fn(module.path); surface = {...fn,constFunction:true,span:{...fn.span,start:qualifier.start}}; }
           else if (parser.cursor.is('fn') || parser.cursor.is('async')) surface = parser.fn(module.path);
           else if (parser.cursor.is('const')) surface = parser.constItem(module.path);
           else throw new TranslationError('syntax', 'expected original function or constant', parser.cursor.peek());
+          if(attributes.some(attribute=>attribute.kind==='tool'))surface={...surface,rustAttributes:attributes};
         }
         if (!parser.cursor.atEnd()) throw new TranslationError('syntax', 'unconsumed declaration tokens', parser.cursor.peek());
         const base = module.offset + item.start;
@@ -251,6 +257,7 @@ export function translateProject(options) {
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
+  if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(module.file),scopes:bindingEvidence.scopes}));
   const executableDeclarations = entries.map(entry => ({ source: entry.file, sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source), name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));

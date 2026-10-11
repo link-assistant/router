@@ -6,6 +6,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
+import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const key=path=>path.join('::');
@@ -131,9 +132,10 @@ function collapse(candidates) {
   }).sort((a,b)=>a.namespace===b.namespace?(a.name<b.name?-1:a.name>b.name?1:0):(a.namespace<b.namespace?-1:1));
 }
 
-export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null}={}) {
+export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,toolContext=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
+  if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
@@ -141,7 +143,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     if(!Array.isArray(module.path) || typeof module.source!=='string' || typeof module.file!=='string')throw new TypeError('Module binding evidence is incomplete');
     if(module.compilationProfile!==undefined&&JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(profile))throw new TypeError('Module graph and binding compilation profiles must agree');
     const name=key(canonical(module.path));if(scopes.has(name))throw new TypeError('Duplicate tracked module scope');
-    const scope={file:module.file,path:[...module.path],seeds:[],bindings:[],deriveNames:[],unknownType:false,unknownMacro:false,unknownBang:false,unknownAttribute:false,baseType:false,baseMacro:false,baseBang:false,baseAttribute:false};
+    const scope={file:module.file,path:[...module.path],seeds:[],bindings:[],deriveNames:[],innerBuiltinNames:[],unknownType:false,unknownMacro:false,unknownBang:false,unknownAttribute:false,baseType:false,baseMacro:false,baseBang:false,baseAttribute:false};
     scopes.set(name,scope);containers.set(name,scope);
   }
   const add=(scope,item,name,namespace,visibility,extra={})=>scope.seeds.push({name,namespace,target:[...canonical(scope.path),name],kind:item.term,status:'resolved',visibility,source:scope.file,span:{start:item.start,end:item.end},declaration:{source:extra.source??scope.file,span:{start:item.start,end:item.end}},via:'declaration',origin:`${extra.source??scope.file}:${item.start}:${namespace}:${name}`,priority:2,...extra});
@@ -161,12 +163,14 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       const condition=itemConfiguration(tokensOf(item),profile);if(condition.status==='inactive')continue;
       const span={start:item.start,end:item.end};
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'))continue;
+      const innerLint=inertInnerLintItem(item,module.source);
+      if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
         const nestedExport=nestedExportUncertainty(tokens,head.at);
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
-        const effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
+        const effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
         if(deriveCertificate) {
           // Only the original invocation is narrowed. The sealed expansion
@@ -379,6 +383,10 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     if(!converged || cyclic.has(name)){scope.unknownType=scope.unknownMacro=scope.unknownBang=scope.unknownAttribute=true;diagnostic(scope,!converged?'binding fixed point did not converge':'glob import cycle requires further resolution',{start:0,end:modules.find(module=>key(canonical(module.path))===name).source.length});}
     for(const binding of scope.bindings.filter(binding=>binding.status==='ambiguous'))diagnostic(scope,`ambiguous ${binding.namespace} binding ${binding.name}`,binding.span,{name:binding.name,namespace:binding.namespace});
     for(const derive of scope.deriveNames)if(scope.bindings.some(binding=>macroBindingAffects(binding,'attribute') && binding.name===derive.name && binding.standardDerive!==true))diagnostic(scope,'derive binding requires resolved standard attribute macro provenance',derive.span,{name:derive.name});
+    for(const attribute of scope.innerBuiltinNames??[])if(scope.bindings.some(binding=>macroBindingAffects(binding,'attribute')&&binding.name===attribute.name)){
+      scope.unknownType=scope.unknownMacro=scope.unknownBang=scope.unknownAttribute=true;
+      diagnostic(scope,'inner builtin lint attribute has a conflicting source macro owner',attribute.span,{name:attribute.name});
+    }
   }
   for(const task of tasks) {
     const result=lookup(task);

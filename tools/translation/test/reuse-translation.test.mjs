@@ -76,5 +76,11 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
       try {assert.throws(()=>run(['--check']),/Copy trait source archive checksum mismatch/);}
       finally {writeFileSync(archive,original);}
     }
+    for(const name of ['rust-resolve-macros-1.89.0.rs.gz','rust-resolve-ident-1.89.0.rs.gz','rust-builtin-attrs-1.89.0.rs.gz']) {
+      const archive=join(bundle,'tools/translation/source-profiles/tool-attributes',name),original=readFileSync(archive),changed=Buffer.from(original);
+      changed[0]^=1;writeFileSync(archive,changed);
+      try {assert.throws(()=>run(['--check']),/Tool attribute source archive checksum mismatch/);}
+      finally {writeFileSync(archive,original);}
+    }
   } finally {rmSync(directory,{recursive:true,force:true});}
 });
