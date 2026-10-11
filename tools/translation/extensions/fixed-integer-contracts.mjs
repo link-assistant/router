@@ -1,0 +1,36 @@
+// Primitive arithmetic instantiations from actual checked fixed types.
+import {valueSchema} from '../type-layout.mjs';
+import {encodeMonomorphicType,monomorphicTypeName} from '../monomorphic.mjs';
+const freeze=value=>{if(value && typeof value==='object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;};
+const assumptions=[
+  'The receiver and every operand have the same actual checked fixed-integer width and signedness; values remain exact BigInt.',
+  'Checked operations return the registered immutable standard Option<T>, with None for mathematical overflow or unsigned underflow.',
+  'Saturating operations clamp the mathematical result to the source type range, independent of debug or release overflow settings.',
+  'Ord min/max/clamp use the built-in implementation for primitive integers only; no arbitrary ADT trait implementation is inferred.',
+  'Reversed clamp bounds preserve a source panic as an exception, rather than a fabricated successful value or Option.',
+  'The pinned Rust 1.89 arithmetic methods are const-eligible; ordinary Ord methods are not const-eligible.',
+  'usize/isize use the existing 64-bit portable profile; other pointer profiles, mixed signed operands, floats and unbound generics require separate contracts.',
+  'No Rust execution or whole-program Router parity is established by these source-derived contracts.',
+];
+export function fixedIntegerContracts(type,declarations=new Map(),{span={start:0,end:0}}={}) {
+  if(type?.kind!=='fixed'||![8,16,32,64,128].includes(type.bits)||typeof type.signed!=='boolean')throw new TypeError('Fixed arithmetic requires an actual checked integer type');
+  const fixed={kind:'fixed',bits:type.bits,signed:type.signed};
+  const name=monomorphicTypeName('Option',[fixed]),option={kind:'named',path:[name]};
+  const ctors=[{name:'None',fields:[]},{name:'Some',fields:[{name:'field0',type:fixed}]}];
+  const schema=valueSchema(declarations),existing=schema.types[name],declaration=declarations.get(name);
+  if(declaration && (!existing||declaration.standardGeneric?.kind!=='Option'))throw new TypeError('Fixed arithmetic requires actual standard Option provenance: '+name);
+  if(existing && JSON.stringify(existing.ctors)!==JSON.stringify(ctors))throw new TypeError('Conflicting fixed arithmetic Option layout: '+name);
+  const data=existing?[]:[{k:'data',name,ctors,span,generated:'router-fixed-integer-contract',standardGeneric:{kind:'Option',arguments:[fixed]}}];
+  const owner=(fixed.signed?'i':'u')+fixed.bits,encoding=encodeMonomorphicType(fixed);
+  const contracts=['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>{
+    const ordered=['min','max','clamp'].includes(method);
+    const aliases=[['std','primitive',owner,method],...(fixed.bits===64?[[fixed.signed?'isize':'usize',method],['std','primitive',fixed.signed?'isize':'usize',method]]:[])];
+    return {
+      id:'rust_fixed_'+method+'_'+encoding,jsExport:'rust_fixed_'+method,rustPath:[owner,method],rustAliases:aliases,
+      kind:'method',receiver:fixed,params:[fixed,fixed,...(method==='clamp'?[fixed]:[])],ret:method.startsWith('checked_')?option:fixed,
+      async:false,pure:true,constEligible:!ordered,...(!ordered?{constSince:'1.47.0'}:{trait:'std::cmp::Ord',traitImplementation:'primitive-integer'}),
+      instantiation:fixed,runtimeInstantiation:{factory:'createFixedIntegerRuntime',type:fixed},assumptions,
+    };
+  });
+  return freeze({type:fixed,data,option,contracts});
+}
