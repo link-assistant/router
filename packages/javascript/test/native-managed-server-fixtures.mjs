@@ -51,7 +51,9 @@ fixture('managed-use-private-validated-selection','server.use',()=>temporary(asy
   for (const server of ['no-scheme','https://username:secret@example.test/','https://example.test/path','https://example.test/?query=1']) await assert.rejects(operate(dir,'server.use',{server}),/absolute http/);
   assert.deepEqual(JSON.parse(await readFile(path,'utf8')),saved);
   await assert.rejects(operate(dir,'server.use',{clear:true,server:'https://example.test'}),/cannot be combined/);
-  await assert.rejects(operate(dir,'server.use',{server:'https://example.test',ca_cert:'ignored.pem'}),error=>error.code === 'unsupported');
+  const badCA=join(dir,'invalid.pem');await writeFile(badCA,'not a certificate');
+  await assert.rejects(operate(dir,'server.use',{server:'https://example.test',ca_cert:badCA}),/CA bundle contains no certificates/);
+  assert.deepEqual(JSON.parse(await readFile(path,'utf8')),saved);
   await operate(dir,'server.use',{clear:true}); await operate(dir,'server.use',{clear:true});
   assert.equal(await selectedManagedServer({config:{data_dir:dir},env:{}}),null);
   assert.equal((await operate(dir,'server.status')).selection.source,'managed');
