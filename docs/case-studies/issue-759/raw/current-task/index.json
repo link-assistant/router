@@ -35544,8 +35544,50 @@
       "headSha": "4939c32fe8bf4a5740ed109a95a38299f5816fdd",
       "status": "All seven stages terminal; two unexpected failing commands plus expected strict 442 gaps/0 errors. Three commands not reached. Candidate unpublished.",
       "archivedAtUtc": "2026-10-11T17:22:37.940500+00:00"
+    },
+    {
+      "label": "cycle-7-typed-try-coherent-repair",
+      "cycle": 7,
+      "pack": "3fa97e2a04f3cb6a17f7630c607660a4f2d46363c52abab802462926dcf646ea.tar.gz",
+      "sha256": "3fa97e2a04f3cb6a17f7630c607660a4f2d46363c52abab802462926dcf646ea",
+      "storedBytes": 9886,
+      "members": [
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-final-bun.log",
+          "bytes": 4309,
+          "sha256": "378e33f32ad1dbfddfadeaba7f425260330d1f2ab9d41bc68211f14059f3bac3"
+        },
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-final-node.log",
+          "bytes": 8813,
+          "sha256": "fa0210e48dbcd6015b62622392ddeb5828b0ee6a679d9d709a833381939043df"
+        },
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-focused-bun.log",
+          "bytes": 42505,
+          "sha256": "aeb1cd29f47428f59b08aeee275130b20c5e79438f1d365c36f2801931cde068"
+        },
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-focused-node.log",
+          "bytes": 16381,
+          "sha256": "ead3c091a68233241e1b742e4e76ad8a5c020bc52cdfeb458e36455c664776a7"
+        },
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-pattern-diagnostic.log",
+          "bytes": 5925,
+          "sha256": "3bf3db0d20cf978c7a2b0d804c71a79ff38e01dea8f9ae94ab909458cb040b8a"
+        },
+        {
+          "path": "cycle-7-typed-try-coherent-repair/router-759-cycle7-repair-receipt.json",
+          "bytes": 2675,
+          "sha256": "52096d891663191da7d9287cda2e7937bbecebe79613c0cfd2bd29456ff3ed4c"
+        }
+      ],
+      "headSha": "26a94e8f9bec500c0a15e1fba4896a5b49951695",
+      "status": "Focused repair37/37 Node and37/37 Bun passed; fresh bulk generation and complete frozen all-seven verification remain pending.",
+      "archivedAtUtc": "2026-10-11T17:29:02.723331+00:00"
     }
   ],
-  "totalStoredPackBytes": 14468962,
-  "totalMembers": 6290
+  "totalStoredPackBytes": 14478848,
+  "totalMembers": 6296
 }
