@@ -7,7 +7,7 @@ const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,gener
 function freeze(value){if(value && typeof value === 'object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;}
 export const JSON_TYPES=freeze({value:named('serde_json','Value'),number:named('serde_json','Number'),map:named('serde_json','Map_String_Value'),entry:named('serde_json','MapEntry'),error:named('serde_json','Error'),category:named('serde_json','error','Category')});
 const {value:VALUE,number:NUMBER,map:MAP,entry:ENTRY,error:ERROR,category:CATEGORY}=JSON_TYPES;
-const U64=fixed(64,false),I64=fixed(64,true),BYTES=array(fixed(8,false)),VALUES=array(VALUE);
+const U64={...fixed(64,false),rustPrimitiveName:'u64'},I64={...fixed(64,true),rustPrimitiveName:'i64'},USIZE={...fixed(64,false),rustPrimitiveName:'usize'},BYTES=array({...fixed(8,false),rustPrimitiveName:'u8'}),VALUES=array(VALUE);
 const option=type=>named(monomorphicTypeName('Option',[type]));
 const result=type=>named(monomorphicTypeName('Result',[type,ERROR]));
 const optionTypes=[VALUE,NUMBER,MAP,STRING,BOOL,U64,I64,FLOAT,UNIT,VALUES];
@@ -18,7 +18,7 @@ export const JSON_DATA=freeze([
     declaration('Number',[ctor('PosInt',U64),ctor('NegInt',I64),ctor('Float',FLOAT)]),
     declaration('MapEntry',[{name:'MapEntry',fields:[field('key',STRING),field('value',VALUE)]}]),
     declaration('Map_String_Value',[{name:'Map',fields:[field('entries',array(ENTRY))]}]),
-    declaration('Error',[{name:'JsonError',fields:[field('category',CATEGORY),field('line',U64),field('column',U64),field('message',STRING)]}]),
+    declaration('Error',[{name:'JsonError',fields:[field('category',CATEGORY),field('line',USIZE),field('column',USIZE),field('message',STRING)]}]),
     {k:'module',name:'error',span,generated:'router-json-contract',items:[declaration('Category',['Io','Syntax','Data','Eof'].map(name=>ctor(name)))]},
   ]},
   ...optionTypes.map(type=>declaration(monomorphicTypeName('Option',[type]),[ctor('None'),ctor('Some',type)],{kind:'Option',arguments:[type]})),
@@ -40,9 +40,9 @@ export const JSON_CONTRACTS=freeze([
   contract('serde_json_from_slice','serde_json::from_slice',[BYTES],result(VALUE),{kind:'function',instantiation:VALUE,rustSignature:'from_slice::<Value>(&[u8]) -> Result<Value, Error>'}),
   ...['to_string','to_string_pretty','to_vec','to_vec_pretty'].map(name=>contract(`serde_json_${name}`,`serde_json::${name}`,[VALUE],result(name.startsWith('to_vec')?BYTES:STRING),{kind:'function',instantiation:VALUE})),
   method('value_get_string','Value','get',[STRING],option(VALUE),{overload:'string'}),
-  method('value_get_usize','Value','get',[U64],option(VALUE),{overload:'usize'}),
+  method('value_get_usize','Value','get',[USIZE],option(VALUE),{overload:'usize'}),
   method('value_index_string','Value','index',[STRING],VALUE,{overload:'string',kind:'index'}),
-  method('value_index_usize','Value','index',[U64],VALUE,{overload:'usize',kind:'index'}),
+  method('value_index_usize','Value','index',[USIZE],VALUE,{overload:'usize',kind:'index'}),
   method('value_pointer','Value','pointer',[STRING],option(VALUE)),
   ...[['str',STRING],['bool',BOOL],['u64',U64],['i64',I64],['f64',FLOAT],['null',UNIT],['number',NUMBER],['array',VALUES],['object',MAP]].map(([name,type])=>method(`value_as_${name}`,'Value',`as_${name}`,[],option(type))),
   ...['null','boolean','number','string','array','object','u64','i64','f64'].map(name=>method(`value_is_${name}`,'Value',`is_${name}`,[],BOOL)),
@@ -51,8 +51,8 @@ export const JSON_CONTRACTS=freeze([
   contract('serde_json_number_from_u64','serde_json::Number::from',[U64],NUMBER,{kind:'function',overload:'u64'}),
   contract('serde_json_number_from_i64','serde_json::Number::from',[I64],NUMBER,{kind:'function',overload:'i64'}),
   contract('serde_json_number_from_f64','serde_json::Number::from_f64',[FLOAT],option(NUMBER),{kind:'function'}),
-  method('map_get','Map','get',[STRING],option(VALUE)),method('map_values','Map','values',[],VALUES),method('map_keys','Map','keys',[],array(STRING)),method('map_len','Map','len',[],U64),method('map_is_empty','Map','is_empty',[],BOOL),
-  method('error_classify','Error','classify',[],CATEGORY),method('error_line','Error','line',[],U64),method('error_column','Error','column',[],U64),method('error_to_string','Error','to_string',[],STRING),
+  method('map_get','Map','get',[STRING],option(VALUE)),method('map_values','Map','values',[],VALUES),method('map_keys','Map','keys',[],array(STRING)),method('map_len','Map','len',[],USIZE),method('map_is_empty','Map','is_empty',[],BOOL),
+  method('error_classify','Error','classify',[],CATEGORY),method('error_line','Error','line',[],USIZE),method('error_column','Error','column',[],USIZE),method('error_to_string','Error','to_string',[],STRING),
   ...['io','syntax','data','eof'].map(name=>method(`error_is_${name}`,'Error',`is_${name}`,[],BOOL)),
 ]);
 export const jsonContracts=rustPath=>JSON_CONTRACTS.filter(contract=>contract.rustPath.join('::') === (Array.isArray(rustPath)?rustPath.join('::'):rustPath));

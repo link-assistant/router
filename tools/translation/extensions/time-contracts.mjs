@@ -5,7 +5,7 @@ const named=(...path)=>({kind:'named',path}),span={start:0,end:0};
 function freeze(value){if(value && typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-time-contract',...(standardGeneric?{standardGeneric}:{})}),field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
 export const TIME_TYPES=freeze({duration:named('std','time','Duration'),floatError:named('std','time','TryFromFloatSecsError'),floatErrorKind:named('std','time','TryFromFloatSecsErrorKind')});
-const {duration:DURATION,floatError:FLOAT_ERROR,floatErrorKind:FLOAT_ERROR_KIND}=TIME_TYPES,U64=fixed(64,false),U32=fixed(32,false),U128=fixed(128,false);
+const {duration:DURATION,floatError:FLOAT_ERROR,floatErrorKind:FLOAT_ERROR_KIND}=TIME_TYPES,U64={...fixed(64,false),rustPrimitiveName:'u64'},U32={...fixed(32,false),rustPrimitiveName:'u32'},U128={...fixed(128,false),rustPrimitiveName:'u128'};
 const option=named(monomorphicTypeName('Option',[DURATION])),result=named(monomorphicTypeName('Result',[DURATION,FLOAT_ERROR]));
 export const TIME_DATA=freeze([
   {k:'module',name:'std',span,generated:'router-time-contract',items:[{k:'module',name:'time',span,generated:'router-time-contract',items:[

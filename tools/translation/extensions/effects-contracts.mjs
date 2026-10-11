@@ -4,7 +4,8 @@ import {monomorphicTypeName} from '../monomorphic.mjs';
 import {STRING,UNIT,fixed,array} from '../vendor/meta-language/translation/types.js';
 const named = (...path) => ({kind:'named',path});
 const span = {start:0,end:0};
-const OPTION_I32=monomorphicTypeName('Option',[fixed(32,true)]);
+const I32={...fixed(32,true),rustPrimitiveName:'i32'};
+const OPTION_I32=monomorphicTypeName('Option',[I32]);
 const RESULT_STRING_IO=monomorphicTypeName('Result',[STRING,named('std','io','Error')]);
 const RESULT_UNIT_IO=monomorphicTypeName('Result',[UNIT,named('std','io','Error')]);
 const RESULT_STRING_ENV=monomorphicTypeName('Result',[STRING,named('std','env','VarError')]);
@@ -15,7 +16,7 @@ const field = (type,name='field0') => ({name,type});
 const result = (name,ok,error) => declaration(name,[constructor('Ok',[field(ok)]),constructor('Err',[field(error)])],{kind:'Result',arguments:[ok,error]});
 
 export const EFFECT_DATA = freeze([
-  declaration(OPTION_I32,[constructor('None'),constructor('Some',[field(fixed(32,true))])],{kind:'Option',arguments:[fixed(32,true)]}),
+  declaration(OPTION_I32,[constructor('None'),constructor('Some',[field(I32)])],{kind:'Option',arguments:[I32]}),
   {k:'module',name:'std',span,items:[
     {k:'module',name:'io',span,items:[declaration('Error',[constructor('IoError',[
       field(STRING,'kind'),field(STRING,'message'),field(named('crate',OPTION_I32),'raw_os_error'),

@@ -14,22 +14,23 @@ const assumptions=[
 ];
 export function fixedIntegerContracts(type,declarations=new Map(),{span={start:0,end:0}}={}) {
   if(type?.kind!=='fixed'||![8,16,32,64,128].includes(type.bits)||typeof type.signed!=='boolean')throw new TypeError('Fixed arithmetic requires an actual checked integer type');
-  const fixed={kind:'fixed',bits:type.bits,signed:type.signed};
+  const portable={kind:'fixed',bits:type.bits,signed:type.signed},fixed={...portable,...(type.rustPrimitiveName?{rustPrimitiveName:type.rustPrimitiveName}:{})};
   const name=monomorphicTypeName('Option',[fixed]),option={kind:'named',path:[name]};
   const ctors=[{name:'None',fields:[]},{name:'Some',fields:[{name:'field0',type:fixed}]}];
   const schema=valueSchema(declarations),existing=schema.types[name],declaration=declarations.get(name);
   if(declaration && (!existing||declaration.standardGeneric?.kind!=='Option'))throw new TypeError('Fixed arithmetic requires actual standard Option provenance: '+name);
-  if(existing && JSON.stringify(existing.ctors)!==JSON.stringify(ctors))throw new TypeError('Conflicting fixed arithmetic Option layout: '+name);
+  const portableCtors=[{name:'None',fields:[]},{name:'Some',fields:[{name:'field0',type:portable}]}];
+  if(existing && JSON.stringify(existing.ctors)!==JSON.stringify(portableCtors))throw new TypeError('Conflicting fixed arithmetic Option layout: '+name);
   const data=existing?[]:[{k:'data',name,ctors,span,generated:'router-fixed-integer-contract',standardGeneric:{kind:'Option',arguments:[fixed]}}];
-  const owner=(fixed.signed?'i':'u')+fixed.bits,encoding=encodeMonomorphicType(fixed);
+  const owner=fixed.rustPrimitiveName??(fixed.signed?'i':'u')+fixed.bits,encoding=encodeMonomorphicType(fixed);
   const contracts=['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].map(method=>{
     const ordered=['min','max','clamp'].includes(method);
-    const aliases=[['std','primitive',owner,method],...(fixed.bits===64?[[fixed.signed?'isize':'usize',method],['std','primitive',fixed.signed?'isize':'usize',method]]:[])];
+    const aliases=[['std','primitive',owner,method]];
     return {
       id:'rust_fixed_'+method+'_'+encoding,jsExport:'rust_fixed_'+method,rustPath:[owner,method],rustAliases:aliases,
       kind:'method',receiver:fixed,params:[fixed,fixed,...(method==='clamp'?[fixed]:[])],ret:method.startsWith('checked_')?option:fixed,
       async:false,pure:true,constEligible:!ordered,...(!ordered?{constSince:'1.47.0'}:{trait:'std::cmp::Ord',traitImplementation:'primitive-integer'}),
-      instantiation:fixed,runtimeInstantiation:{factory:'createFixedIntegerRuntime',type:fixed},assumptions,
+      instantiation:fixed,runtimeInstantiation:{factory:'createFixedIntegerRuntime',type:portable},assumptions,
     };
   });
   return freeze({type:fixed,data,option,contracts});

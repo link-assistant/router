@@ -10,7 +10,7 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 const WHITE_SPACE = '\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000';
 const MAPS = new Set(['trim', 'trim_start', 'trim_end', 'to_ascii_lowercase', 'to_ascii_uppercase']);
 const TESTS = new Set(['eq_ignore_ascii_case', 'is_empty', 'is_ascii']);
-const USIZE = fixed(64, false);
+const USIZE = {...fixed(64, false),rustPrimitiveName:'usize'};
 
 export class StringRustParser extends RustParser {
   constructor(tokens) {

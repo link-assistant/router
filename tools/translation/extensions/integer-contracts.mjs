@@ -23,7 +23,7 @@ const assumptions=[
 ];
 export function integerContracts(type,declarations=new Map()) {
   if(type?.kind !== 'fixed' || ![8,16,32,64,128].includes(type.bits) || typeof type.signed !== 'boolean')throw new TypeError('Integer parsing requires an actual checked fixed type');
-  const fixed={kind:'fixed',bits:type.bits,signed:type.signed},schema=valueSchema(declarations),missing=[];
+  const portable={kind:'fixed',bits:type.bits,signed:type.signed},fixed={...portable,...(type.rustPrimitiveName?{rustPrimitiveName:type.rustPrimitiveName}:{})},schema=valueSchema(declarations),missing=[];
   const expected=[['std.num.IntErrorKind',kindCtors],['std.num.ParseIntError',[{name:'ParseIntError',fields:[{name:'kind',type:{kind:'data',name:'std.num.IntErrorKind'}}]}]]];
   for(const [name,ctors] of expected) {
     const existing=schema.types[name];
@@ -34,13 +34,14 @@ export function integerContracts(type,declarations=new Map()) {
   const name=monomorphicTypeName('Result',[fixed,INTEGER_TYPES.error]),ret=named(name);
   const ctors=[{name:'Ok',fields:[{name:'field0',type:fixed}]},{name:'Err',fields:[{name:'field0',type:{kind:'data',name:'std.num.ParseIntError'}}]}];
   const existing=schema.types[name];
-  if(existing && JSON.stringify(existing.ctors) !== JSON.stringify(ctors))throw new TypeError(`Conflicting checked integer Result layout: ${name}`);
+  const portableCtors=[{name:'Ok',fields:[{name:'field0',type:portable}]},ctors[1]];
+  if(existing && JSON.stringify(existing.ctors) !== JSON.stringify(portableCtors))throw new TypeError(`Conflicting checked integer Result layout: ${name}`);
   if(declarations.has(name) && (!existing || declarations.get(name).standardGeneric?.kind !== 'Result'))throw new TypeError(`Conflicting checked integer Result provenance: ${name}`);
   const data=missing.length?[{k:'module',name:'std',span,items:[{k:'module',name:'num',span,items:missing}]}]:[];
   if(!existing)data.push(declaration(name,ctors,{kind:'Result',arguments:[fixed,INTEGER_TYPES.error]}));
-  const owner=`${fixed.signed?'i':'u'}${fixed.bits}`,encoding=encodeMonomorphicType(fixed),STRING={kind:'string'};
-  const aliases=method=>[['std','primitive',owner,method],...(fixed.bits === 64?[[fixed.signed?'isize':'usize',method],['std','primitive',fixed.signed?'isize':'usize',method]]:[])];
-  const base={ret,async:false,pure:true,instantiation:fixed,runtimeInstantiation:{factory:'createIntegerRuntime',type:fixed},assumptions};
+  const owner=fixed.rustPrimitiveName??`${fixed.signed?'i':'u'}${fixed.bits}`,encoding=encodeMonomorphicType(fixed),STRING={kind:'string'};
+  const aliases=method=>[['std','primitive',owner,method]];
+  const base={ret,async:false,pure:true,instantiation:fixed,runtimeInstantiation:{factory:'createIntegerRuntime',type:portable},assumptions};
   const contracts=[
     {...base,id:`rust_integer_parse_${encoding}`,jsExport:'rust_integer_parse',rustPath:['std','primitive','str','parse'],kind:'method',receiver:STRING,params:[STRING],constEligible:false,genericArity:1},
     {...base,id:`rust_integer_from_str_${encoding}`,jsExport:'rust_integer_parse',rustPath:[owner,'from_str'],rustAliases:aliases('from_str'),kind:'function',params:[STRING],constEligible:false,trait:'std::str::FromStr'},
