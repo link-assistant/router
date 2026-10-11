@@ -64,6 +64,14 @@ test('host modules coexist with source values while actual type and module owner
   for(const k of ['module','data'])assert.deepEqual(admittedHostData([host],[{k,name:'std'}]),[]);
 });
 
+test('host namespace exclusion removes dependent support transitively without rebinding to source layouts',async()=>{
+  const {admittedHostData}=await import('../extensions/source-namespaces.mjs');
+  const field=path=>({type:{kind:'named',path}}),data=(name,fields)=>({k:'data',name,ctors:[{name:'Only',fields}]}),host={k:'module',name:'std',items:[{k:'module',name:'time',items:[data('Duration',[])]}]};
+  const inner=data('Inner',[field(['std','time','Duration'])]),outer=data('Outer',[field(['Inner'])]),independent=data('Independent',[]);
+  assert.deepEqual(admittedHostData([outer,inner,host,independent],[{k:'module',name:'std',items:[]}]),[independent]);
+  assert.deepEqual(admittedHostData([outer,inner,host,independent],[{k:'fn',name:'std'}]),[outer,inner,host,independent]);
+});
+
 
 test('actual function-kind evidence permits lexical precedence and restores outer bindings',()=>{
   const parser=configured('fn value(){}');

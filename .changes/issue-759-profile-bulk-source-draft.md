@@ -9,12 +9,20 @@ missing, stale and unexpected paths. Source sets, matrix membership, required
 profiles and translator implementation hashes remain in the inventories.
 No profile-independent executable, complete platform domain or native parity
 is claimed. The reusable translator CLI supports an explicit --profile-matrix
-write or drift-check cycle. Ten newly authored source-corpus and bulk-profile tests are
-unrun. This source-only draft depends on the pending compilation-matrix helper;
-no compiler, corpus producer, full gate or local Rust build ran on it.
+write or drift-check cycle. Ten newly authored source-corpus and bulk-profile
+tests pass under Node and Bun. The complete initial 25-file regression scope
+has 240 passing and three failing cases under each engine. The failures retain
+the sparse generated-artifact prerequisite, a historical inline-function
+expectation, and dependent host support referencing a shadowed namespace.
+The latter two now have source repairs awaiting coherent rerun; no corpus
+producer, full gate or local Rust build ran in this focused window.
 Sealed plans deeply freeze their inventories, and supplied corpus selections
 are validated as ordinary path data without invoking getters or proxy traps.
 Qualified namespace setup computes ancestor macro and prelude evidence once
 for the consuming scope; other owners contribute the same namespace maps and
 visibility checks. This source-only refactor has no measured performance claim
-and awaits the existing module and namespace regression tests.
+and passes the initial module and namespace regression cases.
+When a source module excludes a registered host namespace, its dependent
+support types are excluded transitively; actual source refusals keep their
+own location. Checked inline source functions called Some execute their
+original body and preserve integer overflow checks.

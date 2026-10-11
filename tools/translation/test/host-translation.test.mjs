@@ -69,11 +69,21 @@ test('constructor spelling preserves actual source owners, function calls and de
  const files={'src/lib.rs':'mod foo; pub fn run(value:u8)->Option<u8>{foo::Some(value)}', 'src/foo.rs':'pub fn Some(value:u8)->Option<u8>{Option::Some(value + 1)}'};
  const checked=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(checked.meta.refused,[]);strict(checked);const api=(await loadJavaScript(checked.javascript)).translated;assert.deepEqual(api.run(1n),tagged('Some',{field0:2n}));assert.throws(()=>api.run(255n),RangeError);
  const local=project('pub fn Some(value:u8)->Option<u8>{Option::Some(value + 2)} pub fn run(value:u8)->Option<u8>{Some(value)}');assert.deepEqual(local.meta.refused,[]);assert.deepEqual((await loadJavaScript(local.javascript)).translated.run(1n),tagged('Some',{field0:3n}));
+ const inline=project('mod foo {pub fn Some(value:u8)->Option<u8>{Option::Some(value+1)}} pub fn invented(value:u8)->Option<u8>{foo::Some(value)}');assert.deepEqual(inline.meta.refused,[]);strict(inline);const inlineApi=(await loadJavaScript(inline.javascript)).translated;assert.deepEqual(inlineApi.invented(1n),tagged('Some',{field0:2n}));assert.throws(()=>inlineApi.invented(255n),RangeError);
  for(const source of [
   'enum Fake {None,Some(u8)} pub fn invented(value:u8)->Option<u8>{Fake::Some(value)}',
   'enum Fake {Err(u8),Ok(u8)} pub fn invented(value:u8)->Result<u8,u8>{Fake::Ok(value)}',
   'enum Fake {None,Some(u8)} pub fn invented(value:Option<u8>)->u8{match value {Fake::Some(x)=>x,Fake::None=>0}}',
-  'mod foo {pub fn Some(value:u8)->Option<u8>{Option::Some(value+1)}} pub fn invented(value:u8)->Option<u8>{foo::Some(value)}',
  ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,source);assert.ok(result.meta.refused.length,source);}
  const refused=translateProject({entry:'src/lib.rs',paths:['src/lib.rs','src/foo.rs'],readSource:path=>path==='src/foo.rs'?'pub fn Some(value:u8)->Option<u8>{missing(value)}':files[path]});assert.equal(refused.meta.executable.some(entry=>entry.name==='run'),false);
+});
+
+test('source host namespace shadows keep their own refusals and preserve unrelated checked bodies',async()=>{
+ for(const [declaration,type] of [['mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}}','std::time::Duration'],['mod serde_json {pub enum Value {Null}}','serde_json::Value']]){
+  const source=declaration+' pub fn independent(value:u8)->u8{value+1}'+` pub fn invented(value:&${type})->&${type}{value}`;
+  const result=project(source);
+  assert.ok(result.meta.executable.some(entry=>entry.name==='independent'));strict(result);
+  const api=(await loadJavaScript(result.javascript)).translated;assert.equal(api.independent(1n),2n);assert.throws(()=>api.independent(255n),RangeError);
+  assert.equal(api.invented,undefined);const refusal=result.meta.refused.find(entry=>entry.name==='invented');assert.ok(refusal?.message.includes('shadowed host type namespace'));assert.ok(refusal.span.start>=source.indexOf('pub fn invented'));
+ }
 });

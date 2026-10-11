@@ -159,5 +159,33 @@ export function withSourceNamespaceParser(Base) {
 // A value-only source name cannot remove a registered module/type owner.
 // Preserve legacy conservative exclusion for non-module support declarations.
 export function admittedHostData(support,sourceItems) {
-  return support.filter(item=>!sourceItems.some(source=>source.name===item.name&&(item.k!=='module'||['module','data'].includes(source.k))));
+  const key=path=>path.filter((part,index)=>index!==0||part!=='crate').join('.');
+  const denied=new Set(),registered=new Set();
+  const names=(items,path,operation)=>{for(const item of items){const own=[...path,item.name];operation(key(own));if(item.k==='module')names(item.items,own,operation);}};
+  const admitted=support.filter(item=>{
+    const excluded=sourceItems.some(source=>source.name===item.name&&(item.k!=='module'||['module','data'].includes(source.k)));
+    if(excluded)names([item],[],name=>denied.add(name));return !excluded;
+  });
+  if(!denied.size)return admitted;
+  names(support,[],name=>registered.add(name));
+  const dependsOnDenied=node=>{
+    if(!node||typeof node!=='object')return false;
+    if(node.kind==='named'&&Array.isArray(node.path)&&registered.has(key(node.path))&&denied.has(key(node.path)))return true;
+    return Object.values(node).some(value=>Array.isArray(value)?value.some(dependsOnDenied):dependsOnDenied(value));
+  };
+  // Registered support must not borrow a same-spelled source owner's layout.
+  // Remove its dependent support types transitively; actual source bodies then
+  // retain their own precise refusal instead of failing at a host zero span.
+  let current=admitted,changed=true;
+  while(changed){
+    changed=false;
+    const visit=(items,path=[])=>items.flatMap(item=>{
+      const own=[...path,item.name];
+      if(item.k==='module')return [{...item,items:visit(item.items,own)}];
+      if(dependsOnDenied(item)){denied.add(key(own));changed=true;return [];}
+      return [item];
+    });
+    current=visit(current);
+  }
+  return current;
 }
