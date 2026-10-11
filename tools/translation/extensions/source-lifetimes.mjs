@@ -110,7 +110,29 @@ function origins(node,env,context,returns,depth=0) {
     return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
+  if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
+  if(node.k==='routerPrimitiveDereference'&&node.dereferenceProof?.kind==='shared-str-reference-copy')return borrowed?project(read(node.value),['pointee']):new Set();
+  if(node.k==='routerIteratorOperation') {
+    const values=read(node.object),operation=node.op;
+    const element=node.type.kind==='routerIterator'?node.type.element:null;
+    if(operation==='iter')return element?uniformOrigins(element,at(values,[]),context):new Set();
+    if(['map','filter','find_map','filter_map','find','any','all'].includes(operation)) {
+      const callback=node.args[0],called=origins(callback.binding,env,{...context,lambdaInputs:[values]},returns,depth+1);
+      if(operation==='find_map')return borrowed?called:new Set();
+      if(operation==='find')return borrowed?prefix(values,['argument',0]):new Set();
+      if(operation==='filter_map')return project(called,['argument',0]);
+      if(operation==='map')return called;
+      return operation==='filter'?values:new Set();
+    }
+    if(operation==='flatten')return element?uniformOrigins(element,new Set(values),context):new Set();
+    if(operation==='fold') {
+      const initial=read(node.args[0]),callback=node.args[1];
+      return origins(callback.binding,env,{...context,lambdaInputs:[initial,values]},returns,depth+1);
+    }
+    for(const value of node.args)read(value);
+    return ['copied','cloned','take','collect'].includes(operation)?values:new Set();
+  }
   if(node.k==='routerSharedArrayLiteral') {
     if(!node.arrayBorrowProof?.verified)throw unsupported('shared array lifetime origin','requires the checked source promotion or constant-extension proof',node.span);
     return uniformOrigins(node.type,new Set(['static']),context);
@@ -136,6 +158,8 @@ function origins(node,env,context,returns,depth=0) {
     if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
     const value=read(node.value),inner=new Map(env);inner.set(node.name,value);return read(node.body,inner);
   }
+  if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
+  if(node.k==='routerOrderedMatchArms')return union(...node.branches.map(branch=>{read(branch.cond);return read(branch.body);}));
   if(['routerPanic','abort'].includes(node.k)){for(const value of node.args??[])read(value);return new Set();}
   if(['if','routerIf'].includes(node.k)){read(node.cond);const branches=union(read(node.then),read(node.else));return node.k==='routerIf'?union(branches,read(node.body)):branches;}
   if(node.k==='match') {

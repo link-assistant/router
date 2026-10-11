@@ -2,6 +2,7 @@
 // The existing matrix compiler retains first-arm priority and exhaustiveness.
 import {planPattern} from '../pattern-bindings.mjs';
 import {BOOL} from '../checked-types.mjs';
+import {hasOrderedMatchGuard,parseOrderedMatch,checkOrderedMatch} from './ordered-matches.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const LIMIT=256;
 const scalar=type=>['fixed','bool','string','unit','nat','int','float'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved;
@@ -73,6 +74,7 @@ function validateAlternativeBindings(pattern,type,checker,path,range) {
 export function withNestedMatchPatternsParser(Base) {
   return class extends Base {
     match(path) {
+      if(hasOrderedMatchGuard(this.cursor))return parseOrderedMatch(this,path);
       const cursor=this.cursor,previous=this.collectNestedMatchSyntax;this.collectNestedMatchSyntax=true;
       let node;try{node=super.match(path);}finally{this.collectNestedMatchSyntax=previous;}
       const active=node.rows.some(row=>row.patterns.some(pattern=>pattern.k==='routerNestedMatchPattern'));
@@ -150,6 +152,7 @@ export function withNestedMatchPatternsChecker(Base) {
       return super.compileMatch({...node,scrutinees:[subjectNode],rows},env,path);
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='routerOrderedMatch')return checkOrderedMatch(this,node,env,path,expected,allowLiteral);
       if(node.k==='routerNestedMatchSubject') {
         const value=this.expr(node.value,env,path,undefined),name=this.freshName('ml_match_subject'),variable={k:'var',name,type:value.type,span:node.span};
         const body=value.type.kind==='data'?{k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,span:node.span},body:variable,type:value.type,span:node.span}:variable;

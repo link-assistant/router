@@ -252,10 +252,14 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_router_unwrap: ['any', 'any', 'boolean'],
     ml_router_unexpected: ['any'],
     ml_router_array: ['ReadonlyArray<any>', '(value: any) => boolean'],
-    ml_router_iter: ['ReadonlyArray<T>'],
+    ml_router_iter: ['ReadonlyArray<T>','boolean'],
     ml_router_range: ['bigint', 'bigint', 'boolean'],
     ml_router_map: ['Iterable<T>', '(value: T) => U'],
     ml_router_filter: ['Iterable<T>', '(value: T) => boolean'],
+    ml_router_find_map: ['Iterable<T>', "(value: T) => Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>"],
+    ml_router_filter_map: ['Iterable<T>', "(value: T) => Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>"],
+    ml_router_find: ['Iterable<T>', '(value: T) => boolean'],
+    ml_router_flatten: ['Iterable<ReadonlyArray<T>>'],
     ml_router_take: ['Iterator<T>', 'bigint'],
     ml_router_collect: ['Iterable<T>'],
     ml_router_count: ['Iterable<T>'],
@@ -274,11 +278,18 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_host_option_map:["Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>",'(value: T) => U'],
   };
   const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U',ml_host_option_map_or:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
+  Object.assign(generics,{ml_router_find_map:'T, U',ml_router_filter_map:'T, U',ml_router_find:'T',ml_router_flatten:'T'});
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
     if (tokens[nameAt + 1]?.value !== '(') continue;
     const name = tokens[nameAt].value;
+    if(name==='ml_host_option_bind')annotations.push({offset:tokens[at].start,text:[
+      "function ml_host_option_bind<T,U>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>, mode:'and_then'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>;",
+      "function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: ()=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, mode:'or_else'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;",
+      "function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>boolean, mode:'is_some_and'): boolean;",
+      '',
+    ].join('\n')});
     if (generics[name]) annotations.push({ offset: tokens[nameAt].end, text: `<${generics[name]}>` });
     const known = parameterTypes.get(name);
     const helper = helperTypes[name];
@@ -289,6 +300,10 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       index++;
     }
     if(name==='ml_host_option_map_or'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': U'});}
+    if(['ml_router_find_map','ml_router_find','ml_router_filter_map','ml_router_flatten'].includes(name)) {
+      const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')'),element=name==='ml_router_find_map'||name==='ml_router_filter_map'?'U':'T';
+      annotations.push({offset:close.end,text:['ml_router_filter_map','ml_router_flatten'].includes(name)?`: IterableIterator<${element}>`:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${element}}>`});
+    }
     const standardResult={ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'U'}[name];
     if(standardResult){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${standardResult}}>`});}
     if (returnTypes.has(name)) {

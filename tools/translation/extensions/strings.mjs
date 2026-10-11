@@ -1,6 +1,7 @@
 import { RustParser, Checker, JavaScriptEmitter, emitWith } from './core.mjs';
 import { monomorphicTypeName } from '../monomorphic.mjs';
 import { tokenizeRust } from './lexical.mjs';
+import {normalizeGeneratedTypeOwner} from './generated-type-owners.mjs';
 import { BOOL, STRING, fixed, fixedBounds, typeKey, array, rustFixedType } from '../checked-types.mjs';
 import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
@@ -26,22 +27,13 @@ export class StringRustParser extends RustParser {
 
   genericType(kind, types, span) {
     if(this.builtinShadow(kind))throw unsupported(`shadowed ${kind} generic`, 'the standard prelude type requires actual resolution', span);
-    const normalize = type => {
-      if (type.kind === 'array') return { ...type, element: normalize(type.element) };
-      if (type.kind !== 'named') return type;
-      let path = this.resolve(type.path, this.modulePath);
-      if (path[0] === 'self') path = ['crate', ...this.modulePath, ...path.slice(1)];
-      if (path[0] === 'super') { let count = 0; while (path[count] === 'super') count++; if (count > this.modulePath.length) throw typeError('super beyond crate root', span); path = ['crate', ...this.modulePath.slice(0, this.modulePath.length - count), ...path.slice(count)]; }
-      if (!['crate','std','serde_json'].includes(path[0])) path = ['crate', ...this.modulePath, ...path];
-      return { ...type, path };
-    };
-    types = types.map(normalize);
+    types = types.map(type=>normalizeGeneratedTypeOwner(this,type,this.modulePath,span));
     const name = monomorphicTypeName(kind, types);
     if (!this.genericTypes.has(name)) {
       const ctors = kind === 'Option' ? [{ name: 'None', fields: [] }, { name: 'Some', fields: [{ type: types[0] }] }] : [{ name: 'Ok', fields: [{ type: types[0] }] }, { name: 'Err', fields: [{ type: types[1] }] }];
       this.genericTypes.set(name, { k: 'data', name, ctors, span, generated: 'router-monomorphic-algebraic-type', standardGeneric:{kind,arguments:types} });
     }
-    return { kind: 'named', path: [name], span };
+    return { kind: 'named', path: ['crate',name], rustGeneratedTypeOwner:{name,generated:'router-monomorphic-algebraic-type'},span };
   }
 
   builtinShadow(name,path=this.modulePath) {

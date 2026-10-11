@@ -83,7 +83,7 @@ test('unproved owners binders guards references source identities and exhaustive
     'enum C{A(u8,u8),B} pub fn wrong(v:C)->u8{match v{C::A(0 | 1,n) | C::A(n,0 | 1)=>n,C::A(_,_)=>0,C::B=>1}}',
     'enum C{A(u8),B(u8),D} pub fn wrong(v:C)->u8{match v{C::A(0 | 1)=>1,C::A(n) | C::B(other)=>0,C::D=>2}}',
     'enum C{A(u64),B(usize),D} pub fn wrong(v:C)->u64{match v{C::A(0 | 1)=>1,C::A(n) | C::B(n)=>n,C::D=>2}}',
-    'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2) if true=>0,Some(_)=>1,None=>2}}',
+    'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2) if 1=>0,Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2)=>0,None=>1}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(256 | 2)=>0,Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u64>)->u8{match v{Some(1usize | 2usize)=>0,Some(_)=>1,None=>2}}',

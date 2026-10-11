@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 // They never supply a repository function body or waive a body obligation.
 import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
+import {parseStandardMatches,emitOrderedMatch} from './ordered-matches.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
 import {withSharedArrayBorrowChecker} from './array-borrows.mjs';
@@ -83,7 +84,7 @@ export function hostData() {
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
-  genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
+  genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
   attributes(options={}) {
     if(!this.compilationProfile)return super.attributes(options);
     const c=this.cursor,result=[];
@@ -122,6 +123,10 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return super.builtinShadow(name,path);
   }
   expressionMacro(token,path) {
+    if(token.value==='matches') {
+      if((this.unresolvedBangMacroScope??this.unresolvedMacroScope)||this.unresolvedImportScope||this.shadowedBuiltinMacros?.has(token.value))throw unsupported('matches! owner','requires an actual unshadowed standard bang macro in this source scope',token);
+      return parseStandardMatches(this,token,path);
+    }
     if(this.unresolvedMacroScope || this.unresolvedImportScope || this.shadowedBuiltinMacros?.has(token.value))throw unsupported(`macro ${token.value}!`,'requires actual source macro expansion and binding resolution',token);
     const value=super.expressionMacro(token,path);return ['format','vec'].includes(token.value)?{k:'routerConstObligation',value,constEligible:false,sourceFeature:token.value+'!',span:value.span}:value;
   }
@@ -217,6 +222,12 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     }
     let offset=1;const segments=[first.value];while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path),owner=segments.slice(0,-1),operation=segments.at(-1),fixed=rustFixedType(owner.at(-1));
+    const fixedItem=owner.length===1&&fixed&&!this.builtinShadow(owner[0],path)&&INHERENT_FIXED_COPY.has(operation);
+    const stringItem=segments.length===2&&segments[0]==='str'&&operation==='to_owned'&&!this.builtinShadow('str',path);
+    if((fixedItem||stringItem)&&!c.is('(',offset)&&!c.is('::',offset)) {
+      for(let index=0;index<offset;index++)c.next();
+      return {k:'routerStandardFunctionItem',operation:segments.join('::'),method:operation,...(fixedItem?{ownerType:{...fixed,rustPrimitiveName:owner[0]}}:{}),sourceFunctionItem:{profile:fixedItem?'rust-1.89-primitive-inherent-function-item':'rust-1.89-str-to-owned-function-item',path:resolved,span:span(first,c.peek())},span:span(first,c.peek())};
+    }
     const constructor=resolved.at(-1),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);
     if(kind&&(kind==='Option'?['Some','None']:['Ok','Err']).includes(constructor)){
       for(let index=0;index<offset;index++)c.next();const args=[];if(c.eat('(')){while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','registered standard constructor');}
@@ -256,6 +267,18 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
   }
   hostLambda(node,types,env,path,expected,context) {
     if(node.k==='routerLambda')return this.lambda(node,types,env,path,expected,context);
+    if(node.k==='routerStandardFunctionItem') {
+      const names=types.map((_,index)=>`ml_standard_callback_${this.fresh++}_${index}`),args=names.map(name=>({k:'name',path:[name],span:node.span}));
+      let body;
+      if(node.operation==='str::to_owned') {
+        if(types.length!==1||types[0].kind!=='string'||types[0].rustReference||types[0].rustOwnership?.kind!=='borrowed'||types[0].rustOwnership.source!=='str')throw typeError('str::to_owned function item needs its actual borrowed str argument',node.span);
+        body={k:'routerStringOwnership',operation:'to_owned',object:args[0],span:node.span};
+      } else {
+        if(types.length!==2||types.some(type=>type.rustReference||type.rustOwnership||type.rustPrimitiveName!==node.ownerType.rustPrimitiveName||!sameType(type,node.ownerType)))throw typeError('standard fixed method function item needs actual by-value primitive arguments',node.span);
+        body={k:'routerDispatchMethod',method:node.method,object:args[0],args:args.slice(1),span:node.span};
+      }
+      return this.lambda({k:'routerLambda',params:names.map(name=>({name,span:node.span})),body,span:node.span},types,env,path,expected,context);
+    }
     if(node.k!=='name')throw unsupported('callback value','only checked closures or resolved function items are supported',node.span);
     const names=types.map((_,index)=>`ml_host_callback_${this.fresh++}_${index}`);
     return this.lambda({k:'routerLambda',params:names.map(name=>({name,span:node.span})),body:{k:'app',fn:node,args:names.map(name=>({k:'name',path:[name],span:node.span})),span:node.span},span:node.span},types,env,path,expected,context);
@@ -270,7 +293,21 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
       if(contract.params.length!==args.length)continue;
       try {
         if(instantiation && (!contract.instantiation||!sameType(this.hostType(contract.instantiation,path,range),this.resolveType(instantiation,path,range))))throw typeError('unsupported host generic instantiation',range);
-        const values=args.map((arg,index)=>{const type=this.hostType(contract.params[index],path,range);return coerce(this.expr(arg,env,path,type),type,this.language,range);});
+        const values=args.map((arg,index)=>{
+          const type=this.hostType(contract.params[index],path,range);
+          if(index!==0||contract.kind!=='method'||type.rustReference?.kind!=='shared')return coerce(this.expr(arg,env,path,type),type,this.language,range);
+          let value=this.expr(arg,env,path);
+          // Shared references are Copy. Registered inherent method dispatch
+          // may peel an actual &&receiver to its &receiver; no owned aggregate
+          // move, custom Deref trait, or missing pointee is inferred here.
+          while(value.type.rustReference?.kind==='shared'&&value.type.rustReference.pointee?.rustReference?.kind==='shared') {
+            const pointee=value.type.rustReference.pointee;
+            if(pointee.rustGenericIdentityUnresolved||!sameType(pointee,type))break;
+            value={k:'routerStandardSharedReceiver',object:value,type:pointee,constEligible:false,sourceReceiverCopy:{profile:'rust-1.89-shared-reference-copy',contract:contract.id,span:range},span:range};
+          }
+          this.expectedOwnership?.(value.type,type,path,range);this.expectedPrimitiveIdentity(value.type,type,path,range);
+          return coerce(value,type,this.language,range);
+        });
         const type=this.hostType(contract.ret,path,range);if(expected && !sameType(type,expected))throw typeError('host operation return type mismatch',range);
         this.expectedPrimitiveIdentity(type,expected,path,range);
         const resolved=this.instantiations.contracts.has(contract.id)?{...contract,params:contract.params.map(type=>this.hostType(type,path,range)),ret:type,runtimeInstantiation:{...contract.runtimeInstantiation,...(contract.runtimeInstantiation?.validatorType?{validatorType:this.hostType(contract.runtimeInstantiation.validatorType,path,range)}:{})}}:null;
@@ -301,7 +338,9 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
     if(node.k==='routerSharedArrayLiteral')return this.sharedArrayBorrow(node,env,path,expected);
     if(node.k==='routerPrimitiveDereference') {
       if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);
-      const value=this.expr(node.value,env,path),type=sharedFixedPointee(value.type,node.span);
+      const value=this.expr(node.value,env,path),reference=value.type.rustReference,pointee=reference?.pointee;
+      if(value.type.kind==='string'&&reference?.kind==='shared'&&pointee?.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str'&&!pointee.rustGenericIdentityUnresolved)return {...node,value,type:pointee,dereferenceProof:{kind:'shared-str-reference-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
+      const type=sharedFixedPointee(value.type,node.span);
       return {...node,value,type,dereferenceProof:{kind:'shared-fixed-copy',primitiveName:type.rustPrimitiveName,reference:structuredClone(value.type.rustReference),sourceFeature:node.sourceFeature,span:node.span}};
     }
     if(node.k==='num'&&expected?.kind==='fixed'&&expected.patternOwnershipRefusal)throw unsupported('integer reference literal','a literal needs checked borrowing or promotion, not a portable integer domain',node.span);
@@ -403,7 +442,7 @@ export class HostEmitter extends EffectEmitter {
     // that helper can invoke a hostile object's conversion hooks.
     if(param.type.kind==='fixed')return [`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&(type.rustFixedArray||hasData(type.element));
-    if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
+    if(!hasData(param.type)&&param.type.kind!=='float')return [...(this.iteratorParameterGuards?.(param)??[]),...super.parameterGuard(param)];
     // A helper's guard must depend only on its actual reachable parameter
     // layout, not on unrelated callers in another checked dependency closure.
     return [...(this.iteratorParameterGuards?.(param)??[]),...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
@@ -429,8 +468,11 @@ export class HostEmitter extends EffectEmitter {
     }
     if(node.type?.kind==='array'&&node.type.rustFixedArray) {
       this.fixedArrays=true;
-      return `ml_copy_fixed_array(${super.expr(node)}, ${JSON.stringify(runtimeValueType(node.type))})`;
+      const value=node.k==='routerOrderedMatchArms'?emitOrderedMatch(this,node):node.k==='routerStandardSharedReceiver'?this.expr(node.object):super.expr(node);
+      return `ml_copy_fixed_array(${value}, ${JSON.stringify(runtimeValueType(node.type))})`;
     }
+    if(node.k==='routerOrderedMatchArms')return emitOrderedMatch(this,node);
+    if(node.k==='routerStandardSharedReceiver')return this.expr(node.object);
     if(node.k==='routerSharedArrayLiteral'){if(!node.arrayBorrowProof?.verified)throw new Error('missing checked shared array origin proof');return `Object.freeze(${this.expr(node.value)})`;}
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);

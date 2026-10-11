@@ -2,6 +2,7 @@
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT} from '../checked-types.mjs';
+import {normalizeGeneratedTypeOwner} from './generated-type-owners.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {withParameterPatternParser} from './parameter-patterns.mjs';
@@ -27,7 +28,7 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
     const name=monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
     if(!this.genericTypes.has(name))this.genericTypes.set(name,{k:'data',name,tuple:true,ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,generated:'router-tuple-type'});
     const ownership=fields.map(field=>field.type.patternOwnershipRefusal).find(Boolean);
-    return {kind:'named',path:['crate',name],span:location,...(ownership?{patternOwnershipRefusal:ownership}:{})};
+    return {kind:'named',path:['crate',name],rustGeneratedTypeOwner:{name,generated:'router-tuple-type'},span:location,...(ownership?{patternOwnershipRefusal:ownership}:{})};
   }
   type() {
     const c=this.cursor;if(!c.is('('))return super.type();
@@ -35,18 +36,9 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
     const fields=[];
     for(;;) {
       const begin=c.index,type=this.type();
-      const normalize=type=>{
-        if(type.kind==='array')return {...type,element:normalize(type.element)};
-        if(type.kind!=='named')return type;
-        let path=type.path;
-        if(path[0]==='self')path=['crate',...this.modulePath,...path.slice(1)];
-        else if(path[0]==='super'){let up=0;while(path[up]==='super')up++;if(up>this.modulePath.length)throw typeError('super beyond crate root',span(start,c.peek()));path=['crate',...this.modulePath.slice(0,-up),...path.slice(up)];}
-        else if(!['crate','std','serde_json'].includes(path[0]))path=['crate',...this.modulePath,...path];
-        return {...type,path};
-      };
       const rustTypeSyntax=c.tokens.slice(begin,c.index).map(token=>token.raw??token.value);
       if(rustTypeSyntax.some(token=>['Box','Vec','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit','mut','*'].includes(token)))throw unsupported('tuple field ownership','ownership-bearing product fields need a separately checked contract',span(start,c.peek()));
-      fields.push({name:`field${fields.length}`,type:normalize(type),rustTypeSyntax});
+      fields.push({name:`field${fields.length}`,type:normalizeGeneratedTypeOwner(this,type,this.modulePath,span(start,c.peek())),rustTypeSyntax});
       if(!c.eat(',')) {if(fields.length===1){c.expect(')','parenthesized type');return type;}c.expect(')','tuple type');break;}
       if(c.eat(')'))break;
     }

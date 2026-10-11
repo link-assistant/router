@@ -15,9 +15,9 @@ export const STANDARD_ITERATOR_ITEM_PROFILE=Object.freeze({id:'rust-1.89-scalar-
   Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs',sha256:'d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab',lines:Object.freeze([892,895,3417,3465])}),
   Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/accum.rs',sha256:'5d04c4da341f5a96aa9605ab1624a4e9bc745bd14b3b870fd683544b03291566',lines:Object.freeze([70,149])}),
 ])});
-const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned']);
+const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned','find_map','filter_map','find','flatten']);
 function sharedItem(type,span,source) {
-  const result={...type,rustSourceType:true,patternOwnershipRefusal:'shared iterator item',rustReference:{kind:'shared',pointee:structuredClone(type),source,span:{...span}}};
+  const result={...type,rustSourceType:true,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(type),source,span:{...span}}};
   if(type.rustOwnership?.kind==='owned')result.rustOwnership={kind:'borrowed',source:type.rustOwnership.source};
   delete result.rustBorrowLifetime;
   return result;
@@ -29,6 +29,33 @@ function copyItem(type,span) {
   const scalar=primitive&&primitive.bits===pointee.bits&&primitive.signed===pointee.signed||pointee.kind==='bool'||pointee.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str';
   if(!pointee.rustReference&&(!scalar||pointee.rustGenericIdentityUnresolved))throw unsupported('iterator scalar Copy/Clone','requires an actual checked standard primitive or shared-reference Copy item',span);
   return structuredClone(pointee);
+}
+function optionPayload(checker,type,path,span) {
+  const entry=type.kind==='data'?checker.items.get(type.name):null;
+  const provenance=type.rustStandardGeneric??entry?.standardGeneric;
+  if(type.rustReference||entry?.standardGeneric?.kind!=='Option'||provenance?.kind!=='Option'||provenance.arguments?.length!==1||entry.ctors.length!==2)throw unsupported('iterator Option result','requires an actual by-value registered standard Option',span);
+  const some=entry.ctors.find(ctor=>ctor.name==='Some'),none=entry.ctors.find(ctor=>ctor.name==='None');
+  if(!some||some.fields.length!==1||!none||none.fields.length)throw typeError('iterator Option result has an invalid actual checked layout',span);
+  const element=checker.resolveType(provenance.arguments[0],entry.modulePath,span),layout=checker.resolveType(some.fields[0].type,entry.modulePath,span);
+  if(!sameType(element,layout))throw typeError('iterator Option payload differs from its registered layout',span);
+  checker.expectedOwnership?.(element,layout,path,span);checker.expectedPrimitiveIdentity?.(element,layout,path,span);
+  return element;
+}
+function readonlyElement(checker,type,span,depth=0) {
+  if(depth>128)throw unsupported('iterator nested view','requires a bounded source element profile',span);
+  if(type.rustGenericIdentityUnresolved)throw unsupported('iterator element identity','requires an actual checked source element',span);
+  if(type.kind==='array') {
+    const pointee=type.rustReference?.kind==='shared'?type.rustReference.pointee:null;
+    if(pointee?.kind!=='array'||!sameType(type.element,pointee.element))return false;
+    checker.expectedOwnership?.(type.element,pointee.element,[],span);checker.expectedPrimitiveIdentity?.(type.element,pointee.element,[],span);
+    return readonlyElement(checker,pointee.element,span,depth+1);
+  }
+  if(type.kind==='data') {
+    const entry=checker.items.get(type.name);
+    if(!entry||entry.k!=='data')throw typeError('borrowed iterator element requires its checked data declaration',span);
+    return true;
+  }
+  return ['fixed','bool','string'].includes(type.kind);
 }
 const span = (start, end) => ({ start: start.start, end: end.end });
 const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue', 'routerTry', 'routerAwait'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
@@ -73,7 +100,7 @@ export class IteratorRustParser extends DataRustParser {
           if(!c.eat(','))break;
           continue;
         }
-        c.eat('&');
+        if(c.is('&'))throw unsupported('reference callback pattern','requires an explicit checked reference-pattern Copy profile',c.peek());
         if (c.is('mut')) throw unsupported('mutable closure parameter', 'only immutable scalar callback arguments are lowered', c.peek());
         const token = c.identifier('closure parameter');
         const type = c.eat(':') ? this.type() : null;
@@ -128,6 +155,22 @@ export class IteratorRustParser extends DataRustParser {
 }
 
 export class IteratorChecker extends DataChecker {
+  iteratorOptionExpected(node,env,path) {
+    // Infer only a genuinely resolved standard Some constructor. Its actual
+    // checked argument supplies the monomorphic payload, never a user enum's
+    // shape or a consuming operation's unrelated accumulator type.
+    if(node.k==='if')return this.iteratorOptionExpected(node.then,env,path)??this.iteratorOptionExpected(node.else,env,path);
+    if(node.k==='let') {
+      const value=this.expr(node.value,env,path,node.type?this.resolveType(node.type,path,node.span):undefined);
+      return this.iteratorOptionExpected(node.body,this.bindingEnvironment(env,node.name,value.type),path);
+    }
+    const registered=node.k==='routerRegisteredConstructor'&&node.kind==='Option'&&node.constructor==='Some';
+    const callee=node.k==='app'?node.fn:null;
+    if(!registered&&(callee?.k!=='name'||callee.path.at(-1)!=='Some'))return undefined;
+    if(node.args.length!==1)return undefined;
+    const value=this.expr(node.args[0],env,path),option=this.instantiations?.option(value.type,node.span);
+    return option&&(registered||this.standardConstructor(callee.path,option,path,env,node.span))?option:undefined;
+  }
   lambda(node, argumentTypes, env, path, expected, context) {
     if (node.k !== 'routerLambda' || node.params.length !== argumentTypes.length) throw typeError(`iterator callback needs ${argumentTypes.length} scalar parameters`, node.span);
     if (containsExit(node.body)) throw unsupported('closure exit', 'callback bodies must use tail values', node.span);
@@ -137,9 +180,14 @@ export class IteratorChecker extends DataChecker {
     }
     let inner = new Map(env);
     node.params.forEach((param, index) => {
-      if (param.type && !sameType(this.resolveType(param.type, path, param.span), argumentTypes[index])) throw typeError('callback parameter type differs from iterator element', param.span);
+      if(param.type) {
+        const declared=this.resolveType(param.type,path,param.span);
+        if(!sameType(declared,argumentTypes[index]))throw typeError('callback parameter type differs from iterator element',param.span);
+        this.expectedOwnership?.(argumentTypes[index],declared,path,param.span);this.expectedPrimitiveIdentity?.(argumentTypes[index],declared,path,param.span);
+      }
       inner = this.bindingEnvironment(inner, param.name, argumentTypes[index]);
     });
+    if(!expected&&context?.source==='iterator')expected=this.iteratorOptionExpected(node.body,inner,path);
     let body = this.expr(node.body, inner, path, expected);
     if (expected) body = coerce(body, expected, this.language, node.span);
     const result = body.type;
@@ -171,26 +219,47 @@ export class IteratorChecker extends DataChecker {
     if (node.k === 'routerLambda') throw unsupported('standalone closure', 'closures need a typed iterator callback context', node.span);
     if (node.k !== 'routerIteratorOperation') return super.expr(node, env, path, expected, allowLiteral);
     const op = node.op;
-    const count = { map: 1, filter: 1, take: 1, any: 1, all: 1, fold: 2 }[op] ?? 0;
+    const count = { map: 1, filter: 1, take: 1, any: 1, all: 1, fold: 2,find_map:1,filter_map:1,find:1 }[op] ?? 0;
     if (node.args.length !== count) throw typeError(`${op} expects ${count} arguments`, node.span);
     const wanted = node.explicit ? this.resolveType(node.explicit, path, node.span) : expected;
     const itemExpected = op === 'collect' && wanted?.kind === 'array' ? { kind: 'routerIterator', element: wanted.element } : expected?.kind === 'routerIterator' ? expected : undefined;
     const object = this.expr(node.object, env, path, itemExpected);
     if (op === 'iter' || op === 'into_iter') {
       if (object.type.kind !== 'array') throw unsupported('iterator receiver', 'only immutable typed scalar arrays have an iterator adapter', node.span);
-      if (!['fixed', 'bool', 'string'].includes(object.type.element.kind)) throw unsupported('iterator element', 'aggregate borrowing and ownership need separate adapters', node.span);
       const borrowed=op==='iter'||object.type.rustReference||object.type.rustOwnership?.kind==='borrowed';
+      if(!readonlyElement(this,object.type.element,node.span)||object.type.element.kind==='data'&&!borrowed)throw unsupported('iterator element','only actual immutable borrowed aggregates or scalar values have a checked adapter',node.span);
       const element=borrowed?sharedItem(object.type.element,node.span,op==='iter'?'slice::iter':'borrowed-IntoIterator'):object.type.element;
       return { k: 'routerIteratorOperation', op: 'iter', object, args: [], type: { kind: 'routerIterator', element }, sourceIteratorProof:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,borrowed:Boolean(borrowed),receiverType:structuredClone(object.type),span:{...node.span}},span: node.span };
     }
     if (object.type.kind !== 'routerIterator') throw typeError(`${op} requires a supported iterator`, node.span);
     const element = object.type.element;
+    const callback=(node,types,expected)=>typeof this.hostLambda==='function'?this.hostLambda(node,types,env,path,expected,{source:'iterator',receiverType:object.type}):this.lambda(node,types,env,path,expected,{source:'iterator',receiverType:object.type});
+    if(['find_map','filter_map'].includes(op)) {
+      const wantedElement=op==='find_map'&&wanted?optionPayload(this,wanted,path,node.span):itemExpected?.element;
+      const expectedOption=wantedElement?this.instantiations?.option(wantedElement,node.span):undefined;
+      const transform=callback(node.args[0],[element],expectedOption),result=optionPayload(this,transform.type.result,path,node.span);
+      if(!readonlyElement(this,result,node.span)&&result.kind!=='array')throw unsupported('filtered iterator payload','requires an actual checked scalar or borrowed aggregate',node.span);
+      if(['array','data'].includes(result.kind)&&!result.rustReference)throw unsupported('filtered aggregate move','requires an actual shared source payload, not an owned aggregate move',node.span);
+      const type=op==='find_map'?transform.type.result:{kind:'routerIterator',element:result};
+      return {k:'routerIteratorOperation',op,object,args:[transform],type,sourceIteratorProof:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,callbackOption:transform.type.result,span:{...node.span}},span:node.span};
+    }
+    if(op==='find') {
+      const predicate=callback(node.args[0],[sharedItem(element,node.span,'Iterator::find')],BOOL);
+      if(!this.instantiations?.option)throw unsupported('Iterator::find','requires canonical checked standard Option instantiation',node.span);
+      return {k:'routerIteratorOperation',op,object,args:[predicate],type:this.instantiations.option(element,node.span),sourceIteratorProof:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,itemType:element,span:{...node.span}},span:node.span};
+    }
+    if(op==='flatten') {
+      const reference=element.rustReference,pointee=reference?.pointee;
+      if(element.kind!=='array'||reference?.kind!=='shared'||pointee?.kind!=='array'||!sameType(element.element,pointee.element)||!readonlyElement(this,pointee.element,node.span))throw unsupported('Iterator::flatten','only actual shared checked slice/Vec views have an IntoIterator profile',node.span);
+      const result=sharedItem(pointee.element,node.span,'borrowed-IntoIterator');
+      return {k:'routerIteratorOperation',op,object,args:[],type:{kind:'routerIterator',element:result},sourceIteratorProof:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,itemType:element,borrowed:true,span:{...node.span}},span:node.span};
+    }
     if (['copied', 'cloned'].includes(op))return {...object,type:{kind:'routerIterator',element:copyItem(element,node.span)},sourceIteratorCopy:{profile:STANDARD_ITERATOR_ITEM_PROFILE.id,operation:op,itemType:structuredClone(element),span:{...node.span}}};
     if (op === 'map' || op === 'filter') {
-      const callback = this.lambda(node.args[0], [op==='filter'?sharedItem(element,node.span,'Iterator::filter'):element], env, path, op === 'filter' ? BOOL : itemExpected?.element,{source:'iterator'});
-      const result = op === 'map' ? callback.type.result : element;
+      const transform = callback(node.args[0], [op==='filter'?sharedItem(element,node.span,'Iterator::filter'):element], op === 'filter' ? BOOL : itemExpected?.element);
+      const result = op === 'map' ? transform.type.result : element;
       if (!['fixed', 'bool', 'string'].includes(result.kind)) throw unsupported('mapped iterator result', 'only scalar iterator values have a checked contract', node.span);
-      return { k: 'routerIteratorOperation', op, object, args: [callback], type: { kind: 'routerIterator', element: result }, span: node.span };
+      return { k: 'routerIteratorOperation', op, object, args: [transform], type: { kind: 'routerIterator', element: result }, span: node.span };
     }
     if (op === 'take') {
       const limit = coerce(this.expr(node.args[0], env, path, USIZE), USIZE, this.language, node.span);
@@ -205,13 +274,13 @@ export class IteratorChecker extends DataChecker {
       if(wanted?.patternOwnershipRefusal||wanted?.rustPrimitiveName&&wanted.rustPrimitiveName!=='usize')throw typeError('Iterator::count returns actual by-value usize, not an equal-width Rust primitive or reference',node.span);
       return { k: 'routerIteratorOperation', op, object, args: [], type: USIZE, span: node.span };
     }
-    if (op === 'any' || op === 'all') return { k: 'routerIteratorOperation', op, object, args: [this.lambda(node.args[0], [element], env, path, BOOL,{source:'iterator'})], type: BOOL, span: node.span };
+    if (op === 'any' || op === 'all') return { k: 'routerIteratorOperation', op, object, args: [callback(node.args[0], [element], BOOL)], type: BOOL, span: node.span };
     if (op === 'fold') {
       let initial = this.expr(node.args[0], env, path, wanted);
       if (wanted) initial = coerce(initial, wanted, this.language, node.span);
       if (!['fixed', 'bool', 'string'].includes(initial.type.kind)) throw unsupported('fold accumulator', 'only scalar accumulators have a checked contract', node.span);
-      const callback = this.lambda(node.args[1], [initial.type, element], env, path, initial.type,{source:'iterator'});
-      return { k: 'routerIteratorOperation', op, object, args: [initial, callback], type: initial.type, span: node.span };
+      const combine = callback(node.args[1], [initial.type, element], initial.type);
+      return { k: 'routerIteratorOperation', op, object, args: [initial, combine], type: initial.type, span: node.span };
     }
     if (op === 'sum') {
       const result=element.rustReference?copyItem(element,node.span):element;
@@ -224,9 +293,13 @@ export class IteratorChecker extends DataChecker {
 
 const HELPERS = {
   range: 'function* ml_router_range(start, end, inclusive) { for (let value = start; value < end || inclusive && value === end;) { yield value; if (value === end) return; value += 1n; } }',
-  iter: 'function ml_router_iter(values) { return Array.prototype.values.call(values); }',
+  iter: 'function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }',
   map: 'function* ml_router_map(values, transform) { for (const value of values) yield transform(value); }',
   filter: 'function* ml_router_filter(values, predicate) { for (const value of values) if (predicate(value)) yield value; }',
+  find_map:'function ml_router_find_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") return result; } return Object.freeze({ $: "None" }); }',
+  filter_map:'function* ml_router_filter_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }',
+  find:'function ml_router_find(values, predicate) { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }',
+  flatten:'function* ml_router_flatten(values) { for (const value of values) { ml_assert_immutable_iterator(value); yield* Array.prototype.values.call(value); } }',
   take: 'function* ml_router_take(values, limit) { while (limit > 0n) { const next = values.next(); if (next.done) return; limit -= 1n; yield next.value; } }',
   collect: 'function ml_router_collect(values) { return Object.freeze(Array.from(values)); }',
   count: 'function ml_router_count(values) { let count = 0n; for (const value of values) { void value; count += 1n; } return count; }',
@@ -237,9 +310,20 @@ const HELPERS = {
 
 export class IteratorEmitter extends DataEmitter {
   constructor(program, state) { super(program, state); this.iteratorHelpers = new Set(); }
+  fn(entry) {
+    const previous=this.iteratorAggregateFunction;
+    const contains=node=>node&&typeof node==='object'&&(node.k==='routerIteratorOperation'&&(['find_map','filter_map','find','flatten'].includes(node.op)||node.op==='iter'&&node.type.element.kind==='data')||Object.entries(node).some(([key,value])=>!['type','sourceIteratorProof'].includes(key)&&(Array.isArray(value)?value.some(contains):contains(value))));
+    this.iteratorAggregateFunction=Boolean(contains(entry.body));
+    try{return super.fn(entry);}finally{this.iteratorAggregateFunction=previous;}
+  }
+  iteratorParameterGuards(param) {
+    if(!this.iteratorAggregateFunction||!['array','data'].includes(param.type.kind))return [];
+    this.iteratorImmutability=true;return [`ml_assert_immutable_iterator(${param.name});`];
+  }
   file() {
     const result = super.file();
     const helpers = [...this.iteratorHelpers].map(name => HELPERS[name]);
+    if(this.iteratorImmutability||this.iteratorHelpers.has('flatten'))helpers.unshift(`import { assertImmutableIterator as ml_assert_immutable_iterator } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'iterator-runtime.mjs'))};`);
     return { ...result, preludes: [...result.preludes, ...helpers], text: [...helpers, result.text].join('\n') };
   }
   statements(node, unit = false) {
@@ -260,7 +344,8 @@ export class IteratorEmitter extends DataEmitter {
     }
     if (node.k !== 'routerIteratorOperation') return super.expr(node);
     const object = this.expr(node.object);
-    this.state.encode('rust-lazy-scalar-iterators', 'immutable scalar slice adapters preserve lazy map/filter evaluation and short-circuit any/all/take; aggregate ownership and consuming an iterator twice are not established');
+    if(node.op==='iter'){this.iteratorImmutability=true;this.iteratorHelpers.add('iter');return `ml_router_iter(${object}, ${node.type.element.kind==='data'})`;}
+    this.state.encode('rust-lazy-checked-iterators', 'lazy checked callbacks preserve iteration order and short circuiting; shared aggregate views require immutable descriptor-only runtime guards, while owned aggregate moves and consuming an iterator twice remain unsupported');
     if (node.op === 'sum') {
       this.iteratorHelpers.add('fold');
       const addition = this.checked('(left + right)', node.type, 'add');

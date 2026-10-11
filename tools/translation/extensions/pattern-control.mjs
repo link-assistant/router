@@ -12,6 +12,14 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
+function immutableBinding(type,checker,active=new Set()) {
+  if(type.rustGenericIdentityUnresolved)return false;
+  if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);
+  if(scalar(type))return !type.patternOwnershipRefusal&&type.rustOwnership?.kind!=='owned';
+  const entry=type.kind==='data'?checker.items.get(type.name):null,profile=type.rustStandardGeneric??entry?.standardGeneric;
+  if(!entry||!['Option','Result'].includes(entry.standardGeneric?.kind)||profile?.kind!==entry.standardGeneric.kind||active.has(type.name))return false;
+  active.add(type.name);const result=profile.arguments.every(argument=>immutableBinding(checker.resolveType(argument,entry.modulePath,entry.span),checker,active));active.delete(type.name);return result;
+}
 const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);
 function checkCallbackCaptures(node,env,bound,span) {
   if(!node||typeof node!=='object')return;
@@ -199,6 +207,11 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return type?.patternOwnershipRefusal?{...resolved,patternOwnershipRefusal:type.patternOwnershipRefusal}:resolved;
     }
     patternOwner(node,type,path,env) {
+      if(type.rustReference) {
+        if(node.k==='wild'||node.k==='bind')return node;
+        if(node.k==='bindOrCtor') {const actual=this.lookup([node.name],path,node.span);if(!actual||actual.k==='fn')return {k:'bind',name:node.name,span:node.span};}
+        throw unsupported('shared aggregate pattern','only a checked reference binder or wildcard is lowered; nested borrowed destructuring requires another profile',node.span);
+      }
       const location=node.span,entry=type.kind==='data'?this.items.get(type.name):null;
       if(node.k==='or')return {...node,alternatives:node.alternatives.map(child=>this.patternOwner(child,type,path,env))};
       if(node.k==='routerTuplePattern') {
@@ -235,6 +248,11 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return normalized;
     }
     patternDomain(type,span,active=new Set()) {
+      if(type.rustReference) {
+        const reference=type.rustReference,pointee=reference.pointee;
+        if(reference.kind!=='shared'||!pointee||type.rustGenericIdentityUnresolved||pointee.kind==='data'&&!this.items.has(pointee.name))throw unsupported('shared pattern reference','requires its actual checked immutable source pointee',span);
+        return;
+      }
       if(type.patternOwnershipRefusal)throw unsupported('if-let ownership',type.patternOwnershipRefusal,span);
       if(type.kind!=='data')return;
       if(active.has(type.name))throw unsupported('recursive if-let layout','recursive ownership requires a separate contract',span);
@@ -246,6 +264,11 @@ export function withPatternControlChecker(Base=ControlChecker) {
         this.patternDomain(field.type,span,active);
       }
       active.delete(type.name);
+    }
+    sharedPatternView(type,active=new Set()) {
+      if(type.rustReference&&['data','array'].includes(type.rustReference.pointee?.kind))return true;
+      if(type.kind!=='data'||active.has(type.name))return false;
+      active.add(type.name);const entry=this.items.get(type.name),result=entry?.ctors.some(ctor=>ctor.fields.some(field=>this.sharedPatternView(field.type,active)))??false;active.delete(type.name);return result;
     }
     patternProjection(subject,projection,targetType) {
       let value=subject;
@@ -341,14 +364,14 @@ export function withPatternControlChecker(Base=ControlChecker) {
         const pattern=this.patternOwner(node.pattern,subject.type,path,env);
         const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
         if(plan.refutable)throw typeError('ordinary tuple let requires an irrefutable checked pattern',node.span);
-        for(const binding of plan.bindings)if(!scalar(binding.type))throw unsupported('tuple aggregate binding','only immutable scalar bindings have a checked ownership contract',binding.span??node.span);
+        for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('tuple aggregate binding','requires immutable scalar/shared-reference or actual standard Copy algebraic bindings',binding.span??node.span);
         let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
         const variable={k:'var',name:temporary,type:subject.type,span:node.span};
         let inner=new Map(env);
         for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
         let body=this.expr(node.body,inner,path,expected,allowLiteral);
         body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
-        if(subject.type.kind==='data')body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL},body,type:body.type,span:node.span};
+        if(subject.type.kind==='data')body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},body,type:body.type,span:node.span};
         return {k:'let',name:temporary,value:subject,body,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'tuple-let'}};
       }
       if(node.k==='routerLetElse') {
@@ -394,7 +417,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       this.patternDomain(subject.type,node.span);
       const pattern=this.patternOwner(node.cond.pattern,subject.type,path,env);
       const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
-      for(const binding of plan.bindings)if(!scalar(binding.type))throw unsupported('if-let aggregate binding','only immutable scalar bindings are lowered; aggregate moves and aliases need ownership semantics',binding.span??node.span);
+      for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('if-let aggregate binding','requires immutable scalar/shared-reference or actual standard Copy algebraic bindings',binding.span??node.span);
       let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
       const variable={k:'var',name:temporary,type:subject.type,span:node.span};
       let inner=new Map(env);
@@ -408,7 +431,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       then=coerce(then,resultType,this.language,node.span);otherwise=coerce(otherwise,resultType,this.language,node.span);
       then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),then);
       let condition=this.patternTest(plan.test,variable);
-      if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL},right:condition,type:BOOL};
+      if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:condition,type:BOOL};
       const conditional={k:node.k,cond:condition,then,else:otherwise,type:resultType,span:node.span};
       if(statement){conditional.body=this.expr(node.body,env,path,expected,allowLiteral);conditional.type=conditional.body.type;}
       return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:node.span,patternControl:{plan,subjectType:subject.type}};
@@ -418,16 +441,24 @@ export function withPatternControlChecker(Base=ControlChecker) {
 export function withPatternControlEmitter(Base=ControlEmitter) {
   return class extends Base {
     constructor(program,state) {
-      super(program,state);state.reserved.add('ml_pattern_immutable');
+      super(program,state);state.reserved.add('ml_pattern_immutable').add('ml_pattern_immutable_view');
     }
     fn(entry) {
-      const previous=this.patternFunction;
+      const previous=this.patternFunction,previousView=this.patternViewFunction;
       const contains=node=>node&&typeof node==='object'&&(node.patternControl||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(contains):contains(value))));
       this.patternFunction=Boolean(contains(entry.body));
-      try{return super.fn(entry);}finally{this.patternFunction=previous;}
+      const view=node=>node&&typeof node==='object'&&(node.k==='routerPatternImmutable'&&node.borrowedAggregate||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(view):view(value))));
+      this.patternViewFunction=Boolean(view(entry.body));
+      try{return super.fn(entry);}finally{this.patternFunction=previous;this.patternViewFunction=previousView;}
     }
     patternParameterGuards(param) {
       if(!this.patternFunction||param.type.kind!=='data')return [];
+      // An unrelated shared aggregate parameter is a borrowed view even when
+      // this function destructures a different, by-value Copy tuple. Its
+      // legitimate immutable arrays do not become a Rust Copy receiver.
+      if(this.patternViewFunction||param.type.rustReference?.kind==='shared'){
+        this.patternViewImmutability=true;return [`ml_pattern_immutable_view(${param.name});`];
+      }
       this.patternImmutability=true;
       return [`ml_pattern_immutable(${param.name});`];
     }
@@ -436,11 +467,11 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
     }
     file() {
       const result=super.file();
-      if(!this.patternImmutability)return result;
-      const path=(this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs');
-      const dependency=`import { assertImmutableCopy as ml_pattern_immutable } from ${JSON.stringify(path)};`;
-      if(result.preludes.includes(dependency))return result;
-      return {...result,preludes:[dependency,...result.preludes],text:dependency+'\n'+result.text};
+      const dependencies=[];
+      if(this.patternImmutability)dependencies.push(`import { assertImmutableCopy as ml_pattern_immutable } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
+      if(this.patternViewImmutability)dependencies.push(`import { assertImmutableIterator as ml_pattern_immutable_view } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'iterator-runtime.mjs'))};`);
+      const fresh=dependencies.filter(dependency=>!result.preludes.includes(dependency));
+      return {...result,preludes:[...fresh,...result.preludes],text:[...fresh,result.text].join('\n')};
     }
     statements(node,unit=false) {
       if(node.k==='let'&&node.value.k==='routerControlInitializer') {
@@ -466,7 +497,7 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
     // the outer adapter when an already-adapted base delegates to super.expr.
     #patternExpression(node) {
       if(node.k==='routerControlInitializer')throw unsupported('return-valued match emission','requires statement lowering; a value IIFE would erase the function return',node.span);
-      if(node.k==='routerPatternImmutable'){this.patternImmutability=true;return `ml_pattern_immutable(${this.expr(node.object)})`;}
+      if(node.k==='routerPatternImmutable'){if(node.borrowedAggregate){this.patternViewImmutability=true;return `ml_pattern_immutable_view(${this.expr(node.object)})`;}this.patternImmutability=true;return `ml_pattern_immutable(${this.expr(node.object)})`;}
       if(node.k==='routerPatternTag')return `(${this.expr(node.object)}.$ === ${JSON.stringify(node.ctor)})`;
       if(node.k==='routerPatternProjection')return `(${this.expr(node.object)})[${JSON.stringify(node.field)}]`;
       return super.expr(node);
