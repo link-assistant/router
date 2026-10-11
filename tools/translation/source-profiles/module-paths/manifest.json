@@ -1,0 +1,37 @@
+{
+  "profile": "rust-1.89-tracked-module-paths",
+  "rust": "1.89.0",
+  "source": {
+    "file": "rustc-module.rs.gz",
+    "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/module.rs",
+    "bytes": 11205,
+    "sha256": "ffd5ab103a966ee584b99c99fb8009f52c9aa6f7fce592f86498924c513e65e5",
+    "compressedSha256": "da7866ffceab3b6550a09a2ec3e62f2afbe0ff82681eb6b1c1e7853d30a2d583",
+    "lines": {
+      "inlineDirectories": [
+        81,
+        129
+      ],
+      "explicitFiles": [
+        130,
+        147
+      ],
+      "literalAttributes": [
+        161,
+        191
+      ],
+      "defaultFiles": [
+        194,
+        230
+      ]
+    }
+  },
+  "reference": "https://doc.rust-lang.org/reference/items/modules.html#the-path-attribute",
+  "namespaceAuthority": false,
+  "runtimeAuthority": false,
+  "limits": {
+    "trackedPaths": 20000,
+    "pathBytes": 4096,
+    "modules": 4096
+  }
+}

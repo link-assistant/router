@@ -1,0 +1,1 @@
+The compressed module-resolution source is copied unchanged from Rust 1.89.0 and remains licensed under MIT OR Apache-2.0. Its SHA-256 and original line ranges are recorded in manifest.json. The source profile grants no namespace, attribute-expansion or runtime authority.
