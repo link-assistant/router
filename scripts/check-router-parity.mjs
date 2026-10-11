@@ -30,7 +30,10 @@ async function runEvidence(evidence) {
   const path = await localFile(evidence.file), key = `${evidence.test ? 'test:' : 'fixture:'}${path}`;
   if (!runners.has(key)) runners.set(key, (async () => {
     if (evidence.test) {
-      const { stdout } = await exec(process.execPath, ['--test','--test-reporter=tap',path], { cwd: root, timeout: 60_000, maxBuffer: 4_194_304 });
+      // Full native TS evidence compiles the complete syntax AST and runs the
+      // source plus compiled fixtures in both engines (84s observed before
+      // its inner timeout repair). Keep actual success mandatory and bounded.
+      const { stdout } = await exec(process.execPath, ['--test','--test-reporter=tap',path], { cwd: root, timeout: 180_000, maxBuffer: 4_194_304 });
       return new Map([...stdout.matchAll(/^ok \d+ - (.+)$/gm)].filter(match => !match[1].includes('# SKIP')).map(match => [match[1], { success: true }]));
     }
     const module = await import(pathToFileURL(path).href), run = module.runParityFixtures ?? module.runOperationFixtures;
