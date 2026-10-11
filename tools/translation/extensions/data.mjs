@@ -100,6 +100,7 @@ export class DataRustParser extends ControlRustParser {
 
 export class DataChecker extends ControlChecker {
   expr(node, env, path, expected, allowLiteral = false) {
+    env = this.contextEnvironment(node, env, expected);
     if (node.k === 'routerRecord') {
       const entry = this.lookup(node.path, path, node.span);
       if (!entry || entry.k !== 'data' || !entry.record || entry.ctors.length !== 1) throw typeError(`unknown record layout ${node.path.join('::')}`, node.span);

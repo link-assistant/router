@@ -72,17 +72,34 @@ test('semantic target input round-trips declaration links without source bodies'
   assert.throws(() => parseProgram(serialized + ' '), /noncanonical/u);
 });
 
+test('scalar slice domain rejects holes and accessor data without invoking user validation or iteration', async () => {
+  const { translated } = await load(translateSource('pub fn total(v: &[u8]) -> u8 { v.iter().copied().sum() }').javascript);
+  assert.throws(() => translated.total(new Array(1)), TypeError);
+  let hits = 0;
+  const getter = []; Object.defineProperty(getter, 0, { get() { hits++; return 1n; } });
+  assert.throws(() => translated.total(getter), TypeError);
+  assert.equal(hits, 0);
+  const invalid = ['wrong']; invalid.every = () => true;
+  assert.throws(() => translated.total(invalid), TypeError);
+  const values = [2n, 3n]; values[Symbol.iterator] = function* () { throw new Error('user iterator'); };
+  assert.equal(translated.total(values), 5n);
+});
+
 test('calls of a carried function stay carried transitively', () => {
   const result = translateSource('fn missing() -> u64 { extern_call() } fn middle() -> u64 { missing() } fn top() -> u64 { middle() }');
   assert.equal(result.ir.counts.executable, 0);
   assert.equal(result.ir.counts.carried, 3);
 });
 
-test('bounded generic lowering rejects non-exhaustiveness, aggregate mutation, closures and missing inference', async () => {
+test('bounded generic lowering rejects non-exhaustiveness, aggregate mutation, callback capture exits and missing inference', async () => {
   const sources = [
     'fn bad(v: Option<u64>) -> u64 { match v { Some(x) => x } }',
     'fn bad() -> Vec<u64> { let mut v = Vec::new(); v.push(1); v }',
-    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| x + 1).collect() }',
+    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(move |x| x + 1).collect() }',
+    'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| { return x; }).collect() }',
+    'fn bad(v: &[u64]) -> Vec<u64> { let mut x: u64 = 1; v.iter().map(|x| { x += 1; x }).collect() }',
+    'fn bad(v: &[u64]) -> usize { let i = v.iter(); i.count() + i.count() }',
+    'fn bad(v: &[u64]) -> u64 { for &mut x in v { x += 1; } 0 }',
     'fn bad() -> u64 { None.unwrap_or(1) }',
     'fn bad() -> u64 { panic!("must abort"); 7 }',
     'fn bad(v: u64) -> u64 { v = 9; v }',

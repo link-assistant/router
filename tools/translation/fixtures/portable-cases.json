@@ -831,5 +831,263 @@
         "expected": null
       }
     ]
+  },
+  {
+    "name": "lazy map take preserves unvisited zero-divisor behavior",
+    "source": "pub fn first(v: &[u64]) -> Vec<u64> { v.iter().map(|x| 10 / x).take(1).collect::<Vec<u64>>() } pub fn none(v: &[u64]) -> Vec<u64> { v.iter().map(|x| 10 / x).take(0).collect() }",
+    "calls": [
+      {
+        "name": "first",
+        "args": [
+          [
+            "2n",
+            "0n"
+          ]
+        ],
+        "expected": [
+          "5n"
+        ]
+      },
+      {
+        "name": "first",
+        "args": [
+          [
+            "0n",
+            "2n"
+          ]
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "first",
+        "args": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "name": "none",
+        "args": [
+          [
+            "0n"
+          ]
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "name": "scalar closure captures and filter map composition",
+    "source": "pub fn selected(v: &[u64], bias: u64) -> Vec<u64> { v.iter().filter(|x| x % 2 == 1).map(|x| x + bias).collect() }",
+    "calls": [
+      {
+        "name": "selected",
+        "args": [
+          [
+            "1n",
+            "2n",
+            "3n"
+          ],
+          "10n"
+        ],
+        "expected": [
+          "11n",
+          "13n"
+        ]
+      },
+      {
+        "name": "selected",
+        "args": [
+          [],
+          "5n"
+        ],
+        "expected": []
+      }
+    ]
+  },
+  {
+    "name": "any and all short circuit lazy upstream transforms",
+    "source": "pub fn any(v: &[u64]) -> bool { v.iter().map(|x| 10 / x).any(|x| x > 0) } pub fn all(v: &[u64]) -> bool { v.iter().map(|x| 10 / x).all(|x| x == 0) }",
+    "calls": [
+      {
+        "name": "any",
+        "args": [
+          [
+            "2n",
+            "0n"
+          ]
+        ],
+        "expected": true
+      },
+      {
+        "name": "all",
+        "args": [
+          [
+            "2n",
+            "0n"
+          ]
+        ],
+        "expected": false
+      },
+      {
+        "name": "any",
+        "args": [
+          []
+        ],
+        "expected": false
+      },
+      {
+        "name": "all",
+        "args": [
+          []
+        ],
+        "expected": true
+      },
+      {
+        "name": "any",
+        "args": [
+          [
+            "0n"
+          ]
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "checked iterator sum fold and empty identity",
+    "source": "pub fn total(v: &[u8]) -> u8 { v.iter().copied().sum::<u8>() } pub fn folded(v: &[u64]) -> u64 { v.iter().fold(0, |acc, x| acc + x) } pub fn count(v: &[u64]) -> usize { v.iter().filter(|x| x > 2).count() }",
+    "calls": [
+      {
+        "name": "total",
+        "args": [
+          [
+            "100n",
+            "155n"
+          ]
+        ],
+        "expected": "255n"
+      },
+      {
+        "name": "total",
+        "args": [
+          [
+            "100n",
+            "156n"
+          ]
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "total",
+        "args": [
+          []
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "folded",
+        "args": [
+          [
+            "2n",
+            "3n"
+          ]
+        ],
+        "expected": "5n"
+      },
+      {
+        "name": "count",
+        "args": [
+          [
+            "1n",
+            "3n",
+            "4n"
+          ]
+        ],
+        "expected": "2n"
+      }
+    ]
+  },
+  {
+    "name": "for scalar slices preserve loop controls and enclosing returns",
+    "source": "pub fn total(v: &[u64]) -> u64 { let mut total: u64 = 0; for x in v { if x == 0 { continue; } if x > 5 { break; } total += x; } total } pub fn find(v: &[u64]) -> u64 { for x in v.iter().filter(|x| x > 2) { return x; } 0 }",
+    "calls": [
+      {
+        "name": "total",
+        "args": [
+          [
+            "1n",
+            "0n",
+            "3n",
+            "8n",
+            "1n"
+          ]
+        ],
+        "expected": "4n"
+      },
+      {
+        "name": "total",
+        "args": [
+          []
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "find",
+        "args": [
+          [
+            "1n",
+            "3n",
+            "5n"
+          ]
+        ],
+        "expected": "3n"
+      },
+      {
+        "name": "find",
+        "args": [
+          []
+        ],
+        "expected": "0n"
+      }
+    ]
+  },
+  {
+    "name": "for mutable scalar binding and callback lexical shadowing",
+    "source": "pub fn total(v: &[u8]) -> u8 { let mut total: u8 = 0; for mut x in v { x += 1; total += x; } total } pub fn shadow(v: &[u64]) -> Vec<u64> { let mut x: u64 = 8; x += 1; v.iter().map(|x| x + 1).collect() }",
+    "calls": [
+      {
+        "name": "total",
+        "args": [
+          [
+            "1n",
+            "3n"
+          ]
+        ],
+        "expected": "6n"
+      },
+      {
+        "name": "total",
+        "args": [
+          [
+            "255n"
+          ]
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "shadow",
+        "args": [
+          [
+            "2n",
+            "3n"
+          ]
+        ],
+        "expected": [
+          "3n",
+          "4n"
+        ]
+      }
+    ]
   }
 ]

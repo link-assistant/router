@@ -211,6 +211,7 @@ export class StringEmitter extends JavaScriptEmitter {
       strip: `function ml_router_strip(value, search, suffix) {\n  const matches = suffix ? value.endsWith(search) : value.startsWith(search);\n  if (!matches) return Object.freeze({ $: 'None' });\n  const text = suffix ? value.slice(0, value.length - search.length) : value.slice(search.length);\n  return Object.freeze({ $: 'Some', field0: text });\n}`,
       unwrap: `function ml_router_unwrap(value, fallback, option) {\n  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;\n}`,
       unexpected: `function ml_router_unexpected(value) {\n  throw new TypeError(\`unexpected constructor \${value.$}\`);\n}`,
+      array: `function ml_router_array(values, validate) {\n  if (!Array.isArray(values)) return false;\n  for (let index = 0; index < values.length; index++) {\n    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));\n    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;\n  }\n  return true;\n}`,
     };
     const extra = [...this.routerHelpers].map(name => helpers[name]);
     return { ...emitted, definitions: emitted.definitions, preludes: [...emitted.preludes, ...extra], text: [...extra, emitted.text].join('\n') };
@@ -247,7 +248,10 @@ export class StringEmitter extends JavaScriptEmitter {
         const { min, max } = fixedBounds(type);
         return `(typeof ${value} === 'bigint' && ${value} >= ${min}n && ${value} <= ${max}n)`;
       }
-      if (type.kind === 'array') return `(Array.isArray(${value}) && ${value}.every((element${depth}) => ${validate(type.element, `element${depth}`, depth + 1)}))`;
+      if (type.kind === 'array') {
+        this.routerHelpers.add('array');
+        return `ml_router_array(${value}, (element${depth}) => ${validate(type.element, `element${depth}`, depth + 1)})`;
+      }
       if (type.kind === 'unit') return `(${value} === null)`;
       if (type.kind === 'data') {
         const data = this.program.declarations.get(type.name);

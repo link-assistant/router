@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { sourceItems } from './rust-structure.mjs';
-import { parseRust, checkProgram, emitJavaScript } from './extensions/data.mjs';
+import { parseRust, checkProgram, emitJavaScript } from './extensions/iterators.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
@@ -186,19 +186,31 @@ export function translateSource(source, path = 'input.rs') {
     ml_abort: ['string'],
     ml_assert: ['boolean', 'string'],
     ml_showNumber: ['number'],
-    ml_at: ['any[]', 'number | bigint'],
+    ml_at: ['ReadonlyArray<any>', 'number | bigint'],
     ml_forall: ['any[]', '(value: any) => boolean'],
     ml_router_strip: ['string', 'string', 'boolean'],
     ml_router_unwrap: ['any', 'any', 'boolean'],
     ml_router_unexpected: ['any'],
+    ml_router_array: ['ReadonlyArray<any>', '(value: any) => boolean'],
+    ml_router_iter: ['ReadonlyArray<any>'],
+    ml_router_map: ['Iterable<any>', '(value: any) => any'],
+    ml_router_filter: ['Iterable<any>', '(value: any) => boolean'],
+    ml_router_take: ['Iterator<any>', 'bigint'],
+    ml_router_collect: ['Iterable<any>'],
+    ml_router_count: ['Iterable<any>'],
+    ml_router_any: ['Iterable<any>', '(value: any) => boolean'],
+    ml_router_all: ['Iterable<any>', '(value: any) => boolean'],
+    ml_router_fold: ['Iterable<any>', 'any', '(accumulator: any, value: any) => any'],
   };
   for (let at = 0; at < tokens.length; at++) {
-    if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function' || tokens[at + 2]?.value !== '(') continue;
-    const name = tokens[at + 1].value;
+    if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
+    const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
+    if (tokens[nameAt + 1]?.value !== '(') continue;
+    const name = tokens[nameAt].value;
     const known = parameterTypes.get(name);
     const helper = helperTypes[name];
     let index = 0;
-    for (let parameter = at + 3; tokens[parameter]?.value !== ')'; parameter++) {
+    for (let parameter = nameAt + 2; tokens[parameter]?.value !== ')'; parameter++) {
       if (tokens[parameter].kind !== 'identifier') continue;
       annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type, dataTypes) : helper?.[index] ?? 'any'}` });
       index++;

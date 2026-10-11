@@ -35,7 +35,7 @@ Carried constructs retain exact original source with a structured diagnostic;
 they create no callable stub or successful fake behavior. An unsupported
 dependency carries every caller. Duplicate declarations are ambiguous and
 carried. Async/Tokio, I/O, platform APIs, mutable aggregates, traits/impls, external
-modules, unbounded generics, closures, conditional compilation and
+modules, unbounded generics, escaping closures, conditional compilation and
 test attributes remain boundaries. Nested declarations remain inside their
 carried enclosing source item. The structural scanner is not a full Rust
 syntax validator; a lexical failure carries the full file explicitly.
@@ -48,11 +48,16 @@ Rust trim/trim_start/trim_end with explicit Unicode White_Space, ASCII case maps
 and comparison, string byte length, scalar count, immutable vec! literals,
 Vec::new, and slice/array measurements. Monomorphic Option/Result values
 support typed constructors, exhaustive match, predicates and eager unwrap_or.
-Generic inference beyond explicit expected types, mutable vectors, indexing,
-iterator closures remain carried. Checked scalar locals and parameters support
+Generic inference beyond explicit expected types and mutable vectors remain carried. Checked scalar locals and parameters support
 assignment, compound arithmetic, while/loop, unlabelled break/continue, statement
 if/else and early returns. Slice indexing validates usize bounds and preserves
-out-of-bounds aborts. Unit functions return null. Value expressions containing
+out-of-bounds aborts. Unit functions return null. Lazy scalar slice iterators support map/filter/take,
+collect/count/sum/fold and short-circuit any/all with contextually checked scalar
+closures. For loops preserve enclosing returns and loop controls. Iterator
+locals, move captures, aggregate borrowing and ranges remain carried until
+ownership and range contracts exist. Slice inputs require dense own data
+elements; user accessors and iteration overrides do not supply Rust values.
+Value expressions containing
 nonlocal exits remain refused to prevent IIFE control-flow errors.
 
 Module-local enum layouts and immutable named/tuple/unit structs now emit

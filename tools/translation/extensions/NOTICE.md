@@ -26,3 +26,8 @@ preserving compound assignments, loop exits, early returns and slice indexing.
 and fields while preserving written field evaluation order. Target emission
 consumes the serialized/reparsed semantic program from `../semantic-meta.mjs`.
 No Rust, platform API, trait or async implementation is substituted.
+
+`iterators.mjs` adds typed scalar callbacks and generator-based lazy iterator
+adapters, short-circuit consumers, checked sums and scalar for loops. Stored
+iterators and escaping/move closures remain refused because consumption and
+capture ownership have not been established.

@@ -58,6 +58,10 @@ export class ControlRustParser extends StringRustParser {
     return { name, type, value, mutable, span: range(start, c.peek()) };
   }
 
+  forStatement() {
+    throw unsupported('for loop', 'iterator borrowing and range lowering require a typed iterator contract', this.cursor.peek());
+  }
+
   block(path, statement = false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
@@ -84,7 +88,7 @@ export class ControlRustParser extends StringRustParser {
         statements.push({ k: 'routerWhile', cond, loopBody, span: range(start, c.peek()) });
         continue;
       }
-      if (c.is('for')) throw unsupported('for loop', 'iterator borrowing and range lowering require a typed iterator contract', start);
+      if (c.is('for')) { statements.push(this.forStatement(path)); continue; }
       const expr = c.is('if') ? this.controlIf(path) : this.expr(path, { statement: true });
       if (c.is('=') || compound[c.peek().value]) {
         if (expr.k !== 'name' || expr.path.length !== 1) throw unsupported('assignment target', 'only scalar local bindings are assignable', expr.span);
@@ -155,7 +159,7 @@ export class ControlChecker extends StringChecker {
     return super.program(surface);
   }
 
-  expr(node, env, path, expected, allowLiteral = false) {
+  contextEnvironment(node, env, expected) {
     // The first expression visited for each signature carries the return type.
     // Descendant lexical scopes inherit it, even inside unit statement blocks.
     if (!env.has(RETURN) && expected) {
@@ -163,6 +167,18 @@ export class ControlChecker extends StringChecker {
       if (mutable.some(name => !scalar(env.get(name)))) throw unsupported('mutable aggregate parameter', 'aggregate ownership and aliases require a separate runtime contract', node.span);
       env = new Map(env).set(RETURN, expected).set(MUTABLE, new Set(mutable));
     }
+    return env;
+  }
+
+  loopEnvironment(env) { return new Map(env).set(LOOP, (env.get(LOOP) ?? 0) + 1); }
+  bindingEnvironment(env, name, type, mutable = false) {
+    const names = new Set(env.get(MUTABLE) ?? []);
+    if (mutable) names.add(name); else names.delete(name);
+    return new Map(env).set(name, type).set(MUTABLE, names);
+  }
+
+  expr(node, env, path, expected, allowLiteral = false) {
+    env = this.contextEnvironment(node, env, expected);
     const checkValue = (value, type) => {
       if (containsControl(value)) throw unsupported('control in value expression', 'nonlocal exits cannot be lowered through a value IIFE', value.span);
       return this.expr(value, env, path, type);
