@@ -95,7 +95,7 @@ test('conditional macro exports shadow only their own profile and unknown neutra
 });
 
 test('unknown OS, feature and cfg_attr evidence stays open in explicit family profiles',()=>{
-  for(const source of ['#[cfg(target_os="linux")] mod configured;','#[cfg(feature="extra")] mod configured;','#[cfg_attr(windows,allow(dead_code))] mod configured;']){
+  for(const source of ['#[cfg(target_os="linux")] mod configured;','#[cfg(feature="extra")] mod configured;','#[cfg_attr(target_os="linux",allow(dead_code))] mod configured;']){
     const evidence=analyze({'src/lib.rs':source,'src/configured.rs':'pub struct Plain;'});
     for(const member of evidence.results){assert.equal(rootScope(member).unresolvedBangMacroScope,true);assert.ok(member.moduleDiagnostics.length);assert.equal(member.namespaceComposition,'tracked-only-external-and-expansion-proofs-absent');}
   }

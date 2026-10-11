@@ -1,0 +1,80 @@
+{
+  "schema": "rust-original-conditional-attribute-absence-v1",
+  "id": "rust-1.89-cfg-attr-false-absence",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/config.rs",
+      "archive": "rust-expand-config-1.89.0.rs.gz",
+      "bytes": 19343,
+      "sha256": "164793e06f844ef96778a8d5593cc3e44cea542d764f49a27aebc42daa711f0e",
+      "archiveBytes": 5323,
+      "archiveSha256": "a87988a492b51b47fe9984e0afb5475c6f88770580fe95d998a18cf045471db6",
+      "anchors": [
+        {
+          "anchor": "fn process_cfg_attr(",
+          "line": 271
+        },
+        {
+          "anchor": "pub(crate) fn expand_cfg_attr(",
+          "line": 286
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/attr.rs",
+      "archive": "rust-parse-attr-1.89.0.rs.gz",
+      "bytes": 19525,
+      "sha256": "9e497b25e61cd8e1aa7b40d8b2d890aa170dd8522626e2481d264980e2bd11fc",
+      "archiveBytes": 4887,
+      "archiveSha256": "28749513fc97a2e614cc7701c129df560bfbc418aba4435613b65790f35a7e45",
+      "anchors": [
+        {
+          "anchor": "pub fn parse_attr_item(",
+          "line": 290
+        },
+        {
+          "anchor": "pub fn parse_cfg_attr(",
+          "line": 380
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/lib.rs",
+      "archive": "rust-parse-lib-1.89.0.rs.gz",
+      "bytes": 8170,
+      "sha256": "e445ed1d6a197b64a9a605d95bd36b73d3f48f59ad867d858b91bf019e926003",
+      "archiveBytes": 2803,
+      "archiveSha256": "58eef1a45473a20141f42ea9ec2aa20a82046874b8921dc07a9c4fc8e4c3bd8d",
+      "anchors": [
+        {
+          "anchor": "pub fn parse_cfg_attr(",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_span/src/symbol.rs",
+      "archive": "rust-symbol-1.89.0.rs.gz",
+      "bytes": 77781,
+      "sha256": "35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2",
+      "archiveBytes": 19825,
+      "archiveSha256": "0fe76fef2e6a0d434b6a4a2baaae292705ded8b6aa1c172d1e0028a8ee1454f9",
+      "keywordLines": [
+        43,
+        115
+      ]
+    }
+  ],
+  "limits": {
+    "tokens": 8192,
+    "inputs": 256,
+    "depth": 64
+  },
+  "supported": "Only complete bounded original syntax whose checked configuration predicate is false; retain all original tokens and spans.",
+  "limitations": [
+    "Active and unknown predicates require separately checked transformations and owner closures.",
+    "Attribute assignment expressions other than original string literals and raw identifier paths remain refused.",
+    "No host configuration, procedural expansion, namespace identity, or runtime behavior is inferred."
+  ]
+}

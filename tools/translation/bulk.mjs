@@ -128,6 +128,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push('tools/translation/module-paths.mjs');
   implementation.push('tools/translation/source-corpus.mjs');
   implementation.push('tools/translation/compilation-matrix.mjs','tools/translation/matrix-bulk.mjs');
+  implementation.push('tools/translation/conditional-attributes.mjs',...readdirSync(new URL('./source-profiles/conditional-attributes/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/conditional-attributes/${name}`));
   implementation.push('scripts/translate-router.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/module-paths/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/module-paths/${name}`));
   implementation.push(...['namespace-census.mjs','namespace-standard.mjs'].map(name=>`tools/translation/${name}`));

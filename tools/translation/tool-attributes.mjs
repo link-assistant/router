@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,originalModuleViewItems,moduleScopeKey} from './source-module-views.mjs';
-import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
+import {compilationProfile,itemConfiguration,isAbsentConditionalAttribute} from './cfg-profile.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -24,14 +24,15 @@ for(const entry of TOOL_ATTRIBUTE_PROFILE.sources){
 }
 // A bounded subset of the actual builtin lint-list grammar. No procedural
 // attribute, tool input, reason expression or macro invocation is admitted.
-export function inertInnerLintItem(item,source,sourceView=null){
+export function inertInnerLintItem(item,source,sourceView=null,profile=null){
   if(item.tokens[0]?.text!=='#'||item.tokens[1]?.text!=='!')return null;
   const actual=(sourceView?originalModuleViewItems(sourceView,source):sourceItems(source)).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
   if(!actual||actual.tokens[0]?.text!=='#'||actual.tokens[1]?.text!=='!')return null;
-  const tokens=actual.tokens.filter(token=>token.type!=='comment'),condition=itemConfiguration(tokens,null);
+  const tokens=actual.tokens.filter(token=>token.type!=='comment'),condition=itemConfiguration(tokens,profile);
   if(condition.status!=='active'||!condition.attributes.length||condition.attributes.at(-1).span.end!==tokens.at(-1)?.end)return null;
   const ident=/^[\p{L}_][\p{L}\p{N}_]*$/u;
-  for(const attribute of condition.attributes){
+  const attributes=condition.attributes.filter(attribute=>!isAbsentConditionalAttribute(attribute));
+  for(const attribute of attributes){
     const body=attribute.tokens.slice(3,-1);
     if(!['allow','warn','deny','forbid'].includes(body[0])||body[1]!=='('||body.at(-1)!==')')return null;
     let at=2,count=0;
@@ -43,7 +44,7 @@ export function inertInnerLintItem(item,source,sourceView=null){
     }
     if(at!==body.length-1)return null;
   }
-  return freeze({profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,sourceSha256:hash(source),span:{start:actual.start,end:actual.end},attributes:condition.attributes,runtimeBehavior:false});
+  return freeze({profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,sourceSha256:hash(source),span:{start:actual.start,end:actual.end},attributes,originalAttributes:condition.attributes,compilationProfile:compilationProfile(profile),runtimeBehavior:false});
 }
 function originalHeader(item,condition){
   const tokens=item.tokens.filter(token=>token.type!=='comment');

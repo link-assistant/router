@@ -25,9 +25,9 @@ test('malformed or unsupported grammar does not become an active condition',()=>
 test('false cfg removes an entire item even with unrelated unknown attribute expansion',()=>{
   const result=condition('#[derive(Unknown)] #[cfg(test)] struct Hidden;');assert.equal(result.status,'inactive');assert.equal(result.attributes[1].evaluation.value,false);assert.deepEqual(result.attributes[1].span,{start:19,end:31});
 });
-test('active known conditions retain original attributes and unknown cfg_attr stays unproven',()=>{
+test('active known conditions retain original attributes and unknown conditional predicates stay unproven',()=>{
   const result=condition('#[cfg(not(test))] #[allow(dead_code)] fn visible(){}');assert.equal(result.status,'active');assert.equal(result.attributes.length,2);assert.equal(result.attributes[0].tokens.join(''),'#[cfg(not(test))]');
-  for(const source of ['#[cfg(unknown)] fn maybe(){}','#[cfg_attr(test,derive(Custom))] struct Maybe;'])assert.equal(condition(source).status,'unknown');
+  for(const source of ['#[cfg(unknown)] fn maybe(){}','#[cfg_attr(unix,derive(Custom))] struct Maybe;'])assert.equal(condition(source).status,'unknown');
 });
 test('profile proof clones caller state and remains serializable and deeply immutable',()=>{
   const input={flags:{test:false},values:{feature:['std']},closedKeys:['feature']},profile=compilationProfile(input);input.flags.test=true;input.values.feature.push('other');
@@ -43,7 +43,7 @@ test('inactive module scopes never read source or poison production macro names'
   const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});const root=bindings.scopes.find(scope=>!scope.path.length);assert.equal(root.unresolvedMacroScope,false);assert.equal(root.bindings.some(binding=>binding.name==='tests'),false);assert.equal(Object.isFrozen(root.compilationProfile.flags),true);
 });
 test('unknown target conditions and cfg_attr do not certify module edges or namespace closure',()=>{
-  for(const attr of ['#[cfg(unix)]','#[cfg_attr(test,allow(dead_code))]']){const files={'src/lib.rs':attr+' mod conditional;','src/conditional.rs':'pub fn amount()->u8{3}'},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});assert.equal(graph.edges.length,0);const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});assert.equal(bindings.scopes[0].unresolvedMacroScope,true);}
+  for(const attr of ['#[cfg(unix)]','#[cfg_attr(unix,allow(dead_code))]']){const files={'src/lib.rs':attr+' mod conditional;','src/conditional.rs':'pub fn amount()->u8{3}'},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});assert.equal(graph.edges.length,0);const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});assert.equal(bindings.scopes[0].unresolvedMacroScope,true);}
 });
 test('inactive nested fields remain explicit refusals until profile-aware field layout exists',()=>{
   const source='struct Record{#[cfg(test)] amount:u8} pub fn invented(value:Record)->u8{value.amount}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false);

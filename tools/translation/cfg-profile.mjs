@@ -1,6 +1,9 @@
 // Explicit three-valued compilation conditions. No host, OS or Cargo feature
-// is inferred. Unknown predicates and cfg_attr expansion retain uncertainty.
+// is inferred. Only validated false cfg_attr predicates prove absence.
 import {tokenizeRust} from './extensions/lexical.mjs';
+import {inspectConditionalAttribute,CONDITIONAL_ATTRIBUTE_PROFILE} from './conditional-attributes.mjs';
+const absentAttributes=new WeakSet();
+export const isAbsentConditionalAttribute=attribute=>!!attribute&&absentAttributes.has(attribute);
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const identifier=/^[\p{L}_][\p{L}\p{N}_]*$/u;
 function record(value){if(!value||typeof value!=='object'||Array.isArray(value)||Object.getOwnPropertySymbols(value).length)throw new TypeError('configuration entries must be plain records');const result=Object.create(null);for(const [name,property] of Object.entries(Object.getOwnPropertyDescriptors(value))){if(!('value' in property)||!identifier.test(name))throw new TypeError('configuration entries need identifier keys and data properties');result[name]=property.value;}return result;}
@@ -38,8 +41,15 @@ export function itemConfiguration(tokens,profile){
     const body=at;let depth=1;for(;at<tokens.length;at++){if(text(tokens[at])==='[')depth++;if(text(tokens[at])===']')depth--;if(!depth)break;}
     if(depth)return freeze({status:'unknown',attributes,diagnostics:[{message:'unterminated configuration attribute',span:range(tokens)}]});const end=at++,name=text(tokens[body]);let evaluation=null;
     if(name==='cfg')evaluation=text(tokens[body+1])==='('&&text(tokens[end-1])===')'?evaluateConfiguration(tokens.slice(body+2,end-1),profile):{value:null,diagnostics:[{message:'cfg requires a parenthesized predicate',span:range(tokens.slice(begin,at))}]};
-    if(name==='cfg_attr')evaluation={value:null,diagnostics:[{message:'cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]};
-    attributes.push({name,span:range(tokens.slice(begin,at)),tokens:tokens.slice(begin,at).map(text),evaluation});
+    if(name==='cfg_attr'){
+      try{
+        const input=inspectConditionalAttribute(tokens.slice(body,end)),predicate=evaluateConfiguration(input.predicate,profile);
+        evaluation={value:predicate.value===false?true:null,predicate,expansion:predicate.value===false?'absent':'unresolved',inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,diagnostics:predicate.value===false?[]:[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]};
+      }catch(error){evaluation={value:null,diagnostics:[{message:error.message,span:range(tokens.slice(begin,at))}]};}
+    }
+    const attribute={name,span:range(tokens.slice(begin,at)),tokens:tokens.slice(begin,at).map(text),evaluation};
+    if(name==='cfg_attr'&&evaluation.expansion==='absent')absentAttributes.add(attribute);
+    attributes.push(attribute);
   }
   const conditions=attributes.filter(attribute=>attribute.evaluation),status=conditions.some(attribute=>attribute.evaluation.value===false)?'inactive':conditions.some(attribute=>attribute.evaluation.value===null)?'unknown':'active';
   return freeze({status,attributes,diagnostics:conditions.flatMap(attribute=>attribute.evaluation.diagnostics??[])});
