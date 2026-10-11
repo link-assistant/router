@@ -54,6 +54,8 @@ test('user enum shapes, host namespace shadows and imported generic shadows neve
   'mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}} pub fn invented(x:&std::time::Duration)->&std::time::Duration{x}',
   'mod other {pub enum Option {None,Some(u8)}} use crate::other::Option;pub fn invented(x:Option<u8>)->bool{x.is_some_and(|v|v>0)}',
   'enum Option {None,Some(u8)} pub fn invented(x:Option<u8>)->bool{x.is_some_and(|v|v>0)}',
+  'mod Option {} pub fn invented(value:u8)->Option<u8>{Option::Some(value)}',
+  'mod Result {} pub fn invented(value:u8)->Result<u8,u8>{Result::Ok(value)}',
  ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,source);assert.ok(result.meta.refused.length,source);}
 });
 
