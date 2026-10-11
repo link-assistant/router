@@ -40787,8 +40787,45 @@
       "headSha": "5d4b97cff52013506aabf8680467cb0a00ff2919",
       "status": "Producer passed; full frozen verification pending; runtime parity false.",
       "archivedAtUtc": "2026-10-11T19:19:09.408935+00:00"
+    },
+    {
+      "label": "combined-all-seven-failure-and-gap-inventory",
+      "cycle": 8,
+      "pack": "adf9371674b143b410fdb12e32d69c26b9b912268f1127d5d42c1361c0c20e25.tar.gz",
+      "sha256": "adf9371674b143b410fdb12e32d69c26b9b912268f1127d5d42c1361c0c20e25",
+      "storedBytes": 1282470,
+      "members": [
+        {
+          "path": "combined-all-seven-failure-and-gap-inventory/router-759-combined-complete-failure-inventory.json",
+          "bytes": 4447,
+          "sha256": "c5a4f2683e0bdf3a0c1d2900e6bcf2d29f13056b10f55790a83c9ee28c88c3a4"
+        },
+        {
+          "path": "combined-all-seven-failure-and-gap-inventory/router-759-complete-production-gaps-d662.json",
+          "bytes": 4413553,
+          "sha256": "308ff81f5bd506742d5d8fa40b373135e26aee42be68a740fc689fb95e1cdc7c"
+        },
+        {
+          "path": "combined-all-seven-failure-and-gap-inventory/router-759-complete-project-gaps-d662.json.gz",
+          "bytes": 546423,
+          "sha256": "b22fb401924b834adf328b6711ff035677e00fafb506afb5ddce26120ed5062e"
+        },
+        {
+          "path": "combined-all-seven-failure-and-gap-inventory/router-759-final-preflight-1c780434.json",
+          "bytes": 2087,
+          "sha256": "e98d3e2ba30327e7e5d818b1af34fec3858b08d3f44f43cd2da0de87aafa7222"
+        },
+        {
+          "path": "combined-all-seven-failure-and-gap-inventory/router-759-final-preflight-1c780434.log",
+          "bytes": 260926,
+          "sha256": "e6965542fc95653d5c22907638368703e91c6ceacdd8cb5045d7e96f0335356f"
+        }
+      ],
+      "headSha": "1c780434e2fb1fb942dfb93088434f8a93308549",
+      "status": "All seven stages terminal; unexpected generated TypeScript and one fixture failure; strict442gaps/0validationerrors; no stamp or Rust.",
+      "archivedAtUtc": "2026-10-11T19:41:42.882533+00:00"
     }
   ],
-  "totalStoredPackBytes": 17327300,
-  "totalMembers": 7329
+  "totalStoredPackBytes": 18609770,
+  "totalMembers": 7334
 }
