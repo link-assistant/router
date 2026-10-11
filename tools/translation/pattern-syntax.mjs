@@ -56,7 +56,14 @@ export function parseBindingPattern(cursor,{resolvePath,parseLiteral}={}) {
     if(first.kind === 'macro')reject('macro pattern');
     if(reserved.has(first.value))reject(`${first.value} pattern`);
     let result=literal();
-    if(result){checkTail();return result;}
+    if(result){
+      if(cursor.is('..')||cursor.is('..=')) {
+        const operator=cursor.next(),upper=literal();
+        if(result.k!=='numLit'||upper?.k!=='numLit')reject('noninteger or open range pattern',operator);
+        result={k:'routerIntegerRangePattern',lower:result,upper,inclusive:operator.value==='..=',span:{start:result.span.start,end:upper.span.end}};
+      }
+      checkTail();return result;
+    }
     if(cursor.eat('_')){result={k:'wild',span:location(first,first)};checkTail();return result;}
     if(cursor.eat('(')) {
       if(cursor.is(')')){const end=cursor.next();result={k:'lit',value:null,span:location(first,end)};checkTail();return result;}

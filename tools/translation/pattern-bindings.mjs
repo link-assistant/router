@@ -2,6 +2,7 @@
 // These plans inspect declarations, never evaluate or rewrite Rust source.
 import {fixedBounds,typeKey,sameType} from './checked-types.mjs';
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
+import {checkedIntegerRange} from './extensions/integer-range-patterns.mjs';
 const always=()=>({kind:'always'});
 const combine=(kind,tests)=>{const useful=tests.filter(test=>test.kind !== 'always');return useful.length?useful.length === 1?useful[0]:{kind,tests:useful}:always();};
 const equalProjection=(left,right)=>left.length === right.length && left.every((field,index)=>field === right[index]);
@@ -147,6 +148,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
         case 'routerRecordPattern':result=constructor(node,currentType,projection,location,true);break;
         case 'routerTuplePattern':result=constructor(node,currentType,projection,location,false,true);break;
         case 'or':case 'routerOrPattern':result=alternatives(node,currentType,projection,location);break;
+        case 'routerIntegerRangePattern':{const range=checkedIntegerRange(node,currentType);result={refutable:!range.coversDomain,bindings:[],test:{kind:'integerRange',type:currentType,...range,projection:[...projection]}};break;}
         case 'lit':case 'numLit':case 'boolLit':case 'strLit':result=literal(node,currentType,projection,location);break;
         default:throw unsupported('pattern',`${node.k} needs separate checked pattern semantics`,location);
       }

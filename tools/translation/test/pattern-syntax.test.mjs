@@ -66,8 +66,16 @@ test('pattern parsing leaves expression delimiters untouched and literal hooks m
   assert.throws(()=>parse('x',{parseLiteral:()=>({k:'strLit',span})}),/must consume/);
   assert.throws(()=>parse('x',{parseLiteral:cursor=>{cursor.next();}}),/unrecognized/);
 });
-test('reference, mutable, range, slice, positional rest, alias and macro patterns remain explicit source refusals',()=>{
-  for(const source of ['&x','&&x','ref x','mut x','box x','[x]','1..=3','x @ Choice::A(n)','() @ x','(x) @ y','Pair(label, ..)','Record { ref flag, .. }','Record { flag, .., choice }','some_macro!()'])assert.throws(()=>parse(source),error=>['unsupported','syntax'].includes(error.kind) && error.span?.start >= 0,source);
+test('literal integer ranges preserve source endpoints and checked primitive identity',()=>{
+  const source='-128i8..=-1i8',pattern=parse(source);
+  assert.equal(pattern.k,'routerIntegerRangePattern');assert.equal(pattern.inclusive,true);
+  assert.deepEqual(pattern.span,{start:0,end:source.length});assert.equal(source.slice(pattern.lower.span.start,pattern.lower.span.end),'-128i8');assert.equal(source.slice(pattern.upper.span.start,pattern.upper.span.end),'-1i8');
+  assert.equal(planPattern(pattern,{...fixed(8,true),rustPrimitiveName:'i8'},{declarations}).test.lower,'-128');
+  assert.equal(parse('0x01u8..0x10u8').inclusive,false);
+  assert.throws(()=>planPattern(pattern,fixed(8,true),{declarations}),/actual/);
+});
+test('reference, mutable, unsupported range endpoints, slice, rest, alias and macros retain refusals',()=>{
+  for(const source of ['&x','&&x','ref x','mut x','box x','[x]','1..=LIMIT','..=3','1..','1...3','\'a\'..=\'z\'','x @ Choice::A(n)','() @ x','(x) @ y','Pair(label, ..)','Record { ref flag, .. }','Record { flag, .., choice }','some_macro!()'])assert.throws(()=>parse(source),error=>['unsupported','syntax'].includes(error.kind) && error.span?.start >= 0,source);
   assert.throws(()=>plan('Record { flag, flag, .. }',data('Record')),/duplicate/);
   assert.throws(()=>plan('Record { missing, .. }',data('Record')),/has no field/);
 });

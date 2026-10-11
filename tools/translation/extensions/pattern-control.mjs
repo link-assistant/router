@@ -287,6 +287,10 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(test.kind==='always')return {k:'lit',value:true,type:BOOL};
       if(test.kind==='ctor')return {k:'routerPatternTag',object:this.patternProjection(subject,test.projection,{kind:'data',name:test.data}),data:test.data,ctor:test.ctor,type:BOOL};
       if(test.kind==='literal')return {k:'binary',op:'eq',left:this.patternProjection(subject,test.projection,test.type),right:{k:'lit',value:test.value,type:test.type},type:BOOL};
+      if(test.kind==='integerRange') {
+        const left=this.patternProjection(subject,test.projection,test.type),bound=value=>({k:'lit',value,type:test.type});
+        return {k:'binary',op:'and',left:{k:'binary',op:'ge',left,right:bound(test.lower),type:BOOL},right:{k:'binary',op:'le',left,right:bound(test.upper),type:BOOL},type:BOOL};
+      }
       if(['and','or'].includes(test.kind)) {
         // Plans inspect only a checked immutable subject. Idempotent duplicate
         // tests can be removed without changing observable evaluation; keeping

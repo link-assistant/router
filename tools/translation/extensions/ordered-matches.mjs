@@ -6,6 +6,7 @@ import {BOOL,sameType} from '../checked-types.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {renameExpr,Scope} from '../vendor/meta-language/translation/ir.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {containsIntegerRange,proveIntegerCoverage} from './integer-range-patterns.mjs';
 const LIMIT=256;
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustReference&&type.rustOwnership?.kind!=='owned'&&(type.kind!=='string'||type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str');
@@ -15,9 +16,10 @@ export function hasOrderedMatchGuard(cursor) {
   let depth=0,body=false,head=true;
   for(let at=cursor.index;at<cursor.tokens.length;at++) {
     const token=cursor.tokens[at];
-    if(token.value==='{'&&!body){body=true;depth=1;continue;}
+    if(token.kind==='punct'&&token.value==='{'&&!body){body=true;depth=1;continue;}
     if(!body)continue;
-    if(depth===1&&head&&token.value==='if')return true;
+    if(head&&(depth===1&&token.kind==='identifier'&&token.value==='if'||token.kind==='punct'&&['..','..='].includes(token.value)))return true;
+    if(token.kind!=='punct')continue;
     if(depth===1&&token.value==='=>')head=false;
     if(depth===1&&token.value===',')head=true;
     if(['(','[','{'].includes(token.value))depth++;
@@ -74,7 +76,7 @@ function alternatives(pattern,depth=0) {
   if(pattern.k==='ctor') {
     let products=[[]];for(const child of pattern.args){const parts=alternatives(child,depth+1);if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);products=products.flatMap(prefix=>parts.map(part=>[...prefix,part]));}return products.map(args=>({...pattern,args}));
   }
-  if(!['wild','bind','numLit','boolLit','strLit'].includes(pattern.k))throw unsupported('ordered match source pattern',`${pattern.k} requires another checked pattern profile`,pattern.span);
+  if(!['wild','bind','numLit','boolLit','strLit','routerIntegerRangePattern'].includes(pattern.k))throw unsupported('ordered match source pattern',`${pattern.k} requires another checked pattern profile`,pattern.span);
   return [pattern];
 }
 function plan(checker,pattern,type,path,span) {return planPattern(pattern,type,{declarations:checker.items,resolveType:type=>checker.resolveType(type,path,span),span});}
@@ -90,6 +92,8 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   env=checker.contextEnvironment(node,env,expected);
   if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||exits(row.body)))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
   const subject=checker.expr(node.subject,env,path);checker.patternDomain(subject.type,node.span);
+  const integerRange=node.rows.some(row=>containsIntegerRange(row.pattern));
+  if(integerRange&&subject.type.kind!=='fixed')throw unsupported('nested integer range match','this profile requires a primitive integer subject',node.span);
   let name;do{name=checker.freshName('ml_ordered_match_');}while(env.has(name));
   const variable={k:'var',name,type:subject.type,span:node.span},attempts=[],coverage=[],evidence=[];
   for(const row of node.rows) {
@@ -113,7 +117,8 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   }
   // Use the existing constructor/literal matrix solely for its checked
   // coverage proof; guards and effects are never run during compilation.
-  checker.compileRows([{name,type:subject.type}],coverage,node.span);
+  const intervalProof=integerRange?proveIntegerCoverage(coverage.map(row=>row.patterns[0]),subject.type,node.span):null;
+  if(!intervalProof)checker.compileRows([{name,type:subject.type}],coverage,node.span);
   let type=expected??attempts.find(attempt=>attempt.body.type.kind!=='literal')?.body.type;
   type??=checker.defaultNumber();
   const bind=(plan,body)=>plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:checker.patternProjection(variable,binding.projection,binding.type),body,type:body.type,mutable:false,span:binding.span??node.span}),body);
@@ -124,11 +129,21 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
     const selected={k:'routerOrderedArm',guard:attempt.guard,body,type,span:attempt.span};
     branches.push({cond:checker.patternTest(attempt.plan.test,variable),body:bind(attempt.plan,selected),span:attempt.span});
   }
+  if(intervalProof&&attempts.every(attempt=>!attempt.guard)) {
+    // Coverage proves that the last remaining row always selects if preceding
+    // tests fail. Ordinary checked if/let IR preserves runtime and selected
+    // path CTFE semantics, without granting a new const trait or guard rule.
+    let result=branches.at(-1).body;
+    const ordinary=arm=>arm.k==='routerOrderedArm'?arm.body:arm.k==='let'?{...arm,body:ordinary(arm.body)}:arm;
+    result=ordinary(result);
+    for(let index=branches.length-2;index>=0;index--)result={k:'if',cond:branches[index].cond,then:ordinary(branches[index].body),else:result,type,span:branches[index].span};
+    return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,integerRangeMatchProof:{...intervalProof,rows:evidence,subjectEvaluatedOnce:true}};
+  }
   // A linear list avoids copying all following attempts into both paths of
   // every guarded alternative. Each branch's ordinary let tree owns binders.
   let result={k:'routerOrderedMatchArms',branches,type,span:node.span};
   if(subject.type.kind==='data')result={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:checker.sharedPatternView(subject.type),span:node.span},body:result,type,span:node.span};
-  return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,constEligible:false,patternControl:{kind:'ordered-scalar-match',profile:ORDERED_MATCH_PROFILE.id,subjectType:subject.type,rows:evidence,expandedRows:attempts.length,exhaustiveness:'unguarded-source-patterns-only',...(node.sourceMacro?{sourceMacro:node.sourceMacro}:{})}};
+  return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,constEligible:false,patternControl:{kind:'ordered-scalar-match',profile:ORDERED_MATCH_PROFILE.id,subjectType:subject.type,rows:evidence,expandedRows:attempts.length,exhaustiveness:'unguarded-source-patterns-only',...(intervalProof?{intervalProof}:{}),...(node.sourceMacro?{sourceMacro:node.sourceMacro}:{})}};
 }
 export function emitOrderedMatch(emitter,node) {
   const lines=['(() => {'];
