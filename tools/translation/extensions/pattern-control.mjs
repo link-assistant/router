@@ -182,12 +182,13 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
       this.patternFunction=Boolean(contains(entry.body));
       try{return super.fn(entry);}finally{this.patternFunction=previous;}
     }
+    patternParameterGuards(param) {
+      if(!this.patternFunction||param.type.kind!=='data')return [];
+      this.patternImmutability=true;
+      return [`ml_pattern_immutable(${param.name});`];
+    }
     parameterGuard(param) {
-      if(this.patternFunction&&param.type.kind==='data') {
-        this.patternImmutability=true;
-        return [`ml_pattern_immutable(${param.name});`,...super.parameterGuard(param)];
-      }
-      return super.parameterGuard(param);
+      return [...this.patternParameterGuards(param),...super.parameterGuard(param)];
     }
     file() {
       const result=super.file();
