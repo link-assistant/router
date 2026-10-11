@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
@@ -8,38 +8,54 @@ import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
+import {trackedSource,sourceCorpusPaths,sourceCorpusText} from './source-corpus.mjs';
+import {compilationMatrixDescription} from './compilation-matrix.mjs';
+export {trackedSource} from './source-corpus.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
-// Sparse workers still translate the complete tracked census. A missing
-// skip-worktree file is read from this checkout's immutable HEAD, never omitted.
-// Missing ordinary working files must continue to fail rather than resurrecting
-// a user's deletion. NUL-delimited ls-files output handles unusual path names.
-export function trackedSource(root, path) {
-  const absolute = join(root, path);
-  if (existsSync(absolute)) return readFileSync(absolute, 'utf8');
-  const records = execFileSync('git', ['ls-files', '-v', '-z', '--', path], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
-  if (!records.some(record => record.startsWith('S ') && record.slice(2) === path)) return readFileSync(absolute, 'utf8');
-  return execFileSync('git', ['show', `HEAD:${path}`], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+const plans=new WeakMap();
+export const BULK_PLAN_LIMITS=Object.freeze({profileExpectedBytes:512*1024*1024});
+function profilePrefix(input){
+  if(input===undefined)return '';
+  if(typeof input!=='string'||!(/^profiles\/[a-z][a-z0-9]*(?:-[a-z0-9]+)*-[a-f0-9]{64}$/).test(input)||input.length>150)throw new TypeError('bulk profile output requires an isolated safe profile/digest directory');
+  return input;
+}
+function assertProfileOutput(root,path){
+  let current=root;
+  for(const part of path.split('/')){
+    current=join(current,part);
+    try{if(lstatSync(current).isSymbolicLink())throw new TypeError('bulk profile output cannot follow a symbolic link');}
+    catch(error){if(error.code!=='ENOENT')throw error;}
+  }
 }
 function files(root) {
   if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(root, entry.name)) : [join(root, entry.name)]);
 }
 
-export function regenerate({ root, check = false, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE } = {}) {
+export function planRegeneration({ root, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE,outputPrefix:prefixInput,sourceCorpus,matrix } = {}) {
   root = resolve(root);
   const profile=compilationProfile(profileInput);
+  const prefix=profilePrefix(prefixInput),outputRoots=OUTPUT_ROOTS.map(path=>prefix?`${prefix}/${path}`:path);
+  const matrixDescription=matrix?compilationMatrixDescription(matrix):null;
+  const matrixMember=matrixDescription?.profiles.find(member=>member.directory===prefix);
+  if(prefix&&(!matrixMember||JSON.stringify(matrixMember.compilationProfile)!==JSON.stringify(profile)))throw new TypeError('bulk profile output must match its original matrix member and exact compilation profile');
+  if(matrix&&!prefix)throw new TypeError('matrix bulk outputs require their isolated member directory');
+  const readSource=path=>sourceCorpus?sourceCorpusText(sourceCorpus,root,path):trackedSource(root,path);
+  const corpusPaths=sourceCorpus?sourceCorpusPaths(sourceCorpus,root):null;
+  if(corpusPaths&&sources!==undefined&&JSON.stringify([...sources].sort())!==JSON.stringify(corpusPaths))throw new TypeError('bulk source selection differs from the original source corpus');
   // Standalone fixture roots without Cargo have no registered derive owner.
   // A real Cargo root must verify every consumed dependency input.
-  const deriveProfile=deriveDependencyProfile({manifest:existsSync(join(root,'Cargo.toml'))?trackedSource(root,'Cargo.toml'):null,lock:existsSync(join(root,'Cargo.lock'))?trackedSource(root,'Cargo.lock'):null}),deriveDependencies=deriveProfile.proof;
-  const paths = (sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
+  const deriveProfile=deriveDependencyProfile({manifest:sourceCorpus?readSource('Cargo.toml'):existsSync(join(root,'Cargo.toml'))?readSource('Cargo.toml'):null,lock:sourceCorpus?readSource('Cargo.lock'):existsSync(join(root,'Cargo.lock'))?readSource('Cargo.lock'):null}),deriveDependencies=deriveProfile.proof;
+  const paths = (corpusPaths??sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
   const expected = new Map();
   const assets = effectRuntimeAssets();
   const hostAssets=hostRuntimeAssets();
-  for (const output of [OUTPUT_ROOTS[1], OUTPUT_ROOTS[2], OUTPUT_ROOTS[4], OUTPUT_ROOTS[5]]) {
+  for (const index of [1,2,4,5]) {
+    const output=outputRoots[index],typed=index===2||index===5;
     expected.set(`${output}/runtime/effects.mjs`, assets.javascript);
-    if (output.startsWith('packages/typescript/')) expected.set(`${output}/runtime/effects.d.mts`, assets.declarations);
-    for(const [path,content] of hostAssets)if(output.startsWith('packages/typescript/')||!path.endsWith('.d.mts'))expected.set(`${output}/runtime/${path}`,content);
+    if (typed) expected.set(`${output}/runtime/effects.d.mts`, assets.declarations);
+    for(const [path,content] of hostAssets)if(typed||!path.endsWith('.d.mts'))expected.set(`${output}/runtime/${path}`,content);
   }
   const inventory = [];
   const diagnostics = new Map();
@@ -48,20 +64,20 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   const projects = [], projectDeclarations = [], projectSourceScopes=[];
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
-    const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path),compilationProfile:profile,deriveDependencies });
+    const result = translateProject({ entry, paths, readSource,compilationProfile:profile,deriveDependencies });
     result.meta.deriveDependencyProfile={available:!!deriveDependencies,digest:deriveDependencies?.digest??null,diagnostics:deriveProfile.diagnostics};
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
-    const targets = { meta: `${OUTPUT_ROOTS[3]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[4]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[5]}/${stem}.ts` };
+    const targets = { meta: `${outputRoots[3]}/${stem}.meta.json`, javascript: `${outputRoots[4]}/${stem}.mjs`, typescript: `${outputRoots[5]}/${stem}.ts` };
     expected.set(targets.meta, json(result.meta)); expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
   }
   for (const path of paths) {
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
-    const source = trackedSource(root, path);
+    const source = readSource(path);
     const result = translateSource(source, path, { projectDeclarations,projectSourceScopes });
     const stem = path.replace(/\.rs$/u, '');
-    const targets = { meta: `${OUTPUT_ROOTS[0]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[1]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[2]}/${stem}.ts` };
+    const targets = { meta: `${outputRoots[0]}/${stem}.meta.json`, javascript: `${outputRoots[1]}/${stem}.mjs`, typescript: `${outputRoots[2]}/${stem}.ts` };
     expected.set(targets.meta, json(result.ir));
     expected.set(targets.javascript, result.javascript);
     expected.set(targets.typescript, result.typescript);
@@ -100,6 +116,9 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');
   implementation.push('tools/translation/module-paths.mjs');
+  implementation.push('tools/translation/source-corpus.mjs');
+  implementation.push('tools/translation/compilation-matrix.mjs','tools/translation/matrix-bulk.mjs');
+  implementation.push('scripts/translate-router.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/module-paths/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/module-paths/${name}`));
   implementation.push(...['namespace-census.mjs','namespace-standard.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['rust-std-lib-1.89.0.rs.gz','rust-alloc-lib-1.89.0.rs.gz','rust-alloc-fmt-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/namespace-standard/${name}`));
@@ -115,7 +134,32 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   implementation.push(...readdirSync(new URL('./source-profiles/utf16-fixed-f64/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/utf16-fixed-f64/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
-  expected.set('parity/rust-source-inventory.json', json(manifest));
+  if(sourceCorpus)manifest.originalSourceCorpus={schema:sourceCorpus.schema,sourceSetSha256:sourceCorpus.sourceSetSha256,sources:sourceCorpus.sources,cargo:sourceCorpus.cargo,totalSourceBytes:sourceCorpus.totalSourceBytes};
+  if(prefix)manifest.outputPrefix=prefix;
+  if(matrixDescription)manifest.explicitCompilationMatrix={sha256:matrix.sha256,profile:matrixMember.name,profileSha256:matrixMember.sha256,requiredProfiles:matrixDescription.requiredProfiles,selectedProfiles:matrixDescription.profiles.map(member=>({name:member.name,sha256:member.sha256})),platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false};
+  expected.set(`${prefix?prefix+'/':''}parity/rust-source-inventory.json`, json(manifest));
+  const expectedBytes=[...expected.values()].reduce((sum,content)=>sum+Buffer.byteLength(content),0);
+  if(prefix&&expectedBytes>BULK_PLAN_LIMITS.profileExpectedBytes)throw new TypeError('bulk profile output plan exceeds its 536870912 byte budget');
+  const outputs=[...expected].map(([path,content])=>Object.freeze({path,bytes:Buffer.byteLength(content),sha256:sha256(content)}));
+  const plan=Object.freeze({schema:'checked-bulk-output-plan-v1',root,outputPrefix:prefix||null,outputRoots:Object.freeze(outputRoots),expectedBytes,outputs:Object.freeze(outputs),manifest});
+  plans.set(plan,{root,prefix,outputRoots,expected,manifest});return plan;
+}
+
+export function validateRegenerationPlan(plan){
+  const state=plans.get(plan);if(!state)throw new TypeError('Unsealed bulk output plan');
+  if(state.prefix){
+    for(const path of state.expected.keys())assertProfileOutput(state.root,path);
+    for(const output of state.outputRoots){
+      assertProfileOutput(state.root,output);
+      for(const target of files(join(state.root,output)))assertProfileOutput(state.root,target.slice(state.root.length+1));
+    }
+  }
+  return plan;
+}
+
+export function applyRegenerationPlan(plan,{check=false}={}){
+  validateRegenerationPlan(plan);
+  const {root,expected,outputRoots,manifest}=plans.get(plan);
   const failures = [];
   for (const [path, content] of expected) {
     const target = join(root, path);
@@ -124,7 +168,7 @@ export function regenerate({ root, check = false, sources, entries, compilationP
       else if (readFileSync(target, 'utf8') !== content) failures.push(`stale: ${path}`);
     } else { mkdirSync(dirname(target), { recursive: true }); writeFileSync(target, content); }
   }
-  for (const output of OUTPUT_ROOTS) for (const target of files(join(root, output))) {
+  for (const output of outputRoots) for (const target of files(join(root, output))) {
     const relative = target.slice(root.length + 1);
     if (!expected.has(relative)) {
       if (check) failures.push(`unexpected: ${relative}`);
@@ -132,4 +176,8 @@ export function regenerate({ root, check = false, sources, entries, compilationP
     }
   }
   return { manifest, failures };
+}
+
+export function regenerate({check=false,...options}={}){
+  return applyRegenerationPlan(planRegeneration(options),{check});
 }
