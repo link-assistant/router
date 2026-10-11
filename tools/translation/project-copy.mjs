@@ -11,12 +11,29 @@ import {attributeMacroProvenance} from './macro-subnamespaces.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
 import {bindNonCopyTraitOwner} from './copy-trait-owners.mjs';
 
-function tree(declarations){const items=[];for(const entry of declarations){let owner=items;for(const name of entry.path){let module=owner.find(item=>item.k==='module'&&item.name===name);if(!module){module={k:'module',name,items:[]};owner.push(module);}owner=module.items;}owner.push(entry.surface);}return items;}
+function tree(declarations,modules){
+  const items=[];
+  const owner=path=>{
+    let current=items;
+    for(const name of path){
+      let module=current.find(item=>item.k==='module'&&item.name===name);
+      if(!module){module={k:'module',name,items:[]};current.push(module);}
+      current=module.items;
+    }
+    return current;
+  };
+  // Lookup still starts in an original module after every layout in that
+  // module refuses. Empty lexical contexts provide no declaration or layout.
+  // Unknown scopes retain possible shadows; inactive scopes contribute none.
+  for(const module of modules)if(module.configurationCondition!=='inactive')owner(module.path);
+  for(const entry of declarations)owner(entry.path).push(entry.surface);
+  return items;
+}
 export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map()){
   let active=declarations.filter(entry=>['enum','struct','generated-type'].includes(entry.term)),checker,program;
   for(let attempts=0;attempts<=declarations.length;attempts++){
     checker=new HostChecker('Rust',[]);
-    const items=tree(active);
+    const items=tree(active,modules);
     try{program=checker.program({language:'Rust',items:[...items,...admittedHostData(hostData(),items)],main:null});break;}
     catch(error){if(!(error instanceof TranslationError))throw error;const owner=active.find(entry=>error.span&&entry.globalSpan.start<=error.span.start&&error.span.start<=entry.globalSpan.end);if(!owner)return ()=>null;active=active.filter(entry=>entry!==owner);}
   }
