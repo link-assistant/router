@@ -8,6 +8,7 @@ import {nominalTypeIdentities,resolveNominalImplTarget,implementationTargetPath}
 import {macroProvenance} from './macro-provenance.mjs';
 import {attributeMacroProvenance} from './macro-subnamespaces.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
+import {bindNonCopyTraitOwner} from './copy-trait-owners.mjs';
 
 function tree(declarations){const items=[];for(const entry of declarations){let owner=items;for(const name of entry.path){let module=owner.find(item=>item.k==='module'&&item.name===name);if(!module){module={k:'module',name,items:[]};owner.push(module);}owner=module.items;}owner.push(entry.surface);}return items;}
 export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map()){
@@ -26,7 +27,7 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     const actualTarget=implementationTargetPath(implementation,module);
     const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
-    return {...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)};
+    return bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes);
   }));
   const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
   const certify=(type,span)=>{

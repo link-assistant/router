@@ -57,6 +57,13 @@ non-Copy elements. A source array does not implicitly become a `Vec` or borrowed
 Zero repetitions retain the operand's expected element lifetime obligation,
 following the pinned [Rust 1.89 type checker](https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_hir_typeck/src/expr.rs#L1899-L1913).
 
+Draft Copy proofs distinguish a source-resolved `std::fmt::Display` implementation
+from Copy, Clone and Drop obligations. The profile retains the exact original
+header and a closed type namespace, with pinned Rust 1.89 owner definitions;
+unknown, shadowed, conditional and unsafe implementations remain refused.
+The incomplete `Display` and `PathBuf` namespace tables supply no formatter,
+path runtime behavior, constructor or glob completeness.
+
 An unsupported construct retains its exact source and diagnostic. It supplies no
 callable stub. Unsupported dependencies carry their callers, and ambiguous or
 conditional declarations require resolution before emission. Every draft and

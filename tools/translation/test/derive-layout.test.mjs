@@ -63,7 +63,7 @@ test('unchanged whole tracked thinking file retains unproved task-local and Copy
   }
 });
 
-test('unchanged whole subscription file checks only proven original shared expiry behavior',async()=>{
+test('unchanged whole subscription file checks proven original Copy and shared expiry behavior',async()=>{
   const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
   assert.equal(hash(source),'74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26');
   const result=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
@@ -72,8 +72,8 @@ test('unchanged whole subscription file checks only proven original shared expir
   assert.equal(hash(source.slice(method.span.start,method.span.end)),'e83bced63445758eaec0237fbad7f91eb1e895191ba8eaed92548862ee4286ad');
   assert.ok(result.meta.deriveNamespaceFootprints.certificates.some(certificate=>certificate.source===path&&certificate.name==='SubscriptionToken'));
   for(const name of ['SubscriptionProvider.as_str','SubscriptionProvider.home_subdir']){
-    assert.equal(result.meta.checkedMethods.some(method=>method.name===name),false);
-    assert.ok(result.meta.refused.some(item=>item.term==='method'&&item.name.endsWith(name)));
+    assert.equal(result.meta.checkedMethods.some(method=>method.name===name),true);
+    assert.equal(result.meta.refused.some(item=>item.term==='method'&&item.name.endsWith(name)),false);
   }
   assert.equal(result.meta.runtimeParity,false);
   const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),emitted=[...target.declarations.values()].find(entry=>entry.impl?.method==='is_expired');assert.ok(emitted);

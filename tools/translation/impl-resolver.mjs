@@ -7,6 +7,7 @@ import {fixedArrayLength} from './checked-types.mjs';
 import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
 import {createHash} from 'node:crypto';
 import {typeKey} from './checked-types.mjs';
+import {nonCopyTraitOwner} from './copy-trait-owners.mjs';
 
 const range = tokens => ({start:tokens[0]?.start ?? 0,end:tokens.at(-1)?.end ?? 0});
 const significant = tokens => tokens.filter(token=>token.type !== 'comment');
@@ -216,7 +217,11 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
         valid=refuse('unresolved trait implementation target prevents Copy certification',implementation.headerSpan??span);continue;
       }
       if(target!==key)continue;
-      if(trait)valid=refuse('manual trait or Drop implementation is outside the derived Copy profile',implementation.headerSpan??span);
+      if(trait) {
+        const owner=nonCopyTraitOwner(implementation);
+        if(owner)proofs.push({kind:'non-copy-affecting-standard-trait',type:current,owner});
+        else valid=refuse('manual trait or Drop implementation is outside the derived Copy profile',implementation.headerSpan??span);
+      }
       if(implementation.attributes?.some(attribute=>['cfg','cfg_attr'].includes(attribute.name)) || implementation.diagnostics?.some(diagnostic=>/unsafe implementation/u.test(diagnostic.message)))valid=refuse('conditional or unsafe implementation prevents Copy certification',implementation.headerSpan??span);
     }
     return valid;
