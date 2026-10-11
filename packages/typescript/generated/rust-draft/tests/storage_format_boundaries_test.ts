@@ -37,17 +37,15 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from tests/storage_format_boundaries_test.rs; sha256=4ea32f224de2de32c36a72059229214df84eb0ed5c8e061a709f97b2c64f766b
 // Carried constructs are data, never runtime parity evidence.
-import { serde_json_from_str as ml_host_serde_json_from_str } from "../runtime/json-runtime.mjs";
-
 import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
 
 function* ml_router_filter<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) yield value; }
 
 function ml_router_collect<T>(values: Iterable<T>) { return Object.freeze(Array.from(values)); }
 
-function is_json(line: string): boolean {
-  if (!(typeof line === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(line))) throw new TypeError('argument outside supported Rust value domain');
-  return (ml_host_serde_json_from_str(line).$ === 'Ok');
+function records(log: string): ReadonlyArray<string> {
+  if (!(typeof log === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(log))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_collect(ml_router_filter(ml_str_lines(log), (line) => { return !((line).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0); }));
 }
 
 const std = {
@@ -74,10 +72,5 @@ const serde_json = {
   },
 };
 
-function records(log: string): ReadonlyArray<string> {
-  if (!(typeof log === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(log))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_collect(ml_router_filter(ml_str_lines(log), (line) => { return !((line).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0); }));
-}
-
-export const translated: { "is_json": (line: string) => boolean; "records": (log: string) => ReadonlyArray<string> } = { ["is_json"]: is_json, ["records"]: records };
-export const provenance = {"sourcePath":"tests/storage_format_boundaries_test.rs","sourceSha256":"4ea32f224de2de32c36a72059229214df84eb0ed5c8e061a709f97b2c64f766b","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":14,"preserved":17,"runtimeParity":false};
+export const translated: { "records": (log: string) => ReadonlyArray<string> } = { ["records"]: records };
+export const provenance = {"sourcePath":"tests/storage_format_boundaries_test.rs","sourceSha256":"4ea32f224de2de32c36a72059229214df84eb0ed5c8e061a709f97b2c64f766b","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":15,"preserved":17,"runtimeParity":false};

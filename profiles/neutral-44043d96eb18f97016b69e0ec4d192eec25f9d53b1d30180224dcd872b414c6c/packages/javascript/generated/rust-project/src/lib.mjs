@@ -1,0 +1,4341 @@
+import { std_time_duration_as_secs as ml_host_duration_as_secs } from "../runtime/time-runtime.mjs";
+
+import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../runtime/json-values.mjs";
+
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+import { rust_f64_is_nan as ml_host_rust_f64_is_nan, rust_f64_is_finite as ml_host_rust_f64_is_finite, rust_f64_floor as ml_host_rust_f64_floor, rust_f64_is_sign_negative as ml_host_rust_f64_is_sign_negative, rust_f64_is_sign_positive as ml_host_rust_f64_is_sign_positive } from "../runtime/float-runtime.mjs";
+
+import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs, std_time_duration_from_millis as ml_host_std_time_duration_from_millis, std_time_duration_min as ml_host_std_time_duration_min } from "../runtime/time-runtime.mjs";
+
+import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_pointer as ml_host_serde_json_value_pointer, serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_bool as ml_host_serde_json_value_as_bool, serde_json_value_as_u64 as ml_host_serde_json_value_as_u64, serde_json_value_as_i64 as ml_host_serde_json_value_as_i64, serde_json_value_as_array as ml_host_serde_json_value_as_array } from "../runtime/json-runtime.mjs";
+
+import { createVectorRuntime as ml_create_vector_runtime } from "../runtime/vector-runtime.mjs";
+
+import { createIntegerRuntime as ml_create_integer_runtime } from "../runtime/integer-runtime.mjs";
+
+import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from "../runtime/fixed-integer-runtime.mjs";
+
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+
+import { encodeUtf16 as ml_encode_utf16, fixedToF64 as ml_fixed_to_f64 } from "../runtime/utf16-fixed-f64-runtime.mjs";
+
+import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
+
+import { borrowedStringSliceContains as ml_slice_str_contains, assertBorrowedStringSlice as ml_assert_str_slice } from "../runtime/slice-membership-runtime.mjs";
+
+import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
+
+import { assertImmutableIterator as ml_pattern_immutable_view } from "../runtime/iterator-runtime.mjs";
+
+function ml_fixed(value, min, max, message) {
+  if (value < min || value > max) throw new RangeError(message);
+  return value;
+}
+
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
+function ml_router_array(values, validate) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+function ml_router_unwrap(value, fallback, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+  } else if (value.$ === 'Ok') return value.field0;
+  return fallback;
+}
+
+import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
+
+function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
+
+function ml_router_find(values, predicate) { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }
+
+function ml_router_find_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") return result; } return Object.freeze({ $: "None" }); }
+
+function* ml_router_filter_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }
+
+function* ml_router_flatten(values) { for (const value of values) { ml_assert_immutable_iterator(value); yield* Array.prototype.values.call(value); } }
+
+function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
+
+function ml_router_all(values, predicate) { for (const value of values) if (!predicate(value)) return false; return true; }
+
+function ml_router_count(values) { let count = 0n; for (const value of values) { void value; count += 1n; } return count; }
+
+function ml_router_collect(values) { return Object.freeze(Array.from(values)); }
+
+function* ml_router_filter(values, predicate) { for (const value of values) if (predicate(value)) yield value; }
+
+function* ml_router_map(values, transform) { for (const value of values) yield transform(value); }
+
+function ml_router_fold(values, initial, combine) { let result = initial; for (const value of values) result = combine(result, value); return result; }
+
+const ml_router_try_return = Symbol('checked Rust early return');
+function ml_router_try(value, option) {
+  if (option) {
+    if (value.$ === 'Some') return value.field0;
+    if (value.$ === 'None') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'None' }) };
+  } else {
+    if (value.$ === 'Ok') return value.field0;
+    if (value.$ === 'Err') throw { [ml_router_try_return]: true, value: Object.freeze({ $: 'Err', field0: value.field0 }) };
+  }
+  throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
+}
+function ml_router_propagated(error) { return error && error[ml_router_try_return] === true; }
+
+const ml_host_value_schema_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573"}}]}]},"rp_526f757465724f7074696f6e5f355f666c6f6174":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573","ctors":[{"name":"Allowed","fields":[]},{"name":"AllowedWarning","fields":[]},{"name":"Rejected","fields":[]}]},"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974","ctors":[{"name":"WindowLimit","fields":[{"name":"name","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733"}},{"name":"reset_unix","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"utilization","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174"}}]}]}}};
+
+const ml_host_value_refinements_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 = new Map([]);
+
+const ml_host_value_schema_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573"}}]}]},"rp_526f757465724f7074696f6e5f355f666c6f6174":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573","ctors":[{"name":"Allowed","fields":[]},{"name":"AllowedWarning","fields":[]},{"name":"Rejected","fields":[]}]},"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473","ctors":[{"name":"UnifiedLimits","fields":[{"name":"windows","type":{"kind":"array","element":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974"}}},{"name":"representative_claim","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974","ctors":[{"name":"WindowLimit","fields":[{"name":"name","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733"}},{"name":"reset_unix","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"utilization","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174"}}]}]}}};
+
+const ml_host_value_refinements_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f = new Map([]);
+
+const ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb = {"schemaVersion":1,"types":{"rp_6163636f756e74732e43726564656e7469616c5374617465":{"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465","ctors":[{"name":"Usable","fields":[]},{"name":"Refreshable","fields":[]},{"name":"Rejected","fields":[]},{"name":"Expired","fields":[]},{"name":"Unusable","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb = new Map([]);
+
+const ml_host_value_schema_b3ad8518f955dc8223993dcf169d389b94bf091ef4adb85dc8a1d17032981d1d = {"schemaVersion":1,"types":{"rp_6163636f756e74732e53656c656374696f6e4d6f6465":{"kind":"data","name":"rp_6163636f756e74732e53656c656374696f6e4d6f6465","ctors":[{"name":"Automatic","fields":[]},{"name":"Pinned","fields":[]},{"name":"Session","fields":[]},{"name":"Detour","fields":[]}]}}};
+
+const ml_host_value_refinements_b3ad8518f955dc8223993dcf169d389b94bf091ef4adb85dc8a1d17032981d1d = new Map([]);
+
+const ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = {"schemaVersion":1,"types":{"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+const ml_host_value_schema_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419 = {"schemaVersion":1,"types":{"rp_6d6574726963732e53757266616365":{"kind":"data","name":"rp_6d6574726963732e53757266616365","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAIChat","fields":[]},{"name":"OpenAIResponses","fields":[]}]}}};
+
+const ml_host_value_refinements_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419 = new Map([]);
+
+const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
+
+const ml_host_value_schema_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765":{"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765","ctors":[{"name":"AnthropicUsage","fields":[{"name":"input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_creation_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"cache_read_input_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"output_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"service_tier","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"server_tool_use","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+const ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573"}}]}]},"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c"}}}]}]},"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573","ctors":[{"name":"ClaudeModelCapabilities","fields":[{"name":"behaves_as","type":{"kind":"string"}},{"name":"source","type":{"kind":"string"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573","ctors":[{"name":"RouterClientCapabilities","fields":[{"name":"claude","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733"}}]}]},"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c","ctors":[{"name":"RouterModel","fields":[{"name":"id","type":{"kind":"string"}},{"name":"owned_by","type":{"kind":"string"}},{"name":"selector_kind","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64"}},{"name":"capability_provenance","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}},{"name":"default_reasoning_level","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"provider_created_at","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"supported_reasoning_levels","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663"}},{"name":"client_capabilities","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573"}},{"name":"router_unavailable_reason","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c","ctors":[{"name":"RouterReasoningLevel","fields":[{"name":"effort","type":{"kind":"string"}},{"name":"description","type":{"kind":"string"}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64","ctors":[{"name":"Concrete","fields":[]},{"name":"ProviderDynamicAlias","fields":[]},{"name":"OperatorAlias","fields":[]},{"name":"Unknown","fields":[]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+const ml_host_value_schema_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f = {"schemaVersion":1,"types":{"rp_6465706c6f792e737465702e4f7574636f6d65":{"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65","ctors":[{"name":"AlreadyConverged","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Acted","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Skipped","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f = new Map([]);
+
+const ml_host_value_schema_a9c91990e57f535ecafdd0ad3c60f5d58603b5247a4c1e358642d2cfe1ecf282 = {"schemaVersion":1,"types":{"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635":{"kind":"data","name":"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635","ctors":[{"name":"Ok","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65"}}]},{"name":"Err","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6465706c6f792e737465702e4661696c757265"}}]}]},"rp_6465706c6f792e737465702e4661696c757265":{"kind":"data","name":"rp_6465706c6f792e737465702e4661696c757265","ctors":[{"name":"Failure","fields":[{"name":"step","type":{"kind":"string"}},{"name":"purpose","type":{"kind":"string"}},{"name":"expected","type":{"kind":"string"}},{"name":"found","type":{"kind":"string"}}]}]},"rp_6465706c6f792e737465702e4f7574636f6d65":{"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65","ctors":[{"name":"AlreadyConverged","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Acted","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Skipped","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6465706c6f792e737465702e537465705265706f7274":{"kind":"data","name":"rp_6465706c6f792e737465702e537465705265706f7274","ctors":[{"name":"StepReport","fields":[{"name":"step","type":{"kind":"string"}},{"name":"outcome","type":{"kind":"data","name":"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635"}},{"name":"took","type":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e"}}]}]},"rp_7374642e74696d652e4475726174696f6e":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e","ctors":[{"name":"Duration","fields":[{"name":"secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"nanos","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_a9c91990e57f535ecafdd0ad3c60f5d58603b5247a4c1e358642d2cfe1ecf282 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
+
+const ml_host_value_schema_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885 = {"schemaVersion":1,"types":{"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635":{"kind":"data","name":"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635","ctors":[{"name":"Ok","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65"}}]},{"name":"Err","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6465706c6f792e737465702e4661696c757265"}}]}]},"rp_6465706c6f792e737465702e4661696c757265":{"kind":"data","name":"rp_6465706c6f792e737465702e4661696c757265","ctors":[{"name":"Failure","fields":[{"name":"step","type":{"kind":"string"}},{"name":"purpose","type":{"kind":"string"}},{"name":"expected","type":{"kind":"string"}},{"name":"found","type":{"kind":"string"}}]}]},"rp_6465706c6f792e737465702e4f7574636f6d65":{"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65","ctors":[{"name":"AlreadyConverged","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Acted","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Skipped","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6465706c6f792e737465702e5265706f7274":{"kind":"data","name":"rp_6465706c6f792e737465702e5265706f7274","ctors":[{"name":"Report","fields":[{"name":"steps","type":{"kind":"array","element":{"kind":"data","name":"rp_6465706c6f792e737465702e537465705265706f7274"}}}]}]},"rp_6465706c6f792e737465702e537465705265706f7274":{"kind":"data","name":"rp_6465706c6f792e737465702e537465705265706f7274","ctors":[{"name":"StepReport","fields":[{"name":"step","type":{"kind":"string"}},{"name":"outcome","type":{"kind":"data","name":"rp_526f75746572526573756c745f34325f6e616d65645f3634363537303663366637395f37333734363537305f34663735373436333666366436355f34325f6e616d65645f3634363537303663366637395f37333734363537305f3436363136393663373537323635"}},{"name":"took","type":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e"}}]}]},"rp_7374642e74696d652e4475726174696f6e":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e","ctors":[{"name":"Duration","fields":[{"name":"secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"nanos","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
+
+const ml_host_value_schema_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379","ctors":[{"name":"ModelAccessPolicy","fields":[{"name":"allowed_models","type":{"kind":"array","element":{"kind":"string"}}},{"name":"allow_substitution","type":{"kind":"bool"}},{"name":"substitution_source","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_73746f726167652e546f6b656e5265636f7264":{"kind":"data","name":"rp_73746f726167652e546f6b656e5265636f7264","ctors":[{"name":"TokenRecord","fields":[{"name":"id","type":{"kind":"string"}},{"name":"label","type":{"kind":"string"}},{"name":"issued_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"revoked","type":{"kind":"bool"}},{"name":"ephemeral","type":{"kind":"bool"}},{"name":"run_lease_expires_at","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"sliding_window_seconds","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"max_requests","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"used_requests","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"max_tokens","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"used_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"reserved_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"rate_limit_per_minute","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"rate_window_started_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"rate_window_requests","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"scope","type":{"kind":"string"}},{"name":"github_repos","type":{"kind":"array","element":{"kind":"string"}}},{"name":"client_kind","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"principal_id","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"model_policy","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379"}}]}]}}};
+
+const ml_host_value_refinements_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 = new Map([]);
+
+const ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = new Map([]);
+
+const ml_host_value_schema_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c = {"schemaVersion":1,"types":{"rp_6769745f70726f78792e526566557064617465":{"kind":"data","name":"rp_6769745f70726f78792e526566557064617465","ctors":[{"name":"RefUpdate","fields":[{"name":"old","type":{"kind":"string"}},{"name":"new","type":{"kind":"string"}},{"name":"name","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c = new Map([]);
+
+const ml_host_value_schema_2e2bcfd22e611a7e46fbf2512e50105db66e586a752c729fb9f936fd24ff3df8 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6769746875625f70726f78792e476974487562506f6c696379":{"kind":"data","name":"rp_6769746875625f70726f78792e476974487562506f6c696379","ctors":[{"name":"GitHubPolicy","fields":[{"name":"rules","type":{"kind":"array","element":{"kind":"data","name":"rp_6769746875625f70726f78792e506f6c69637952756c65"}}}]}]},"rp_6769746875625f70726f78792e47697448756250726f7879436f6e666967":{"kind":"data","name":"rp_6769746875625f70726f78792e47697448756250726f7879436f6e666967","ctors":[{"name":"GitHubProxyConfig","fields":[{"name":"token","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"base_url","type":{"kind":"string"}},{"name":"policy","type":{"kind":"data","name":"rp_6769746875625f70726f78792e476974487562506f6c696379"}}]}]},"rp_6769746875625f70726f78792e506f6c696379456666656374":{"kind":"data","name":"rp_6769746875625f70726f78792e506f6c696379456666656374","ctors":[{"name":"Allow","fields":[]},{"name":"Deny","fields":[]}]},"rp_6769746875625f70726f78792e506f6c69637952756c65":{"kind":"data","name":"rp_6769746875625f70726f78792e506f6c69637952756c65","ctors":[{"name":"PolicyRule","fields":[{"name":"effect","type":{"kind":"data","name":"rp_6769746875625f70726f78792e506f6c696379456666656374"}},{"name":"method","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"path","type":{"kind":"string"}},{"name":"body_contains","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
+
+const ml_host_value_refinements_2e2bcfd22e611a7e46fbf2512e50105db66e586a752c729fb9f936fd24ff3df8 = new Map([]);
+
+const ml_host_value_schema_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61 = {"schemaVersion":1,"types":{"rp_6c6566696e652e436174616c6f674661696c7572654b696e64":{"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c7572654b696e64","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unavailable","fields":[]}]}}};
+
+const ml_host_value_refinements_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61 = new Map([]);
+
+const ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f345f626f6f6c":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"bool"}}]}]},"rp_6c6f675f616e616c797369732e45786368616e6765":{"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765","ctors":[{"name":"Exchange","fields":[{"name":"correlation_id","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"upstream_status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"uri","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"streamed","type":{"kind":"bool"}},{"name":"stream_evidence","type":{"kind":"bool"}},{"name":"response_media_type","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"stream_requested","type":{"kind":"bool"}},{"name":"body_terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"stream_outcome","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"stream_complete","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f345f626f6f6c"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"undecodable_bodies","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"records","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"stream_error","type":{"kind":"bool"}},{"name":"encoded_frames","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}},{"name":"content_encoding","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
+
+const ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 = new Map([]);
+
+const ml_host_value_schema_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e436174616c6f67536f7572636573436f6e666967":{"kind":"data","name":"rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e436174616c6f67536f7572636573436f6e666967","ctors":[{"name":"CatalogSourcesConfig","fields":[{"name":"sources","type":{"kind":"array","element":{"kind":"string"}}},{"name":"refresh_secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"local_models","type":{"kind":"array","element":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c547275746844657363726970746f72"}}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c526f75746553636f7065":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c526f75746553636f7065","ctors":[{"name":"ModelRouteScope","fields":[{"name":"provider","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"endpoint","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"protocols","type":{"kind":"array","element":{"kind":"string"}}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64","ctors":[{"name":"Concrete","fields":[]},{"name":"ProviderDynamicAlias","fields":[]},{"name":"OperatorAlias","fields":[]},{"name":"Unknown","fields":[]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c547275746844657363726970746f72":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c547275746844657363726970746f72","ctors":[{"name":"ModelTruthDescriptor","fields":[{"name":"requested_selector","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"selector_kind","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64"}},{"name":"route","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c526f75746553636f7065"}},{"name":"upstream_request_model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"upstream_served_model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"capabilities","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}},{"name":"capability_provenance","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}},{"name":"allow_substitution","type":{"kind":"bool"}},{"name":"substitution_source","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
+const ml_host_value_schema_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6d70702e4d7070436f6e666967":{"kind":"data","name":"rp_6d70702e4d7070436f6e666967","ctors":[{"name":"MppConfig","fields":[{"name":"enabled","type":{"kind":"bool"}},{"name":"amount","type":{"kind":"string"}},{"name":"currency","type":{"kind":"string"}},{"name":"recipient","type":{"kind":"string"}},{"name":"method","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
+
+const ml_host_value_refinements_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d = new Map([]);
+
+const ml_host_value_schema_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a = new Map([]);
+
+const ml_host_value_schema_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_6f75747075745f6c696d69742e4f7574707574546f6b656e4c696d69746572":{"kind":"data","name":"rp_6f75747075745f6c696d69742e4f7574707574546f6b656e4c696d69746572","ctors":[{"name":"OutputTokenLimiter","fields":[{"name":"remaining","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"stopped","type":{"kind":"bool"}}]}]}}};
+
+const ml_host_value_refinements_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919 = new Map([]);
+
+const ml_host_value_schema_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 = {"schemaVersion":1,"types":{"rp_706f6f6c5f72657472792e5265747279427564676574":{"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279427564676574","ctors":[{"name":"RetryBudget","fields":[{"name":"policy","type":{"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279506f6c696379"}},{"name":"round","type":{"kind":"fixed","bits":32,"signed":false}},{"name":"per_round","type":{"kind":"fixed","bits":32,"signed":false}},{"name":"max_attempts","type":{"kind":"fixed","bits":32,"signed":false}}]}]},"rp_706f6f6c5f72657472792e5265747279506f6c696379":{"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279506f6c696379","ctors":[{"name":"RetryPolicy","fields":[{"name":"rounds","type":{"kind":"fixed","bits":32,"signed":false}},{"name":"max_credentials","type":{"kind":"fixed","bits":32,"signed":false}},{"name":"max_interval","type":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e"}}]}]},"rp_7374642e74696d652e4475726174696f6e":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e","ctors":[{"name":"Duration","fields":[{"name":"secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"nanos","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
+
+const ml_host_value_schema_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6163636f756e74732e526f7574696e67436f6e74657874":{"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874","ctors":[{"name":"RoutingContext","fields":[{"name":"session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"parent_session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"pinned_account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"exclude","type":{"kind":"array","element":{"kind":"string"}}}]}]}}};
+
+const ml_host_value_refinements_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = new Map([]);
+
+const ml_host_value_schema_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc = {"schemaVersion":1,"types":{"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64":{"kind":"data","name":"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64","ctors":[{"name":"InvalidCandidate","fields":[]},{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]},{"name":"PersistenceUncertain","fields":[]}]}}};
+
+const ml_host_value_refinements_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc = new Map([]);
+
+const ml_host_value_schema_618c1d88e4b015cd71dde84d91243f7aab00f81eac1950c714e807cd556b06a5 = {"schemaVersion":1,"types":{"rp_726566726573682e496d706f7274526566726573684661696c7572654b696e64":{"kind":"data","name":"rp_726566726573682e496d706f7274526566726573684661696c7572654b696e64","ctors":[{"name":"NotAttempted","fields":[]},{"name":"ExchangeRejected","fields":[]},{"name":"ExchangeUncertain","fields":[]},{"name":"PersistenceUncertain","fields":[]}]}}};
+
+const ml_host_value_refinements_618c1d88e4b015cd71dde84d91243f7aab00f81eac1950c714e807cd556b06a5 = new Map([]);
+
+const ml_host_value_schema_2fe239ab7b28114fb9ffcf036e121990d4271e3edf9ebea1f40e9324584802e0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_726566726573682e526566726573684572726f72":{"kind":"data","name":"rp_726566726573682e526566726573684572726f72","ctors":[{"name":"Unsupported","fields":[]},{"name":"NoRefreshToken","fields":[]},{"name":"Request","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Status","fields":[{"name":"field0","type":{"kind":"fixed","bits":16,"signed":false}},{"name":"field1","type":{"kind":"data","name":"rp_726566726573682e52656672657368537461747573436c617373"}},{"name":"field2","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}}]},{"name":"Parse","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Storage","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726566726573682e52656672657368537461747573436c617373":{"kind":"data","name":"rp_726566726573682e52656672657368537461747573436c617373","ctors":[{"name":"InvalidGrant","fields":[]},{"name":"InvalidClient","fields":[]},{"name":"UnauthorizedClient","fields":[]},{"name":"UnsupportedGrantType","fields":[]},{"name":"RateLimited","fields":[]},{"name":"ClientRejected","fields":[]},{"name":"Transient","fields":[]},{"name":"UnexpectedStatus","fields":[]}]}}};
+
+const ml_host_value_refinements_2fe239ab7b28114fb9ffcf036e121990d4271e3edf9ebea1f40e9324584802e0 = new Map([]);
+
+const ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65":{"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = new Map([]);
+
+const ml_host_value_schema_e7ee5cdad12a2c42655adc11b0c79869f6ca16ad6b7bb23285fe46220669f0f7 = {"schemaVersion":1,"types":{"rp_7374642e74696d652e4475726174696f6e":{"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e","ctors":[{"name":"Duration","fields":[{"name":"secs","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"nanos","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_e7ee5cdad12a2c42655adc11b0c79869f6ca16ad6b7bb23285fe46220669f0f7 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
+
+const ml_host_value_schema_2d77511a83b66f015d7a9a4166263edaba333dc1c8ae3027346dbf81989af38a = {"schemaVersion":1,"types":{"rp_726573706f6e7365735f776562736f636b65742e4e616d657370616365":{"kind":"data","name":"rp_726573706f6e7365735f776562736f636b65742e4e616d657370616365","ctors":[{"name":"OpenAi","fields":[]},{"name":"Codex","fields":[]}]}}};
+
+const ml_host_value_refinements_2d77511a83b66f015d7a9a4166263edaba333dc1c8ae3027346dbf81989af38a = new Map([]);
+
+const ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 = {"schemaVersion":1,"types":{"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964":{"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964","ctors":[{"name":"Health","fields":[]},{"name":"AggregateModels","fields":[]},{"name":"SubscriptionUsage","fields":[]},{"name":"SubscriptionUsageProvider","fields":[]},{"name":"Tokens","fields":[]},{"name":"ClientTokens","fields":[]},{"name":"RunLease","fields":[]},{"name":"RevokeToken","fields":[]},{"name":"RotateToken","fields":[]},{"name":"RotateClientToken","fields":[]},{"name":"Providers","fields":[]},{"name":"Provider","fields":[]},{"name":"Login","fields":[]},{"name":"LoginSession","fields":[]},{"name":"LoginCode","fields":[]},{"name":"Usage","fields":[]},{"name":"Accounts","fields":[]},{"name":"AccountPause","fields":[]},{"name":"AccountResume","fields":[]},{"name":"CredentialStatus","fields":[]},{"name":"AuthDiagnostics","fields":[]},{"name":"EmergencyAuthStatus","fields":[]},{"name":"EmergencyAuthDisable","fields":[]},{"name":"SubscriptionHealth","fields":[]},{"name":"Metrics","fields":[]},{"name":"AdminStatus","fields":[]},{"name":"AdminBootstrap","fields":[]},{"name":"AdminBootstrapConfirm","fields":[]},{"name":"AdminRotate","fields":[]},{"name":"AdminSummary","fields":[]},{"name":"AnthropicMessages","fields":[]},{"name":"AnthropicCountTokens","fields":[]},{"name":"AnthropicModels","fields":[]},{"name":"AnthropicModel","fields":[]},{"name":"OpenAiChatCompletions","fields":[]},{"name":"OpenAiChatCompletion","fields":[]},{"name":"OpenAiChatCompletionMessages","fields":[]},{"name":"OpenAiResponses","fields":[]},{"name":"OpenAiResponse","fields":[]},{"name":"OpenAiResponseCancel","fields":[]},{"name":"OpenAiResponseInputItems","fields":[]},{"name":"OpenAiConversations","fields":[]},{"name":"OpenAiConversation","fields":[]},{"name":"OpenAiConversationItems","fields":[]},{"name":"OpenAiConversationItem","fields":[]},{"name":"OpenAiModels","fields":[]},{"name":"OpenAiModel","fields":[]},{"name":"CodexChatCompletions","fields":[]},{"name":"CodexChatCompletion","fields":[]},{"name":"CodexChatCompletionMessages","fields":[]},{"name":"CodexResponses","fields":[]},{"name":"CodexResponse","fields":[]},{"name":"CodexResponseCancel","fields":[]},{"name":"CodexResponseInputItems","fields":[]},{"name":"CodexConversations","fields":[]},{"name":"CodexConversation","fields":[]},{"name":"CodexConversationItems","fields":[]},{"name":"CodexConversationItem","fields":[]},{"name":"CodexModels","fields":[]},{"name":"CodexModel","fields":[]},{"name":"QwenChatCompletions","fields":[]},{"name":"QwenChatCompletion","fields":[]},{"name":"QwenChatCompletionMessages","fields":[]},{"name":"QwenResponses","fields":[]},{"name":"QwenResponse","fields":[]},{"name":"QwenResponseCancel","fields":[]},{"name":"QwenResponseInputItems","fields":[]},{"name":"QwenConversations","fields":[]},{"name":"QwenConversation","fields":[]},{"name":"QwenConversationItems","fields":[]},{"name":"QwenConversationItem","fields":[]},{"name":"QwenModels","fields":[]},{"name":"QwenModel","fields":[]},{"name":"GeminiModels","fields":[]},{"name":"GeminiModel","fields":[]},{"name":"Vertex","fields":[]},{"name":"AnthropicVertex","fields":[]},{"name":"BedrockInvoke","fields":[]},{"name":"BedrockInvokeStream","fields":[]},{"name":"GitHubRest","fields":[]},{"name":"GitHubGraphql","fields":[]},{"name":"Git","fields":[]},{"name":"GitHubAdapterRest","fields":[]},{"name":"GitHubAdapterGraphql","fields":[]},{"name":"GitHubAdapterGit","fields":[]},{"name":"ActivityPubActor","fields":[]},{"name":"ActivityPubInbox","fields":[]},{"name":"ActivityPubOutbox","fields":[]},{"name":"ActivityPubFollowers","fields":[]},{"name":"ActivityPubFollowProblemsets","fields":[]},{"name":"NativeOpenAi","fields":[]},{"name":"NativeAnthropic","fields":[]},{"name":"NativeCodex","fields":[]},{"name":"NativeCodexBackend","fields":[]},{"name":"AccountPolicy","fields":[]},{"name":"RequestLog","fields":[]},{"name":"ErrorLogs","fields":[]},{"name":"ErrorLog","fields":[]},{"name":"ClearLogs","fields":[]},{"name":"Logging","fields":[]},{"name":"UsageQueue","fields":[]},{"name":"LatestVersion","fields":[]},{"name":"ModelDefinitions","fields":[]},{"name":"Routing","fields":[]},{"name":"CooldownReset","fields":[]}]}}};
+
+const ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 = new Map([]);
+
+const ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e = {"schemaVersion":1,"types":{"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64":{"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64","ctors":[{"name":"Get","fields":[]},{"name":"Post","fields":[]},{"name":"Put","fields":[]},{"name":"Patch","fields":[]},{"name":"Delete","fields":[]},{"name":"Any","fields":[]}]}}};
+
+const ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e = new Map([]);
+
+const ml_host_value_schema_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 = {"schemaVersion":1,"types":{"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64":{"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAi","fields":[]},{"name":"Codex","fields":[]},{"name":"Qwen","fields":[]},{"name":"Gemini","fields":[]},{"name":"Vertex","fields":[]},{"name":"Bedrock","fields":[]},{"name":"GitHub","fields":[]},{"name":"Git","fields":[]},{"name":"ActivityPub","fields":[]}]}}};
+
+const ml_host_value_refinements_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 = new Map([]);
+
+const ml_host_value_schema_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf = {"schemaVersion":1,"types":{"rp_6170695f6572726f722e4170694469616c656374":{"kind":"data","name":"rp_6170695f6572726f722e4170694469616c656374","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAi","fields":[]},{"name":"Gemini","fields":[]},{"name":"GitHub","fields":[]}]}}};
+
+const ml_host_value_refinements_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf = new Map([]);
+
+const ml_host_value_schema_61dfd53674d645afd1c8de731523520c1e33ba3584a42b1556b50d4958ecf679 = {"schemaVersion":1,"types":{"rp_73746f705f73657175656e6365732e53746f7053657175656e636546696c746572":{"kind":"data","name":"rp_73746f705f73657175656e6365732e53746f7053657175656e636546696c746572","ctors":[{"name":"StopSequenceFilter","fields":[{"name":"sequences","type":{"kind":"array","element":{"kind":"string"}}},{"name":"pending","type":{"kind":"string"}},{"name":"stopped","type":{"kind":"bool"}}]}]}}};
+
+const ml_host_value_refinements_61dfd53674d645afd1c8de731523520c1e33ba3584a42b1556b50d4958ecf679 = new Map([]);
+
+const ml_host_value_schema_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db4332ec3f01ff5 = {"schemaVersion":1,"types":{"rp_73747265616d5f7465726d696e6174696f6e2e5465726d696e616c4576656e744465746563746f72":{"kind":"data","name":"rp_73747265616d5f7465726d696e6174696f6e2e5465726d696e616c4576656e744465746563746f72","ctors":[{"name":"TerminalEventDetector","fields":[{"name":"carry","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}},{"name":"seen","type":{"kind":"bool"}}]}]}}};
+
+const ml_host_value_refinements_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db4332ec3f01ff5 = new Map([]);
+
+const ml_host_value_schema_7f3c07751fe3015bee333364ac17a84270644c048c5ea155a474ef59febb42b9 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e546f6b656e":{"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e546f6b656e","ctors":[{"name":"SubscriptionToken","fields":[{"name":"access_token","type":{"kind":"string"}},{"name":"refresh_token","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"expires_at_ms","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"account_id","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"resource_url","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]}}};
+
+const ml_host_value_refinements_7f3c07751fe3015bee333364ac17a84270644c048c5ea155a474ef59febb42b9 = new Map([]);
+
+const ml_host_value_schema_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = {"schemaVersion":1,"types":{"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379":{"kind":"data","name":"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379","ctors":[{"name":"NetworkPolicy","fields":[{"name":"loopback","type":{"kind":"bool"}},{"name":"private","type":{"kind":"bool"}},{"name":"link_local","type":{"kind":"bool"}},{"name":"all","type":{"kind":"bool"}}]}]}}};
+
+const ml_host_value_refinements_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = new Map([]);
+
+const ml_host_value_schema_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d002e910f6475 = {"schemaVersion":1,"types":{"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64":{"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
+
+const ml_host_value_refinements_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d002e910f6475 = new Map([]);
+
+function ml_validate_duration(value) { ml_host_duration_as_secs(value); return true; }
+
+function ml_host_bool_then_some(value, argument) { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_bool_then(value, callback) { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map(value, callback) { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map_or(value, defaultValue, callback) { return value.$ === 'Some' ? callback(value.field0) : defaultValue; }
+
+function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
+
+const ml_host_rust_fixed_saturating_add_u64 = ml_create_fixed_integer_runtime({"kind":"fixed","bits":64,"signed":false}).rust_fixed_saturating_add;
+
+const ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565 = ml_create_vector_runtime(values => ml_validate_rust_value(values, {"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 })).rust_vec_first;
+
+const ml_host_rust_fixed_saturating_mul_u64 = ml_create_fixed_integer_runtime({"kind":"fixed","bits":64,"signed":false}).rust_fixed_saturating_mul;
+
+const ml_host_rust_fixed_saturating_mul_i64 = ml_create_fixed_integer_runtime({"kind":"fixed","bits":64,"signed":true}).rust_fixed_saturating_mul;
+
+const ml_host_rust_integer_parse_u64 = ml_create_integer_runtime({"kind":"fixed","bits":64,"signed":false}).rust_integer_parse;
+
+function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353() {
+  return 90n;
+}
+
+function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353() {
+  return 300n;
+}
+
+function rp_6163636f756e745f687474702e50524f58595f534348454d4553() {
+  return Object.freeze(Object.freeze(["http", "https", "socks5", "socks5h"]));
+}
+
+function rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958() {
+  return "anthropic-ratelimit-unified-";
+}
+
+function rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((ml_fixed((ml_fixed((8n * 24n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_6163636f756e745f6c696d6974732e53544154455f46494c45() {
+  return "account-limits.json";
+}
+
+function rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553() {
+  return ml_copy_fixed_array(["opus", "sonnet", "haiku"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373435663663363936643639373437333265346336393664363937343533373436313734373537335f37303631373237333635(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((value).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+  if ((ml_s1 === "allowed")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Allowed' }) });
+  } else {
+    if ((ml_s1 === "allowed_warning")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'AllowedWarning' }) });
+    } else {
+      if ((ml_s1 === "rejected")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Rejected' }) });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373435663663363936643639373437333265353736393665363436663737346336393664363937345f366436663634363536633566363636313664363936633739(router_self) {
+  ml_assert_immutable_iterator(router_self);
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974"}, ml_host_value_schema_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315, { refinements: ml_host_value_refinements_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 });
+  return ml_router_find(ml_router_iter(ml_copy_fixed_array(rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}}), false), (family) => { const ml_text_1 = (router_self).name;
+  const ml_text_2 = family;
+  return ml_text_1.includes(ml_text_2); });
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f36333732363137343635326536313633363336663735366537343566366336393664363937343733326535353665363936363639363536343463363936643639373437335f36393733356636353664373037343739(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473"}, ml_host_value_schema_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f, { refinements: ml_host_value_refinements_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f });
+  return (((router_self).windows.length === 0) && ((router_self).representative_claim.$ === 'None'));
+}
+
+function rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256414c5f53454353() {
+  return 60n;
+}
+
+function rp_6163636f756e74732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373437333265353336353663363536333734363936663665353337343732363137343635363737395f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((s).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).toLowerCase();
+  if ((ml_s1 === "weighted-round-robin")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'WeightedRoundRobin' }) });
+  } else {
+    if ((ml_s1 === "weighted_round_robin")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'WeightedRoundRobin' }) });
+    } else {
+      if ((ml_s1 === "round-robin")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+      } else {
+        if ((ml_s1 === "roundrobin")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+        } else {
+          if ((ml_s1 === "rr")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+          } else {
+            if ((ml_s1 === "priority")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+            } else {
+              if ((ml_s1 === "prio")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+              } else {
+                if ((ml_s1 === "fill-first")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+                } else {
+                  if ((ml_s1 === "fillfirst")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+                  } else {
+                    if ((ml_s1 === "least-used")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                    } else {
+                      if ((ml_s1 === "leastused")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                      } else {
+                        if ((ml_s1 === "least-utilized")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                        } else {
+                          if ((ml_s1 === "quota-first")) {
+                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                          } else {
+                            if ((ml_s1 === "lru")) {
+                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                            } else {
+                              return Object.freeze({ $: 'None' });
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6163636f756e74732e6d6c5f696d706c5f3633373236313734363532653631363336333666373536653734373332653433373236353634363536653734363936313663353337343631373436355f36633631363236353663(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465"}, ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb, { refinements: ml_host_value_refinements_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb });
+  switch (router_self.$) {
+    case "Usable": {
+      return "ok";
+    }
+    case "Refreshable": {
+      return "refreshable";
+    }
+    case "Rejected": {
+      return "rejected";
+    }
+    case "Expired": {
+      return "expired";
+    }
+    case "Unusable": {
+      const ml_f1 = router_self.field0;
+      return "missing";
+    }
+    default: {
+      return ml_router_unexpected(router_self);
+    }
+  }
+}
+
+function rp_6163636f756e74732e73656c656374696f6e2e6d6c5f696d706c5f36333732363137343635326536313633363336663735366537343733326534313633363336663735366537343532366637353734363537325f37353665363137363631363936633631363236633635356636353732373236663732(mode, account) {
+  ml_validate_rust_value(mode, {"kind":"data","name":"rp_6163636f756e74732e53656c656374696f6e4d6f6465"}, ml_host_value_schema_b3ad8518f955dc8223993dcf169d389b94bf091ef4adb85dc8a1d17032981d1d, { refinements: ml_host_value_refinements_b3ad8518f955dc8223993dcf169d389b94bf091ef4adb85dc8a1d17032981d1d });
+  if (!(typeof account === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(account))) throw new TypeError('argument outside supported Rust value domain');
+  switch (mode.$) {
+    case "Automatic": {
+      return Object.freeze({ $: 'NoHealthyAccounts' });
+    }
+    case "Pinned": {
+      return Object.freeze({ $: 'PinnedAccountUnavailable', field0: account });
+    }
+    case "Session": {
+      return Object.freeze({ $: 'SessionAccountUnavailable', field0: account });
+    }
+    case "Detour": {
+      return Object.freeze({ $: 'NoHealthyAccounts' });
+    }
+    default: {
+      return ml_router_unexpected(mode);
+    }
+  }
+}
+
+function rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e() {
+  return "paused by an operator";
+}
+
+function rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445() {
+  return "note: recorded in this machine's data directory; a router started from it applies the change at startup. Pass --server <URL> to change a running router.";
+}
+
+function rp_61637469766974797075622e41435449564954595f4a534f4e() {
+  return "application/activity+json";
+}
+
+function rp_61646d696e2e41444d494e5f544f4b454e5f505245464958() {
+  return "la_admin_";
+}
+
+function rp_61646d696e2e434c41494d5f46494c455f4e414d45() {
+  return "admin-claim.json";
+}
+
+function rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353() {
+  return 120n;
+}
+
+function rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253() {
+  return ml_fixed((24n * 365n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c() {
+  return "first-visitor-admin";
+}
+
+function rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c() {
+  return "recovered-admin";
+}
+
+function rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53() {
+  return 4096n;
+}
+
+function rp_616e7468726f7069635f6272696467652e75736167655f6669656c64(usage, keys) {
+  ml_assert_immutable_iterator(usage);
+  ml_validate_rust_value(usage, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  ml_assert_immutable_iterator(keys);
+  if (!ml_router_array(keys, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_unwrap(ml_host_option_bind(usage, (u) => { return ml_router_find_map(ml_router_iter(keys, false), (k) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(u, k), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"); }); }, "and_then"), 0n, true);
+}
+
+function rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e(finish_reason) {
+  if (!(typeof finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(finish_reason))) throw new TypeError('argument outside supported Rust value domain');
+  if ((finish_reason === "length")) {
+    return "max_tokens";
+  } else {
+    if ((finish_reason === "max_tokens")) {
+      return "max_tokens";
+    } else {
+      if ((finish_reason === "max_output_tokens")) {
+        return "max_tokens";
+      } else {
+        if ((finish_reason === "tool_calls")) {
+          return "tool_use";
+        } else {
+          if ((finish_reason === "function_call")) {
+            return "tool_use";
+          } else {
+            if ((finish_reason === "tool_use")) {
+              return "tool_use";
+            } else {
+              return "end_turn";
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579(event) {
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return Object.freeze({ $: 'Tuple', field0: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"), 0n, true), field1: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_5_0); }, "and_then"), 0n, true) });
+}
+
+function rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  if ((status === 400n)) {
+    return "invalid_request_error";
+  } else {
+    if ((status === 404n)) {
+      return "invalid_request_error";
+    } else {
+      if ((status === 422n)) {
+        return "invalid_request_error";
+      } else {
+        if ((status === 401n)) {
+          return "authentication_error";
+        } else {
+          if ((status === 403n)) {
+            return "permission_error";
+          } else {
+            if ((status === 429n)) {
+              return "rate_limit_error";
+            } else {
+              return "api_error";
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  if ((status === 401n)) {
+    return Object.freeze({ $: 'Some', field0: "invalid_api_key" });
+  } else {
+    if ((status === 403n)) {
+      return Object.freeze({ $: 'Some', field0: "permission_denied" });
+    } else {
+      if ((status === 404n)) {
+        return Object.freeze({ $: 'Some', field0: "model_not_found" });
+      } else {
+        if ((status === 429n)) {
+          return Object.freeze({ $: 'Some', field0: "rate_limit_exceeded" });
+        } else {
+          return Object.freeze({ $: 'None' });
+        }
+      }
+    }
+  }
+}
+
+function rp_61756469742e737572666163655f6e616d65(surface) {
+  ml_validate_rust_value(surface, {"kind":"data","name":"rp_6d6574726963732e53757266616365"}, ml_host_value_schema_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419, { refinements: ml_host_value_refinements_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419 });
+  switch (surface.$) {
+    case "Anthropic": {
+      return "anthropic";
+    }
+    case "OpenAIChat": {
+      return "openai_chat";
+    }
+    case "OpenAIResponses": {
+      return "openai_responses";
+    }
+    default: {
+      return ml_router_unexpected(surface);
+    }
+  }
+}
+
+function rp_617574682e434f4445585f434c49454e545f4944() {
+  return "app_EMoamEEZ73f0CkXaXp7hrann";
+}
+
+function rp_617574682e434f4445585f495353554552() {
+  return "https://auth.openai.com";
+}
+
+function rp_617574682e434f4445585f43414c4c4241434b5f50415448() {
+  return "/auth/callback";
+}
+
+function rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448() {
+  return "/deviceauth/callback";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f43524544454e5449414c() {
+  return "missing_credential";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e494e56414c49445f505245464958() {
+  return "invalid_prefix";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4d414c464f524d4544() {
+  return "malformed";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e5349474e41545552455f494e56414c4944() {
+  return "signature_invalid";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4953535545525f5345435245545f554e534554() {
+  return "issuer_secret_unset";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e45585049524544() {
+  return "expired";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e5245564f4b4544() {
+  return "revoked";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f5245434f5244() {
+  return "missing_record";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e42494e44494e475f4d49534d41544348() {
+  return "binding_mismatch";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e524551554553545f425544474554() {
+  return "request_budget";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e544f4b454e5f425544474554() {
+  return "token_budget";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e524154455f4c494d4954() {
+  return "rate_limit";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4d4f44454c5f504f4c494359() {
+  return "model_policy";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e494e53554646494349454e545f53434f5045() {
+  return "insufficient_scope";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e52554e5f4c454153455f554e52454e455741424c45() {
+  return "run_lease_unrenewable";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e554e535550504f525445445f4c454153455f454e44504f494e54() {
+  return "unsupported_lease_endpoint";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e53544f52414745() {
+  return "storage";
+}
+
+function rp_617574685f646961676e6f73746963732e726561736f6e2e4e4f545f464f554e44() {
+  return "not_found";
+}
+
+function rp_617574685f72656d6f74652e524551554553545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(30n);
+}
+
+function rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_secs(3n);
+}
+
+function rp_617574685f72656d6f74652e7374617475735f6f66(view) {
+  ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(view, "status"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then"), "unknown", true);
+}
+
+function rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473(body, provider) {
+  ml_assert_immutable_iterator(body);
+  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_host_option_map(ml_host_option_bind(ml_router_find(ml_router_flatten(ml_router_filter_map(ml_router_iter(ml_copy_fixed_array(["credentials", "accounts"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}}), false), (key) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(body, key), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"); })), (entry) => { return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(entry, "name"), (ml_host_callback_9_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_9_0); }, "and_then"), (name) => { return ((name).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (provider).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }, "is_some_and"); }), (entry_2) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(entry_2, "home"), (ml_host_callback_10_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_10_0); }, "and_then"); }, "and_then"), (ml_standard_callback_11_0) => { return ml_standard_callback_11_0; });
+}
+
+function rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453() {
+  return Object.freeze(Object.freeze(["model", "messages", "max_tokens", "max_completion_tokens", "temperature", "top_p", "frequency_penalty", "presence_penalty", "logit_bias", "seed", "stream", "stream_options", "stop", "tools", "tool_choice", "reasoning_effort", "reasoning", "response_format", "parallel_tool_calls", "n", "modalities", "audio", "logprobs", "top_logprobs", "safety_identifier", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "prediction", "user"]));
+}
+
+function rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453() {
+  return Object.freeze(Object.freeze(["model", "input", "instructions", "max_output_tokens", "temperature", "top_p", "stream", "tools", "tool_choice", "reasoning", "text", "parallel_tool_calls", "background", "max_tool_calls", "truncation", "store", "stream_options", "safety_identifier", "previous_response_id", "conversation", "service_tier", "prompt_cache_key", "prompt_cache_options", "prompt_cache_retention", "moderation", "metadata", "include", "prompt", "user", "context_management", "top_logprobs"]));
+}
+
+function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason) {
+  ml_validate_rust_value(reason, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  const ml_s1 = ml_router_unwrap(reason, "end_turn", true);
+  if ((ml_s1 === "end_turn")) {
+    return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
+  } else {
+    if ((ml_s1 === "stop_sequence")) {
+      return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
+    } else {
+      if ((ml_s1 === "tool_use")) {
+        return rp_6272696467655f726573706f6e73652e636f6d706c657465("tool_calls");
+      } else {
+        if ((ml_s1 === "refusal")) {
+          return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("content_filter", "content_filter", true);
+        } else {
+          if ((ml_s1 === "max_tokens")) {
+            return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
+          } else {
+            if ((ml_s1 === "pause_turn")) {
+              return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
+            } else {
+              if ((ml_s1 === "model_context_window_exceeded")) {
+                return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
+              } else {
+                return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6272696467655f726573706f6e73652e636f6d706c657465(chat_finish_reason) {
+  if (!(typeof chat_finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(chat_finish_reason))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = chat_finish_reason;
+  const ml_record2 = "completed";
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = false;
+  return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 });
+}
+
+function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_reason, reason, refusal) {
+  if (!(typeof chat_finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(chat_finish_reason))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(reason))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof refusal === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = chat_finish_reason;
+  const ml_record2 = "incomplete";
+  const ml_record3 = Object.freeze({ $: 'Some', field0: reason });
+  const ml_record4 = refusal;
+  return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 });
+}
+
+function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169(value) {
+  ml_pattern_immutable(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  const ml_s4 = (() => {
+    const ml_match_subject7 = ml_host_option_bind(value, (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject7);
+    return ml_match_subject7;
+  })();
+  switch (ml_s4.$) {
+    case "None": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "Some": {
+      const ml_f1 = ml_s4.field0;
+      if ((ml_f1 === "default")) {
+        return Object.freeze({ $: 'Some', field0: "standard" });
+      } else {
+        if ((ml_f1 === "auto")) {
+          return Object.freeze({ $: 'Some', field0: "standard" });
+        } else {
+          if ((ml_f1 === "priority")) {
+            return Object.freeze({ $: 'Some', field0: "priority" });
+          } else {
+            return Object.freeze({ $: 'None' });
+          }
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s4);
+    }
+  }
+}
+
+function rp_6272696467655f726573706f6e73652e6d6c5f696d706c5f3633373236313734363532653632373236393634363736353566373236353733373036663665373336353265343136653734363837323666373036393633353537333631363736355f37343666373436313663356636393665373037353734(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6272696467655f726573706f6e73652e416e7468726f7069635573616765"}, ml_host_value_schema_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8, { refinements: ml_host_value_refinements_8b72c89d4583e352afceaec1e4cf08dc6b090f62973fe492f40a84ac728b60b8 });
+  return ml_host_rust_fixed_saturating_add_u64(ml_host_rust_fixed_saturating_add_u64((router_self).input_tokens, (router_self).cache_creation_input_tokens), (router_self).cache_read_input_tokens);
+}
+
+function rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544() {
+  return "model_selection_required";
+}
+
+function rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365(tools, forced) {
+try {
+  ml_assert_immutable_iterator(tools);
+  ml_validate_rust_value(tools, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  if (!(typeof forced === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!forced) {
+    return Object.freeze({ $: 'None' });
+  } else {
+  }
+  const tools_2 = ml_router_try(ml_host_serde_json_value_as_array(ml_router_try(tools, true)), true);
+  if ((tools_2.length === 0)) {
+    return Object.freeze({ $: 'None' });
+  } else {
+  }
+  const has_function = ml_router_any(ml_router_iter(tools_2, true), (tool) => { const kind = ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_34_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_34_0); }, "and_then"), "custom", true);
+  return !((() => {
+    const ml_text_36 = kind;
+    const ml_text_37 = "web_search";
+    return ml_text_36.startsWith(ml_text_37);
+  })() || (() => {
+    const ml_text_38 = kind;
+    const ml_text_39 = "web_fetch";
+    return ml_text_38.startsWith(ml_text_39);
+  })()); });
+  return ml_host_bool_then(!has_function, () => { return "tool_choice requires a tool call, but the request offers only server-side tools that the provider executes itself; use tool_choice auto or add a client tool"; });
+
+} catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
+}
+
+function rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353() {
+  return 120n;
+}
+
+function rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445() {
+  return 5n;
+}
+
+function rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57() {
+  return ml_host_std_time_duration_from_secs(60n);
+}
+
+function rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c() {
+  return ml_host_std_time_duration_from_secs(3600n);
+}
+
+function rp_636861745f61646d696e2e4d41585f53455353494f4e53() {
+  return 512n;
+}
+
+function rp_636861745f61646d696e2e6e6f726d616c697365(word) {
+  if (!(typeof word === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(word))) throw new TypeError('argument outside supported Rust value domain');
+  const word_2 = ml_router_unwrap((() => {
+    const ml_text_17 = word;
+    const ml_text_18 = "/";
+    return (ml_text_17.startsWith(ml_text_18)?Object.freeze({ $: 'Some', field0: ml_text_17.slice(ml_text_18.length) }):Object.freeze({ $: 'None' }));
+  })(), word, true);
+  const word_3 = ml_host_option_map_or((() => {
+    const ml_text_25 = word_2;
+    const ml_text_26 = "@";
+    return (()=>{const index=ml_text_25.indexOf(ml_text_26);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_25.slice(0,index), field1: ml_text_25.slice(index+ml_text_26.length) }) });})();
+  })(), word_2, (ml_pattern_callback_27) => { ml_pattern_immutable(ml_pattern_callback_27);
+  const name = (ml_pattern_callback_27)["field0"];
+  return name; });
+  return word_3.toLowerCase();
+}
+
+function rp_636861745f61646d696e2e414c52454144595f434c41494d4544() {
+  return "Administration of this router is already claimed (here, through the web UI, or by deployment configuration). Send `/auth <admin token>` with an admin credential.";
+}
+
+function rp_636861745f61646d696e2e524154455f4c494d49544544() {
+  return "Too many attempts. Wait a minute and try again.";
+}
+
+function rp_636861745f61646d696e2e48454c50() {
+  return "Commands:\n/status — credential state, accounts and usage\n/tokens — list issued tokens (ids, labels and limits, never values)\n/issue [label] [ttl_hours] [max_requests] [key=value …] — issue a token;\n    options: label, ttl_hours, max_requests, max_tokens,\n    rate_limit_per_minute, account\n/show <id> — every constraint, counter and state for one token\n/rotate-token <id> [key=value …] — reissue a token, keeping its limits\n/revoke <id> — revoke a token\n/rotate — replace the admin credential\n/auth <token> — sign in with an admin credential\n/logout — forget the credential bound to this chat";
+}
+
+function rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253() {
+  return 24n;
+}
+
+function rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954() {
+  return 30n;
+}
+
+function rp_636861745f636f6d6d616e64732e49535355455f4b455953() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "label", field1: Object.freeze(Object.freeze(["label", "name"])) }), Object.freeze({ $: 'Tuple', field0: "ttl_hours", field1: Object.freeze(Object.freeze(["ttl_hours", "ttl"])) }), Object.freeze({ $: 'Tuple', field0: "max_requests", field1: Object.freeze(Object.freeze(["max_requests", "requests"])) }), Object.freeze({ $: 'Tuple', field0: "max_tokens", field1: Object.freeze(Object.freeze(["max_tokens", "tokens"])) }), Object.freeze({ $: 'Tuple', field0: "rate_limit_per_minute", field1: Object.freeze(Object.freeze(["rate_limit_per_minute", "rpm", "rate"])) }), Object.freeze({ $: 'Tuple', field0: "account", field1: Object.freeze(Object.freeze(["account", "pin"])) })]));
+}
+
+function rp_636861745f636f6d6d616e64732e7965735f6e6f(value) {
+  if (!(typeof value === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (value) {
+    return "yes";
+  } else {
+    return "no";
+  }
+}
+
+function rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c() {
+  return "https://claude.com/cai/oauth/authorize";
+}
+
+function rp_636c617564655f617574682e434c415544455f52454449524543545f555249() {
+  return "https://platform.claude.com/oauth/code/callback";
+}
+
+function rp_636c617564655f617574682e434c415544455f53434f504553() {
+  return "org:create_api_key user:profile user:inference user:sessions:claude_code user:mcp_servers user:file_upload";
+}
+
+function rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045() {
+  return "user:inference";
+}
+
+function rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45() {
+  return ".link-assistant-router-claude-login.json";
+}
+
+function rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054() {
+  return "You are Claude Code, Anthropic's official CLI for Claude.";
+}
+
+function rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e() {
+  return "2.1.265";
+}
+
+function rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c(token) {
+  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_1 = token;
+  const ml_text_2 = "sk-ant-oat";
+  return ml_text_1.startsWith(ml_text_2);
+}
+
+function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479(blocks) {
+  ml_validate_rust_value(blocks, {"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565(blocks), (block) => { return ml_host_serde_json_value_get_string(block, "text"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (text) => { const ml_text_2 = text;
+  const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
+  return ml_text_2.startsWith(ml_text_3); }, "is_some_and");
+}
+
+function rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_ROUTER_TOKEN";
+}
+
+function rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153() {
+  return "LINK_ASSISTANT_TOKEN";
+}
+
+function rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e() {
+  return "released Claude Code (checked through 2.1.283) has no supported split-auth mechanism: Router inference and /v1/models discovery use only the Router token, while the stored Claude.ai login remains untouched; Claude.ai connectors, Remote Control and /remote-control, /schedule, notification preferences, cloud sessions (--cloud, --environment, --teleport, and ultrareview), remote managed settings, and organization policy are unavailable in this Router-directed process";
+}
+
+function rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52() {
+  return "this Claude.ai operation cannot be routed because released Claude Code (checked through 2.1.283) has no supported split-auth mechanism; run it directly with Claude.ai authentication instead; no Router token was minted and no client was launched";
+}
+
+function rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553() {
+  return Object.freeze(Object.freeze(["HOME", "USERPROFILE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "APPDATA", "LOCALAPPDATA", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "CURSOR_CONFIG_DIR", "GEMINI_CLI_HOME", "OPENCODE_CONFIG_DIR", "QWEN_HOME", "QWEN_RUNTIME_DIR"]));
+}
+
+function rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f415454454d505453() {
+  return 5n;
+}
+
+function rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159() {
+  return ml_host_std_time_duration_from_millis(20n);
+}
+
+function rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552() {
+  return "x-link-assistant-proxied-client";
+}
+
+function rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545() {
+  return "codex";
+}
+
+function rp_636c69656e74732e434f4445585f50524f5649444552() {
+  return "link-assistant";
+}
+
+function rp_636c69656e74732e434f4445585f544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_TOKEN";
+}
+
+function rp_636c69656e74732e434c415544455f544f4b454e5f454e56() {
+  return "ANTHROPIC_AUTH_TOKEN";
+}
+
+function rp_636c69656e74732e434c415544455f424153455f454e56() {
+  return "ANTHROPIC_BASE_URL";
+}
+
+function rp_636c69656e74732e524f555445525f544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_TOKEN";
+}
+
+function rp_636c69656e74732e47524f4b5f544f4b454e5f454e56() {
+  return "GROK_API_KEY";
+}
+
+function rp_636c69656e74732e47524f4b5f424153455f454e56() {
+  return "GROK_BASE_URL";
+}
+
+function rp_636c69656e74732e524f555445525f50524f5649444552() {
+  return "link-assistant";
+}
+
+function rp_636c69656e74732e4f574e4552534849505f4d41524b4552() {
+  return ".link-assistant-router-client.json";
+}
+
+function rp_636c69656e74732e434c415544455f4d4f44454c5f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":5}});
+}
+
+function rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}});
+}
+
+function rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552() {
+  return "openai";
+}
+
+function rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552() {
+  return "anthropic";
+}
+
+function rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552() {
+  return "google";
+}
+
+function rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552() {
+  return "qwen";
+}
+
+function rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552() {
+  return "z.ai";
+}
+
+function rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254() {
+  return "xhigh";
+}
+
+function rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254() {
+  return "high";
+}
+
+function rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL", "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":9}});
+}
+
+function rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c() {
+  return "glm-5.3";
+}
+
+function rp_636c69656e74732e636174616c6f672e6d6c5f696d706c5f3633373236313734363532653633366336393635366537343733326536333631373436313663366636373265353236663735373436353732346436663634363536635f36393733356637333635373237363631363236633635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c"}, ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379, { refinements: ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 });
+  return ((router_self).router_unavailable_reason.$ === 'None');
+}
+
+function rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552() {
+  return "x-link-assistant-client-check";
+}
+
+function rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545() {
+  return "reachability";
+}
+
+function rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e() {
+  return Object.freeze({ $: 'Tuple', field0: 2n, field1: 1n, field2: 255n });
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553() {
+  return 4096n;
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54() {
+  return 64n;
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553() {
+  return 16384n;
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453() {
+  return Object.freeze(Object.freeze(["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"]));
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553() {
+  return Object.freeze(Object.freeze([".chatgpt.com", ".chatgpt-staging.com"]));
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553() {
+  return Object.freeze(Object.freeze(["__cf_bm", "__cflb", "__cfruid", "__cfseq", "__cfwaitingroom", "_cfuvid", "cf_clearance", "cf_ob_info", "cf_use_ob"]));
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636861746770745f686f7374(host) {
+  if (!(typeof host === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(host))) throw new TypeError('argument outside supported Rust value domain');
+  return (ml_slice_str_contains(rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), host, null) || ml_router_any(ml_router_iter(rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), false), (suffix) => { const ml_text_1 = host;
+  const ml_text_2 = suffix;
+  return ml_text_1.endsWith(ml_text_2); }));
+}
+
+function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636f6f6b69655f6e616d65(name) {
+  if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
+  return (ml_slice_str_contains(rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), name, null) || (() => {
+    const ml_text_1 = name;
+    const ml_text_2 = "cf_chl_";
+    return ml_text_1.startsWith(ml_text_2);
+  })());
+}
+
+function rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e() {
+  return "0.154.0";
+}
+
+function rp_636f6465785f6964656e746974792e4f524947494e41544f52() {
+  return "codex_cli_rs";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448() {
+  return "/api/services/codex/backend-api";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552() {
+  return "x-link-assistant-router-codex-bridge";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56() {
+  return "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56() {
+  return "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_UPSTREAM";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56() {
+  return "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_STATE";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56() {
+  return "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_NONCE";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56() {
+  return "LINK_ASSISTANT_ROUTER_INTERNAL_CODEX_BRIDGE_LISTEN";
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(5n);
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(3n);
+}
+
+function rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_millis(25n);
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958() {
+  return "la_rc_";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45() {
+  return "codex-remote-control.lino";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e() {
+  return 1n;
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453() {
+  return 1000n;
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54() {
+  return "/api/services/codex/backend-api/wham/remote/control/";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552() {
+  return "/api/services/codex/backend-api/wham/remote/control/server";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c() {
+  return "/api/services/codex/backend-api/wham/remote/control/server/enroll";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348() {
+  return "/api/services/codex/backend-api/wham/remote/control/server/refresh";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d() {
+  return "/wham/remote/control/server/refresh";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952() {
+  return "/api/services/codex/backend-api/wham/remote/control/server/pair";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553() {
+  return "/api/services/codex/backend-api/wham/remote/control/server/pair/status";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453() {
+  return "/api/services/codex/backend-api/wham/remote/control/environments/";
+}
+
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_1 = path;
+  const ml_text_2 = rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54();
+  return ml_text_1.startsWith(ml_text_2);
+}
+
+function rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553() {
+  return ml_fixed((ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_636f6e6669672e64656661756c745f6d70705f636f6e666967() {
+  const ml_record1 = false;
+  const ml_record2 = "0.00";
+  const ml_record3 = "USD";
+  const ml_record4 = "";
+  const ml_record5 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "MppConfig", ["enabled"]: ml_record1, ["amount"]: ml_record2, ["currency"]: ml_record3, ["recipient"]: ml_record4, ["method"]: ml_record5 });
+}
+
+function rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d() {
+  return "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----";
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535353730373337343732363536313664353037323666373636393634363537325f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "auto")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Auto' }) });
+  } else {
+    if ((ml_s1 === "all")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Auto' }) });
+    } else {
+      if ((ml_s1 === "anthropic")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+      } else {
+        if ((ml_s1 === "claude")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+        } else {
+          if ((ml_s1 === "gonka")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gonka' }) });
+          } else {
+            if ((ml_s1 === "crater")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Crater' }) });
+            } else {
+              if ((ml_s1 === "forgefed")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Crater' }) });
+              } else {
+                if ((ml_s1 === "codex")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                } else {
+                  if ((ml_s1 === "chatgpt")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                  } else {
+                    if ((ml_s1 === "openai-codex")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                    } else {
+                      if ((ml_s1 === "gemini")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                      } else {
+                        if ((ml_s1 === "google")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                        } else {
+                          if ((ml_s1 === "code-assist")) {
+                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                          } else {
+                            if ((ml_s1 === "qwen")) {
+                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                            } else {
+                              if ((ml_s1 === "qwen-code")) {
+                                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                              } else {
+                                if ((ml_s1 === "dashscope")) {
+                                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                                } else {
+                                  if ((ml_s1 === "openai")) {
+                                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                  } else {
+                                    if ((ml_s1 === "openai-compatible")) {
+                                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                    } else {
+                                      if ((ml_s1 === "openai_like")) {
+                                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                      } else {
+                                        if ((ml_s1 === "litellm")) {
+                                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                        } else {
+                                          if ((ml_s1 === "z.ai-coding-plan")) {
+                                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                                          } else {
+                                            if ((ml_s1 === "zai-coding-plan")) {
+                                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                                            } else {
+                                              return Object.freeze({ $: 'None' });
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f36333732363137343635326536333666366536363639363732653431373036393436366637323664363137345f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "anthropic")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+  } else {
+    if ((ml_s1 === "messages")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+    } else {
+      if ((ml_s1 === "bedrock")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Bedrock' }) });
+      } else {
+        if ((ml_s1 === "invoke")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Bedrock' }) });
+        } else {
+          if ((ml_s1 === "vertex")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Vertex' }) });
+          } else {
+            if ((ml_s1 === "rawpredict")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Vertex' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f3633373236313734363532653633366636653636363936373265353236663735373436393665363734643666363436355f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "direct")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Direct' }) });
+  } else {
+    if ((ml_s1 === "cli")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cli' }) });
+    } else {
+      if ((ml_s1 === "subprocess")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cli' }) });
+      } else {
+        if ((ml_s1 === "hybrid")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Hybrid' }) });
+        } else {
+          if ((ml_s1 === "auto")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Hybrid' }) });
+          } else {
+            return Object.freeze({ $: 'None' });
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535333734366637323631363736353530366636633639363337395f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "memory")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+  } else {
+    if ((ml_s1 === "mem")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+    } else {
+      if ((ml_s1 === "none")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+      } else {
+        if ((ml_s1 === "text")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Text' }) });
+        } else {
+          if ((ml_s1 === "lino")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Text' }) });
+          } else {
+            if ((ml_s1 === "binary")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+            } else {
+              if ((ml_s1 === "bin")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+              } else {
+                if ((ml_s1 === "link-cli")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                } else {
+                  if ((ml_s1 === "linkcli")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                  } else {
+                    if ((ml_s1 === "clink")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                    } else {
+                      if ((ml_s1 === "both")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Both' }) });
+                      } else {
+                        if ((ml_s1 === "dual")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Both' }) });
+                        } else {
+                          return Object.freeze({ $: 'None' });
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c() {
+  return "";
+}
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c() {
+  return "http://localhost:4000/v1";
+}
+
+function rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967() {
+  const ml_record1 = "litellm";
+  const ml_record2 = rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c();
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze([]);
+  const ml_record7 = Object.freeze([]);
+  return Object.freeze({ $: "OpenAICompatibleConfig", ["provider_name"]: ml_record1, ["base_url"]: ml_record2, ["api_key"]: ml_record3, ["api_key_env"]: ml_record4, ["default_model"]: ml_record5, ["models"]: ml_record6, ["supported_clients"]: ml_record7 });
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56() {
+  return "CONVERSATION_RECORD";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56() {
+  return "CONVERSATION_REPLAY";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552() {
+  return "x-router-replay-turn";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253() {
+  return Object.freeze(Object.freeze(["content-length", "transfer-encoding", "connection", "date"]));
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459() {
+  return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253() {
+  return Object.freeze(Object.freeze(["authorization", "content-length", "host", "proxy-authorization", "user-agent", "x-api-key", "x-request-id", "date", "cookie"]));
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453() {
+  return Object.freeze(Object.freeze(["method", "uri"]));
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e6865616465725f69735f636f6d7061726564(name) {
+  if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
+  return !ml_slice_str_contains(rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), (name).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)), null);
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954() {
+  return 120n;
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345() {
+  return "recording";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345() {
+  return "turn";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365(record) {
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_record1 = rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, "router_version");
+  const ml_record2 = rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, "provider");
+  return Object.freeze({ $: "Provenance", ["router_version"]: ml_record1, ["provider"]: ml_record2 });
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record, name) {
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
+}
+
+function rp_6372617465722e41435449564954595f4a534f4e() {
+  return "application/activity+json";
+}
+
+function rp_6372617465722e4c494e4b45445f444154415f4a534f4e() {
+  return "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"";
+}
+
+function rp_6372617465722e44454641554c545f4d4f44454c() {
+  return "crater-forgefed";
+}
+
+function rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(20n);
+}
+
+function rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259() {
+  return "auth-import-candidates";
+}
+
+function rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e() {
+  return 1n;
+}
+
+function rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259() {
+  return "refresh-recovery";
+}
+
+function rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54() {
+  return "primary";
+}
+
+function rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(5n);
+}
+
+function rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559() {
+  return "_link_assistant_router";
+}
+
+function rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559() {
+  return "credential_source";
+}
+
+function rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559() {
+  return "refresh_owner";
+}
+
+function rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552() {
+  return "external";
+}
+
+function rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958() {
+  return ".router-refresh.lock";
+}
+
+function rp_6465706c6f792e434f4e5441494e4552() {
+  return "router-deploy";
+}
+
+function rp_6465706c6f792e52454c4159() {
+  return "router-deploy-relay";
+}
+
+function rp_6465706c6f792e4e4554574f524b() {
+  return "router-deploy-network";
+}
+
+function rp_6465706c6f792e4241434b454e445f505245464958() {
+  return "router-deploy-backend-";
+}
+
+function rp_6465706c6f792e4c4142454c5f4b4559() {
+  return "com.link-assistant.router.deploy";
+}
+
+function rp_6465706c6f792e4c4142454c() {
+  return "com.link-assistant.router.deploy=1";
+}
+
+function rp_6465706c6f792e44454641554c545f504f5254() {
+  return 8080n;
+}
+
+function rp_6465706c6f792e4845414c54485f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(60n);
+}
+
+function rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c() {
+  return "deploy";
+}
+
+function rp_6465706c6f792e66697273745f6c696e65(text) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  return (ml_router_unwrap(ml_str_next(ml_str_lines(text)), "", true)).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
+}
+
+function rp_6465706c6f792e696e7374616e63652e4d41585f494e5354414e43455f4c454e() {
+  return 32n;
+}
+
+function rp_6465706c6f792e72656769737472792e46494c45() {
+  return "deployments.json";
+}
+
+function rp_6465706c6f792e72756e74696d652e69735f616273656e74(error) {
+  if (!(typeof error === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error))) throw new TypeError('argument outside supported Rust value domain');
+  const lowered = (error).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+  return (((() => {
+    const ml_text_1 = lowered;
+    const ml_text_2 = "no such object";
+    return ml_text_1.includes(ml_text_2);
+  })() || (() => {
+    const ml_text_3 = lowered;
+    const ml_text_4 = "no such container";
+    return ml_text_3.includes(ml_text_4);
+  })()) || (() => {
+    const ml_text_5 = lowered;
+    const ml_text_6 = "no such image";
+    return ml_text_5.includes(ml_text_6);
+  })());
+}
+
+function rp_6465706c6f792e737465702e6d6c5f696d706c5f36333732363137343635326536343635373036633666373932653733373436353730326534663735373436333666366436355f373436313637(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65"}, ml_host_value_schema_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f, { refinements: ml_host_value_refinements_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f });
+  switch (router_self.$) {
+    case "AlreadyConverged": {
+      const ml_f1 = router_self.field0;
+      return "already";
+    }
+    case "Acted": {
+      const ml_f2 = router_self.field0;
+      return "acted";
+    }
+    case "Skipped": {
+      const ml_f3 = router_self.field0;
+      return "skipped";
+    }
+    default: {
+      return ml_router_unexpected(router_self);
+    }
+  }
+}
+
+function rp_6465706c6f792e737465702e6d6c5f696d706c5f36333732363137343635326536343635373036633666373932653733373436353730326535333734363537303532363537303666373237345f363636313639366336353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6465706c6f792e737465702e537465705265706f7274"}, ml_host_value_schema_a9c91990e57f535ecafdd0ad3c60f5d58603b5247a4c1e358642d2cfe1ecf282, { refinements: ml_host_value_refinements_a9c91990e57f535ecafdd0ad3c60f5d58603b5247a4c1e358642d2cfe1ecf282 });
+  return ((router_self).outcome.$ === 'Err');
+}
+
+function rp_6465706c6f792e737465702e6d6c5f696d706c5f3633373236313734363532653634363537303663366637393265373337343635373032653532363537303666373237345f363336663665373636353732363736353634(router_self) {
+  ml_assert_immutable_iterator(router_self);
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6465706c6f792e737465702e5265706f7274"}, ml_host_value_schema_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885, { refinements: ml_host_value_refinements_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885 });
+  return ml_router_all(ml_router_iter((router_self).steps, true), (step) => { return !rp_6465706c6f792e737465702e6d6c5f696d706c5f36333732363137343635326536343635373036633666373932653733373436353730326535333734363537303532363537303666373237345f363636313639366336353634(step); });
+}
+
+function rp_6465706c6f795f636f6e6669672e52455345525645445f454e56() {
+  return Object.freeze(Object.freeze(["TOKEN_SECRET", "DATA_DIR", "STORAGE_POLICY", "HOME", "PATH", "USER", "SHELL", "PWD", "IFS", "CLAUDE_CODE_HOME", "CLAUDE_CONFIG_DIR", "LISTENERS", "ROUTER_HOST", "ROUTER_PORT", "NODE_EXTRA_CA_CERTS"]));
+}
+
+function rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553() {
+  return Object.freeze(Object.freeze(["ROUTER_DEPLOY_", "TLS_", "VERIFY_", "PRESERVATION_"]));
+}
+
+function rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453() {
+  return Object.freeze(Object.freeze(["claude", "codex", "qwen-code", "gemini", "opencode"]));
+}
+
+function rp_6465706c6f795f72656c61792e53544154455f454e56() {
+  return "ROUTER_DEPLOY_RELAY_STATE";
+}
+
+function rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56() {
+  return "ROUTER_DEPLOY_RELAY_LISTENERS";
+}
+
+function rp_6465706c6f795f736565642e4d455441444154415f4b4559() {
+  return "_link_assistant_router";
+}
+
+function rp_6465706c6f795f736565642e48414e444f5645525f4b4559() {
+  return "handed_over";
+}
+
+function rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65(record, now) {
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73746f726167652e546f6b656e5265636f7264"}, ml_host_value_schema_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98, { refinements: ml_host_value_refinements_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 });
+  if (typeof now !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(now, -9223372036854775808n, 9223372036854775807n, "i64 argument now out of range");
+  if (!(typeof now === 'bigint' && now >= -9223372036854775808n && now <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  return (((!(record).revoked && ((record).expires_at > now)) && ((record).client_kind.$ === 'Some')) && ((record).principal_id.$ === 'Some'));
+}
+
+function rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049() {
+  return "https://api.github.com/repos/link-assistant/router/releases/latest";
+}
+
+function rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958() {
+  return ".router-rollback";
+}
+
+function rp_64757261626c655f66696c652e434f4d4d49545f535546464958() {
+  return ".router-commit";
+}
+
+function rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_millis(20n);
+}
+
+function rp_656d657267656e63795f617574682e464c4147() {
+  return "--emergency-accept-any-token";
+}
+
+function rp_656d657267656e63795f617574682e454e56() {
+  return "EMERGENCY_ACCEPT_ANY_TOKEN";
+}
+
+function rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56() {
+  return "EMERGENCY_ALLOW_NON_LOOPBACK";
+}
+
+function rp_656d657267656e63795f617574682e4455524154494f4e5f454e56() {
+  return "EMERGENCY_DURATION_MINUTES";
+}
+
+function rp_656d657267656e63795f617574682e454e565f56415253() {
+  return ml_copy_fixed_array([rp_656d657267656e63795f617574682e454e56(), rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), rp_656d657267656e63795f617574682e4455524154494f4e5f454e56()], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553() {
+  return 60n;
+}
+
+function rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553() {
+  return ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_656d657267656e63795f617574682e5355424a4543545f505245464958() {
+  return "emergency-bypass-";
+}
+
+function rp_656d657267656e63795f617574682e4c4142454c() {
+  return "emergency-bypass";
+}
+
+function rp_656d657267656e63795f617574682e4845414c54485f484541444552() {
+  return "x-link-assistant-emergency-auth";
+}
+
+function rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964(token_id) {
+  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_1 = token_id;
+  const ml_text_2 = rp_656d657267656e63795f617574682e5355424a4543545f505245464958();
+  return ml_text_1.startsWith(ml_text_2);
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f() {
+  return 200n;
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553() {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553() {
+  return 4n;
+}
+
+function rp_656e747279706f696e742e535441434b5f4259544553() {
+  return ml_fixed((ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553() {
+  return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6572726f725f6c6f672e4d41585f424f44595f4259544553() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553() {
+  return ml_fixed((ml_fixed((8n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_67656d696e692e50524f4a4543545f454e56() {
+  return "GEMINI_PROJECT";
+}
+
+function rp_67656d696e692e4d4f44454c5f4f574e4552() {
+  return "google";
+}
+
+function rp_67656d696e692e6d61705f66696e6973685f726561736f6e(gemini) {
+  if (!(typeof gemini === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(gemini))) throw new TypeError('argument outside supported Rust value domain');
+  if ((gemini === "STOP")) {
+    return "stop";
+  } else {
+    if ((gemini === "MAX_TOKENS")) {
+      return "length";
+    } else {
+      return "content_filter";
+    }
+  }
+}
+
+function rp_67656d696e692e67656d696e695f66696e6973685f726561736f6e(response) {
+  ml_validate_rust_value(response, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const inner = ml_router_unwrap(ml_host_serde_json_value_get_string(response, "response"), response, true);
+  return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_pointer(inner, "/candidates/0/finishReason"), () => { return ml_host_serde_json_value_pointer(inner, "/promptFeedback/blockReason"); }, "or_else"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+}
+
+function rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574(path) {
+try {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_pattern_3 = ml_router_try((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = ":";
+    return (()=>{const index=ml_text_1.lastIndexOf(ml_text_2);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_1.slice(0,index), field1: ml_text_1.slice(index+ml_text_2.length) }) });})();
+  })(), true);
+  ml_pattern_immutable(ml_pattern_3);
+  const resource = (ml_pattern_3)["field0"];
+  const action = (ml_pattern_3)["field1"];
+  let streaming;
+  ml_control_exit_1: {
+    if ((action === "generateContent")) {
+      streaming = false;
+      break ml_control_exit_1;
+    } else {
+      if ((action === "streamGenerateContent")) {
+        streaming = true;
+        break ml_control_exit_1;
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+  const model_2 = (() => {
+    const ml_text_104 = (() => {
+      const ml_text_102 = ml_host_option_map_or((() => {
+        const ml_text_99 = resource;
+        const ml_text_100 = "/models/";
+        return (()=>{const index=ml_text_99.lastIndexOf(ml_text_100);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_99.slice(0,index), field1: ml_text_99.slice(index+ml_text_100.length) }) });})();
+      })(), resource, (ml_pattern_callback_101) => { ml_pattern_immutable(ml_pattern_callback_101);
+      const model = (ml_pattern_callback_101)["field1"];
+      return model; });
+      const ml_text_103 = "models/";
+      return (()=>{let text=ml_text_102;if(ml_text_103.length===0)return text;while(text.startsWith(ml_text_103))text=text.slice(ml_text_103.length);return text;})();
+    })();
+    const ml_text_105 = "/";
+    return (()=>{let text=ml_text_104;if(ml_text_105.length===0)return text;while(text.startsWith(ml_text_105))text=text.slice(ml_text_105.length);while(text.endsWith(ml_text_105))text=text.slice(0,text.length-ml_text_105.length);return text;})();
+  })();
+  return ml_host_bool_then(!(model_2.length === 0), () => { return Object.freeze({ $: 'Tuple', field0: model_2, field1: streaming }); });
+
+} catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
+}
+
+function rp_67656d696e692e726573706f6e7365732e6d6c5f696d706c5f363337323631373436353265363736353664363936653639326537323635373337303666366537333635373332653436363936653639373336385f36363732366636643566363736353664363936653639(reason) {
+  if (!(typeof reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(reason))) throw new TypeError('argument outside supported Rust value domain');
+  if ((reason === "STOP")) {
+    return Object.freeze({ $: 'Completed' });
+  } else {
+    if ((reason === "MAX_TOKENS")) {
+      return Object.freeze({ $: 'MaxOutputTokens' });
+    } else {
+      return Object.freeze({ $: 'ContentFilter' });
+    }
+  }
+}
+
+function rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45() {
+  return "model";
+}
+
+function rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e(openai) {
+  if (!(typeof openai === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(openai))) throw new TypeError('argument outside supported Rust value domain');
+  if ((openai === "length")) {
+    return "MAX_TOKENS";
+  } else {
+    if ((openai === "content_filter")) {
+      return "SAFETY";
+    } else {
+      return "STOP";
+    }
+  }
+}
+
+function rp_67656d696e695f6272696467652e726571756573742e68656c706572732e494d4147455f4d454449415f5459504553() {
+  return ml_copy_fixed_array(["image/jpeg", "image/png", "image/gif", "image/webp"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":4}});
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(a, b) {
+  ml_validate_rust_value(a, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(b, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((ml_host_rust_f64_is_nan(a) || ml_host_rust_f64_is_nan(b))) {
+    return NaN;
+  } else {
+  }
+  if (((a === 0) && (b === 0))) {
+    return ((ml_host_rust_f64_is_sign_negative(a) || ml_host_rust_f64_is_sign_negative(b)) ? (-0) : 0);
+  } else {
+  }
+  if ((a < b)) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(a, b) {
+  ml_validate_rust_value(a, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(b, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((ml_host_rust_f64_is_nan(a) || ml_host_rust_f64_is_nan(b))) {
+    return NaN;
+  } else {
+  }
+  if (((a === 0) && (b === 0))) {
+    return ((ml_host_rust_f64_is_sign_positive(a) || ml_host_rust_f64_is_sign_positive(b)) ? 0 : (-0));
+  } else {
+  }
+  if ((a > b)) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473(used, reserved, reserve, max) {
+  ml_validate_rust_value(used, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserve, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(max, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((max < 0) || (((used + reserved) < max) && (((used + reserved) + reserve) <= max)));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665(until, now) {
+  ml_validate_rust_value(until, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (until > now);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70(value, minimum, maximum) {
+  ml_validate_rust_value(value, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(minimum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(value, minimum), maximum);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e(previous, next) {
+  ml_validate_rust_value(previous, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(next, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(previous, next);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65(seconds, now, maximum) {
+  ml_validate_rust_value(seconds, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((!ml_host_rust_f64_is_finite(seconds) || (seconds < 0))) {
+    return now;
+  } else {
+  }
+  return (now + rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70(seconds, 0, maximum));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374(input, output, input_per_million, output_per_million) {
+  ml_validate_rust_value(input, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(output, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(input_per_million, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(output_per_million, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (((input * input_per_million) + (output * output_per_million)) / 1000000);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74(value) {
+  ml_validate_rust_value(value, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((ml_host_rust_f64_is_finite(value) && (value >= 0)) && (ml_host_rust_f64_floor(value) === value));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765(total, reserved, actual) {
+  ml_validate_rust_value(total, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(actual, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, (total - reserved)) + actual);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574(used, reserved, max) {
+  ml_validate_rust_value(used, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(max, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((max < 0)) {
+    return (-1);
+  } else {
+  }
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, ((max - used) - reserved));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974(requested, available, limit) {
+  ml_validate_rust_value(requested, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(available, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(limit, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, ml_host_rust_f64_floor(rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(requested, rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(available, limit))));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573(status) {
+  ml_validate_rust_value(status, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (((status === 408) || (status === 429)) || ((status >= 500) && (status <= 599)));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573(status) {
+  ml_validate_rust_value(status, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((status >= 200) && (status <= 299));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479(weight, load) {
+  ml_validate_rust_value(weight, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(load, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((((weight <= 0) || !ml_host_rust_f64_is_finite(weight)) || (load < 0))) {
+    return 0;
+  } else {
+  }
+  return (weight / (load + 1));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564(now, expires, skew) {
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(expires, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(skew, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (now >= (expires + skew));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_fixed_to_f64(ml_router_count(ml_encode_utf16(value)), "usize");
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473(value, maximum) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) > 0) && (rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) <= maximum));
+}
+
+function rp_6769745f70726f78792e5a45524f5f4f4944() {
+  return "0000000000000000000000000000000000000000";
+}
+
+function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(payload) {
+  ml_pattern_immutable_view(payload);
+  ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_s4 = (() => {
+    const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    ml_pattern_immutable(ml_match_subject7);
+    return ml_match_subject7;
+  })();
+  switch (ml_s4.$) {
+    case "None": {
+      return Object.freeze({ $: 'Unknown' });
+    }
+    case "Some": {
+      const ml_f1 = ml_s4.field0;
+      if ((ml_f1 === "ahead")) {
+        return Object.freeze({ $: 'FastForward' });
+      } else {
+        if ((ml_f1 === "identical")) {
+          return Object.freeze({ $: 'FastForward' });
+        } else {
+          if ((ml_f1 === "behind")) {
+            return Object.freeze({ $: 'Diverged' });
+          } else {
+            if ((ml_f1 === "diverged")) {
+              return Object.freeze({ $: 'Diverged' });
+            } else {
+              return Object.freeze({ $: 'Unknown' });
+            }
+          }
+        }
+      }
+    }
+    default: {
+      return ml_router_unexpected(ml_s4);
+    }
+  }
+}
+
+function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, repository) {
+  if (!ml_router_array(allowed_repositories, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof repository === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(repository))) throw new TypeError('argument outside supported Rust value domain');
+  return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories, false), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
+}
+
+function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_unwrap((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/github";
+    return (ml_text_5.startsWith(ml_text_6)?Object.freeze({ $: 'Some', field0: ml_text_5.slice(ml_text_6.length) }):Object.freeze({ $: 'None' }));
+  })(), path, true);
+}
+
+function rp_6769745f70726f78792e6d6c5f696d706c5f36333732363137343635326536373639373435663730373236663738373932653532363536363535373036343631373436355f363937333566363436353663363537343635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6769745f70726f78792e526566557064617465"}, ml_host_value_schema_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c, { refinements: ml_host_value_refinements_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c });
+  return ((router_self).new === rp_6769745f70726f78792e5a45524f5f4f4944());
+}
+
+function rp_6769745f70726f78792e6d6c5f696d706c5f36333732363137343635326536373639373435663730373236663738373932653532363536363535373036343631373436355f363937333566363337323635363137343635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6769745f70726f78792e526566557064617465"}, ml_host_value_schema_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c, { refinements: ml_host_value_refinements_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c });
+  return ((router_self).old === rp_6769745f70726f78792e5a45524f5f4f4944());
+}
+
+function rp_6769746875625f70726f78792e504f4c4943595f484541444552() {
+  return "x-link-assistant-policy";
+}
+
+function rp_6769746875625f70726f78792e6d6c5f696d706c5f3633373236313734363532653637363937343638373536323566373037323666373837393265343736393734343837353632353037323666373837393433366636653636363936375f3635366536313632366336353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6769746875625f70726f78792e47697448756250726f7879436f6e666967"}, ml_host_value_schema_2e2bcfd22e611a7e46fbf2512e50105db66e586a752c729fb9f936fd24ff3df8, { refinements: ml_host_value_refinements_2e2bcfd22e611a7e46fbf2512e50105db66e586a752c729fb9f936fd24ff3df8 });
+  return ((router_self).token.$ === 'Some');
+}
+
+function rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745() {
+  return "Gonka broker mode requires GONKA_API_KEY";
+}
+
+function rp_676f6e6b612e434154414c4f475f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4641494c45445f524546524553485f5245545259() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4d41585f434154414c4f475f4259544553() {
+  return ml_fixed((ml_fixed((4n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_676f6e6b612e4d41585f5353455f43415252595f4259544553() {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6c6566696e652e424153455f55524c() {
+  return "https://lefine.pro/v1";
+}
+
+function rp_6c6566696e652e434f4d50415449424c455f434c49454e5453() {
+  return ml_copy_fixed_array(["grok", "opencode", "qwen"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_6c6566696e652e4d41585f434154414c4f475f424f4459() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6c6566696e652e756e617661696c61626c65(message) {
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  return rp_6c6566696e652e6d6c5f696d706c5f3633373236313734363532653663363536363639366536353265343336313734363136633666363734363631363936633735373236355f366536353737(Object.freeze({ $: 'Unavailable' }), message);
+}
+
+function rp_6c6566696e652e6d6c5f696d706c5f3633373236313734363532653663363536363639366536353265343336313734363136633666363734363631363936633735373236355f366536353737(kind, message) {
+  ml_validate_rust_value(kind, {"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c7572654b696e64"}, ml_host_value_schema_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61, { refinements: ml_host_value_refinements_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61 });
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = kind;
+  const ml_record2 = message;
+  return Object.freeze({ $: "CatalogFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
+}
+
+function rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552() {
+  return "#a";
+}
+
+function rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552() {
+  return "#o";
+}
+
+function rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47() {
+  return "%z";
+}
+
+function rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d(record) {
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_router_unwrap(ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(record, "body"), (body) => { return ml_host_serde_json_value_get_string(body, "json"); }, "and_then"), (body_2) => { return ml_host_serde_json_value_get_string(body_2, "stream"); }, "and_then"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_bool(ml_host_callback_2_0); }, "and_then"), false, true);
+}
+
+function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f3633363137323732363936353634356636313665356636353732373236663732(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
+  return (router_self).stream_error;
+}
+
+function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f3639373335663735366537363635373236393636363936313632366336353566373337343732363536313664(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
+  return ((router_self).streamed && !(router_self).inspectable);
+}
+
+function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f363937333566373536653734363537323664363936653631373436353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
+  return ((((router_self).streamed && (router_self).inspectable) && ((router_self).stream_outcome.$ === 'None')) && !(router_self).body_terminated);
+}
+
+function rp_6c6f675f6465636f64652e42524f544c495f425546464552() {
+  return 4096n;
+}
+
+function rp_6c6f6767696e672e687474705f6661696c757265(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  const ml_ordered_match_1 = status;
+  if ((ml_ordered_match_1 === 401n)) {
+    return "authentication_or_authorization";
+  } else {
+    if ((ml_ordered_match_1 === 403n)) {
+      return "authentication_or_authorization";
+    } else {
+      if ((ml_ordered_match_1 === 407n)) {
+        return "authentication_or_authorization";
+      } else {
+        if ((ml_ordered_match_1 === 402n)) {
+          return "billing";
+        } else {
+          if ((ml_ordered_match_1 === 408n)) {
+            return "transport_timeout";
+          } else {
+            if ((ml_ordered_match_1 === 504n)) {
+              return "transport_timeout";
+            } else {
+              if ((ml_ordered_match_1 === 429n)) {
+                return "rate_limited";
+              } else {
+                if ((ml_ordered_match_1 === 400n)) {
+                  return "invalid_request";
+                } else {
+                  if ((ml_ordered_match_1 === 422n)) {
+                    return "invalid_request";
+                  } else {
+                    if ((ml_ordered_match_1 === 404n)) {
+                      return "routing_not_found";
+                    } else {
+                      if (((ml_ordered_match_1 >= 500n) && (ml_ordered_match_1 <= 599n))) {
+                        return "upstream_server_error";
+                      } else {
+                        return "http_error";
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6c6f67696e2e535543434553535f4d41524b455253() {
+  return Object.freeze(Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]));
+}
+
+function rp_6c6f67696e2e4641494c5552455f4d41524b455253() {
+  return Object.freeze(Object.freeze(["OAutherror", "PressEntertoretry", "Invalidcode", "invalid_grant", "Authenticationfailed", "Loginfailed"]));
+}
+
+function rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552() {
+  return "Choosethetextstylethatlooksbestwithyourterminal";
+}
+
+function rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552() {
+  return "Quicksafetycheck:Isthisaprojectyoucreated";
+}
+
+function rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552() {
+  return "Selectloginmethod:";
+}
+
+function rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552() {
+  return "Tipsforgettingstarted";
+}
+
+function rp_6c6f67696e5f7074792e5054595f434f4c53() {
+  return 400n;
+}
+
+function rp_6c6f67696e5f7074792e5054595f524f5753() {
+  return 60n;
+}
+
+function rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c() {
+  return ml_host_std_time_duration_from_millis(50n);
+}
+
+function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(compact, markers) {
+  if (!(typeof compact === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(compact))) throw new TypeError('argument outside supported Rust value domain');
+  if (!ml_router_array(markers, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_any(ml_router_iter(markers, false), (marker) => { const ml_text_1 = compact;
+  const ml_text_2 = marker;
+  return ml_text_1.includes(ml_text_2); });
+}
+
+function rp_6c6f67696e5f75726c2e415554485f484f535453() {
+  return Object.freeze(Object.freeze(["claude.ai", "claude.com", "anthropic.com"]));
+}
+
+function rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553() {
+  return Object.freeze(Object.freeze(["sk-ant-oat", "sk-ant-"]));
+}
+
+function rp_6c6f67696e5f75726c2e5245444143544544() {
+  return "[redacted]";
+}
+
+function rp_6c6f67696e5f75726c2e5345435245545f5052454649584553() {
+  return Object.freeze(Object.freeze(["sk-ant-", rp_746f6b656e2e544f4b454e5f505245464958(), rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), rp_61646d696e2e41444d494e5f544f4b454e5f505245464958()]));
+}
+
+function rp_6c6f67696e5f75726c2e7265646163745f76616c7565(text, secret) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof secret === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(secret))) throw new TypeError('argument outside supported Rust value domain');
+  const secret_2 = (secret).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
+  if ((BigInt(new TextEncoder().encode(secret_2).length) < 4n)) {
+    return text;
+  } else {
+  }
+  const ml_text_1 = text;
+  const ml_text_2 = secret_2;
+  const ml_text_3 = rp_6c6f67696e5f75726c2e5245444143544544();
+  return (ml_text_2.length===0?(ml_text_1.length===0?ml_text_3:ml_text_3+Array.from(ml_text_1).join(ml_text_3)+ml_text_3):ml_text_1.split(ml_text_2).join(ml_text_3));
+}
+
+function rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254() {
+  return 8080n;
+}
+
+function rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259() {
+  return "link-assistant-router";
+}
+
+function rp_6d616e616765645f7365727665722e5345525645525f434f4e464947() {
+  return "server.json";
+}
+
+function rp_6d616e616765645f7365727665722e4d414e414745445f5354415445() {
+  return "managed-server.json";
+}
+
+function rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b() {
+  return "managed-server.lock";
+}
+
+function rp_6d616e616765645f7365727665722e434f4e5441494e4552() {
+  return "link-assistant-router-managed";
+}
+
+function rp_6d616e616765645f7365727665722e564f4c554d45() {
+  return "link-assistant-router-managed-data";
+}
+
+function rp_6d616e616765645f7365727665722e494d414745() {
+  return "ghcr.io/link-assistant/router:latest";
+}
+
+function rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c() {
+  return "com.link-assistant.router.managed=1";
+}
+
+function rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c() {
+  return ml_host_std_time_duration_from_secs(30n);
+}
+
+function rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259() {
+  return "server-trust";
+}
+
+function rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553() {
+  return 100n;
+}
+
+function rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e() {
+  return 1n;
+}
+
+function rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45() {
+  return "model-catalogs.json";
+}
+
+function rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952() {
+  return "model-catalog-invalidations";
+}
+
+function rp_6d6f64656c5f636174616c6f672e6572726f72732e5045524d495353494f4e5f4552524f525f434f444553() {
+  return ml_copy_fixed_array(["oauth_not_allowed_for_organization"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":1}});
+}
+
+function rp_6d6f64656c5f636174616c6f672e737461727475702e494e495449414c5f524546524553485f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(20n);
+}
+
+function rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e44454641554c545f524546524553485f53454353() {
+  return 10800n;
+}
+
+function rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e63616e6f6e6963616c5f70726f7669646572(provider) {
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  if ((provider === "claude")) {
+    return "anthropic";
+  } else {
+    if ((provider === "chatgpt")) {
+      return "codex";
+    } else {
+      if ((provider === "openai-codex")) {
+        return "codex";
+      } else {
+        if ((provider === "google")) {
+          return "gemini";
+        } else {
+          if ((provider === "qwen-code")) {
+            return "qwen";
+          } else {
+            const other = provider;
+            return other;
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e6d6c5f696d706c5f36333732363137343635326536643666363436353663356636333631373436313663366636373566373336663735373236333635373332653633366636653636363936373265343336313734363136633666363735333666373537323633363537333433366636653636363936375f36393665373436353732373636313663(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e436174616c6f67536f7572636573436f6e666967"}, ml_host_value_schema_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca, { refinements: ml_host_value_refinements_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca });
+  return ml_host_std_time_duration_from_secs((router_self).refresh_secs);
+}
+
+function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry) {
+  ml_validate_rust_value(entry, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  const label = ml_router_unwrap(ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
+  const kind = rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(label);
+  return Object.freeze({ $: 'Tuple', field0: label, field1: kind });
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  if ((value === "provider_dynamic_alias")) {
+    return Object.freeze({ $: 'ProviderDynamicAlias' });
+  } else {
+    if ((value === "provider_advertised_alias")) {
+      return Object.freeze({ $: 'ProviderDynamicAlias' });
+    } else {
+      if ((value === "operator_alias")) {
+        return Object.freeze({ $: 'OperatorAlias' });
+      } else {
+        if ((value === "concrete")) {
+          return Object.freeze({ $: 'Concrete' });
+        } else {
+          if ((value === "provider_advertised_exact_id")) {
+            return Object.freeze({ $: 'Concrete' });
+          } else {
+            return Object.freeze({ $: 'Unknown' });
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f36333732363137343635326536643666363436353663356636333666366537343732363136333734326534643666363436353663343136333633363537333733343537323732366637325f373036663663363936333739356637353665363137363631363936633631363236633635(requested) {
+  if (!(typeof requested === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(requested))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = "model_policy_unavailable";
+  const ml_record2 = requested;
+  const ml_record3 = Object.freeze([]);
+  return Object.freeze({ $: "ModelAccessError", ["code"]: ml_record1, ["requested_model"]: ml_record2, ["allowed_models"]: ml_record3 });
+}
+
+function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745() {
+  return 1000n;
+}
+
+function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745() {
+  return 20n;
+}
+
+function rp_6d6f64656c5f726f7574696e672e6167677265676174652e4341504142494c4954595f4649454c4453() {
+  return ml_copy_fixed_array(["context_window", "max_output_tokens", "modalities", "pricing", "deprecation_date", "default_reasoning_level", "supported_reasoning_levels", "client_capabilities", "thinking"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":9}});
+}
+
+function rp_6d6f64656c5f726f7574696e672e73746f7265642e626172655f6d6f64656c5f6964(model) {
+  if (!(typeof model === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(model))) throw new TypeError('argument outside supported Rust value domain');
+  return model;
+}
+
+function rp_6d70702e6573636170655f6865616465725f76616c7565(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_10 = (() => {
+    const ml_text_7 = value;
+    const ml_text_8 = "\\";
+    const ml_text_9 = "\\\\";
+    return (ml_text_8.length===0?(ml_text_7.length===0?ml_text_9:ml_text_9+Array.from(ml_text_7).join(ml_text_9)+ml_text_9):ml_text_7.split(ml_text_8).join(ml_text_9));
+  })();
+  const ml_text_11 = "\"";
+  const ml_text_12 = "\\\"";
+  return (ml_text_11.length===0?(ml_text_10.length===0?ml_text_12:ml_text_12+Array.from(ml_text_10).join(ml_text_12)+ml_text_12):ml_text_10.split(ml_text_11).join(ml_text_12));
+}
+
+function rp_6d70702e6d6c5f696d706c5f36333732363137343635326536643730373032653464373037303433366636653636363936375f3639373335663633366636653636363936373735373236353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6d70702e4d7070436f6e666967"}, ml_host_value_schema_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d, { refinements: ml_host_value_refinements_548540e24eccf2491c19760fd7e19c5e516cbefa5c00d622e3c1b2f100506c0d });
+  return ((((router_self).enabled && !(((router_self).amount).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0)) && !(((router_self).currency).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0)) && !(((router_self).recipient).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '').length === 0));
+}
+
+function rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_6f70656e61692e657874726163745f7373655f64617461(block) {
+  if (!(typeof block === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(block))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_str_join(ml_router_collect(ml_router_filter_map(ml_str_lines(block), (line) => { return ml_host_option_map((() => {
+    const ml_text_25 = (() => {
+      const ml_text_23 = line;
+      const ml_text_24 = "\r";
+      return (()=>{let text=ml_text_23;if(ml_text_24.length===0)return text;while(text.endsWith(ml_text_24))text=text.slice(0,text.length-ml_text_24.length);return text;})();
+    })();
+    const ml_text_26 = "data:";
+    return (ml_text_25.startsWith(ml_text_26)?Object.freeze({ $: 'Some', field0: ml_text_25.slice(ml_text_26.length) }):Object.freeze({ $: 'None' }));
+  })(), (ml_standard_callback_26_0) => { return (ml_standard_callback_26_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+}
+
+function rp_6f70656e61692e646f6e655f6672616d65() {
+  return "data: [DONE]\n\n";
+}
+
+function rp_6f70656e61692e746f6f6c732e69735f7472616e736c617461626c65(tool) {
+  ml_validate_rust_value(tool, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const kind = ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "function", true);
+  if ((kind === "function")) {
+    return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(ml_router_unwrap(ml_host_serde_json_value_get_string(tool, "function"), tool, true), "name"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (name) => { return !(name.length === 0); }, "is_some_and");
+  } else {
+    if ((kind === "web_search")) {
+      return true;
+    } else {
+      if ((kind === "web_fetch")) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+}
+
+function rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553() {
+  return ml_fixed((ml_fixed((2n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6f7065726174696f6e616c5f6c6f672e4241434b555053() {
+  return 4n;
+}
+
+function rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e() {
+  return 4n;
+}
+
+function rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74(event) {
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ((ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (kind) => { return (((() => {
+    const ml_text_2 = kind;
+    const ml_text_3 = "output_text.delta";
+    return ml_text_2.includes(ml_text_3);
+  })() || (() => {
+    const ml_text_4 = kind;
+    const ml_text_5 = "content_block_delta";
+    return ml_text_4.includes(ml_text_5);
+  })()) || (() => {
+    const ml_text_6 = kind;
+    const ml_text_7 = "function_call_arguments.delta";
+    return ml_text_6.includes(ml_text_7);
+  })()); }, "is_some_and") || ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "choices"), (ml_host_callback_7_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_7_0); }, "and_then"), (choices) => { return !(choices.length === 0); }, "is_some_and")) || ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "candidates"), () => { return ml_host_serde_json_value_pointer(event, "/response/candidates"); }, "or_else"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"), (candidates) => { return !(candidates.length === 0); }, "is_some_and"));
+}
+
+function rp_6f75747075745f6c696d69742e646174615f7061796c6f6164(block) {
+  if (!(typeof block === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(block))) throw new TypeError('argument outside supported Rust value domain');
+  const payload = ml_str_join(ml_router_collect(ml_router_filter_map(ml_str_lines(block), (line) => { return ml_host_option_map((() => {
+    const ml_text_79 = (() => {
+      const ml_text_77 = line;
+      const ml_text_78 = "\r";
+      return (()=>{let text=ml_text_77;if(ml_text_78.length===0)return text;while(text.endsWith(ml_text_78))text=text.slice(0,text.length-ml_text_78.length);return text;})();
+    })();
+    const ml_text_80 = "data:";
+    return (ml_text_79.startsWith(ml_text_80)?Object.freeze({ $: 'Some', field0: ml_text_79.slice(ml_text_80.length) }):Object.freeze({ $: 'None' }));
+  })(), (ml_standard_callback_80_0) => { return (ml_standard_callback_80_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+  return ml_host_bool_then_some(!(payload.length === 0), payload);
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f366536353737(limit) {
+  ml_validate_rust_value(limit, {"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}, ml_host_value_schema_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a, { refinements: ml_host_value_refinements_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a });
+  const ml_record1 = (() => {
+    switch (limit.$) {
+      case "None": {
+        return Object.freeze({ $: 'None' });
+      }
+      case "Some": {
+        const limit_2 = limit.field0;
+        return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_mul_u64(limit_2, rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e()) });
+      }
+      default: {
+        return ml_router_unexpected(limit);
+      }
+    }
+  })();
+  const ml_record2 = false;
+  return Object.freeze({ $: "OutputTokenLimiter", ["remaining"]: ml_record1, ["stopped"]: ml_record2 });
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f3635366536313632366336353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6f75747075745f6c696d69742e4f7574707574546f6b656e4c696d69746572"}, ml_host_value_schema_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919, { refinements: ml_host_value_refinements_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919 });
+  return ((router_self).remaining.$ === 'Some');
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f3733373436663730373036353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6f75747075745f6c696d69742e4f7574707574546f6b656e4c696d69746572"}, ml_host_value_schema_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919, { refinements: ml_host_value_refinements_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919 });
+  return (router_self).stopped;
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f3633373236313734363532653666373537343730373537343566366336393664363937343265353236353733373036663665373336353733353337343732363536313664353236353737373236393734363537325f366536353737(requested_model, limit) {
+  if (!(typeof requested_model === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(requested_model))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(limit, {"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}, ml_host_value_schema_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a, { refinements: ml_host_value_refinements_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a });
+  const ml_record1 = requested_model;
+  const ml_record2 = rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f366536353737(limit);
+  const ml_record3 = Object.freeze([]);
+  const ml_record4 = false;
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  const ml_record7 = false;
+  const ml_record8 = false;
+  const ml_record9 = Object.freeze({ $: 'Unknown' });
+  return Object.freeze({ $: "ResponsesStreamRewriter", ["requested_model"]: ml_record1, ["limiter"]: ml_record2, ["buffer"]: ml_record3, ["finished"]: ml_record4, ["last_response"]: ml_record5, ["upstream_model"]: ml_record6, ["strict_identity"]: ml_record7, ["allow_substitution"]: ml_record8, ["selector_kind"]: ml_record9 });
+}
+
+function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453() {
+  return 3n;
+}
+
+function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353() {
+  return 30n;
+}
+
+function rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353() {
+  return ml_fixed((ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  if ((status === 429n)) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RateLimited' }) });
+  } else {
+    if ((status === 529n)) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Overloaded' }) });
+    } else {
+      if ((status === 500n)) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+      } else {
+        if ((status === 502n)) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+        } else {
+          if ((status === 503n)) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+          } else {
+            if ((status === 504n)) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+            } else {
+              if ((status === 401n)) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Unauthorized' }) });
+              } else {
+                return Object.freeze({ $: 'None' });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553() {
+  return ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_706f6f6c5f72657472792e6d6c5f696d706c5f36333732363137343635326537303666366636633566373236353734373237393265353236353734373237393432373536343637363537345f3732366637353665363435663636373536633663(router_self, context) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279427564676574"}, ml_host_value_schema_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323, { refinements: ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 });
+  ml_validate_rust_value(context, {"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874"}, ml_host_value_schema_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9, { refinements: ml_host_value_refinements_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 });
+  return (BigInt((context).exclude.length) >= (router_self).per_round);
+}
+
+function rp_706f6f6c5f72657472792e6d6c5f696d706c5f36333732363137343635326537303666366636633566373236353734373237393265353236353734373237393432373536343637363537345f37323666373536653634373335663735373336353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_706f6f6c5f72657472792e5265747279427564676574"}, ml_host_value_schema_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323, { refinements: ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa29065adf668ed9ed323 });
+  return (router_self).round;
+}
+
+function rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553() {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_70726f76696465725f616363657074616e63652e6d6c5f696d706c5f363337323631373436353265373037323666373636393634363537323566363136333633363537303734363136653633363532653530373236663736363936343635373235303732366637363639373336393666366534363631363936633735373236355f366536353737(kind, message) {
+  ml_validate_rust_value(kind, {"kind":"data","name":"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64"}, ml_host_value_schema_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc, { refinements: ml_host_value_refinements_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc });
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = kind;
+  const ml_record2 = message;
+  return Object.freeze({ $: "ProviderProvisionFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
+}
+
+function rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374(surface, path) {
+  ml_validate_rust_value(surface, {"kind":"data","name":"rp_6d6574726963732e53757266616365"}, ml_host_value_schema_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419, { refinements: ml_host_value_refinements_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419 });
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if ((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/gemini/";
+    return ml_text_1.includes(ml_text_2);
+  })()) {
+    return Object.freeze({ $: 'GeminiNative' });
+  } else {
+  }
+  switch (surface.$) {
+    case "Anthropic": {
+      return Object.freeze({ $: 'AnthropicMessages' });
+    }
+    case "OpenAIChat": {
+      return Object.freeze({ $: 'OpenAIChat' });
+    }
+    case "OpenAIResponses": {
+      return Object.freeze({ $: 'OpenAIResponses' });
+    }
+    default: {
+      return ml_router_unexpected(surface);
+    }
+  }
+}
+
+function rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_70726f7669646572732e64656661756c745f656e61626c6564() {
+  return true;
+}
+
+function rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_unwrap(ml_host_option_bind((() => {
+    const ml_text_33 = value;
+    const ml_text_34 = "\"";
+    return (ml_text_33.startsWith(ml_text_34)?Object.freeze({ $: 'Some', field0: ml_text_33.slice(ml_text_34.length) }):Object.freeze({ $: 'None' }));
+  })(), (v) => { const ml_text_35 = v;
+  const ml_text_36 = "\"";
+  return (ml_text_35.endsWith(ml_text_36)?Object.freeze({ $: 'Some', field0: ml_text_35.slice(0,ml_text_35.length-ml_text_36.length) }):Object.freeze({ $: 'None' })); }, "and_then"), value, true);
+}
+
+function rp_70726f7669646572732e6d6c5f696d706c5f36333732363137343635326537303732366637363639363436353732373332653530373236663736363936343635373234623639366536345f363637323666366435663733373437323566366637303734(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = value.toLowerCase();
+  if ((ml_s1 === "openai")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+  } else {
+    if ((ml_s1 === "openai-compatible")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+    } else {
+      if ((ml_s1 === "open-a-i-compatible")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+      } else {
+        if ((ml_s1 === "openai_like")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+        } else {
+          if ((ml_s1 === "litellm")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+          } else {
+            if ((ml_s1 === "lefine")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Lefine' }) });
+            } else {
+              if ((ml_s1 === "z.ai-coding-plan")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+              } else {
+                if ((ml_s1 === "zai-coding-plan")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                } else {
+                  return Object.freeze({ $: 'None' });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_70726f78792e4150495f505245464958() {
+  return "/api/services/anthropic/";
+}
+
+function rp_70726f78792e52455155495245445f464f52574152445f48454144455253() {
+  return Object.freeze(Object.freeze(["anthropic-beta", "anthropic-version"]));
+}
+
+function rp_70726f78792e484f505f42595f484f505f48454144455253() {
+  return Object.freeze(Object.freeze(["host", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]));
+}
+
+function rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253() {
+  return Object.freeze(Object.freeze(["authorization", "proxy-authorization", "set-cookie", "set-cookie2", "x-api-key", "x-goog-api-key", "anthropic-auth-token"]));
+}
+
+function rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253() {
+  return Object.freeze(Object.freeze(["x-api-key", "x-goog-api-key"]));
+}
+
+function rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54() {
+  return "Missing client token. Present it as `Authorization: Bearer <token>`, `x-api-key: <token>` or `x-goog-api-key: <token>`. The `?key=` query parameter is deliberately not accepted, because a URL is recorded by proxies and server logs.";
+}
+
+function rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e() {
+  return "2023-06-01";
+}
+
+function rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147() {
+  return "oauth-2025-04-20";
+}
+
+function rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553() {
+  return rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553();
+}
+
+function rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253() {
+  return Object.freeze(Object.freeze(["forwarded", "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-port", "x-forwarded-server", "x-original-forwarded-for", "x-real-ip", "x-client-ip", "x-cluster-client-ip", "cf-connecting-ip", "true-client-ip", "fastly-client-ip", "fly-client-ip", "x-envoy-external-address", "x-forwarded-client-cert", "x-azure-clientip", "x-appengine-user-ip", "cloudfront-viewer-address"]));
+}
+
+function rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_pattern_3 = (() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/anthropic";
+    return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+    const rest = (ml_pattern_3)["field0"];
+    return rest;
+  } else {
+  }
+  const ml_pattern_6 = (() => {
+    const ml_text_4 = path;
+    const ml_text_5 = "/api/services/bedrock";
+    return (ml_text_4.startsWith(ml_text_5)?Object.freeze({ $: 'Some', field0: ml_text_4.slice(ml_text_5.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_6) && (ml_pattern_6.$ === "Some"))) {
+    const rest_2 = (ml_pattern_6)["field0"];
+    return rest_2;
+  } else {
+  }
+  const ml_pattern_9 = (() => {
+    const ml_text_7 = path;
+    const ml_text_8 = "/api/services/vertex";
+    return (ml_text_7.startsWith(ml_text_8)?Object.freeze({ $: 'Some', field0: ml_text_7.slice(ml_text_8.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_9) && (ml_pattern_9.$ === "Some"))) {
+    const rest_3 = (ml_pattern_9)["field0"];
+    return rest_3;
+  } else {
+  }
+  const ml_pattern_12 = (() => {
+    const ml_text_10 = path;
+    const ml_text_11 = "/api/anthropic";
+    return (ml_text_10.startsWith(ml_text_11)?Object.freeze({ $: 'Some', field0: ml_text_10.slice(ml_text_11.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_12) && (ml_pattern_12.$ === "Some"))) {
+    const rest_4 = (ml_pattern_12)["field0"];
+    return rest_4;
+  } else {
+  }
+  const ml_pattern_15 = (() => {
+    const ml_text_13 = path;
+    const ml_text_14 = "/api/latest/anthropic";
+    return (ml_text_13.startsWith(ml_text_14)?Object.freeze({ $: 'Some', field0: ml_text_13.slice(ml_text_14.length) }):Object.freeze({ $: 'None' }));
+  })();
+  if ((ml_pattern_immutable(ml_pattern_15) && (ml_pattern_15.$ === "Some"))) {
+    const rest_5 = (ml_pattern_15)["field0"];
+    return rest_5;
+  } else {
+  }
+  return path;
+}
+
+function rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54() {
+  return "anthropic-sdk-typescript/0.112.1 userOAuthProvider";
+}
+
+function rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e() {
+  return "0.112.1";
+}
+
+function rp_726566726573682e47454d494e495f434c495f56455253494f4e() {
+  return "0.59.0";
+}
+
+function rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e() {
+  return "10.9.0";
+}
+
+function rp_726566726573682e5157454e5f434f44455f56455253494f4e() {
+  return "0.23.1";
+}
+
+function rp_726566726573682e47454d494e495f434c49454e545f49445f454e56() {
+  return "GEMINI_OAUTH_CLIENT_ID";
+}
+
+function rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56() {
+  return "GEMINI_OAUTH_CLIENT_SECRET";
+}
+
+function rp_726566726573682e47454d494e495f434c49454e545f4944() {
+  return "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com";
+}
+
+function rp_726566726573682e47454d494e495f415554485f555345525f4147454e54() {
+  return "google-api-nodejs-client/10.9.0";
+}
+
+function rp_726566726573682e47454d494e495f4150495f434c49454e54() {
+  return "gl-node/22.14.0";
+}
+
+function rp_726566726573682e434c415544455f434c49454e545f4944() {
+  return "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
+}
+
+function rp_726566726573682e434c415544455f544f4b454e5f55524c() {
+  return "https://platform.claude.com/v1/oauth/token";
+}
+
+function rp_726566726573682e524546524553485f534b45575f4d53() {
+  return ml_fixed((5n * 60000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53() {
+  return ml_fixed((60n * 60000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_726566726573682e726566726573685f73746174652e494e495449414c5f4241434b4f46465f4d53() {
+  return 1000n;
+}
+
+function rp_726566726573682e726566726573685f73746174652e4d41585f4241434b4f46465f4d53() {
+  return ml_fixed((ml_fixed((5n * 60n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow") * 1000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_726566726573682e726566726573685f73746174652e524f544154494f4e5f47524143455f4d53() {
+  return ml_fixed((ml_fixed((5n * 60n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow") * 1000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_726566726573682e6d6c5f696d706c5f36333732363137343635326537323635363637323635373336383265343936643730366637323734353236353636373236353733363834363631363936633735373236355f366536353737(kind, message) {
+  ml_validate_rust_value(kind, {"kind":"data","name":"rp_726566726573682e496d706f7274526566726573684661696c7572654b696e64"}, ml_host_value_schema_618c1d88e4b015cd71dde84d91243f7aab00f81eac1950c714e807cd556b06a5, { refinements: ml_host_value_refinements_618c1d88e4b015cd71dde84d91243f7aab00f81eac1950c714e807cd556b06a5 });
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = kind;
+  const ml_record2 = message;
+  return Object.freeze({ $: "ImportRefreshFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
+}
+
+function rp_726566726573682e6d6c5f696d706c5f363337323631373436353265373236353636373236353733363832653532363536363732363537333638343537323732366637325f37323635373437323739356636313636373436353732356636643733(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726566726573682e526566726573684572726f72"}, ml_host_value_schema_2fe239ab7b28114fb9ffcf036e121990d4271e3edf9ebea1f40e9324584802e0, { refinements: ml_host_value_refinements_2fe239ab7b28114fb9ffcf036e121990d4271e3edf9ebea1f40e9324584802e0 });
+  switch (router_self.$) {
+    case "Unsupported": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "NoRefreshToken": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "Request": {
+      const ml_f1 = router_self.field0;
+      return Object.freeze({ $: 'None' });
+    }
+    case "Status": {
+      const ml_f2 = router_self.field0;
+      const ml_f3 = router_self.field1;
+      const ml_f4 = router_self.field2;
+      switch (ml_f4.$) {
+        case "None": {
+          return Object.freeze({ $: 'None' });
+        }
+        case "Some": {
+          const seconds = ml_f4.field0;
+          return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_mul_i64(seconds, 1000n) });
+        }
+        default: {
+          return ml_router_unexpected(ml_f4);
+        }
+      }
+    }
+    case "Parse": {
+      const ml_f5 = router_self.field0;
+      return Object.freeze({ $: 'None' });
+    }
+    case "Storage": {
+      const ml_f6 = router_self.field0;
+      return Object.freeze({ $: 'None' });
+    }
+    default: {
+      return ml_router_unexpected(router_self);
+    }
+  }
+}
+
+function rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45() {
+  return "refresh-rejections.lino";
+}
+
+function rp_726571756573745f6c6f672e4c4f475f46494c45() {
+  return "requests.lino";
+}
+
+function rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45() {
+  return "requests.jsonl";
+}
+
+function rp_726571756573745f6c6f672e5245444143544544() {
+  return "[REDACTED]";
+}
+
+function rp_726571756573745f6c6f672e554e41555448454e54494341544544() {
+  return "unauthenticated";
+}
+
+function rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553() {
+  return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559() {
+  return "base64";
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552() {
+  return "stream-end marker";
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67(outcome) {
+  ml_validate_rust_value(outcome, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
+  return rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(outcome);
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  return ((((() => {
+    const ml_text_1 = text;
+    const ml_text_2 = "message_stop";
+    return ml_text_1.includes(ml_text_2);
+  })() || (() => {
+    const ml_text_3 = text;
+    const ml_text_4 = "[DONE]";
+    return ml_text_3.includes(ml_text_4);
+  })()) || (() => {
+    const ml_text_5 = text;
+    const ml_text_6 = "response.completed";
+    return ml_text_5.includes(ml_text_6);
+  })()) || (() => {
+    const ml_text_7 = text;
+    const ml_text_8 = "finishReason";
+    return ml_text_7.includes(ml_text_8);
+  })());
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f36393733356636333666366437303663363537343635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
+  if (!(router_self).streamed) {
+    return ((router_self).detail.$ === 'None');
+  } else {
+  }
+  if (!(router_self).inspectable) {
+    return false;
+  } else {
+  }
+  return ((router_self).terminated && ((router_self).detail.$ === 'None'));
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f3639373335663634363536643666366537333734373236313632366337393566363337353734(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
+  if (((router_self).detail.$ === 'Some')) {
+    return true;
+  } else {
+  }
+  return (((router_self).streamed && (router_self).inspectable) && !(router_self).terminated);
+}
+
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c5f36333732363137343635326537323635373137353635373337343566366336663637326537333734373236353631366435663666373537343633366636643635326535333734373236353631366434663735373436333666366436355f36633631363236353663(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53747265616d4f7574636f6d65"}, ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106, { refinements: ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 });
+  if (((router_self).detail.$ === 'Some')) {
+    return "upstream_error";
+  } else {
+    if (!(router_self).streamed) {
+      return "completed_not_streamed";
+    } else {
+      if ((router_self).terminated) {
+        return "completed";
+      } else {
+        if ((router_self).inspectable) {
+          return "ended_without_terminator";
+        } else {
+          return "encoded_not_verifiable";
+        }
+      }
+    }
+  }
+}
+
+function rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572(duration) {
+  ml_validate_rust_value(duration, {"kind":"data","name":"rp_7374642e74696d652e4475726174696f6e"}, ml_host_value_schema_e7ee5cdad12a2c42655adc11b0c79869f6ca16ad6b7bb23285fe46220669f0f7, { refinements: ml_host_value_refinements_e7ee5cdad12a2c42655adc11b0c79869f6ca16ad6b7bb23285fe46220669f0f7 });
+  return ml_host_std_time_duration_min(duration, rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552());
+}
+
+function rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345() {
+  return ml_fixed((ml_fixed((32n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45() {
+  return "response-affinities.lino";
+}
+
+function rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e() {
+  return 1n;
+}
+
+function rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((ml_fixed((ml_fixed((30n * 24n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453() {
+  return 10000n;
+}
+
+function rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553() {
+  return 256n;
+}
+
+function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f363337323631373436353265373236353733373036663665373336353566363136363636363936653639373437393265353236353733373036663665373336353465363136643635373337303631363336355f363637323666366435663730363137343638(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if ((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/openai/v1/responses";
+    return ml_text_1.startsWith(ml_text_2);
+  })()) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAiResponses' }) });
+  } else {
+    if ((() => {
+    const ml_text_3 = path;
+    const ml_text_4 = "/api/services/codex/v1/responses";
+    return ml_text_3.startsWith(ml_text_4);
+  })()) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'CodexResponses' }) });
+    } else {
+      if ((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/qwen/v1/responses";
+    return ml_text_5.startsWith(ml_text_6);
+  })()) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenResponses' }) });
+      } else {
+        if ((() => {
+    const ml_text_7 = path;
+    const ml_text_8 = "/api/services/openai/v1/chat/completions";
+    return ml_text_7.startsWith(ml_text_8);
+  })()) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAiChat' }) });
+        } else {
+          if ((() => {
+    const ml_text_9 = path;
+    const ml_text_10 = "/api/services/codex/v1/chat/completions";
+    return ml_text_9.startsWith(ml_text_10);
+  })()) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'CodexChat' }) });
+          } else {
+            if ((() => {
+    const ml_text_11 = path;
+    const ml_text_12 = "/api/services/qwen/v1/chat/completions";
+    return ml_text_11.startsWith(ml_text_12);
+  })()) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenChat' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f363337323631373436353265373236353733373036663665373336353566363136363636363936653639373437393265353236353733373036663665373336353465363136643635373337303631363336355f36333666366537363635373237333631373436393666366537333566363637323666366435663730363137343638(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if ((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/openai/v1/conversations";
+    return ml_text_1.startsWith(ml_text_2);
+  })()) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'OpenAiConversations' }), field1: Object.freeze({ $: 'OpenAiConversationItems' }) }) });
+  } else {
+    if ((() => {
+    const ml_text_3 = path;
+    const ml_text_4 = "/api/services/codex/v1/conversations";
+    return ml_text_3.startsWith(ml_text_4);
+  })()) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'CodexConversations' }), field1: Object.freeze({ $: 'CodexConversationItems' }) }) });
+    } else {
+      if ((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/qwen/v1/conversations";
+    return ml_text_5.startsWith(ml_text_6);
+  })()) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'QwenConversations' }), field1: Object.freeze({ $: 'QwenConversationItems' }) }) });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+}
+
+function rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579(event) {
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return Object.freeze({ $: 'Tuple', field0: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"), 0n, true), field1: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_5_0); }, "and_then"), 0n, true) });
+}
+
+function rp_726573706f6e7365732e657874726163745f7373655f64617461(block) {
+  if (!(typeof block === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(block))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_str_join(ml_router_collect(ml_router_filter_map(ml_str_lines(block), (line) => { return ml_host_option_map((() => {
+    const ml_text_25 = (() => {
+      const ml_text_23 = line;
+      const ml_text_24 = "\r";
+      return (()=>{let text=ml_text_23;if(ml_text_24.length===0)return text;while(text.endsWith(ml_text_24))text=text.slice(0,text.length-ml_text_24.length);return text;})();
+    })();
+    const ml_text_26 = "data:";
+    return (ml_text_25.startsWith(ml_text_26)?Object.freeze({ $: 'Some', field0: ml_text_25.slice(ml_text_26.length) }):Object.freeze({ $: 'None' }));
+  })(), (ml_standard_callback_26_0) => { return (ml_standard_callback_26_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+}
+
+function rp_726573706f6e7365732e646f6e655f6672616d65() {
+  return "data: [DONE]\n\n";
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448() {
+  return "/v1/responses";
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53() {
+  return 32n;
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253() {
+  return 256n;
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((60n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468(namespace) {
+  ml_validate_rust_value(namespace, {"kind":"data","name":"rp_726573706f6e7365735f776562736f636b65742e4e616d657370616365"}, ml_host_value_schema_2d77511a83b66f015d7a9a4166263edaba333dc1c8ae3027346dbf81989af38a, { refinements: ml_host_value_refinements_2d77511a83b66f015d7a9a4166263edaba333dc1c8ae3027346dbf81989af38a });
+  switch (namespace.$) {
+    case "OpenAi": {
+      return "/api/services/openai/v1/responses";
+    }
+    case "Codex": {
+      return "/api/services/codex/v1/responses";
+    }
+    default: {
+      return ml_router_unexpected(namespace);
+    }
+  }
+}
+
+function rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Combined' }), Object.freeze({ $: 'InferenceOnly' })]));
+}
+
+function rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f41444d494e() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Combined' }), Object.freeze({ $: 'Admin' })]));
+}
+
+function rp_726f7574655f636f6e74726163742e434f4d42494e45445f4f4e4c59() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Combined' })]));
+}
+
+function rp_726f7574655f636f6e74726163742e4749544855425f414441505445525f4f4e4c59() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'GitHubAdapter' })]));
+}
+
+function rp_726f7574655f636f6e74726163742e6e65757472616c(id, method, template) {
+  ml_validate_rust_value(id, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964"}, ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7, { refinements: ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 });
+  ml_validate_rust_value(method, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64"}, ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e, { refinements: ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e });
+  if (!(typeof template === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(template))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = id;
+  const ml_record2 = method;
+  const ml_record3 = template;
+  const ml_record4 = Object.freeze({ $: 'Neutral' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'Anthropic' });
+  const ml_record7 = rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345();
+  return Object.freeze({ $: "RouteSpec", ["id"]: ml_record1, ["method"]: ml_record2, ["template"]: ml_record3, ["class"]: ml_record4, ["auth"]: ml_record5, ["dialect"]: ml_record6, ["listeners"]: ml_record7 });
+}
+
+function rp_726f7574655f636f6e74726163742e6d616e6167656d656e74(id, method, template) {
+  ml_validate_rust_value(id, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964"}, ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7, { refinements: ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 });
+  ml_validate_rust_value(method, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64"}, ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e, { refinements: ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e });
+  if (!(typeof template === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(template))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = id;
+  const ml_record2 = method;
+  const ml_record3 = template;
+  const ml_record4 = Object.freeze({ $: 'Management' });
+  const ml_record5 = Object.freeze({ $: 'Admin' });
+  const ml_record6 = Object.freeze({ $: 'Anthropic' });
+  const ml_record7 = rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f41444d494e();
+  return Object.freeze({ $: "RouteSpec", ["id"]: ml_record1, ["method"]: ml_record2, ["template"]: ml_record3, ["class"]: ml_record4, ["auth"]: ml_record5, ["dialect"]: ml_record6, ["listeners"]: ml_record7 });
+}
+
+function rp_726f7574655f636f6e74726163742e61695f73657276696365(id, method, template, service, dialect) {
+  ml_validate_rust_value(id, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964"}, ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7, { refinements: ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 });
+  ml_validate_rust_value(method, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64"}, ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e, { refinements: ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e });
+  if (!(typeof template === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(template))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(service, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64"}, ml_host_value_schema_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0, { refinements: ml_host_value_refinements_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 });
+  ml_validate_rust_value(dialect, {"kind":"data","name":"rp_6170695f6572726f722e4170694469616c656374"}, ml_host_value_schema_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf, { refinements: ml_host_value_refinements_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf });
+  const ml_record1 = id;
+  const ml_record2 = method;
+  const ml_record3 = template;
+  const ml_record4 = Object.freeze({ $: 'Service', field0: service });
+  const ml_record5 = Object.freeze({ $: 'Client' });
+  const ml_record6 = dialect;
+  const ml_record7 = rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345();
+  return Object.freeze({ $: "RouteSpec", ["id"]: ml_record1, ["method"]: ml_record2, ["template"]: ml_record3, ["class"]: ml_record4, ["auth"]: ml_record5, ["dialect"]: ml_record6, ["listeners"]: ml_record7 });
+}
+
+function rp_726f7574655f636f6e74726163742e707269766174655f73657276696365(id, method, template, service, dialect) {
+  ml_validate_rust_value(id, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964"}, ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7, { refinements: ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 });
+  ml_validate_rust_value(method, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64"}, ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e, { refinements: ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e });
+  if (!(typeof template === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(template))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(service, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64"}, ml_host_value_schema_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0, { refinements: ml_host_value_refinements_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 });
+  ml_validate_rust_value(dialect, {"kind":"data","name":"rp_6170695f6572726f722e4170694469616c656374"}, ml_host_value_schema_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf, { refinements: ml_host_value_refinements_2c3f4e05b63ed62da7a2f15d79e340fe3f479863971b41058bdfa179a88d5ebf });
+  const ml_record1 = id;
+  const ml_record2 = method;
+  const ml_record3 = template;
+  const ml_record4 = Object.freeze({ $: 'Service', field0: service });
+  const ml_record5 = Object.freeze({ $: 'Client' });
+  const ml_record6 = dialect;
+  const ml_record7 = rp_726f7574655f636f6e74726163742e434f4d42494e45445f4f4e4c59();
+  return Object.freeze({ $: "RouteSpec", ["id"]: ml_record1, ["method"]: ml_record2, ["template"]: ml_record3, ["class"]: ml_record4, ["auth"]: ml_record5, ["dialect"]: ml_record6, ["listeners"]: ml_record7 });
+}
+
+function rp_726f7574655f636f6e74726163742e6769746875625f616461707465725f73657276696365(id, method, template, service) {
+  ml_validate_rust_value(id, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654964"}, ml_host_value_schema_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7, { refinements: ml_host_value_refinements_a0a1b814adaf3838855f3c3dba574fc45a78fdd7f96b86404ccaada92a852aa7 });
+  ml_validate_rust_value(method, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e526f7574654d6574686f64"}, ml_host_value_schema_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e, { refinements: ml_host_value_refinements_c65d1d87234f2a8cf0cafd46b6559baa133ad2b460e324053fcdb719a5ea627e });
+  if (!(typeof template === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(template))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(service, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64"}, ml_host_value_schema_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0, { refinements: ml_host_value_refinements_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 });
+  const ml_record1 = id;
+  const ml_record2 = method;
+  const ml_record3 = template;
+  const ml_record4 = Object.freeze({ $: 'Service', field0: service });
+  const ml_record5 = Object.freeze({ $: 'Client' });
+  const ml_record6 = Object.freeze({ $: 'GitHub' });
+  const ml_record7 = rp_726f7574655f636f6e74726163742e4749544855425f414441505445525f4f4e4c59();
+  return Object.freeze({ $: "RouteSpec", ["id"]: ml_record1, ["method"]: ml_record2, ["template"]: ml_record3, ["class"]: ml_record4, ["auth"]: ml_record5, ["dialect"]: ml_record6, ["listeners"]: ml_record7 });
+}
+
+function rp_726f7574655f636f6e74726163742e736572766963655f626173655f70617468(service) {
+  ml_validate_rust_value(service, {"kind":"data","name":"rp_726f7574655f636f6e74726163742e74797065732e536572766963654b696e64"}, ml_host_value_schema_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0, { refinements: ml_host_value_refinements_982f1054220c602571873e9386559c249904ba3065441f28d20404db5a66c5f0 });
+  switch (service.$) {
+    case "Anthropic": {
+      return "/api/services/anthropic";
+    }
+    case "OpenAi": {
+      return "/api/services/openai/v1";
+    }
+    case "Codex": {
+      return "/api/services/codex/v1";
+    }
+    case "Qwen": {
+      return "/api/services/qwen/v1";
+    }
+    case "Gemini": {
+      return "/api/services/gemini";
+    }
+    case "Vertex": {
+      return "/api/services/vertex/v1";
+    }
+    case "Bedrock": {
+      return "/api/services/bedrock";
+    }
+    case "GitHub": {
+      return "/api/services/github/api/v3";
+    }
+    case "Git": {
+      return "/api/services/github/git";
+    }
+    case "ActivityPub": {
+      return "/api/services/activitypub";
+    }
+    default: {
+      return ml_router_unexpected(service);
+    }
+  }
+}
+
+function rp_726f7574655f636f6e74726163742e74797065732e52454d4f5645445f524f55544553() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "GET", field1: "/health" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/health/subscriptions" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/v1/messages" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/v1/chat/completions" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/v1/models" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/anthropic/v1/messages" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/openai/v1/responses" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/codex/v1/responses" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/qwen/v1/chat/completions" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/gemini/v1beta/models" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/invoke" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/tokens" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/providers" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/login" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/admin/status" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/metrics" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/user" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/actor/code" })]));
+}
+
+function rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253() {
+  return ml_fixed((24n * 365n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
+}
+
+function rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c() {
+  return "bootstrap-admin";
+}
+
+function rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253() {
+  return 64n;
+}
+
+function rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359() {
+  return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+}
+
+function rp_73746f705f73657175656e6365732e6d6c5f696d706c5f3633373236313734363532653733373436663730356637333635373137353635366536333635373332653533373436663730353336353731373536353665363336353436363936633734363537325f366536353737(sequences) {
+  if (!ml_router_array(sequences, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = ml_router_collect(ml_router_filter(ml_router_iter(sequences, false), (sequence) => { return !(sequence.length === 0); }));
+  const ml_record2 = "";
+  const ml_record3 = false;
+  return Object.freeze({ $: "StopSequenceFilter", ["sequences"]: ml_record1, ["pending"]: ml_record2, ["stopped"]: ml_record3 });
+}
+
+function rp_73746f705f73657175656e6365732e6d6c5f696d706c5f3633373236313734363532653733373436663730356637333635373137353635366536333635373332653533373436663730353336353731373536353665363336353436363936633734363537325f3635366536313632366336353634(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_73746f705f73657175656e6365732e53746f7053657175656e636546696c746572"}, ml_host_value_schema_61dfd53674d645afd1c8de731523520c1e33ba3584a42b1556b50d4958ecf679, { refinements: ml_host_value_refinements_61dfd53674d645afd1c8de731523520c1e33ba3584a42b1556b50d4958ecf679 });
+  return !((router_self).sequences.length === 0);
+}
+
+function rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72(error, contents) {
+  if (!(typeof error === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof contents === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(contents))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_fold(ml_router_filter(ml_router_map(ml_str_lines(contents), (ml_standard_callback_8_0) => { return (ml_standard_callback_8_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (line) => { return (BigInt(new TextEncoder().encode(line).length) >= 8n); }), error, (message, line_2) => { const ml_text_10 = message;
+  const ml_text_11 = line_2;
+  const ml_text_12 = "<redacted input>";
+  return (ml_text_11.length===0?(ml_text_10.length===0?ml_text_12:ml_text_12+Array.from(ml_text_10).join(ml_text_12)+ml_text_12):ml_text_10.split(ml_text_11).join(ml_text_12)); });
+}
+
+function rp_73746f726167652e6173736f636961746976652e54595045() {
+  return "Type";
+}
+
+function rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244() {
+  return "TokenRecord";
+}
+
+function rp_73746f726167652e6173736f636961746976652e53554254595045() {
+  return "SubType";
+}
+
+function rp_73746f726167652e6173736f636961746976652e56414c5545() {
+  return "Value";
+}
+
+function rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154() {
+  return "StorageFormat";
+}
+
+function rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e() {
+  return "router-token-doublets-v1";
+}
+
+function rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958() {
+  return "Record/";
+}
+
+function rp_73746f726167652e6173736f636961746976652e535452494e475f544147() {
+  return 1n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e454447455f544147() {
+  return 2n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345() {
+  return 3n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254() {
+  return 4n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54() {
+  return 259n;
+}
+
+function rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745() {
+  return "upstream stream ended before completion";
+}
+
+function rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553() {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_73747265616d5f7465726d696e6174696f6e2e6d6c5f696d706c5f3633373236313734363532653733373437323635363136643566373436353732366436393665363137343639366636653265343636313639366337353732363534623639366536345f3666363635663639366535663632363136653634(event) {
+try {
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const code = ml_router_try(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_pointer(event, "/error/code"), () => { return ml_host_serde_json_value_get_string(event, "code"); }, "or_else"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then"), true);
+  if ((code === "upstream_timeout")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Stalled' }) });
+  } else {
+    if ((code === "upstream_interrupted")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Interrupted' }) });
+    } else {
+      if ((code === "upstream_incomplete")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Truncated' }) });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+
+} catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
+}
+
+function rp_73747265616d5f7465726d696e6174696f6e2e6d6c5f696d706c5f36333732363137343635326537333734373236353631366435663734363537323664363936653631373436393666366532653534363537323664363936653631366334353736363536653734343436353734363536333734366637325f366436393634356636363732363136643635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_73747265616d5f7465726d696e6174696f6e2e5465726d696e616c4576656e744465746563746f72"}, ml_host_value_schema_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db4332ec3f01ff5, { refinements: ml_host_value_refinements_c4b47d79bd7fb30e5f44f88a340c8dcd3e2121c7c72685fb6db4332ec3f01ff5 });
+  return !((router_self).carry.length === 0);
+}
+
+function rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559() {
+  return "_link_assistant_router";
+}
+
+function rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559() {
+  return "refresh_owner";
+}
+
+function rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552() {
+  return "external";
+}
+
+function rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559() {
+  return "credential_source";
+}
+
+function rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559() {
+  return "promotion_receipt";
+}
+
+function rp_737562736372697074696f6e2e74797065732e6d6c5f696d706c5f3633373236313734363532653733373536323733363337323639373037343639366636653265373437393730363537333265353337353632373336333732363937303734363936663665353037323666373636393634363537325f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((s).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).toLowerCase();
+  if ((ml_s1 === "claude")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Claude' }) });
+  } else {
+    if ((ml_s1 === "anthropic")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Claude' }) });
+    } else {
+      if ((ml_s1 === "claude-code")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Claude' }) });
+      } else {
+        if ((ml_s1 === "codex")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+        } else {
+          if ((ml_s1 === "chatgpt")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+          } else {
+            if ((ml_s1 === "openai-codex")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+            } else {
+              if ((ml_s1 === "gemini")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+              } else {
+                if ((ml_s1 === "google")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                } else {
+                  if ((ml_s1 === "code-assist")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                  } else {
+                    if ((ml_s1 === "qwen")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                    } else {
+                      if ((ml_s1 === "qwen-code")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                      } else {
+                        if ((ml_s1 === "dashscope")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                        } else {
+                          return Object.freeze({ $: 'None' });
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_737562736372697074696f6e2e74797065732e6d6c5f696d706c5f3633373236313734363532653733373536323733363337323639373037343639366636653265373437393730363537333265353337353632373336333732363937303734363936663665353436663662363536655f3639373335663635373837303639373236353634(router_self, now_ms) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e546f6b656e"}, ml_host_value_schema_7f3c07751fe3015bee333364ac17a84270644c048c5ea155a474ef59febb42b9, { refinements: ml_host_value_refinements_7f3c07751fe3015bee333364ac17a84270644c048c5ea155a474ef59febb42b9 });
+  if (typeof now_ms !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(now_ms, -9223372036854775808n, 9223372036854775807n, "i64 argument now_ms out of range");
+  if (!(typeof now_ms === 'bigint' && now_ms >= -9223372036854775808n && now_ms <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  return ml_host_option_bind((router_self).expires_at_ms, (exp) => { return (exp <= now_ms); }, "is_some_and");
+}
+
+function rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552() {
+  return "x-openai-internal-codex-responses-lite";
+}
+
+function rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e() {
+  return 1n;
+}
+
+function rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459() {
+  return ml_fixed((ml_fixed((2n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753() {
+  return ml_copy_fixed_array(["five_hour", "seven_day", "seven_day_oauth_apps", "seven_day_opus", "seven_day_sonnet", "cinder_cove"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":6}});
+}
+
+function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e6e756d657269635f6d6573736167655f657374696d617465(value) {
+try {
+  ml_assert_immutable_iterator(value);
+  ml_pattern_immutable_view(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_pattern_1 = ml_host_serde_json_value_as_u64(value);
+  if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
+    const count = (ml_pattern_1)["field0"];
+    return Object.freeze({ $: 'Some', field0: count });
+  } else {
+  }
+  const values = ml_router_try(ml_host_serde_json_value_as_array(value), true);
+  const counts = ml_router_collect(ml_router_filter_map(ml_router_iter(values, true), (entry) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(entry, "count"), (ml_host_callback_9_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_9_0); }, "and_then"); }));
+  return ml_host_bool_then(!(counts.length === 0), () => { return ml_router_fold(ml_router_iter(counts, false), 0n, (ml_standard_callback_10_0, ml_standard_callback_11_1) => { return ml_host_rust_fixed_saturating_add_u64(ml_standard_callback_10_0, ml_standard_callback_11_1); }); });
+
+} catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
+}
+
+function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65(value) {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits"), () => { return ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits_summary"); }, "or_else"), (credits) => { return ml_host_serde_json_value_get_string(credits, "available_count"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
+}
+
+function rp_737562736372697074696f6e5f75736167652e63616368652e5354414e444152445f43414348455f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((3n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_737562736372697074696f6e5f75736167652e63616368652e414e5448524f5049435f43414348455f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((13n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353() {
+  return 30n;
+}
+
+function rp_74656c656772616d2e4552524f525f4241434b4f4646() {
+  return ml_host_std_time_duration_from_secs(5n);
+}
+
+function rp_74656c656772616d2e414c4c4f5745445f55504441544553() {
+  return "[\"message\"]";
+}
+
+function rp_74656c656772616d2e7570646174655f6964(update) {
+  ml_validate_rust_value(update, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(update, "update_id"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_i64(ml_host_callback_2_0); }, "and_then"), 0n, true);
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53() {
+  return 8192n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554() {
+  return 1024n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d() {
+  return 8192n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52() {
+  return 4096n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47() {
+  return 32000n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47() {
+  return 40192n;
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574(effort) {
+  if (!(typeof effort === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(effort))) throw new TypeError('argument outside supported Rust value domain');
+  if ((effort === "minimal")) {
+    return 1024n;
+  } else {
+    if ((effort === "low")) {
+      return 4096n;
+    } else {
+      if ((effort === "medium")) {
+        return 8192n;
+      } else {
+        if ((effort === "xhigh")) {
+          return 24576n;
+        } else {
+          if ((effort === "max")) {
+            return 32000n;
+          } else {
+            return 16384n;
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274(effort) {
+  if (!(typeof effort === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(effort))) throw new TypeError('argument outside supported Rust value domain');
+  if ((effort === "minimal")) {
+    return "low";
+  } else {
+    if ((effort === "low")) {
+      return "low";
+    } else {
+      if ((effort === "medium")) {
+        return "medium";
+      } else {
+        if ((effort === "xhigh")) {
+          return "max";
+        } else {
+          if ((effort === "max")) {
+            return "max";
+          } else {
+            return "high";
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_746c732e47454e4552415445445f4449524543544f5259() {
+  return "tls";
+}
+
+function rp_746c732e47454e4552415445445f43455254() {
+  return "cert.pem";
+}
+
+function rp_746c732e47454e4552415445445f4b4559() {
+  return "key.pem";
+}
+
+function rp_746f6b656e2e544f4b454e5f505245464958() {
+  return "la_sk_";
+}
+
+function rp_746f6b656e2e434f4445585f544f4b454e5f505245464958() {
+  return "at-";
+}
+
+function rp_746f6b656e2e41444d494e5f53434f5045() {
+  return "admin";
+}
+
+function rp_746f6b656e2e72756e5f6c656173652e52554e5f4c454153455f54544c5f5345434f4e4453() {
+  return 120n;
+}
+
+function rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259() {
+  return "token-import-backups";
+}
+
+function rp_746f6b656e5f7265706f72742e48454144455253() {
+  return ml_copy_fixed_array(["id", "issued_at", "expires_at", "revoked", "requests", "tokens", "reserved", "rpm", "scope"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":9}});
+}
+
+function rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e() {
+  return 4n;
+}
+
+function rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53() {
+  return 4096n;
+}
+
+function rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73(body) {
+  ml_pattern_immutable_view(body);
+  ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  for (const field of ml_router_iter(ml_copy_fixed_array(["max_output_tokens", "max_completion_tokens", "max_tokens"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}}), false)) {
+    const ml_pattern_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(body, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
+    if ((ml_pattern_immutable(ml_pattern_2) && (ml_pattern_2.$ === "Some"))) {
+      const value = (ml_pattern_2)["field0"];
+      return Object.freeze({ $: 'Some', field0: value });
+    } else {
+    }
+  }
+  return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(body, "generationConfig"), (config) => { return ml_host_serde_json_value_get_string(config, "maxOutputTokens"); }, "and_then"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then");
+}
+
+function rp_746f6b656e5f7365637265742e53454e54494e454c() {
+  return "\u0000link-assistant-router:no-token-secret:";
+}
+
+function rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253() {
+  return ml_copy_fixed_array(["unused-by-remote-command", "unused-by-auth", "unused-by-this-client-command"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_746f6b656e5f7365637265742e7265667573616c() {
+  return "TOKEN_SECRET environment variable is required: this command signs or encrypts on this machine, and no signing secret was supplied";
+}
+
+function rp_746f6b656e5f7365637265742e46494c455f454e56() {
+  return "TOKEN_SECRET_FILE";
+}
+
+function rp_766572696669636174696f6e2e534348454d41() {
+  return "link-assistant-router/verification/v1";
+}
+
+function rp_766572696669636174696f6e2e534b49505f4c4f47() {
+  return "ROUTER_VERIFICATION_SKIPS";
+}
+
+function rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_ROUTER_TOKEN";
+}
+
+function rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745() {
+  return "link-assistant-router-tunnel";
+}
+
+function rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52() {
+  return "while :; do \"$@\"; sleep 5; done";
+}
+
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353() {
+  return 120n;
+}
+
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353() {
+  return 10n;
+}
+
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353() {
+  return rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353();
+}
+
+function rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373(value, default_) {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  if (typeof default_ !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(default_, 0n, 18446744073709551615n, "u64 argument default_ out of range");
+  if (!(typeof default_ === 'bigint' && default_ >= 0n && default_ <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  const seconds = ml_router_unwrap(ml_host_option_bind(value, (value_2) => { return ml_host_result_ok(ml_host_rust_integer_parse_u64((value_2).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''))); }, "and_then"), default_, true);
+  return ml_host_bool_then((seconds > 0n), () => { return ml_host_std_time_duration_from_secs(seconds); });
+}
+
+function rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574(value) {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  return rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373(value, rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353());
+}
+
+function rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56() {
+  return "UPSTREAM_ALLOW_PRIVATE_NETWORKS";
+}
+
+function rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553() {
+  return Object.freeze(Object.freeze(["metadata.google.internal", "metadata", "instance-data"]));
+}
+
+function rp_757073747265616d5f67756172642e6d6c5f696d706c5f36333732363137343635326537353730373337343732363536313664356636373735363137323634326534653635373437373666373236623530366636633639363337395f363136633663366637373566363136633663() {
+  const ml_record1 = true;
+  const ml_record2 = true;
+  const ml_record3 = true;
+  const ml_record4 = true;
+  return Object.freeze({ $: "NetworkPolicy", ["loopback"]: ml_record1, ["private"]: ml_record2, ["link_local"]: ml_record3, ["all"]: ml_record4 });
+}
+
+function rp_757073747265616d5f67756172642e6d6c5f696d706c5f3633373236313734363532653735373037333734373236353631366435663637373536313732363432653437373536313732363436353634353236353733366636633736363537325f366536353737(policy) {
+  ml_validate_rust_value(policy, {"kind":"data","name":"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379"}, ml_host_value_schema_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe, { refinements: ml_host_value_refinements_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe });
+  const ml_record1 = policy;
+  return Object.freeze({ $: "GuardedResolver", ["policy"]: ml_record1 });
+}
+
+function rp_75736167652e746f6b656e5f636f756e74(value) {
+try {
+  ml_pattern_immutable_view(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_pattern_1 = ml_router_try(rp_75736167652e746f6b656e5f7061727473(value), true);
+  ml_pattern_immutable(ml_pattern_1);
+  const total = (ml_pattern_1)["field0"];
+  const input = (ml_pattern_1)["field1"];
+  const output = (ml_pattern_1)["field2"];
+  return ml_host_option_bind(total, () => { return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64(ml_router_unwrap(input, 0n, true), ml_router_unwrap(output, 0n, true)) }); }, "or_else");
+
+} catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
+}
+
+function rp_75736167652e746f6b656e5f7061727473(value) {
+  ml_assert_immutable_iterator(value);
+  ml_pattern_immutable_view(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const ml_pattern_1 = ml_host_serde_json_value_get_string(value, "usage");
+  if ((ml_pattern_immutable_view(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
+    const usage = (ml_pattern_1)["field0"];
+    const ml_pattern_3 = ml_host_option_bind(ml_host_serde_json_value_get_string(usage, "total_tokens"), (ml_host_callback_1_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_1_0); }, "and_then");
+    if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+      const total = (ml_pattern_3)["field0"];
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'Some', field0: total }), field1: Object.freeze({ $: 'None' }), field2: Object.freeze({ $: 'None' }) }) });
+    } else {
+    }
+    const input_2 = ml_host_option_map(rp_75736167652e66697273745f753634(usage, Object.freeze(Object.freeze(["input_tokens", "prompt_tokens"]))), (input) => { return ml_router_fold(ml_router_filter_map(ml_router_iter(ml_copy_fixed_array(["cache_creation_input_tokens", "cache_read_input_tokens"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}}), false), (field) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(usage, field), (ml_host_callback_15_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_15_0); }, "and_then"); }), input, (ml_standard_callback_16_0, ml_standard_callback_17_1) => { return ml_host_rust_fixed_saturating_add_u64(ml_standard_callback_16_0, ml_standard_callback_17_1); }); });
+    const output = rp_75736167652e66697273745f753634(usage, Object.freeze(Object.freeze(["output_tokens", "completion_tokens"])));
+    if (((input_2.$ === 'Some') || (output.$ === 'Some'))) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'None' }), field1: input_2, field2: output }) });
+    } else {
+    }
+  } else {
+  }
+  const ml_pattern_19 = ml_host_serde_json_value_get_string(value, "usageMetadata");
+  if ((ml_pattern_immutable_view(ml_pattern_19) && (ml_pattern_19.$ === "Some"))) {
+    const usage_2 = (ml_pattern_19)["field0"];
+    const ml_pattern_21 = ml_host_option_bind(ml_host_serde_json_value_get_string(usage_2, "totalTokenCount"), (ml_host_callback_19_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_19_0); }, "and_then");
+    if ((ml_pattern_immutable(ml_pattern_21) && (ml_pattern_21.$ === "Some"))) {
+      const total_2 = (ml_pattern_21)["field0"];
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'Some', field0: total_2 }), field1: Object.freeze({ $: 'None' }), field2: Object.freeze({ $: 'None' }) }) });
+    } else {
+    }
+    const input_3 = ml_host_option_bind(ml_host_serde_json_value_get_string(usage_2, "promptTokenCount"), (ml_host_callback_23_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_23_0); }, "and_then");
+    const output_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(usage_2, "candidatesTokenCount"), (ml_host_callback_26_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_26_0); }, "and_then");
+    if (((input_3.$ === 'Some') || (output_2.$ === 'Some'))) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'None' }), field1: input_3, field2: output_2 }) });
+    } else {
+    }
+  } else {
+  }
+  return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(value, "response"), () => { return ml_host_serde_json_value_get_string(value, "message"); }, "or_else"), (ml_host_callback_27_0) => { return rp_75736167652e746f6b656e5f7061727473(ml_host_callback_27_0); }, "and_then");
+}
+
+function rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e() {
+  return 4n;
+}
+
+function rp_75736167652e66697273745f753634(value, fields) {
+  ml_assert_immutable_iterator(value);
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  ml_assert_immutable_iterator(fields);
+  if (!ml_router_array(fields, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_find_map(ml_router_iter(fields, false), (field) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(value, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then"); });
+}
+
+function rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(90n);
+}
+
+function rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245() {
+  return Object.freeze(Object.freeze(["-p", "ok"]));
+}
+
+function rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245() {
+  return Object.freeze(Object.freeze(["exec", "--skip-git-repo-check", "ok"]));
+}
+
+function rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56() {
+  return "ROUTER_VENDOR_REFRESH_ARGS";
+}
+
+function rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72(os) {
+  if (!(typeof os === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(os))) throw new TypeError('argument outside supported Rust value domain');
+  if ((os === "macos")) {
+    return Object.freeze({ $: 'Err', field0: "safe OS credential-store boundary unavailable: native macOS vendor probes are refused before version, doctor or TUI; use the disposable Linux verification environment" });
+  } else {
+    return Object.freeze({ $: 'Ok', field0: null });
+  }
+}
+
+function rp_766572696669636174696f6e5f636c69656e742e434c49454e5453() {
+  return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "claude", field1: "ROUTER_REAL_CLIENT_CLAUDE_VERSION" }), Object.freeze({ $: 'Tuple', field0: "codex", field1: "ROUTER_REAL_CLIENT_CODEX_VERSION" }), Object.freeze({ $: 'Tuple', field0: "opencode", field1: "ROUTER_REAL_CLIENT_OPENCODE_VERSION" })]));
+}
+
+function rp_766b2e4150495f56455253494f4e() {
+  return "5.199";
+}
+
+function rp_766b2e574149545f53454353() {
+  return 25n;
+}
+
+function rp_766b2e4552524f525f4241434b4f4646() {
+  return ml_host_std_time_duration_from_secs(5n);
+}
+
+function rp_766b2e434841545f504545525f4f4646534554() {
+  return 2000000000n;
+}
+
+function rp_766b2e69735f70726976617465(peer_id, from_id) {
+  if (typeof peer_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(peer_id, -9223372036854775808n, 9223372036854775807n, "i64 argument peer_id out of range");
+  if (!(typeof peer_id === 'bigint' && peer_id >= -9223372036854775808n && peer_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof from_id !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(from_id, -9223372036854775808n, 9223372036854775807n, "i64 argument from_id out of range");
+  if (!(typeof from_id === 'bigint' && from_id >= -9223372036854775808n && from_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  return (((peer_id === from_id) && (from_id > 0n)) && (peer_id < rp_766b2e434841545f504545525f4f4646534554()));
+}
+
+function rp_7761726d75702e5741524d55505f54455854() {
+  return "Warmup";
+}
+
+function rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56() {
+  return ml_copy_fixed_array(["DISABLE_ERROR_REPORTING", "DISABLE_AUTOUPDATER", "DISABLE_FEEDBACK_COMMAND"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56() {
+  return ml_copy_fixed_array(["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "DISABLE_TELEMETRY", "DO_NOT_TRACK"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c() {
+  return "router-last-working-model";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448() {
+  return "/api/anthropic";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448() {
+  return "/api/coding/paas/v4";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448() {
+  return "/api/v1";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448() {
+  return "/api/monitor/usage/quota/limit";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448() {
+  return "/api/anthropic/v1/models";
+}
+
+function rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_7a61695f636f64696e675f706c616e2e6d6c5f696d706c5f36333732363137343635326537613631363935663633366636343639366536373566373036633631366532653561363136393530373236663632363534363631363936633735373236355f366536353737(kind, message) {
+  ml_validate_rust_value(kind, {"kind":"data","name":"rp_7a61695f636f64696e675f706c616e2e5a616950726f62654661696c7572654b696e64"}, ml_host_value_schema_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d002e910f6475, { refinements: ml_host_value_refinements_88474d9f92da6bba9f1da984f384993a39d4d4df82ae06af296d002e910f6475 });
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = kind;
+  const ml_record2 = message;
+  return Object.freeze({ $: "ZaiProbeFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
+}
+
+function rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553() {
+  return Object.freeze(Object.freeze([1113n, 1309n, 1310n, 1311n, 1314n, 1315n, 1316n, 1317n, 1318n, 1319n, 1320n, 1321n]));
+}
+
+function rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459() {
+  return ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45() {
+  return "provider-exhaustion.json";
+}
+
+function rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345() {
+  return ml_fixed((ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559() {
+  return rp_6465706c6f792e4c4142454c5f4b4559();
+}
+
+function rp_6465706c6f795f6c6f63616c2e4c4547414359() {
+  return rp_6465706c6f792e434f4e5441494e4552();
+}
+
+function rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e() {
+  return "local-v1";
+}
+
+function rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453() {
+  return 300n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45() {
+  return ".credentials.json";
+}
+
+function rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958() {
+  return "claude-credentials";
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954() {
+  return ml_fixed((ml_fixed((256n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553() {
+  return 10000n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448() {
+  return 32n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45() {
+  return ml_host_std_time_duration_from_secs(10n);
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544() {
+  return ml_copy_fixed_array(["providers.lenv", "projects", "sessions"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41() {
+  return "link-assistant-router/data-backup/v1";
+}
+
+function rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44() {
+  return "router deploy --mode container";
+}
+
+function rp_6465706c6f795f6c6f63616c2e686f73742e6d6967726174652e484f53545f52454144595f415454454d505453() {
+  return 60n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56() {
+  return "ROUTER_PRESERVATION_TOKEN";
+}
+
+function rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054() {
+  return "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_PRESERVATION_TOKEN}});if(r.status!==200)process.exit(2);const b=await r.json();if(!Array.isArray(b.data))process.exit(3);console.log(JSON.stringify(b.data.map(m=>String(m.owned_by||'')+'/'+m.id).sort()))";
+}
+
+function rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453() {
+  return 120n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958() {
+  return "runtime-env";
+}
+
+function rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958() {
+  return "token-secret";
+}
+
+function rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56() {
+  return "ROUTER_DEPLOY_PROBE_TOKEN";
+}
+
+function rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054() {
+  return "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
+}
+
+function rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  return ((status !== 401n) && (status < 500n));
+}
+
+function rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56() {
+  return "LINK_ASSISTANT_ROUTER_SERVICE_MANAGER";
+}
+
+function rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244() {
+  return "service.json";
+}
+
+function rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554() {
+  return "token-secret";
+}
+
+function rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_118 = (() => {
+    const ml_text_115 = (() => {
+      const ml_text_112 = (() => {
+        const ml_text_109 = value;
+        const ml_text_110 = "&";
+        const ml_text_111 = "&amp;";
+        return (ml_text_110.length===0?(ml_text_109.length===0?ml_text_111:ml_text_111+Array.from(ml_text_109).join(ml_text_111)+ml_text_111):ml_text_109.split(ml_text_110).join(ml_text_111));
+      })();
+      const ml_text_113 = "<";
+      const ml_text_114 = "&lt;";
+      return (ml_text_113.length===0?(ml_text_112.length===0?ml_text_114:ml_text_114+Array.from(ml_text_112).join(ml_text_114)+ml_text_114):ml_text_112.split(ml_text_113).join(ml_text_114));
+    })();
+    const ml_text_116 = ">";
+    const ml_text_117 = "&gt;";
+    return (ml_text_116.length===0?(ml_text_115.length===0?ml_text_117:ml_text_117+Array.from(ml_text_115).join(ml_text_117)+ml_text_117):ml_text_115.split(ml_text_116).join(ml_text_117));
+  })();
+  const ml_text_119 = "\"";
+  const ml_text_120 = "&quot;";
+  return (ml_text_119.length===0?(ml_text_118.length===0?ml_text_120:ml_text_120+Array.from(ml_text_118).join(ml_text_120)+ml_text_120):ml_text_118.split(ml_text_119).join(ml_text_120));
+}
+
+function rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c() {
+  return "com.link-assistant.router.staging";
+}
+
+function rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552() {
+  return "staging.json";
+}
+
+function rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954() {
+  return 73n;
+}
+
+function rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954() {
+  return 10n;
+}
+
+function rp_6465706c6f795f72656d6f74652e4c454153455f45584954() {
+  return 11n;
+}
+
+function rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954() {
+  return 12n;
+}
+
+function rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958() {
+  return "ROUTER_DEPLOY_EVENT ";
+}
+
+function rp_6c6f67735f636c692e53484f574e() {
+  return 5n;
+}
+
+function rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553() {
+  return ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553() {
+  return ml_fixed((ml_fixed((32n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45() {
+  return "routing-policy.json";
+}
+
+function rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854() {
+  return 1000000n;
+}
+
+function rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553() {
+  return 100n;
+}
+
+function rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354() {
+  return Object.freeze(Object.freeze(["x-request-id", "x-correlation-id", "traceparent", "tracestate", "x-claude-code-session-id", "x-codex-session-id", "x-session-id", "session-id"]));
+}
+
+function rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453() {
+  return 4096n;
+}
+
+function rp_6d616e6167656d656e745f6163636573732e534e415053484f54() {
+  return "management-lockouts.lenv";
+}
+export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["account_limits.MODEL_FAMILIES"]: rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), ["accounts.limits.LIMITS_SAVE_INTERVAL_SECS"]: rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256414c5f53454353(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.DEFAULT_CANDIDATE_TTL_SECS"]: rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353(), ["admin.DEFAULT_CLAIM_TTL_HOURS"]: rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_bridge.usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64, ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["audit.surface_name"]: rp_61756469742e737572666163655f6e616d65, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_diagnostics.reason.MISSING_CREDENTIAL"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f43524544454e5449414c(), ["auth_diagnostics.reason.INVALID_PREFIX"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e56414c49445f505245464958(), ["auth_diagnostics.reason.MALFORMED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d414c464f524d4544(), ["auth_diagnostics.reason.SIGNATURE_INVALID"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5349474e41545552455f494e56414c4944(), ["auth_diagnostics.reason.ISSUER_SECRET_UNSET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4953535545525f5345435245545f554e534554(), ["auth_diagnostics.reason.EXPIRED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e45585049524544(), ["auth_diagnostics.reason.REVOKED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5245564f4b4544(), ["auth_diagnostics.reason.MISSING_RECORD"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f5245434f5244(), ["auth_diagnostics.reason.BINDING_MISMATCH"]: rp_617574685f646961676e6f73746963732e726561736f6e2e42494e44494e475f4d49534d41544348(), ["auth_diagnostics.reason.REQUEST_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524551554553545f425544474554(), ["auth_diagnostics.reason.TOKEN_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e544f4b454e5f425544474554(), ["auth_diagnostics.reason.RATE_LIMIT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524154455f4c494d4954(), ["auth_diagnostics.reason.MODEL_POLICY"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d4f44454c5f504f4c494359(), ["auth_diagnostics.reason.INSUFFICIENT_SCOPE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e53554646494349454e545f53434f5045(), ["auth_diagnostics.reason.RUN_LEASE_UNRENEWABLE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e52554e5f4c454153455f554e52454e455741424c45(), ["auth_diagnostics.reason.UNSUPPORTED_LEASE_ENDPOINT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e554e535550504f525445445f4c454153455f454e44504f494e54(), ["auth_diagnostics.reason.STORAGE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e53544f52414745(), ["auth_diagnostics.reason.NOT_FOUND"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4e4f545f464f554e44(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["auth_remote.home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["capabilities.unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365, ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_auth.CLAUDE_AUTHORIZE_URL"]: rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c(), ["claude_auth.CLAUDE_REDIRECT_URI"]: rp_636c617564655f617574682e434c415544455f52454449524543545f555249(), ["claude_auth.CLAUDE_SCOPES"]: rp_636c617564655f617574682e434c415544455f53434f504553(), ["claude_auth.CLAUDE_INFERENCE_SCOPE"]: rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045(), ["claude_auth.PENDING_LOGIN_FILE"]: rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45(), ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_lifecycle.active.PROFILE_VARIABLES"]: rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553(), ["client_lifecycle.active.SETTLE_ATTEMPTS"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f415454454d505453(), ["client_lifecycle.active.SETTLE_DELAY"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.CLAUDE_MODEL_ENV"]: rp_636c69656e74732e434c415544455f4d4f44454c5f454e56(), ["clients.CLAUDE_GATEWAY_TARGET_ENV"]: rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56(), ["clients.CLAUDE_DEFAULT_ROW_ENV"]: rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.analysis.CLAUDE_PRECEDENCE_ENV"]: rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_cloudflare_cookies.is_allowed_chatgpt_host"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636861746770745f686f7374, ["codex_cloudflare_cookies.is_allowed_cookie_name"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636f6f6b69655f6e616d65, ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.BACKEND_PATH"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.HEALTH_HEADER"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552(), ["codex_loopback_bridge.DAEMON_MARKER_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56(), ["codex_loopback_bridge.DAEMON_UPSTREAM_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56(), ["codex_loopback_bridge.DAEMON_STATE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56(), ["codex_loopback_bridge.DAEMON_NONCE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56(), ["codex_loopback_bridge.DAEMON_LISTEN_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["codex_remote_control.MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["codex_remote_control.is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["config.DEFAULT_MAX_PROXY_REQUEST_BYTES"]: rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553(), ["config.default_mpp_config"]: rp_636f6e6669672e64656661756c745f6d70705f636f6e666967, ["config.default_activitypub_public_key_pem"]: rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d, ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["config_defaults.default_openai_compatible_config"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.header_is_compared"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e6865616465725f69735f636f6d7061726564, ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["crater.ACTIVITY_JSON"]: rp_6372617465722e41435449564954595f4a534f4e(), ["crater.LINKED_DATA_JSON"]: rp_6372617465722e4c494e4b45445f444154415f4a534f4e(), ["crater.DEFAULT_MODEL"]: rp_6372617465722e44454641554c545f4d4f44454c(), ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_VERSION"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy.first_line"]: rp_6465706c6f792e66697273745f6c696e65, ["deploy.instance.MAX_INSTANCE_LEN"]: rp_6465706c6f792e696e7374616e63652e4d41585f494e5354414e43455f4c454e(), ["deploy.registry.FILE"]: rp_6465706c6f792e72656769737472792e46494c45(), ["deploy.runtime.is_absent"]: rp_6465706c6f792e72756e74696d652e69735f616273656e74, ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["deployment_preservation.usable"]: rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65, ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.ENV_VARS"]: rp_656d657267656e63795f617574682e454e565f56415253(), ["emergency_auth.DEFAULT_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553(), ["emergency_auth.MAX_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["emergency_auth.is_synthetic_id"]: rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964, ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini.gemini_finish_reason"]: rp_67656d696e692e67656d696e695f66696e6973685f726561736f6e, ["gemini.native.parse_native_target"]: rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["gemini_bridge.request.helpers.IMAGE_MEDIA_TYPES"]: rp_67656d696e695f6272696467652e726571756573742e68656c706572732e494d4147455f4d454449415f5459504553(), ["generated_js_first.policy.js_min"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e, ["generated_js_first.policy.js_max"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178, ["generated_js_first.policy.token_budget_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473, ["generated_js_first.policy.cooldown_active"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665, ["generated_js_first.policy.clamp"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70, ["generated_js_first.policy.longest_cooldown"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e, ["generated_js_first.policy.retry_after_deadline"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65, ["generated_js_first.policy.token_cost"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374, ["generated_js_first.policy.valid_token_count"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74, ["generated_js_first.policy.settled_token_usage"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765, ["generated_js_first.policy.remaining_token_budget"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574, ["generated_js_first.policy.completion_token_limit"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974, ["generated_js_first.policy.retryable_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573, ["generated_js_first.policy.success_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573, ["generated_js_first.policy.weighted_capacity"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479, ["generated_js_first.policy.token_expired"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564, ["generated_js_first.policy.utf16_length"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468, ["generated_js_first.policy.model_name_length_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["logging.http_failure"]: rp_6c6f6767696e672e687474705f6661696c757265, ["login.SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["login.FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["login.THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["login.WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["login.LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["login.READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.DEFAULT_LOCAL_PORT"]: rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254(), ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.MAX_CATALOG_PAGES"]: rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553(), ["model_catalog.PERSISTED_CATALOG_VERSION"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["model_catalog.errors.PERMISSION_ERROR_CODES"]: rp_6d6f64656c5f636174616c6f672e6572726f72732e5045524d495353494f4e5f4552524f525f434f444553(), ["model_catalog.startup.INITIAL_REFRESH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e737461727475702e494e495449414c5f524546524553485f54494d454f5554(), ["model_catalog_sources.config.DEFAULT_REFRESH_SECS"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e44454641554c545f524546524553485f53454353(), ["model_catalog_sources.config.canonical_provider"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e63616e6f6e6963616c5f70726f7669646572, ["model_command.selector_kind"]: rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64, ["model_routing.native_catalog.MAX_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(), ["model_routing.native_catalog.DEFAULT_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745(), ["model_routing.aggregate.CAPABILITY_FIELDS"]: rp_6d6f64656c5f726f7574696e672e6167677265676174652e4341504142494c4954595f4649454c4453(), ["model_routing.stored.bare_model_id"]: rp_6d6f64656c5f726f7574696e672e73746f7265642e626172655f6d6f64656c5f6964, ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["openai.extract_sse_data"]: rp_6f70656e61692e657874726163745f7373655f64617461, ["openai.done_frame"]: rp_6f70656e61692e646f6e655f6672616d65, ["openai.tools.is_translatable"]: rp_6f70656e61692e746f6f6c732e69735f7472616e736c617461626c65, ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["output_limit.data_payload"]: rp_6f75747075745f6c696d69742e646174615f7061796c6f6164, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.protocol_for_request"]: rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374, ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["providers.default_enabled"]: rp_70726f7669646572732e64656661756c745f656e61626c6564, ["providers.provider_import.unquote"]: rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465, ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.MAX_PROXY_REQUEST_BYTES"]: rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh.REFRESH_SKEW_MS"]: rp_726566726573682e524546524553485f534b45575f4d53(), ["refresh.ROTATION_ATTRIBUTION_MS"]: rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53(), ["refresh.refresh_state.INITIAL_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e494e495449414c5f4241434b4f46465f4d53(), ["refresh.refresh_state.MAX_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e4d41585f4241434b4f46465f4d53(), ["refresh.refresh_state.ROTATION_GRACE_MS"]: rp_726566726573682e726566726573685f73746174652e524f544154494f4e5f47524143455f4d53(), ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.LOG_FILE"]: rp_726571756573745f6c6f672e4c4f475f46494c45(), ["request_log.LEGACY_LOG_FILE"]: rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45(), ["request_log.REDACTED"]: rp_726571756573745f6c6f672e5245444143544544(), ["request_log.UNAUTHENTICATED"]: rp_726571756573745f6c6f672e554e41555448454e54494341544544(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["resource_capture.MAX_BUFFERED_ID_PREFIX"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958(), ["resource_capture.MAX_BUFFERED_JSON_RESPONSE"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345(), ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.STORE_VERSION"]: rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["response_affinity.DEFAULT_MAX_RECORDS"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453(), ["response_affinity.MAX_RESPONSE_ID_BYTES"]: rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553(), ["responses.stream_content_key"]: rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579, ["responses.extract_sse_data"]: rp_726573706f6e7365732e657874726163745f7373655f64617461, ["responses.done_frame"]: rp_726573706f6e7365732e646f6e655f6672616d65, ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["route_contract.COMBINED_AND_INFERENCE"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345(), ["route_contract.COMBINED_AND_ADMIN"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f41444d494e(), ["route_contract.COMBINED_ONLY"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f4f4e4c59(), ["route_contract.GITHUB_ADAPTER_ONLY"]: rp_726f7574655f636f6e74726163742e4749544855425f414441505445525f4f4e4c59(), ["route_contract.neutral"]: rp_726f7574655f636f6e74726163742e6e65757472616c, ["route_contract.management"]: rp_726f7574655f636f6e74726163742e6d616e6167656d656e74, ["route_contract.ai_service"]: rp_726f7574655f636f6e74726163742e61695f73657276696365, ["route_contract.private_service"]: rp_726f7574655f636f6e74726163742e707269766174655f73657276696365, ["route_contract.github_adapter_service"]: rp_726f7574655f636f6e74726163742e6769746875625f616461707465725f73657276696365, ["route_contract.service_base_path"]: rp_726f7574655f636f6e74726163742e736572766963655f626173655f70617468, ["route_contract.types.REMOVED_ROUTES"]: rp_726f7574655f636f6e74726163742e74797065732e52454d4f5645445f524f55544553(), ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.sanitize_codec_error"]: rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72, ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["subscription_usage.normalize.ANTHROPIC_WINDOWS"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753(), ["subscription_usage.normalize.numeric_message_estimate"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e6e756d657269635f6d6573736167655f657374696d617465, ["subscription_usage.normalize.reset_credits_available"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65, ["subscription_usage.cache.STANDARD_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e5354414e444152445f43414348455f54544c(), ["subscription_usage.cache.ANTHROPIC_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e414e5448524f5049435f43414348455f54544c(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token.run_lease.RUN_LEASE_TTL_SECONDS"]: rp_746f6b656e2e72756e5f6c656173652e52554e5f4c454153455f54544c5f5345434f4e4453(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_report.HEADERS"]: rp_746f6b656e5f7265706f72742e48454144455253(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.LEGACY_PLACEHOLDERS"]: rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["tunnel_command.TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["tunnel_command.DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["tunnel_command.SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.token_count"]: rp_75736167652e746f6b656e5f636f756e74, ["usage.token_parts"]: rp_75736167652e746f6b656e5f7061727473, ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["usage.first_u64"]: rp_75736167652e66697273745f753634, ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["with_command.CLAUDE_PRIVACY_DEFAULT_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56(), ["with_command.CLAUDE_FEATURE_FLAG_BLOCKING_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56(), ["with_command.claude_settings.LAST_WORKING_MODEL"]: rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.LIMIT"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954(), ["deploy_local.data_backup.FILES"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553(), ["deploy_local.data_backup.DEPTH"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.COVERED"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.host.migrate.HOST_READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e686f73742e6d6967726174652e484f53545f52454144595f415454454d505453(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.service.xml"]: rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c, ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.MAX_WEIGHT"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854(), ["account_routing_policy.MAX_RETRIES"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.MAX_CLIENTS"]: rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
+export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":390,"executableFunctions":106,"executableConstants":440};

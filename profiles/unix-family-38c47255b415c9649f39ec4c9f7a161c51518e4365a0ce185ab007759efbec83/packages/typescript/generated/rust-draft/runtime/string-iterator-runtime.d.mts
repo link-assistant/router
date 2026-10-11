@@ -1,0 +1,4 @@
+type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
+export declare function stringLines(value: string): IterableIterator<string>;
+export declare function stringNext(value: IterableIterator<string>): RustOption<string>;
+export declare function stringJoin(values: readonly string[], separator: string): string;
