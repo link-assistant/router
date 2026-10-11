@@ -34,7 +34,9 @@ test('module names retain keyword raw-identifier and filesystem spelling restric
   assert.equal(plan(module('#[path="actual.rs"]mod café;'),['src/actual.rs']).name,'café');
   assert.equal(plan(module('mod café {}'),[]).name,'café');
   assert.throws(()=>plan(module('#[path="actual.rs"]mod cafe\u0301;'),['src/actual.rs']),/permitted original Rust identifier/);
-  for(const source of ['pub(in fn)mod child;','pub(in crate::fn)mod child;','pub(in crate::_)mod child;'])assert.throws(()=>plan(module(source),['src/child.rs']),/checked grammar/);
+  // The structural partitioner can classify an invalid visibility using its
+  // embedded keyword; either rejection must precede any file-selection plan.
+  for(const source of ['pub(in fn)mod child;','pub(in crate::fn)mod child;','pub(in crate::_)mod child;'])assert.throws(()=>plan(module(source),['src/child.rs']),/Tracked module path/);
 });
 
 test('ordinary external module candidates retain foo.rs and foo/mod.rs ownership',()=>{
