@@ -38,6 +38,22 @@ test('actual written type qualifiers survive checked signatures and semantic IR'
   assert.throws(()=>checked('fn bad(v:String)->String{&&v}'),/repeated shared ownership borrow/);
 });
 
+test('borrow lifetime metadata preserves only actual written syntax and original literal origins',()=>{
+  const source='pub fn elided(v:&str)->&str{v} pub fn explicit(v:&\'static str)->&\'static str{v} pub fn literal()->&\'static str{"Ω"}';
+  const program=roundTripProgram(checked(source));
+  for(const [name,kind,syntax]of [['elided','elided','&str'],['explicit','static',"&'static str"]]){
+    const type=program.declarations.get(name).params[0].type,proof=type.rustBorrowLifetime;
+    assert.equal(proof.kind,kind);assert.equal(proof.source,'borrowed-str-type');assert.equal(source.slice(proof.span.start,proof.span.end),syntax);
+    assert.equal(proof.tokens[0].value,'&');assert.equal(proof.tokens.at(-1).value,'str');
+  }
+  const proof=program.declarations.get('literal').body.type.rustBorrowLifetime;
+  assert.equal(proof.kind,'static');assert.equal(proof.source,'string-literal');assert.equal(source.slice(proof.span.start,proof.span.end),'"Ω"');
+  const checker=new Checker('Rust',[]),generated=checker.qualifyOwnershipResult({k:'lit',value:'generated',span:{start:0,end:0}},{k:'lit',value:'generated',type:{kind:'string'}});
+  assert.equal(generated.type.rustBorrowLifetime,undefined);
+  const nested=parsed('fn nested(v:&&str)->&&str{v}').items[0].params[0].type;
+  assert.equal(nested.rustBorrowLifetime,undefined);assert.equal(nested.rustReference.pointee.rustBorrowLifetime.kind,'elided');
+});
+
 test('shared ownership proof requires actual pointees and bounded reference depth equality',()=>{
   const span={start:0,end:1},leaf={...scalar(ownedString),rustSourceType:true};
   const reference=pointee=>({...leaf,rustReference:{kind:'shared',pointee}});

@@ -102,7 +102,11 @@ export function withOwnershipParser(Base=TextRustParser) {
         if(!borrow&&!referenceDepth)throw unsupported('unsized slice value','requires an actual source borrow, not an owned Vec encoding',location(first,tokens.at(-1)));
         owner=BORROWED_SLICE;
       }
-      return {...type,rustSourceType:true,...(owner?{rustOwnership:owner}:{})};
+      const qualified={...type,rustSourceType:true,...(owner?{rustOwnership:owner}:{})};
+      // A pointee's lifetime is not the lifetime of an outer reference.
+      if(type.rustReference)delete qualified.rustBorrowLifetime;
+      if(borrow&&root==='str'&&(offset===1||tokens[2]?.value==='static'))qualified.rustBorrowLifetime={kind:offset===1?'elided':'static',source:'borrowed-str-type',span:location(first,tokens.at(-1)),tokens:tokens.map(token=>({kind:token.kind,value:token.value,span:{start:token.start,end:token.end}}))};
+      return qualified;
     }
     expressionMacro(token,path) {
       const value=super.expressionMacro(token,path);
@@ -129,7 +133,7 @@ export function withOwnershipChecker(Base=TextChecker) {
     }
     resolveType(type,path,span) {
       const resolved=super.resolveType(type,path,span);
-      return {...resolved,...(type?.rustSourceType?{rustSourceType:true}:{}),...(type?.rustOwnership?{rustOwnership:type.rustOwnership}:{}),...(type?.rustBorrowingUnresolved?{rustBorrowingUnresolved:type.rustBorrowingUnresolved}:{})};
+      return {...resolved,...(type?.rustSourceType?{rustSourceType:true}:{}),...(type?.rustOwnership?{rustOwnership:type.rustOwnership}:{}),...(type?.rustBorrowLifetime?{rustBorrowLifetime:type.rustBorrowLifetime}:{}),...(type?.rustBorrowingUnresolved?{rustBorrowingUnresolved:type.rustBorrowingUnresolved}:{})};
     }
     expectedOwnership(actual,expected,path,span) {
       assertRustOwnership(actual,expected,span,{declarations:this.items,resolveType:(type,scope,range)=>this.resolveType(type,scope??path,range)});
@@ -150,6 +154,7 @@ export function withOwnershipChecker(Base=TextChecker) {
       let operation=value;while(operation.k==='let')operation=operation.body;
       if(operation.k==='routerTextPattern'&&operation.sourceProfile==='checked-str-pattern-v1'&&['trim_start_matches','trim_end_matches','trim_matches'].includes(operation.op))owner=BORROWED_STR;
       if(owner)value={...value,type:{...value.type,rustOwnership:owner}};
+      if(node.k==='str'&&typeof node.value==='string'&&owner?.kind==='borrowed'&&owner.source==='str')value={...value,type:{...value.type,rustBorrowLifetime:{kind:'static',source:'string-literal',span:{...node.span}}}};
       return value;
     }
     expr(node,env,path,expected,allowLiteral=false) {
